@@ -472,13 +472,17 @@
     {
       "metadata": {
         "name": "awsDatasourcesTempCredentials",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-07-06T15:06:11Z"
+        "resourceVersion": "1752523189825",
+        "creationTimestamp": "2023-07-06T15:06:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 19:59:49.825959 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
-        "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources"
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources",
+        "expression": "true"
       }
     },
     {
@@ -997,6 +1001,22 @@
         "codeowner": "@grafana/grafana-backend-services-squad",
         "requiresRestart": true,
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "enablePluginImporter",
+        "resourceVersion": "1752591728321",
+        "creationTimestamp": "2025-07-15T15:02:08Z"
+      },
+      "spec": {
+        "description": "Set this to true to use the new PluginImporter functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -2023,8 +2043,11 @@
     {
       "metadata": {
         "name": "multiTenantTempCredentials",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-04-02T20:25:50Z"
+        "resourceVersion": "1752523189825",
+        "creationTimestamp": "2025-04-02T20:25:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 19:59:49.825959 +0000 UTC"
+        }
       },
       "spec": {
         "description": "use multi-tenant path for awsTempCredentials",
@@ -2312,6 +2335,23 @@
     },
     {
       "metadata": {
+        "name": "pluginLoadingRefactor",
+        "resourceVersion": "1752218524617",
+        "creationTimestamp": "2025-07-11T07:22:04Z",
+        "deletionTimestamp": "2025-07-11T07:23:34Z"
+      },
+      "spec": {
+        "description": "Set this to true to use the new plugin loading functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginAssetProvider",
         "resourceVersion": "1752486584712",
         "creationTimestamp": "2025-07-14T09:49:44Z"
@@ -2517,6 +2557,22 @@
       },
       "spec": {
         "description": "Next generation provisioning... and git",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioningSecretsService",
+        "resourceVersion": "1752501981893",
+        "creationTimestamp": "2025-07-14T14:05:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 14:06:21.89322 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -2810,6 +2866,20 @@
     },
     {
       "metadata": {
+        "name": "sharingDashboardImage",
+        "resourceVersion": "1747090555040",
+        "creationTimestamp": "2025-05-12T22:55:55Z"
+      },
+      "spec": {
+        "description": "Enables image sharing functionality for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "showDashboardValidationWarnings",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2022-10-14T13:51:05Z"
@@ -3010,6 +3080,19 @@
         "description": "Use new **Combobox** component for template variables",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "tempoAlerting",
+        "resourceVersion": "1750158458662",
+        "creationTimestamp": "2025-06-17T11:07:38Z"
+      },
+      "spec": {
+        "description": "Enables creating alerts from Tempo data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true
       }
     },

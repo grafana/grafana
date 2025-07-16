@@ -186,6 +186,7 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
+  * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
@@ -209,6 +210,10 @@ export interface FeatureToggles {
   * Next generation provisioning... and git
   */
   provisioning?: boolean;
+  /**
+  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+  */
+  provisioningSecretsService?: boolean;
   /**
   * Start an additional https handler and write kubectl options
   */
@@ -938,6 +943,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables creating alerts from Tempo data source
+  */
+  tempoAlerting?: boolean;
+  /**
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
@@ -984,6 +993,10 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
+  * Enables image sharing functionality for dashboards
+  */
+  sharingDashboardImage?: boolean;
+  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
@@ -1008,6 +1021,11 @@ export interface FeatureToggles {
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
+  /**
+  * Set this to true to use the new PluginImporter functionality
+  * @default false
+  */
+  enablePluginImporter?: boolean;
   /**
   * Allows decoupled core plugins to load from the Grafana CDN
   * @default false

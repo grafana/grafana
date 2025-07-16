@@ -8,7 +8,7 @@ import { PromOptions } from '../types';
 
 import { docsTip, overhaulStyles } from './shared/utils';
 
-export type DataSourceHttpSettingsProps = {
+type DataSourceHttpSettingsProps = {
   options: DataSourceSettings<PromOptions, {}>;
   onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void;
   secureSocksDSProxyEnabled: boolean;

@@ -15,7 +15,7 @@ import { PromVisualQuery } from '../types';
 import { LabelFilters } from './LabelFilters';
 import { MetricCombobox } from './MetricCombobox';
 
-export interface MetricsLabelsSectionProps {
+interface MetricsLabelsSectionProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
@@ -194,7 +194,7 @@ async function getMetrics(
   }));
 }
 
-export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
+function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
   if (!metadata[metric]) {
     return;
   }
