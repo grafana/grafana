@@ -23,7 +23,7 @@ if [ ! -f ".nvmrc" ]; then
     exit 1
 fi
 
-REQUIRED_VERSION=$(cat .nvmrc | sed 's/v//')
+REQUIRED_VERSION=$(sed 's/v//' .nvmrc)
 CURRENT_VERSION=$(node --version | sed 's/v//')
 
 if [ "$CURRENT_VERSION" != "$REQUIRED_VERSION" ]; then
