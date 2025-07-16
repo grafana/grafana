@@ -35,19 +35,16 @@ export interface RepositoryFieldData {
   content?: (setValue: UseFormReturn<RepositoryFormData>['setValue']) => ReactNode; // For custom fields
 }
 
-// Repository form data - flattened from RepositorySpec with all config types
-export type RepositoryFormData = Omit<RepositorySpec, 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local'> &
+export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySpec['type']> &
   BitbucketRepositoryConfig &
   GitRepositoryConfig &
   GitHubRepositoryConfig &
   GitLabRepositoryConfig &
   LocalRepositoryConfig & {
-    // Derived fields from data transformations
     readOnly: boolean;
     prWorkflow: boolean;
   };
 
-// Field can be string or object with dependencies
 export type RepositorySettingsField = Path<RepositoryFormData>;
 
 // Section configuration
