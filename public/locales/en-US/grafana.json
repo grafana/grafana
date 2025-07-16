@@ -10549,8 +10549,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Set up required feature toggles"
       },
-      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in GitHub and provision updates automatically",
-      "manage-your-dashboards-with-remote-provisioning": "Get started with GitSync",
+      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in Git and provision updates automatically",
+      "manage-your-dashboards-with-remote-provisioning": "Get started with Git Sync",
       "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"
     },
     "file-history-page": {

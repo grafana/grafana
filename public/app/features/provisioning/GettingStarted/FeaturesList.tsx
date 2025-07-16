@@ -18,13 +18,13 @@ export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesL
     <Stack direction="column" gap={3}>
       <Text variant="h2">
         <Trans i18nKey="provisioning.features-list.manage-your-dashboards-with-remote-provisioning">
-          Get started with GitSync
+          Get started with Git Sync
         </Trans>
       </Text>
       <ul className={styles.featuresList}>
         <li>
           <Trans i18nKey="provisioning.features-list.manage-dashboards-provision-updates-automatically">
-            Manage dashboards as code in GitHub and provision updates automatically
+            Manage dashboards as code in Git and provision updates automatically
           </Trans>
         </li>
         <li>
