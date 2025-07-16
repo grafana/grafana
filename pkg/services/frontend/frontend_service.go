@@ -130,7 +130,7 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 
 	// Frontend service doesn't (yet?) serve any assets, so explicitly 404
 	// them so we can get logs for them
-	s.routeGet(m, "/public/*", s.handleAssets404)
+	s.routeGet(m, "/public/*", http.NotFound)
 
 	// All other requests return index.html
 	s.routeGet(m, "/*", s.index.HandleRequest)
