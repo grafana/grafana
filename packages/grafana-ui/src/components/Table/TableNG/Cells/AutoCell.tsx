@@ -14,7 +14,8 @@ export default function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   }
 
   if ((field.config.links?.length ?? 0 > 1) || (field.config.actions?.length ?? 0 > 0)) {
-    return <a href="#;">{formattedValue}</a>;
+    // eslint-disable-next-line jsx-a11y/anchor-is-valid
+    return <a>{formattedValue}</a>;
   }
 
   return formattedValue;

@@ -614,14 +614,12 @@ export function TableNG(props: TableNGProps) {
         rows={paginatedRows}
         headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
-        onCellClick={(
-          { column, row },
-          { clientX, clientY, preventGridDefault, target, preventDefault, stopPropagation }
-        ) => {
+        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
           // Note: could be column.field; JS says yes, but TS says no!
           const field = columns[column.idx].field;
+          const targ: HTMLElement = target as HTMLElement;
 
-          if (colsWithTooltip[getDisplayName(field)] && (target as HTMLElement).matches('a')) {
+          if (colsWithTooltip[getDisplayName(field)] && targ.matches('a') && !targ.hasAttribute('href')) {
             const rowIdx = row.__index;
             setTooltipState({
               coords: {
@@ -633,8 +631,6 @@ export function TableNG(props: TableNGProps) {
             });
 
             preventGridDefault();
-            preventDefault();
-            stopPropagation();
           }
         }}
         onCellKeyDown={
@@ -898,7 +894,6 @@ const getCellStyles = (
     minHeight: '100%',
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
     ...(shouldWrap && { whiteSpace: 'pre-line' }),
-    ...(hasTooltip && { cursor: 'pointer' }),
 
     '&:last-child': {
       borderInlineEnd: 'none',
