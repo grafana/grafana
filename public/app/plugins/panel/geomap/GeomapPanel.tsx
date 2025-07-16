@@ -9,7 +9,7 @@ import Zoom from 'ol/control/Zoom';
 import { Coordinate } from 'ol/coordinate';
 import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, transformExtent } from 'ol/proj';
 import { Component, ReactNode } from 'react';
 import * as React from 'react';
 import { Subscription } from 'rxjs';
@@ -284,10 +284,15 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   initMapView = (config: MapViewConfig): View | undefined => {
+    // Define the world extent in EPSG:3857 (Web Mercator)
+    const worldExtent = [-180, -85.05112878, 180, 85.05112878]; // [minx, miny, maxx, maxy] in EPSG:4326
+    const projectedExtent = transformExtent(worldExtent, 'EPSG:4326', 'EPSG:3857');
     let view = new View({
       center: [0, 0],
       zoom: 1,
-      showFullExtent: true, // allows zooming so the full range is visible
+      extent: projectedExtent,
+      showFullExtent: false, // allows zooming so the full range is visible
+      constrainOnlyCenter: false, // Ensure the entire visible area stays within the extent
     });
 
     // With shared views, all panels use the same view instance

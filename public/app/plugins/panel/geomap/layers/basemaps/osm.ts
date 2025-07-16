@@ -17,7 +17,7 @@ export const standard: MapLayerRegistryItem = {
   create: async (map: OpenLayersMap, options: MapLayerOptions, eventBus: EventBus) => ({
     init: () => {
       return new TileLayer({
-        source: new OSM(),
+        source: new OSM({ wrapX: false }),
       });
     },
   }),
