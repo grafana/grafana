@@ -15,7 +15,7 @@ import (
 
 // Minimal copy of contextHandler.Middleware for frontend-service
 // frontend-service doesn't handle authentication or know what signed in users are
-func (s *frontendService) contextMiddleware(tracer tracing.Tracer) web.Middleware {
+func (s *frontendService) contextMiddleware() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
