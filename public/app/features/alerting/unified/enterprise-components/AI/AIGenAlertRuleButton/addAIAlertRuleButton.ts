@@ -13,13 +13,13 @@ export const AIAlertRuleButtonComponent: ComponentType<GenAIAlertRuleButtonProps
   if (!InternalAIAlertRuleButtonComponent) {
     return null;
   }
-  
+
   const WrappedComponent = withErrorBoundary(InternalAIAlertRuleButtonComponent, {
     title: 'AI Alert Rule Button failed to load',
     style: 'alertbox',
     errorLogger: logError,
   });
-  
+
   return createElement(WrappedComponent, props);
 };
 

@@ -21,7 +21,7 @@ const mockProps: GenAITriageButtonProps = {
 describe('AITriageButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAITriageButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -48,4 +48,4 @@ describe('AITriageButtonComponent Error Boundary', () => {
     expect(screen.getByText('AI Triage Button failed to load')).toBeInTheDocument();
     expect(container.querySelector('details')).toBeInTheDocument();
   });
-}); 
+});

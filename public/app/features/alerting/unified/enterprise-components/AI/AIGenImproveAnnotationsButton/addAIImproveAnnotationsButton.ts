@@ -13,13 +13,13 @@ export const AIImproveAnnotationsButtonComponent: ComponentType<GenAIImproveAnno
   if (!InternalAIImproveAnnotationsButtonComponent) {
     return null;
   }
-  
+
   const WrappedComponent = withErrorBoundary(InternalAIImproveAnnotationsButtonComponent, {
     title: 'AI Improve Annotations Button failed to load',
     style: 'alertbox',
     errorLogger: logError,
   });
-  
+
   return createElement(WrappedComponent, props);
 };
 

@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { ComponentType } from 'react';
 
-import { AIImproveLabelsButtonComponent, GenAIImproveLabelsButtonProps, addAIImproveLabelsButton } from './addAIImproveLabelsButton';
+import {
+  AIImproveLabelsButtonComponent,
+  GenAIImproveLabelsButtonProps,
+  addAIImproveLabelsButton,
+} from './addAIImproveLabelsButton';
 
 // Component that throws an error for testing
 const ThrowingComponent: ComponentType<GenAIImproveLabelsButtonProps> = () => {
@@ -16,7 +20,7 @@ const WorkingComponent: ComponentType<GenAIImproveLabelsButtonProps> = () => {
 describe('AIImproveLabelsButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAIImproveLabelsButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -43,4 +47,4 @@ describe('AIImproveLabelsButtonComponent Error Boundary', () => {
     expect(screen.getByText('AI Improve Labels Button failed to load')).toBeInTheDocument();
     expect(container.querySelector('details')).toBeInTheDocument();
   });
-}); 
+});

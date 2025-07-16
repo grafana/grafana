@@ -1,7 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { ComponentType } from 'react';
 
-import { AIImproveAnnotationsButtonComponent, GenAIImproveAnnotationsButtonProps, addAIImproveAnnotationsButton } from './addAIImproveAnnotationsButton';
+import {
+  AIImproveAnnotationsButtonComponent,
+  GenAIImproveAnnotationsButtonProps,
+  addAIImproveAnnotationsButton,
+} from './addAIImproveAnnotationsButton';
 
 // Component that throws an error for testing
 const ThrowingComponent: ComponentType<GenAIImproveAnnotationsButtonProps> = () => {
@@ -16,7 +20,7 @@ const WorkingComponent: ComponentType<GenAIImproveAnnotationsButtonProps> = () =
 describe('AIImproveAnnotationsButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAIImproveAnnotationsButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -43,4 +47,4 @@ describe('AIImproveAnnotationsButtonComponent Error Boundary', () => {
     expect(screen.getByText('AI Improve Annotations Button failed to load')).toBeInTheDocument();
     expect(container.querySelector('details')).toBeInTheDocument();
   });
-}); 
+});

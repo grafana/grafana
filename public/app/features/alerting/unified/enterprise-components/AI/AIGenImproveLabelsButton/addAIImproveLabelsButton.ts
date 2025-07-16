@@ -13,13 +13,13 @@ export const AIImproveLabelsButtonComponent: ComponentType<GenAIImproveLabelsBut
   if (!InternalAIImproveLabelsButtonComponent) {
     return null;
   }
-  
+
   const WrappedComponent = withErrorBoundary(InternalAIImproveLabelsButtonComponent, {
     title: 'AI Improve Labels Button failed to load',
     style: 'alertbox',
     errorLogger: logError,
   });
-  
+
   return createElement(WrappedComponent, props);
 };
 

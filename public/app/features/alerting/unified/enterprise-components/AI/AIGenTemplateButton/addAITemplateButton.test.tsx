@@ -21,7 +21,7 @@ const mockProps: GenAITemplateButtonProps = {
 describe('AITemplateButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAITemplateButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -48,4 +48,4 @@ describe('AITemplateButtonComponent Error Boundary', () => {
     expect(screen.getByText('AI Template Button failed to load')).toBeInTheDocument();
     expect(container.querySelector('details')).toBeInTheDocument();
   });
-}); 
+});

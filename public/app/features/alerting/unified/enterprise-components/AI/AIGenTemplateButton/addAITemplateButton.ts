@@ -16,13 +16,13 @@ export const AITemplateButtonComponent: ComponentType<GenAITemplateButtonProps> 
   if (!InternalAITemplateButtonComponent) {
     return null;
   }
-  
+
   const WrappedComponent = withErrorBoundary(InternalAITemplateButtonComponent, {
     title: 'AI Template Button failed to load',
     style: 'alertbox',
     errorLogger: logError,
   });
-  
+
   return createElement(WrappedComponent, props);
 };
 
