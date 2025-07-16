@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import {
   Button,
   Checkbox,
-  Combobox,
   ControlledCollapse,
   Field,
   Input,
@@ -23,24 +22,17 @@ import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { RepositoryFormData } from '../types';
 import { dataToSpec } from '../utils/data';
-import { isGitProvider, getRepositoryTypeConfigs } from '../utils/repositoryTypes';
+import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
-const getOptions = () => {
-  const typeOptions = getRepositoryTypeConfigs().map((config) => ({
-    value: config.type,
-    label: config.label,
-  }));
-
-  const targetOptions = [
+const getTargetOptions = () => {
+  return [
     { value: 'instance', label: t('provisioning.config-form.option-entire-instance', 'Entire instance') },
     { value: 'folder', label: t('provisioning.config-form.option-managed-folder', 'Managed folder') },
   ];
-
-  return [typeOptions, targetOptions];
 };
 
 export interface ConfigFormProps {
@@ -63,7 +55,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
-  const [typeOptions, targetOptions] = useMemo(() => getOptions(), []);
+  const targetOptions = useMemo(() => getTargetOptions(), []);
   const [isLoading, setIsLoading] = useState(false);
   const isGitBased = isGitProvider(type);
 
@@ -93,30 +85,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setIsLoading(false);
   };
 
-  // NOTE: We do not want the lint option to be listed.
   return (
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Stack direction="column" gap={2}>
         <Field noMargin label={t('provisioning.config-form.label-repository-type', 'Repository type')}>
-          <Controller
-            name={'type'}
-            control={control}
-            render={({ field: { ref, onChange, ...field } }) => {
-              return (
-                <Combobox
-                  options={typeOptions}
-                  onChange={(value) => onChange(value?.value)}
-                  placeholder={t(
-                    'provisioning.config-form.placeholder-select-repository-type',
-                    'Select repository type'
-                  )}
-                  disabled={!!data?.spec}
-                  {...field}
-                />
-              );
-            }}
-          />
+          <Input value={getRepositoryTypeConfig(type)?.label || type} disabled />
         </Field>
         <Field
           noMargin
