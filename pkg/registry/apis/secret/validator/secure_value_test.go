@@ -2,8 +2,6 @@ package validator
 
 import (
 	"fmt"
-	"maps"
-	"slices"
 	"strings"
 	"testing"
 
@@ -31,7 +29,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
 			sv.Spec.Description = ""
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.description", errs[0].Field)
@@ -43,7 +41,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv.Spec.Value = nil
 			sv.Spec.Ref = nil
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -52,7 +50,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue(""))
 			sv.Spec.Ref = nil
 
-			validator = ProvideSecureValueValidator(nil)
+			validator = ProvideSecureValueValidator()
 			errs = validator.Validate(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -62,7 +60,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("value"))
 			sv.Spec.Ref = &ref
 
-			validator = ProvideSecureValueValidator(nil)
+			validator = ProvideSecureValueValidator()
 			errs = validator.Validate(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -73,7 +71,7 @@ func TestValidateSecureValue(t *testing.T) {
 			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue(strings.Repeat("a", contracts.SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES+1)))
 			sv.Spec.Ref = nil
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.value", errs[0].Field)
@@ -95,7 +93,7 @@ func TestValidateSecureValue(t *testing.T) {
 				},
 			}
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, oldSv, admission.Update)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -115,7 +113,7 @@ func TestValidateSecureValue(t *testing.T) {
 				},
 			}
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, oldSv, admission.Update)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -137,7 +135,7 @@ func TestValidateSecureValue(t *testing.T) {
 				},
 			}
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, oldSv, admission.Update)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -148,7 +146,7 @@ func TestValidateSecureValue(t *testing.T) {
 				},
 			}
 
-			validator = ProvideSecureValueValidator(nil)
+			validator = ProvideSecureValueValidator()
 			errs = validator.Validate(sv, oldSv, admission.Update)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -167,7 +165,7 @@ func TestValidateSecureValue(t *testing.T) {
 				},
 			}
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, oldSv, admission.Update)
 			require.Empty(t, errs)
 		})
@@ -175,7 +173,7 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("when the old object is `nil` it returns an error", func(t *testing.T) {
 			sv := &secretv1beta1.SecureValue{}
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, nil, admission.Update)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -196,7 +194,7 @@ func TestValidateSecureValue(t *testing.T) {
 				},
 			}
 
-			validator := ProvideSecureValueValidator(nil)
+			validator := ProvideSecureValueValidator()
 			errs := validator.Validate(sv, oldSv, admission.Update)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
@@ -216,75 +214,25 @@ func TestValidateSecureValue(t *testing.T) {
 			},
 		}
 
-		validator := ProvideSecureValueValidator(nil)
+		validator := ProvideSecureValueValidator()
 		errs := validator.Validate(sv, nil, admission.Create)
 		require.Len(t, errs, 1)
 		require.Equal(t, "spec.decrypters.[1]", errs[0].Field)
 	})
 
-	t.Run("when set, the `decrypters` must be one of the allowed in the allow list", func(t *testing.T) {
-		allowList := map[string]struct{}{"app1": {}, "app2": {}}
-		decrypters := slices.Collect(maps.Keys(allowList))
+	t.Run("`decrypters` list can be empty", func(t *testing.T) {
+		ref := "ref"
+		sv := &secretv1beta1.SecureValue{
+			Spec: secretv1beta1.SecureValueSpec{
+				Description: "description", Ref: &ref,
 
-		t.Run("no matches, returns an error", func(t *testing.T) {
-			ref := "ref"
-			sv := &secretv1beta1.SecureValue{
-				Spec: secretv1beta1.SecureValueSpec{
-					Description: "description", Ref: &ref,
+				Decrypters: []string{},
+			},
+		}
 
-					Decrypters: []string{"app3"},
-				},
-			}
-
-			validator := ProvideSecureValueValidator(allowList)
-			errs := validator.Validate(sv, nil, admission.Create)
-			require.Len(t, errs, 1)
-		})
-
-		t.Run("no decrypters, returns no error", func(t *testing.T) {
-			ref := "ref"
-			sv := &secretv1beta1.SecureValue{
-				Spec: secretv1beta1.SecureValueSpec{
-					Description: "description", Ref: &ref,
-
-					Decrypters: []string{},
-				},
-			}
-
-			validator := ProvideSecureValueValidator(allowList)
-			errs := validator.Validate(sv, nil, admission.Create)
-			require.Empty(t, errs)
-		})
-
-		t.Run("one match, returns no errors", func(t *testing.T) {
-			ref := "ref"
-			sv := &secretv1beta1.SecureValue{
-				Spec: secretv1beta1.SecureValueSpec{
-					Description: "description", Ref: &ref,
-
-					Decrypters: []string{decrypters[0]},
-				},
-			}
-
-			validator := ProvideSecureValueValidator(allowList)
-			errs := validator.Validate(sv, nil, admission.Create)
-			require.Empty(t, errs)
-		})
-
-		t.Run("all matches, returns no errors", func(t *testing.T) {
-			ref := "ref"
-			sv := &secretv1beta1.SecureValue{
-				Spec: secretv1beta1.SecureValueSpec{
-					Description: "description", Ref: &ref,
-
-					Decrypters: decrypters,
-				},
-			}
-
-			validator := ProvideSecureValueValidator(allowList)
-			errs := validator.Validate(sv, nil, admission.Create)
-			require.Empty(t, errs)
-		})
+		validator := ProvideSecureValueValidator()
+		errs := validator.Validate(sv, nil, admission.Create)
+		require.Empty(t, errs)
 	})
 
 	t.Run("`decrypters` must be a valid label value", func(t *testing.T) {
@@ -310,7 +258,7 @@ func TestValidateSecureValue(t *testing.T) {
 			},
 		}
 
-		validator := ProvideSecureValueValidator(nil)
+		validator := ProvideSecureValueValidator()
 		errs := validator.Validate(sv, nil, admission.Create)
 		require.Len(t, errs, 3)
 	})
@@ -330,7 +278,7 @@ func TestValidateSecureValue(t *testing.T) {
 			},
 		}
 
-		validator := ProvideSecureValueValidator(nil)
+		validator := ProvideSecureValueValidator()
 		errs := validator.Validate(sv, nil, admission.Create)
 		require.Len(t, errs, 1)
 		require.Equal(t, "spec.decrypters", errs[0].Field)
