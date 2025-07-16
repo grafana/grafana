@@ -3215,6 +3215,9 @@
       "define-allowed-teams-ids-label": "許可されたチームIDを定義する",
       "display-name-description": "ログインページに「...でサインイン」と表示されます。複数のIDプロバイダーまたはSSOプロトコルを使用する場合に役立ちます。",
       "display-name-label": "表示名",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "OAuth2 IDトークンの属性マップ内でユーザーメール検索に使用するキーの名前。",
       "email-attribute-name-label": "メール属性名",
       "email-attribute-path-description": "ユーザー情報からユーザーメールを検索する際に使用するJMESPath式。",
@@ -4595,6 +4598,14 @@
     },
     "errors": {
       "failed-to-load": "ダッシュボードの読み込みに失敗しました"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -8612,9 +8623,7 @@
     "share-panel": {
       "config-description": "次のカスタマイズ設定を使用して、組織内でパネルを共有するためのパーソナライズされた直接リンクを作成します。",
       "download-image": "画像をダウンロード",
-      "render-image": "画像を生成する",
-      "render-image-error": "パネル画像のレンダリングに失敗しました",
-      "render-image-error-description": "画像の生成中にエラーが発生しました"
+      "render-image": "画像を生成する"
     }
   },
   "live": {
@@ -8779,6 +8788,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11363,6 +11374,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "JSON形式でエクスポート",
       "share-externally-title": "外部と共有",
       "share-internally-title": "内部と共有",
@@ -11398,6 +11410,19 @@
       "view-button": "JSONを表示",
       "view-button-yaml": "YAMLを表示"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "ライブラリパネルを作成します。"
     },
@@ -11406,7 +11431,7 @@
       "info-text": "以下のオプションでカスタマイズした、このダッシュボードまたはパネルへの直接リンクを作成します。",
       "link-url": "URLをリンク",
       "render-alert": "画像レンダラープラグインがインストールされていません",
-      "render-instructions": "パネル画像をレンダリングするには、<2>Grafana画像レンダラープラグイン</2>をインストールする必要があります。プラグインをインストールするには、Grafana管理者にお問い合わせください。",
+      "render-instructions": "",
       "rendered-image": "レンダリングされた画像への直接リンク",
       "save-alert": "ダッシュボードは保存されていません",
       "save-dashboard": "パネル画像をレンダリングするには、最初にダッシュボードを保存する必要があります。",
@@ -11474,6 +11499,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "パネルプレビュー"
     },
