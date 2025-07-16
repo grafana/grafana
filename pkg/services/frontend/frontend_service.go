@@ -9,10 +9,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -33,13 +33,13 @@ type frontendService struct {
 	errChan      chan error
 	promGatherer prometheus.Gatherer
 	promRegister prometheus.Registerer
-	tracer       tracing.Tracer
+	tracer       trace.Tracer
 	license      licensing.Licensing
 
 	index *IndexProvider
 }
 
-func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, tracer tracing.Tracer) (*frontendService, error) {
+func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*frontendService, error) {
 	index, err := NewIndexProvider(cfg, license)
 	if err != nil {
 		return nil, err

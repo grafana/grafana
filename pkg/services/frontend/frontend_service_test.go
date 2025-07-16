@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -24,12 +23,11 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 
 	features := featuremgmt.WithFeatures()
 	license := &licensing.OSSLicensingService{}
-	tracer := tracing.InitializeTracerForTest()
 
 	var promRegister prometheus.Registerer = prometheus.NewRegistry()
 	promGatherer := promRegister.(*prometheus.Registry)
 
-	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license, tracer)
+	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license)
 	require.NoError(t, err)
 
 	return service
