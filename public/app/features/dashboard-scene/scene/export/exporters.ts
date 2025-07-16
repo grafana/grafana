@@ -437,16 +437,11 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       } else if (element.kind === 'LibraryPanel') {
         if (isSharingExternally) {
           // Convert library panel to inline panel for external sharing
-          try {
-            const inlinePanel = await convertLibraryPanelToInlinePanel(element);
-            // Apply datasource templating to the converted panel
-            processPanel(inlinePanel);
-            // Replace the library panel with the inline panel
-            elements[key] = inlinePanel;
-          } catch (error) {
-            console.error(`Failed to convert library panel ${key}:`, error);
-            // Keep the library panel reference if conversion fails
-          }
+          const inlinePanel = await convertLibraryPanelToInlinePanel(element);
+          // Apply datasource templating to the converted panel
+          processPanel(inlinePanel);
+          // Replace the library panel with the inline panel
+          elements[key] = inlinePanel;
         }
         // For internal exports, keep library panels as-is
       }

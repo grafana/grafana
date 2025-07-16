@@ -130,7 +130,11 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
         const specCopy = JSON.parse(JSON.stringify(exportable));
         const result = await makeExportableV2(specCopy, isSharingExternally);
         if ('error' in result) {
-          throw new Error(`Export failed: ${result.error}`);
+          return {
+            json: { error: result.error },
+            initialSaveModelVersion,
+            hasLibraryPanels: Object.values(origDashboard.elements).some((element) => element.kind === 'LibraryPanel'),
+          };
         }
         finalSpec = result;
       }
