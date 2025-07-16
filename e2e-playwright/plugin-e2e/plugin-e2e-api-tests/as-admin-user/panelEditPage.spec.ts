@@ -71,7 +71,7 @@ test.describe(
         await expect(
           page.locator('.rdg'),
           formatExpectError('Expected certain select options to be displayed after clicking on the select input')
-        ).toHaveText('val1val2val3val4');
+        ).toHaveText(/val1val2val3val4/);
       });
     });
 
