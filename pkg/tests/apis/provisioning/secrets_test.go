@@ -3,9 +3,11 @@ package provisioning
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
@@ -475,9 +477,10 @@ func TestIntegrationProvisioning_Secrets_Removal(t *testing.T) {
 				value, _ := encryptedField(t, secretsService, repo, output.Object, expectedField.Path, true)
 				require.NotEmpty(t, value)
 
-				_, err := secretsService.Decrypt(ctx, repo, value)
-				require.Error(t, err)
-				require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+				require.Eventually(t, func() bool {
+					_, err := secretsService.Decrypt(ctx, repo, value)
+					return err != nil && errors.Is(err, contracts.ErrDecryptNotFound)
+				}, 10*time.Second, 500*time.Millisecond, "expected ErrDecryptNotFound error")
 			}
 		})
 	}
