@@ -883,6 +883,16 @@ export type TimeZoneUtc = 'utc';
 export type TimeZoneBrowser = 'browser';
 
 /**
+ * Options for time comparison
+ */
+export interface TimeCompareOptions {
+  /**
+   * Enable time comparison control
+   */
+  timeCompare?: boolean;
+}
+
+/**
  * Optional formats for the template variable replace functions
  * See also https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
  */
