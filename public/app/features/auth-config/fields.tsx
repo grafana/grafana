@@ -271,7 +271,6 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
-          'loginPrompt',
         ],
       },
       {
