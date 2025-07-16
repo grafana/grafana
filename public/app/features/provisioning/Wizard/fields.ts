@@ -242,47 +242,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
   },
 });
 
-/**
- * Get field configuration for a specific provider and field
- */
-const getSingleFieldConfig = (type: RepoType, fieldName: string): FieldConfig | undefined => {
-  return getProviderConfigs()[type]?.[fieldName];
-};
 
-/**
- * Get field configurations for multiple fields - returns object with xxxConfig keys
- */
-const getMultipleFieldConfigs = (type: RepoType, fieldNames: string[]): Record<string, FieldConfig | undefined> => {
-  const result: Record<string, FieldConfig | undefined> = {};
-
-  for (const fieldName of fieldNames) {
-    const configKey = `${fieldName}Config`;
-    result[configKey] = getSingleFieldConfig(type, fieldName);
-  }
-
-  return result;
-};
-
-/**
- * Get field configuration(s) for a specific provider
- *
- * Usage:
- * - Single field: getProviderFields(type)('token')
- * - Multiple fields: const {tokenConfig, urlConfig} = getProviderFields(type)(['token', 'url'])
- */
-export const getProviderFields = (type: RepoType) => {
-  function getFields(fieldName: string): FieldConfig | undefined;
-  function getFields(fieldNames: string[]): Record<string, FieldConfig | undefined>;
-  function getFields(input: string | string[]): FieldConfig | undefined | Record<string, FieldConfig | undefined> {
-    if (Array.isArray(input)) {
-      return getMultipleFieldConfigs(type, input);
-    } else {
-      return getSingleFieldConfig(type, input);
-    }
-  }
-
-  return getFields;
-};
 
 /**
  * Get git provider field configurations that are guaranteed to exist

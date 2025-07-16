@@ -7,14 +7,13 @@ import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 import { checkImageRenderer, checkPublicAccess } from '../GettingStarted/features';
 import { isGitProvider } from '../utils/repositoryTypes';
 
-import { getProviderFields } from './fields';
+import { getGitProviderFields } from './fields';
 import { WizardFormData } from './types';
 
 export function FinishStep() {
   const { register, watch, setValue } = useFormContext<WizardFormData>();
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
-  const getFieldConfig = getProviderFields(type);
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
@@ -26,8 +25,8 @@ export function FinishStep() {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
 
-  // Get field config for PR workflow
-  const prWorkflowConfig = getFieldConfig('prWorkflow');
+  // Get field configurations for git-based providers
+  const gitFields = isGitBased ? getGitProviderFields(type) : null;
 
   return (
     <Stack direction="column" gap={2}>
@@ -70,13 +69,13 @@ export function FinishStep() {
         />
       </Field>
 
-      {isGitBased && prWorkflowConfig && (
+      {gitFields && (
         <Field noMargin>
           <Checkbox
             {...register('repository.prWorkflow')}
             disabled={readOnly}
-            label={prWorkflowConfig.label}
-            description={prWorkflowConfig.description}
+            label={gitFields.prWorkflowConfig.label}
+            description={gitFields.prWorkflowConfig.description}
           />
         </Field>
       )}
