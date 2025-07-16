@@ -230,7 +230,7 @@ require (
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250716152245-2202c99d7030 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/iam v0.0.0-20250627191313-2f1a6ae1712b // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250627191313-2f1a6ae1712b // @fcjack @matryer
@@ -246,6 +246,8 @@ require (
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 )
+
+require github.com/grafana/grafana/pkg/build v0.0.0-20250716154214-974103c6fa20
 
 require (
 	cel.dev/expr v0.23.1 // indirect
@@ -304,6 +306,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/kms v1.38.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.3 // indirect
