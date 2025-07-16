@@ -74,6 +74,10 @@ export function isV1DashboardCommand(
   return !isDashboardV2Spec(cmd.dashboard);
 }
 
+export function isV1ClassicDashboard(obj: Dashboard | DashboardV2Spec): obj is Dashboard {
+  return !isDashboardV2Spec(obj);
+}
+
 export function isV2DashboardCommand(
   cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
 ): cmd is SaveDashboardCommand<DashboardV2Spec> {
