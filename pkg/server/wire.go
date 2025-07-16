@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -426,7 +425,6 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideKeeperMetadataStorage,
 	secretmetadata.ProvideDecryptStorage,
 	secretdecrypt.ProvideDecryptAuthorizer,
-	secretdecrypt.ProvideDecryptAllowList,
 	secretdecrypt.ProvideDecryptService,
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
