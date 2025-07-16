@@ -96,6 +96,112 @@ If the [Grafana LLM app](https://grafana.com/grafana/plugins/grafana-llm-app/) i
 
 ![<Grafana Advisor - LLM suggestions>](/media/docs/grafana-advisor/llm-suggestions.png)
 
+## How to Create an Alert Based on Advisor Results
+
+This guide will walk you through creating a Grafana alert that monitors Advisor check results and triggers when failures are detected.
+
+## Prerequisites
+
+- Admin access to your Grafana instance
+
+## Step 1: Create a Service Account and Token
+
+1. Navigate to **Administration → Users and access → Service accounts** in your Grafana instance
+2. Click **Add service account**
+3. Provide a name (e.g., "advisor-alert-service-account")
+4. Set the role to **Admin** to ensure proper permissions
+5. Click **Create**
+6. In the service account details, click **Add service account token**
+7. Provide a token name and set an appropriate expiration
+8. Click **Generate token**
+
+> **Important**: Copy the token value immediately and store it securely - you won't be able to see it again
+
+## Step 2: Install Grafana Infinity Datasource (if not already installed)
+
+1. Go to **Administration → Plugins**
+2. Search for "Infinity"
+3. If not installed, click **Install**
+
+## Step 3: Create an Infinity Datasource
+
+1. Navigate to **Connections → Data sources**
+2. Click **Add data source**
+3. Search for and select **Infinity**
+4. Configure the datasource:
+   - **Name**: Give it a descriptive name (e.g., "Advisor API")
+   - **Authentication**: In the **Auth details**, select **Bearer Token**. In the **Auth details** section, paste the service account token from Step 1 and in the **Allowed hosts** section, write your Grafana app URL and click the "Add" button (e.g., `https://your-grafana-host.com`).
+5. Click **Save & test** to verify the connection
+
+## Step 4: Create the Alert Rule
+
+Now you have everything you need to create an alert based on Advisor results.
+
+### 4.1 Basic Alert Setup
+
+1. Navigate to **Alerting → Alert rules**
+2. Click **New alert rule**
+3. Provide a rule name (e.g., "Advisor Failures Alert")
+
+### 4.2 Configure the Query
+
+1. **Data source**: Select the Infinity datasource created in Step 3
+2. Configure the query settings:
+   - **Type**: JSON
+   - **Parser**: JQ
+   - **Source**: URL
+   - **Format**: Table
+   - **Method**: GET
+   - **URL**: Get this from the Advisor interface:
+     - Visit the Advisor in your Grafana instance
+     - Open browser Developer Tools (F12) → Network tab
+     - Look for a request ending with `/checks`
+     - Copy the full URL (format: `https://<your_grafana_host>/apis/advisor.grafana.app/v0alpha1/namespaces/<your_namespace>/checks`)
+
+### 4.3 Configure Parsing Options
+
+**Rows/Root** (paste this JQ expression):
+
+```jq
+.items | map({
+  type: .metadata.labels["advisor.grafana.app/type"],
+  creationTimestamp: .metadata.creationTimestamp,
+  failuresCount: (.status.report.failures | length)
+}) | group_by(.type) | map(sort_by(.creationTimestamp) | last)
+```
+
+This JQ query processes Grafana Advisor check data to get the most recent result for each check type. It transforms each check into a simplified object with type, timestamp, and failure count.
+The result is a clean array showing the current state of each check type (datasource, plugin, config, etc.) with their failure counts, perfect for alerting when any type has failures > 0.
+
+**Columns** (add these three columns):
+
+- **Selector**: `creationTimestamp`, **Format**: Time
+- **Selector**: `failuresCount`, **Format**: Number
+- **Selector**: `type`, **Format**: String
+
+### 4.4 Optional: Filter by Check Type
+
+If you want to alert only for specific check types:
+
+1. In the **Computed columns, Filter, Group by** section
+2. Add a **Filter**: `type == "license"` (replace "license" with your desired check type)
+
+### 4.5 Set Alert Condition
+
+- **Alert condition**: Select "WHEN Last OF QUERY Is above 0"
+- This will trigger when any check type has failures (failuresCount > 0)
+- Click on "Preview alert rule condition" to see the result of the query.
+
+### 4.6 Complete Alert Configuration
+
+Select your preferred evaluation (e.g. every 24 hours) and notification settings.
+
+## Step 5: Save the alert rule
+
+Click **Save** and check the alert is being triggered.
+
+Your alert is now configured to monitor Advisor results and notify you when failures are detected!
+
 ## Address issues
 
 To resolve issues flagged by Grafana Advisor and maintain system reliability, follow the best practices below. Regularly check the Advisor to keep your Grafana instance secure and up to date.
