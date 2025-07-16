@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Add more"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "AI Alert Rule Button failed to load",
+        "improve-annotations-button": "AI Improve Annotations Button failed to load",
+        "improve-labels-button": "AI Improve Labels Button failed to load",
+        "template-button": "AI Template Button failed to load",
+        "triage-button": "AI Triage Button failed to load"
+      }
+    },
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
