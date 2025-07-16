@@ -3,7 +3,7 @@ import { SyntaxNode } from '@lezer/common';
 import { LRParser } from '@lezer/lr';
 
 // Although 0 isn't explicitly provided in the @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
-export const ErrorId = 0;
+const ErrorId = 0;
 
 export const warningTypes: Record<string, string> = {
   SubqueryExpr:

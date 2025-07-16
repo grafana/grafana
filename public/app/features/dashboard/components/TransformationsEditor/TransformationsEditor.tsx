@@ -5,6 +5,7 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   DataFrame,
+  DataQueryRequest,
   DataTransformerConfig,
   PanelData,
   SelectableValue,
@@ -44,6 +45,7 @@ export type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 
 export interface TransformationData {
+  request?: DataQueryRequest;
   series: DataFrame[];
   annotations?: DataFrame[];
 }
