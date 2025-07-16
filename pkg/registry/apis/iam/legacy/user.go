@@ -398,7 +398,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	cmd.Created = now
 	cmd.Updated = now
 	cmd.LastSeenAt = lastSeenAt
-	cmd.Role = "Viewer" // TODO: use auto_assign_org_role ???
+	cmd.Role = "Viewer" // TODO: https://github.com/grafana/identity-access-team/issues/1552
 
 	sql, err := s.sql(ctx)
 	if err != nil {
@@ -546,9 +546,18 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		if err != nil {
 			return fmt.Errorf("failed to check if user exists: %w", err)
 		}
+		defer func() {
+			if rows != nil {
+				_ = rows.Close()
+			}
+		}()
 
 		var userID int64
 		if !rows.Next() {
+			if err := rows.Err(); err != nil {
+				return fmt.Errorf("failed to read user lookup rows: %w", err)
+			}
+			// User not found, nothing to delete
 			return fmt.Errorf("user not found")
 		}
 		if err := rows.Scan(&userID); err != nil {
