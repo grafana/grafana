@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -97,7 +98,7 @@ func TestFrontendService_Routes(t *testing.T) {
 		mux.ServeHTTP(recorder, req)
 
 		assert.Equal(t, 404, recorder.Code)
-		assert.Equal(t, "no assets from frontend-service", recorder.Body.String())
+		assert.Equal(t, "404 page not found", strings.TrimSpace(recorder.Body.String()))
 	})
 
 	t.Run("should return prometheus metrics", func(t *testing.T) {
