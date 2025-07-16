@@ -117,18 +117,18 @@ This guide will walk you through creating a Grafana alert that monitors Advisor 
 
 > **Important**: Copy the token value immediately and store it securely - you won't be able to see it again
 
-## Step 2: Install Grafana Infinity Datasource (if not already installed)
+## Step 2: Install Grafana Infinity plugin (if not already installed)
 
 1. Go to **Administration → Plugins**
 2. Search for "Infinity"
 3. If not installed, click **Install**
 
-## Step 3: Create an Infinity Datasource
+## Step 3: Create an Infinity data source
 
 1. Navigate to **Connections → Data sources**
 2. Click **Add data source**
 3. Search for and select **Infinity**
-4. Configure the datasource:
+4. Configure the data source:
    - **Name**: Give it a descriptive name (e.g., "Advisor API")
    - **Authentication**: In the **Auth details**, select **Bearer Token**. In the **Auth details** section, paste the service account token from Step 1 and in the **Allowed hosts** section, write your Grafana app URL and click the "Add" button (e.g., `https://your-grafana-host.com`).
 5. Click **Save & test** to verify the connection
@@ -145,7 +145,7 @@ Now you have everything you need to create an alert based on Advisor results.
 
 ### 4.2 Configure the Query
 
-1. **Data source**: Select the Infinity datasource created in Step 3
+1. **Data source**: Select the Infinity data source created in Step 3
 2. Configure the query settings:
    - **Type**: JSON
    - **Parser**: JQ
@@ -171,7 +171,7 @@ Now you have everything you need to create an alert based on Advisor results.
 ```
 
 This JQ query processes Grafana Advisor check data to get the most recent result for each check type. It transforms each check into a simplified object with type, timestamp, and failure count.
-The result is a clean array showing the current state of each check type (datasource, plugin, config, etc.) with their failure counts, perfect for alerting when any type has failures > 0.
+The result is a clean array showing the current state of each check type (data source, plugin, configuration, etc.) with their failure counts, perfect for alerting when any type has failures > 0.
 
 **Columns** (add these three columns):
 
@@ -189,7 +189,7 @@ If you want to alert only for specific check types:
 ### 4.5 Set Alert Condition
 
 - **Alert condition**: Select "WHEN Last OF QUERY Is above 0"
-- This will trigger when any check type has failures (failuresCount > 0)
+- This will trigger when any check type has failures.
 - Click on "Preview alert rule condition" to see the result of the query.
 
 ### 4.6 Complete Alert Configuration
