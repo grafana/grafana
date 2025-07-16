@@ -3469,7 +3469,7 @@
       "move-modal-title": "Move",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required.",
-      "selected-mix-resources-modal-text": "These cannot be deleted together. Please review your selection and try again.",
+      "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
     "actions": {

@@ -81,7 +81,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showDeleteModal = () => {
-    if (hasProvisioned && hasNonProvisioned) {
+    if (hasProvisioned && hasNonProvisioned && provisioningEnabled) {
       // Mixed selection
       appEvents.publish(
         new ShowModalReactEvent({

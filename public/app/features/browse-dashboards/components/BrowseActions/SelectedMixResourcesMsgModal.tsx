@@ -15,7 +15,8 @@ export const SelectedMixResourcesMsgModal = ({ onDismiss }: { onDismiss: () => v
       className={styles.modal}
     >
       <Trans i18nKey="browse-dashboards.action.selected-mix-resources-modal-text">
-        These cannot be deleted together. Please review your selection and try again.
+        You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please
+        select only provisioned resources or only non-provisioned resources and try again.
       </Trans>
     </Modal>
   );

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { config, getBackendSrv } from '@grafana/runtime';
-import { ManagerKind } from 'app/features/apiserver/types';
+import { config } from '@grafana/runtime';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
@@ -26,6 +27,17 @@ export function useSelectionProvisioningStatus(
   const [folderCache, setFolderCache] = useState<Record<string, boolean>>({});
   const [dashboardCache, setDashboardCache] = useState<Record<string, boolean>>({});
 
+  // Create folder resource client for k8s API
+  const folderClient = useMemo(
+    () =>
+      new ScopedResourceClient({
+        group: 'folder.grafana.app',
+        version: 'v1beta1',
+        resource: 'folders',
+      }),
+    []
+  );
+
   const findItemInState = useCallback(
     (uid: string) => {
       const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, uid);
@@ -40,7 +52,8 @@ export function useSelectionProvisioningStatus(
         return folderCache[uid];
       }
       try {
-        const { managedBy } = await getBackendSrv().get(`/api/folders/${uid}`);
+        const folder = await folderClient.get(uid);
+        const managedBy = folder.metadata?.annotations?.[AnnoKeyManagerKind];
         const result = managedBy === ManagerKind.Repo;
         setFolderCache((prev) => ({ ...prev, [uid]: result }));
         return result;
@@ -48,7 +61,7 @@ export function useSelectionProvisioningStatus(
         return false;
       }
     },
-    [folderCache]
+    [folderCache, folderClient]
   );
 
   const getDashboardMeta = useCallback(
@@ -114,7 +127,6 @@ export function useSelectionProvisioningStatus(
         ...folders.map((uid) => ({ uid, isFolder: true })),
         ...dashboards.map((uid) => ({ uid, isFolder: false })),
       ];
-
       for (const { uid, isFolder } of allItems) {
         const isProvisioned = await checkItemProvisioning(uid, isFolder);
         isProvisioned ? (hasProvisioned = true) : (hasNonProvisioned = true);
