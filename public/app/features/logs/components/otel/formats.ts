@@ -8,8 +8,14 @@ import { LogListModel } from '../panel/processing';
  */
 const OTEL_PROBE_FIELD = 'severity_number';
 export function identifyOTelLanguages(logs: LogListModel[] | LogRowModel[]): string[] {
-  const languages = logs.map((log) => identifyOTelLanguage(log)).filter((language) => language !== undefined);
-  return [...new Set(languages)];
+  const languagesSet = new Set<string>();
+  logs.forEach((log) => {
+    const lang = identifyOTelLanguage(log);
+    if (lang !== undefined) {
+      languagesSet.add(lang);
+    }
+  });
+  return [...languagesSet];
 }
 
 export function identifyOTelLanguage(log: LogListModel | LogRowModel): string | undefined {
