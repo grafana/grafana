@@ -23,6 +23,7 @@ shorturl: {
 			schema: {
 				spec: {
 					path: string
+					uid: string
 					lastSeenAt: int64
 					shortURL: string
 				}

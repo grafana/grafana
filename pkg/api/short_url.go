@@ -1,11 +1,14 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v0alpha1"
@@ -42,6 +45,7 @@ type shortURLK8sHandler struct {
 	namespacer           request.NamespaceMapper
 	gvr                  schema.GroupVersionResource
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	cfg                  *setting.Cfg
 }
 
 func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
@@ -54,6 +58,7 @@ func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
 		gvr:                  gvr,
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
+		cfg:                  hs.Cfg,
 	}
 }
 
@@ -65,16 +70,50 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 
 	shortURLUID := web.Params(c.Req)[":uid"]
 	if !util.IsValidShortUID(shortURLUID) {
+		c.Logger.Warn("Invalid short URL UID format", "uid", shortURLUID)
 		return
 	}
 
+	c.Logger.Debug("Fetching short URL", "uid", shortURLUID)
 	out, err := client.Get(c.Req.Context(), shortURLUID, v1.GetOptions{})
+	// If we didn't get the URL for whatever reason, we redirect to the
+	// main page, otherwise we get into an endless loops of redirects, as
+	// we would try to redirect again.
 	if err != nil {
-		sk8s.writeError(c, err)
+		c.Logger.Error("Failed to get short URL", "uid", shortURLUID, "error", err)
+		c.Redirect(sk8s.cfg.AppURL, 307)
 		return
 	}
 
-	c.JSON(http.StatusOK, shorturl.UnstructuredToLegacyShortURLDTO(*out))
+	// Update lastSeenAt with current Unix timestamp
+	now := time.Now().Unix()
+	patchData := []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/spec/lastSeenAt",
+			"value": now,
+		},
+	}
+	patchBytes, err := json.Marshal(patchData)
+	if err != nil {
+		// Log error but continue with redirect to avoid endless loops
+		c.Logger.Error("Failed to marshal patch data for lastSeenAt update", "uid", shortURLUID, "error", err)
+	} else {
+		// Attempt to patch the lastSeenAt field
+		_, err = client.Patch(c.Req.Context(), shortURLUID, types.JSONPatchType, patchBytes, v1.PatchOptions{})
+		if err != nil {
+			// Log error but continue with redirect to avoid endless loops
+			c.Logger.Error("Failed to update lastSeenAt", "uid", shortURLUID, "error", err)
+		} else {
+			c.Logger.Debug("Successfully updated lastSeenAt", "uid", shortURLUID, "timestamp", now)
+		}
+	}
+
+	spec := out.Object["spec"].(map[string]any)
+	path := spec["path"].(string)
+
+	c.Logger.Debug("Redirecting short URL", "uid", shortURLUID, "path", path)
+	c.Redirect(setting.ToAbsUrl(path), 302)
 }
 
 func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel.ReqContext) {
@@ -85,25 +124,22 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 
 	cmd := dtos.CreateShortURLCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.Logger.Error("Failed to bind request data", "error", err)
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
 
+	c.Logger.Debug("Creating short URL", "path", cmd.Path)
 	obj := shorturl.LegacyCreateCommandToUnstructured(cmd)
-	generateName, err := util.GetRandomString(8)
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "failed to create generated name", err)
-		return
-	}
-
-	obj.SetGenerateName(generateName)
 
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {
+		c.Logger.Error("Failed to create short URL in Kubernetes", "path", cmd.Path, "error", err)
 		sk8s.writeError(c, err)
 		return
 	}
 
+	c.Logger.Info("Successfully created short URL", "path", cmd.Path, "uid", out.GetName())
 	c.JSON(http.StatusOK, shorturl.UnstructuredToLegacyShortURLDTO(*out))
 }
 

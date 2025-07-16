@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/shorturls"
-	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -70,7 +69,6 @@ func LegacyCreateCommandToUnstructured(cmd dtos.CreateShortURLCmd) unstructured.
 			},
 		},
 	}
-	obj.SetName(util.GenerateShortUID())
 	return obj
 }
 

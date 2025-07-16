@@ -6,6 +6,7 @@ toolchain go1.24.4
 
 require (
 	github.com/grafana/grafana-app-sdk v0.39.2
+	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 	k8s.io/apimachinery v0.33.2
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff

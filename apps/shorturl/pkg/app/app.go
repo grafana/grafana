@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	shorturlv0alpha1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v0alpha1"
+	"github.com/teris-io/shortid"
 )
 
 // Local error definitions to avoid importing the main shorturls package
@@ -67,13 +68,23 @@ func New(cfg app.Config) (app.App, error) {
 							return nil, fmt.Errorf("expected ShortURL object, got %T", req.Object)
 						}
 
-						// GenerateName is required for object creation
-						if shortURL.ObjectMeta.GenerateName == "" {
-							shortURL.ObjectMeta.GenerateName = "shorturl-"
+						if shortURL.ObjectMeta.Name == "" {
+							uid, err := shortid.Generate()
+							if err != nil {
+								return nil, err
+							}
+							shortURL.ObjectMeta.Name = uid
 						}
 
-						// Set calculated fields in spec
-						shortURL.Spec.ShortURL = fmt.Sprintf("%s/goto/%s?orgId=%s", strings.TrimSuffix(shortURLConfig.AppURL, "/"), shortURL.Name, shortURL.Namespace)
+						// Use the same UID for both the object name and spec.uid
+						shortURL.Spec.Uid = shortURL.ObjectMeta.Name
+
+						// Set calculated shortURL field
+						shortURL.Spec.ShortURL = fmt.Sprintf("%s/goto/%s?orgId=%s",
+							strings.TrimSuffix(shortURLConfig.AppURL, "/"),
+							shortURL.Spec.Uid,
+							shortURL.Namespace)
+
 						return &app.MutatingResponse{
 							UpdatedObject: shortURL,
 						}, nil
