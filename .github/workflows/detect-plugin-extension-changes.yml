@@ -126,7 +126,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":broken_heart: *Plugin Extensions:* possible changes to extension points in core Grafana."
+                    "text": "*Plugin Extensions:* possible changes to extension points in core Grafana."
                   }
                 },
                 {
