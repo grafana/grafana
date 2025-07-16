@@ -533,6 +533,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Nil(t, res1.Error)
 		require.Len(t, res1.Items, 3)
 		require.NotEmpty(t, res1.NextPageToken)
+		require.Contains(t, string(res1.Items[0].Value), "item1 ADDED")
+		require.Contains(t, string(res1.Items[1].Value), "item4 ADDED")
+		require.Contains(t, string(res1.Items[2].Value), "item5 ADDED")
 
 		// Request next page with a large limit
 		req.Limit = 10 // Larger than the 2 remaining items
