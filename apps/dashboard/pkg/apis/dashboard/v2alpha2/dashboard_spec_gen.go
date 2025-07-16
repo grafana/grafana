@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v2alpha1
+package v2alpha2
 
 import (
 	json "encoding/json"
@@ -331,14 +331,14 @@ type DashboardFieldConfigSource struct {
 	// Defaults are the options applied to all fields.
 	Defaults DashboardFieldConfig `json:"defaults"`
 	// Overrides are the options applied to specific fields overriding the defaults.
-	Overrides []DashboardV2alpha1FieldConfigSourceOverrides `json:"overrides"`
+	Overrides []DashboardV2alpha2FieldConfigSourceOverrides `json:"overrides"`
 }
 
 // NewDashboardFieldConfigSource creates a new DashboardFieldConfigSource object.
 func NewDashboardFieldConfigSource() *DashboardFieldConfigSource {
 	return &DashboardFieldConfigSource{
 		Defaults:  *NewDashboardFieldConfig(),
-		Overrides: []DashboardV2alpha1FieldConfigSourceOverrides{},
+		Overrides: []DashboardV2alpha2FieldConfigSourceOverrides{},
 	}
 }
 
@@ -468,14 +468,14 @@ func NewDashboardValueMappingResult() *DashboardValueMappingResult {
 type DashboardRangeMap struct {
 	Type DashboardMappingType `json:"type"`
 	// Range to match against and the result to apply when the value is within the range
-	Options DashboardV2alpha1RangeMapOptions `json:"options"`
+	Options DashboardV2alpha2RangeMapOptions `json:"options"`
 }
 
 // NewDashboardRangeMap creates a new DashboardRangeMap object.
 func NewDashboardRangeMap() *DashboardRangeMap {
 	return &DashboardRangeMap{
 		Type:    DashboardMappingTypeRange,
-		Options: *NewDashboardV2alpha1RangeMapOptions(),
+		Options: *NewDashboardV2alpha2RangeMapOptions(),
 	}
 }
 
@@ -485,14 +485,14 @@ func NewDashboardRangeMap() *DashboardRangeMap {
 type DashboardRegexMap struct {
 	Type DashboardMappingType `json:"type"`
 	// Regular expression to match against and the result to apply when the value matches the regex
-	Options DashboardV2alpha1RegexMapOptions `json:"options"`
+	Options DashboardV2alpha2RegexMapOptions `json:"options"`
 }
 
 // NewDashboardRegexMap creates a new DashboardRegexMap object.
 func NewDashboardRegexMap() *DashboardRegexMap {
 	return &DashboardRegexMap{
 		Type:    DashboardMappingTypeRegex,
-		Options: *NewDashboardV2alpha1RegexMapOptions(),
+		Options: *NewDashboardV2alpha2RegexMapOptions(),
 	}
 }
 
@@ -502,14 +502,14 @@ func NewDashboardRegexMap() *DashboardRegexMap {
 // +k8s:openapi-gen=true
 type DashboardSpecialValueMap struct {
 	Type    DashboardMappingType                    `json:"type"`
-	Options DashboardV2alpha1SpecialValueMapOptions `json:"options"`
+	Options DashboardV2alpha2SpecialValueMapOptions `json:"options"`
 }
 
 // NewDashboardSpecialValueMap creates a new DashboardSpecialValueMap object.
 func NewDashboardSpecialValueMap() *DashboardSpecialValueMap {
 	return &DashboardSpecialValueMap{
 		Type:    DashboardMappingTypeSpecial,
-		Options: *NewDashboardV2alpha1SpecialValueMapOptions(),
+		Options: *NewDashboardV2alpha2SpecialValueMapOptions(),
 	}
 }
 
@@ -1771,21 +1771,21 @@ func NewDashboardSpec() *DashboardSpec {
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha1FieldConfigSourceOverrides struct {
+type DashboardV2alpha2FieldConfigSourceOverrides struct {
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
 }
 
-// NewDashboardV2alpha1FieldConfigSourceOverrides creates a new DashboardV2alpha1FieldConfigSourceOverrides object.
-func NewDashboardV2alpha1FieldConfigSourceOverrides() *DashboardV2alpha1FieldConfigSourceOverrides {
-	return &DashboardV2alpha1FieldConfigSourceOverrides{
+// NewDashboardV2alpha2FieldConfigSourceOverrides creates a new DashboardV2alpha2FieldConfigSourceOverrides object.
+func NewDashboardV2alpha2FieldConfigSourceOverrides() *DashboardV2alpha2FieldConfigSourceOverrides {
+	return &DashboardV2alpha2FieldConfigSourceOverrides{
 		Matcher:    *NewDashboardMatcherConfig(),
 		Properties: []DashboardDynamicConfigValue{},
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha1RangeMapOptions struct {
+type DashboardV2alpha2RangeMapOptions struct {
 	// Min value of the range. It can be null which means -Infinity
 	From *float64 `json:"from"`
 	// Max value of the range. It can be null which means +Infinity
@@ -1794,39 +1794,39 @@ type DashboardV2alpha1RangeMapOptions struct {
 	Result DashboardValueMappingResult `json:"result"`
 }
 
-// NewDashboardV2alpha1RangeMapOptions creates a new DashboardV2alpha1RangeMapOptions object.
-func NewDashboardV2alpha1RangeMapOptions() *DashboardV2alpha1RangeMapOptions {
-	return &DashboardV2alpha1RangeMapOptions{
+// NewDashboardV2alpha2RangeMapOptions creates a new DashboardV2alpha2RangeMapOptions object.
+func NewDashboardV2alpha2RangeMapOptions() *DashboardV2alpha2RangeMapOptions {
+	return &DashboardV2alpha2RangeMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha1RegexMapOptions struct {
+type DashboardV2alpha2RegexMapOptions struct {
 	// Regular expression to match against
 	Pattern string `json:"pattern"`
 	// Config to apply when the value matches the regex
 	Result DashboardValueMappingResult `json:"result"`
 }
 
-// NewDashboardV2alpha1RegexMapOptions creates a new DashboardV2alpha1RegexMapOptions object.
-func NewDashboardV2alpha1RegexMapOptions() *DashboardV2alpha1RegexMapOptions {
-	return &DashboardV2alpha1RegexMapOptions{
+// NewDashboardV2alpha2RegexMapOptions creates a new DashboardV2alpha2RegexMapOptions object.
+func NewDashboardV2alpha2RegexMapOptions() *DashboardV2alpha2RegexMapOptions {
+	return &DashboardV2alpha2RegexMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha1SpecialValueMapOptions struct {
+type DashboardV2alpha2SpecialValueMapOptions struct {
 	// Special value to match against
 	Match DashboardSpecialValueMatch `json:"match"`
 	// Config to apply when the value matches the special value
 	Result DashboardValueMappingResult `json:"result"`
 }
 
-// NewDashboardV2alpha1SpecialValueMapOptions creates a new DashboardV2alpha1SpecialValueMapOptions object.
-func NewDashboardV2alpha1SpecialValueMapOptions() *DashboardV2alpha1SpecialValueMapOptions {
-	return &DashboardV2alpha1SpecialValueMapOptions{
+// NewDashboardV2alpha2SpecialValueMapOptions creates a new DashboardV2alpha2SpecialValueMapOptions object.
+func NewDashboardV2alpha2SpecialValueMapOptions() *DashboardV2alpha2SpecialValueMapOptions {
+	return &DashboardV2alpha2SpecialValueMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
 }
