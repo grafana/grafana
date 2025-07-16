@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Add more"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "AI Alert Rule Button failed to load",
+        "improve-annotations-button": "AI Improve Annotations Button failed to load",
+        "improve-labels-button": "AI Improve Labels Button failed to load",
+        "template-button": "AI Template Button failed to load",
+        "triage-button": "AI Triage Button failed to load"
+      }
+    },
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
@@ -3461,6 +3470,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
+      "bulk-delete-provisioned-resources-not-implemented": "Bulk delete for provisioned resources is not implemented yet.",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3479,7 +3490,9 @@
       "move-modal-text": "This action will move the following content:",
       "move-modal-title": "Move",
       "moving": "Moving...",
-      "new-folder-name-required-phrase": "Folder name is required."
+      "new-folder-name-required-phrase": "Folder name is required.",
+      "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
+      "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
@@ -4616,6 +4629,14 @@
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
+    },
+    "export": {
+      "button": {
+        "label": "Export dashboard"
+      },
+      "menu": {
+        "label": "Export dashboard menu"
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -8641,9 +8662,7 @@
     "share-panel": {
       "config-description": "Create a personalized, direct link to share your panel within your organization, with the following customization settings:",
       "download-image": "Download image",
-      "render-image": "Generate image",
-      "render-image-error": "Failed to render panel image",
-      "render-image-error-description": "An error occurred when generating the image"
+      "render-image": "Generate image"
     }
   },
   "live": {
@@ -8811,6 +8830,8 @@
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
+      "move-displayed-field-down": "Move down",
+      "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
@@ -11404,6 +11425,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "Export as image",
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
@@ -11439,6 +11461,19 @@
       "view-button": "View JSON",
       "view-button-yaml": "View YAML"
     },
+    "image": {
+      "actions": "Image export actions",
+      "cancel-button": "Cancel",
+      "download-button": "Download image",
+      "error-title": "Failed to generate image",
+      "generate-button": "Generate image",
+      "generating": "Generating image...",
+      "info-text": "Save this dashboard as an image",
+      "preview": "Preview",
+      "preview-aria": "Generated image preview",
+      "preview-region": "Image preview",
+      "title": "Export as image"
+    },
     "library": {
       "info": "Create library panel."
     },
@@ -11447,7 +11482,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render an image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
@@ -11515,6 +11550,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "Save the dashboard to enable image generation",
+    "download-disabled-help": "Generate an image first to enable download",
+    "error-title": "Failed to generate image",
+    "form": {
+      "label": "Panel image settings"
+    },
     "preview": {
       "title": "Panel preview"
     },

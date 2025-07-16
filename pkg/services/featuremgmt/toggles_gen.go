@@ -915,6 +915,10 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
+	// FlagSharingDashboardImage
+	// Enables image sharing functionality for dashboards
+	FlagSharingDashboardImage = "sharingDashboardImage"
+
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
@@ -934,4 +938,12 @@ const (
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
+
+	// FlagEnablePluginImporter
+	// Set this to true to use the new PluginImporter functionality
+	FlagEnablePluginImporter = "enablePluginImporter"
+
+	// FlagOtelLogsFormatting
+	// Applies OTel formatting templates to displayed logs
+	FlagOtelLogsFormatting = "otelLogsFormatting"
 )
