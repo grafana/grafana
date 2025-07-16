@@ -176,17 +176,10 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 	if err != nil {
 		return err
 	}
-	if os.Geteuid() == 0 {
-	pluginPath := filepath.Join(o.pluginDir, pluginID)
-	parentInfo, err := os.Stat(o.pluginDir)
-	if err == nil {
-		if stat, ok := parentInfo.Sys().(*syscall.Stat_t); ok {
-			if chownErr := os.Chown(pluginPath, int(stat.Uid), int(stat.Gid)); chownErr != nil {
-				services.Logger.Warnf("Failed to chown plugin directory %s: %v", pluginPath, chownErr)
-			}
-		}
-	}
+if os.Geteuid() == 0 {
+  chownPluginDirRecursively(o.pluginDir, pluginID)
 }
+
 
 	for _, dep := range extractedArchive.Dependencies {
 		services.Logger.Infof("Fetching %s dependency %s...", pluginID, dep.ID)
