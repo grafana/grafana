@@ -150,7 +150,8 @@ func TestService_resolveScopeMap(t *testing.T) {
 					s.teamIDCache.Set(context.Background(), teamIDsCacheKey(ns), cache)
 				}
 			}
-			got := s.resolveScopeMap(context.Background(), tt.ns, tt.scopeMap)
+			got, err := s.resolveScopeMap(context.Background(), tt.ns, tt.scopeMap)
+			require.NoError(t, err)
 
 			require.Len(t, got, len(tt.want))
 			for scope := range tt.want {

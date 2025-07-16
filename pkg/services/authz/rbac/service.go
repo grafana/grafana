@@ -437,7 +437,10 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		}
 		scopeMap := getScopeMap(permissions)
 
-		scopeMap = s.resolveScopeMap(ctx, ns, scopeMap)
+		scopeMap, err = s.resolveScopeMap(ctx, ns, scopeMap)
+		if err != nil {
+			return nil, fmt.Errorf("could not resolve scope map: %w", err)
+		}
 
 		s.permCache.Set(ctx, userPermKey, scopeMap)
 		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
