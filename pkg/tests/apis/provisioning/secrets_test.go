@@ -3,12 +3,15 @@ package provisioning
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -80,10 +83,11 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 			name := mustNestedString(input.Object, "metadata", "name")
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
+			repo := unstructuredToRepository(t, output)
 
 			// Move encrypted token mutation
 			for _, expectedField := range test.expectedFields {
-				value, decrypted := encryptedField(t, secretsService, nil, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
+				value, decrypted := encryptedField(t, secretsService, repo, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
 				require.False(t, strings.HasPrefix(value, name), "value should not be prefixed with the repository name")
 				require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 			}
@@ -175,17 +179,17 @@ func TestIntegrationProvisioning_Secrets_LegacyUpdate(t *testing.T) {
 			// Fetch current resourceVersion
 			current, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to get current resource for update")
-			updatedInput.Object["metadata"].(map[string]any)["resourceVersion"] =
-				current.Object["metadata"].(map[string]any)["resourceVersion"]
+			updatedInput.Object["metadata"].(map[string]any)["resourceVersion"] = current.Object["metadata"].(map[string]any)["resourceVersion"]
 
 			_, err = helper.Repositories.Resource.Update(ctx, updatedInput, updateOptions)
 			require.NoError(t, err, "failed to update resource")
 
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource after update")
+			repo := unstructuredToRepository(t, output)
 
 			for _, expectedField := range test.expectedFields {
-				value, decrypted := encryptedField(t, secretsService, nil, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
+				value, decrypted := encryptedField(t, secretsService, repo, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
 				require.False(t, strings.HasPrefix(value, name), "value should not be prefixed with the repository name")
 				require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 			}
@@ -402,6 +406,86 @@ func TestIntegrationProvisioning_Secrets_Update(t *testing.T) {
 				if expectedField.ExpectedDecryptedValue != "" {
 					require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 				}
+			}
+		})
+	}
+}
+
+func TestIntegrationProvisioning_Secrets_Removal(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := runGrafana(t, useAppPlatformSecrets)
+	secretsService := helper.GetEnv().RepositorySecrets
+	createOptions := metav1.CreateOptions{}
+
+	type expectedField struct {
+		Path []string
+	}
+
+	tests := []struct {
+		name           string
+		inputFile      string
+		values         map[string]interface{}
+		expectedFields []expectedField
+		updatedFields  []expectedField
+	}{
+		{
+			name:      "remove encrypted git token",
+			inputFile: "testdata/git-readonly.json.tmpl",
+			values: map[string]interface{}{
+				"Token": "initial-token",
+			},
+			expectedFields: []expectedField{
+				{
+					Path: []string{"spec", "git", "encryptedToken"},
+				},
+			},
+		},
+		{
+			name:      "remove encrypted github token",
+			inputFile: "testdata/github-readonly.json.tmpl",
+			values: map[string]interface{}{
+				"Token": "initial-token",
+			},
+			expectedFields: []expectedField{
+				{
+					Path: []string{"spec", "github", "encryptedToken"},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Create initial resource
+			input := helper.RenderObject(t, test.inputFile, test.values)
+			_, err := helper.Repositories.Resource.Create(ctx, input, createOptions)
+			require.NoError(t, err, "failed to create resource")
+
+			name := mustNestedString(input.Object, "metadata", "name")
+			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err, "failed to read back resource")
+
+			repo := unstructuredToRepository(t, output)
+
+			// Set the same name and resourceVersion for update
+			err = helper.Repositories.Resource.Delete(ctx, name, metav1.DeleteOptions{})
+			require.NoError(t, err, "failed to delete resource")
+
+			for _, expectedField := range test.expectedFields {
+				secretName, found, err := base64DecodedField(output.Object, expectedField.Path)
+				require.NoError(t, err, "failed to decode base64 value")
+				require.True(t, found, "secretName should be found")
+				require.NotEmpty(t, secretName)
+
+				var lastDecrypted []byte
+				require.Eventually(t, func() bool {
+					lastDecrypted, err = secretsService.Decrypt(ctx, repo, secretName)
+					return err != nil && errors.Is(err, contracts.ErrDecryptNotFound)
+				}, 1000*time.Second, 500*time.Millisecond, "expected ErrDecryptNotFound error, got %v", lastDecrypted)
 			}
 		})
 	}
