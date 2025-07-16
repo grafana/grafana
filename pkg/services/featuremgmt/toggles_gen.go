@@ -463,10 +463,6 @@ const (
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
 
-	// FlagSsoSettingsSAML
-	// Use the new SSO Settings API to configure the SAML connector
-	FlagSsoSettingsSAML = "ssoSettingsSAML"
-
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
@@ -682,6 +678,22 @@ const (
 	// FlagAzureMonitorEnableUserAuth
 	// Enables user auth for Azure Monitor datasource only
 	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
+
+	// FlagAlertingAIGenAlertRules
+	// Enable AI-generated alert rules.
+	FlagAlertingAIGenAlertRules = "alertingAIGenAlertRules"
+
+	// FlagAlertingAIImproveAlertRules
+	// Enable AI-improve alert rules labels and annotations.
+	FlagAlertingAIImproveAlertRules = "alertingAIImproveAlertRules"
+
+	// FlagAlertingAIGenTemplates
+	// Enable AI-generated alerting templates.
+	FlagAlertingAIGenTemplates = "alertingAIGenTemplates"
+
+	// FlagAlertingAIAnalyzeCentralStateHistory
+	// Enable AI-analyze central state history.
+	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
@@ -903,6 +915,10 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
+	// FlagSharingDashboardImage
+	// Enables image sharing functionality for dashboards
+	FlagSharingDashboardImage = "sharingDashboardImage"
+
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
@@ -922,4 +938,12 @@ const (
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
+
+	// FlagEnablePluginImporter
+	// Set this to true to use the new PluginImporter functionality
+	FlagEnablePluginImporter = "enablePluginImporter"
+
+	// FlagOtelLogsFormatting
+	// Applies OTel formatting templates to displayed logs
+	FlagOtelLogsFormatting = "otelLogsFormatting"
 )
