@@ -25,25 +25,29 @@ export function FinishStep() {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
 
-  // Get field config for interval seconds
-  const intervalConfig = getFieldConfig('sync.intervalSeconds');
+  // Get field config for PR workflow
+  const prWorkflowConfig = getFieldConfig('prWorkflow');
 
   return (
     <Stack direction="column">
-      {isGitBased && intervalConfig && (
+      {isGitBased && (
         <Field
           noMargin
-          label={intervalConfig.label}
-          description={intervalConfig.description}
-          required={intervalConfig.required}
+          label={t('provisioning.finish-step.label-sync-interval', 'Sync Interval (seconds)')}
+          description={t(
+            'provisioning.finish-step.description-sync-interval',
+            'How often to sync changes from the repository'
+          )}
+          required
         >
           <Input
             {...register('repository.sync.intervalSeconds', {
               valueAsNumber: true,
-              required: intervalConfig.validation?.required,
+              required: t('provisioning.finish-step.error-sync-interval-required', 'Sync interval is required'),
             })}
             type="number"
-            placeholder={intervalConfig.placeholder}
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            placeholder="60"
           />
         </Field>
       )}
@@ -65,20 +69,18 @@ export function FinishStep() {
         />
       </Field>
 
-      {isGitBased && !readOnly && (
+      {isGitBased && prWorkflowConfig && (
         <Field noMargin>
           <Checkbox
             {...register('repository.prWorkflow')}
-            label={t('provisioning.finish-step.label-enable-pull-requests', 'Enable pull request option when saving')}
-            description={t(
-              'provisioning.finish-step.description-enable-pull-requests',
-              'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
-            )}
+            disabled={readOnly}
+            label={prWorkflowConfig.label}
+            description={prWorkflowConfig.description}
           />
         </Field>
       )}
 
-      {isGithub && !readOnly && (
+      {isGithub && (
         <Field noMargin>
           <Checkbox
             {...register('repository.generateDashboardPreviews')}

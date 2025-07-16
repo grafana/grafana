@@ -54,6 +54,10 @@ const PROVIDER_CONFIGS: Record<RepoType, Record<string, FieldConfig>> = {
       placeholder: 'grafana/',
       required: false,
     },
+    prWorkflow: {
+      label: 'Enable pull request option when saving',
+      description: 'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.',
+    },
   },
 
   gitlab: {
@@ -93,6 +97,10 @@ const PROVIDER_CONFIGS: Record<RepoType, Record<string, FieldConfig>> = {
       description: 'Optional subdirectory path within the repository',
       placeholder: 'grafana/',
       required: false,
+    },
+    prWorkflow: {
+      label: 'Enable merge request option when saving',
+      description: 'Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.',
     },
   },
 
@@ -134,6 +142,10 @@ const PROVIDER_CONFIGS: Record<RepoType, Record<string, FieldConfig>> = {
       placeholder: 'grafana/',
       required: false,
     },
+    prWorkflow: {
+      label: 'Enable pull request option when saving',
+      description: 'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.',
+    },
   },
 
   git: {
@@ -173,6 +185,10 @@ const PROVIDER_CONFIGS: Record<RepoType, Record<string, FieldConfig>> = {
       description: 'Optional subdirectory path within the repository',
       placeholder: 'grafana/',
       required: false,
+    },
+    prWorkflow: {
+      label: 'Enable pull request option when saving',
+      description: 'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.',
     },
   },
 
