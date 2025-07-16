@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	provisioning2 "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
@@ -779,7 +780,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
 	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueService, decryptService)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, secureValueService, decryptService, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v2 := apiregistry.MergeProvisioningExtras(webhookExtraBuilder)
+	v2 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
 	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v2)
 	if err != nil {
 		return nil, err
@@ -1328,7 +1329,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
 	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueService, decryptService)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, secureValueService, decryptService, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v2 := apiregistry.MergeProvisioningExtras(webhookExtraBuilder)
+	v2 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
 	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v2)
 	if err != nil {
 		return nil, err
