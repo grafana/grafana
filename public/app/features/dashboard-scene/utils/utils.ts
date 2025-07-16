@@ -33,6 +33,11 @@ import { containsCloneKey, getLastKeyFromClone, getOriginalKey, isInCloneChain }
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
 
+const V1_PANEL_PROPERTIES = {
+  LIBRARY_PANEL: 'libraryPanel',
+  COLLAPSED: 'collapsed',
+} as const;
+
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
@@ -471,33 +476,41 @@ export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrc
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
 
+// @returns true if the panel is a valid library panel reference
+// a valid library panel reference is a panel with this
+// property: `libraryPanel: {name: string, uid: string}`
+
+export function isValidLibraryPanelRef(panel: Panel): boolean {
+  return (
+    (V1_PANEL_PROPERTIES.LIBRARY_PANEL in panel &&
+      panel.libraryPanel &&
+      Boolean(panel.libraryPanel?.uid && panel.libraryPanel?.name)) ||
+    false
+  );
+}
+
 /**
  * Checks if a V1 dashboard contains library panels
  * @returns true if the dashboard contains library panels
  */
 export function hasLibraryPanelsInV1Dashboard(dashboard: Dashboard | undefined): boolean {
-  if (!dashboard || !dashboard.panels) {
+  if (!dashboard?.panels) {
     return false;
   }
 
   return dashboard.panels.some((panel: Panel | RowPanel) => {
-    if ('libraryPanel' in panel && panel.libraryPanel && 'uid' in panel.libraryPanel) {
-      return Boolean(panel.libraryPanel.uid);
+    if (isValidLibraryPanelRef(panel)) {
+      return true;
+    }
+    // Check if this is a collapsed row containing library panels
+    const isCollapsedRow =
+      V1_PANEL_PROPERTIES.COLLAPSED in panel && panel.collapsed && 'panels' in panel && panel.panels;
+
+    if (!isCollapsedRow) {
+      return false;
     }
 
-    // Check collapsed row panels
-    if ('collapsed' in panel && panel.collapsed && 'panels' in panel && panel.panels) {
-      return panel.panels.some((rowPanel: Panel) => {
-        return (
-          'libraryPanel' in rowPanel &&
-          rowPanel.libraryPanel &&
-          'uid' in rowPanel.libraryPanel &&
-          Boolean(rowPanel.libraryPanel.uid)
-        );
-      });
-    }
-
-    return false;
+    return panel.panels.some(isValidLibraryPanelRef);
   });
 }
 
