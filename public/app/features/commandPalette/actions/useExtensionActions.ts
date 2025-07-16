@@ -13,7 +13,7 @@ export default function useExtensionActions(): CommandPaletteAction[] {
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.CommandPalette,
     context,
-    limitPerPlugin: 3,
+    limitPerPlugin: 40,
   });
 
   return useMemo(() => {

@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -64,12 +63,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	database := database.ProvideDatabase(testDB, tracer)
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
-
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, features, nil)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, nil)
 	require.NoError(t, err)
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, features, nil)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, nil)
 	require.NoError(t, err)
 
 	// Initialize access client + access control
@@ -86,7 +83,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
@@ -107,7 +104,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	// Initialize encrypted value storage with a fake db
-	encryptedValueStorage, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
+	encryptedValueStorage, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
 	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil)
@@ -122,7 +119,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
-	decryptStorage, err := metadata.ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
+	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
