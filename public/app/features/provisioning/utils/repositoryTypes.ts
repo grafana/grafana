@@ -35,6 +35,12 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.bitbucket-description', 'Connect to Bitbucket repositories'),
     icon: 'cloud' as const,
   },
+  {
+    type: 'local',
+    label: t('provisioning.repository-types.local', 'Local'),
+    description: t('provisioning.repository-types.local-description', 'Configure file provisioning'),
+    icon: 'file-alt' as const,
+  },
 ];
 
 export const getRepositoryTypeConfig = (type: RepoType): RepositoryTypeConfig | undefined => {

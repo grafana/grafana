@@ -10785,8 +10785,10 @@
       "title-queued-for-deletion": "Queued for deletion"
     },
     "repository-type-cards": {
+      "choose-provider": "Choose a provider:",
       "configure-file": "Configure file provisioning",
-      "configure-with-provider": "Configure with {{ provider }}"
+      "configure-with-provider": "Configure with {{ provider }}",
+      "provider-not-listed": "If your provider is not listed:"
     },
     "repository-types": {
       "bitbucket": "Bitbucket",
@@ -10796,6 +10798,8 @@
       "github-description": "Connect to GitHub repositories",
       "gitlab": "GitLab",
       "gitlab-description": "Connect to GitLab repositories",
+      "local": "Local",
+      "local-description": "Configure file provisioning",
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository"
     },
