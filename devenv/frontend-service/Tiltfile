@@ -66,3 +66,15 @@ docker_build('grafana-backend', '../..',
     restart_container()
   ]
 )
+
+
+docker_build('grafana-proxy', '.',
+  dockerfile='proxy.dockerfile',
+  only=[
+    "./nginx.conf",
+  ],
+  live_update = [
+    sync('./nginx.conf', '/etc/nginx/conf.d/default.conf'),
+    restart_container()
+  ]
+)

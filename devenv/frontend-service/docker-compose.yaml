@@ -2,11 +2,13 @@ name: grafana-fs-dev
 
 services:
   proxy:
-    image: nginx:alpine
+    image: grafana-proxy
+    build:
+      context: .
+      dockerfile: proxy.dockerfile
     volumes:
       - ../../public/build:/cdn/public/build
       - ../../public/fonts:/cdn/public/fonts
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
       - '3000:80' # Gateway
       - '3010:81' # CDN
