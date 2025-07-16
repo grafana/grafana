@@ -113,8 +113,10 @@ jobs:
       - name: Send Slack Message via Payload
         id: slack
         if: steps.check-changes.outputs.plugin_extension_changes == 'true'
-        uses: grafana/shared-workflows/actions/send-slack-message@7b628e7352c2dea057c565cc4fcd5564d5f396c0 #v1.0.0
+        uses: grafana/shared-workflows/actions/send-slack-message@0941e3408fa4789fec9062c44a2a9e1832146ba6 #v2.0.1
         with:
+          method: chat.postMessage
+          payload-templated: true
           payload: |
             {
               "channel": "C031SLFH6G0",
