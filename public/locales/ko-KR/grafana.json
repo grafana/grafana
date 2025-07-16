@@ -3215,6 +3215,9 @@
       "define-allowed-teams-ids-label": "허용된 팀 ID 정의",
       "display-name-description": "로그인 페이지에 '다음으로 로그인'으로 표시됩니다. 두 개 이상의 ID 제공자 또는 SSO 프로토콜을 사용하는 경우 유용합니다.",
       "display-name-label": "표시 이름",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "OAuth2 ID 토큰의 속성 맵 내에서 사용자 이메일 조회에 사용할 키의 이름입니다.",
       "email-attribute-name-label": "이메일 속성 이름",
       "email-attribute-path-description": "사용자 정보에서 사용자 이메일 조회에 사용할 JMESPath 표현식입니다.",
@@ -4595,6 +4598,14 @@
     },
     "errors": {
       "failed-to-load": "대시보드 로딩에 실패했습니다."
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -8612,9 +8623,7 @@
     "share-panel": {
       "config-description": "다음 사용자 지정 설정을 사용하여 조직 내에서 패널을 공유할 수 있는 개인화된 직접 링크를 생성합니다.",
       "download-image": "이미지 다운로드",
-      "render-image": "이미지 생성",
-      "render-image-error": "패널 이미지 렌더링 실패",
-      "render-image-error-description": "이미지를 생성하던 중 오류 발생"
+      "render-image": "이미지 생성"
     }
   },
   "live": {
@@ -8779,6 +8788,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11363,6 +11374,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "JSON으로 내보내기",
       "share-externally-title": "외부 공유",
       "share-internally-title": "내부 공유",
@@ -11398,6 +11410,19 @@
       "view-button": "JSON 보기",
       "view-button-yaml": "YAML 보기"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "라이브러리 패널을 생성합니다."
     },
@@ -11406,7 +11431,7 @@
       "info-text": "아래 옵션으로 사용자 정의된 이 대시보드 또는 패널에 대한 직접 링크를 생성합니다.",
       "link-url": "링크 URL",
       "render-alert": "이미지 렌더러 플러그인 미설치",
-      "render-instructions": "패널 이미지를 렌더링하려면 <2>Grafana 이미지 렌더러 플러그인</2>을 설치해야 합니다. 플러그인을 설치하려면 Grafana 관리자에게 문의하세요.",
+      "render-instructions": "",
       "rendered-image": "렌더링된 이미지에 직접 연결",
       "save-alert": "대시보드 저장되지 않음",
       "save-dashboard": "패널 이미지를 렌더링하려면 먼저 대시보드를 저장해야 합니다.",
@@ -11474,6 +11499,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "패널 미리 보기"
     },

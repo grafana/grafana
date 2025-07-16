@@ -8,6 +8,8 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -25,8 +27,8 @@ func TestMain(m *testing.M) {
 func Test_OSSKeeperService(t *testing.T) {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          "sdDkslslld",
-			EncryptionProvider: "secretKey.v1",
+			CurrentEncryptionProvider: "secret_key.v1",
+			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
 		},
 	}
 	keeperService, err := setupTestService(t, cfg)
@@ -53,7 +55,13 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error)
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
-	encryptionManager, err := manager.ProvideEncryptionManager(tracer, dataKeyStore, cfg, &usagestats.UsageStatsMock{T: t}, nil)
+	usageStats := &usagestats.UsageStatsMock{T: t}
+	enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+	require.NoError(t, err)
+
+	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+	require.NoError(t, err)
+	encryptionManager, err := manager.ProvideEncryptionManager(tracer, dataKeyStore, usageStats, enc, ossProviders)
 	require.NoError(t, err)
 
 	// Initialize the keeper service

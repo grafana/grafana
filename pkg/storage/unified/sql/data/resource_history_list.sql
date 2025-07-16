@@ -50,7 +50,7 @@ SELECT
         AND kv.{{ .Ident "name" }}      = {{ .Arg .Request.Options.Key.Name }}
         {{ end }}
     {{ end }}
-    ORDER BY kv.{{ .Ident "namespace" }} ASC, kv.{{ .Ident "name" }} ASC
+    ORDER BY kv.{{ .Ident "resource_version" }} ASC
     {{ if (gt .Request.Limit 0) }}
     LIMIT {{ .Arg .Request.Limit }} OFFSET {{ .Arg .Request.Offset }}
     {{ end }}

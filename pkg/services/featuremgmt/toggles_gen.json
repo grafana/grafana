@@ -1005,6 +1005,22 @@
     },
     {
       "metadata": {
+        "name": "enablePluginImporter",
+        "resourceVersion": "1752591728321",
+        "creationTimestamp": "2025-07-15T15:02:08Z"
+      },
+      "spec": {
+        "description": "Set this to true to use the new PluginImporter functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableSCIM",
         "resourceVersion": "1750952338509",
         "creationTimestamp": "2024-11-07T14:38:46Z",
@@ -2319,6 +2335,23 @@
     },
     {
       "metadata": {
+        "name": "pluginLoadingRefactor",
+        "resourceVersion": "1752218524617",
+        "creationTimestamp": "2025-07-11T07:22:04Z",
+        "deletionTimestamp": "2025-07-11T07:23:34Z"
+      },
+      "spec": {
+        "description": "Set this to true to use the new plugin loading functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-06-05T11:36:14Z"
@@ -2813,6 +2846,20 @@
         "description": "Enable the secrets management API and services under app platform",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sharingDashboardImage",
+        "resourceVersion": "1747090555040",
+        "creationTimestamp": "2025-05-12T22:55:55Z"
+      },
+      "spec": {
+        "description": "Enables image sharing functionality for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "hideFromDocs": true
       }
     },
     {
