@@ -10,13 +10,10 @@ import { Dashboard, VariableModel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-  defaultDataQueryKind,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
   GridLayoutKind,
-  PanelKind,
   PanelSpec,
-  QueryVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
@@ -50,13 +47,11 @@ jest.mock('@grafana/runtime', () => ({
             name: 'Grafana',
             meta: { id: 'grafana' },
             type: 'datasource',
-            uid: 'grafana',
           },
           prometheus: {
             name: 'prometheus',
             meta: { id: 'prometheus' },
             type: 'datasource',
-            uid: 'prometheus-uid',
           },
         },
       },
@@ -728,14 +723,9 @@ describe('DashboardSceneSerializer', () => {
               spec: {
                 builtIn: true,
                 name: 'Annotations & Alerts',
-                query: {
-                  kind: 'DataQuery',
-                  version: defaultDataQueryKind().version,
-                  group: 'grafana',
-                  datasource: {
-                    name: '-- Grafana --',
-                  },
-                  spec: {},
+                datasource: {
+                  uid: '-- Grafana --',
+                  type: 'grafana',
                 },
                 enable: true,
                 hide: true,
@@ -894,226 +884,6 @@ describe('DashboardSceneSerializer', () => {
           },
         });
       });
-
-      describe('data source references persistence', () => {
-        it('should not fill data source references for annotations when input did not contain it', () => {
-          const dashboard = setupV2({
-            annotations: [
-              {
-                kind: 'AnnotationQuery',
-                spec: {
-                  builtIn: false,
-                  enable: true,
-                  hide: false,
-                  iconColor: 'blue',
-                  name: 'prom-annotations',
-                  query: {
-                    group: 'prometheus',
-                    kind: 'DataQuery',
-                    spec: {
-                      refId: 'Anno',
-                    },
-                    version: 'v0',
-                  },
-                },
-              },
-            ],
-          });
-          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
-          // referencing index 1 as transformation adds built in annotation query
-          expect(saveAsModel.annotations[1].spec.query.datasource).toBeUndefined();
-        });
-
-        it('should fill data source references for annotations when input did contain it', () => {
-          const dashboard = setupV2({
-            annotations: [
-              {
-                kind: 'AnnotationQuery',
-                spec: {
-                  builtIn: false,
-                  enable: true,
-                  hide: false,
-                  iconColor: 'blue',
-                  name: 'prom-annotations',
-                  query: {
-                    group: 'prometheus',
-                    kind: 'DataQuery',
-                    datasource: {
-                      name: 'prometheus-uid',
-                    },
-                    spec: {
-                      refId: 'Anno',
-                    },
-                    version: 'v0',
-                  },
-                },
-              },
-            ],
-          });
-          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
-          // referencing index 1 as transformation adds built in annotation query
-          expect(saveAsModel.annotations[1].spec.query.datasource).toEqual({
-            name: 'prometheus-uid',
-          });
-        });
-        it('should not fill data source references for panel queries when input did not contain it', () => {
-          const dashboard = setupV2({
-            elements: {
-              'panel-1': {
-                kind: 'Panel',
-                spec: {
-                  ...defaultPanelSpec(),
-                  data: {
-                    kind: 'QueryGroup',
-                    spec: {
-                      transformations: [],
-                      queryOptions: {},
-                      queries: [
-                        {
-                          kind: 'PanelQuery',
-                          spec: {
-                            refId: 'A',
-                            hidden: false,
-                            query: {
-                              kind: 'DataQuery',
-                              group: 'prometheus',
-                              version: 'v0',
-                              spec: {},
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            },
-          });
-          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
-          expect(
-            (saveAsModel.elements['panel-1'] as PanelKind).spec.data.spec.queries[0].spec.query.datasource
-          ).toBeUndefined();
-        });
-
-        it('should fill data source references for panel queries when input did contain it', () => {
-          const dashboard = setupV2({
-            elements: {
-              'panel-1': {
-                kind: 'Panel',
-                spec: {
-                  ...defaultPanelSpec(),
-                  data: {
-                    kind: 'QueryGroup',
-                    spec: {
-                      transformations: [],
-                      queryOptions: {},
-                      queries: [
-                        {
-                          kind: 'PanelQuery',
-                          spec: {
-                            refId: 'A',
-                            hidden: false,
-                            query: {
-                              kind: 'DataQuery',
-                              group: 'prometheus',
-                              version: 'v0',
-                              datasource: {
-                                name: 'prometheus-uid',
-                              },
-                              spec: {},
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            },
-          });
-          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
-          expect(
-            (saveAsModel.elements['panel-1'] as PanelKind).spec.data.spec.queries[0].spec.query.datasource
-          ).toEqual({
-            name: 'prometheus-uid',
-          });
-        });
-
-        it('should not fill data source references for query variables when input did contain it', () => {
-          const queryVariable: QueryVariableKind = {
-            kind: 'QueryVariable',
-            spec: {
-              name: 'app',
-              current: {
-                text: 'app1',
-                value: 'app1',
-              },
-              hide: 'dontHide',
-              includeAll: false,
-              label: 'Query Variable',
-              skipUrlSync: false,
-              regex: '',
-              definition: '',
-              options: [],
-              refresh: 'never',
-              sort: 'alphabeticalAsc',
-              multi: false,
-              allowCustomValue: true,
-              query: {
-                kind: 'DataQuery',
-                group: 'prometheus',
-                version: 'v0',
-                spec: {},
-              },
-            },
-          };
-          const dashboard = setupV2({
-            variables: [queryVariable],
-          });
-          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
-          expect((saveAsModel.variables[0] as QueryVariableKind).spec.query.datasource).toBeUndefined();
-        });
-
-        it('should fill data source references for query variables when input did contain it', () => {
-          const queryVariable: QueryVariableKind = {
-            kind: 'QueryVariable',
-            spec: {
-              name: 'app',
-              current: {
-                text: 'app1',
-                value: 'app1',
-              },
-              hide: 'dontHide',
-              includeAll: false,
-              label: 'Query Variable',
-              skipUrlSync: false,
-              regex: '',
-              definition: '',
-              options: [],
-              refresh: 'never',
-              sort: 'alphabeticalAsc',
-              multi: false,
-              allowCustomValue: true,
-              query: {
-                kind: 'DataQuery',
-                group: 'prometheus',
-                version: 'v0',
-                datasource: {
-                  name: 'prometheus-uid',
-                },
-                spec: {},
-              },
-            },
-          };
-          const dashboard = setupV2({
-            variables: [queryVariable],
-          });
-          const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
-          expect((saveAsModel.variables[0] as QueryVariableKind).spec.query.datasource).toEqual({
-            name: 'prometheus-uid',
-          });
-        });
-      });
     });
 
     describe('panel mapping methods', () => {
@@ -1244,7 +1014,7 @@ describe('DashboardSceneSerializer', () => {
                           refId: 'A',
                           hidden: false,
                           // No datasource defined
-                          query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'sql', spec: {} },
+                          query: { kind: 'sql', spec: {} },
                         },
                       },
                       {
@@ -1252,15 +1022,8 @@ describe('DashboardSceneSerializer', () => {
                         spec: {
                           refId: 'B',
                           hidden: false,
-                          query: {
-                            kind: 'DataQuery',
-                            version: defaultDataQueryKind().version,
-                            group: 'prometheus',
-                            datasource: {
-                              name: 'datasource-1',
-                            },
-                            spec: {},
-                          },
+                          datasource: { uid: 'datasource-1', type: 'prometheus' },
+                          query: { kind: 'prometheus', spec: {} },
                         },
                       },
                     ],
@@ -1295,7 +1058,7 @@ describe('DashboardSceneSerializer', () => {
                           refId: 'C',
                           hidden: false,
                           // No datasource defined
-                          query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'sql', spec: {} },
+                          query: { kind: 'sql', spec: {} },
                         },
                       },
                     ],
@@ -1343,7 +1106,7 @@ describe('DashboardSceneSerializer', () => {
               kind: 'AnnotationQuery',
               spec: {
                 name: 'Annotation 1',
-                query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'prometheus', spec: {} },
+                query: { kind: 'prometheus', spec: {} },
                 enable: true,
                 hide: false,
                 iconColor: 'red',
