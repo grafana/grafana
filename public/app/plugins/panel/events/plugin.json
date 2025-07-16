@@ -1,0 +1,16 @@
+{
+    "type": "panel",
+    "name": "Events",
+    "id": "events",
+    "info": {
+        "description": "Displays events with custom formatting for alert types, messages, and tags",
+        "author": {
+            "name": "Grafana Labs",
+            "url": "https://grafana.com"
+        },
+        "logos": {
+            "small": "img/icn-events-panel.svg",
+            "large": "img/icn-events-panel.svg"
+        }
+    }
+}
