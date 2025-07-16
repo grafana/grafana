@@ -33,8 +33,7 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
 }
 
 /**
- * @internal
- * A temporary component until we have a proper dropdown component
+ * @deprecated Use Combobox or Dropdown instead
  */
 const ButtonSelectComponent = <T,>(props: Props<T>) => {
   const { className, options, value, onChange, narrow, variant, ...restProps } = props;

@@ -6,7 +6,7 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState,
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getTrackingSource } from '../../dashboard/components/ShareModal/utils';
 import { DashboardInteractions } from '../utils/interactions';

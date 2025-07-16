@@ -17,10 +17,10 @@ import {
   DataQueryResponse,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { ExplorePanelData } from 'app/types/explore';
 
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { MockDataQueryRequest, MockQuery } from '../../../../test/mocks/query';
-import { ExplorePanelData } from '../../../types';
 import { mockExplorePanelData } from '../mocks/data';
 
 import { getSupplementaryQueryProvider } from './supplementaryQueries';

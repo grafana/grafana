@@ -137,6 +137,8 @@ export {
   fieldColorModeRegistry,
   type FieldColorMode,
   getFieldSeriesColor,
+  /** @internal */
+  getColorByStringHash,
 } from './field/fieldColor';
 export { FieldConfigOptionsRegistry } from './field/FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './field/thresholds';
@@ -432,7 +434,11 @@ export {
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
-export { type PluginContextType, type DataSourcePluginContextType } from './context/plugins/PluginContext';
+export {
+  type PluginContextType,
+  type DataSourcePluginContextType,
+  PluginContext,
+} from './context/plugins/PluginContext';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
@@ -555,6 +561,7 @@ export {
   type ComponentTypeWithExtensionMeta,
   type PluginExtensionFunction,
   type PluginExtensionEventHelpers,
+  type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,

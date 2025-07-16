@@ -13,12 +13,10 @@ import {
 import { getDataSourceSrv, usePluginComponents, UsePluginComponentsResult } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { DataSourceSettingsState, useDispatch } from 'app/types';
+import { DataSourceSettingsState } from 'app/types/datasources';
+import { useDispatch } from 'app/types/store';
 
 import {
-  dataSourceLoaded,
-  setDataSourceName,
-  setIsDefault,
   useDataSource,
   useDataSourceExploreUrl,
   useDataSourceMeta,
@@ -28,7 +26,8 @@ import {
   useInitDataSourceSettings,
   useTestDataSource,
   useUpdateDatasource,
-} from '../state';
+} from '../state/hooks';
+import { setIsDefault, setDataSourceName, dataSourceLoaded } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { DataSourceRights } from '../types';
 

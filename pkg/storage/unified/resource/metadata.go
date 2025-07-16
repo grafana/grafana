@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -206,15 +205,15 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 		return MetaData{}, fmt.Errorf("invalid metadata key: %w", err)
 	}
 
-	obj, err := d.kv.Get(ctx, metaSection, key.String())
+	reader, err := d.kv.Get(ctx, metaSection, key.String())
 	if err != nil {
 		return MetaData{}, err
 	}
 	defer func() {
-		_ = obj.Value.Close()
+		_ = reader.Close()
 	}()
 	var meta MetaData
-	err = json.NewDecoder(obj.Value).Decode(&meta)
+	err = json.NewDecoder(reader).Decode(&meta)
 	return meta, err
 }
 
@@ -340,12 +339,18 @@ func (d *metadataStore) Save(ctx context.Context, obj MetaDataObj) error {
 	if err := obj.Key.Validate(); err != nil {
 		return fmt.Errorf("invalid metadata key: %w", err)
 	}
-	var buf bytes.Buffer
-	encoder := json.NewEncoder(&buf)
-	if err := encoder.Encode(obj.Value); err != nil {
+
+	writer, err := d.kv.Save(ctx, metaSection, obj.Key.String())
+	if err != nil {
 		return err
 	}
-	return d.kv.Save(ctx, metaSection, obj.Key.String(), &buf)
+	encoder := json.NewEncoder(writer)
+	if err := encoder.Encode(obj.Value); err != nil {
+		_ = writer.Close()
+		return err
+	}
+
+	return writer.Close()
 }
 
 // parseMetaDataKey parses a string key into a MetaDataKey struct
