@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -119,7 +118,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			MaxIdleConns:        sqlCfg.DefaultMaxIdleConns,
 			ConnMaxLifetime:     sqlCfg.DefaultMaxConnLifetimeSeconds,
 			Timescaledb:         false,
-			ConfigurationMethod: "file-path",
+			ConfigurationMethod: string(TLSConfigurationMethodFilePath),
 			SecureDSProxy:       false,
 		}
 
@@ -144,7 +143,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
 
-		cnnstr, err := s.generateConnectionString(dsInfo)
+		cnnstr, err := GenerateConnectionString(dsInfo, s.tlsManager, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -169,108 +168,6 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 // escape single quotes and backslashes in Postgres connection string parameters.
 func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
-}
-
-func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
-	logger := s.logger
-	connStr, err := getInitialConnectionString(dsInfo, logger)
-	if err != nil {
-		return connStr, err
-	}
-	connStr, err = getTLSIncludedConnectionString(connStr, s.tlsManager, dsInfo, logger)
-	if err != nil {
-		return connStr, err
-	}
-	logger.Debug("Generated Postgres connection string successfully")
-	return connStr, nil
-}
-
-func getInitialConnectionString(dsInfo sqleng.DataSourceInfo, logger log.Logger) (string, error) {
-	if dsInfo.JsonData.ConnectionType == sqleng.ConnectionTypeConnectionString {
-		connStr := dsInfo.DecryptedSecureJSONData["connectionString"]
-		if connStr == "" {
-			return connStr, errors.New("Invalid/Empty connection string")
-		}
-		return connStr, nil
-	}
-	var host string
-	var port int
-	if strings.HasPrefix(dsInfo.URL, "/") {
-		host = dsInfo.URL
-		logger.Debug("Generating connection string with Unix socket specifier", "address", dsInfo.URL)
-	} else {
-		index := strings.LastIndex(dsInfo.URL, ":")
-		v6Index := strings.Index(dsInfo.URL, "]")
-		sp := strings.SplitN(dsInfo.URL, ":", 2)
-		host = sp[0]
-		if v6Index == -1 {
-			if len(sp) > 1 {
-				var err error
-				port, err = strconv.Atoi(sp[1])
-				if err != nil {
-					logger.Debug("Error parsing the IPv4 address", "address", dsInfo.URL)
-					return "", sqleng.ErrParsingPostgresURL
-				}
-				logger.Debug("Generating IPv4 connection string with network host/port pair", "host", host, "port", port, "address", dsInfo.URL)
-			} else {
-				logger.Debug("Generating IPv4 connection string with network host", "host", host, "address", dsInfo.URL)
-			}
-		} else {
-			if index == v6Index+1 {
-				host = dsInfo.URL[1 : index-1]
-				var err error
-				port, err = strconv.Atoi(dsInfo.URL[index+1:])
-				if err != nil {
-					logger.Debug("Error parsing the IPv6 address", "address", dsInfo.URL)
-					return "", sqleng.ErrParsingPostgresURL
-				}
-				logger.Debug("Generating IPv6 connection string with network host/port pair", "host", host, "port", port, "address", dsInfo.URL)
-			} else {
-				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
-				logger.Debug("Generating IPv6 connection string with network host", "host", host, "address", dsInfo.URL)
-			}
-		}
-	}
-
-	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
-		escape(dsInfo.User), escape(dsInfo.DecryptedSecureJSONData["password"]), escape(host), escape(dsInfo.Database))
-	if port > 0 {
-		connStr += fmt.Sprintf(" port=%d", port)
-	}
-	return connStr, nil
-}
-
-func getTLSIncludedConnectionString(connStr string, tlsManager tlsSettingsProvider, dsInfo sqleng.DataSourceInfo, logger log.Logger) (string, error) {
-	tlsSettings, err := tlsManager.getTLSSettings(dsInfo)
-	if err != nil {
-		return "", err
-	}
-
-	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
-
-	// there is an issue with the lib/pq module, the `verify-ca` tls mode
-	// does not work correctly. ( see https://github.com/lib/pq/issues/1106 )
-	// to workaround the problem, if the `verify-ca` mode is chosen,
-	// we disable sslsni.
-	if tlsSettings.Mode == "verify-ca" {
-		connStr += " sslsni=0"
-	}
-
-	// Attach root certificate if provided
-	if tlsSettings.RootCertFile != "" {
-		logger.Debug("Setting server root certificate", "tlsRootCert", tlsSettings.RootCertFile)
-		connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsSettings.RootCertFile))
-	}
-
-	// Attach client certificate and key if both are provided
-	if tlsSettings.CertFile != "" && tlsSettings.CertKeyFile != "" {
-		logger.Debug("Setting TLS/SSL client auth", "tlsCert", tlsSettings.CertFile, "tlsKey", tlsSettings.CertKeyFile)
-		connStr += fmt.Sprintf(" sslcert='%s' sslkey='%s'", escape(tlsSettings.CertFile), escape(tlsSettings.CertKeyFile))
-	} else if tlsSettings.CertFile != "" || tlsSettings.CertKeyFile != "" {
-		return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
-	}
-
-	return connStr, nil
 }
 
 type postgresQueryResultTransformer struct{}

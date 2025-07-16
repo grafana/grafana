@@ -134,7 +134,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           <RadioButtonGroup<PostgresConnectionType>
             value={jsonData.connectionType || 'default'}
             options={[
-              { value: 'default', label: 'Default' },
+              { value: 'default', label: 'Connection Parameters' },
               { value: 'connectionString', label: 'Connection String' },
             ]}
             onChange={onConnectionTypeChanged}

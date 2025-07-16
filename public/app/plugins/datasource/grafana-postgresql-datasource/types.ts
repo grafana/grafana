@@ -15,7 +15,7 @@ export enum PostgresTLSMethods {
 export type PostgresConnectionType = 'default' | 'connectionString';
 
 export interface PostgresOptions extends SQLOptions {
-  connectionType: PostgresConnectionType;
+  connectionType?: PostgresConnectionType;
   tlsConfigurationMethod?: PostgresTLSMethods;
   sslmode?: PostgresTLSModes;
   sslRootCertFile?: string;
