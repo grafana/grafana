@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
+	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
@@ -63,8 +64,9 @@ import (
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
-var ProvisioningOSSExtras = wire.NewSet(
-	ProvideProvisioningOSSExtras,
+var provisioningExtras = wire.NewSet(
+	webhooks.ProvideWebhooks,
+	provisioningapis.ProvideProvisioningOSSExtras,
 )
 
 var wireExtsBasicSet = wire.NewSet(
@@ -137,8 +139,7 @@ var wireExtsBasicSet = wire.NewSet(
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
 	gsmKMSProviders.ProvideOSSKMSProviders,
-	webhooks.ProvideWebhooks,
-	ProvisioningOSSExtras,
+	provisioningExtras,
 )
 
 var wireExtsSet = wire.NewSet(
