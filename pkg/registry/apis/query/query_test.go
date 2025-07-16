@@ -265,8 +265,7 @@ func (m mockClientSupplier) GetInstanceConfigurationSettings(ctx context.Context
 }
 
 type mockClient struct {
-	lastCalledWithHeaders *map[string]string
-	stubbedFrame          *data.Frame
+	stubbedFrame *data.Frame
 }
 
 func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest) (*backend.QueryDataResponse, error) {
