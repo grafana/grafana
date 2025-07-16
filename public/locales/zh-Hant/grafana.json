@@ -3215,6 +3215,9 @@
       "define-allowed-teams-ids-label": "定義允許的團隊 ID",
       "display-name-description": "將在登入頁面上顯示為「使用...登入」。如果您使用多個身分提供者或 SSO 協定，這項功能會很有幫助。",
       "display-name-label": "顯示名稱",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "設定用來在 OAuth2 ID 權杖的屬性對應中查找使用者電子郵件的金鑰名稱。",
       "email-attribute-name-label": "電子郵件屬性名稱",
       "email-attribute-path-description": "用來從使用者資訊中查找使用者電子郵件的 JMESPath 表達式。",
@@ -4595,6 +4598,14 @@
     },
     "errors": {
       "failed-to-load": "無法載入儀表板"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -8612,9 +8623,7 @@
     "share-panel": {
       "config-description": "使用以下自訂設定，建立個人化的直接連結，以便在組織內分享面板：",
       "download-image": "下載圖片",
-      "render-image": "產生圖片",
-      "render-image-error": "無法呈現面板圖片",
-      "render-image-error-description": "產生圖片時發生錯誤"
+      "render-image": "產生圖片"
     }
   },
   "live": {
@@ -8779,6 +8788,8 @@
       "links-section": "連結",
       "log-line-field": "",
       "log-line-section": "紀錄行",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "沒有要顯示的欄位。",
       "pin-line": "固定紀錄",
       "remove-displayed-field": "",
@@ -11363,6 +11374,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "匯出為 JSON",
       "share-externally-title": "外部分享",
       "share-internally-title": "內部分享",
@@ -11398,6 +11410,19 @@
       "view-button": "檢視 JSON",
       "view-button-yaml": "檢視 YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "建立資料庫面板。"
     },
@@ -11406,7 +11431,7 @@
       "info-text": "建立指向此儀表板或面板的直接連結，並使用以下選項自訂。",
       "link-url": "連結網址",
       "render-alert": "未安裝圖片轉譯器外掛程式",
-      "render-instructions": "若要呈現面板圖像，您必須安裝 <2>Grafana 圖像渲染器外掛程式</2>。請聯絡您的 Grafana 管理員以安裝外掛程式。",
+      "render-instructions": "",
       "rendered-image": "直接連結轉譯的圖片",
       "save-alert": "儀表板未儲存",
       "save-dashboard": "若要呈現面板圖片，您必須先儲存儀表板。",
@@ -11474,6 +11499,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "面板預覽"
     },
