@@ -36,7 +36,7 @@ function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): 
   });
 }
 
-export function PillCell({ value, field }: TableCellRendererProps) {
+export function PillCell({ value, field, rowIdx }: TableCellRendererProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
@@ -46,22 +46,20 @@ export function PillCell({ value, field }: TableCellRendererProps) {
   }, [value, field, theme]);
 
   return (
-    <TableCellLinkWraper field={field} rowIdx={0}>
-      <>
-        {pills.map((pill) => (
-          <span
-            key={pill.key}
-            className={styles.pill}
-            style={{
-              backgroundColor: pill.bgColor,
-              color: pill.color,
-              border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
-            }}
-          >
-            {pill.value}
-          </span>
-        ))}
-      </>
+    <TableCellLinkWraper field={field} rowIdx={rowIdx}>
+      {pills.map((pill) => (
+        <span
+          key={pill.key}
+          className={styles.pill}
+          style={{
+            backgroundColor: pill.bgColor,
+            color: pill.color,
+            border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
+          }}
+        >
+          {pill.value}
+        </span>
+      ))}
     </TableCellLinkWraper>
   );
 }

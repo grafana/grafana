@@ -272,5 +272,5 @@ export interface ScrollPosition {
 export interface TableCellLinkWraperProps {
   field: Field;
   rowIdx: number;
-  children: string | JSX.Element;
+  children: React.ReactNode;
 }

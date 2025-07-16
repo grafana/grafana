@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { renderSingleLink } from '../../DataLinksActionsTooltip';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { TableCellLinkWraperProps } from '../types';
 import { getCellLinks, getCellOptions, withDataLinksActionsTooltip } from '../utils';
 
@@ -26,8 +27,18 @@ export function TableCellLinkWraper({ field, rowIdx, children }: TableCellLinkWr
     return <a aria-controls="table-data-links-actions-tooltip">{children}</a>;
   }
 
-  if (shouldShowSingleLink && singleLink) {
-    return renderSingleLink(singleLink, children);
+  if (singleLink) {
+    return (
+      <a
+        href={singleLink.href}
+        onClick={singleLink.onClick}
+        target={singleLink.target}
+        title={singleLink.title}
+        data-testid={selectors.components.DataLinksContextMenu.singleLink}
+      >
+        {children}
+      </a>
+    );
   }
 
   return children;
