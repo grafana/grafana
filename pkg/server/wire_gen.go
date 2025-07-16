@@ -738,19 +738,19 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
 	databaseDatabase := database5.ProvideDatabase(sqlStore, tracer)
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, tracer, featureToggles, registerer)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, featureToggles, registerer)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer, featureToggles)
+	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
 	if err != nil {
 		return nil, err
 	}
-	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, featureToggles, registerer)
+	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -773,7 +773,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	decryptAllowList := decrypt.ProvideDecryptAllowList()
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, decryptAllowList)
-	decryptStorage, err := metadata.ProvideDecryptStorage(featureToggles, tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
+	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1288,19 +1288,19 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
 	databaseDatabase := database5.ProvideDatabase(sqlStore, tracer)
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, tracer, featureToggles, registerer)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, featureToggles, registerer)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer, featureToggles)
+	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
 	if err != nil {
 		return nil, err
 	}
-	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, featureToggles, registerer)
+	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1323,7 +1323,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	decryptAllowList := decrypt.ProvideDecryptAllowList()
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, decryptAllowList)
-	decryptStorage, err := metadata.ProvideDecryptStorage(featureToggles, tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
+	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}

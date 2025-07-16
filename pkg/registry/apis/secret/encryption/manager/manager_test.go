@@ -256,9 +256,8 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		}
 
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		tracer := noop.NewTracerProvider().Tracer("test")
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
 		usageStats := &usagestats.UsageStatsMock{T: t}
@@ -342,8 +341,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 	t.Run("encrypting with v1 then removing the v1 config should cause decryption to fail", func(t *testing.T) {
 		tracer := noop.NewTracerProvider().Tracer("test")
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
 		usageStats := &usagestats.UsageStatsMock{T: t}
