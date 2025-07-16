@@ -8546,7 +8546,7 @@
       "placeholder": "example: 127.0.0.1"
     },
     "login-form-alert": {
-      "description": "Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.",
+      "description": "Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the login form to use LDAP authentication. See our <2><0>documentation</0></2> for details on how to enable it.",
       "title": "Basic login disabled"
     },
     "search_filter": {
