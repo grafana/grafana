@@ -1,4 +1,5 @@
-import { Map as OpenLayersMap } from 'ol';
+import Feature from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
 import Geometry from 'ol/geom/Geometry';
 import Point from 'ol/geom/Point';
 import { defaults as interactionDefaults } from 'ol/interaction';
@@ -178,9 +179,9 @@ export const isUrl = (url: string) => {
 export function hasLayerData(
   layer:
     | LayerGroup
-    | VectorLayer<VectorSource<Geometry>>
-    | VectorImage<VectorSource<Geometry>>
-    | WebGLPointsLayer<VectorSource<Point>>
+    | VectorLayer<VectorSource<Feature<Geometry>>>
+    | VectorImage<VectorSource<Feature<Geometry>>>
+    | WebGLPointsLayer<VectorSource<Feature<Point>>>
     | TileLayer<TileSource>
     | ImageLayer<ImageSource>
     | BaseLayer

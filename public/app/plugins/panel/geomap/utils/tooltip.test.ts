@@ -1,4 +1,5 @@
-import { Feature, MapBrowserEvent } from 'ol';
+import Feature from 'ol/Feature';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
 import { Point } from 'ol/geom';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import VectorSource from 'ol/source/Vector';
@@ -55,9 +56,9 @@ jest.mock('./layers', () => {
 
 describe('tooltip utils', () => {
   let panel: GeomapPanel;
-  let mockEvent: MapBrowserEvent<MouseEvent>;
-  let mockWebGLLayer: WebGLPointsLayer<VectorSource<Point>>;
-  let mockVectorSource: VectorSource<Point>;
+  let mockEvent: MapBrowserEvent<PointerEvent>;
+  let mockWebGLLayer: WebGLPointsLayer<VectorSource<Feature<Point>>>;
+  let mockVectorSource: VectorSource<Feature<Point>>;
 
   // Consolidated feature constants
   let feature1: Feature;
@@ -72,12 +73,15 @@ describe('tooltip utils', () => {
 
     // Create mock objects
     panel = new GeomapPanel({} as PanelProps<Options>);
+
+    // Create a proper MouseEvent instance to pass the instanceof check
+    const mouseEvent = new MouseEvent('pointermove');
+    Object.defineProperty(mouseEvent, 'pageX', { value: 100 });
+    Object.defineProperty(mouseEvent, 'pageY', { value: 100 });
+
     mockEvent = {
-      originalEvent: {
-        pageX: 100,
-        pageY: 100,
-      },
-    } as MapBrowserEvent<MouseEvent>;
+      originalEvent: mouseEvent,
+    } as MapBrowserEvent<PointerEvent>;
 
     // Create features for testing
     feature1 = new Feature({
@@ -111,19 +115,16 @@ describe('tooltip utils', () => {
     });
 
     // Create mock vector source
-    mockVectorSource = new VectorSource<Point>();
+    mockVectorSource = new VectorSource<Feature<Point>>();
     mockVectorSource.forEachFeature = jest.fn();
 
     // Create mock WebGL layer
     mockWebGLLayer = new WebGLPointsLayer({
       source: mockVectorSource,
       style: {
-        symbol: {
-          symbolType: 'circle',
-          size: 8,
-          color: '#000000',
-          opacity: 1,
-        },
+        'circle-radius': 8,
+        'circle-fill-color': '#000000',
+        'circle-opacity': 1,
       },
     });
     mockWebGLLayer.getSource = jest.fn().mockReturnValue(mockVectorSource);

@@ -1,5 +1,5 @@
 import Feature from 'ol/Feature';
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import Point from 'ol/geom/Point';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -60,7 +60,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<DayNightConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<DayNightConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultConfig,

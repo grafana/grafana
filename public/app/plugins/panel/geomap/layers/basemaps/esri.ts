@@ -1,4 +1,4 @@
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 
 import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry, EventBus } from '@grafana/data';
 
@@ -60,7 +60,12 @@ export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
 
-  create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<ESRIXYZConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     const cfg = { ...options.config };
     const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
     if (svc.id !== CUSTOM_SERVICE) {

@@ -1,4 +1,4 @@
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
@@ -23,7 +23,12 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   description: 'Add map from a generic tile layer',
   isBaseMap: true,
 
-  create: async (map: Map, options: MapLayerOptions<XYZConfig>, eventBus: EventBus, theme: GrafanaTheme2) => ({
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<XYZConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => ({
     init: () => {
       const cfg = { ...options.config };
       if (!cfg.url) {

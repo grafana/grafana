@@ -38,8 +38,8 @@ import { hasVariableDependencies, hasLayerData } from './utils';
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
 
-const createTestVectorSource = (hasFeature = false): VectorSource<Point> => {
-  const source = new VectorSource<Point>();
+const createTestVectorSource = (hasFeature = false): VectorSource<Feature<Point>> => {
+  const source = new VectorSource<Feature<Point>>();
   if (hasFeature) {
     source.addFeature(createTestFeature());
   }
@@ -47,12 +47,9 @@ const createTestVectorSource = (hasFeature = false): VectorSource<Point> => {
 };
 
 const createTestWebGLStyle = () => ({
-  symbol: {
-    symbolType: 'circle',
-    size: 8,
-    color: '#000000',
-    opacity: 1,
-  },
+  'circle-radius': 8,
+  'circle-fill-color': '#000000',
+  'circle-opacity': 1,
 });
 
 describe('hasVariableDependencies', () => {
