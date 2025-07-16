@@ -875,8 +875,6 @@ github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17 h1:t0E6FzRE
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17/go.mod h1:ygpklyoaypuyDvOM5ujWGrYWpAK3h7ugnmKCU/76Ys4=
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15 h1:moLQUoVq91LiqT1nbvzDukyqAlCv89ZmwaHw/ZFlFZg=
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15/go.mod h1:ZH34PJUc8ApjBIfgQCFvkWcUDBtl/WTD+uiYHjd8igA=
-github.com/aws/aws-sdk-go-v2/service/kms v1.38.1 h1:tecq7+mAav5byF+Mr+iONJnCBf4B4gon8RSp4BrweSc=
-github.com/aws/aws-sdk-go-v2/service/kms v1.38.1/go.mod h1:cQn6tAF77Di6m4huxovNM7NVAozWTZLsDRp9t8Z/WYk=
 github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 h1:teOWtElLARLOhpYWwupjLbY9j5I/yZ/H1I8jg41An78=
 github.com/aws/aws-sdk-go-v2/service/oam v1.18.3/go.mod h1:wGhpdyftHX6/1U4egowHkYdypwBMjpb+KjAAprv6z20=
 github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 h1:PwbxovpcJvb25k019bkibvJfCpCmIANOFrXZIFPmRzk=
@@ -1613,8 +1611,8 @@ github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b h1:8o
 github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:q+h3HbmqU/PposW6lq8cMle1v8vuyX1LCMrGzbabHxc=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b h1:jr+C3epmjhd5Yyob4P1Z/dPaW4LRTkU5UJLXsI4eaeM=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:WpI7TCck4P2wKTO2WJLBRcfOWvUGvTdxYu3QqS3z7jM=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250716152245-2202c99d7030 h1:ravSwl2XJacO/o2u3IVaMacd0NpL1Msf9ENLcLbLwO0=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250716152245-2202c99d7030/go.mod h1:1XWiRSVuDQiayapHhQiDc4S4e9GzEZgg/3GeNCuDgn4=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250627191313-2f1a6ae1712b h1:FJHoqhrVR/PMS9xv7yYGVi73iTB1VXyV/oIXCUssvMQ=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:eR8wca74ADgxBrvX0uNpdB1qnPaGx/KhCm4Xj8oqHfQ=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b h1:31MwoIKKT9Ay0ZjbT4lkfcPijiWogUWzXs2EjrCgodI=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:dLtYBp1pza5HYalezNvzlP8JDeKrZ5BKTonDgEOE0NY=
 github.com/grafana/grafana/apps/iam v0.0.0-20250627191313-2f1a6ae1712b h1:NV8v9xdM/pzjjy+1cLqUseia3bYcvQGh88vZdMW/jA0=
@@ -1631,8 +1629,6 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250711114246-c9b2126c4ad5 h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250711114246-c9b2126c4ad5/go.mod h1:eAlOam2uWhrsEZlOoAr7XZ9hbBP7SyYGYn31/aQAPs8=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b h1:QyJLJn3xwFTIXu9KPZujsrIUN0X8DdiR9b2h75L0AfI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:6OKkPWDB8PetDXqMVMOWL35iTCEUdpATwwpuew0k8+o=
-github.com/grafana/grafana/pkg/build v0.0.0-20250716154214-974103c6fa20 h1:WOaBIu1gvt7YJY3kySi9uFZpH9kJvd+d2RjyAVqEByQ=
-github.com/grafana/grafana/pkg/build v0.0.0-20250716154214-974103c6fa20/go.mod h1:v3qBGBT0htoCL5pXPXfW0Y+UrAggHr9t0jGxuYr8OEs=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b h1:m78RNSvTseSpvwQYe5HcdsiADSw4vj6+QUppuCL63gw=
