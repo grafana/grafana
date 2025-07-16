@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"dagger.io/dagger"
 )
@@ -44,9 +45,11 @@ func main() {
 		panic(err)
 	}
 
-	videosDir := fmt.Sprintf("/src/e2e/%s/videos", *suite)
+	// Extract just the suite name from the path (e.g., "e2e/dashboards-suite" -> "dashboards-suite")
+	suiteName := filepath.Base(*suite)
+	videosDir := fmt.Sprintf("/src/e2e/%s/videos", suiteName)
 	// *spec.ts.mp4
-	c := RunSuite(d, svc, grafana, yarnCache, *suite)
+	c := RunSuite(d, svc, grafana, yarnCache, suiteName)
 	c, err = c.Sync(ctx)
 	if err != nil {
 		log.Fatalf("error running dagger: %s", err)
