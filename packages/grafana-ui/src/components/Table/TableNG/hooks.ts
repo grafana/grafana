@@ -497,7 +497,7 @@ export function useRowHeight({
 
     return (row: TableRow) => {
       // nested rows
-      if (Number(row.__depth) > 0) {
+      if (row.__depth > 0) {
         // if unexpanded, height === 0
         if (!expandedRows.has(row.__index)) {
           return 0;
