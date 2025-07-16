@@ -3228,6 +3228,9 @@
       "define-allowed-teams-ids-label": "Définir les ID des équipes autorisées",
       "display-name-description": "Sera affiché sur la page de connexion comme « Se connecter avec... ». Utile si vous utilisez plusieurs fournisseurs d’identité ou protocoles SSO.",
       "display-name-label": "Pseudo",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Nom de la clé à utiliser pour la recherche d’e-mail de l’utilisateur dans la carte d’attributs du jeton d’identification OAuth2.",
       "email-attribute-name-label": "Nom d’attribut de l’e-mail",
       "email-attribute-path-description": "Expression JMESPath à utiliser pour la recherche d’e-mail de l’utilisateur à partir des informations de l’utilisateur.",
@@ -4614,6 +4617,14 @@
     "errors": {
       "failed-to-load": "Échec du chargement du tableau de bord"
     },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "Échec de la récupération du tableau de bord"
@@ -5837,10 +5848,13 @@
       "description-examples": "Les groupes de capture nommés peuvent être utilisés pour séparer le texte d’affichage et la valeur (<1>voir les exemples</1>).",
       "description-optional": "Facultatif, si vous souhaitez extraire une partie d’un nom de série ou d’un segment de nœud de métrique.",
       "label-data-source": "Source de données",
+      "label-static-options-sort": "",
       "label-target-data-source": "Source de données cible",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Options de recherche",
-      "selection-options": "Options de sélection"
+      "selection-options": "Options de sélection",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -8635,9 +8649,7 @@
     "share-panel": {
       "config-description": "Créez un lien direct personnalisé pour partager votre panneau au sein de votre organisation, avec les paramètres de personnalisation suivants :",
       "download-image": "Télécharger l'image",
-      "render-image": "Générer l'image",
-      "render-image-error": "Échec du rendu de l'image du panneau",
-      "render-image-error-description": "Une erreur s'est produite lors de la génération de l'image"
+      "render-image": "Générer l'image"
     }
   },
   "live": {
@@ -8805,6 +8817,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11398,6 +11412,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exporter en tant que JSON",
       "share-externally-title": "Partager en externe",
       "share-internally-title": "Partager en interne",
@@ -11433,6 +11448,19 @@
       "view-button": "Afficher au format JSON",
       "view-button-yaml": "Afficher le fichier YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Créer un panneau de bibliothèque."
     },
@@ -11441,7 +11469,7 @@
       "info-text": "Créez un lien direct vers ce tableau de bord ou ce panneau, personnalisé avec les options ci-dessous.",
       "link-url": "Lien URL",
       "render-alert": "Plugin de rendu d'image non installé",
-      "render-instructions": "Pour afficher une image de panneau, vous devez installer le <2>plugin de rendu d'image Grafana</2>. Veuillez contacter votre administrateur Grafana pour installer le plugin.",
+      "render-instructions": "",
       "rendered-image": "Lien direct vers l'image dont il faut améliorer le rendu",
       "save-alert": "Le tableau de bord n'est pas enregistré",
       "save-dashboard": "Pour améliorer le rendu d'une image de panneau, vous devez d'abord enregistrer le tableau de bord.",
@@ -11509,6 +11537,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Aperçu du panneau"
     },
@@ -11871,14 +11905,6 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
-    "pill-cell-options-editor": {
-      "description-color-mode": "",
-      "description-fixed-color": "",
-      "description-value-mappings-info": "",
-      "label-color-mode": "",
-      "label-fixed-color": "",
-      "label-value-mappings-info": ""
-    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -13165,6 +13191,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

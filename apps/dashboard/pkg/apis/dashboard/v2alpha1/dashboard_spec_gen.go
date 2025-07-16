@@ -1214,24 +1214,26 @@ func NewDashboardQueryVariableKind() *DashboardQueryVariableKind {
 // Query variable specification
 // +k8s:openapi-gen=true
 type DashboardQueryVariableSpec struct {
-	Name             string                    `json:"name"`
-	Current          DashboardVariableOption   `json:"current"`
-	Label            *string                   `json:"label,omitempty"`
-	Hide             DashboardVariableHide     `json:"hide"`
-	Refresh          DashboardVariableRefresh  `json:"refresh"`
-	SkipUrlSync      bool                      `json:"skipUrlSync"`
-	Description      *string                   `json:"description,omitempty"`
-	Datasource       *DashboardDataSourceRef   `json:"datasource,omitempty"`
-	Query            DashboardDataQueryKind    `json:"query"`
-	Regex            string                    `json:"regex"`
-	Sort             DashboardVariableSort     `json:"sort"`
-	Definition       *string                   `json:"definition,omitempty"`
-	Options          []DashboardVariableOption `json:"options"`
-	Multi            bool                      `json:"multi"`
-	IncludeAll       bool                      `json:"includeAll"`
-	AllValue         *string                   `json:"allValue,omitempty"`
-	Placeholder      *string                   `json:"placeholder,omitempty"`
-	AllowCustomValue bool                      `json:"allowCustomValue"`
+	Name               string                                        `json:"name"`
+	Current            DashboardVariableOption                       `json:"current"`
+	Label              *string                                       `json:"label,omitempty"`
+	Hide               DashboardVariableHide                         `json:"hide"`
+	Refresh            DashboardVariableRefresh                      `json:"refresh"`
+	SkipUrlSync        bool                                          `json:"skipUrlSync"`
+	Description        *string                                       `json:"description,omitempty"`
+	Datasource         *DashboardDataSourceRef                       `json:"datasource,omitempty"`
+	Query              DashboardDataQueryKind                        `json:"query"`
+	Regex              string                                        `json:"regex"`
+	Sort               DashboardVariableSort                         `json:"sort"`
+	Definition         *string                                       `json:"definition,omitempty"`
+	Options            []DashboardVariableOption                     `json:"options"`
+	Multi              bool                                          `json:"multi"`
+	IncludeAll         bool                                          `json:"includeAll"`
+	AllValue           *string                                       `json:"allValue,omitempty"`
+	Placeholder        *string                                       `json:"placeholder,omitempty"`
+	AllowCustomValue   bool                                          `json:"allowCustomValue"`
+	StaticOptions      []DashboardVariableOption                     `json:"staticOptions,omitempty"`
+	StaticOptionsOrder *DashboardQueryVariableSpecStaticOptionsOrder `json:"staticOptionsOrder,omitempty"`
 }
 
 // NewDashboardQueryVariableSpec creates a new DashboardQueryVariableSpec object.
@@ -1878,6 +1880,15 @@ const (
 	DashboardTimeSettingsSpecWeekStartSaturday DashboardTimeSettingsSpecWeekStart = "saturday"
 	DashboardTimeSettingsSpecWeekStartMonday   DashboardTimeSettingsSpecWeekStart = "monday"
 	DashboardTimeSettingsSpecWeekStartSunday   DashboardTimeSettingsSpecWeekStart = "sunday"
+)
+
+// +k8s:openapi-gen=true
+type DashboardQueryVariableSpecStaticOptionsOrder string
+
+const (
+	DashboardQueryVariableSpecStaticOptionsOrderBefore DashboardQueryVariableSpecStaticOptionsOrder = "before"
+	DashboardQueryVariableSpecStaticOptionsOrderAfter  DashboardQueryVariableSpecStaticOptionsOrder = "after"
+	DashboardQueryVariableSpecStaticOptionsOrderSorted DashboardQueryVariableSpecStaticOptionsOrder = "sorted"
 )
 
 // +k8s:openapi-gen=true

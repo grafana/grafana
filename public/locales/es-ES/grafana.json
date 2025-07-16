@@ -3228,6 +3228,9 @@
       "define-allowed-teams-ids-label": "Definir ID de equipos permitidos",
       "display-name-description": "Se mostrará en la página de inicio de sesión como «Iniciar sesión con...». Resulta útil si utiliza más de un proveedor de identidad o protocolos SSO.",
       "display-name-label": "Nombre para mostrar",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Nombre de la clave que se utilizará para la búsqueda de correo electrónico del usuario dentro del mapa de atributos del token de identificación OAuth2.",
       "email-attribute-name-label": "Nombre del atributo de correo electrónico",
       "email-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de correo electrónico del usuario a partir de la información del usuario.",
@@ -4614,6 +4617,14 @@
     "errors": {
       "failed-to-load": "Error al cargar el panel de control"
     },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "Error al obtener el dashboard"
@@ -5837,10 +5848,13 @@
       "description-examples": "Los grupos de captura con nombre se pueden utilizar para separar el texto y el valor de la pantalla (<1>consulta los ejemplos</1>).",
       "description-optional": "Es opcional si quieres extraer parte del nombre de una serie o segmento de nodo métrico.",
       "label-data-source": "Fuente de datos",
+      "label-static-options-sort": "",
       "label-target-data-source": "Fuente de datos de destino",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Opciones de consulta",
-      "selection-options": "Opciones de selección"
+      "selection-options": "Opciones de selección",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -8635,9 +8649,7 @@
     "share-panel": {
       "config-description": "Crea un enlace personalizado y directo para compartir tu panel dentro de tu organización, con los siguientes ajustes de personalización:",
       "download-image": "Descargar imagen",
-      "render-image": "Generar imagen",
-      "render-image-error": "Error al representar la imagen del panel",
-      "render-image-error-description": "Se ha producido un error al generar la imagen"
+      "render-image": "Generar imagen"
     }
   },
   "live": {
@@ -8805,6 +8817,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11398,6 +11412,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exportar como JSON",
       "share-externally-title": "Compartir externamente",
       "share-internally-title": "Compartir internamente",
@@ -11433,6 +11448,19 @@
       "view-button": "Ver JSON",
       "view-button-yaml": "Ver YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Cree un panel de librería."
     },
@@ -11441,7 +11469,7 @@
       "info-text": "Cree un enlace directo a este panel de control o panel, personalizado con las siguientes opciones.",
       "link-url": "URL del enlace",
       "render-alert": "Complemento de renderizador de imagen no instalado",
-      "render-instructions": "Para representar una imagen de panel, debes instalar el <2>complemento de renderizado de imágenes de Grafana</2>. Ponte en contacto con tu administrador de Grafana para instalar el complemento.",
+      "render-instructions": "",
       "rendered-image": "Enlace directo a la imagen renderizada",
       "save-alert": "El panel de control no se ha guardado",
       "save-dashboard": "Para renderizar una imagen de panel, primero debe guardar el panel de control.",
@@ -11509,6 +11537,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Vista previa del panel"
     },
@@ -11871,14 +11905,6 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
-    "pill-cell-options-editor": {
-      "description-color-mode": "",
-      "description-fixed-color": "",
-      "description-value-mappings-info": "",
-      "label-color-mode": "",
-      "label-fixed-color": "",
-      "label-value-mappings-info": ""
-    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -13165,6 +13191,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",
