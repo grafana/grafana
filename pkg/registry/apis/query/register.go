@@ -36,10 +36,9 @@ import (
 var _ builder.APIGroupBuilder = (*QueryAPIBuilder)(nil)
 
 type QueryAPIBuilder struct {
-	log                    log.Logger
-	concurrentQueryLimit   int
-	userFacingDefaultError string
-	features               featuremgmt.FeatureToggles
+	log                  log.Logger
+	concurrentQueryLimit int
+	features             featuremgmt.FeatureToggles
 
 	authorizer authorizer.Authorizer
 
@@ -61,7 +60,6 @@ func NewQueryAPIBuilder(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
-
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
 	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
