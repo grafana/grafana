@@ -1,4 +1,3 @@
-import { css, cx } from '@emotion/css';
 import { omit } from 'lodash';
 import { InputHTMLAttributes } from 'react';
 import * as React from 'react';
@@ -26,19 +25,6 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
   interactive?: boolean;
 }
 
-const getSecretFormFieldStyles = () => {
-  return {
-    noRadiusInput: css({
-      borderBottomRightRadius: '0 !important',
-      borderTopRightRadius: '0 !important',
-    }),
-    noRadiusButton: css({
-      borderBottomLeftRadius: '0 !important',
-      borderTopLeftRadius: '0 !important',
-    }),
-  };
-};
-
 /**
  * Form field that has 2 states configured and not configured. If configured it will not show its contents and adds
  * a reset button that will clear the input and makes it accessible. In non configured state it behaves like normal
@@ -58,7 +44,6 @@ export const SecretFormField = ({
   interactive,
   ...inputProps
 }: Props) => {
-  const styles = getSecretFormFieldStyles();
   return (
     <FormField
       label={label!}
@@ -70,7 +55,7 @@ export const SecretFormField = ({
           <>
             <input
               type="text"
-              className={cx(`gf-form-input width-${inputWidth}`, styles.noRadiusInput)}
+              className={`gf-form-input width-${inputWidth}`}
               disabled={true}
               value="configured"
               {...omit(inputProps, 'value')}

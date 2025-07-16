@@ -1,5 +1,5 @@
-import { setupMockedAnnotationQueryRunner } from '../__mocks__/AnnotationQueryRunner';
-import { namespaceVariable, regionVariable } from '../__mocks__/CloudWatchDataSource';
+import { setupMockedAnnotationQueryRunner } from '../mocks/AnnotationQueryRunner';
+import { namespaceVariable, regionVariable } from '../mocks/CloudWatchDataSource';
 import { CloudWatchAnnotationQuery } from '../types';
 
 describe('CloudWatchAnnotationQueryRunner', () => {

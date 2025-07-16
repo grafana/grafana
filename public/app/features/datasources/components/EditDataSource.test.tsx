@@ -3,11 +3,11 @@ import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataSourceJsonData, PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
-import { setPluginComponentsHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
+import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../mocks/dataSourcesMocks';
 
 import { missingRightsMessage } from './DataSourceMissingRightsMessage';
 import { readOnlyMessage } from './DataSourceReadOnlyMessage';
@@ -26,6 +26,8 @@ jest.mock('@grafana/runtime', () => {
     })),
   };
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const setup = (props?: Partial<ViewProps>) => {
   const store = configureStore();

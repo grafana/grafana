@@ -12,9 +12,9 @@ import {
   QueryVariableModel,
   ScopedVars,
 } from '@grafana/data';
+import { StoreState, ThunkDispatch } from 'app/types/store';
 
 import { dispatch, getState } from '../../../store/store';
-import { StoreState, ThunkDispatch } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest } from '../../query/state/runRequest';
 import { getLastKey, getVariable } from '../state/selectors';

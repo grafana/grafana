@@ -8,9 +8,16 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
+	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -57,6 +64,11 @@ import (
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
+var provisioningExtras = wire.NewSet(
+	webhooks.ProvideWebhooks,
+	extras.ProvideProvisioningOSSExtras,
+)
+
 var wireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
@@ -93,6 +105,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
+	secretkeeper.ProvideService,
+	wire.Bind(new(contracts.KeeperService), new(*secretkeeper.OSSKeeperService)),
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	guardian.ProvideGuardian,
@@ -123,6 +137,9 @@ var wireExtsBasicSet = wire.NewSet(
 	unified.ProvideUnifiedStorageClient,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
+	apisregistry.WireSetExts,
+	gsmKMSProviders.ProvideOSSKMSProviders,
+	provisioningExtras,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -149,7 +166,6 @@ var wireExtsBaseCLISet = wire.NewSet(
 	metrics.WireSet,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	featuremgmt.ProvideOpenFeatureService,
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
@@ -159,6 +175,10 @@ var wireExtsBaseCLISet = wire.NewSet(
 var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
+	// Tracing
+	tracing.ProvideTracingConfig,
+	tracing.ProvideService,
+	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

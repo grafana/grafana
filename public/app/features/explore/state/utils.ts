@@ -25,8 +25,8 @@ import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExplorePanelData, StoreState } from 'app/types';
-import { ExploreItemState, RichHistoryQuery } from 'app/types/explore';
+import { ExploreItemState, ExplorePanelData, RichHistoryQuery } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
 
 import store from '../../../core/store';
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';

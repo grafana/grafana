@@ -9,8 +9,8 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
 import { highlightTrial } from 'app/features/admin/utils';
-
-import { StoreState, TeamGroup } from '../../types';
+import { StoreState } from 'app/types/store';
+import { TeamGroup } from 'app/types/teams';
 
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';

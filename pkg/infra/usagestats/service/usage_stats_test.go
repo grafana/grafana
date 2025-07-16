@@ -155,7 +155,7 @@ func TestMetrics(t *testing.T) {
 	})
 }
 
-func TestGetUsageReport_IncludesMetrics(t *testing.T) {
+func TestIntegrationGetUsageReport_IncludesMetrics(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, sqlStore, true)
 	metricName := "stats.test_metric.count"

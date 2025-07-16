@@ -260,16 +260,24 @@ function getClassicPalette() {
   // Todo replace these with named colors (as many as possible)
 
   return [
-    'green', // '#7EB26D', // 0: pale green
-    'semi-dark-yellow', // '#EAB839', // 1: mustard
-    'light-blue', // #6ED0E0', // 2: light blue
-    'semi-dark-orange', // '#EF843C', // 3: orange
-    'red', // '#E24D42', // 4: red
-    'blue', // #1F78C1', // 5: ocean
-    'purple', // '#BA43A9', // 6: purple
-    '#705DA0', // 7: violet
-    'dark-green', // '#508642', // 8: dark green
-    'yellow', //'#CCA300', // 9: dark sand
+    'green',
+    'yellow',
+    'blue',
+    'orange',
+    'red',
+    'purple',
+    'dark-green',
+    'dark-yellow',
+    'dark-blue',
+    'dark-orange',
+    'dark-red',
+    'dark-purple',
+    'super-light-green',
+    'super-light-yellow',
+    'super-light-blue',
+    'super-light-orange',
+    'super-light-red',
+    'super-light-purple',
     '#447EBC',
     '#C15C17',
     '#890F02',

@@ -31,7 +31,7 @@ import {
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
   MockDataSourceSrv,
-} from './__mocks__/useCorrelations.mocks';
+} from './mocks/useCorrelations.mocks';
 import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
 
 // Set app events up, otherwise plugin modules will fail to load

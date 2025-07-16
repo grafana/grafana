@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -8,9 +9,9 @@ import { Box, Button, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DashboardEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/DashboardEditFormSharedFields';
+import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
@@ -42,6 +43,7 @@ function FormContent({
   const resourceId = parentFolder?.uid || '';
 
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
+  const navigate = useNavigate();
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
@@ -66,9 +68,9 @@ function FormContent({
   // TODO: move to a hook if this useEffect shared mostly the same logic as in NewProvisionedFolderForm
   useEffect(() => {
     if (request.isSuccess && repository) {
-      if (workflow === 'branch') {
-        // TODO: handle display banner https://github.com/grafana/git-ui-sync-project/issues/300
-        // TODO: implement when BE is ready
+      const prUrl = request.data?.urls?.newPullRequestURL;
+      if (workflow === 'branch' && prUrl) {
+        navigate(`/dashboards?new_pull_request_url=${prUrl}`);
         return;
       }
 
@@ -101,7 +103,7 @@ function FormContent({
       });
       return;
     }
-  }, [request, repository, workflow, parentFolder]);
+  }, [request, repository, workflow, parentFolder, navigate]);
 
   return (
     <FormProvider {...methods}>
@@ -121,7 +123,7 @@ function FormContent({
             />
           </Box>
 
-          <DashboardEditFormSharedFields
+          <ResourceEditFormSharedFields
             resourceType="folder"
             isNew={false}
             workflow={workflow}

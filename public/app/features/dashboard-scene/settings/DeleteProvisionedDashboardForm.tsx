@@ -8,7 +8,7 @@ import { Alert, Button, Drawer, Stack } from '@grafana/ui';
 import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
-import { DashboardEditFormSharedFields } from '../components/Provisioned/DashboardEditFormSharedFields';
+import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
@@ -121,7 +121,7 @@ export function DeleteProvisionedDashboardForm({
               </Alert>
             )}
 
-            <DashboardEditFormSharedFields
+            <ResourceEditFormSharedFields
               resourceType="dashboard"
               isNew={isNew}
               readOnly={readOnly}

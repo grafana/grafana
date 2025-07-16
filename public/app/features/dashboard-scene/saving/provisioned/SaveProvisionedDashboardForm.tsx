@@ -14,7 +14,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
-import { DashboardEditFormSharedFields } from '../../components/Provisioned/DashboardEditFormSharedFields';
+import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
@@ -120,6 +120,8 @@ export function SaveProvisionedDashboardForm({
       ref = loadedFromRef;
     }
 
+    const message = comment || `Save dashboard: ${dashboard.state.title}`;
+
     const body = dashboard.getSaveResource({
       isNew,
       title,
@@ -130,7 +132,7 @@ export function SaveProvisionedDashboardForm({
       ref,
       name: repo,
       path,
-      message: comment,
+      message,
       body,
     });
   };
@@ -214,7 +216,7 @@ export function SaveProvisionedDashboardForm({
 
           {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
-          <DashboardEditFormSharedFields
+          <ResourceEditFormSharedFields
             resourceType="dashboard"
             readOnly={readOnly}
             workflow={workflow}

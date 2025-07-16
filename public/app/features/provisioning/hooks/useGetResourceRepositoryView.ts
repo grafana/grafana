@@ -1,5 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
+import { config } from '@grafana/runtime';
 import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
@@ -18,11 +19,18 @@ interface RepositoryViewData {
 
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
 export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRepositoryArgs): RepositoryViewData => {
-  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery();
-  const skipFolderQuery = name || !folderName;
+  const provisioningEnabled = config.featureToggles.provisioning;
+  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(
+    !provisioningEnabled ? skipToken : undefined
+  );
+  const skipFolderQuery = !folderName || !provisioningEnabled;
   const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
     skipFolderQuery ? skipToken : { name: folderName }
   );
+
+  if (!provisioningEnabled) {
+    return { isLoading: false, isInstanceManaged: false };
+  }
 
   if (isSettingsLoading || isFolderLoading) {
     return { isLoading: true, isInstanceManaged: false };

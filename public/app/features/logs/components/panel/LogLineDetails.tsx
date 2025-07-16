@@ -1,48 +1,35 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useCallback, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { getDragStyles, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { getDragStyles, useStyles2 } from '@grafana/ui';
 
-import { LogDetails } from '../LogDetails';
-import { getLogRowStyles } from '../getLogRowStyles';
-
-import { useLogListContext } from './LogListContext';
+import { LogLineDetailsComponent } from './LogLineDetailsComponent';
+import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
-interface Props {
+export interface Props {
   containerElement: HTMLDivElement;
-  getFieldLinks?: GetFieldLinksFn;
+  focusLogLine: (log: LogListModel) => void;
   logs: LogListModel[];
   onResize(): void;
 }
 
-export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize }: Props) => {
-  const {
-    app,
-    closeDetails,
-    detailsWidth,
-    displayedFields,
-    isLabelFilterActive,
-    onClickFilterLabel,
-    onClickFilterOutLabel,
-    onClickShowField,
-    onClickHideField,
-    onPinLine,
-    pinLineButtonTooltipTitle,
-    setDetailsWidth,
-    showDetails,
-    wrapLogMessage,
-  } = useLogListContext();
-  const getRows = useCallback(() => logs, [logs]);
-  const logRowsStyles = getLogRowStyles(useTheme2());
-  const styles = useStyles2(getStyles);
+export type LogLineDetailsMode = 'inline' | 'sidebar';
+
+export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize }: Props) => {
+  const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
+  const styles = useStyles2(getStyles, 'sidebar');
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    focusLogLine(showDetails[0]);
+    // Just once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleResize = useCallback(() => {
     if (containerRef.current) {
@@ -52,6 +39,10 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
   }, [onResize, setDetailsWidth]);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+
+  if (!showDetails.length) {
+    return null;
+  }
 
   return (
     <Resizable
@@ -65,54 +56,70 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>
-          <IconButton
-            name="times"
-            className={styles.closeIcon}
-            aria-label={t('logs.log-details.close', 'Close log details')}
-            onClick={closeDetails}
-          />
-          <table width="100%">
-            <tbody>
-              <LogDetails
-                getRows={getRows}
-                mode="sidebar"
-                row={showDetails[0]}
-                showDuplicates={false}
-                styles={logRowsStyles}
-                wrapLogMessage={wrapLogMessage}
-                onPinLine={onPinLine}
-                getFieldLinks={getFieldLinks}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowField={onClickShowField}
-                onClickHideField={onClickHideField}
-                hasError={showDetails[0].hasError}
-                displayedFields={displayedFields}
-                app={app}
-                isFilterLabelActive={isLabelFilterActive}
-                pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-              />
-            </tbody>
-          </table>
+          <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
         </div>
       </div>
     </Resizable>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export interface InlineLogLineDetailsProps {
+  logs: LogListModel[];
+}
+
+export const InlineLogLineDetails = memo(({ logs }: InlineLogLineDetailsProps) => {
+  const { showDetails } = useLogListContext();
+  const styles = useStyles2(getStyles, 'inline');
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const saveScroll = useCallback(() => {
+    saveDetailsScrollPosition(showDetails[0], scrollRef.current?.scrollTop ?? 0);
+  }, [showDetails]);
+
+  useEffect(() => {
+    if (!scrollRef.current) {
+      return;
+    }
+    scrollRef.current.scrollTop = getDetailsScrollPosition(showDetails[0]);
+  }, [showDetails]);
+
+  if (!showDetails.length) {
+    return null;
+  }
+
+  return (
+    <div className={`${styles.inlineWrapper} log-line-inline-details`}>
+      <div className={styles.container}>
+        <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
+          <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
+        </div>
+      </div>
+    </div>
+  );
+});
+InlineLogLineDetails.displayName = 'InlineLogLineDetails';
+
+export const LOG_LINE_DETAILS_HEIGHT = 35;
+
+const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
+  inlineWrapper: css({
+    gridColumn: '1 / -1',
+    height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
+    paddingBottom: theme.spacing(0.5),
+    marginRight: 1,
+  }),
   container: css({
     overflow: 'auto',
     height: '100%',
+    boxShadow: theme.shadows.z1,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRight: mode === 'sidebar' ? 'none' : undefined,
   }),
   scrollContainer: css({
     overflow: 'auto',
-    position: 'relative',
     height: '100%',
   }),
-  closeIcon: css({
-    position: 'absolute',
-    top: theme.spacing(1),
-    right: theme.spacing(1.5),
+  componentWrapper: css({
+    padding: theme.spacing(0, 1, 1, 1),
   }),
 });

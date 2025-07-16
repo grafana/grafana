@@ -1,9 +1,9 @@
 import { of } from 'rxjs';
 
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
-import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
@@ -45,7 +45,7 @@ jest.mock('../services/PreferencesService', () => ({
 }));
 
 // FIXME: Tests break unless plugin loader is mocked. This is likely due to a circular dependency
-jest.mock('app/features/plugins/plugin_loader', () => ({}));
+jest.mock('app/features/plugins/pluginLoader', () => ({}));
 
 describe('RichHistoryRemoteStorage', () => {
   let storage: RichHistoryRemoteStorage;

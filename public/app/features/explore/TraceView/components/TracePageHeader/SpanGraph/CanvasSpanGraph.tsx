@@ -19,7 +19,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { withTheme2, stylesFactory } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TNil } from '../../types';
+import TNil from '../../types/TNil';
 import { getRgbColorByKey } from '../../utils/color-generator';
 
 import renderIntoCanvas from './render-into-canvas';
