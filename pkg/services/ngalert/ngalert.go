@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
@@ -738,7 +739,7 @@ func configureNotificationHistorian(
 	met *metrics.NotificationHistorian,
 	l log.Logger,
 	tracer tracing.Tracer,
-) (*notifier.NotificationHistorian, error) {
+) (nfstatus.NotificationHistorian, error) {
 	if !featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNotificationHistory) {
 		return nil, nil
 	}
