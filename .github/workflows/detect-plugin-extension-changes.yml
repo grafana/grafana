@@ -14,11 +14,10 @@ on:
     paths:
       - 'packages/**'
       - 'public/**'
-  workflow_dispatch:
 
 env:
   # Space-separated list of keywords referring to plugin extensions
-  PLUGIN_EXTENSION_KEYWORDS: "usePluginLinks usePluginComponent usePluginComponents usePluginFunctions PluginExtensionPoints"
+  PLUGIN_EXTENSION_KEYWORDS: "usePluginLinks, usePluginComponent, usePluginComponents, usePluginFunctions, PluginExtensionPoints"
 
 jobs:
   detect-plugin-extension-changes:
@@ -44,7 +43,7 @@ jobs:
             const fs = require('fs');
             
             // Plugin extension keywords from environment
-            const keywords = process.env.PLUGIN_EXTENSION_KEYWORDS.split(' ');
+            const keywords = process.env.PLUGIN_EXTENSION_KEYWORDS.split(',');
             const baseSha = '${{ github.event.pull_request.base.sha }}';
             const headSha = '${{ github.event.pull_request.head.sha }}';
             
@@ -53,23 +52,18 @@ jobs:
             
             // Get changed files in packages/ and public/ directories
             let changedFiles = [];
-            try {
-              const diffOutput = execSync(
-                `git diff --name-only ${baseSha}...${headSha} -- packages/ public/`,
-                { encoding: 'utf8' }
-              ).trim();
-              
-              if (diffOutput) {
-                changedFiles = diffOutput.split('\n').filter(file => {
-                  // Validate file path and ensure it's in target directories
-                  return file.match(/^(packages\/|public\/)/) && 
-                         file.match(/^[a-zA-Z0-9._/-]+$/) && 
-                         fs.existsSync(file);
-                });
-              }
-            } catch (error) {
-              console.log('Error getting changed files:', error.message);
-              return;
+            const diffOutput = execSync(
+              `git diff --name-only ${baseSha}...${headSha} -- packages/ public/`,
+              { encoding: 'utf8' }
+            ).trim();
+            
+            if (diffOutput) {
+              changedFiles = diffOutput.split('\n').filter(file => {
+                // Validate file path and ensure it's in target directories
+                return file.match(/^(packages\/|public\/)/) && 
+                        file.match(/^[a-zA-Z0-9._/-]+$/) && 
+                        fs.existsSync(file);
+              });
             }
             
             console.log('Changed files to check:', changedFiles);
@@ -108,31 +102,19 @@ jobs:
             
             core.setOutput('plugin_extension_changes', hasPluginExtensionChanges.toString());
             core.setOutput('formatted_changed_files', formattedFiles);
-            
-            // Create summary if changes detected
+
             if (hasPluginExtensionChanges) {
-              const summary = [
-                '### Plugin Extension Changes Detected 🔧',
-                '',
-                'The following plugin extension-related changes were detected:',
-                '',
-                ...filesArray.map(file => `- Changes in \`${file}\``),
-                '',
-                'Please review these changes carefully as they affect plugin extension points.'
-              ].join('\n');
-              
-              fs.writeFileSync('extension_changes_summary.md', summary);
+              console.log('The following files have changes that may affect plugin extensions:');
+              console.log(filesArray);
+            } else {
+              console.log('No changes detected in core Grafana extensions or extension points.');
             }
-            
-            console.log('Plugin extension changes detected:', hasPluginExtensionChanges);
-            console.log('Files with changes:', filesArray);
 
       - name: Send Slack Message via Payload
         id: slack
         if: steps.check-changes.outputs.plugin_extension_changes == 'true'
         uses: grafana/shared-workflows/actions/send-slack-message@7b628e7352c2dea057c565cc4fcd5564d5f396c0 #v1.0.0
         with:
-          channel-id: "C031SLFH6G0"
           payload: |
             {
               "channel": "C031SLFH6G0",
