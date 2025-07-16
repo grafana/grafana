@@ -91,7 +91,7 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
    * onClickHideField?: (key: string) => void;
-   * 
+   *
    * Called from the new Log Details Panel when fields are reordered. If ommited, a default implementation is used.
    * setDisplayedFields?: (key: string) => void;
    *
