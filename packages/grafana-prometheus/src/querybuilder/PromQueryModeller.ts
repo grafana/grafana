@@ -3,7 +3,7 @@ import { FUNCTIONS } from '../promql';
 
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
-import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';
+import { PromQueryModellerBase } from './shared/PromQueryModellerBase';
 import {
   PromQueryPattern,
   PromQueryPatternType,
@@ -11,7 +11,7 @@ import {
   PromQueryModellerInterface,
 } from './types';
 
-export class PromQueryModeller extends LokiAndPromQueryModellerBase implements PromQueryModellerInterface {
+export class PromQueryModeller extends PromQueryModellerBase implements PromQueryModellerInterface {
   constructor() {
     super(() => {
       const allOperations = [...getOperationDefinitions(), ...getAggregationOperations()];

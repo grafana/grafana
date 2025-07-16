@@ -4,23 +4,16 @@ import { Registry } from '@grafana/data';
 import { renderLabels } from './rendering/labels';
 import { hasBinaryOp, renderOperations } from './rendering/operations';
 import { renderQuery, renderBinaryQueries } from './rendering/query';
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
+import {
+  PrometheusVisualQuery,
+  QueryBuilderLabelFilter,
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  VisualQueryBinary,
+  VisualQueryModeller,
+} from './types';
 
-export interface VisualQueryBinary<T> {
-  operator: string;
-  vectorMatchesType?: 'on' | 'ignoring';
-  vectorMatches?: string;
-  query: T;
-}
-
-export interface PromLokiVisualQuery {
-  metric?: string;
-  labels: QueryBuilderLabelFilter[];
-  operations: QueryBuilderOperation[];
-  binaryQueries?: Array<VisualQueryBinary<PromLokiVisualQuery>>;
-}
-
-export abstract class LokiAndPromQueryModellerBase implements VisualQueryModeller {
+export abstract class PromQueryModellerBase implements VisualQueryModeller {
   protected operationsRegistry: Registry<QueryBuilderOperationDef>;
   private categories: string[] = [];
   private operationsMapCache: Map<string, QueryBuilderOperationDef> | null = null;
@@ -63,7 +56,7 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
     return renderOperations(queryString, operations, this.getOperationsMap());
   }
 
-  renderBinaryQueries(queryString: string, binaryQueries?: Array<VisualQueryBinary<PromLokiVisualQuery>>) {
+  renderBinaryQueries(queryString: string, binaryQueries?: Array<VisualQueryBinary<PrometheusVisualQuery>>) {
     return renderBinaryQueries(queryString, binaryQueries);
   }
 
@@ -71,11 +64,11 @@ export abstract class LokiAndPromQueryModellerBase implements VisualQueryModelle
     return renderLabels(labels);
   }
 
-  renderQuery(query: PromLokiVisualQuery, nested?: boolean) {
+  renderQuery(query: PrometheusVisualQuery, nested?: boolean) {
     return renderQuery(query, nested, this.getOperationsMap());
   }
 
-  hasBinaryOp(query: PromLokiVisualQuery): boolean {
+  hasBinaryOp(query: PrometheusVisualQuery): boolean {
     return hasBinaryOp(query, this.getOperationsMap());
   }
 }

@@ -1,6 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/types.ts
-import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef } from './shared/types';
+import {
+  QueryBuilderLabelFilter,
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  VisualQueryBinary,
+} from './shared/types';
 
 /**
  * Visual query model

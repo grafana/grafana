@@ -25,6 +25,7 @@ import {
   fixSummariesMetadata,
   processHistogramMetrics,
   processLabels,
+  removeQuotesIfExist,
   toPromLikeQuery,
 } from './language_utils';
 import { promqlGrammar } from './promql';
@@ -764,18 +765,6 @@ function isCancelledError(error: unknown): error is {
   cancelled: boolean;
 } {
   return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
-}
-
-/**
- * Removes quotes from a string if they exist.
- * Used to handle utf8 label keys in Prometheus queries.
- *
- * @param {string} input - Input string that may have surrounding quotes
- * @returns {string} String with surrounding quotes removed if they existed
- */
-export function removeQuotesIfExist(input: string): string {
-  const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
-  return match?.[1] ?? input;
 }
 
 function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {
