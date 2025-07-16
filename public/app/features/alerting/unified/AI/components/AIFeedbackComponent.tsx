@@ -100,9 +100,12 @@ export const AIFeedbackComponent = ({
   return (
     <Box width={"100%"} padding={2} borderStyle="solid" borderColor={"weak"} >
       <Stack direction="column" gap={2} width={"100%"}>
-        <Text variant="body">
-          <Trans i18nKey="alerting.ai-feedback.question">Was this AI response helpful?</Trans>
-        </Text>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Icon name="ai-sparkle" className={styles.aiSparkle} />
+          <Text variant="body" color="info">
+            <Trans i18nKey="alerting.ai-feedback.question">Was this AI response helpful?</Trans>
+          </Text>
+        </Stack>
         <Stack direction="row" gap={2} alignItems="center">
           <Button
             variant="secondary"
@@ -137,5 +140,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   thumbsDown: css({
     transform: 'scale(-1, -1)',
+  }),
+  aiSparkle: css({
+    color: theme.colors.info.main,
   }),
 }); 
