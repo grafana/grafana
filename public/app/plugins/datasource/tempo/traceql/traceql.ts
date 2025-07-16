@@ -113,8 +113,8 @@ const language: languages.IMonarchLanguage = {
       // trace ID
       [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
 
-      // with clause - match 'with' keyword followed by parentheses
-      [/\bwith\s*\(/, { token: 'keyword', next: '@withClause' }],
+      // with clause - match 'with' keyword
+      [/\bwith\b/, { token: 'keyword', next: '@withStart' }],
 
       // keywords
       [
@@ -171,12 +171,22 @@ const language: languages.IMonarchLanguage = {
       [/(@digits)[lL]?/, 'number'],
     ],
 
+    withStart: [
+      [/\s+/, ''], // whitespace
+      [/\(/, { token: 'delimiter.bracket', next: '@withClause' }], // opening parenthesis - enter with clause
+      [/(?=.)/, { token: '', next: '@pop' }], // anything else - go back to root (use lookahead to not consume the character)
+    ],
+
     withClause: [
       [/\s+/, ''], // whitespace
-      [/most_recent/, 'variable'], // parameter names like 'most_recent'
-      [/=/, 'delimiter'], // assignment operator
-      [/\b(true|false)\b/, 'type'], // boolean values
-      [/\)/, { token: 'delimiter.bracket', next: '@pop' }], // closing parenthesis - return to root
+      [/\w+/, { // parameter names
+          cases: {
+            '@withParameters': 'variable'
+          }
+        }],
+      [/=/, 'delimiter'], // operator
+      [/\b(true|false)\b/, 'type'], // values
+      [/\)/, { token: 'delimiter.bracket', next: '@pop' }], // closing parenthesis - return to previous state
     ],
 
     string_double: [
