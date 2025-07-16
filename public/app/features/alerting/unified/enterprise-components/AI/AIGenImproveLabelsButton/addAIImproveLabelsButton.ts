@@ -1,5 +1,9 @@
 import { ComponentType, createElement } from 'react';
 
+import { withErrorBoundary } from '@grafana/ui';
+
+import { logError } from '../../../Analytics';
+
 export interface GenAIImproveLabelsButtonProps {}
 
 // Internal variable to store the actual component
@@ -9,7 +13,14 @@ export const AIImproveLabelsButtonComponent: ComponentType<GenAIImproveLabelsBut
   if (!InternalAIImproveLabelsButtonComponent) {
     return null;
   }
-  return createElement(InternalAIImproveLabelsButtonComponent, props);
+  
+  const WrappedComponent = withErrorBoundary(InternalAIImproveLabelsButtonComponent, {
+    title: 'AI Improve Labels Button failed to load',
+    style: 'alertbox',
+    errorLogger: logError,
+  });
+  
+  return createElement(WrappedComponent, props);
 };
 
 export function addAIImproveLabelsButton(component: ComponentType<GenAIImproveLabelsButtonProps> | null) {

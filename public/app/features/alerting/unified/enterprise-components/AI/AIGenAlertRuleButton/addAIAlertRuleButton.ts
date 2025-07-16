@@ -1,5 +1,9 @@
 import { ComponentType, createElement } from 'react';
 
+import { withErrorBoundary } from '@grafana/ui';
+
+import { logError } from '../../../Analytics';
+
 export interface GenAIAlertRuleButtonProps {}
 
 // Internal variable to store the actual component
@@ -9,7 +13,14 @@ export const AIAlertRuleButtonComponent: ComponentType<GenAIAlertRuleButtonProps
   if (!InternalAIAlertRuleButtonComponent) {
     return null;
   }
-  return createElement(InternalAIAlertRuleButtonComponent, props);
+  
+  const WrappedComponent = withErrorBoundary(InternalAIAlertRuleButtonComponent, {
+    title: 'AI Alert Rule Button failed to load',
+    style: 'alertbox',
+    errorLogger: logError,
+  });
+  
+  return createElement(WrappedComponent, props);
 };
 
 export function addAIAlertRuleButton(component: ComponentType<GenAIAlertRuleButtonProps> | null) {
