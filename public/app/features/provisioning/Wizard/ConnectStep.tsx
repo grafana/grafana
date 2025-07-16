@@ -27,7 +27,7 @@ export function ConnectStep() {
   const { tokenConfig, urlConfig, branchConfig, pathConfig } = getFieldConfig(['token', 'url', 'branch', 'path']);
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={2}>
       {type === 'github' && <TokenPermissionsInfo />}
 
       {isGitBased && tokenConfig && (

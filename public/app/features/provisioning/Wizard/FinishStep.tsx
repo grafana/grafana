@@ -29,7 +29,7 @@ export function FinishStep() {
   const prWorkflowConfig = getFieldConfig('prWorkflow');
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={2}>
       {isGitBased && (
         <Field
           noMargin
