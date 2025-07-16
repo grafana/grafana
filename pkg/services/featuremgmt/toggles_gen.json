@@ -2227,6 +2227,19 @@
     },
     {
       "metadata": {
+        "name": "otelLogsFormatting",
+        "resourceVersion": "1750152612973",
+        "creationTimestamp": "2025-06-17T09:30:12Z"
+      },
+      "spec": {
+        "description": "Applies OTel formatting templates to displayed logs",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-11-03T12:15:54Z"
