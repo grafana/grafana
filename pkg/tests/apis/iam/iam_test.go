@@ -212,6 +212,7 @@ func TestIntegrationUsers(t *testing.T) {
 func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("should create user and delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
+
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
 			GVR:  gvrUsers,
@@ -260,17 +261,24 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Contains(t, err.Error(), "not found")
 	})
 
-	t.Run("should not be able to create if not admin", func(t *testing.T) {
-		ctx := context.Background()
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
-			GVR:  gvrUsers,
-		})
+	t.Run("should not be able to create user when using a user with insufficient permissions", func(t *testing.T) {
+		for _, user := range []apis.User{
+			helper.Org1.Editor,
+			helper.Org1.Viewer,
+		} {
+			t.Run(fmt.Sprintf("with basic role: %s", user.Identity.GetOrgRole()), func(t *testing.T) {
+				ctx := context.Background()
+				userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+					User: user,
+					GVR:  gvrUsers,
+				})
 
-		// Create the user
-		_, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unauthorized request")
+				// Create the user
+				_, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "unauthorized request")
+			})
+		}
 	})
 }
 
