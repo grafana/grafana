@@ -20,7 +20,7 @@ import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
 import { rootFolder, sharedWithMeFolder } from './virtualFolders';
 
-import { folderAPIv1beta1 } from './index';
+import { useGetFolderQuery, useGetFolderParentsQuery, useGetFolderAccessQuery } from './index';
 
 function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
@@ -41,10 +41,10 @@ export function useGetFolderQueryFacade(uid?: string) {
     const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
     const params = isVirtualFolder || !uid ? skipToken : { name: uid };
 
-    let result = folderAPIv1beta1.useGetFolderQuery(params);
+    let result = useGetFolderQuery(params);
 
-    const resultParents = folderAPIv1beta1.useGetFolderParentsQuery(params);
-    const resultAccess = folderAPIv1beta1.useGetFolderAccessQuery(params);
+    const resultParents = useGetFolderParentsQuery(params);
+    const resultAccess = useGetFolderAccessQuery(params);
 
     const keys: string[] = result.data
       ? [
@@ -121,37 +121,9 @@ export function useGetFolderQueryFacade(uid?: string) {
       }
     }
 
-    console.log(newData);
     return {
       ...result,
-      isLoading:
-        result.isLoading ||
-        resultParents.isLoading ||
-        resultAccess.isLoading ||
-        (keys.length ? resultUserDisplay.isLoading : false),
-      isFetching:
-        result.isFetching ||
-        resultParents.isFetching ||
-        resultAccess.isFetching ||
-        (keys.length ? resultUserDisplay.isFetching : false),
-      isSuccess:
-        result.isSuccess &&
-        resultParents.isSuccess &&
-        resultAccess.isSuccess &&
-        (keys.length ? resultUserDisplay.isSuccess : true),
-      isError:
-        result.isError ||
-        resultParents.isError ||
-        resultAccess.isError ||
-        (keys.length ? resultUserDisplay.isError : false),
-
-      // Only one error will be shown. TODO: somehow create a single error out of them?
-      error:
-        result.error ||
-        resultParents.error ||
-        resultAccess.error ||
-        (keys.length ? resultUserDisplay.error : undefined),
-
+      ...combinedState(result, resultParents, resultAccess, resultUserDisplay, needsUserData),
       refetch: async () => {
         return Promise.all([
           result.refetch(),
@@ -167,4 +139,24 @@ export function useGetFolderQueryFacade(uid?: string) {
   } else {
     return useGetFolderQueryLegacy(uid || skipToken);
   }
+}
+
+function combinedState(
+  result: ReturnType<typeof useGetFolderQuery>,
+  resultParents: ReturnType<typeof useGetFolderParentsQuery>,
+  resultAccess: ReturnType<typeof useGetFolderAccessQuery>,
+  resultUserDisplay: ReturnType<typeof useGetDisplayMappingQuery>,
+  needsUserData: boolean
+) {
+  const results = needsUserData
+    ? [result, resultParents, resultAccess]
+    : [result, resultParents, resultAccess, resultUserDisplay];
+  return {
+    isLoading: results.some((r) => r.isLoading),
+    isFetching: results.some((r) => r.isFetching),
+    isSuccess: results.every((r) => r.isSuccess),
+    isError: results.some((r) => r.isError),
+    // Only one error will be shown. TODO: somehow create a single error out of them?
+    error: results.find((r) => r.error),
+  };
 }
