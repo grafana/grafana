@@ -68,8 +68,6 @@ export class CanvasPanel extends Component<Props, State> {
     const dashboard = getDashboardSrv().getCurrent();
     const allowEditing = this.props.options.inlineEditing && dashboard?.editable;
 
-    console.log('this.props.options', this.props.options);
-
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
     this.scene = new Scene(
