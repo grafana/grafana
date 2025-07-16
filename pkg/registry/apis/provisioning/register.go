@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -168,6 +169,13 @@ func NewAPIBuilder(
 	}
 
 	return b
+}
+
+// HACK: This is a hack so that wire can uniquely identify dependencies
+func ProvideProvisioningOSSExtras(webhook webhooks.WebhookExtraBuilder) []ExtraBuilder {
+	return []ExtraBuilder{
+		webhook.ExtraBuilder,
+	}
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
