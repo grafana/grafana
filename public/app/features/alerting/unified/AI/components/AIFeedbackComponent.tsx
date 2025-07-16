@@ -3,20 +3,16 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Icon, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { Box, Button, Field, Icon, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 export interface AIFeedbackComponentProps {
   onFeedback: (helpful: boolean, comment?: string) => void;
-  className?: string;
-  disabled?: boolean;
   showComment?: boolean;
   feedbackGiven?: boolean;
 }
 
 export const AIFeedbackComponent = ({
   onFeedback,
-  className,
-  disabled = false,
   showComment = false,
   feedbackGiven = false,
 }: AIFeedbackComponentProps) => {
@@ -55,21 +51,19 @@ export const AIFeedbackComponent = ({
 
   if (feedbackGiven) {
     return (
-      <div className={`${styles.container} ${className}`}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name="check" color="success" />
-          <Text variant="bodySmall" color="success">
-            <Trans i18nKey="alerting.ai-feedback.thank-you">Thank you for your feedback!</Trans>
-          </Text>
-        </Stack>
-      </div>
+      <Stack direction="row" alignItems="center" gap={1} width={"100%"}>
+        <Icon name="check" color="success" />
+        <Text variant="bodySmall" color="success">
+          <Trans i18nKey="alerting.ai-feedback.thank-you">Thank you for your feedback!</Trans>
+        </Text>
+      </Stack>
     );
   }
 
   if (showCommentField && selectedFeedback !== null) {
     return (
-      <div className={`${styles.container} ${className}`}>
-        <Stack direction="column" gap={2}>
+      <Box width={"100%"} padding={2} borderStyle="solid" borderColor={"weak"} >
+        <Stack direction="column" gap={2} width={"100%"}>
           <Text variant="body">
             <Trans i18nKey="alerting.ai-feedback.comment-prompt">
               Would you like to tell us more about your experience?
@@ -88,25 +82,24 @@ export const AIFeedbackComponent = ({
               onChange={(e) => setComment(e.currentTarget.value)}
               placeholder={t('alerting.ai-feedback.comment-placeholder', 'Share your thoughts on the AI response...')}
               rows={3}
-              disabled={disabled}
             />
           </Field>
           <Stack direction="row" gap={2} justifyContent="flex-end">
-            <Button variant="secondary" size="sm" onClick={handleSkipComment} disabled={disabled}>
+            <Button variant="secondary" size="sm" onClick={handleSkipComment}>
               <Trans i18nKey="alerting.ai-feedback.skip">Skip</Trans>
             </Button>
-            <Button variant="primary" size="sm" onClick={handleSubmitWithComment} disabled={disabled}>
+            <Button variant="primary" size="sm" onClick={handleSubmitWithComment}>
               <Trans i18nKey="alerting.ai-feedback.submit">Submit Feedback</Trans>
             </Button>
           </Stack>
         </Stack>
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className={`${styles.container} ${className}`}>
-      <Stack direction="column" gap={2}>
+    <Box width={"100%"} padding={2} borderStyle="solid" borderColor={"weak"} >
+      <Stack direction="column" gap={2} width={"100%"}>
         <Text variant="body">
           <Trans i18nKey="alerting.ai-feedback.question">Was this AI response helpful?</Trans>
         </Text>
@@ -116,7 +109,6 @@ export const AIFeedbackComponent = ({
             size="sm"
             icon="thumbs-up"
             onClick={() => handleFeedback(true)}
-            disabled={disabled}
             className={styles.feedbackButton}
           >
             <Trans i18nKey="alerting.ai-feedback.helpful">Yes, helpful</Trans>
@@ -125,7 +117,6 @@ export const AIFeedbackComponent = ({
             variant="secondary"
             size="sm"
             onClick={() => handleFeedback(false)}
-            disabled={disabled}
             className={styles.feedbackButton}
           >
             <Stack direction="row" alignItems="center" gap={1}>
@@ -135,21 +126,12 @@ export const AIFeedbackComponent = ({
           </Button>
         </Stack>
       </Stack>
-    </div>
+    </Box>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
-    padding: theme.spacing(2),
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  }),
+
   feedbackButton: css({
     minWidth: '120px',
   }),
