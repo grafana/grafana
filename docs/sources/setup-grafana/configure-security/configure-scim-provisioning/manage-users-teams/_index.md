@@ -196,7 +196,7 @@ allow_non_provisioned_users = true
 
 **During migration:**
 
-- **Monitor logs** - Watch for SCIM errors or conflicts during the linking process
+- **Monitor logs** - Watch for SCIM errors or conflicts during the linking process in Grafana and your Identity Provider
 - **Batch processing** - Consider migrating users in small batches to identify issues early
 - **Communication** - Inform users about the migration timeline and any required actions
 
@@ -301,7 +301,7 @@ curl --location 'https://{$GRAFANA_URL}/apis/scim.grafana.app/v0alpha1/namespace
 --header 'Authorization: Bearer glsa_xxxxxxxxxxxxxxxxxxxxxxxx'
 ```
 
-The response should return exactly one user. If not, configure a different unique identifier field in your identity provider.
+The response should return exactly one user. If not, configure a different unique identifier field in your identity provider, or remove the duplicate users from Grafana.
 
 #### Error: "invalid namespace"
 
