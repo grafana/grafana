@@ -74,7 +74,7 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Auto,
-  showValues: VisibilityMode.Auto,
+  showValues: false,
 };
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
@@ -555,60 +555,51 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
   builder.setStackingGroups(stackingGroups);
 
-  const shouldShowValues = frame.fields.slice(1).some((field) => {
-    const customConfig = { ...defaultConfig, ...field.config.custom };
-    if (customConfig.showValues === VisibilityMode.Always) {
-      return true;
+  const shouldShowValues = frame.fields.some((field, i) => {
+    if (i === 0) {
+      return false;
     }
-    if (
-      customConfig.showValues === VisibilityMode.Auto &&
-      field.type === FieldType.number &&
-      customConfig.showPoints !== VisibilityMode.Never
-    ) {
-      return true;
-    }
-    return false;
+
+    const customConfig = field.config.custom;
+    const showPoints =
+      customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
+
+    return showPoints !== VisibilityMode.Never && customConfig.showValues;
   });
 
   if (shouldShowValues) {
     builder.addHook('draw', (u: uPlot) => {
+      const baseFontSize = 12;
+      const font = `${baseFontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
+
       const { ctx } = u;
       ctx.save();
       ctx.fillStyle = theme.colors.text.primary;
-      ctx.font = `12px ${theme.typography.fontFamily}`;
+      ctx.font = font;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
 
-      // Iterate through series (skip x-axis series at index 0)
       for (let seriesIdx = 1; seriesIdx < u.data.length; seriesIdx++) {
         const field = frame.fields[seriesIdx];
-        if (!field) {
-          continue;
-        }
 
-        const customConfig = { ...defaultConfig, ...field.config.custom };
-
-        if (customConfig.showValues === VisibilityMode.Never) {
+        if (!field.config.custom.showValues) {
           continue;
         }
 
         const seriesData = u.data[seriesIdx];
         const xData = u.data[0];
 
-        // Draw values for each data point
         for (let dataIdx = 0; dataIdx < seriesData.length; dataIdx++) {
           const value = seriesData[dataIdx];
           const xValue = xData[dataIdx];
 
           if (value != null && xValue != null) {
-            // Convert data coordinates to pixel coordinates
             const x = u.valToPos(xValue, 'x', true);
             const y = u.valToPos(value, u.series[seriesIdx].scale!, true);
 
             const displayValue = field.display?.(value);
             const text = displayValue?.text ?? String(value);
 
-            // Draw the value text above the data point
             ctx.fillText(text, x, y - 5);
           }
         }
