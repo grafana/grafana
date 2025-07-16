@@ -5,9 +5,7 @@ import { Card, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
 
 import { CONNECT_URL } from '../constants';
-import { getRepositoryTypeConfigs } from '../utils/repositoryTypes';
-
-const GIT_PROVIDER_TYPES = ['github', 'gitlab', 'bitbucket'];
+import { getRepositoryTypeConfigs, isGitProvider } from '../utils/repositoryTypes';
 
 export function RepositoryTypeCards() {
   const styles = useStyles2(getStyles);
@@ -17,8 +15,8 @@ export function RepositoryTypeCards() {
   const repositoryConfigs = getRepositoryTypeConfigs().filter((config) => availableTypes.includes(config.type));
 
   // Separate git providers from other providers
-  const gitProviders = repositoryConfigs.filter((config) => GIT_PROVIDER_TYPES.includes(config.type));
-  const otherProviders = repositoryConfigs.filter((config) => !GIT_PROVIDER_TYPES.includes(config.type));
+  const gitProviders = repositoryConfigs.filter((config) => isGitProvider(config.type));
+  const otherProviders = repositoryConfigs.filter((config) => !isGitProvider(config.type));
 
   return (
     <Stack direction="column" gap={2}>

@@ -5,6 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 
 import { checkImageRenderer, checkPublicAccess } from '../GettingStarted/features';
+import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getProviderFields } from './fields';
 import { WizardFormData } from './types';
@@ -16,7 +17,7 @@ export function FinishStep() {
   const getFieldConfig = getProviderFields(type);
 
   const isGithub = type === 'github';
-  const isGitBased = ['github', 'gitlab', 'bitbucket', 'git'].includes(type);
+  const isGitBased = isGitProvider(type);
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
 

@@ -46,3 +46,9 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
 export const getRepositoryTypeConfig = (type: RepoType): RepositoryTypeConfig | undefined => {
   return getRepositoryTypeConfigs().find((config) => config.type === type);
 };
+
+const GIT_PROVIDER_TYPES = ['github', 'gitlab', 'bitbucket', 'git'];
+
+export const isGitProvider = (type: RepoType) => {
+  return GIT_PROVIDER_TYPES.includes(type);
+};
