@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,8 +29,13 @@ import (
 func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataResponse {
 	t.Helper()
 
+	// Validate filename doesn't contain path traversal
+	if strings.Contains(filename, "..") || strings.Contains(filename, "/") {
+		t.Fatalf("Invalid test filename: %s", filename)
+	}
+
 	testdataPath := filepath.Join("testdata", filename)
-	data, err := os.ReadFile(testdataPath)
+	data, err := os.ReadFile(testdataPath) // #nosec G304 -- testdata files in tests
 	require.NoError(t, err, "Failed to read testdata file: %s", filename)
 
 	var result *backend.QueryDataResponse
@@ -156,8 +162,9 @@ func TestQueryAPI(t *testing.T) {
 				clientSupplier: mockClientSupplier{
 					stubbedFrame: tc.stubbedFrame,
 				},
-				tracer: tracing.InitializeTracerForTest(),
-				log:    log.New("test"),
+				tracer:                 tracing.InitializeTracerForTest(),
+				log:                    log.New("test"),
+				legacyDatasourceLookup: &mockLegacyDataSourceLookup{},
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
@@ -184,7 +191,7 @@ func TestQueryAPI(t *testing.T) {
 			// Verify the response is the expected type
 			qdr, ok := mr.response.(*queryapi.QueryDataResponse)
 			require.True(t, ok, "Response should be QueryDataResponse type")
-			require.NotNil(t, qdr.QueryDataResponse.Responses, "Should have responses")
+			require.NotNil(t, qdr.Responses, "Should have responses")
 
 			// Load expected frames from testdata if provided
 			if tc.testdataFile != "" {
@@ -198,9 +205,9 @@ func TestQueryAPI(t *testing.T) {
 
 				// Verify all expected refIDs are present
 				for _, refID := range expectedRefIds {
-					require.Contains(t, qdr.QueryDataResponse.Responses, refID, "Should contain response for refId %s", refID)
+					require.Contains(t, qdr.Responses, refID, "Should contain response for refId %s", refID)
 
-					actualResponse := qdr.QueryDataResponse.Responses[refID]
+					actualResponse := qdr.Responses[refID]
 					expectedFrameResponse := expectedResponse.Responses[refID]
 
 					// Verify frame structure matches testdata
@@ -291,6 +298,15 @@ func (m mockClient) GetInstanceConfigurationSettings(ctx context.Context) (clien
 	return clientapi.InstanceConfigurationSettings{
 		ExpressionsEnabled: true,
 		FeatureToggles:     featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
+	}, nil
+}
+
+type mockLegacyDataSourceLookup struct{}
+
+func (m *mockLegacyDataSourceLookup) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*dataapi.DataSourceRef, error) {
+	return &dataapi.DataSourceRef{
+		UID:  "demo-prom",
+		Type: "prometheus",
 	}, nil
 }
 

@@ -394,8 +394,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
 	}()
 
-	resp := &backend.QueryDataResponse{}
-	var err error
+	var resp *backend.QueryDataResponse
 	mtDSClient, ok := s.mtDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
 	if !ok { // use single tenant client
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
@@ -419,7 +418,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
 		}
-
+		var err error
 		// make the query with a mt client
 		resp, err = mtDSClient.QueryData(ctx, *k8sReq)
 

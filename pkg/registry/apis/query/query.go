@@ -199,8 +199,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	}), nil
 }
 
-func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper) (qdr *backend.QueryDataResponse, err error) {
-	var jsonQueries []*simplejson.Json
+func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper) (*backend.QueryDataResponse, error) {
+	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
 		jsonBytes, err := json.Marshal(query)
 		if err != nil {
@@ -230,7 +230,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	if err != nil {
 		b.log.Error("failed to get instance configuration settings", "err", err)
 		responder.Error(err)
-		return
+		return nil, err
 	}
 
 	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
@@ -256,7 +256,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		mtDsClientBuilder,
 	)
 
-	qdr, err = service.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
+	qdr, err := service.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
 
 	if err != nil {
 		return qdr, err
