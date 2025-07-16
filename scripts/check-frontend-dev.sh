@@ -20,22 +20,22 @@ REQUIRED_VERSION=$(cat .nvmrc | sed 's/v//')
 CURRENT_VERSION=$(node --version | sed 's/v//')
 
 if [ "$CURRENT_VERSION" != "$REQUIRED_VERSION" ]; then
-    echo ""
-    echo "${RED}⚠️  WARNING  ⚠️${NC}"
-    echo "${YELLOW}${BOLD}Node.js version mismatch!${NC}"
-    echo ""
-    echo "${BOLD}${CYAN}Recommended:${NC} ${GREEN}$REQUIRED_VERSION${NC} (from .nvmrc)"
-    echo "${BOLD}${CYAN}Current:${NC}     ${RED}$CURRENT_VERSION${NC}"
-    echo ""
-    echo "${BOLD}${YELLOW}⚠️  We only test and support developing Grafana with the specific LTS Node.js release.${NC}"
-    echo "    Using a different version may lead to unexpected build issues or runtime errors."
-    echo ""
-    echo "${BOLD}💡 Consider using a node version manager and configuring it to auto-switch to the recommended version:${NC}"
-    echo "   • ${BLUE}nvm${NC} - Node Version Manager"
-    echo "   • ${BLUE}fnm${NC} - Fast Node Manager"
-    echo ""
-    echo "${BLUE}${BOLD}If you experience issues building Grafana, first switch to the recommended version of Node.js.${NC}"
-    echo ""
+    printf "%b\n" ""
+    printf "%b\n" "${RED}⚠️  WARNING  ⚠️${NC}"
+    printf "%b\n" "${YELLOW}${BOLD}Node.js version mismatch!${NC}"
+    printf "%b\n" ""
+    printf "%b\n" "${BOLD}${CYAN}Recommended:${NC} ${GREEN}$REQUIRED_VERSION${NC} (from .nvmrc)"
+    printf "%b\n" "${BOLD}${CYAN}Current:${NC}     ${RED}$CURRENT_VERSION${NC}"
+    printf "%b\n" ""
+    printf "%b\n" "${BOLD}${YELLOW}⚠️  We only test and support developing Grafana with the specific LTS Node.js release.${NC}"
+    printf "%b\n" "    Using a different version may lead to unexpected build issues or runtime errors."
+    printf "%b\n" ""
+    printf "%b\n" "${BOLD}💡 Consider using a node version manager and configuring it to auto-switch to the recommended version:${NC}"
+    printf "%b\n" "   • ${BLUE}nvm${NC} - Node Version Manager"
+    printf "%b\n" "   • ${BLUE}fnm${NC} - Fast Node Manager"
+    printf "%b\n" ""
+    printf "%b\n" "${BLUE}${BOLD}If you experience issues building Grafana, first switch to the recommended version of Node.js.${NC}"
+    printf "%b\n" ""
 fi
 
 
