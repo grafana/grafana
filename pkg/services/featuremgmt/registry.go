@@ -296,7 +296,8 @@ var (
 		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -1703,6 +1704,14 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",
+		},
+		{
+			Name:         "sharingDashboardImage",
+			Description:  "Enables image sharing functionality for dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			HideFromDocs: true,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "preferLibraryPanelTitle",

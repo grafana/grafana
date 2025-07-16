@@ -186,6 +186,7 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
+  * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
@@ -991,6 +992,10 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Enables image sharing functionality for dashboards
+  */
+  sharingDashboardImage?: boolean;
   /**
   * Prefer library panel title over viz panel title.
   * @default false
