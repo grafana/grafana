@@ -99,7 +99,7 @@ function GroupEditPage() {
 
   if (!!dsFeatures && !dsFeatures.rulerConfig) {
     return (
-      <AlertingPageWrapper pageNav={pageNav} title={groupName} navId="alert-list" isLoading={isLoadingGroup}>
+      <AlertingPageWrapper pageNav={pageNav} navId="alert-list" isLoading={isLoadingGroup}>
         <Alert title={t('alerting.group-edit.group-not-editable', 'Selected group cannot be edited')}>
           <Trans i18nKey="alerting.group-edit.group-not-editable-description">
             This group belongs to a data source that does not support editing.
@@ -124,12 +124,7 @@ function GroupEditPage() {
         };
 
   return (
-    <AlertingPageWrapper
-      pageNav={pageNav}
-      title={t('alerting.group-edit.title', 'Edit evaluation group')}
-      navId="alert-list"
-      isLoading={isLoadingGroup}
-    >
+    <AlertingPageWrapper pageNav={pageNav} navId="alert-list" isLoading={isLoadingGroup}>
       <>
         {Boolean(dsFeaturesError) && (
           <Alert

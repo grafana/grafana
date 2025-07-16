@@ -20,11 +20,7 @@ function Home() {
   const insightsScene = getInsightsScenes();
 
   return (
-    <AlertingPageWrapper
-      title={t('alerting.home.title-alerting', 'Alerting')}
-      subTitle="Learn about problems in your systems moments after they occur"
-      navId="alerting"
-    >
+    <AlertingPageWrapper subTitle="Learn about problems in your systems moments after they occur" navId="alerting">
       <Stack gap={2} direction="column">
         <WelcomeHeader />
         <PluginIntegrations />
