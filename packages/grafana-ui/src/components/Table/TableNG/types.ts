@@ -268,3 +268,9 @@ export interface ScrollPosition {
   x: number;
   y: number;
 }
+
+export interface TableCellLinkWraperProps {
+  field: Field;
+  rowIdx: number;
+  children: string | JSX.Element;
+}

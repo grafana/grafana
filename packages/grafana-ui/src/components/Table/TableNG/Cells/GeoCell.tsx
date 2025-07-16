@@ -19,6 +19,7 @@ export function GeoCell({ value, justifyContent, height }: GeoCellProps) {
     disp = `${value}`;
   }
 
+  // TODO: can this be wrapped by TableCellLinkWrapper?
   return (
     <div className={styles.cell} style={{ justifyContent, height }}>
       <div className={styles.cellText} style={{ fontFamily: 'monospace' }}>

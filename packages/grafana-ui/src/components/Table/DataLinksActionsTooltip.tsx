@@ -86,6 +86,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
       {value}
       <Portal>
         <div
+          id="table-data-links-actions-tooltip"
           ref={refCallback}
           {...getReferenceProps()}
           {...getFloatingProps()}

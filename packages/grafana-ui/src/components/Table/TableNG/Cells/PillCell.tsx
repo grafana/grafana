@@ -14,6 +14,8 @@ import { FieldColorModeId } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { TableCellRendererProps } from '../types';
 
+import { TableCellLinkWraper } from './TableCellLinkWrapper';
+
 interface Pill {
   value: string;
   key: string;
@@ -43,19 +45,25 @@ export function PillCell({ value, field }: TableCellRendererProps) {
     return createPills(pillValues, field, theme);
   }, [value, field, theme]);
 
-  return pills.map((pill) => (
-    <span
-      key={pill.key}
-      className={styles.pill}
-      style={{
-        backgroundColor: pill.bgColor,
-        color: pill.color,
-        border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
-      }}
-    >
-      {pill.value}
-    </span>
-  ));
+  return (
+    <TableCellLinkWraper field={field} rowIdx={0}>
+      <>
+        {pills.map((pill) => (
+          <span
+            key={pill.key}
+            className={styles.pill}
+            style={{
+              backgroundColor: pill.bgColor,
+              color: pill.color,
+              border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
+            }}
+          >
+            {pill.value}
+          </span>
+        ))}
+      </>
+    </TableCellLinkWraper>
+  );
 }
 
 const SPLIT_RE = /\s*,\s*/;

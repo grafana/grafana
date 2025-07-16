@@ -614,12 +614,17 @@ export function TableNG(props: TableNGProps) {
         rows={paginatedRows}
         headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
-        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
+        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target, currentTarget }) => {
           // Note: could be column.field; JS says yes, but TS says no!
           const field = columns[column.idx].field;
-          const targ: HTMLElement = target as HTMLElement;
 
-          if (colsWithTooltip[getDisplayName(field)] && targ.matches('a') && !targ.hasAttribute('href')) {
+          // find the tooltip control anchor tag within the cell. if it doesn't exist, this cell can't trigger tooltips.
+          const tooltipControl = currentTarget.querySelector('a[aria-controls="table-data-links-actions-tooltip"]');
+          if (!tooltipControl) {
+            return;
+          }
+
+          if (colsWithTooltip[getDisplayName(field)] && tooltipControl.contains(target as HTMLElement)) {
             const rowIdx = row.__index;
             setTooltipState({
               coords: {

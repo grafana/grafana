@@ -17,7 +17,6 @@ import {
   getColumnTypes,
   GetMaxWrapCellOptions,
   getMaxWrapCell,
-  getCellLinks,
 } from './utils';
 
 // Helper function to get displayed value
@@ -600,13 +599,6 @@ export function useColumnResize(
   );
 
   return dataGridResizeHandler;
-}
-
-export function useSingleLink(field: Field, rowIdx: number): LinkModel | undefined {
-  const linksCount = field.config.links?.length ?? 0;
-  const actionsCount = field.config.actions?.length ?? 0;
-  const shouldShowLink = linksCount === 1 && actionsCount === 0;
-  return useMemo(() => (shouldShowLink ? (getCellLinks(field, rowIdx) ?? []) : [])[0], [field, shouldShowLink, rowIdx]);
 }
 
 export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {

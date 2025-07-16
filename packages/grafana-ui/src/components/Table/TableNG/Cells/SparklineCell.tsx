@@ -30,6 +30,8 @@ import { Sparkline } from '../../../Sparkline/Sparkline';
 import { SparklineCellProps } from '../types';
 import { getAlignmentFactor, getCellOptions } from '../utils';
 
+import { TableCellLinkWraper } from './TableCellLinkWrapper';
+
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   type: TableCellDisplayMode.Sparkline,
   drawStyle: GraphDrawStyle.Line,
@@ -112,7 +114,9 @@ export const SparklineCell = (props: SparklineCellProps) => {
   return (
     <div className={styles.cellContainer}>
       {valueElement}
-      <Sparkline width={width - valueWidth} height={25} sparkline={sparkline} config={config} theme={theme} />
+      <TableCellLinkWraper field={field} rowIdx={rowIdx}>
+        <Sparkline width={width - valueWidth} height={25} sparkline={sparkline} config={config} theme={theme} />
+      </TableCellLinkWraper>
     </div>
   );
 };
