@@ -43,18 +43,6 @@ func MakePublicQueryError(refID, err string) error {
 	return QueryError.Build(data)
 }
 
-var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure of the dependent expression or query [{{.Public.depRefId}}]"
-
-var dependencyError = errutil.BadRequest("sse.dependencyError").MustTemplate(
-	depErrStr,
-	errutil.WithPublic(depErrStr))
-
-var cyclicErrStr = "cyclic reference in expression [{{ .Public.refId }}]"
-
-var cyclicErr = errutil.BadRequest("sse.cyclic").MustTemplate(
-	cyclicErrStr,
-	errutil.WithPublic(cyclicErrStr))
-
 type ErrorWithRefID struct {
 	err   error
 	refId string
