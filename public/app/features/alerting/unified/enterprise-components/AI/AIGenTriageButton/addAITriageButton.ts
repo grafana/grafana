@@ -1,6 +1,7 @@
 import { ComponentType, createElement } from 'react';
 
 import { TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { withErrorBoundary } from '@grafana/ui';
 
 import { logError } from '../../../Analytics';
@@ -17,14 +18,14 @@ export const AITriageButtonComponent: ComponentType<GenAITriageButtonProps> = (p
   if (!InternalAITriageButtonComponent) {
     return null;
   }
-
+  
   // Wrap the component with error boundary
   const WrappedComponent = withErrorBoundary(InternalAITriageButtonComponent, {
-    title: 'AI Triage Button failed to load',
+    title: t('alerting.ai.error-boundary.triage-button', 'AI Triage Button failed to load'),
     style: 'alertbox',
     errorLogger: logError,
   });
-
+  
   return createElement(WrappedComponent, props);
 };
 

@@ -20,7 +20,7 @@ const WorkingComponent: ComponentType<GenAIImproveLabelsButtonProps> = () => {
 describe('AIImproveLabelsButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAIImproveLabelsButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -42,9 +42,10 @@ describe('AIImproveLabelsButtonComponent Error Boundary', () => {
     addAIImproveLabelsButton(ThrowingComponent);
 
     // Render the component, it should not crash the page
-    const { container } = render(<AIImproveLabelsButtonComponent />);
+    render(<AIImproveLabelsButtonComponent />);
 
     expect(screen.getByText('AI Improve Labels Button failed to load')).toBeInTheDocument();
-    expect(container.querySelector('details')).toBeInTheDocument();
+    // Check for error alert role instead of direct DOM access
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 });

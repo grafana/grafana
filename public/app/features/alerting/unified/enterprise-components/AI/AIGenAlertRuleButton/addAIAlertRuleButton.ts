@@ -1,5 +1,6 @@
 import { ComponentType, createElement } from 'react';
 
+import { t } from '@grafana/i18n';
 import { withErrorBoundary } from '@grafana/ui';
 
 import { logError } from '../../../Analytics';
@@ -13,13 +14,14 @@ export const AIAlertRuleButtonComponent: ComponentType<GenAIAlertRuleButtonProps
   if (!InternalAIAlertRuleButtonComponent) {
     return null;
   }
-
+  
+  // Wrap the component with error boundary
   const WrappedComponent = withErrorBoundary(InternalAIAlertRuleButtonComponent, {
-    title: 'AI Alert Rule Button failed to load',
+    title: t('alerting.ai.error-boundary.alert-rule-button', 'AI Alert Rule Button failed to load'),
     style: 'alertbox',
     errorLogger: logError,
   });
-
+  
   return createElement(WrappedComponent, props);
 };
 

@@ -20,7 +20,7 @@ const WorkingComponent: ComponentType<GenAIImproveAnnotationsButtonProps> = () =
 describe('AIImproveAnnotationsButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAIImproveAnnotationsButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -42,9 +42,10 @@ describe('AIImproveAnnotationsButtonComponent Error Boundary', () => {
     addAIImproveAnnotationsButton(ThrowingComponent);
 
     // Render the component, it should not crash the page
-    const { container } = render(<AIImproveAnnotationsButtonComponent />);
+    render(<AIImproveAnnotationsButtonComponent />);
 
     expect(screen.getByText('AI Improve Annotations Button failed to load')).toBeInTheDocument();
-    expect(container.querySelector('details')).toBeInTheDocument();
+    // Check for error alert role instead of direct DOM access
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 });

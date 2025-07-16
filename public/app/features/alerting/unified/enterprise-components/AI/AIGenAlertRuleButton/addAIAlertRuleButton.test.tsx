@@ -16,7 +16,7 @@ const WorkingComponent: ComponentType<GenAIAlertRuleButtonProps> = () => {
 describe('AIAlertRuleButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAIAlertRuleButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   afterEach(() => {
@@ -38,9 +38,10 @@ describe('AIAlertRuleButtonComponent Error Boundary', () => {
     addAIAlertRuleButton(ThrowingComponent);
 
     // Render the component, it should not crash the page
-    const { container } = render(<AIAlertRuleButtonComponent />);
+    render(<AIAlertRuleButtonComponent />);
 
     expect(screen.getByText('AI Alert Rule Button failed to load')).toBeInTheDocument();
-    expect(container.querySelector('details')).toBeInTheDocument();
+    // Check for error alert role instead of direct DOM access
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 });

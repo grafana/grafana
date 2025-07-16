@@ -52,9 +52,10 @@ describe('AITriageButtonComponent Error Boundary', () => {
     addAITriageButton(ThrowingComponent);
 
     // Render the component, it should not crash the page
-    const { container } = render(<AITriageButtonComponent {...mockProps} />);
+    render(<AITriageButtonComponent {...mockProps} />);
 
     expect(screen.getByText('AI Triage Button failed to load')).toBeInTheDocument();
-    expect(container.querySelector('details')).toBeInTheDocument();
+    // Check for error alert role instead of direct DOM access
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 });
