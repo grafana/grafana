@@ -34,7 +34,6 @@ import (
 
 type SetupConfig struct {
 	KeeperService contracts.KeeperService
-	AllowList     map[string]struct{}
 }
 
 func defaultSetupCfg() SetupConfig {
@@ -118,7 +117,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
 
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, setupCfg.AllowList)
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
