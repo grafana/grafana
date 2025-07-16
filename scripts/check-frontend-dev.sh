@@ -5,7 +5,6 @@ if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] || [ -n "$IGNORE_NODE_VERSION_CHECK"
   exit 0
 fi
 
-
 # Colors for prettier output
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -15,6 +14,14 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 BOLD='\033[1m'
 
+# Check if .nvmrc file exists
+if [ ! -f ".nvmrc" ]; then
+    printf "%b\n" ""
+    printf "%b\n" "${RED}⚠️  ERROR  ⚠️${NC}"
+    printf "%b\n" "${YELLOW}${BOLD}.nvmrc file not found!${NC} Run '${BLUE}git checkout main -- .nvmrc${NC}' to fix."
+    printf "%b\n" ""
+    exit 1
+fi
 
 REQUIRED_VERSION=$(cat .nvmrc | sed 's/v//')
 CURRENT_VERSION=$(node --version | sed 's/v//')
@@ -27,8 +34,8 @@ if [ "$CURRENT_VERSION" != "$REQUIRED_VERSION" ]; then
     printf "%b\n" "${BOLD}${CYAN}Recommended:${NC} ${GREEN}$REQUIRED_VERSION${NC} (from .nvmrc)"
     printf "%b\n" "${BOLD}${CYAN}Current:${NC}     ${RED}$CURRENT_VERSION${NC}"
     printf "%b\n" ""
-    printf "%b\n" "${BOLD}${YELLOW}⚠️  We only test and support developing Grafana with the specific LTS Node.js release.${NC}"
-    printf "%b\n" "    Using a different version may lead to unexpected build issues or runtime errors."
+    printf "%b\n" "${BOLD}${YELLOW}⚠️ We only test and support developing Grafana with the specific LTS Node.js release.${NC}"
+    printf "%b\n" "   Using a different version may lead to unexpected build issues or runtime errors."
     printf "%b\n" ""
     printf "%b\n" "${BOLD}💡 Consider using a node version manager and configuring it to auto-switch to the recommended version:${NC}"
     printf "%b\n" "   • ${BLUE}nvm${NC} - Node Version Manager"
