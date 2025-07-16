@@ -459,10 +459,6 @@ const (
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
 
-	// FlagSsoSettingsSAML
-	// Use the new SSO Settings API to configure the SAML connector
-	FlagSsoSettingsSAML = "ssoSettingsSAML"
-
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"

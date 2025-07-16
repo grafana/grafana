@@ -509,11 +509,6 @@ export interface FeatureToggles {
   */
   scopeFilters?: boolean;
   /**
-  * Use the new SSO Settings API to configure the SAML connector
-  * @default true
-  */
-  ssoSettingsSAML?: boolean;
-  /**
   * Require that sub claims is present in oauth tokens.
   */
   oauthRequireSubClaim?: boolean;

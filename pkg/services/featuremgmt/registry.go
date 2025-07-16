@@ -860,14 +860,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "ssoSettingsSAML",
-			Description:    "Use the new SSO Settings API to configure the SAML connector",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          identityAccessTeam,
-			Expression:     "true",
-			AllowSelfServe: true,
-		},
-		{
 			Name:              "oauthRequireSubClaim",
 			Description:       "Require that sub claims is present in oauth tokens.",
 			Stage:             FeatureStageExperimental,
