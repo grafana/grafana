@@ -87,9 +87,8 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		// Don't modify context so that the auth middleware span doesn't get propagated as a parent elsewhere
-		_, span := tracing.Start(ctx, "Auth - Middleware")
+		ctx, span := tracing.Start(r.Context(), "Auth - Middleware")
+		defer span.End()
 
 		reqContext := &contextmodel.ReqContext{
 			Context: web.FromContext(ctx),
@@ -111,7 +110,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		// This modifies both r and reqContext.Req since they point to the same value
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
-		ctx = trace.ContextWithSpan(reqContext.Req.Context(), span)
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
@@ -153,8 +151,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		})
 		ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 
-		// End the span to make next handlers not wrapped within middleware span
-		span.End()
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
