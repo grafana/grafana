@@ -10,7 +10,7 @@ import { AutoSizeInput, Select } from '@grafana/ui';
 
 import { LegendFormatMode } from '../../types';
 
-export interface PromQueryLegendEditorProps {
+interface PromQueryLegendEditorProps {
   legendFormat: string | undefined;
   onChange: (legendFormat: string) => void;
   onRunQuery: () => void;

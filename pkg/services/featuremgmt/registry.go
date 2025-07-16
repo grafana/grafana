@@ -296,7 +296,8 @@ var (
 		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -333,6 +334,13 @@ var (
 		{
 			Name:            "provisioning",
 			Description:     "Next generation provisioning... and git",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
+			Name:            "provisioningSecretsService",
+			Description:     "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
@@ -1602,6 +1610,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "tempoAlerting",
+			Description:  "Enables creating alerts from Tempo data source",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "pluginsAutoUpdate",
 			Description:  "Enables auto-updating of users installed plugins",
 			Stage:        FeatureStageExperimental,
@@ -1683,6 +1698,14 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:         "sharingDashboardImage",
+			Description:  "Enables image sharing functionality for dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			HideFromDocs: true,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "preferLibraryPanelTitle",
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
@@ -1719,6 +1742,16 @@ var (
 			Description:       "Enables use of app platform API for folders",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendSearchNavOrganise,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "enablePluginImporter",
+			Description:       "Set this to true to use the new PluginImporter functionality",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
