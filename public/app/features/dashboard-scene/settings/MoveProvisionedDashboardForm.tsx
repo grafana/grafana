@@ -13,6 +13,7 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { notifyMoveResult, moveResource } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
@@ -98,37 +99,24 @@ export function MoveProvisionedDashboardForm({
     const branchRef = workflow === 'write' ? loadedFromRef : ref;
     const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
 
-    try {
-      await createFile({
-        name: repo,
-        path: targetPath,
-        ref: branchRef,
-        message: commitMessage,
-        body: currentFileData.resource.file,
-      }).unwrap();
+    const result = await moveResource({
+      repositoryName: repo,
+      currentPath: path,
+      targetPath,
+      fileContent: currentFileData.resource.file,
+      commitMessage,
+      ref: branchRef,
+      mutations: { createFile, deleteFile },
+    });
 
-      await deleteFile({
-        name: repo,
-        path: path,
-        ref: branchRef,
-        message: commitMessage,
-      }).unwrap();
-    } catch (error) {
-      if (createRequest.isSuccess && !deleteRequest.isSuccess) {
-        appEvents.publish({
-          type: AppEvents.alertWarning.name,
-          payload: [
-            t(
-              'dashboard-scene.move-provisioned-dashboard-form.partial-failure-warning',
-              'Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.'
-            ),
-          ],
-        });
+    notifyMoveResult(result, 'Dashboard');
+
+    if (result.success || result.partialSuccess) {
+      panelEditor?.onDiscard();
+      if (targetFolderUID && targetFolderTitle) {
+        onSuccess(targetFolderUID, targetFolderTitle);
       }
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error],
-      });
+      navigate('/dashboards');
     }
   };
 

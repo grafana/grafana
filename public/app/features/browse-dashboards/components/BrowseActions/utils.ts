@@ -1,4 +1,18 @@
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config, getBackendSrv, getAppEvents } from '@grafana/runtime';
+import {
+  RepositoryView,
+  ResourceWrapper,
+  Unstructured,
+  useCreateRepositoryFilesWithPathMutation,
+  useDeleteRepositoryFilesWithPathMutation,
+} from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
+
+import { DashboardTreeSelection } from '../../types';
 
 export function buildBreakdownString(
   folderCount: number,
@@ -25,4 +39,323 @@ export function buildBreakdownString(
     breakdownString += `: ${parts.join(', ')}`;
   }
   return breakdownString;
+}
+
+type MoveResourceMutations = {
+  createFile: ReturnType<typeof useCreateRepositoryFilesWithPathMutation>[0];
+  deleteFile: ReturnType<typeof useDeleteRepositoryFilesWithPathMutation>[0];
+};
+interface BulkMoveRequest {
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
+  targetFolderPath: string;
+  repository: RepositoryView;
+  mutations: MoveResourceMutations;
+  options: BaseProvisionedFormData;
+}
+
+interface MoveResultSuccess {
+  uid: string;
+  status: 'success';
+}
+
+interface MoveResultFailed {
+  uid: string;
+  status: 'failed';
+}
+
+interface FulfilledResource {
+  uid: string;
+  data: ResourceWrapper;
+  title: string;
+}
+
+interface BulkMoveResult {
+  successful: MoveResultSuccess[];
+  failed: MoveResultFailed[];
+  summary: {
+    total: number;
+    successCount: number;
+    failedCount: number;
+  };
+}
+
+/**
+ * Execute bulk move operation for selected dashboards
+ * TODO: Follow up https://github.com/grafana/git-ui-sync-project/issues/315#issuecomment-3075920997 for better approach
+ */
+export const bulkMoveResources = async ({
+  selectedItems,
+  targetFolderPath,
+  repository,
+  mutations,
+  options,
+}: BulkMoveRequest): Promise<BulkMoveResult> => {
+  // 1. Get dashboard data for all selected dashboards
+  const dashboardsToMove = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+
+  const dashboardDataResults = await Promise.allSettled(
+    dashboardsToMove.map(async (uid) => {
+      try {
+        const dto = await getDashboardAPI().getDashboardDTO(uid);
+        const sourcePath =
+          'meta' in dto
+            ? dto.meta.k8s?.annotations?.[AnnoKeySourcePath] || dto.meta.provisionedExternalId
+            : dto.metadata?.annotations?.[AnnoKeySourcePath];
+
+        if (!sourcePath) {
+          throw new Error(`No source path found for dashboard ${uid}`);
+        }
+
+        const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
+        const url = `${baseUrl}/repositories/${repository.name}/files/${sourcePath}`;
+        const fileResponse = await getBackendSrv().get(url);
+
+        return {
+          uid,
+          data: fileResponse,
+          title: 'dashboard' in dto ? dto.dashboard.title : dto.spec?.title || 'Unknown',
+        };
+      } catch (error) {
+        console.error(`Failed to get dashboard data for ${uid}:`, error);
+        throw error;
+      }
+    })
+  );
+
+  // 2. Filter successful data fetches
+  const { fulfilledResources, dataFetchFailures } = dashboardDataResults.reduce<{
+    fulfilledResources: FulfilledResource[];
+    dataFetchFailures: MoveResultFailed[];
+  }>(
+    (acc, result, index) => {
+      if (result.status === 'fulfilled') {
+        acc.fulfilledResources.push(result.value);
+      } else {
+        acc.dataFetchFailures.push({
+          uid: dashboardsToMove[index],
+          status: 'failed',
+        });
+      }
+      return acc;
+    },
+    {
+      fulfilledResources: [],
+      dataFetchFailures: [],
+    }
+  );
+
+  // 3. Execute moves for dashboards with valid data
+  // In the executeBulkMove function, replace the move logic:
+  const moveResults = await Promise.allSettled(
+    fulfilledResources.map(async ({ uid, data, title }): Promise<MoveResultSuccess | MoveResultFailed> => {
+      try {
+        const fileNameWithPath = data.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
+        const fileName = fileNameWithPath.split('/').pop();
+        const newPath = calculateTargetPath(targetFolderPath, fileNameWithPath);
+        const body = data.resource.file;
+
+        if (!body) {
+          throw new Error(`No file content found for dashboard ${uid}`);
+        }
+
+        const result = await moveResource({
+          repositoryName: repository.name,
+          currentPath: `${options.path}/${fileName}`,
+          targetPath: newPath,
+          fileContent: body,
+          commitMessage: options.comment || `Move dashboard: ${title || uid}`,
+          ref: options.workflow === 'write' ? undefined : options.ref,
+          mutations,
+        });
+
+        if (result.success) {
+          return {
+            uid,
+            status: 'success',
+          };
+        } else {
+          throw new Error(result.error || 'Move operation failed');
+        }
+      } catch (error) {
+        console.error(`Failed to move dashboard ${uid}:`, error);
+        return {
+          uid,
+          status: 'failed',
+        };
+      }
+    })
+  );
+
+  // 4. Process results
+  const successful: MoveResultSuccess[] = [];
+  const failed: MoveResultFailed[] = [...dataFetchFailures];
+
+  moveResults.forEach((result) => {
+    if (result.status === 'fulfilled') {
+      if (result.value.status === 'success') {
+        successful.push(result.value);
+      } else {
+        failed.push(result.value);
+      }
+    } else {
+      const failedResult: MoveResultFailed = {
+        uid: 'unknown',
+        status: 'failed',
+      };
+      failed.push(failedResult);
+    }
+  });
+
+  const summary = {
+    total: dashboardsToMove.length,
+    successCount: successful.length,
+    failedCount: failed.length,
+  };
+
+  return {
+    successful,
+    failed,
+    summary,
+  };
+};
+
+/**
+ * Calculate target path for moving a resource
+ */
+export function calculateTargetPath(targetFolderPath: string, currentSourcePath: string): string {
+  const fileName = currentSourcePath.split('/').pop();
+  return `${targetFolderPath}/${fileName}`;
+}
+
+export interface MoveResourceResult {
+  success: boolean;
+  partialSuccess?: boolean; // Created but not deleted
+  error?: string;
+}
+
+// Single resource move operation
+export interface MoveResourceParams {
+  repositoryName: string;
+  currentPath: string;
+  targetPath: string;
+  fileContent: Unstructured;
+  commitMessage: string;
+  ref?: string;
+  mutations: MoveResourceMutations;
+}
+
+export async function moveResource({
+  repositoryName,
+  currentPath,
+  targetPath,
+  fileContent,
+  commitMessage,
+  ref,
+  mutations,
+}: MoveResourceParams): Promise<MoveResourceResult> {
+  try {
+    // Step 1: Create file at target location
+    await mutations
+      .createFile({
+        name: repositoryName,
+        path: targetPath,
+        ref,
+        message: commitMessage,
+        body: fileContent,
+      })
+      .unwrap();
+
+    try {
+      // Step 2: Delete file from current location
+      await mutations
+        .deleteFile({
+          name: repositoryName,
+          path: currentPath,
+          ref,
+          message: commitMessage,
+        })
+        .unwrap();
+
+      return { success: true };
+    } catch (deleteError) {
+      // Partial success: created but couldn't delete
+      return {
+        success: false,
+        partialSuccess: true,
+        error: deleteError instanceof Error ? deleteError.message : 'Delete failed',
+      };
+    }
+  } catch (createError) {
+    return {
+      success: false,
+      error: createError instanceof Error ? createError.message : 'Create failed',
+    };
+  }
+}
+
+/**
+ * Common error handling for move operations
+ */
+export function notifyMoveResult(result: MoveResourceResult, resourceName: string) {
+  const appEvents = getAppEvents();
+
+  if (result.success) {
+    appEvents.publish({
+      type: AppEvents.alertSuccess.name,
+      payload: [t('move-operations.success', `${resourceName} moved successfully`)],
+    });
+  } else if (result.partialSuccess) {
+    appEvents.publish({
+      type: AppEvents.alertWarning.name,
+      payload: [
+        t(
+          'move-operations.partial-success-warning',
+          `${resourceName} was created at new location but could not be deleted from original location. Please manually remove the old file.`
+        ),
+      ],
+    });
+  } else {
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload: [t('move-operations.error', `Failed to move ${resourceName}`), result.error],
+    });
+  }
+}
+
+/**
+ * Handle bulk move/delete operation results with appropriate notifications
+ */
+export function notifyBulkMoveResult(action: 'move' | 'delete', result: BulkMoveResult, onSuccess?: () => void) {
+  const appEvents = getAppEvents();
+
+  if (result.failed.length === 0) {
+    // Complete success
+    appEvents.publish({
+      type: AppEvents.alertSuccess.name,
+      payload: [
+        t('browse-dashboards.bulk-action-resources-form.success', 'Bulk {{action}} completed successfully', { action }),
+      ],
+    });
+    onSuccess?.();
+  } else if (result.successful.length > 0) {
+    // Partial success
+    appEvents.publish({
+      type: AppEvents.alertWarning.name,
+      payload: [
+        t(
+          'browse-dashboards.bulk-action-resources-form.partial-success',
+          'Bulk {{action}} partially completed: {{successCount}} successful, {{failedCount}} failed',
+          { successCount: result.summary.successCount, failedCount: result.summary.failedCount, action }
+        ),
+      ],
+    });
+  } else {
+    // Complete failure
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload: [
+        t('browse-dashboards.bulk-action-resources-form.complete-failure', 'Bulk {{action}} failed', { action }),
+      ],
+    });
+  }
 }

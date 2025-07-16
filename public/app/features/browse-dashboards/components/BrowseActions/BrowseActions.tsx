@@ -15,6 +15,7 @@ import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
 
+import { BulkMoveProvisionedResourceDrawer } from './BulkMoveProvisionedResourcesDrawer';
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
 import { SelectedMixResourcesMsgModal } from './SelectedMixResourcesMsgModal';
@@ -26,6 +27,7 @@ export interface Props {
 
 export function BrowseActions({ folderDTO }: Props) {
   const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
+  const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
 
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
@@ -69,15 +71,29 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showMoveModal = () => {
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: MoveModal,
-        props: {
-          selectedItems,
-          onConfirm: onMove,
-        },
-      })
-    );
+    if (hasProvisioned && hasNonProvisioned) {
+      // Mixed selection
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: SelectedMixResourcesMsgModal,
+          props: {},
+        })
+      );
+    } else if (hasProvisioned && provisioningEnabled) {
+      // Only provisioned items
+      setShowBulkMoveProvisionedResource(true);
+    } else {
+      // Only non-provisioned items
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: MoveModal,
+          props: {
+            selectedItems,
+            onConfirm: onMove,
+          },
+        })
+      );
+    }
   };
 
   const showDeleteModal = () => {
@@ -138,6 +154,13 @@ export function BrowseActions({ folderDTO }: Props) {
             Bulk delete for provisioned resources is not implemented yet.
           </Trans>
         </Drawer>
+      )}
+      {showBulkMoveProvisionedResource && (
+        <BulkMoveProvisionedResourceDrawer
+          selectedItems={selectedItems}
+          folderUid={folderDTO?.uid || ''}
+          onClose={() => setShowBulkMoveProvisionedResource(false)}
+        />
       )}
     </>
   );
