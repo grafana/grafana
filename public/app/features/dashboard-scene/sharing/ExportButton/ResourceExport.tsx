@@ -1,5 +1,6 @@
 import { AsyncState } from 'react-use/lib/useAsync';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
@@ -27,6 +28,8 @@ interface Props {
   onShareExternallyChange: () => void;
   onViewYAML: () => void;
 }
+
+const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
 export function ResourceExport({
   dashboardJson,
@@ -110,7 +113,12 @@ export function ResourceExport({
           (initialSaveModelVersion === 'v2' && exportMode === ExportMode.V1Resource)) && (
           <Stack gap={1} alignItems="start">
             <Label>{switchExportLabel}</Label>
-            <Switch label={switchExportLabel} value={isSharingExternally} onChange={onShareExternallyChange} />
+            <Switch
+              label={switchExportLabel}
+              value={isSharingExternally}
+              onChange={onShareExternallyChange}
+              data-testid={selector.exportExternallyToggle}
+            />
           </Stack>
         )}
       </Stack>

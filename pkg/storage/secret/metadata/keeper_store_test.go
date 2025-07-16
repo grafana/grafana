@@ -4,16 +4,17 @@ import (
 	"context"
 	"testing"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/utils/ptr"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
@@ -22,10 +23,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	defaultKeeperName := "kp-test"
 	defaultKeeperNS := "default"
 
-	testKeeper := &secretv0alpha1.Keeper{
-		Spec: secretv0alpha1.KeeperSpec{
+	testKeeper := &secretv1beta1.Keeper{
+		Spec: secretv1beta1.KeeperSpec{
 			Description: "description",
-			AWS:         &secretv0alpha1.AWSKeeperConfig{},
+			Aws:         &secretv1beta1.KeeperAWSConfig{},
 		},
 	}
 
@@ -41,7 +42,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		// get system keeper config
 		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, defaultKeeperNS, nil, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.IsType(t, &secretv0alpha1.SystemKeeperConfig{}, keeperConfig)
+		require.IsType(t, &secretv1beta1.SystemKeeperConfig{}, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
@@ -90,10 +91,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		keeperTest := "kp-test2"
 		keeperNamespaceTest := "ns"
 
-		testKeeper := &secretv0alpha1.Keeper{
-			Spec: secretv0alpha1.KeeperSpec{
+		testKeeper := &secretv1beta1.Keeper{
+			Spec: secretv1beta1.KeeperSpec{
 				Description: "another description",
-				AWS:         &secretv0alpha1.AWSKeeperConfig{},
+				Aws:         &secretv1beta1.KeeperAWSConfig{},
 			},
 		}
 		testKeeper.Name = keeperTest
@@ -128,10 +129,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		keeperNamespaceTest := "ns"
 
 		// Create initial keeper
-		initialKeeper := &secretv0alpha1.Keeper{
-			Spec: secretv0alpha1.KeeperSpec{
+		initialKeeper := &secretv1beta1.Keeper{
+			Spec: secretv1beta1.KeeperSpec{
 				Description: "initial description",
-				AWS:         &secretv0alpha1.AWSKeeperConfig{},
+				Aws:         &secretv1beta1.KeeperAWSConfig{},
 			},
 		}
 		initialKeeper.Name = keeperTest
@@ -147,10 +148,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.Equal(t, "initial description", keeper.Spec.Description)
 
 		// Update the keeper with new values
-		updatedKeeper := &secretv0alpha1.Keeper{
-			Spec: secretv0alpha1.KeeperSpec{
+		updatedKeeper := &secretv1beta1.Keeper{
+			Spec: secretv1beta1.KeeperSpec{
 				Description: "updated description",
-				AWS:         &secretv0alpha1.AWSKeeperConfig{},
+				Aws:         &secretv1beta1.KeeperAWSConfig{},
 			},
 		}
 		updatedKeeper.Name = keeperTest
@@ -182,19 +183,17 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		keeperNamespaceTest := "ns"
 
 		// Create initial keeper with first AWS config
-		initialKeeper := &secretv0alpha1.Keeper{
-			Spec: secretv0alpha1.KeeperSpec{
+		initialKeeper := &secretv1beta1.Keeper{
+			Spec: secretv1beta1.KeeperSpec{
 				Description: "initial description",
-				AWS: &secretv0alpha1.AWSKeeperConfig{
-					AWSCredentials: secretv0alpha1.AWSCredentials{
-						AccessKeyID: secretv0alpha1.CredentialValue{
-							ValueFromEnv: "AWS_ACCESS_KEY_ID_1",
-						},
-						SecretAccessKey: secretv0alpha1.CredentialValue{
-							ValueFromEnv: "AWS_SECRET_ACCESS_KEY_1",
-						},
-						KMSKeyID: "kms-key-id-1",
+				Aws: &secretv1beta1.KeeperAWSConfig{
+					AccessKeyID: secretv1beta1.KeeperCredentialValue{
+						ValueFromEnv: "AWS_ACCESS_KEY_ID_1",
 					},
+					SecretAccessKey: secretv1beta1.KeeperCredentialValue{
+						ValueFromEnv: "AWS_SECRET_ACCESS_KEY_1",
+					},
+					KmsKeyID: ptr.To("kms-key-id-1"),
 				},
 			},
 		}
@@ -208,24 +207,22 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		// Verify initial AWS config
 		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, "AWS_ACCESS_KEY_ID_1", keeper.Spec.AWS.AccessKeyID.ValueFromEnv)
-		require.Equal(t, "AWS_SECRET_ACCESS_KEY_1", keeper.Spec.AWS.SecretAccessKey.ValueFromEnv)
-		require.Equal(t, "kms-key-id-1", keeper.Spec.AWS.KMSKeyID)
+		require.Equal(t, "AWS_ACCESS_KEY_ID_1", keeper.Spec.Aws.AccessKeyID.ValueFromEnv)
+		require.Equal(t, "AWS_SECRET_ACCESS_KEY_1", keeper.Spec.Aws.SecretAccessKey.ValueFromEnv)
+		require.Equal(t, "kms-key-id-1", *keeper.Spec.Aws.KmsKeyID)
 
 		// Update with new AWS config
-		updatedKeeper := &secretv0alpha1.Keeper{
-			Spec: secretv0alpha1.KeeperSpec{
+		updatedKeeper := &secretv1beta1.Keeper{
+			Spec: secretv1beta1.KeeperSpec{
 				Description: "updated description",
-				AWS: &secretv0alpha1.AWSKeeperConfig{
-					AWSCredentials: secretv0alpha1.AWSCredentials{
-						AccessKeyID: secretv0alpha1.CredentialValue{
-							ValueFromEnv: "AWS_ACCESS_KEY_ID_2",
-						},
-						SecretAccessKey: secretv0alpha1.CredentialValue{
-							ValueFromEnv: "AWS_SECRET_ACCESS_KEY_2",
-						},
-						KMSKeyID: "kms-key-id-2",
+				Aws: &secretv1beta1.KeeperAWSConfig{
+					AccessKeyID: secretv1beta1.KeeperCredentialValue{
+						ValueFromEnv: "AWS_ACCESS_KEY_ID_2",
 					},
+					SecretAccessKey: secretv1beta1.KeeperCredentialValue{
+						ValueFromEnv: "AWS_SECRET_ACCESS_KEY_2",
+					},
+					KmsKeyID: ptr.To("kms-key-id-2"),
 				},
 			},
 		}
@@ -239,9 +236,9 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		// Verify updated AWS config
 		updatedKeeper, err = keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, "AWS_ACCESS_KEY_ID_2", updatedKeeper.Spec.AWS.AccessKeyID.ValueFromEnv)
-		require.Equal(t, "AWS_SECRET_ACCESS_KEY_2", updatedKeeper.Spec.AWS.SecretAccessKey.ValueFromEnv)
-		require.Equal(t, "kms-key-id-2", updatedKeeper.Spec.AWS.KMSKeyID)
+		require.Equal(t, "AWS_ACCESS_KEY_ID_2", updatedKeeper.Spec.Aws.AccessKeyID.ValueFromEnv)
+		require.Equal(t, "AWS_SECRET_ACCESS_KEY_2", updatedKeeper.Spec.Aws.SecretAccessKey.ValueFromEnv)
+		require.Equal(t, "kms-key-id-2", *updatedKeeper.Spec.Aws.KmsKeyID)
 	})
 
 	t.Run("list keepers in empty namespace", func(t *testing.T) {
@@ -276,17 +273,15 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		keeperNamespaceTest := "ns1"
 
 		// Create initial keeper
-		initialKeeper := &secretv0alpha1.Keeper{
-			Spec: secretv0alpha1.KeeperSpec{
+		initialKeeper := &secretv1beta1.Keeper{
+			Spec: secretv1beta1.KeeperSpec{
 				Description: "initial description",
-				AWS: &secretv0alpha1.AWSKeeperConfig{
-					AWSCredentials: secretv0alpha1.AWSCredentials{
-						AccessKeyID: secretv0alpha1.CredentialValue{
-							ValueFromEnv: "AWS_ACCESS_KEY_ID",
-						},
-						SecretAccessKey: secretv0alpha1.CredentialValue{
-							ValueFromEnv: "AWS_SECRET_ACCESS_KEY",
-						},
+				Aws: &secretv1beta1.KeeperAWSConfig{
+					AccessKeyID: secretv1beta1.KeeperCredentialValue{
+						ValueFromEnv: "AWS_ACCESS_KEY_ID",
+					},
+					SecretAccessKey: secretv1beta1.KeeperCredentialValue{
+						ValueFromEnv: "AWS_SECRET_ACCESS_KEY",
 					},
 				},
 			},
@@ -320,10 +315,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		ctx := context.Background()
 		keeperMetadataStorage := initStorage(t)
 
-		nonExistentKeeper := &secretv0alpha1.Keeper{
-			Spec: secretv0alpha1.KeeperSpec{
+		nonExistentKeeper := &secretv1beta1.Keeper{
+			Spec: secretv1beta1.KeeperSpec{
 				Description: "some description",
-				AWS:         &secretv0alpha1.AWSKeeperConfig{},
+				Aws:         &secretv1beta1.KeeperAWSConfig{},
 			},
 		}
 		nonExistentKeeper.Name = "non-existent"
@@ -338,10 +333,9 @@ func initStorage(t *testing.T) contracts.KeeperMetadataStorage {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
 	db := database.ProvideDatabase(testDB, tracer)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the keeper storage
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, features, nil)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, nil)
 	require.NoError(t, err)
 	return keeperMetadataStorage
 }

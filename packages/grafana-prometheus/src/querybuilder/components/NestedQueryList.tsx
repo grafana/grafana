@@ -6,7 +6,7 @@ import { PromVisualQuery, PromVisualQueryBinary } from '../types';
 
 import { NestedQuery } from './NestedQuery';
 
-export interface NestedQueryListProps {
+interface NestedQueryListProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (query: PromVisualQuery) => void;

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+	"go.opentelemetry.io/otel/trace"
 
 	authlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
@@ -41,7 +42,7 @@ var (
 	)
 )
 
-func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
+func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	})
@@ -60,6 +61,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
 		namespaceMapper:     request.GetNamespaceMapper(cfg),
 		accessTokenVerifier: accessTokenVerifier,
 		idTokenVerifier:     idTokenVerifier,
+		tracer:              tracer,
 	}
 }
 
@@ -69,9 +71,13 @@ type ExtendedJWT struct {
 	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
 	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
 	namespaceMapper     request.NamespaceMapper
+	tracer              trace.Tracer
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.extjwt.Authenticate")
+	defer span.End()
+
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
 	accessTokenClaims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
