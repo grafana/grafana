@@ -33,7 +33,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 }
 
 func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	if err := authorize(ctx, r.GetNamespace()); err != nil {
+	if err := authorize(ctx, r.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
