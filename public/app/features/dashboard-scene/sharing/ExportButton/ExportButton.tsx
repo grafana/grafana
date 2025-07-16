@@ -8,8 +8,6 @@ import { DashboardScene } from '../../scene/DashboardScene';
 
 import ExportMenu from './ExportMenu';
 
-const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton;
-
 interface Props {
   dashboard: DashboardScene;
 }
@@ -24,17 +22,20 @@ export default function ExportButton({ dashboard }: Props) {
   const MenuActions = () => <ExportMenu dashboard={dashboard} />;
 
   return (
-    <ButtonGroup data-testid={newExportButtonSelector.container}>
+    <ButtonGroup>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
         <Button
-          data-testid={newExportButtonSelector.arrowMenu}
           size="sm"
           variant="secondary"
           fill="solid"
           tooltip={t('export.menu.export-as-json-tooltip', 'Export')}
+          aria-label={t('dashboard.export.button.label', 'Export dashboard')}
+          aria-haspopup="menu"
+          aria-expanded={isOpen}
+          data-testid={e2eSelectors.pages.Dashboard.DashNav.NewExportButton.arrowMenu}
         >
           <Trans i18nKey="export.menu.export-as-json-label">Export</Trans>&nbsp;
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="sm" />
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="sm" aria-hidden="true" />
         </Button>
       </Dropdown>
     </ButtonGroup>

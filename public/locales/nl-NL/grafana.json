@@ -3228,6 +3228,9 @@
       "define-allowed-teams-ids-label": "Toegestane team-id's definiëren",
       "display-name-description": "Wordt weergegeven op de inlogpagina als 'Aanmelden met ...'. Handig als je meer dan één identiteitsprovider of SSO-protocol gebruikt.",
       "display-name-label": "Weergavenaam",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Naam van de sleutel die moet worden gebruikt voor het opzoeken van gebruikers-e-mails in de attribuutkaart van het OAuth2 ID-token.",
       "email-attribute-name-label": "Naam e-mailattribuut",
       "email-attribute-path-description": "JMESPath-expressie om te gebruiken voor het opzoeken van gebruikers-e-mails uit de gebruikersinformatie.",
@@ -4613,6 +4616,14 @@
     },
     "errors": {
       "failed-to-load": "Kan dashboard niet laden"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -8638,9 +8649,7 @@
     "share-panel": {
       "config-description": "Maak een gepersonaliseerde, directe link om je dashboard binnen je organisatie te delen, met de volgende aanpassingsinstellingen:",
       "download-image": "Afbeelding downloaden",
-      "render-image": "Afbeelding genereren",
-      "render-image-error": "Kan paneelafbeelding niet weergeven",
-      "render-image-error-description": "Er is een fout opgetreden bij het genereren van de afbeelding"
+      "render-image": "Afbeelding genereren"
     }
   },
   "live": {
@@ -8808,6 +8817,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11401,6 +11412,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exporteren als JSON",
       "share-externally-title": "Extern delen",
       "share-internally-title": "Intern delen",
@@ -11436,6 +11448,19 @@
       "view-button": "JSON weergeven",
       "view-button-yaml": "YAML weergeven"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Bibliotheekpaneel aanmaken."
     },
@@ -11444,7 +11469,7 @@
       "info-text": "Maak een directe link naar dit dashboard of paneel, aangepast met de onderstaande opties.",
       "link-url": "Link-URL",
       "render-alert": "Afbeeldingweergave-plug-in niet geïnstalleerd",
-      "render-instructions": "Om een paneelafbeelding weer te geven, moet je de <2>Grafana- afbeeldingsweergave-plug-in </2> installeren. Neem contact op met je Grafana-beheerder om de plug-in te installeren.",
+      "render-instructions": "",
       "rendered-image": "Directe link naar gerenderde afbeelding",
       "save-alert": "Dashboard is niet opgeslagen",
       "save-dashboard": "Om een paneelafbeelding weer te geven, moet je eerst het dashboard opslaan.",
@@ -11512,6 +11537,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Voorbeeld van paneel"
     },

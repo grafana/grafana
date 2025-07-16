@@ -163,6 +163,7 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 			dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			dashv0.DashboardResourceInfo.GroupVersion(),
 			dashv1.DashboardResourceInfo.GroupVersion(),
+			dashv2alpha2.DashboardResourceInfo.GroupVersion(),
 		}
 	}
 
