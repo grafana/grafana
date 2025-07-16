@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Card, useStyles2 } from '@grafana/ui';
 
-import promqlGrammar from '../promql';
+import { promqlGrammar } from '../promql';
 
 import { RawQuery } from './shared/RawQuery';
 import { promQueryModeller } from './shared/modeller_instance';

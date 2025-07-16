@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -37,8 +39,9 @@ type WebhookExtraBuilder struct {
 func ProvideWebhooks(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
-	secretsSvc grafanasecrets.Service,
+	legacySecretsSvc grafanasecrets.Service,
+	secretsSvc *service.SecureValueService,
+	decryptSvc service.DecryptService,
 	ghFactory *github.Factory,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
@@ -65,13 +68,13 @@ func ProvideWebhooks(
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
 			commenter := pullrequest.NewCommenter()
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+			repositorySecrets := secrets.NewRepositorySecrets(features, secrets.NewSecretsService(secretsSvc, decryptSvc), secrets.NewSingleTenant(legacySecretsSvc))
 
 			return NewWebhookExtra(
-				features,
 				render,
 				webhook,
 				urlProvider,
-				secrets.NewSingleTenant(secretsSvc),
+				repositorySecrets,
 				ghFactory,
 				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
@@ -84,11 +87,10 @@ func ProvideWebhooks(
 // WebhookExtra implements the Extra interface for webhooks
 // to wrap around
 type WebhookExtra struct {
-	features    featuremgmt.FeatureToggles
 	render      *renderConnector
 	webhook     *webhookConnector
 	urlProvider func(namespace string) string
-	secrets     secrets.Service
+	secrets     secrets.RepositorySecrets
 	ghFactory   *github.Factory
 	clonedir    string
 	parsers     resources.ParserFactory
@@ -96,18 +98,16 @@ type WebhookExtra struct {
 }
 
 func NewWebhookExtra(
-	features featuremgmt.FeatureToggles,
 	render *renderConnector,
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
-	secrets secrets.Service,
+	secrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
 	clonedir string,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
 ) *WebhookExtra {
 	return &WebhookExtra{
-		features:    features,
 		render:      render,
 		webhook:     webhook,
 		urlProvider: urlProvider,
@@ -129,19 +129,11 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 	return e.render.Authorize(ctx, a)
 }
 
-// Mutate delegates mutation to the webhook connector
-func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) error {
-	// Encrypt webhook secret if present
-	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
-		encryptedSecret, err := e.secrets.Encrypt(ctx, []byte(r.Status.Webhook.Secret))
-		if err != nil {
-			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
-		}
-		r.Status.Webhook.EncryptedSecret = encryptedSecret
-		r.Status.Webhook.Secret = ""
+// Mutators returns the mutators for the webhook extra
+func (e *WebhookExtra) Mutators() []controller.Mutator {
+	return []controller.Mutator{
+		Mutator(e.secrets),
 	}
-
-	return nil
 }
 
 // UpdateStorage updates the storage with both render and webhook connectors
@@ -190,7 +182,7 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
 		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := e.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
+			decrypted, err := e.secrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)
 			}
@@ -205,12 +197,12 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, e.secrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken)
+		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken, e.secrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}
