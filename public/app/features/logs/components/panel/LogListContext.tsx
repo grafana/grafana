@@ -186,7 +186,7 @@ export const LogListContextProvider = ({
   enableLogDetails,
   detailsMode: detailsModeProp,
   dedupStrategy,
-  displayedFields: displayedFieldsProp,
+  displayedFields,
   filterLevels,
   fontSize,
   forceEscape = false,
@@ -240,13 +240,16 @@ export const LogListContextProvider = ({
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
-  const displayedFields = useMemo(
-    () =>
-      displayedFieldsProp.length > 0 || !config.featureToggles.otelLogsFormatting
-        ? displayedFieldsProp
-        : getDisplayedFieldsForLogs(logs),
-    [displayedFieldsProp, logs]
-  );
+
+  useEffect(() => {
+    if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
+      return;
+    }
+    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
+    if (otelDisplayedFields.length) {
+      setDisplayedFields(otelDisplayedFields);
+    }
+  }, [displayedFields.length, logs, setDisplayedFields]);
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
