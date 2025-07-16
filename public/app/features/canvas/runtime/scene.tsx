@@ -93,7 +93,7 @@ export class Scene {
   setBackgroundCallback?: (anchorPoint: AnchorPoint) => void;
 
   tooltipCallback?: (tooltip: CanvasTooltipPayload | undefined) => void;
-  tooltip?: CanvasTooltipPayload;
+  tooltipPayload?: CanvasTooltipPayload;
 
   moveableActionCallback?: (moved: boolean) => void;
 
@@ -283,10 +283,11 @@ export class Scene {
   };
 
   render() {
-    const hasDataLinks = this.tooltip?.element?.getLinks && this.tooltip.element.getLinks({}).length > 0;
-    const hasActions = this.tooltip?.element?.options.actions && this.tooltip.element.options.actions.length > 0;
+    const hasDataLinks = this.tooltipPayload?.element?.getLinks && this.tooltipPayload.element.getLinks({}).length > 0;
+    const hasActions =
+      this.tooltipPayload?.element?.options.actions && this.tooltipPayload.element.options.actions.length > 0;
 
-    const isTooltipValid = hasDataLinks || hasActions || this.tooltip?.element?.data?.field;
+    const isTooltipValid = hasDataLinks || hasActions || this.tooltipPayload?.element?.data?.field;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (
