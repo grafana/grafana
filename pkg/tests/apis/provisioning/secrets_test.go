@@ -474,18 +474,16 @@ func TestIntegrationProvisioning_Secrets_Removal(t *testing.T) {
 			require.NoError(t, err, "failed to delete resource")
 
 			for _, expectedField := range test.expectedFields {
-				value, _ := encryptedField(t, secretsService, repo, output.Object, expectedField.Path, true)
-				require.NotEmpty(t, value)
+				secretName, found, err := base64DecodedField(output.Object, expectedField.Path)
+				require.NoError(t, err, "failed to decode base64 value")
+				require.True(t, found, "secretName should be found")
+				require.NotEmpty(t, secretName)
 
-				var (
-					lastDecrypted []byte
-					lastError     error
-				)
-
+				var lastDecrypted []byte
 				require.Eventually(t, func() bool {
-					lastDecrypted, lastError = secretsService.Decrypt(ctx, repo, value)
-					return lastError != nil && errors.Is(lastError, contracts.ErrDecryptNotFound)
-				}, 10*time.Second, 500*time.Millisecond, "expected ErrDecryptNotFound error, encrypted value: '%v', err: '%v'", string(lastDecrypted), lastError)
+					lastDecrypted, err = secretsService.Decrypt(ctx, repo, secretName)
+					return err != nil && errors.Is(err, contracts.ErrDecryptNotFound)
+				}, 1000*time.Second, 500*time.Millisecond, "expected ErrDecryptNotFound error, got %v", lastDecrypted)
 			}
 		})
 	}

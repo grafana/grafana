@@ -3,6 +3,7 @@ package secrets
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -71,68 +72,27 @@ func (s *repositorySecrets) Encrypt(ctx context.Context, r *provisioning.Reposit
 	return encrypted, nil
 }
 
-// Decrypt attempts to retrieve and decrypt secret data for a repository.
-// If the provisioning secrets service feature flag is enabled, it tries the new secrets service first.
-//   - On success, returns the decrypted data.
-//   - On failure, falls back to the legacy secrets service.
+// Decrypt retrieves and decrypts secret data for a repository, supporting migration between secret backends.
+// The backend used for decryption is determined by a heuristic:
+//   - If the provided nameOrValue starts with the repository name, it is assumed to be a Kubernetes secret name
+//     and the new secrets service is used for decryption.
+//   - Otherwise, it is treated as a legacy secret value and the legacy secrets service is used.
 //
-// If the feature flag is disabled, it tries the legacy secrets service first.
-//   - On success, returns the decrypted data.
-//   - On failure, falls back to the new secrets service.
+// HACK: This approach relies on checking the prefix of nameOrValue to distinguish between secret backends.
+// This is a temporary workaround to support both backends during migration and should be removed once
+// migration is complete.
 //
-// This dual-path logic is intended to support migration between secret backends.
+// This method ensures compatibility and minimizes disruption during the transition between secret backends.
 func (s *repositorySecrets) Decrypt(ctx context.Context, r *provisioning.Repository, nameOrValue string) ([]byte, error) {
 	logger := logging.FromContext(ctx)
-	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
-		data, err := s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
-		if err == nil && len(data) > 0 {
-			return data, nil
-		}
-
-		logger.Info("Decryption failed with new secrets service, falling back to legacy", "error", err)
-		// If the new service fails or returns empty bytes, fall back to legacy
-		fallbackData, fallbackErr := s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
-		if fallbackErr != nil || len(fallbackData) == 0 {
-			logger.Debug("Fallback decryption failed with legacy secrets service", "error", fallbackErr)
-			// Return original error if fallback fails or returns empty bytes
-			if err != nil {
-				return nil, err
-			}
-
-			if fallbackErr != nil {
-				return nil, fallbackErr
-			}
-
-			return nil, errors.New("decryption returned empty data")
-		}
-		return fallbackData, nil
+	// HACK: this is a hack to identify if the name is a potential Kubernetes name for a secret.
+	if strings.HasPrefix(nameOrValue, r.GetName()) {
+		logger.Info("Decrypting secret with new secrets service", "name", nameOrValue)
+		return s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
+	} else {
+		logger.Info("Decrypting secret with legacy secrets service", "name", nameOrValue)
+		return s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
 	}
-
-	// If the new service is disabled, use the legacy service first
-	data, err := s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
-	if err == nil && len(data) > 0 {
-		return data, nil
-	}
-
-	logger.Info("Decryption failed with legacy secrets service, falling back to new", "error", err)
-
-	// If legacy service fails or returns empty bytes, fall back to new service
-	fallbackData, fallbackErr := s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
-	if fallbackErr != nil || len(fallbackData) == 0 {
-		logger.Debug("Fallback decryption failed with new secrets service", "error", fallbackErr)
-		// Return original error if fallback fails or returns empty bytes
-		if err != nil {
-			return nil, err
-		}
-
-		if fallbackErr != nil {
-			return nil, fallbackErr
-		}
-
-		return nil, errors.New("decryption returned empty data")
-	}
-
-	return fallbackData, nil
 }
 
 func (s *repositorySecrets) Delete(ctx context.Context, r *provisioning.Repository, nameOrValue string) error {
