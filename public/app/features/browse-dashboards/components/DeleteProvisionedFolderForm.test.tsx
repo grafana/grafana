@@ -23,7 +23,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
-  provisioningAPI: {
+  provisioningAPIv0alpha1: {
     endpoints: {
       listRepository: {
         select: jest.fn(() => () => ({ data: { items: [] } })),
