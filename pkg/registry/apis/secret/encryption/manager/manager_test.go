@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -78,9 +77,8 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 	tracer := noop.NewTracerProvider().Tracer("test")
-	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -183,10 +181,9 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		tracer := noop.NewTracerProvider().Tracer("test")
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
 		usageStats := &usagestats.UsageStatsMock{T: t}
@@ -259,9 +256,8 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		}
 
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		tracer := noop.NewTracerProvider().Tracer("test")
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
 		usageStats := &usagestats.UsageStatsMock{T: t}
@@ -345,8 +341,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 	t.Run("encrypting with v1 then removing the v1 config should cause decryption to fail", func(t *testing.T) {
 		tracer := noop.NewTracerProvider().Tracer("test")
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
 		usageStats := &usagestats.UsageStatsMock{T: t}
@@ -540,7 +535,6 @@ func TestIntegration_SecretsService(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 			tracer := noop.NewTracerProvider().Tracer("test")
-			features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 
 			cfg := &setting.Cfg{
 				SecretsManagement: setting.SecretsManagerSettings{
@@ -548,7 +542,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}

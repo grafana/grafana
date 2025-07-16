@@ -16,13 +16,10 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 )
 
-// TODO: this should be a "decrypt" service rather, so that other services can wire and call it.
 func ProvideDecryptStorage(
-	features featuremgmt.FeatureToggles,
 	tracer trace.Tracer,
 	keeperService contracts.KeeperService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
@@ -30,10 +27,6 @@ func ProvideDecryptStorage(
 	decryptAuthorizer contracts.DecryptAuthorizer,
 	reg prometheus.Registerer,
 ) (contracts.DecryptStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return &decryptStorage{}, nil
-	}
-
 	if decryptAuthorizer == nil {
 		return nil, fmt.Errorf("a decrypt authorizer is required")
 	}
