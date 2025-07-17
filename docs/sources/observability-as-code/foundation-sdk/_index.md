@@ -36,9 +36,10 @@ To get started, clone the [intro-to-foundation-sdk repository](https://github.co
 
 ## Install the Grafana Foundation SDK
 
-Select the `go` or `typescript` tab to view instructions to install the SDK. 
+Select the `go` or `typescript` tab to view instructions to install the SDK.
 For other languages, refer to the Grafana Foundation SDK documentation for installation instructions.
 {{< code >}}
+
 ```go
 go get github.com/grafana/grafana-foundation-sdk/go
 ```
@@ -46,8 +47,8 @@ go get github.com/grafana/grafana-foundation-sdk/go
 ```typescript
 npm install @grafana/grafana-foundation-sdk
 ```
-{{< /code >}}
 
+{{< /code >}}
 
 ## Grafana Foundation SDK Overview
 
@@ -138,9 +139,9 @@ import * as testdata from '@grafana/grafana-foundation-sdk/testdata';
 import * as timeseries from '@grafana/grafana-foundation-sdk/timeseries';
 
 // Define a data source reference for our testdata data source
-const testDataRef : dashboard.DataSourceRef = {
-    type: 'grafana-testdata-datasource',
-    uid:  'testdata',
+const testDataRef: dashboard.DataSourceRef = {
+  type: 'grafana-testdata-datasource',
+  uid: 'testdata',
 };
 
 // Define our dashboard as strongly typed code
@@ -148,26 +149,15 @@ const builder = new dashboard.DashboardBuilder('My Dashboard')
   .withPanel(
     new stat.PanelBuilder()
       .title('Version')
-      .reduceOptions(
-          new common.ReduceDataOptionsBuilder()
-              .calcs(['lastNotNull'])
-              .fields('/.*/')
-      )
+      .reduceOptions(new common.ReduceDataOptionsBuilder().calcs(['lastNotNull']).fields('/.*/'))
       .datasource(testdataRef)
-      .withTarget(
-          new testdata.DataqueryBuilder()
-              .scenarioId('csv_content')
-              .csvContent('version\nv1.2.3')
-      )
+      .withTarget(new testdata.DataqueryBuilder().scenarioId('csv_content').csvContent('version\nv1.2.3'))
   )
   .withPanel(
     new timeseries.PanelBuilder()
       .title('Random Time Series')
       .datasource(testdataRef)
-      .withTarget(
-        new testdata.DataqueryBuilder()
-          .scenarioId('random_walk')
-      )
+      .withTarget(new testdata.DataqueryBuilder().scenarioId('random_walk'))
   );
 
 // Build the dashboard - errors in configuration will be thrown here
@@ -180,8 +170,9 @@ console.log(JSON.stringify(dashboard, null, 2));
 {{< /code >}}
 
 This code defines a dashboard titled “My Dashboard” with a two panels:
-* a simple stat panel displaying a version number, and 
-* a time series panel displaying randomized data from the `testdata` data source `random_walk` scenario.
+
+- a simple stat panel displaying a version number, and
+- a time series panel displaying randomized data from the `testdata` data source `random_walk` scenario.
 
 ## Export and use the JSON
 
@@ -198,8 +189,8 @@ Now that you've seen how to define a basic dashboard using code, let's take a mo
 
 ### Builders
 
-The SDK follows a builder pattern, which lets you compose dashboards step-by-step using chained method calls. 
-Almost every piece of the dashboard, including dashboards, panels, rows, queries,  and variables, has its own `Builder` class.
+The SDK follows a builder pattern, which lets you compose dashboards step-by-step using chained method calls.
+Almost every piece of the dashboard, including dashboards, panels, rows, queries, and variables, has its own `Builder` class.
 
 Here are a few you've already seen:
 
@@ -210,6 +201,7 @@ Here are a few you've already seen:
 Builders are chainable, so you can fluently compose dashboards in a readable, structured way:
 
 {{< code >}}
+
 ```go
 stat.NewPanelBuilder().
   Title("Version").
@@ -227,18 +219,11 @@ stat.NewPanelBuilder().
 ```typescript
 new stat.PanelBuilder()
   .title('Version')
-  .reduceOptions(
-      new common.ReduceDataOptionsBuilder()
-          .calcs(['lastNotNull'])
-          .fields('/.*/')
-  )
+  .reduceOptions(new common.ReduceDataOptionsBuilder().calcs(['lastNotNull']).fields('/.*/'))
   .datasource(testdataRef)
-  .withTarget(
-      new testdata.DataqueryBuilder()
-          .scenarioId('csv_content')
-          .csvContent('version\nv1.2.3')
-  )
+  .withTarget(new testdata.DataqueryBuilder().scenarioId('csv_content').csvContent('version\nv1.2.3'));
 ```
+
 {{< /code >}}
 
 ### Types
@@ -270,6 +255,7 @@ Most builder methods accept simple values like strings or numbers, but others ex
 Example using options:
 
 {{< code >}}
+
 ```go
 stat.NewPanelBuilder().
   ReduceOptions(common.NewReduceDataOptionsBuilder().
@@ -279,13 +265,9 @@ stat.NewPanelBuilder().
 ```
 
 ```typescript
-new stat.PanelBuilder()
-  .reduceOptions(
-      new common.ReduceDataOptionsBuilder()
-          .calcs(['lastNotNull'])
-          .fields('/.*/')
-  )
+new stat.PanelBuilder().reduceOptions(new common.ReduceDataOptionsBuilder().calcs(['lastNotNull']).fields('/.*/'));
 ```
+
 {{< /code >}}
 
 By using option builders, you don't need to manually construct deeply nested configuration objects. Instead, the SDK gives you a typed and guided API that mirrors a dashboards internal structure, making it easier to configure complex options without guesswork or referring back to the JSON schema.
