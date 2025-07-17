@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -39,6 +41,9 @@ var getViewIndex = func() string {
 	return viewIndex
 }
 
+// Only allow redirects that start with an alphanumerical character, a dash or an underscore.
+var redirectRe = regexp.MustCompile(`^/[a-zA-Z0-9-_].*`)
+
 var (
 	errAbsoluteRedirectTo  = errors.New("absolute URLs are not allowed for redirect_to cookie value")
 	errInvalidRedirectTo   = errors.New("invalid redirect_to cookie value")
@@ -65,6 +70,15 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	}
 
 	if strings.HasPrefix(to.Path, "//") {
+		return errForbiddenRedirectTo
+	}
+
+	cleanPath := path.Clean(to.Path)
+	// "." is what path.Clean returns for empty paths
+	if cleanPath == "." {
+		return errForbiddenRedirectTo
+	}
+	if to.Path != "/" && !redirectRe.MatchString(cleanPath) {
 		return errForbiddenRedirectTo
 	}
 
