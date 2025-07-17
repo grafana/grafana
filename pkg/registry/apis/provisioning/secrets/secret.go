@@ -139,6 +139,11 @@ func (s *secretsService) Delete(ctx context.Context, namespace string, name stri
 	}
 
 	if err := client.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
+		// FIXME: This is a temporary workaround until the client abstraction properly handles
+		// k8s not found errors. The client should normalize these errors to return contracts.ErrSecureValueNotFound
+		if isNotFoundError(err) {
+			return contracts.ErrSecureValueNotFound
+		}
 		return err
 	}
 

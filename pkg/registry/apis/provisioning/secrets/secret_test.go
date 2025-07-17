@@ -523,3 +523,46 @@ func TestSecretsService_Encrypt_WithK8sNotFoundError(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "test-secret", result)
 }
+
+func TestSecretsService_Delete_WithK8sNotFoundError(t *testing.T) {
+	mockSecretsSvc := NewMockSecureValueClient(t)
+	mockDecryptSvc := &mocks.MockDecryptService{}
+	mockResourceInterface := &mockDynamicInterface{}
+
+	// Setup client to return the mock resource interface
+	mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
+
+	// Mock Delete call to return k8s not found error
+	k8sNotFoundErr := apierrors.NewNotFound(schema.GroupResource{Group: "secret.grafana.app", Resource: "securevalues"}, "test-secret")
+	mockResourceInterface.deleteErr = k8sNotFoundErr
+
+	svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
+	ctx := context.Background()
+
+	err := svc.Delete(ctx, "test-namespace", "test-secret")
+
+	// Should return contracts.ErrSecureValueNotFound instead of k8s error
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+}
+
+func TestSecretsService_Delete_WithGrafanaNotFoundError(t *testing.T) {
+	mockSecretsSvc := NewMockSecureValueClient(t)
+	mockDecryptSvc := &mocks.MockDecryptService{}
+	mockResourceInterface := &mockDynamicInterface{}
+
+	// Setup client to return the mock resource interface
+	mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
+
+	// Mock Delete call to return Grafana not found error
+	mockResourceInterface.deleteErr = contracts.ErrSecureValueNotFound
+
+	svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
+	ctx := context.Background()
+
+	err := svc.Delete(ctx, "test-namespace", "test-secret")
+
+	// Should return contracts.ErrSecureValueNotFound
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+}
