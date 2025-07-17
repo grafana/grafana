@@ -105,7 +105,7 @@ jobs:
         cache: 'yarn'
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
-    - run: yarn nx run-many -t test:ci --projects='tag:scope:plugin'
+    - run: yarn run plugin:test:ci
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.
