@@ -7997,6 +7997,11 @@
       "field-name-picker": {
         "placeholder": "Select field"
       },
+      "get-list-of-query-ref-ids": {
+        "description": "Frames ({{framesCount}}): {{framesNames}}",
+        "label": "Query: {{refId}}",
+        "label-missing-ref-id": "Query: (missing refId)"
+      },
       "name-field-name-by-regex-matcher": "Fields with name matching regex",
       "name-fields-by-query": "Fields returned by query",
       "name-fields-with-name": "Fields with name",
