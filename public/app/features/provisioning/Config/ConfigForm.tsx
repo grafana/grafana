@@ -53,6 +53,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const isEdit = Boolean(data?.metadata?.name);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
   const targetOptions = useMemo(() => getTargetOptions(), []);
@@ -73,8 +74,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
   }, [request.isSuccess, reset, getValues, navigate]);
 
   const onSubmit = async (form: RepositoryFormData) => {
-    const spec = dataToSpec(form, data);
-    await submitData(spec);
+    setIsLoading(true);
+    try {
+      const spec = dataToSpec(form, data);
+      await submitData(spec);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -254,8 +260,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
         )}
 
         <Stack gap={2}>
-          <Button type={'submit'} disabled={request.isLoading}>
-            {request.isLoading
+          <Button type={'submit'} disabled={isLoading}>
+            {isLoading
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
