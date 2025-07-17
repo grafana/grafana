@@ -81,10 +81,6 @@
                 "value": 100
               },
               {
-                "id": "links",
-                "value": []
-              },
-              {
                 "id": "custom.width",
                 "value": 300
               }

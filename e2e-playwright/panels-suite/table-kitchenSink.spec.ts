@@ -235,7 +235,24 @@ test.describe(
       expect(fourthPageStatus.total).toBe(largeRowStatus.total);
     });
 
-    test('Tests DataLinks, actions, and context menu', async ({ gotoDashboardPage, selectors, page }) => {
+    test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
+      const addDataLink = async (title: string, url: string) => {
+        await dashboardPage
+          .getByGrafanaSelector(
+            selectors.components.PanelEditor.OptionsPane.fieldLabel('Data links and actions Data links')
+          )
+          .locator('button')
+          .filter({ hasText: 'Add link' })
+          .click();
+
+        // DataLinks dialog has popped open - fill it in and add a global datalink.
+        expect(page.getByRole('dialog')).toBeVisible();
+        await page.getByRole('dialog').locator('#link-title').fill(title);
+        await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').fill(url);
+        await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+        expect(page.getByRole('dialog')).not.toBeVisible();
+      };
+
       const dashboardPage = await gotoDashboardPage({
         uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
         queryParams: new URLSearchParams({ editPanel: '1' }),
@@ -250,6 +267,36 @@ test.describe(
       expect(infoCell.locator('a')).toBeVisible();
       expect(infoCell.locator('a')).toHaveAttribute('href');
       expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
+
+      // now, add a DataLink to the whole table
+      await addDataLink('Test link', 'https://grafana.com');
+
+      // add a DataLink to the whole table, all cells will now have a single link.
+      const colCount = await page.getByRole('row').nth(1).getByRole('gridcell').count();
+      for (let colIdx = 0; colIdx < colCount; colIdx++) {
+        const cell = await getCell(page, 1, colIdx);
+        expect(cell.locator('a')).toBeVisible();
+        expect(cell.locator('a')).toHaveAttribute('href');
+        expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
+      }
+
+      const headerContainer = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer);
+
+      // add another data link. now we'll check that the multi-link popups work.
+      await addDataLink('Another test link', 'https://grafana.com/foo');
+
+      for (let colIdx = 0; colIdx < colCount; colIdx++) {
+        const cell = await getCell(page, 1, colIdx);
+        await cell.locator('a').click({ force: true });
+        page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper).waitFor({ state: 'visible' });
+        expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).toBeVisible();
+
+        await headerContainer.click(); // convenient just to click the header to close the tooltip.
+        expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeVisible();
+      }
+
+      // add an Action to the whole table and check that the action button is added to the tooltip.
+      // TODO -- saving for another day.
     });
 
     test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
