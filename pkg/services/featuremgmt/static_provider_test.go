@@ -80,7 +80,7 @@ ABCD = true
 
 	openFeatureEnabledFlags := map[string]bool{}
 	for _, flag := range allFlags.Flags {
-		if flag.Value {
+		if v, ok := flag.Value.(bool); ok && v {
 			openFeatureEnabledFlags[flag.Key] = true
 		}
 	}

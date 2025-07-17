@@ -3,7 +3,8 @@ package kinds
 import (
 	v0 "github.com/grafana/grafana/sdkkinds/dashboard/v0alpha1"
 	v1 "github.com/grafana/grafana/sdkkinds/dashboard/v1beta1"
-	v2 "github.com/grafana/grafana/sdkkinds/dashboard/v2alpha1"
+	v2alpha1 "github.com/grafana/grafana/sdkkinds/dashboard/v2alpha1"
+	v2alpha2 "github.com/grafana/grafana/sdkkinds/dashboard/v2alpha2"
 )
 
 // Status is the shared status of all dashboard versions.
@@ -90,7 +91,13 @@ dashboard: {
 				}
 			}
 			schema: {
-				spec:   v2.DashboardSpec
+				spec:   v2alpha1.DashboardSpec
+				status: DashboardStatus
+			}
+		}
+		"v2alpha2": {
+			schema: {
+				spec:   v2alpha2.DashboardSpec
 				status: DashboardStatus
 			}
 		}

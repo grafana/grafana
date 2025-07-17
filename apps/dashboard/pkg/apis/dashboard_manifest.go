@@ -15,6 +15,7 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	v1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	v2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	v2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
 )
 
 var ()
@@ -59,6 +60,10 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
+
+				{
+					Name: "v2alpha2",
+				},
 			},
 		},
 	},
@@ -76,6 +81,7 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"Dashboard/v0alpha1": v0alpha1.DashboardKind(),
 	"Dashboard/v1beta1":  v1beta1.DashboardKind(),
 	"Dashboard/v2alpha1": v2alpha1.DashboardKind(),
+	"Dashboard/v2alpha2": v2alpha2.DashboardKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

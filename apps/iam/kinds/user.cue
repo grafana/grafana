@@ -15,6 +15,12 @@ user: {
 				ts: { enabled: false }
 				go: { enabled: true }
 			}
+			validation: {
+				operations: [
+					"CREATE",
+					"UPDATE",
+				]
+			}
 			schema: {
 				spec: v0alpha1.UserSpec
 			}

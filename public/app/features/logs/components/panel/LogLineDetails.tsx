@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
 
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
-import { useLogListContext } from './LogListContext';
+import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
@@ -67,9 +67,21 @@ export interface InlineLogLineDetailsProps {
   logs: LogListModel[];
 }
 
-export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
+export const InlineLogLineDetails = memo(({ logs }: InlineLogLineDetailsProps) => {
   const { showDetails } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const saveScroll = useCallback(() => {
+    saveDetailsScrollPosition(showDetails[0], scrollRef.current?.scrollTop ?? 0);
+  }, [showDetails]);
+
+  useEffect(() => {
+    if (!scrollRef.current) {
+      return;
+    }
+    scrollRef.current.scrollTop = getDetailsScrollPosition(showDetails[0]);
+  }, [showDetails]);
 
   if (!showDetails.length) {
     return null;
@@ -78,13 +90,14 @@ export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
   return (
     <div className={`${styles.inlineWrapper} log-line-inline-details`}>
       <div className={styles.container}>
-        <div className={styles.scrollContainer}>
+        <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
           <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
         </div>
       </div>
     </div>
   );
-};
+});
+InlineLogLineDetails.displayName = 'InlineLogLineDetails';
 
 export const LOG_LINE_DETAILS_HEIGHT = 35;
 
