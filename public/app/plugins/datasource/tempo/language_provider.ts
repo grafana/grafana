@@ -21,6 +21,13 @@ export const TAGS_LIMIT = 5000;
 // Limit maximum options in select dropdowns
 export const OPTIONS_LIMIT = 1000;
 
+interface GetOptionsV2 {
+  tag: string;
+  query?: string;
+  timeRangeForTags?: number;
+  range?: TimeRange;
+}
+
 export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
   tagsV1?: string[];
@@ -181,12 +188,12 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return options;
   }
 
-  async getOptionsV2(
-    tag: string,
-    query?: string,
-    timeRangeForTags?: number,
-    range?: TimeRange
-  ): Promise<Array<SelectableValue<string>>> {
+  async getOptionsV2({
+    tag,
+    query,
+    timeRangeForTags,
+    range,
+  }: GetOptionsV2): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
     const params: { q?: string; limit: number; start?: number; end?: number } = {
       limit: this.getTagsLimit(),

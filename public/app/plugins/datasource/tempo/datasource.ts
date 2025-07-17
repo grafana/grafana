@@ -226,7 +226,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2(scopeAndTag, undefined, timeRangeForTags, range);
+      options = await this.languageProvider.getOptionsV2({
+        tag: scopeAndTag,
+        timeRangeForTags,
+        range,
+      });
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
@@ -265,7 +269,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     try {
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
-      options = await this.languageProvider.getOptionsV2(tag, query, timeRangeForTags, range);
+      options = await this.languageProvider.getOptionsV2({
+        tag,
+        query,
+        timeRangeForTags,
+        range,
+      });
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(getTagWithoutScope(tag));

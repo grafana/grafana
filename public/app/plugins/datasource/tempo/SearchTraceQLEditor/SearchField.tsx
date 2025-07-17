@@ -62,7 +62,12 @@ const SearchField = ({
   const updateOptions = async () => {
     try {
       const result = filter.tag
-        ? await datasource.languageProvider.getOptionsV2(scopedTag, query, timeRangeForTags, range)
+        ? await datasource.languageProvider.getOptionsV2({
+            tag: scopedTag,
+            query,
+            timeRangeForTags,
+            range,
+          })
         : [];
       setAlertText(undefined);
       setError(null);
