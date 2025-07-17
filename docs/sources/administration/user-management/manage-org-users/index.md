@@ -83,8 +83,6 @@ When you invite users to join an organization, you assign the **Admin**, **Edito
 If you have [server administrator](../../roles-and-permissions/#grafana-server-administrators) permissions, you can also manually [add a user to an organization](../server-user-management/add-remove-user-to-org/).
 {{< /admonition >}}
 
-**Quick invite option**: You can also invite users by clicking the **Invite** button in the top navigation bar, which provides a shortcut to the invitation form.
-
 ### Before you begin
 
 - Ensure you have organization administrator privileges.
