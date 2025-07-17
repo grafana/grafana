@@ -44,12 +44,18 @@ type MoveResourceMutations = {
   createFile: ReturnType<typeof useCreateRepositoryFilesWithPathMutation>[0];
   deleteFile: ReturnType<typeof useDeleteRepositoryFilesWithPathMutation>[0];
 };
+
+export interface ProgressCallback {
+  (current: number, total: number, item: string): void;
+}
+
 interface BulkMoveRequest {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
   targetFolderPath: string;
   repository: RepositoryView;
   mutations: MoveResourceMutations;
   options: BaseProvisionedFormData;
+  onProgress?: ProgressCallback;
 }
 
 interface MoveResultSuccess {
@@ -82,8 +88,8 @@ interface FulfilledResource {
 }
 
 /**
- * Execute bulk move operation for selected dashboards
- * TODO: Follow up https://github.com/grafana/git-ui-sync-project/issues/315#issuecomment-3075920997 for better approach
+ * Execute bulk move operation for selected dashboards with sequential processing
+ * to avoid GitHub API conflicts and race conditions
  */
 export const bulkMoveResources = async ({
   selectedItems,
@@ -91,9 +97,16 @@ export const bulkMoveResources = async ({
   repository,
   mutations,
   options,
+  onProgress,
 }: BulkMoveRequest): Promise<BulkMoveResult> => {
-  // 1. Get dashboard data for all selected dashboards
+  // 1. Get dashboard data for all selected dashboards (parallel reads are OK)
   const dashboardsToMove = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+
+  onProgress?.(
+    0,
+    dashboardsToMove.length,
+    t('browse-dashboards.bulk-move.fetching-data', 'Fetching dashboard data...')
+  );
 
   const dashboardDataResults = await Promise.allSettled(
     dashboardsToMove.map(async (uid) => {
@@ -105,7 +118,9 @@ export const bulkMoveResources = async ({
             : dto.metadata?.annotations?.[AnnoKeySourcePath];
 
         if (!sourcePath) {
-          throw new Error(`No source path found for dashboard ${uid}`);
+          throw new Error(
+            t('browse-dashboards.bulk-move.no-source-path', 'No source path found for dashboard {{uid}}', { uid })
+          );
         }
 
         const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
@@ -137,6 +152,7 @@ export const bulkMoveResources = async ({
           uid: dashboardsToMove[index],
           status: 'failed',
           failureType: 'data-fetch',
+          error: result.reason instanceof Error ? result.reason.message : 'Data fetch failed',
         });
       }
       return acc;
@@ -147,67 +163,66 @@ export const bulkMoveResources = async ({
     }
   );
 
-  // 3. Execute moves for dashboards with valid data
-  // In the executeBulkMove function, replace the move logic:
-  const moveResults = await Promise.allSettled(
-    fulfilledResources.map(async ({ uid, data, title }): Promise<MoveResultSuccess | MoveResultFailed> => {
-      try {
-        const fileName = formatFileName(data);
-        const body = data.resource.file;
-
-        if (!body) {
-          throw new Error(`No file content found for dashboard ${uid}`);
-        }
-
-        const result = await moveResource({
-          repositoryName: repository.name,
-          currentPath: formatFilePath(options.path, fileName),
-          targetPath: formatFilePath(targetFolderPath, fileName),
-          fileContent: body,
-          commitMessage: options.comment || `Move dashboard: ${title || uid}`,
-          ref: options.workflow === 'write' ? undefined : options.ref,
-          mutations,
-        });
-
-        if (result.success) {
-          return {
-            uid,
-            status: 'success',
-          };
-        } else {
-          throw new Error(result.error || 'Move operation failed');
-        }
-      } catch (error) {
-        console.error(`Failed to move dashboard ${uid}:`, error);
-        return {
-          uid,
-          status: 'failed',
-          failureType: 'create',
-        };
-      }
-    })
-  );
-
-  // 4. Process results
+  // 3. Sequential processing for write operations to avoid GitHub API conflicts
   const successful: MoveResultSuccess[] = [];
   const failed: MoveResultFailed[] = [...dataFetchFailures];
 
-  moveResults.forEach((result) => {
-    if (result.status === 'fulfilled') {
-      if (result.value.status === 'success') {
-        successful.push(result.value);
-      } else {
-        failed.push(result.value);
+  for (const [index, { uid, data, title }] of fulfilledResources.entries()) {
+    try {
+      const currentStep = index + 1;
+      const totalSteps = fulfilledResources.length;
+
+      onProgress?.(
+        currentStep,
+        totalSteps,
+        t('browse-dashboards.bulk-move.moving-dashboard', 'Moving "{{title}}"', { title })
+      );
+
+      const fileName = formatFileName(data);
+      const newPath = formatFilePath(targetFolderPath, fileName);
+      const body = data.resource.file;
+
+      if (!body) {
+        throw new Error(
+          t('browse-dashboards.bulk-move.no-file-content', 'No file content found for dashboard {{uid}}', { uid })
+        );
       }
-    } else {
-      const failedResult: MoveResultFailed = {
-        uid: 'unknown',
+
+      const result = await moveResource({
+        repositoryName: repository.name,
+        currentPath: formatFilePath(options.path, fileName),
+        targetPath: newPath,
+        fileContent: body,
+        commitMessage: options.comment || `Move dashboard: ${title}`,
+        ref: options.workflow === 'write' ? undefined : options.ref,
+        mutations,
+      });
+
+      if (result.success) {
+        successful.push({
+          uid,
+          status: 'success',
+        });
+        console.log(`✅ Successfully moved dashboard: ${title} (${uid})`);
+      } else {
+        throw new Error(result.error || t('browse-dashboards.bulk-move.move-failed', 'Move operation failed'));
+      }
+
+      // Add delay between operations to prevent GitHub API rate limits and conflicts
+      if (index < fulfilledResources.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 300)); // 300ms delay
+      }
+    } catch (error) {
+      console.error(`❌ Failed to move dashboard ${uid}:`, error);
+      failed.push({
+        uid,
         status: 'failed',
-        failureType: 'data-fetch',
-      };
-      failed.push(failedResult);
+        title,
+        failureType: 'create',
+        error: error instanceof Error ? error.message : t('browse-dashboards.bulk-move.unknown-error', 'Unknown error'),
+      });
     }
-  });
+  }
 
   const summary = {
     total: dashboardsToMove.length,
@@ -225,11 +240,10 @@ export const bulkMoveResources = async ({
 export interface MoveResourceResult {
   success: boolean;
   failedToCreate?: boolean;
-  failedToDelete?: boolean; // Created but not deleted
+  failedToDelete?: boolean;
   error?: string;
 }
 
-// Single resource move operation
 export interface MoveResourceParams {
   repositoryName: string;
   currentPath: string;
@@ -249,6 +263,8 @@ export async function moveResource({
   ref,
   mutations,
 }: MoveResourceParams): Promise<MoveResourceResult> {
+  console.log(`🚀 Moving file: ${currentPath} → ${targetPath}`);
+
   // Step 1: Create file at target location
   try {
     await mutations
@@ -256,16 +272,17 @@ export async function moveResource({
         name: repositoryName,
         path: targetPath,
         ref,
-        message: commitMessage,
+        message: `Bulk action (move) - ${commitMessage}`,
         body: fileContent,
-        skipDryRun: true, // We want to skip dry run, otherwise BE will check for UID and instead not create the file, but try to update it.
       })
       .unwrap();
+    console.log(`✅ Created file at: ${targetPath}`);
   } catch (error) {
+    console.error(`❌ Failed to create file at ${targetPath}:`, error);
     return {
       success: false,
       failedToCreate: true,
-      error: error instanceof Error ? error.message : 'Create failed',
+      error: error instanceof Error ? error.message : t('browse-dashboards.bulk-move.create-failed', 'Create failed'),
     };
   }
 
@@ -276,17 +293,20 @@ export async function moveResource({
         name: repositoryName,
         path: currentPath,
         ref,
-        message: commitMessage,
+        message: `Bulk action (delete) - ${commitMessage}`,
       })
       .unwrap();
-
-    return { success: true }; // Only return true if both create and delete succeed
+    console.log(`✅ Deleted file from: ${currentPath}`);
+    return { success: true };
   } catch (deleteError) {
-    // Partial success: created but couldn't delete
+    console.error(`❌ Failed to delete file from ${currentPath}:`, deleteError);
     return {
       success: false,
       failedToDelete: true,
-      error: deleteError instanceof Error ? deleteError.message : 'Delete failed',
+      error:
+        deleteError instanceof Error
+          ? deleteError.message
+          : t('browse-dashboards.bulk-move.delete-failed', 'Delete failed'),
     };
   }
 }
@@ -294,14 +314,20 @@ export async function moveResource({
 function formatFileName(data: ResourceWrapper) {
   const fileName = data.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
   if (!fileName) {
-    throw new Error('Missing source path annotation');
+    throw new Error(t('browse-dashboards.bulk-move.missing-source-path', 'Missing source path annotation'));
   }
   return fileName.split('/').pop();
 }
 
-function formatFilePath(path: string, fileName: string | undefined) {
+function formatFilePath(path: string | undefined, fileName: string | undefined) {
   if (!fileName) {
-    throw new Error('File name is required to format file path');
+    throw new Error(t('browse-dashboards.bulk-move.filename-required', 'File name is required to format file path'));
   }
-  return `${path.replace(/\/$/, '')}/${fileName}`;
+
+  // Handle root folder cases (undefined, empty, or just "/")
+  const safePath = path || '';
+  const cleanPath = safePath.replace(/^\/+|\/+$/g, ''); // Remove leading AND trailing slashes
+
+  // For root folder, return just the filename, otherwise folder/filename
+  return cleanPath ? `${cleanPath}/${fileName}` : fileName;
 }

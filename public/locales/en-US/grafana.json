@@ -3495,16 +3495,33 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
+    "bulk-move": {
+      "create-failed": "Create failed",
+      "delete-failed": "Delete failed",
+      "fetching-data": "Fetching dashboard data...",
+      "filename-required": "File name is required to format file path",
+      "missing-source-path": "Missing source path annotation",
+      "move-failed": "Move operation failed",
+      "moving-dashboard": "Moving \"{{title}}\"",
+      "no-file-content": "No file content found for dashboard {{uid}}",
+      "no-source-path": "No source path found for dashboard {{uid}}",
+      "unknown-error": "Unknown error"
+    },
     "bulk-move-resources-form": {
       "cancel-action": "Cancel",
+      "error": "Bulk move operation failed",
       "failed-alert": "Move Failed",
       "failed-create": "Failed to create resource in target location",
       "failed-delete": "Resource was created at new location but could not be deleted from original location. Please manually remove the old file.",
       "failed-fetch": "Failed to fetch resource data",
       "move-action": "Move Resources",
       "move-warning": "This will move selected resources and their descendants. In total, this will affect:",
-      "moving": "Moving...",
-      "success": "Bulk move completed successfully",
+      "moving": "Moving... ({{current}}/{{total}})",
+      "partial-success": "Moved {{successCount}} dashboard(s), {{failedCount}} failed",
+      "preparing": "Preparing...",
+      "progress": "Progress: {{current}} of {{total}}",
+      "success_one": "Successfully moved {{count}} dashboard(s)",
+      "success_other": "Successfully moved {{count}} dashboard(s)",
       "target-folder": "Target Folder",
       "title": "Bulk Move Resources"
     },

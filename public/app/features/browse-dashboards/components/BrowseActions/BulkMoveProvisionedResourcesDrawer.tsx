@@ -23,8 +23,9 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { DashboardTreeSelection } from '../../types';
 
 import { BulkMoveFailedBanner } from './BulkMoveFailedBanner';
+import { BulkMoveProgress, ProgressState } from './BulkMoveProgress';
 import { DescendantCount } from './DescendantCount';
-import { bulkMoveResources, BulkMoveResult } from './utils';
+import { bulkMoveResources, BulkMoveResult, ProgressCallback } from './utils';
 
 interface FormProps extends BulkMoveProvisionResourceProps {
   initialValues: Omit<BaseProvisionedFormData, 'title'>;
@@ -51,7 +52,8 @@ function FormContent({
   const [createFile] = useCreateRepositoryFilesWithPathMutation();
   const [deleteFile] = useDeleteRepositoryFilesWithPathMutation();
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<BulkMoveResult | undefined>(); // This only gets set if there are any failed moves
+  const [results, setResults] = useState<BulkMoveResult | undefined>();
+  const [progress, setProgress] = useState<ProgressState | null>(null);
 
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
@@ -63,49 +65,89 @@ function FormContent({
   const [workflow] = watch(['workflow']);
 
   const onFolderChange = (folderUid?: string) => {
-    if (folderUid) {
-      setTargetFolderUID(folderUid);
-    }
+    setTargetFolderUID(folderUid || '');
+  };
+
+  const onProgressUpdate: ProgressCallback = (current, total, item) => {
+    setProgress({ current, total, item });
   };
 
   const handleSubmitForm = async (formData: BaseProvisionedFormData) => {
-    if (!targetFolder || !repository) {
+    if (targetFolderUID == null || !repository) {
       return;
     }
 
     setIsLoading(true);
+    setResults(undefined);
+    setProgress(null);
 
-    const folderAnnotations = targetFolder?.metadata.annotations || {};
+    try {
+      const folderAnnotations = targetFolder?.metadata.annotations || {};
+      const targetPath = folderAnnotations[AnnoKeySourcePath] || ''; // Handle root folder
 
-    const results = await bulkMoveResources({
-      selectedItems,
-      targetFolderPath: folderAnnotations[AnnoKeySourcePath],
-      repository,
-      mutations: { createFile, deleteFile },
-      options: { ...formData },
-    });
-
-    if (results.successful.length > 0 && results.failed.length === 0) {
-      // All resources moved successfully, navigate to the dashboard list
-      appEvents.publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('browse-dashboards.bulk-move-resources-form.success', 'Bulk move completed successfully')],
+      const results = await bulkMoveResources({
+        selectedItems,
+        targetFolderPath: targetPath,
+        repository,
+        mutations: { createFile, deleteFile },
+        options: { ...formData },
+        onProgress: onProgressUpdate,
       });
-      onClose();
-      // Navigate to the target folder
-      if (targetFolder?.metadata?.name) {
-        navigate(`/dashboards/f/${targetFolder.metadata.name}/`);
-      } else {
-        navigate('/dashboards'); // Fallback to root
-      }
-    } else {
-      setResults(results);
-    }
 
-    setIsLoading(false);
+      if (results.successful.length > 0 && results.failed.length === 0) {
+        // All resources moved successfully
+        appEvents.publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [
+            t('browse-dashboards.bulk-move-resources-form.success', 'Successfully moved {{count}} dashboard(s)', {
+              count: results.successful.length,
+            }),
+          ],
+        });
+        onClose();
+
+        // Navigate to target folder
+        if (targetFolderUID && targetFolderUID !== 'general') {
+          navigate(`/dashboards/f/${targetFolderUID}/`);
+        } else {
+          navigate('/dashboards');
+        }
+      } else {
+        // Some failures occurred
+        setResults(results);
+
+        if (results.successful.length > 0) {
+          appEvents.publish({
+            type: AppEvents.alertWarning.name,
+            payload: [
+              t(
+                'browse-dashboards.bulk-move-resources-form.partial-success',
+                'Moved {{successCount}} dashboard(s), {{failedCount}} failed',
+                {
+                  successCount: results.successful.length,
+                  failedCount: results.failed.length,
+                }
+              ),
+            ],
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Bulk move operation failed:', error);
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t('browse-dashboards.bulk-move-resources-form.error', 'Bulk move operation failed'),
+          error instanceof Error ? error.message : 'Unknown error',
+        ],
+      });
+    } finally {
+      setIsLoading(false);
+      setProgress(null);
+    }
   };
 
-  const canSubmit = targetFolderUID && !isLoading;
+  const canSubmit = targetFolderUID != null && !isLoading;
 
   return (
     <Drawer onClose={onClose} title={t('browse-dashboards.bulk-move-resources-form.title', 'Bulk Move Resources')}>
@@ -114,6 +156,9 @@ function FormContent({
           <Stack direction="column" gap={2}>
             {/* Bulk move failed banner */}
             {results && <BulkMoveFailedBanner result={results} onDismiss={() => setResults(undefined)} />}
+
+            {/* Progress indicator */}
+            {progress && <BulkMoveProgress progress={progress} />}
 
             <Box paddingBottom={2}>
               <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-warning">
@@ -138,7 +183,12 @@ function FormContent({
             <Stack gap={2}>
               <Button variant="primary" type="submit" disabled={!canSubmit || !!results}>
                 {isLoading
-                  ? t('browse-dashboards.bulk-move-resources-form.moving', 'Moving...')
+                  ? progress
+                    ? t('browse-dashboards.bulk-move-resources-form.moving', 'Moving... ({{current}}/{{total}})', {
+                        current: progress.current,
+                        total: progress.total,
+                      })
+                    : t('browse-dashboards.bulk-move-resources-form.preparing', 'Preparing...')
                   : t('browse-dashboards.bulk-move-resources-form.move-action', 'Move Resources')}
               </Button>
               <Button variant="secondary" onClick={onClose} fill="outline" disabled={isLoading}>
@@ -169,7 +219,7 @@ export function BulkMoveProvisionedResourceDrawer({
     comment: '',
     ref: `bulk-move/${timestamp}`,
     workflow: getDefaultWorkflow(repository),
-    path: `${path}/`,
+    path: path ? `${path}/` : '', // Handle root folder
   };
 
   if (!repository) {
