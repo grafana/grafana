@@ -21,7 +21,7 @@ COPY Makefile devenv/frontend-service/build-grafana.sh ./
 
 # Copy go mod files first
 # run this command and replace the output below:
-# ls -1 {pkg,scripts,apps}**/go.{mod,sum} | sed 's#\(.*\)/go\.\(mod\|sum\)#COPY \1/go.* \1/#' | sort -u
+# find pkg scripts apps -type f \( -name go.mod -o -name go.sum \) -print | sed -E 's#(.*)/go\.(mod|sum)$#COPY \1/go.* \1/#' | sort -u
 COPY apps/advisor/go.* apps/advisor/
 COPY apps/alerting/notifications/go.* apps/alerting/notifications/
 COPY apps/dashboard/go.* apps/dashboard/
