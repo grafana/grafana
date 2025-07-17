@@ -355,9 +355,6 @@
       "query-builder-hints": {
         "hint-details": "提示：{{hintDetails}}"
       },
-      "query-editor-hints": {
-        "hint-details": "提示： {{hintDetails}}"
-      },
       "query-editor-mode-toggle": {
         "editor-modes": {
           "label-builder": "",

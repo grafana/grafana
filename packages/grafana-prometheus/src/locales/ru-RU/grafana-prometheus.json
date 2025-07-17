@@ -358,9 +358,6 @@
       "query-builder-hints": {
         "hint-details": ""
       },
-      "query-editor-hints": {
-        "hint-details": ""
-      },
       "query-editor-mode-toggle": {
         "editor-modes": {
           "label-builder": "",

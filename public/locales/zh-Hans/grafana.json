@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "添加更多"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "提醒状态",
       "annotations": "注释",
@@ -3448,6 +3457,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "取消",
       "cannot-move-folders": "文件夹无法移动",
       "confirmation-text": "删除",
@@ -3466,7 +3477,9 @@
       "move-modal-text": "此操作将移动以下内容：",
       "move-modal-title": "移动",
       "moving": "正在移动...",
-      "new-folder-name-required-phrase": "文件夹名称是必需项。"
+      "new-folder-name-required-phrase": "文件夹名称是必需项。",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "最近删除"

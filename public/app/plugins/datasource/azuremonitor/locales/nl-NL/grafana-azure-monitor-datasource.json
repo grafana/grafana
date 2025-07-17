@@ -233,7 +233,7 @@
       "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Bereik"
     },
     "search": {
       "aria-label-resource-search": "Bron zoeken",
