@@ -9589,14 +9589,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/istanbul-lib-coverage@npm:*, @types/istanbul-lib-coverage@npm:^2.0.0, @types/istanbul-lib-coverage@npm:^2.0.1":
-  version: 2.0.3
-  resolution: "@types/istanbul-lib-coverage@npm:2.0.3"
-  checksum: 10/0650cba4be8f464bee89b9de0b71a5ea3b5cc676ce24e1196b5d6a51542ce9e613ae4549bf19756bb33dbbbb32b47931040266100062bfb197c597d73e341eb0
-  languageName: node
-  linkType: hard
-
-"@types/istanbul-lib-coverage@npm:^2.0.6":
+"@types/istanbul-lib-coverage@npm:*, @types/istanbul-lib-coverage@npm:^2.0.0, @types/istanbul-lib-coverage@npm:^2.0.1, @types/istanbul-lib-coverage@npm:^2.0.6":
   version: 2.0.6
   resolution: "@types/istanbul-lib-coverage@npm:2.0.6"
   checksum: 10/3feac423fd3e5449485afac999dcfcb3d44a37c830af898b689fadc65d26526460bedb889db278e0d4d815a670331796494d073a10ee6e3a6526301fe7415778
@@ -9612,16 +9605,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/istanbul-reports@npm:^3.0.0":
-  version: 3.0.1
-  resolution: "@types/istanbul-reports@npm:3.0.1"
-  dependencies:
-    "@types/istanbul-lib-report": "npm:*"
-  checksum: 10/f1ad54bc68f37f60b30c7915886b92f86b847033e597f9b34f2415acdbe5ed742fa559a0a40050d74cdba3b6a63c342cac1f3a64dba5b68b66a6941f4abd7903
-  languageName: node
-  linkType: hard
-
-"@types/istanbul-reports@npm:^3.0.4":
+"@types/istanbul-reports@npm:^3.0.0, @types/istanbul-reports@npm:^3.0.4":
   version: 3.0.4
   resolution: "@types/istanbul-reports@npm:3.0.4"
   dependencies:
@@ -18527,7 +18511,7 @@ __metadata:
     typescript: "npm:5.8.3"
     uplot: "npm:1.6.32"
     uuid: "npm:11.1.0"
-    vis-data: "npm:^7.1.10"
+    vis-data: "npm:^8.0.0"
     vis-network: "npm:9.1.13"
     webpack: "npm:5.97.1"
     webpack-assets-manifest: "npm:^5.1.0"
@@ -32003,13 +31987,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vis-data@npm:^7.1.10":
-  version: 7.1.10
-  resolution: "vis-data@npm:7.1.10"
+"vis-data@npm:^8.0.0":
+  version: 8.0.1
+  resolution: "vis-data@npm:8.0.1"
   peerDependencies:
     uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
-    vis-util: ^5.0.1
-  checksum: 10/23fb2ef26864153013372e1d95107765be86dd9ce96f987bf99fdd93759fbe5ec1bd2603d354ca18a03f0fb607b829396ec02fe005aead63ef24599512f21402
+    vis-util: ">=6.0.0"
+  checksum: 10/d69045c555a79fde292270d42f111b0d1ba644989481eec08393f73cf64573563e6533718eff0534f4255f44d363b078d0520704190328b97f8e244d4b4c8b73
   languageName: node
   linkType: hard
 
