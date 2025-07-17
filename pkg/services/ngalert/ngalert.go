@@ -283,11 +283,8 @@ func (ng *AlertNG) init() error {
 
 						// The internal Alertmanager should implement the StateMerger interface.
 						sm := internalAM.(notifier.StateMerger)
-						if err := sm.MergeNflog(rs.Nflog); err != nil {
-							return nil, fmt.Errorf("failed to merge remote nflog entries: %w", err)
-						}
-						if err := sm.MergeSilences(rs.Silences); err != nil {
-							return nil, fmt.Errorf("failed to merge remote silences: %w", err)
+						if err := sm.MergeState(rs); err != nil {
+							return nil, fmt.Errorf("failed to merge remote state: %w", err)
 						}
 						moaLogger.Info("Successfully merged remote silences and nflog entries")
 					}

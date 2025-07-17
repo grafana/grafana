@@ -77,10 +77,15 @@ type Alertmanager interface {
 	Ready() bool
 }
 
+// ExternalState represents an external Alertmanager state that can be merged into Grafana's
+type ExternalState struct {
+	Silences []byte
+	Nflog    []byte
+}
+
 // StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
 type StateMerger interface {
-	MergeNflog([]byte) error
-	MergeSilences([]byte) error
+	MergeState(ExternalState) error
 }
 
 type MultiOrgAlertmanager struct {
