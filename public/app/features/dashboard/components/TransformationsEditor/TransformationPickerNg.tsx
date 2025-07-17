@@ -11,7 +11,19 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Badge, Card, Drawer, FilterPill, Grid, IconButton, Input, Switch, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  Badge,
+  Card,
+  Drawer,
+  FilterPill,
+  Grid,
+  IconButton,
+  Input,
+  Stack,
+  Switch,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
@@ -74,7 +86,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
       }}
       title={t('dashboard.transformation-picker-ng.title-add-another-transformation', 'Add another transformation')}
     >
-      <div className={styles.drawerContent}>
+      <Stack direction="column" gap={2}>
         {config?.featureToggles?.sqlExpressions && <SqlExpressionsBanner />}
         <div className={styles.searchWrapper}>
           <Input
@@ -91,7 +103,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
             ref={searchInputRef}
             autoFocus={true}
           />
-          <div className={styles.switchWrapper}>
+          <Stack direction="row" alignItems="center" gap={0.5}>
             <span className={styles.switchLabel}>
               <Trans i18nKey="dashboard.transformation-picker-ng.show-images">Show images</Trans>
             </span>
@@ -99,10 +111,10 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
               value={showIllustrations}
               onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
             />
-          </div>
+          </Stack>
         </div>
 
-        <div className={styles.filterWrapper}>
+        <Stack direction="row" wrap="wrap" rowGap={1} columnGap={0.5}>
           {filterCategoriesLabels.map(([slug, label]) => {
             return (
               <FilterPill
@@ -113,7 +125,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
               />
             );
           })}
-        </div>
+        </Stack>
 
         <TransformationsGrid
           showIllustrations={showIllustrations}
@@ -123,18 +135,13 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
             onTransformationAdd({ value: id });
           }}
         />
-      </div>
+      </Stack>
     </Drawer>
   );
 }
 
 function getTransformationPickerStyles(theme: GrafanaTheme2) {
   return {
-    drawerContent: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(2),
-    }),
     pickerInformationLine: css({
       fontSize: '16px',
       marginBottom: theme.spacing(2),
@@ -156,17 +163,6 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
     }),
     switchLabel: css({
       whiteSpace: 'nowrap',
-    }),
-    switchWrapper: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-    }),
-    filterWrapper: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      rowGap: theme.spacing(1),
-      columnGap: theme.spacing(0.5),
     }),
   };
 }
