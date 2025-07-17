@@ -34,6 +34,14 @@ export type DatasourceUID = string;
 
 export const defaultDatasourceUID = (): DatasourceUID => ("");
 
+export interface IntervalTrigger {
+	interval: PromDuration;
+}
+
+export const defaultIntervalTrigger = (): IntervalTrigger => ({
+	interval: defaultPromDuration(),
+});
+
 export type PromDuration = string;
 
 export const defaultPromDuration = (): PromDuration => ("");
@@ -55,11 +63,15 @@ export const defaultTemplateString = (): TemplateString => ("");
 
 export interface Spec {
 	title: string;
-	paused?: boolean;
 	data: Record<string, Query>;
+	paused?: boolean;
+	trigger: IntervalTrigger;
 	interval: PromDuration;
 	noDataState: string;
 	execErrState: string;
+	for: string;
+	keepFiringFor: string;
+	missingSeriesEvalsToResolve?: number;
 	notificationSettings?: {
 		receiver: string;
 		groupBy?: string[];
@@ -69,18 +81,18 @@ export interface Spec {
 		muteTimeIntervals?: MuteTimeIntervalRef[];
 		activeTimeIntervals?: ActiveTimeIntervalRef[];
 	};
-	for: string;
-	keepFiringFor: string;
-	missingSeriesEvalsToResolve?: number;
 	annotations: Record<string, TemplateString>;
-	dashboardUID?: string;
 	labels: Record<string, TemplateString>;
-	panelID?: number;
+	panelRef?: {
+		dashboardUID: string;
+		panelID: number;
+	};
 }
 
 export const defaultSpec = (): Spec => ({
 	title: "",
 	data: {},
+	trigger: defaultIntervalTrigger(),
 	interval: defaultPromDuration(),
 	noDataState: "NoData",
 	execErrState: "Error",

@@ -10,17 +10,23 @@ ExecErrState: *"Error" | "Ok" | "Alerting" | "KeepLast"
 AlertRuleSpec: #RuleSpec & {
 	noDataState:                  NoDataState
 	execErrState:                 ExecErrState
-	notificationSettings?:        #NotificationSettings
 	"for":                        string & #PromDuration
 	keepFiringFor:                string & #PromDuration
 	missingSeriesEvalsToResolve?: int
+
+	notificationSettings?: #NotificationSettings
 	annotations: {
 		[string]: TemplateString
 	}
-	dashboardUID?: string
-	panelID?:      int
+	panelRef?: #PanelRef
 }
 
+#PanelRef: {
+	dashboardUID: string
+	panelID:      int
+}
+
+// TODO(@moustafab): this should be imported from the notifications package
 #NotificationSettings: {
 	receiver: string
 	groupBy?: [...string]

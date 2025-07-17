@@ -17,8 +17,6 @@ spec:
                             additionalProperties:
                                 type: string
                             type: object
-                        dashboardUID:
-                            type: string
                         data:
                             additionalProperties:
                                 description: |-
@@ -108,15 +106,32 @@ spec:
                             required:
                                 - receiver
                             type: object
-                        panelID:
-                            type: integer
+                        panelRef:
+                            properties:
+                                dashboardUID:
+                                    type: string
+                                panelID:
+                                    type: integer
+                            required:
+                                - dashboardUID
+                                - panelID
+                            type: object
                         paused:
                             type: boolean
                         title:
                             type: string
+                        trigger:
+                            properties:
+                                interval:
+                                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+                                    type: string
+                            required:
+                                - interval
+                            type: object
                     required:
                         - title
                         - data
+                        - trigger
                         - interval
                         - noDataState
                         - execErrState
@@ -166,8 +181,8 @@ spec:
               selectableFields:
                 - spec.title
                 - spec.paused
-                - spec.dashboardUID
-                - spec.panelID
+                - spec.panelRef.dashboardUID
+                - spec.panelRef.panelID
                 - spec.notificationSettings.receiver
           conversion: false
         - kind: RecordingRule
@@ -227,9 +242,18 @@ spec:
                             type: string
                         title:
                             type: string
+                        trigger:
+                            properties:
+                                interval:
+                                    pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+                                    type: string
+                            required:
+                                - interval
+                            type: object
                     required:
                         - title
                         - data
+                        - trigger
                         - interval
                         - metric
                         - labels
@@ -275,4 +299,5 @@ spec:
                     type: object
               selectableFields:
                 - spec.title
+                - spec.paused
           conversion: false

@@ -63,9 +63,18 @@ spec:
                                 type: string
                             title:
                                 type: string
+                            trigger:
+                                properties:
+                                    interval:
+                                        pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
+                                        type: string
+                                required:
+                                    - interval
+                                type: object
                         required:
                             - title
                             - data
+                            - trigger
                             - interval
                             - metric
                             - labels
@@ -116,6 +125,7 @@ spec:
             status: {}
           selectableFields:
             - jsonPath: .spec.title
+            - jsonPath: .spec.paused
     names:
         kind: RecordingRule
         plural: recordingrules

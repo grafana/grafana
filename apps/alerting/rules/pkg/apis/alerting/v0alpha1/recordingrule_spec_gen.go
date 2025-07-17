@@ -37,6 +37,16 @@ type RecordingRulePromDurationWMillis string
 type RecordingRuleDatasourceUID string
 
 // +k8s:openapi-gen=true
+type RecordingRuleIntervalTrigger struct {
+	Interval RecordingRulePromDuration `json:"interval"`
+}
+
+// NewRecordingRuleIntervalTrigger creates a new RecordingRuleIntervalTrigger object.
+func NewRecordingRuleIntervalTrigger() *RecordingRuleIntervalTrigger {
+	return &RecordingRuleIntervalTrigger{}
+}
+
+// +k8s:openapi-gen=true
 type RecordingRulePromDuration string
 
 // =~ figure out the regex for the template string
@@ -46,8 +56,9 @@ type RecordingRuleTemplateString string
 // +k8s:openapi-gen=true
 type RecordingRuleSpec struct {
 	Title               string                                 `json:"title"`
-	Paused              *bool                                  `json:"paused,omitempty"`
 	Data                map[string]RecordingRuleQuery          `json:"data"`
+	Paused              *bool                                  `json:"paused,omitempty"`
+	Trigger             RecordingRuleIntervalTrigger           `json:"trigger"`
 	Interval            RecordingRulePromDuration              `json:"interval"`
 	Metric              string                                 `json:"metric"`
 	Labels              map[string]RecordingRuleTemplateString `json:"labels"`
@@ -57,7 +68,8 @@ type RecordingRuleSpec struct {
 // NewRecordingRuleSpec creates a new RecordingRuleSpec object.
 func NewRecordingRuleSpec() *RecordingRuleSpec {
 	return &RecordingRuleSpec{
-		Data:   map[string]RecordingRuleQuery{},
-		Labels: map[string]RecordingRuleTemplateString{},
+		Data:    map[string]RecordingRuleQuery{},
+		Trigger: *NewRecordingRuleIntervalTrigger(),
+		Labels:  map[string]RecordingRuleTemplateString{},
 	}
 }

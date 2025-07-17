@@ -22,8 +22,10 @@ recordingRule: {
 			}
 			selectableFields: [
 				"spec.title",
-				"spec.metric",
-				"spec.targetDatasourceUID",
+				"spec.paused",
+				// FIXME(@moustafab): not sure why these fields are being considered structs... Bug in codegen
+				// "spec.metric",
+				// "spec.targetDatasourceUID",
 				// TODO: add status fields for filtering
 			]
 		}

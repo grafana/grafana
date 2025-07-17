@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,14 +29,13 @@ func ConvertToK8sResource(
 	if rule.Type() != ngmodels.RuleTypeAlerting {
 		return nil, invalidRuleError
 	}
-	// TODO: add the common metadata fields
-	// TODO: figure out how the rule folder is supposed to be mapped on k8s objects
 	k8sRule := &model.AlertRule{
 		ObjectMeta: metav1.ObjectMeta{
-			UID:       types.UID(rule.UID),
-			Name:      rule.UID,
-			Namespace: namespaceMapper(orgID),
-			Labels:    make(map[string]string),
+			UID:             types.UID(rule.UID),
+			Name:            rule.UID,
+			Namespace:       namespaceMapper(orgID),
+			ResourceVersion: fmt.Sprint(rule.Version),
+			Labels:          make(map[string]string),
 		},
 		Spec: model.AlertRuleSpec{
 			Title:    rule.Title,
@@ -107,6 +107,21 @@ func ConvertToK8sResource(
 		}
 		k8sRule.Spec.NotificationSettings = &nfSetting
 	}
+
+	// TODO: figure out how the rule folder is supposed to be mapped on k8s objects
+	meta, err := utils.MetaAccessor(k8sRule)
+	if err == nil {
+		meta.SetFolder(rule.NamespaceUID)
+		meta.SetUpdatedBy(string(*rule.UpdatedBy))
+		meta.SetUpdatedTimestamp(&rule.Updated)
+	}
+
+	// TODO: add the common metadata fields
+	k8sRule.SetUpdatedBy(string(*rule.UpdatedBy))
+	k8sRule.SetUpdateTimestamp(rule.Updated)
+	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
+	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
+	// k8sRule.SetCreationTimestamp(rule.)
 
 	return k8sRule, nil
 }

@@ -34,6 +34,14 @@ export type DatasourceUID = string;
 
 export const defaultDatasourceUID = (): DatasourceUID => ("");
 
+export interface IntervalTrigger {
+	interval: PromDuration;
+}
+
+export const defaultIntervalTrigger = (): IntervalTrigger => ({
+	interval: defaultPromDuration(),
+});
+
 export type PromDuration = string;
 
 export const defaultPromDuration = (): PromDuration => ("");
@@ -45,8 +53,9 @@ export const defaultTemplateString = (): TemplateString => ("");
 
 export interface Spec {
 	title: string;
-	paused?: boolean;
 	data: Record<string, Query>;
+	paused?: boolean;
+	trigger: IntervalTrigger;
 	interval: PromDuration;
 	metric: string;
 	labels: Record<string, TemplateString>;
@@ -56,6 +65,7 @@ export interface Spec {
 export const defaultSpec = (): Spec => ({
 	title: "",
 	data: {},
+	trigger: defaultIntervalTrigger(),
 	interval: defaultPromDuration(),
 	metric: "",
 	labels: {},

@@ -37,29 +37,23 @@ var (
 				},
 			},
 			{
-				FieldSelector: "spec.dashboardUID",
+				FieldSelector: "spec.panelRef.dashboardUID",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*AlertRule)
 					if !ok {
 						return "", fmt.Errorf("provided object must be of type *AlertRule")
 					}
-					if cast.Spec.DashboardUID == nil {
-						return "", nil
-					}
-					return *cast.Spec.DashboardUID, nil
+					return cast.Spec.PanelRef.DashboardUID, nil
 				},
 			},
 			{
-				FieldSelector: "spec.panelID",
+				FieldSelector: "spec.panelRef.panelID",
 				FieldValueFunc: func(o resource.Object) (string, error) {
 					cast, ok := o.(*AlertRule)
 					if !ok {
 						return "", fmt.Errorf("provided object must be of type *AlertRule")
 					}
-					if cast.Spec.PanelID == nil {
-						return "", nil
-					}
-					return fmt.Sprintf("%d", *cast.Spec.PanelID), nil
+					return fmt.Sprintf("%d", cast.Spec.PanelRef.PanelID), nil
 				},
 			},
 			{

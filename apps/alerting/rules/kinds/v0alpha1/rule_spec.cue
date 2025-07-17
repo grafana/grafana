@@ -10,18 +10,26 @@ TemplateString: string                       // =~ figure out the regex for the 
 #DatasourceUID: string & =~"^[a-zA-Z0-9_]+$" // TODO(@moustafab): validate regex for datasource UID
 
 #RuleSpec: {
-	title:   string
-	paused?: bool
+	title: string
 	data: {
 		// TODO: validate that only one can specify source=true
 		// Note: any issues with go hash map key sorting?
 		[string]: #Query
 	}
+	paused?:  bool
+	trigger:  #IntervalTrigger
 	interval: #PromDuration
 	labels: {
 		[string]: TemplateString
 	}
 	...
+}
+
+// TODO(@moustafab): when we support other trigger types ensure that none of the fields conflict
+// #TriggerType: #IntervalTrigger
+
+#IntervalTrigger: {
+	interval: #PromDuration
 }
 
 #RelativeTimeRange: {
