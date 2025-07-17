@@ -277,7 +277,7 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 	}
 
 	req := &backend.QueryDataRequest{
-		Headers: s.headers,
+		Headers: map[string]string{},
 		Queries: []backend.DataQuery{},
 	}
 
