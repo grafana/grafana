@@ -85,11 +85,6 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 				"Metadata.Name",
 				"WecomConfigs.Settings.EndpointURL", // This field is not exposed to user
 			}
-			if integrationType != "webhook" {
-				// Many notifiers now support HTTPClientConfig but only Webhook currently has it enabled in schema.
-				//TODO: Remove this once HTTPClientConfig is added to other schemas.
-				pathFilters = append(pathFilters, "HTTPClientConfig")
-			}
 			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {
 				for _, filter := range pathFilters {
 					if strings.Contains(path.String(), filter) {
