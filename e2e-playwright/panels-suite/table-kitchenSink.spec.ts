@@ -1,3 +1,5 @@
+import { Page, Locator } from '@playwright/test';
+
 import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
@@ -6,6 +8,15 @@ test.use({
     tableNextGen: true,
   },
 });
+
+// helper utils
+const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: number) =>
+  loc.getByRole('row').nth(rowIdx).getByRole('gridcell').nth(colIdx);
+
+const getCellHeight = async (loc: Page | Locator, rowIdx: number, colIdx: number) => {
+  const cell = await getCell(loc, rowIdx, colIdx);
+  return (await cell.boundingBox())?.height ?? 0;
+};
 
 test.describe(
   'Panels test: Table - Kitchen Sink',
@@ -21,30 +32,39 @@ test.describe(
 
       await expect(page.locator('.rdg')).toBeVisible();
 
-      // ---- Toggle text wrapping ----
-      // check that row height is increased due to the the wrapped rows
-      const getCell = async (rowIdx: number, colIdx: number) =>
-        page.getByRole('row').nth(rowIdx).getByRole('gridcell').nth(colIdx);
-      const getCellHeight = async (rowIdx: number, colIdx: number) => {
-        const cell = await getCell(rowIdx, colIdx);
-        return (await cell.boundingBox())?.height ?? 0;
-      };
+      // text wrapping is enabled by default on this panel.
+      await expect(getCellHeight(page, 1, 5)).resolves.toBeGreaterThan(100);
 
-      await expect(getCellHeight(1, 5)).resolves.toBeGreaterThan(100);
-
-      // toggle the lorem ipsum column's wrap text toggle.
+      // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
       await dashboardPage
         .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text'))
         .last()
         .click();
+      await expect(getCellHeight(page, 1, 5)).resolves.toBeLessThan(100);
 
-      await expect(getCellHeight(1, 5)).resolves.toBeLessThan(100);
+      // test that hover overflow works.
+      const loremIpsumCell = await getCell(page, 1, 5);
+      await loremIpsumCell.hover();
+      await expect(getCellHeight(page, 1, 5)).resolves.toBeGreaterThan(100);
+      await (await getCell(page, 1, 6)).hover();
+      await expect(getCellHeight(page, 1, 5)).resolves.toBeLessThan(100);
 
-      // now, test that hover overflow works.
-      await (await getCell(1, 5)).hover();
-      await expect(getCellHeight(1, 5)).resolves.toBeGreaterThan(100);
-      await (await getCell(1, 6)).hover();
-      await expect(getCellHeight(1, 5)).resolves.toBeLessThan(100);
+      // enable cell inspect, confirm that hover no longer triggers.
+      await dashboardPage
+        .getByGrafanaSelector(
+          selectors.components.PanelEditor.OptionsPane.fieldLabel('Cell options Cell value inspect')
+        )
+        .first()
+        .locator('label[for="custom.inspect"]')
+        .click();
+      await loremIpsumCell.hover();
+      await expect(getCellHeight(page, 1, 5)).resolves.toBeLessThan(100);
+
+      // click cell inspect, check that cell inspection pops open in the side as we'd expect.
+      await loremIpsumCell.getByLabel('Inspect value').click();
+      const loremIpsumText = await loremIpsumCell.textContent();
+      expect(loremIpsumText).toBeDefined();
+      await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
     });
 
     // test visibility, display name
