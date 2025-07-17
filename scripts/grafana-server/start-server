@@ -60,7 +60,7 @@ cp devenv/dashboards.yaml $PROV_DIR/dashboards
 cp devenv/alert_rules.yaml $PROV_DIR/alerting
 cp devenv/plugins.yaml $PROV_DIR/plugins
 
-cp -r devenv $
+cp -r devenv $RUNDIR
 
 echo -e "Starting Grafana server port $PORT"
 
