@@ -45,20 +45,11 @@ func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMap
 
 func convertToLegacyResource(p *shorturl.ShortURL, orgId int64) (*shorturls.ShortUrl, error) {
 	return &shorturls.ShortUrl{
-		Uid:        p.Name,
+		Uid:        p.Spec.Uid,
 		OrgId:      orgId,
 		Path:       p.Spec.Path,
 		LastSeenAt: p.Spec.LastSeenAt,
 	}, nil
-}
-
-// Read legacy ID from metadata annotations
-func getLegacyID(item *unstructured.Unstructured) int64 {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return 0
-	}
-	return meta.GetDeprecatedInternalID() // nolint:staticcheck
 }
 
 func LegacyCreateCommandToUnstructured(cmd dtos.CreateShortURLCmd) unstructured.Unstructured {
