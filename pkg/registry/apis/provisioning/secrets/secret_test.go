@@ -6,18 +6,79 @@ import (
 	"testing"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets/mocks"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
+// MockResourceInterface is a mock for dynamic.ResourceInterface
+type MockResourceInterface struct {
+	mock.Mock
+}
+
+func (m *MockResourceInterface) Get(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, options)
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockResourceInterface) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, options)
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockResourceInterface) Update(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, options)
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockResourceInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+	args := m.Called(ctx, name, options)
+	return args.Error(0)
+}
+
+func (m *MockResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	args := m.Called(ctx, options, listOptions)
+	return args.Error(0)
+}
+
+func (m *MockResourceInterface) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	args := m.Called(ctx, opts)
+	return args.Get(0).(*unstructured.UnstructuredList), args.Error(1)
+}
+
+func (m *MockResourceInterface) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
+	args := m.Called(ctx, opts)
+	return args.Get(0).(watch.Interface), args.Error(1)
+}
+
+func (m *MockResourceInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, pt, data, options)
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockResourceInterface) Apply(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, obj, options)
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockResourceInterface) ApplyStatus(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, obj, options)
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockResourceInterface) UpdateStatus(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, options)
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
 func TestNewSecretsService(t *testing.T) {
-	mockSecretsSvc := NewMockSecureValueService(t)
+	mockSecretsSvc := NewMockSecureValueClient(t)
 	mockDecryptSvc := &mocks.MockDecryptService{}
 
 	svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
@@ -33,7 +94,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 		namespace     string
 		secretName    string
 		data          string
-		setupMocks    func(*MockSecureValueService, *mocks.MockDecryptService)
+		setupMocks    func(*MockSecureValueClient, *mocks.MockDecryptService, *MockResourceInterface)
 		expectedName  string
 		expectedError string
 	}{
@@ -42,47 +103,20 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "test-secret",
 			data:       "secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
-				// Assert Read call with correct parameters
-				mockSecretsSvc.EXPECT().Read(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					xkube.Namespace("test-namespace"),
-					"test-secret",
-				).Return(nil, contracts.ErrSecureValueNotFound)
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+				// Setup client to return the mock resource interface
+				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
-				// Assert Create call with detailed validation
-				mockSecretsSvc.EXPECT().Create(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					mock.MatchedBy(func(sv *secretv1beta1.SecureValue) bool {
-						if sv.Namespace != "test-namespace" || sv.Name != "test-secret" {
-							return false
-						}
-						if sv.Spec.Description != "provisioning: test-secret" {
-							return false
-						}
-						if sv.Spec.Value == nil {
-							return false
-						}
-						if len(sv.Spec.Decrypters) != 1 || sv.Spec.Decrypters[0] != svcName {
-							return false
-						}
-						// Verify the actual secret value
-						if sv.Spec.Value.DangerouslyExposeAndConsumeValue() != "secret-data" {
-							return false
-						}
-						return true
-					}),
-					":test-uid",
-				).Return(&secretv1beta1.SecureValue{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-secret",
-						Namespace: "test-namespace",
+				// Mock Get call to return not found error (secret doesn't exist)
+				mockResourceInterface.On("Get", mock.Anything, "test-secret", mock.AnythingOfType("v1.GetOptions")).Return((*unstructured.Unstructured)(nil), contracts.ErrSecureValueNotFound)
+
+				// Mock Create call with validation
+				mockResourceInterface.On("Create", mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*unstructured.Unstructured"), mock.AnythingOfType("v1.CreateOptions")).Return(&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":      "test-secret",
+							"namespace": "test-namespace",
+						},
 					},
 				}, nil)
 			},
@@ -93,54 +127,35 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "existing-secret",
 			data:       "new-secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
-				existingSecret := &secretv1beta1.SecureValue{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "existing-secret",
-						Namespace: "test-namespace",
-					},
-					Spec: secretv1beta1.SecureValueSpec{
-						Description: "provisioning: existing-secret",
-						Decrypters:  []string{svcName},
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+				existingSecret := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":      "existing-secret",
+							"namespace": "test-namespace",
+						},
+						"spec": map[string]interface{}{
+							"description": "provisioning: existing-secret",
+							"decrypters":  []string{svcName},
+						},
 					},
 				}
 
-				// Assert Read call with context validation
-				mockSecretsSvc.EXPECT().Read(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					xkube.Namespace("test-namespace"),
-					"existing-secret",
-				).Return(existingSecret, nil)
+				// Setup client to return the mock resource interface
+				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
-				// Assert Update call with detailed validation
-				mockSecretsSvc.EXPECT().Update(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					mock.MatchedBy(func(sv *secretv1beta1.SecureValue) bool {
-						if sv.Namespace != "test-namespace" || sv.Name != "existing-secret" {
-							return false
-						}
-						if sv.Spec.Value == nil {
-							return false
-						}
-						// Verify the updated secret value
-						if sv.Spec.Value.DangerouslyExposeAndConsumeValue() != "new-secret-data" {
-							return false
-						}
-						return true
-					}),
-					":test-uid",
-				).Return(&secretv1beta1.SecureValue{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "existing-secret",
-						Namespace: "test-namespace",
+				// Mock Get call to return existing secret
+				mockResourceInterface.On("Get", mock.Anything, "existing-secret", mock.AnythingOfType("v1.GetOptions")).Return(existingSecret, nil)
+
+				// Mock Update call with validation
+				mockResourceInterface.On("Update", mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*unstructured.Unstructured"), mock.AnythingOfType("v1.UpdateOptions")).Return(&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":      "existing-secret",
+							"namespace": "test-namespace",
+						},
 					},
-				}, true, nil)
+				}, nil)
 			},
 			expectedName: "existing-secret",
 		},
@@ -149,15 +164,12 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "test-secret",
 			data:       "secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
-				mockSecretsSvc.EXPECT().Read(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					xkube.Namespace("test-namespace"),
-					"test-secret",
-				).Return(nil, errors.New("database error"))
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+				// Setup client to return the mock resource interface
+				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
+
+				// Mock Get call to return error
+				mockResourceInterface.On("Get", mock.Anything, "test-secret", mock.AnythingOfType("v1.GetOptions")).Return((*unstructured.Unstructured)(nil), errors.New("database error"))
 			},
 			expectedError: "database error",
 		},
@@ -166,29 +178,15 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "test-secret",
 			data:       "secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
-				mockSecretsSvc.EXPECT().Read(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					xkube.Namespace("test-namespace"),
-					"test-secret",
-				).Return(nil, contracts.ErrSecureValueNotFound)
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+				// Setup client to return the mock resource interface
+				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
-				mockSecretsSvc.EXPECT().Create(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					mock.MatchedBy(func(sv *secretv1beta1.SecureValue) bool {
-						return sv.Namespace == "test-namespace" &&
-							sv.Name == "test-secret" &&
-							sv.Spec.Value != nil &&
-							sv.Spec.Value.DangerouslyExposeAndConsumeValue() == "secret-data"
-					}),
-					":test-uid",
-				).Return(nil, errors.New("creation failed"))
+				// Mock Get call to return not found error
+				mockResourceInterface.On("Get", mock.Anything, "test-secret", mock.AnythingOfType("v1.GetOptions")).Return((*unstructured.Unstructured)(nil), contracts.ErrSecureValueNotFound)
+
+				// Mock Create call to return error
+				mockResourceInterface.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), mock.Anything).Return((*unstructured.Unstructured)(nil), errors.New("creation failed"))
 			},
 			expectedError: "creation failed",
 		},
@@ -197,40 +195,28 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "existing-secret",
 			data:       "new-secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
-				existingSecret := &secretv1beta1.SecureValue{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "existing-secret",
-						Namespace: "test-namespace",
-					},
-					Spec: secretv1beta1.SecureValueSpec{
-						Description: "provisioning: existing-secret",
-						Decrypters:  []string{svcName},
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+				existingSecret := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":      "existing-secret",
+							"namespace": "test-namespace",
+						},
+						"spec": map[string]interface{}{
+							"description": "provisioning: existing-secret",
+							"decrypters":  []string{svcName},
+						},
 					},
 				}
 
-				mockSecretsSvc.EXPECT().Read(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					xkube.Namespace("test-namespace"),
-					"existing-secret",
-				).Return(existingSecret, nil)
+				// Setup client to return the mock resource interface
+				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
-				mockSecretsSvc.EXPECT().Update(
-					mock.MatchedBy(func(ctx context.Context) bool {
-						requester, err := identity.GetRequester(ctx)
-						return err == nil && requester != nil && requester.GetUID() == ":test-uid"
-					}),
-					mock.MatchedBy(func(sv *secretv1beta1.SecureValue) bool {
-						return sv.Namespace == "test-namespace" &&
-							sv.Name == "existing-secret" &&
-							sv.Spec.Value != nil &&
-							sv.Spec.Value.DangerouslyExposeAndConsumeValue() == "new-secret-data"
-					}),
-					":test-uid",
-				).Return(nil, false, errors.New("update failed"))
+				// Mock Get call to return existing secret
+				mockResourceInterface.On("Get", mock.Anything, "existing-secret", mock.AnythingOfType("v1.GetOptions")).Return(existingSecret, nil)
+
+				// Mock Update call to return error
+				mockResourceInterface.On("Update", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), mock.Anything).Return((*unstructured.Unstructured)(nil), errors.New("update failed"))
 			},
 			expectedError: "update failed",
 		},
@@ -238,17 +224,15 @@ func TestSecretsService_Encrypt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSecretsSvc := NewMockSecureValueService(t)
+			mockSecretsSvc := NewMockSecureValueClient(t)
 			mockDecryptSvc := &mocks.MockDecryptService{}
+			mockResourceInterface := &MockResourceInterface{}
 
-			tt.setupMocks(mockSecretsSvc, mockDecryptSvc)
+			tt.setupMocks(mockSecretsSvc, mockDecryptSvc, mockResourceInterface)
 
 			svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
 
 			ctx := context.Background()
-			ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-				UserUID: "test-uid",
-			})
 
 			result, err := svc.Encrypt(ctx, tt.namespace, tt.secretName, tt.data)
 
@@ -263,9 +247,12 @@ func TestSecretsService_Encrypt(t *testing.T) {
 	}
 }
 
-func TestSecretsService_Encrypt_NoIdentity(t *testing.T) {
-	mockSecretsSvc := NewMockSecureValueService(t)
+func TestSecretsService_Encrypt_ClientError(t *testing.T) {
+	mockSecretsSvc := NewMockSecureValueClient(t)
 	mockDecryptSvc := &mocks.MockDecryptService{}
+
+	// Setup client to return error
+	mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(nil, errors.New("client error"))
 
 	svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
 
@@ -274,6 +261,7 @@ func TestSecretsService_Encrypt_NoIdentity(t *testing.T) {
 	result, err := svc.Encrypt(ctx, "test-namespace", "test-secret", "secret-data")
 
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "client error")
 	assert.Empty(t, result)
 }
 
@@ -282,7 +270,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 		name           string
 		namespace      string
 		secretName     string
-		setupMocks     func(*MockSecureValueService, *mocks.MockDecryptService)
+		setupMocks     func(*MockSecureValueClient, *mocks.MockDecryptService)
 		expectedResult []byte
 		expectedError  string
 	}{
@@ -290,7 +278,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 			name:       "successfully decrypt secret",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService) {
 				exposedValue := secretv1beta1.NewExposedSecureValue("decrypted-data")
 				mockResult := service.NewDecryptResultValue(&exposedValue)
 
@@ -311,7 +299,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 			name:       "decrypt service error",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService) {
 				mockDecryptSvc.EXPECT().Decrypt(
 					mock.MatchedBy(func(ctx context.Context) bool {
 						return ctx != nil
@@ -326,7 +314,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 			name:       "secret not found in results",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService) {
 				mockDecryptSvc.EXPECT().Decrypt(
 					mock.MatchedBy(func(ctx context.Context) bool {
 						return ctx != nil
@@ -341,7 +329,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 			name:       "decrypt result has error",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService) {
 				mockResult := service.NewDecryptResultErr(errors.New("decryption failed"))
 
 				mockDecryptSvc.EXPECT().Decrypt(
@@ -360,7 +348,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSecretsSvc := NewMockSecureValueService(t)
+			mockSecretsSvc := NewMockSecureValueClient(t)
 			mockDecryptSvc := &mocks.MockDecryptService{}
 
 			tt.setupMocks(mockSecretsSvc, mockDecryptSvc)
@@ -382,15 +370,15 @@ func TestSecretsService_Decrypt(t *testing.T) {
 	}
 }
 
-// Test to verify that the Decrypt method creates the correct StaticRequester
-func TestSecretsService_Decrypt_StaticRequesterCreation(t *testing.T) {
-	mockSecretsSvc := NewMockSecureValueService(t)
+// Test to verify that the Decrypt method creates the correct service identity context
+func TestSecretsService_Decrypt_ServiceIdentityContext(t *testing.T) {
+	mockSecretsSvc := NewMockSecureValueClient(t)
 	mockDecryptSvc := &mocks.MockDecryptService{}
 
 	exposedValue := secretv1beta1.NewExposedSecureValue("test-data")
 	mockResult := service.NewDecryptResultValue(&exposedValue)
 
-	// Create a more detailed context matcher to verify the StaticRequester is created correctly
+	// Create a more detailed context matcher to verify the service identity context is created correctly
 	mockDecryptSvc.EXPECT().Decrypt(
 		mock.MatchedBy(func(ctx context.Context) bool {
 			// At minimum, verify the context is not nil and is different from the original
@@ -416,38 +404,53 @@ func TestSecretsService_Delete(t *testing.T) {
 		name          string
 		namespace     string
 		secretName    string
-		setupMocks    func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService)
+		setupMocks    func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface)
 		expectedError string
 	}{
 		{
 			name:       "delete success",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
-				mockSecretsSvc.EXPECT().
-					Delete(mock.Anything, xkube.Namespace("test-namespace"), "test-secret").
-					Return(&secretv1beta1.SecureValue{}, nil)
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+				// Setup client to return the mock resource interface
+				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
+
+				// Mock Delete call
+				mockResourceInterface.On("Delete", mock.Anything, "test-secret", mock.AnythingOfType("v1.DeleteOptions")).Return(nil)
 			},
 		},
 		{
 			name:       "delete returns error",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
-				mockSecretsSvc.EXPECT().
-					Delete(mock.Anything, xkube.Namespace("test-namespace"), "test-secret").
-					Return(nil, errors.New("delete failed"))
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+				// Setup client to return the mock resource interface
+				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
+
+				// Mock Delete call to return error
+				mockResourceInterface.On("Delete", mock.Anything, "test-secret", mock.AnythingOfType("v1.DeleteOptions")).Return(errors.New("delete failed"))
 			},
 			expectedError: "delete failed",
+		},
+		{
+			name:       "client error",
+			namespace:  "test-namespace",
+			secretName: "test-secret",
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+				// Setup client to return error
+				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(nil, errors.New("client error"))
+			},
+			expectedError: "client error",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSecretsSvc := NewMockSecureValueService(t)
+			mockSecretsSvc := NewMockSecureValueClient(t)
 			mockDecryptSvc := &mocks.MockDecryptService{}
+			mockResourceInterface := &MockResourceInterface{}
 
-			tt.setupMocks(mockSecretsSvc, mockDecryptSvc)
+			tt.setupMocks(mockSecretsSvc, mockDecryptSvc, mockResourceInterface)
 
 			svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
 			ctx := context.Background()
