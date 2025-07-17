@@ -37,6 +37,7 @@ func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 		apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
 	} else {
 		apiRoute.Post("/api/short-urls", reqSignedIn, hs.createShortURL)
+		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, hs.getShortURL)
 		apiRoute.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 	}
 }
@@ -159,6 +160,27 @@ func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Respon
 	c.Logger.Debug("Created short URL", "url", shortURLDTO.URL)
 
 	return response.JSON(http.StatusOK, shortURLDTO)
+}
+
+// getShortURL handles requests to create short URLs.
+func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response {
+	shortURLUID := web.Params(c.Req)[":uid"]
+
+	if !util.IsValidShortUID(shortURLUID) {
+		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("invalid uid"))
+	}
+
+	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
+	if err != nil {
+		// If we didn't get the URL for whatever reason, we redirect to the
+		// main page, otherwise we get into an endless loops of redirects, as
+		// we would try to redirect again.
+		if shorturls.ErrShortURLNotFound.Is(err) {
+			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
+		}
+	}
+
+	return response.JSON(http.StatusOK, shortURL)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
