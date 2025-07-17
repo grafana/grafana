@@ -1,11 +1,10 @@
-import { memo, ReactNode } from "react";
+import { memo, ReactNode } from 'react';
 
-import { Field } from "@grafana/data";
+import { Field } from '@grafana/data';
 
-import { renderSingleLink } from "../DataLinksActionsTooltip";
+import { renderSingleLink } from '../DataLinksActionsTooltip';
 
-import { getCellLinks } from "./utils";
-
+import { getCellLinks } from './utils';
 
 interface MaybeWrapWithLinkProps {
   field: Field;
