@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -378,6 +379,7 @@ type FakeLicensingService struct {
 	TokenRaw       string
 	LicensePath    string
 	LicenseAppURL  string
+	CDNPrefix      string
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
@@ -398,6 +400,10 @@ func (s *FakeLicensingService) AppURL() string {
 
 func (s *FakeLicensingService) Environment() []string {
 	return []string{fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", s.TokenRaw)}
+}
+
+func (s *FakeLicensingService) ContentDeliveryPrefix() string {
+	return s.CDNPrefix
 }
 
 type FakeRoleRegistry struct {
@@ -664,4 +670,27 @@ func (p *FakeBackendPlugin) Target() backendplugin.Target {
 
 func (p *FakeBackendPlugin) Logger() log.Logger {
 	return log.NewTestLogger()
+}
+
+type AssetProvider struct {
+	ModuleFunc    func(plugin pluginassets.PluginInfo) (string, error)
+	AssetPathFunc func(plugin pluginassets.PluginInfo, assetPath ...string) (string, error)
+}
+
+func NewFakeAssetProvider() *AssetProvider {
+	return &AssetProvider{}
+}
+
+func (p *AssetProvider) Module(plugin pluginassets.PluginInfo) (string, error) {
+	if p.ModuleFunc != nil {
+		return p.ModuleFunc(plugin)
+	}
+	return "", nil
+}
+
+func (p *AssetProvider) AssetPath(plugin pluginassets.PluginInfo, assetPath ...string) (string, error) {
+	if p.AssetPathFunc != nil {
+		return p.AssetPathFunc(plugin, assetPath...)
+	}
+	return "", nil
 }
