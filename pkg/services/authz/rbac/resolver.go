@@ -82,7 +82,7 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 }
 
 func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scopePrefix string) (ScopeResolverFunc, error) {
-	if strings.HasPrefix(scopePrefix, "teams:id:") {
+	if scopePrefix == "teams:id:" {
 		return s.newTeamNameResolver(ctx, ns)
 	}
 	// No resolver found for the given scope prefix.
@@ -103,11 +103,6 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, s
 			if len(strings.Split(scope, ":")) < 3 {
 				// Skip scopes that don't have at least 3 parts (e.g., "*", "teams:*")
 				// This is because we expect scopes to be in the format "resource:attribute:value".
-				continue
-			}
-			if strings.HasPrefix(scope, "folders:uid:") {
-				// Resources can be stored in folders
-				// but we don't want to resolve folder scopes
 				continue
 			}
 
