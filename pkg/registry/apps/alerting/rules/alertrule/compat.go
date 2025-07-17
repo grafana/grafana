@@ -50,13 +50,18 @@ func ConvertToK8sResource(
 			ExecErrState:                string(rule.ExecErrState),
 			MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
 			Annotations:                 make(map[string]model.AlertRuleTemplateString),
-			PanelID:                     rule.PanelID,
-			DashboardUID:                rule.DashboardUID,
 		},
 	}
 
 	if rule.RuleGroup != "" {
 		k8sRule.ObjectMeta.Labels["group"] = rule.RuleGroup
+	}
+
+	if rule.PanelID != nil && rule.DashboardUID != nil {
+		k8sRule.Spec.PanelRef = &model.AlertRuleV0alpha1SpecPanelRef{
+			PanelID:      *rule.PanelID,
+			DashboardUID: *rule.DashboardUID,
+		}
 	}
 
 	for k, v := range rule.Annotations {
@@ -161,9 +166,6 @@ func ConvertToDomainModel(k8sRule *model.AlertRule) (*ngmodels.AlertRule, error)
 		NotificationSettings: make([]ngmodels.NotificationSettings, 1),
 		NoDataState:          ngmodels.NoDataState(k8sRule.Spec.NoDataState),
 		ExecErrState:         ngmodels.ExecutionErrorState(k8sRule.Spec.ExecErrState),
-
-		PanelID:      k8sRule.Spec.PanelID,
-		DashboardUID: k8sRule.Spec.DashboardUID,
 	}
 
 	for k, v := range k8sRule.Spec.Annotations {
@@ -172,6 +174,11 @@ func ConvertToDomainModel(k8sRule *model.AlertRule) (*ngmodels.AlertRule, error)
 
 	for k, v := range k8sRule.Spec.Labels {
 		domainRule.Labels[k] = string(v)
+	}
+
+	if k8sRule.Spec.PanelRef != nil {
+		domainRule.PanelID = &k8sRule.Spec.PanelRef.PanelID
+		domainRule.DashboardUID = &k8sRule.Spec.PanelRef.DashboardUID
 	}
 
 	if k8sRule.Spec.MissingSeriesEvalsToResolve != nil {
