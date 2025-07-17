@@ -27,7 +27,7 @@ import { DescendantCount } from './DescendantCount';
 import { bulkMoveResources, BulkMoveResult } from './utils';
 
 interface FormProps extends BulkMoveProvisionResourceProps {
-  initialValues: BaseProvisionedFormData;
+  initialValues: Omit<BaseProvisionedFormData, 'title'>;
   repository: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   isGitHub: boolean;
@@ -160,7 +160,6 @@ export function BulkMoveProvisionedResourceDrawer({
 
   const initialValues = {
     repo: repository?.name || '',
-    title: '', // its ok to be empty, we don't use it
     comment: '',
     ref: `bulk-move/${timestamp}`,
     workflow: getDefaultWorkflow(repository),

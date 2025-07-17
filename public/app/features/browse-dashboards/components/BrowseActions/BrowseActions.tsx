@@ -158,7 +158,7 @@ export function BrowseActions({ folderDTO }: Props) {
       {showBulkMoveProvisionedResource && (
         <BulkMoveProvisionedResourceDrawer
           selectedItems={selectedItems}
-          folderUid={folderDTO?.uid || ''}
+          folderUid={folderDTO?.uid}
           onClose={() => setShowBulkMoveProvisionedResource(false)}
         />
       )}

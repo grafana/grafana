@@ -293,6 +293,9 @@ export async function moveResource({
 
 function formatFileName(data: ResourceWrapper) {
   const fileName = data.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
+  if (!fileName) {
+    throw new Error('Missing source path annotation');
+  }
   return fileName.split('/').pop();
 }
 
