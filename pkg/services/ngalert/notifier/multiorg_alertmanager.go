@@ -78,10 +78,15 @@ type Alertmanager interface {
 	Ready() bool
 }
 
+// ExternalState holds nflog entries and silences from an external Alertmanager.
+type ExternalState struct {
+	Silences []byte
+	Nflog    []byte
+}
+
 // StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
 type StateMerger interface {
-	MergeNflog([]byte) error
-	MergeSilences([]byte) error
+	MergeState(ExternalState) error
 }
 
 type MultiOrgAlertmanager struct {

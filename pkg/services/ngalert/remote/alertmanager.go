@@ -389,15 +389,9 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg *remoteClient
 	return nil
 }
 
-// RemoteState represents the state (silences, nflog) in use by a remote Alertmanager.
-type RemoteState struct {
-	Silences []byte
-	Nflog    []byte
-}
-
 // GetRemoteState gets the remote Alertmanager's internal state.
-func (am *Alertmanager) GetRemoteState(ctx context.Context) (RemoteState, error) {
-	var rs RemoteState
+func (am *Alertmanager) GetRemoteState(ctx context.Context) (notifier.ExternalState, error) {
+	var rs notifier.ExternalState
 
 	s, err := am.mimirClient.GetFullState(ctx)
 	if err != nil {
