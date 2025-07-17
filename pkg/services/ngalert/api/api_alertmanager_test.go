@@ -611,6 +611,7 @@ func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertC
 		log.New("testlogger"),
 		secretsService,
 		featuremgmt.WithManager(),
+		nil,
 	)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())

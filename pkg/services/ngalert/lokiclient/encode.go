@@ -1,4 +1,4 @@
-package historian
+package lokiclient
 
 import (
 	"encoding/json"
