@@ -624,13 +624,13 @@ export function TableNG(props: TableNGProps) {
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
           // Note: could be column.field; JS says yes, but TS says no!
           const field = columns[column.idx].field;
-          const targ: HTMLElement = target as HTMLElement;
 
           if (
             colsWithTooltip[getDisplayName(field)] &&
+            target instanceof HTMLElement &&
             // this walks up the tree to find either a faux link wrapper or the cell root
             // it then only proceeds if we matched the faux link wrapper
-            targ.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
+            target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
           ) {
             const rowIdx = row.__index;
             setTooltipState({
