@@ -5,10 +5,6 @@ import { BulkMoveResult } from './utils';
 
 // TODO: Adjust this for bulk delete operation
 export function BulkMoveFailedBanner({ result, onDismiss }: { result: BulkMoveResult; onDismiss: () => void }) {
-  if (result.failed.length === 0) {
-    return null;
-  }
-
   function getMessage(item: BulkMoveResult['failed'][0]) {
     switch (item.failureType) {
       case 'create':

@@ -153,7 +153,6 @@ export const bulkMoveResources = async ({
     fulfilledResources.map(async ({ uid, data, title }): Promise<MoveResultSuccess | MoveResultFailed> => {
       try {
         const fileName = formatFileName(data);
-        const newPath = formatFilePath(targetFolderPath, fileName);
         const body = data.resource.file;
 
         if (!body) {
@@ -162,8 +161,8 @@ export const bulkMoveResources = async ({
 
         const result = await moveResource({
           repositoryName: repository.name,
-          currentPath: formatFilePath(targetFolderPath, fileName),
-          targetPath: newPath,
+          currentPath: formatFilePath(options.path, fileName),
+          targetPath: formatFilePath(targetFolderPath, fileName),
           fileContent: body,
           commitMessage: options.comment || `Move dashboard: ${title || uid}`,
           ref: options.workflow === 'write' ? undefined : options.ref,
@@ -259,6 +258,7 @@ export async function moveResource({
         ref,
         message: commitMessage,
         body: fileContent,
+        skipDryRun: true, // We want to skip dry run, otherwise BE will check for UID and instead not create the file, but try to update it.
       })
       .unwrap();
   } catch (error) {

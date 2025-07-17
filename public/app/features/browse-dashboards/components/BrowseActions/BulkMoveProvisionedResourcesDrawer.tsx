@@ -91,7 +91,13 @@ function FormContent({
         type: AppEvents.alertSuccess.name,
         payload: [t('browse-dashboards.bulk-move-resources-form.success', 'Bulk move completed successfully')],
       });
-      navigate('/dashboards');
+      onClose();
+      // Navigate to the target folder
+      if (targetFolder?.metadata?.name) {
+        navigate(`/dashboards/f/${targetFolder.metadata.name}/`);
+      } else {
+        navigate('/dashboards'); // Fallback to root
+      }
     } else {
       setResults(results);
     }
