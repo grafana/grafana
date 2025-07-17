@@ -242,35 +242,37 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
   },
 });
 
-
-
 /**
  * Get git provider field configurations that are guaranteed to exist
  * This should only be called for git-based providers
  */
-export const getGitProviderFields = (type: RepoType): {
-  tokenConfig: FieldConfig;
-  urlConfig: FieldConfig;
-  branchConfig: FieldConfig;
-  pathConfig: FieldConfig;
-  prWorkflowConfig: FieldConfig;
-} | undefined => {
+export const getGitProviderFields = (
+  type: RepoType
+):
+  | {
+      tokenConfig: FieldConfig;
+      urlConfig: FieldConfig;
+      branchConfig: FieldConfig;
+      pathConfig: FieldConfig;
+      prWorkflowConfig: FieldConfig;
+    }
+  | undefined => {
   const configs = getProviderConfigs()[type];
   if (!configs) {
     return undefined;
   }
-  
+
   // For git providers, these fields are guaranteed to exist
   const tokenConfig = configs.token;
   const urlConfig = configs.url;
   const branchConfig = configs.branch;
   const pathConfig = configs.path;
   const prWorkflowConfig = configs.prWorkflow;
-  
+
   if (!tokenConfig || !urlConfig || !branchConfig || !pathConfig || !prWorkflowConfig) {
     return undefined;
   }
-  
+
   return {
     tokenConfig,
     urlConfig,
@@ -284,21 +286,25 @@ export const getGitProviderFields = (type: RepoType): {
  * Get local provider field configurations that are guaranteed to exist
  * This should only be called for local providers
  */
-export const getLocalProviderFields = (type: RepoType): {
-  pathConfig: FieldConfig;
-} | undefined => {
+export const getLocalProviderFields = (
+  type: RepoType
+):
+  | {
+      pathConfig: FieldConfig;
+    }
+  | undefined => {
   const configs = getProviderConfigs()[type];
   if (!configs) {
     return undefined;
   }
-  
+
   // For local providers, the path field is guaranteed to exist
   const pathConfig = configs.path;
-  
+
   if (!pathConfig) {
     return undefined;
   }
-  
+
   return {
     pathConfig,
   };
