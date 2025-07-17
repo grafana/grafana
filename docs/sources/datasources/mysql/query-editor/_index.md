@@ -244,92 +244,58 @@ Table panel result: [Resultant image to be added]
 Given the result in the following example, the data is grouped and aggregated within buckets with timestamps of fixed interval i.e. 5 mins. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U).
 
 
-**Example with `metric` column:**
+**Example with `$__timeGroupAlias(dateColumn,'5m')` Macro:**
 
 ```sql
 SELECT
   $__timeGroupAlias(time_date_time,'5m'),
   min(value_double),
   'min' as metric
-FROM test_data
+FROM my_data
 WHERE $__timeFilter(time_date_time)
 GROUP BY time
 ORDER BY time
 ```
 
-Data frame result:
+Table panel result: [Resultant image to be added]
 
-```text
-+---------------------+-----------------+
-| Name: time          | Name: min       |
-| Labels:             | Labels:         |
-| Type: []time.Time   | Type: []float64 |
-+---------------------+-----------------+
-| 2020-01-02 03:05:00 | 3               |
-| 2020-01-02 03:10:00 | 6               |
-| 2020-01-02 03:20:00 | 5               |
-+---------------------+-----------------+
-```
+The following result is similar to the prior `$__timeGroup(dateColumn,'5m')` macro’s result where the only difference is a built-in time column alias feature.
+To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U).
 
-To customize the default series name formatting (optional), refer to [Standard options definitions](ref:configure-standard-options-display-name).
-
-**Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
+**Example with `$__timeGroupAlias` Macro to convert null values to zero instead:**
 
 ```sql
 SELECT
   $__timeGroupAlias(createdAt,'5m',0),
   sum(value_double) as value,
   hostname
-FROM test_data
+FROM my_data
 WHERE
   $__timeFilter(createdAt)
 GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions](ref:configure-standard-options-display-name) display value of `${__field.labels.hostname}`.
+Table panel result: [Resultant image to be added]
 
-Data frame result:
+Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the `Time` column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U) to display the value of `${__field.labels.hostname}`.
 
-```text
-+---------------------+---------------------------+---------------------------+
-| Name: time          | Name: value               | Name: value               |
-| Labels:             | Labels: hostname=10.0.1.1 | Labels: hostname=10.0.1.2 |
-| Type: []time.Time   | Type: []float64           | Type: []float64           |
-+---------------------+---------------------------+---------------------------+
-| 2020-01-02 03:05:00 | 3                         | 4                         |
-| 2020-01-02 03:10:00 | 6                         | 7                         |
-| 2020-01-02 03:15:00 | 0                         | 0                         |
-| 2020-01-02 03:20:00 | 0                         | 5                         |
-+---------------------+---------------------------+---------------------------+
-```
-
-**Example with multiple columns:**
+**Example with multiple columns for `$__timeGroupAlias(dateColumn,'5m')` Macro:**
 
 ```sql
 SELECT
   $__timeGroupAlias(time_date_time,'5m'),
   min(value_double) as min_value,
   max(value_double) as max_value
-FROM test_data
+FROM my_data
 WHERE $__timeFilter(time_date_time)
 GROUP BY time
 ORDER BY time
 ```
 
-Data frame result:
+Table panel result: [Resultant image to be added]
 
-```text
-+---------------------+-----------------+-----------------+
-| Name: time          | Name: min_value | Name: max_value |
-| Labels:             | Labels:         | Labels:         |
-| Type: []time.Time   | Type: []float64 | Type: []float64 |
-+---------------------+-----------------+-----------------+
-| 2020-01-02 03:05:00 | 3               | 4               |
-| 2020-01-02 03:10:00 | 6               | 7               |
-| 2020-01-02 03:20:00 | 5               | 5               |
-+---------------------+-----------------+-----------------+
-```
+Multiple columns representing minimum and maximum values within the defined range.
 
 ## Templating
 
