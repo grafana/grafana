@@ -22,7 +22,7 @@ load(
 )
 
 def artifacts_cmd(artifacts = []):
-    cmd = "go run ./pkg/build/cmd artifacts "
+    cmd = "dagger run go run ./pkg/build/cmd artifacts "
 
     for artifact in artifacts:
         cmd += "-a {} ".format(artifact)
@@ -82,7 +82,7 @@ def rgm_build_docker_step(depends_on = ["yarn-install"], file = "docker.txt", ta
             "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version",
             "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'",
             "docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all",
-            "go run ./pkg/build/cmd artifacts " +
+            "dagger run go run ./pkg/build/cmd artifacts " +
             "-a docker:grafana:linux/amd64 " +
             "-a docker:grafana:linux/amd64:ubuntu " +
             "-a docker:grafana:linux/arm64 " +

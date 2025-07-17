@@ -485,7 +485,7 @@ gen-ts:
 .PHONY: drone
 drone: $(DRONE)
 	bash scripts/drone/env-var-check.sh
-	$(DRONE) starlark --format
+	$(DRONE) starlark --format --max-execution-steps 100000
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 

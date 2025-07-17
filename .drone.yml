@@ -197,7 +197,7 @@ steps:
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
-  - go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
+  - dagger run go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
@@ -665,7 +665,7 @@ steps:
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
-  - go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
+  - dagger run go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
     -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
@@ -2986,6 +2986,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1198b1489e48a9ced211633a0325d112814553246847fc7320fb5ac2bcb32b7d
+hmac: be0be86d16bcb5801eebe69d9a31fc86841a3cd67f2036859c9f78a5fa920828
 
 ...
