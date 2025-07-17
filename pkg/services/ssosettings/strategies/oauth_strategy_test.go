@@ -58,6 +58,7 @@ var (
 	signout_redirect_url = test_signout_redirect_url
 	org_attribute_path = groups
 	org_mapping = Group1:*:Editor
+	login_prompt = select_account
 	`
 
 	expectedOAuthInfo = map[string]any{
@@ -104,6 +105,7 @@ var (
 		"team_ids":                      "first, second",
 		"org_attribute_path":            "groups",
 		"org_mapping":                   "Group1:*:Editor",
+		"login_prompt":                  "select_account",
 	}
 )
 

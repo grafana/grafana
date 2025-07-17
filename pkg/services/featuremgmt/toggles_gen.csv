@@ -233,4 +233,5 @@ enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,f
 foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 enablePluginImporter,experimental,@grafana/plugins-platform-backend,false,false,true
 otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
+alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
 alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
