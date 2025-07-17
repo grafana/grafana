@@ -1,3 +1,4 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { TableAutoCellOptions, TableColorTextCellOptions } from '@grafana/schema';
 import { Field, Switch } from '@grafana/ui';
@@ -17,7 +18,11 @@ export const AutoCellOptionsEditor = ({
 
   return (
     <Field label={t('table.auto-cell-options-editor.label-wrap-text', 'Wrap text')}>
-      <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
+      <Switch
+        label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Wrap text`)}
+        value={cellOptions.wrapText}
+        onChange={onWrapTextChange}
+      />
     </Field>
   );
 };
