@@ -17,7 +17,7 @@ import (
 
 // NewDualWriter creates a dual writer for the given group resource using the provided configuration
 func NewDualWriter(
-	ctx context.Context,
+	_ context.Context,
 	gr schema.GroupResource,
 	storageOpts *options.StorageOptions,
 	legacy grafanarest.Storage,
@@ -77,6 +77,7 @@ func NewDualWriter(
 		DataSyncerRecordsLimit: dataSyncerRecordsLimit,
 	}
 
+	ctx := context.Background()
 	// This also sets the currentMode on the syncer config.
 	currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
 	if err != nil {

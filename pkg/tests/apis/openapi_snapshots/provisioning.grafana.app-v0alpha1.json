@@ -1,17 +1,17 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "description": "Provisioning",
-    "title": "provisioning.grafana.app/v0alpha1"
+    "title": "Generic API Server",
+    "version": "1.33"
   },
   "paths": {
     "/apis/provisioning.grafana.app/v0alpha1/": {
       "get": {
         "tags": [
-          "API Discovery"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Describe the available kubernetes resources",
-        "operationId": "getAPIResources",
+        "description": "get available resources",
+        "operationId": "getProvisioningGrafanaAppV0alpha1APIResources",
         "responses": {
           "200": {
             "description": "OK",
@@ -36,13 +36,161 @@
         }
       }
     },
+    "/apis/provisioning.grafana.app/v0alpha1/jobs": {
+      "get": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "list or watch objects of kind Job",
+        "operationId": "listProvisioningGrafanaAppV0alpha1JobForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Job"
+        }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/jobs": {
       "get": {
         "tags": [
-          "Job"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "list or watch objects of kind Job",
-        "operationId": "listJob",
+        "operationId": "listProvisioningGrafanaAppV0alpha1NamespacedJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -197,10 +345,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/jobs/{name}": {
       "get": {
         "tags": [
-          "Job"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "read the specified Job",
-        "operationId": "getJob",
+        "operationId": "readProvisioningGrafanaAppV0alpha1NamespacedJob",
         "responses": {
           "200": {
             "description": "OK",
@@ -265,10 +413,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "list or watch objects of kind Repository",
-        "operationId": "listRepository",
+        "operationId": "listProvisioningGrafanaAppV0alpha1NamespacedRepository",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -402,10 +550,10 @@
       },
       "post": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "create a Repository",
-        "operationId": "createRepository",
+        "operationId": "createProvisioningGrafanaAppV0alpha1NamespacedRepository",
         "parameters": [
           {
             "name": "dryRun",
@@ -437,17 +585,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
-              }
-            },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
-              }
-            },
-            "application/yaml": {
+            "*/*": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
               }
@@ -526,10 +664,10 @@
       },
       "delete": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "delete collection of Repository",
-        "operationId": "deletecollectionRepository",
+        "operationId": "deleteProvisioningGrafanaAppV0alpha1CollectionNamespacedRepository",
         "parameters": [
           {
             "name": "continue",
@@ -649,6 +787,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -703,10 +850,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "read the specified Repository",
-        "operationId": "getRepository",
+        "operationId": "readProvisioningGrafanaAppV0alpha1NamespacedRepository",
         "responses": {
           "200": {
             "description": "OK",
@@ -738,10 +885,10 @@
       },
       "put": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "replace the specified Repository",
-        "operationId": "replaceRepository",
+        "operationId": "replaceProvisioningGrafanaAppV0alpha1NamespacedRepository",
         "parameters": [
           {
             "name": "dryRun",
@@ -773,17 +920,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
-              }
-            },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
-              }
-            },
-            "application/yaml": {
+            "*/*": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
               }
@@ -842,10 +979,10 @@
       },
       "delete": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "delete a Repository",
-        "operationId": "deleteRepository",
+        "operationId": "deleteProvisioningGrafanaAppV0alpha1NamespacedRepository",
         "parameters": [
           {
             "name": "dryRun",
@@ -893,6 +1030,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -944,10 +1090,10 @@
       },
       "patch": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "partially update the specified Repository",
-        "operationId": "updateRepository",
+        "operationId": "patchProvisioningGrafanaAppV0alpha1NamespacedRepository",
         "parameters": [
           {
             "name": "dryRun",
@@ -1092,68 +1238,95 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/files/": {
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/files": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "summary": "File listing",
-        "description": "Get the files and content hash",
-        "operationId": "getRepositoryFiles",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "query",
-            "description": "branch or commit hash",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "The default"
-              },
-              "branch": {
-                "summary": "Select branch",
-                "value": "my-branch"
-              },
-              "commit": {
-                "summary": "Commit hash (or prefix)",
-                "value": "7f7cc2153"
-              }
-            }
-          }
-        ],
+        "description": "connect GET requests to files of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryFiles",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "description": "Information we can get just from the file listing",
-                  "type": "object",
-                  "required": [
-                    "items"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      },
-                      "x-kubernetes-list-type": "atomic"
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "default": {}
-                    }
-                  }
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
+        }
+      },
+      "put": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "connect PUT requests to files of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1PutNamespacedRepositoryFiles",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
+        }
+      },
+      "post": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "connect POST requests to files of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1PostNamespacedRepositoryFiles",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ResourceWrapper"
+        }
+      },
+      "delete": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "connect DELETE requests to files of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1DeleteNamespacedRepositoryFiles",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceWrapper"
                 }
               }
             }
@@ -1192,33 +1365,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/files/{path}": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Read value from upstream repository",
-        "operationId": "getRepositoryFilesWithPath",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "query",
-            "description": "branch or commit hash",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "The default"
-              },
-              "branch": {
-                "summary": "Select branch",
-                "value": "my-branch"
-              },
-              "commit": {
-                "summary": "Commit hash (or prefix)",
-                "value": "7f7cc2153"
-              }
-            }
-          }
-        ],
+        "description": "connect GET requests to files of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryFilesWithPath",
         "responses": {
           "200": {
             "description": "OK",
@@ -1240,89 +1390,10 @@
       },
       "put": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "connect PUT requests to files of Repository",
-        "operationId": "replaceRepositoryFilesWithPath",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "query",
-            "description": "branch or commit hash",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "The default"
-              },
-              "branch": {
-                "summary": "Select branch",
-                "value": "my-branch"
-              },
-              "commit": {
-                "summary": "Commit hash (or prefix)",
-                "value": "7f7cc2153"
-              }
-            }
-          },
-          {
-            "name": "message",
-            "in": "query",
-            "description": "optional message sent with any changes",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "skipDryRun",
-            "in": "query",
-            "description": "do not pro-actively verify the payload",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              },
-              "examples": {
-                "dashboard": {
-                  "value": {
-                    "spec": {
-                      "hello": "dashboard"
-                    }
-                  }
-                },
-                "playlist": {
-                  "value": {
-                    "spec": {
-                      "hello": "playlist"
-                    }
-                  }
-                }
-              }
-            },
-            "application/x-yaml": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              },
-              "examples": {
-                "dashboard": {
-                  "value": "apiVersion: dashboards.grafana.app/v0alpha1\nkind: Dashboard\nspec:\n  title: Sample dashboard\n"
-                },
-                "playlist": {
-                  "value": "apiVersion: playlist.grafana.app/v0alpha1\nkind: Playlist\nspec:\n  title: Playlist from provisioning\n  interval: 5m\n  items:\n  - type: dashboard_by_tag\n    value: panel-tests\n"
-                }
-              }
-            }
-          }
-        },
+        "operationId": "connectProvisioningGrafanaAppV0alpha1PutNamespacedRepositoryFilesWithPath",
         "responses": {
           "200": {
             "description": "OK",
@@ -1344,89 +1415,10 @@
       },
       "post": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "connect POST requests to files of Repository",
-        "operationId": "createRepositoryFilesWithPath",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "query",
-            "description": "branch or commit hash",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "The default"
-              },
-              "branch": {
-                "summary": "Select branch",
-                "value": "my-branch"
-              },
-              "commit": {
-                "summary": "Commit hash (or prefix)",
-                "value": "7f7cc2153"
-              }
-            }
-          },
-          {
-            "name": "message",
-            "in": "query",
-            "description": "optional message sent with any changes",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "skipDryRun",
-            "in": "query",
-            "description": "do not pro-actively verify the payload",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              },
-              "examples": {
-                "dashboard": {
-                  "value": {
-                    "spec": {
-                      "hello": "dashboard"
-                    }
-                  }
-                },
-                "playlist": {
-                  "value": {
-                    "spec": {
-                      "hello": "playlist"
-                    }
-                  }
-                }
-              }
-            },
-            "application/x-yaml": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              },
-              "examples": {
-                "dashboard": {
-                  "value": "apiVersion: dashboards.grafana.app/v0alpha1\nkind: Dashboard\nspec:\n  title: Sample dashboard\n"
-                },
-                "playlist": {
-                  "value": "apiVersion: playlist.grafana.app/v0alpha1\nkind: Playlist\nspec:\n  title: Playlist from provisioning\n  interval: 5m\n  items:\n  - type: dashboard_by_tag\n    value: panel-tests\n"
-                }
-              }
-            }
-          }
-        },
+        "operationId": "connectProvisioningGrafanaAppV0alpha1PostNamespacedRepositoryFilesWithPath",
         "responses": {
           "200": {
             "description": "OK",
@@ -1448,49 +1440,10 @@
       },
       "delete": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "connect DELETE requests to files of Repository",
-        "operationId": "deleteRepositoryFilesWithPath",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "query",
-            "description": "branch or commit hash",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "The default"
-              },
-              "branch": {
-                "summary": "Select branch",
-                "value": "my-branch"
-              },
-              "commit": {
-                "summary": "Commit hash (or prefix)",
-                "value": "7f7cc2153"
-              }
-            }
-          },
-          {
-            "name": "message",
-            "in": "query",
-            "description": "optional message sent with any changes",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "skipDryRun",
-            "in": "query",
-            "description": "do not pro-actively verify the payload",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
+        "operationId": "connectProvisioningGrafanaAppV0alpha1DeleteNamespacedRepositoryFilesWithPath",
         "responses": {
           "200": {
             "description": "OK",
@@ -1546,33 +1499,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/history": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Get the history of the repository",
-        "operationId": "getRepositoryHistory",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "query",
-            "description": "branch or commit hash",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "The default"
-              },
-              "branch": {
-                "summary": "Select branch",
-                "value": "my-branch"
-              },
-              "commit": {
-                "summary": "Commit hash (or prefix)",
-                "value": "7f7cc2153"
-              }
-            }
-          }
-        ],
+        "description": "connect GET requests to history of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryHistory",
         "responses": {
           "200": {
             "description": "OK",
@@ -1618,33 +1548,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/history/{path}": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Get the history of a path",
-        "operationId": "getRepositoryHistoryWithPath",
-        "parameters": [
-          {
-            "name": "ref",
-            "in": "query",
-            "description": "branch or commit hash",
-            "schema": {
-              "type": "string"
-            },
-            "examples": {
-              "": {
-                "summary": "The default"
-              },
-              "branch": {
-                "summary": "Select branch",
-                "value": "my-branch"
-              },
-              "commit": {
-                "summary": "Commit hash (or prefix)",
-                "value": "7f7cc2153"
-              }
-            }
-          }
-        ],
+        "description": "connect GET requests to history of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryHistoryWithPath",
         "responses": {
           "200": {
             "description": "OK",
@@ -1700,17 +1607,17 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/jobs": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "List recent jobs",
-        "operationId": "getRepositoryJobs",
+        "description": "connect GET requests to jobs of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryJobs",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
                 }
               }
             }
@@ -1725,44 +1632,15 @@
       },
       "post": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Register a job for this repository",
-        "operationId": "createRepositoryJobs",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobSpec"
-              },
-              "examples": {
-                "incremental": {
-                  "summary": "Pull (incremental)",
-                  "description": "look for changes since the last sync",
-                  "value": {
-                    "pull": {
-                      "incremental": true
-                    }
-                  }
-                },
-                "pull": {
-                  "summary": "Pull from repository",
-                  "description": "pull all files",
-                  "value": {
-                    "pull": {
-                      "incremental": false
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
+        "description": "connect POST requests to jobs of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1PostNamespacedRepositoryJobs",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
                 }
@@ -1800,18 +1678,43 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/jobs/{uid}": {
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/jobs/{path}": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Get job by UID",
-        "operationId": "getRepositoryJobsWithPath",
+        "description": "connect GET requests to jobs of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryJobsWithPath",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
+        }
+      },
+      "post": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "connect POST requests to jobs of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1PostNamespacedRepositoryJobsWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
                 }
@@ -1848,9 +1751,9 @@
           }
         },
         {
-          "name": "uid",
+          "name": "path",
           "in": "path",
-          "description": "Original Job UID",
+          "description": "path to the resource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1862,41 +1765,17 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/refs": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "summary": "Repository refs listing",
-        "description": "Get the repository references",
-        "operationId": "getRepositoryRefs",
+        "description": "connect GET requests to refs of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryRefs",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "items"
-                  ],
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "default": {}
-                      },
-                      "x-kubernetes-list-type": "atomic"
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "default": {}
-                    }
-                  }
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RefList"
                 }
               }
             }
@@ -1932,18 +1811,71 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/render/{guid}": {
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/render": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "get a rendered preview image",
-        "operationId": "getRepositoryRenderWithPath",
+        "description": "connect GET requests to render of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryRender",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "image/png": {}
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Repository",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/render/{path}": {
+      "get": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "connect GET requests to render of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryRenderWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
+                }
+              }
             }
           }
         },
@@ -1976,9 +1908,9 @@
           }
         },
         {
-          "name": "guid",
+          "name": "path",
           "in": "path",
-          "description": "Image GUID",
+          "description": "path to the resource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1990,10 +1922,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/resources": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "connect GET requests to resources of Repository",
-        "operationId": "getRepositoryResources",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryResources",
         "responses": {
           "200": {
             "description": "OK",
@@ -2039,10 +1971,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/status": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "read status of the specified Repository",
-        "operationId": "getRepositoryStatus",
+        "operationId": "readProvisioningGrafanaAppV0alpha1NamespacedRepositoryStatus",
         "responses": {
           "200": {
             "description": "OK",
@@ -2074,10 +2006,10 @@
       },
       "put": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "replace status of the specified Repository",
-        "operationId": "replaceRepositoryStatus",
+        "operationId": "replaceProvisioningGrafanaAppV0alpha1NamespacedRepositoryStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -2109,17 +2041,7 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
-              }
-            },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
-              }
-            },
-            "application/yaml": {
+            "*/*": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Repository"
               }
@@ -2178,10 +2100,10 @@
       },
       "patch": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "partially update status of the specified Repository",
-        "operationId": "updateRepositoryStatus",
+        "operationId": "patchProvisioningGrafanaAppV0alpha1NamespacedRepositoryStatus",
         "parameters": [
           {
             "name": "dryRun",
@@ -2329,39 +2251,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/test": {
       "post": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Check if the configuration is valid",
-        "operationId": "createRepositoryTest",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
-                "type": "object",
-                "properties": {
-                  "apiVersion": {
-                    "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                    "type": "string"
-                  },
-                  "kind": {
-                    "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                    "type": "string"
-                  },
-                  "metadata": {
-                    "default": {}
-                  },
-                  "spec": {
-                    "default": {}
-                  },
-                  "status": {
-                    "default": {}
-                  }
-                }
-              }
-            }
-          }
-        },
+        "description": "connect POST requests to test of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1PostNamespacedRepositoryTest",
         "responses": {
           "200": {
             "description": "OK",
@@ -2407,10 +2300,10 @@
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/webhook": {
       "get": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
         "description": "connect GET requests to webhook of Repository",
-        "operationId": "getRepositoryWebhook",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1GetNamespacedRepositoryWebhook",
         "responses": {
           "200": {
             "description": "OK",
@@ -2432,10 +2325,10 @@
       },
       "post": {
         "tags": [
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Currently only supports github webhooks",
-        "operationId": "createRepositoryWebhook",
+        "description": "connect POST requests to webhook of Repository",
+        "operationId": "connectProvisioningGrafanaAppV0alpha1PostNamespacedRepositoryWebhook",
         "responses": {
           "200": {
             "description": "OK",
@@ -2478,71 +2371,1101 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/settings": {
+    "/apis/provisioning.grafana.app/v0alpha1/repositories": {
       "get": {
         "tags": [
-          "Provisioning",
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Get the frontend settings for this namespace",
-        "operationId": "getFrontendSettings",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "path",
-            "description": "workspace",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "default"
-          }
-        ],
+        "description": "list or watch objects of kind Repository",
+        "operationId": "listProvisioningGrafanaAppV0alpha1RepositoryForAllNamespaces",
         "responses": {
           "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryViewList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryList"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryList"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryList"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryList"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryList"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
         }
-      }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/stats": {
+    "/apis/provisioning.grafana.app/v0alpha1/watch/jobs": {
       "get": {
         "tags": [
-          "Provisioning",
-          "Repository"
+          "provisioningGrafanaApp_v0alpha1"
         ],
-        "description": "Get resource stats for this namespace",
-        "operationId": "getResourceStats",
-        "parameters": [
-          {
-            "name": "namespace",
-            "in": "path",
-            "description": "workspace",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "default"
-          }
-        ],
+        "description": "watch individual changes to a list of Job. deprecated: use the 'watch' parameter with a list operation instead.",
+        "operationId": "watchProvisioningGrafanaAppV0alpha1JobListForAllNamespaces",
         "responses": {
           "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceStats"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Job"
         }
-      }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/watch/namespaces/{namespace}/jobs": {
+      "get": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "watch individual changes to a list of Job. deprecated: use the 'watch' parameter with a list operation instead.",
+        "operationId": "watchProvisioningGrafanaAppV0alpha1NamespacedJobList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Job"
+        }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/watch/namespaces/{namespace}/jobs/{name}": {
+      "get": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "watch changes to an object of kind Job. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "operationId": "watchProvisioningGrafanaAppV0alpha1NamespacedJob",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Job"
+        }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Job",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/watch/namespaces/{namespace}/repositories": {
+      "get": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "watch individual changes to a list of Repository. deprecated: use the 'watch' parameter with a list operation instead.",
+        "operationId": "watchProvisioningGrafanaAppV0alpha1NamespacedRepositoryList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/watch/namespaces/{namespace}/repositories/{name}": {
+      "get": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "watch changes to an object of kind Repository. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "operationId": "watchProvisioningGrafanaAppV0alpha1NamespacedRepository",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Repository",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/watch/repositories": {
+      "get": {
+        "tags": [
+          "provisioningGrafanaApp_v0alpha1"
+        ],
+        "description": "watch individual changes to a list of Repository. deprecated: use the 'watch' parameter with a list operation instead.",
+        "operationId": "watchProvisioningGrafanaAppV0alpha1RepositoryListForAllNamespaces",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/vnd.kubernetes.protobuf;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "allowWatchBookmarks",
+          "in": "query",
+          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "continue",
+          "in": "query",
+          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "fieldSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labelSelector",
+          "in": "query",
+          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersion",
+          "in": "query",
+          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "resourceVersionMatch",
+          "in": "query",
+          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sendInitialEvents",
+          "in": "query",
+          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "timeoutSeconds",
+          "in": "query",
+          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "watch",
+          "in": "query",
+          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -2551,26 +3474,6 @@
         "type": "object",
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Author": {
-        "type": "object",
-        "required": [
-          "name",
-          "username"
-        ],
-        "properties": {
-          "avatarURL": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "default": ""
-          },
-          "username": {
-            "type": "string",
-            "default": ""
-          }
-        }
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.BitbucketRepositoryConfig": {
         "type": "object",
@@ -2639,59 +3542,6 @@
           "path": {
             "description": "Prefix in target file system",
             "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileItem": {
-        "type": "object",
-        "required": [
-          "path"
-        ],
-        "properties": {
-          "author": {
-            "type": "string"
-          },
-          "hash": {
-            "type": "string"
-          },
-          "modified": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "path": {
-            "type": "string",
-            "default": ""
-          },
-          "size": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileList": {
-        "description": "Information we can get just from the file listing",
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
           }
         }
       },
@@ -2823,64 +3673,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HistoryItem": {
-        "type": "object",
-        "required": [
-          "ref",
-          "message",
-          "authors",
-          "createdAt"
-        ],
-        "properties": {
-          "authors": {
-            "type": "array",
-            "items": {
-              "default": {}
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "createdAt": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          },
-          "message": {
-            "type": "string",
-            "default": ""
-          },
-          "ref": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.HistoryList": {
-        "description": "HistoryList is a list of versions of a resource",
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {}
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job": {
         "description": "The repository name and type are stored as labels",
         "type": "object",
@@ -2919,6 +3711,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Job",
+            "version": "__internal"
+          },
           {
             "group": "provisioning.grafana.app",
             "kind": "Job",
@@ -2961,6 +3758,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "JobList",
+            "version": "__internal"
+          },
           {
             "group": "provisioning.grafana.app",
             "kind": "JobList",
@@ -3122,33 +3924,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ManagerStats": {
-        "type": "object",
-        "required": [
-          "stats"
-        ],
-        "properties": {
-          "id": {
-            "description": "Manager identity",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Manager kind",
-            "type": "string"
-          },
-          "stats": {
-            "description": "stats",
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount"
-                }
-              ]
-            }
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions": {
         "type": "object",
         "properties": {
@@ -3240,6 +4015,11 @@
           {
             "group": "provisioning.grafana.app",
             "kind": "RefList",
+            "version": "__internal"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RefList",
             "version": "v0alpha1"
           }
         ]
@@ -3285,6 +4065,11 @@
           {
             "group": "provisioning.grafana.app",
             "kind": "Repository",
+            "version": "__internal"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Repository",
             "version": "v0alpha1"
           }
         ]
@@ -3325,6 +4110,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RepositoryList",
+            "version": "__internal"
+          },
           {
             "group": "provisioning.grafana.app",
             "kind": "RepositoryList",
@@ -3482,112 +4272,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryView": {
-        "type": "object",
-        "required": [
-          "name",
-          "title",
-          "type",
-          "target",
-          "workflows"
-        ],
-        "properties": {
-          "branch": {
-            "description": "For git, this is the target branch",
-            "type": "string"
-          },
-          "name": {
-            "description": "The k8s name for this repository",
-            "type": "string",
-            "default": ""
-          },
-          "target": {
-            "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "folder",
-              "instance"
-            ]
-          },
-          "title": {
-            "description": "Repository display",
-            "type": "string",
-            "default": ""
-          },
-          "type": {
-            "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "bitbucket",
-              "git",
-              "github",
-              "gitlab",
-              "local"
-            ]
-          },
-          "workflows": {
-            "description": "The supported workflows",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": "",
-              "enum": [
-                "branch",
-                "write"
-              ]
-            }
-          }
-        }
-      },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryViewList": {
-        "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "availableRepositoryTypes": {
-            "description": "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": "",
-              "enum": [
-                "bitbucket",
-                "git",
-                "github",
-                "gitlab",
-                "local"
-              ]
-            }
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RepositoryView"
-                }
-              ]
-            },
-            "x-kubernetes-map-type": "atomic"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "legacyStorage": {
-            "description": "The backend is using legacy storage FIXME: Not sure where this should be exposed... but we need it somewhere The UI should force the onboarding workflow when this is true",
-            "type": "boolean"
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount": {
         "type": "object",
         "required": [
@@ -3648,6 +4332,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceList",
+            "version": "__internal"
+          },
           {
             "group": "provisioning.grafana.app",
             "kind": "ResourceList",
@@ -3794,47 +4483,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceStats": {
-        "description": "Information we can get just from the file listing",
-        "type": "object",
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "instance": {
-            "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceCount"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "managed": {
-            "description": "Stats for each manager",
-            "type": "array",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ManagerStats"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "metadata": {
-            "default": {}
-          }
-        }
-      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceType": {
         "type": "object",
         "properties": {
@@ -3956,6 +4604,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceWrapper",
+            "version": "__internal"
+          },
           {
             "group": "provisioning.grafana.app",
             "kind": "ResourceWrapper",
@@ -4104,6 +4757,11 @@
           {
             "group": "provisioning.grafana.app",
             "kind": "TestResults",
+            "version": "__internal"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "TestResults",
             "version": "v0alpha1"
           }
         ]
@@ -4138,6 +4796,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "WebhookResponse",
+            "version": "__internal"
+          },
           {
             "group": "provisioning.grafana.app",
             "kind": "WebhookResponse",
@@ -4280,7 +4943,14 @@
             },
             "x-kubernetes-list-type": "atomic"
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "",
+            "kind": "APIResourceList",
+            "version": "v1"
+          }
+        ]
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions": {
         "description": "DeleteOptions may be provided when deleting an API object.",
@@ -4328,7 +4998,344 @@
             "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
             "type": "string"
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "admissionregistration.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "admissionregistration.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "admissionregistration.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "apps",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "apps",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "apps",
+            "kind": "DeleteOptions",
+            "version": "v1beta2"
+          },
+          {
+            "group": "authentication.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "authentication.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "authentication.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "authorization.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "authorization.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "autoscaling",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "autoscaling",
+            "kind": "DeleteOptions",
+            "version": "v2"
+          },
+          {
+            "group": "autoscaling",
+            "kind": "DeleteOptions",
+            "version": "v2beta1"
+          },
+          {
+            "group": "autoscaling",
+            "kind": "DeleteOptions",
+            "version": "v2beta2"
+          },
+          {
+            "group": "batch",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "batch",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "certificates.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "certificates.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "certificates.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "coordination.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "coordination.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha2"
+          },
+          {
+            "group": "coordination.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v2alpha1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v2alpha2"
+          },
+          {
+            "group": "discovery.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "discovery.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "events.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "events.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "extensions",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "features.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "featuretoggle.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "flowcontrol.apiserver.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "flowcontrol.apiserver.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "flowcontrol.apiserver.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta2"
+          },
+          {
+            "group": "flowcontrol.apiserver.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta3"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "iam.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "internal.apiserver.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "networking.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "networking.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "networking.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "node.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "node.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "node.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "playlist.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "policy",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "policy",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "query.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "rbac.authorization.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "rbac.authorization.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "rbac.authorization.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "resource.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha3"
+          },
+          {
+            "group": "resource.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "resource.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta2"
+          },
+          {
+            "group": "scheduling.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "scheduling.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "scheduling.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "storage.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1"
+          },
+          {
+            "group": "storage.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "storage.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1beta1"
+          },
+          {
+            "group": "storagemigration.k8s.io",
+            "kind": "DeleteOptions",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "userstorage.grafana.app",
+            "kind": "DeleteOptions",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
         "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
@@ -4618,7 +5625,19 @@
             "description": "Status of the operation. One of: \"Success\" or \"Failure\". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
             "type": "string"
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "",
+            "kind": "Status",
+            "version": "v1"
+          },
+          {
+            "group": "features.grafana.app",
+            "kind": "Status",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause": {
         "description": "StatusCause provides more information about an api.Status failure, including cases when multiple errors are encountered.",
@@ -4703,7 +5722,344 @@
             "type": "string",
             "default": ""
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "admissionregistration.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "admissionregistration.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "admissionregistration.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "apps",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "apps",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "apps",
+            "kind": "WatchEvent",
+            "version": "v1beta2"
+          },
+          {
+            "group": "authentication.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "authentication.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "authentication.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "authorization.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "authorization.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "autoscaling",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "autoscaling",
+            "kind": "WatchEvent",
+            "version": "v2"
+          },
+          {
+            "group": "autoscaling",
+            "kind": "WatchEvent",
+            "version": "v2beta1"
+          },
+          {
+            "group": "autoscaling",
+            "kind": "WatchEvent",
+            "version": "v2beta2"
+          },
+          {
+            "group": "batch",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "batch",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "certificates.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "certificates.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "certificates.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "coordination.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "coordination.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha2"
+          },
+          {
+            "group": "coordination.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v2alpha1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v2alpha2"
+          },
+          {
+            "group": "discovery.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "discovery.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "events.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "events.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "extensions",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "features.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "featuretoggle.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "flowcontrol.apiserver.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "flowcontrol.apiserver.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "flowcontrol.apiserver.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta2"
+          },
+          {
+            "group": "flowcontrol.apiserver.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta3"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "iam.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "internal.apiserver.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "networking.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "networking.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "networking.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "node.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "node.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "node.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "playlist.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "policy",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "policy",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "query.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "rbac.authorization.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "rbac.authorization.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "rbac.authorization.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "resource.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha3"
+          },
+          {
+            "group": "resource.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "resource.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta2"
+          },
+          {
+            "group": "scheduling.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "scheduling.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "scheduling.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "storage.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1"
+          },
+          {
+            "group": "storage.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "storage.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1beta1"
+          },
+          {
+            "group": "storagemigration.k8s.io",
+            "kind": "WatchEvent",
+            "version": "v1alpha1"
+          },
+          {
+            "group": "userstorage.grafana.app",
+            "kind": "WatchEvent",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "io.k8s.apimachinery.pkg.runtime.RawExtension": {
         "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",

@@ -12,8 +12,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 )
@@ -52,44 +50,6 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPlaylistv0alpha1,
-					Routes: map[string]spec3.PathProps{
-						"/example": {
-							Get: &spec3.Operation{
-								OperationProps: spec3.OperationProps{
-
-									OperationId: "GetExample",
-
-									Responses: &spec3.Responses{
-										ResponsesProps: spec3.ResponsesProps{
-											Default: &spec3.Response{
-												ResponseProps: spec3.ResponseProps{
-													Description: "Default OK response",
-													Content: map[string]*spec3.MediaType{
-														"application/json": {
-															MediaTypeProps: spec3.MediaTypeProps{
-																Schema: &spec.Schema{
-																	SchemaProps: spec.SchemaProps{
-																		Type: []string{"object"},
-																		Properties: map[string]spec.Schema{
-																			"status": {
-																				SchemaProps: spec.SchemaProps{
-																					Type: []string{"string"},
-																				},
-																			},
-																		},
-																		Required: []string{
-																			"status",
-																		},
-																	}},
-															}},
-													},
-												},
-											},
-										}},
-								},
-							},
-						},
-					},
 				},
 			},
 		},
@@ -115,9 +75,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{
-	"v0alpha1|Playlist|example|GET": v0alpha1.GetExample{},
-}
+var customRouteToGoResponseType = map[string]any{}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.

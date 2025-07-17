@@ -11,6 +11,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/logging"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -36,6 +37,7 @@ type serverWrapper struct {
 }
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
+	log := logging.FromContext(s.ctx)
 	legacyProvider, ok := s.installer.(LegacyStorageProvider)
 	if !ok {
 		return s.GenericAPIServer.InstallAPIGroup(apiGroupInfo)
@@ -44,6 +46,7 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 		for storagePath, restStorage := range storageMap {
 			genericStorage, ok := restStorage.(*genericregistry.Store)
 			if !ok {
+				log.Error("Expected generic registry store", "storagePath", storagePath, "version", v)
 				continue
 			}
 			resource, err := getResourceFromStoragePath(storagePath)
@@ -56,6 +59,9 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 			}
 			genericStorage.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
 			genericStorage.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+			genericStorage.UpdateStrategy = &updateStrategyWrapper{
+				RESTUpdateStrategy: genericStorage.UpdateStrategy,
+			}
 
 			dw, err := NewDualWriter(
 				s.ctx,

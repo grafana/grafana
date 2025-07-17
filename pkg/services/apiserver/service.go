@@ -361,6 +361,8 @@ func (s *service) start(ctx context.Context) error {
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(combinedDefsGetter),
 		openapinamer.NewDefinitionNamer(s.scheme, k8sscheme.Scheme))
 
+	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
+
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
 	if err := appinstaller.RegisterPostStartHooks(s.appInstallers, serverConfig); err != nil {

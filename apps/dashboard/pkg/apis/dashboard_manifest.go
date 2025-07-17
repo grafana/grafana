@@ -60,9 +60,18 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
+			},
+		},
 
+		{
+			Name:   "v2alpha2",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
 				{
-					Name: "v2alpha2",
+					Kind:       "Dashboard",
+					Plural:     "Dashboards",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
 			},
 		},
