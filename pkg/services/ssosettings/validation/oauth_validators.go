@@ -51,6 +51,15 @@ func SkipOrgRoleSyncAllowAssignGrafanaAdminValidator(info *social.OAuthInfo, req
 	return nil
 }
 
+func LoginPromptValidator(info *social.OAuthInfo, requester identity.Requester) error {
+	prompt := info.LoginPrompt
+
+	if prompt != "" && prompt != "login" && prompt != "consent" && prompt != "select_account" {
+		return ssosettings.ErrInvalidOAuthConfig("Invalid value for login_prompt. Valid values are: login, consent, select_account.")
+	}
+	return nil
+}
+
 func RequiredValidator(value string, name string) ssosettings.ValidateFunc[social.OAuthInfo] {
 	return func(info *social.OAuthInfo, requester identity.Requester) error {
 		if value == "" {

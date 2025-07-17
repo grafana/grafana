@@ -224,7 +224,8 @@ func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 	if s.info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
-	return s.Config.AuthCodeURL(state, opts...)
+
+	return s.getAuthCodeURL(state, opts...)
 }
 
 func (s *SocialGoogle) extractFromToken(_ context.Context, _ *http.Client, token *oauth2.Token) (*googleUserData, error) {
