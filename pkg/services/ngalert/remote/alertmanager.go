@@ -789,3 +789,8 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 	}
 	return md5.Sum(rawRemote) != hash
 }
+
+// MergeState should never be called on the remote Alertmanager implementation.
+func (am *Alertmanager) MergeState(notifier.ExternalState) error {
+	panic("Not implemented")
+}
