@@ -29,13 +29,7 @@ const GAUGE_RENDERER: TableCellRenderer = (props) => (
 );
 
 const AUTO_RENDERER: TableCellRenderer = (props) => (
-  <AutoCell
-    value={props.value}
-    field={props.field}
-    justifyContent={props.justifyContent}
-    rowIdx={props.rowIdx}
-    cellOptions={props.cellOptions}
-  />
+  <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
 const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
@@ -109,6 +103,12 @@ export function getCellRenderer(field: Field, cellOptions: TableCellOptions): Ta
   if (cellType === TableCellDisplayMode.Auto) {
     return getAutoRendererResult(field);
   }
+
+  // TODO: add support boolean, enum, (maybe int). but for now just string fields
+  if (cellType === TableCellDisplayMode.Pill && field.type !== FieldType.string) {
+    return AUTO_RENDERER;
+  }
+
   return CELL_RENDERERS[cellType] ?? AUTO_RENDERER;
 }
 

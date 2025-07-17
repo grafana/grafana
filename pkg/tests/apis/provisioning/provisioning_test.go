@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -83,6 +84,36 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				Suffix("files/").
 				Do(context.Background())
 			require.NoError(t, rsp.Error())
+
+			// Verify that we can list refs
+			rsp = helper.AdminREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(name).
+				Suffix("refs").
+				Do(context.Background())
+
+			if expectedRepo.Spec.Type == provisioning.LocalRepositoryType {
+				require.ErrorContains(t, rsp.Error(), "does not support versioned operations")
+			} else {
+				require.NoError(t, rsp.Error())
+				refs := &provisioning.RefList{}
+				err = rsp.Into(refs)
+				require.NoError(t, err)
+				require.True(t, len(refs.Items) >= 1, "should have at least one ref")
+
+				var foundBranch bool
+				for _, ref := range refs.Items {
+					// FIXME: this assertion should be improved for all git types and take things from config
+					if ref.Name == "integration-test" {
+						require.Equal(t, "0f3370c212b04b9704e00f6926ef339bf91c7a1b", ref.Hash)
+						require.Equal(t, "https://github.com/grafana/grafana-git-sync-demo/tree/integration-test", ref.RefURL)
+						foundBranch = true
+					}
+				}
+
+				require.True(t, foundBranch, "branch should be found")
+			}
 		})
 	}
 
@@ -97,6 +128,22 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		err := rsp.Into(settings)
 		require.NoError(t, err)
 		require.Len(t, settings.Items, len(inputFiles))
+
+		// FIXME: this should be an enterprise integration test
+		if extensions.IsEnterprise {
+			require.ElementsMatch(t, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+				provisioning.GitRepositoryType,
+				provisioning.BitbucketRepositoryType,
+				provisioning.GitLabRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		} else {
+			require.ElementsMatch(t, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		}
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {

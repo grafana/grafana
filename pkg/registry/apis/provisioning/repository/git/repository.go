@@ -19,6 +19,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/options"
@@ -26,9 +27,13 @@ import (
 	"github.com/grafana/nanogit/protocol/hash"
 )
 
+//nolint:gosec // This is a constant for a secret suffix
+const gitTokenSecretSuffix = "-git-token"
+
 type RepositoryConfig struct {
 	URL            string
 	Branch         string
+	TokenUser      string
 	Token          string
 	EncryptedToken []byte
 	Path           string
@@ -39,16 +44,23 @@ type gitRepository struct {
 	config    *provisioning.Repository
 	gitConfig RepositoryConfig
 	client    nanogit.Client
+	secrets   secrets.RepositorySecrets
 }
 
 func NewGitRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
+	secrets secrets.RepositorySecrets,
 ) (GitRepository, error) {
 	var opts []options.Option
 	if len(gitConfig.Token) > 0 {
-		opts = append(opts, options.WithBasicAuth("git", gitConfig.Token))
+		tokenUser := gitConfig.TokenUser
+		if tokenUser == "" {
+			tokenUser = "git"
+		}
+
+		opts = append(opts, options.WithBasicAuth(tokenUser, gitConfig.Token))
 	}
 
 	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)
@@ -60,6 +72,7 @@ func NewGitRepository(
 		config:    config,
 		gitConfig: gitConfig,
 		client:    client,
+		secrets:   secrets,
 	}, nil
 }
 
@@ -476,6 +489,27 @@ func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provis
 	}}
 }
 
+func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
+	refs, err := r.client.ListRefs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list refs: %w", err)
+	}
+	refItems := make([]provisioning.RefItem, 0, len(refs))
+	for _, ref := range refs {
+		// Only branches
+		if !strings.HasPrefix(ref.Name, "refs/heads/") {
+			continue
+		}
+
+		refItems = append(refItems, provisioning.RefItem{
+			Name: strings.TrimPrefix(ref.Name, "refs/heads/"),
+			Hash: ref.Hash.String(),
+		})
+	}
+
+	return refItems, nil
+}
+
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	ctx, _ = r.logger(ctx, "")
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))
@@ -731,4 +765,24 @@ func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context
 	ctx = log.ToContext(ctx, logger)
 
 	return ctx, logger
+}
+
+func (r *gitRepository) OnCreate(_ context.Context) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (r *gitRepository) OnUpdate(_ context.Context) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (r *gitRepository) OnDelete(ctx context.Context) error {
+	logger := logging.FromContext(ctx)
+	secretName := r.config.Name + gitTokenSecretSuffix
+	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
+		return fmt.Errorf("delete git token secret: %w", err)
+	}
+
+	logger.Info("Deleted git token secret", "secretName", secretName)
+
+	return nil
 }

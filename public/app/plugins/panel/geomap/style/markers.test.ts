@@ -1,6 +1,14 @@
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
 
-import { getWebGLStyle } from './markers';
+import {
+  getWebGLStyle,
+  baseCircleStyle,
+  baseShapeStyle,
+  sizeExpression,
+  opacityExpression,
+  rotationExpression,
+  offsetExpression,
+} from './markers';
 
 // Mock dependencies
 jest.mock('app/features/dimensions/resource', () => ({
@@ -14,40 +22,30 @@ describe('getWebGLStyle', () => {
 
   it('returns default circle style when no symbol is provided', async () => {
     const result = await getWebGLStyle();
-    expect(result).toEqual({
-      symbol: {
-        symbolType: 'circle',
-        size: ['get', 'size', 'number'],
-        color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
-        offset: ['array', ['get', 'offsetX'], ['get', 'offsetY']],
-        rotation: ['get', 'rotation', 'number'],
-        opacity: ['get', 'opacity', 'number'],
-      },
-    });
+    expect(result).toEqual(baseCircleStyle);
   });
 
   it('returns circle style for known WebGL regular shape', async () => {
     const result = await getWebGLStyle('img/icons/marker/circle.svg');
-    if (result.symbol) {
-      expect(result.symbol.symbolType).toBe('circle');
-      expect(result.symbol).not.toHaveProperty('src');
-    }
+    expect(result).toEqual(baseCircleStyle);
   });
 
-  it('returns square style for known WebGL regular shape', async () => {
+  it('returns shape style for square WebGL regular shape', async () => {
     const result = await getWebGLStyle('img/icons/marker/square.svg');
-    if (result.symbol) {
-      expect(result.symbol.symbolType).toBe('square');
-      expect(result.symbol).not.toHaveProperty('src');
-    }
+    expect(result).toEqual({
+      ...baseShapeStyle,
+      'shape-points': 4,
+      'shape-angle': Math.PI / 4,
+    });
   });
 
-  it('returns triangle style for known WebGL regular shape', async () => {
+  it('returns shape style for triangle WebGL regular shape', async () => {
     const result = await getWebGLStyle('img/icons/marker/triangle.svg');
-    if (result.symbol) {
-      expect(result.symbol.symbolType).toBe('triangle');
-      expect(result.symbol).not.toHaveProperty('src');
-    }
+    expect(result).toEqual({
+      ...baseShapeStyle,
+      'shape-points': 3,
+      'shape-angle': 0,
+    });
   });
 
   it('returns image style with src for custom SVG symbol', async () => {
@@ -62,10 +60,12 @@ describe('getWebGLStyle', () => {
       } as Response)
     );
     const result = await getWebGLStyle('test.svg');
-    if (result.symbol) {
-      expect(result.symbol.symbolType).toBe('image');
-      expect(result.symbol.src).toContain('data:image/svg+xml');
-    }
+    expect(result['icon-src']).toContain('data:image/svg+xml');
+    expect(result['icon-width']).toEqual(sizeExpression);
+    expect(result['icon-height']).toEqual(sizeExpression);
+    expect(result['icon-opacity']).toEqual(opacityExpression);
+    expect(result['icon-rotation']).toEqual(rotationExpression);
+    expect(result['icon-displacement']).toEqual(offsetExpression);
   });
 
   it('includes background circle with opacity-adjusted stroke when opacity is provided', async () => {
@@ -79,12 +79,10 @@ describe('getWebGLStyle', () => {
       } as Response)
     );
     const result = await getWebGLStyle('custom.svg', 0.5);
-    if (result.symbol?.src) {
-      expect(result.symbol.symbolType).toBe('image');
-      expect(result.symbol.src).toContain('circle');
-      const decodedSrc = decodeURIComponent(result.symbol.src);
-      expect(decodedSrc).toContain('stroke="rgba(255,255,255,0.2)"'); // 0.1 / 0.5 = 0.2
-    }
+    const iconSrc = result['icon-src'] as string;
+    expect(iconSrc).toContain('circle');
+    const decodedSrc = decodeURIComponent(iconSrc);
+    expect(decodedSrc).toContain('stroke="rgba(255,255,255,0.2)"'); // 0.1 / 0.5 = 0.2
   });
 
   it('handles fetch error gracefully', async () => {
@@ -94,10 +92,8 @@ describe('getWebGLStyle', () => {
     (getPublicOrAbsoluteUrl as jest.Mock).mockReturnValue('error.svg');
     global.fetch = jest.fn(() => Promise.reject(new Error('Fetch failed')));
     const result = await getWebGLStyle('error.svg');
-    if (result.symbol) {
-      expect(result.symbol.symbolType).toBe('image');
-      expect(result.symbol.src).toBe(''); // Empty SVG
-    }
+    expect(result['icon-src']).toBe(''); // Empty SVG
+
     // Verify console.error was called with the expected error
     expect(consoleErrorSpy).toHaveBeenCalledWith(new Error('Fetch failed'));
 

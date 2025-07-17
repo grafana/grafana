@@ -25,7 +25,7 @@ import {
   StandardPromVariableQuery,
 } from '../types';
 
-export const variableOptions = [
+const variableOptions = [
   { label: 'Label names', value: QueryType.LabelNames },
   { label: 'Label values', value: QueryType.LabelValues },
   { label: 'Metrics', value: QueryType.MetricNames },
