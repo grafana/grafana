@@ -58,7 +58,7 @@ Mute timings and active time intervals are assigned to a [specific Alertmanager]
 
 The following table highlights the key differences between mute timings and silences.
 
-|            | Mute timing                                      | Silence                                                          |
+|            | Mute timing                                                 | Silence                                                          |
 | ---------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
 | **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
 | **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
