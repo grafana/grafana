@@ -626,7 +626,12 @@ export function TableNG(props: TableNGProps) {
           const field = columns[column.idx].field;
           const targ: HTMLElement = target as HTMLElement;
 
-          if (colsWithTooltip[getDisplayName(field)] && targ.matches('a') && !targ.hasAttribute('href')) {
+          if (
+            colsWithTooltip[getDisplayName(field)] &&
+            // this walks up the tree to find either a faux link wrapper or the cell root
+            // it then only proceeds if we matched the faux link wrapper
+            targ.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
+          ) {
             const rowIdx = row.__index;
             setTooltipState({
               coords: {

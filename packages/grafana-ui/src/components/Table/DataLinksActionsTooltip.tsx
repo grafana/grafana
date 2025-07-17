@@ -104,7 +104,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
 
 export const renderSingleLink = (
   link: LinkModel,
-  children: string | React.JSX.Element,
+  children: React.ReactNode,
   className?: string
 ): React.JSX.Element => {
   return (
