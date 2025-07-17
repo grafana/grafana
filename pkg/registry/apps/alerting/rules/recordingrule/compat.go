@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -66,6 +67,24 @@ func ConvertToK8sResource(
 			Source: util.Pointer(rule.Condition == query.RefID),
 		}
 	}
+
+	// TODO: add the common metadata fields
+	meta, err := utils.MetaAccessor(k8sRule)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata: %w", err)
+	}
+	meta.SetFolder(rule.NamespaceUID)
+	if rule.UpdatedBy != nil {
+		meta.SetUpdatedBy(string(*rule.UpdatedBy))
+		k8sRule.SetUpdatedBy(string(*rule.UpdatedBy))
+	}
+	meta.SetUpdatedTimestamp(&rule.Updated)
+	k8sRule.SetUpdateTimestamp(rule.Updated)
+
+	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
+	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
+	// k8sRule.SetCreationTimestamp(rule.)
+
 	return k8sRule, nil
 }
 
@@ -91,20 +110,30 @@ func ConvertToK8sResources(
 	return k8sRules, nil
 }
 
-func ConvertToDomainModel(k8sRule *model.RecordingRule) (*ngmodels.AlertRule, error) {
+func ConvertToDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, error) {
+	if k8sRule.UID != types.UID(k8sRule.Name) {
+		return nil, fmt.Errorf("object name (%s) does not match object UID (%s)", k8sRule.Name, k8sRule.UID)
+	}
 	domainRule := &ngmodels.AlertRule{
-		UID:          string(k8sRule.UID),
-		Title:        k8sRule.Spec.Title,
-		NamespaceUID: k8sRule.Namespace,
-		Data:         make([]ngmodels.AlertQuery, 0, len(k8sRule.Spec.Data)),
-		IsPaused:     k8sRule.Spec.Paused != nil && *k8sRule.Spec.Paused,
-		Labels:       make(map[string]string),
+		OrgID:    orgID,
+		UID:      string(k8sRule.UID),
+		Title:    k8sRule.Spec.Title,
+		Data:     make([]ngmodels.AlertQuery, 0, len(k8sRule.Spec.Data)),
+		IsPaused: k8sRule.Spec.Paused != nil && *k8sRule.Spec.Paused,
+		Labels:   make(map[string]string),
 
 		Record: &ngmodels.Record{
 			Metric:              k8sRule.Spec.Metric,
 			TargetDatasourceUID: k8sRule.Spec.TargetDatasourceUID,
 		},
 	}
+
+	meta, err := utils.MetaAccessor(k8sRule)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata: %w", err)
+	}
+
+	domainRule.NamespaceUID = meta.GetFolder()
 
 	interval, err := strconv.Atoi(string(k8sRule.Spec.Trigger.Interval))
 	if err != nil {

@@ -115,17 +115,19 @@ func ConvertToK8sResource(
 		k8sRule.Spec.NotificationSettings = &nfSetting
 	}
 
-	// TODO: figure out how the rule folder is supposed to be mapped on k8s objects
-	meta, err := utils.MetaAccessor(k8sRule)
-	if err == nil {
-		meta.SetFolder(rule.NamespaceUID)
-		meta.SetUpdatedBy(string(*rule.UpdatedBy))
-		meta.SetUpdatedTimestamp(&rule.Updated)
-	}
-
 	// TODO: add the common metadata fields
-	k8sRule.SetUpdatedBy(string(*rule.UpdatedBy))
+	meta, err := utils.MetaAccessor(k8sRule)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata: %w", err)
+	}
+	meta.SetFolder(rule.NamespaceUID)
+	if rule.UpdatedBy != nil {
+		meta.SetUpdatedBy(string(*rule.UpdatedBy))
+		k8sRule.SetUpdatedBy(string(*rule.UpdatedBy))
+	}
+	meta.SetUpdatedTimestamp(&rule.Updated)
 	k8sRule.SetUpdateTimestamp(rule.Updated)
+
 	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
 	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
 	// k8sRule.SetCreationTimestamp(rule.)
@@ -155,8 +157,12 @@ func ConvertToK8sResources(
 	return k8sRules, nil
 }
 
-func ConvertToDomainModel(k8sRule *model.AlertRule) (*ngmodels.AlertRule, error) {
+func ConvertToDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.AlertRule, error) {
+	if k8sRule.UID != types.UID(k8sRule.Name) {
+		return nil, fmt.Errorf("object name (%s) does not match object UID (%s)", k8sRule.Name, k8sRule.UID)
+	}
 	domainRule := &ngmodels.AlertRule{
+		OrgID:        orgID,
 		UID:          string(k8sRule.UID),
 		Title:        k8sRule.Spec.Title,
 		NamespaceUID: k8sRule.Namespace,
@@ -169,6 +175,13 @@ func ConvertToDomainModel(k8sRule *model.AlertRule) (*ngmodels.AlertRule, error)
 		NoDataState:          ngmodels.NoDataState(k8sRule.Spec.NoDataState),
 		ExecErrState:         ngmodels.ExecutionErrorState(k8sRule.Spec.ExecErrState),
 	}
+
+	meta, err := utils.MetaAccessor(k8sRule)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata: %w", err)
+	}
+
+	domainRule.NamespaceUID = meta.GetFolder()
 
 	for k, v := range k8sRule.Spec.Annotations {
 		domainRule.Annotations[k] = string(v)

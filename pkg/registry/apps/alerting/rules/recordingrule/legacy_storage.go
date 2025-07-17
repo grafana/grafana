@@ -3,7 +3,6 @@ package recordingrule
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -52,6 +52,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
+	// TODO: we want the org id passed in from the namespace mapper rather than the one we're getting from the user
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -97,13 +98,18 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, _ rest.V
 
 	p, ok := obj.(*model.RecordingRule)
 	if !ok {
-		return nil, fmt.Errorf("expected recording rule but got %T", obj)
-	}
-	if p.Name != "" {
-		return nil, k8serrors.NewBadRequest("object's metadata.name should be empty")
+		return nil, k8serrors.NewBadRequest("expected valid recording rule object")
 	}
 
-	model, err := ConvertToDomainModel(p)
+	if p.GenerateName != "" {
+		return nil, k8serrors.NewBadRequest("generate-name is not supported in legacy storage mode")
+	}
+	if p.Name != "" {
+		p.UID = types.UID(p.Name)
+	}
+
+	// TODO(@rwwiv): this org id needs to be from the namespace rather than the user
+	model, err := ConvertToDomainModel(user.GetOrgID(), p)
 	if err != nil {
 		return nil, err
 	}
@@ -139,10 +145,15 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 	p, ok := obj.(*model.RecordingRule)
 	if !ok {
-		return nil, false, fmt.Errorf("expected recording rule but got %T", obj)
+		return nil, false, k8serrors.NewBadRequest("expected valid recording rule object")
+	}
+	// FIXME(@rwwiv): this shouldn't be necessary
+	if p.Name != "" {
+		p.UID = types.UID(p.Name)
 	}
 
-	model, err := ConvertToDomainModel(p)
+	// TODO(@rwwiv): this org id needs to be from the namespace rather than the user
+	model, err := ConvertToDomainModel(user.GetOrgID(), p)
 	if err != nil {
 		return nil, false, err
 	}

@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -52,6 +53,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
+	// TODO: we want the org id passed in from the namespace mapper rather than the one we're getting from the user
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -102,13 +104,18 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 
 	p, ok := obj.(*model.AlertRule)
 	if !ok {
-		return nil, fmt.Errorf("expected alert rule but got %T", obj)
-	}
-	if p.Name != "" {
-		return nil, k8serrors.NewBadRequest("object's metadata.name should be empty")
+		return nil, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
-	model, err := ConvertToDomainModel(p)
+	if p.GenerateName != "" {
+		return nil, fmt.Errorf("generate-name is not supported in legacy storage mode")
+	}
+	if p.Name != "" {
+		p.UID = types.UID(p.Name)
+	}
+
+	// TODO(@rwwiv): this org id needs to be from the namespace rather than the user
+	model, err := ConvertToDomainModel(user.GetOrgID(), p)
 	if err != nil {
 		return nil, err
 	}
@@ -144,9 +151,15 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 	p, ok := obj.(*model.AlertRule)
 	if !ok {
-		return nil, false, fmt.Errorf("expected alert rule but got %T", obj)
+		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
-	model, err := ConvertToDomainModel(p)
+	// FIXME(@rwwiv): this shouldn't be necessary
+	if p.Name != "" {
+		p.UID = types.UID(p.Name)
+	}
+
+	// TODO(@rwwiv): this org id needs to be from the namespace rather than the user
+	model, err := ConvertToDomainModel(user.GetOrgID(), p)
 	if err != nil {
 		return old, false, err
 	}
