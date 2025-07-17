@@ -2,7 +2,8 @@ import { HistoryItem, TimeRange } from '@grafana/data';
 import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
 import { DEFAULT_SUGGESTIONS_LIMIT, METRIC_LABEL } from '../../../constants';
-import { type PrometheusLanguageProviderInterface, removeQuotesIfExist } from '../../../language_provider';
+import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { removeQuotesIfExist } from '../../../language_utils';
 import { PromQuery } from '../../../types';
 import { escapeForUtf8Support, isValidLegacyName } from '../../../utf8_support';
 
