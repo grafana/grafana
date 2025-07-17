@@ -25,6 +25,7 @@ import { TraceSpan, TraceSpanReference } from '../types/trace';
 
 import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
+import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -62,6 +63,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     infoWrapper: css({
       label: 'infoWrapper',
       padding: '0.75rem',
+    }),
+    cell: css({
+      label: 'cell',
+      display: 'flex !important',
+      width: '100% !important',
+    }),
+    indentSpacer: css({
+      label: 'indentSpacer',
+      flex: 'none',
+    }),
+    detailWrapper: css({
+      label: 'detailWrapper',
+      flex: '1',
+      minWidth: 0,
     }),
   };
 });
@@ -136,40 +151,56 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
       setRedrawListView,
       timeRange,
       app,
+      hoverIndentGuideIds,
+      addHoverIndentGuideId,
+      removeHoverIndentGuideId,
+      visibleSpanIds,
     } = this.props;
     const styles = getStyles(theme);
     return (
       <TimelineRow>
-        <TimelineRow.Cell width={1}>
-          <div className={styles.infoWrapper} style={{ borderTopColor: color }}>
-            <SpanDetail
-              color={color}
-              detailState={detailState}
-              logItemToggle={logItemToggle}
-              logsToggle={logsToggle}
-              processToggle={processToggle}
-              referenceItemToggle={referenceItemToggle}
-              referencesToggle={referencesToggle}
-              warningsToggle={warningsToggle}
-              stackTracesToggle={stackTracesToggle}
+        <TimelineRow.Cell width={1} className={styles.cell}>
+          <div className={styles.indentSpacer}>
+            <SpanTreeOffset
               span={span}
-              traceToProfilesOptions={traceToProfilesOptions}
-              timeZone={timeZone}
-              tagsToggle={tagsToggle}
-              traceStartTime={traceStartTime}
-              traceDuration={traceDuration}
-              traceName={traceName}
-              createSpanLink={createSpanLink}
-              focusedSpanId={focusedSpanId}
-              createFocusSpanLink={createFocusSpanLink}
-              datasourceType={datasourceType}
-              datasourceUid={datasourceUid}
-              traceFlameGraphs={traceFlameGraphs}
-              setTraceFlameGraphs={setTraceFlameGraphs}
-              setRedrawListView={setRedrawListView}
-              timeRange={timeRange}
-              app={app}
+              showChildrenIcon={false}
+              hoverIndentGuideIds={hoverIndentGuideIds}
+              addHoverIndentGuideId={addHoverIndentGuideId}
+              removeHoverIndentGuideId={removeHoverIndentGuideId}
+              visibleSpanIds={visibleSpanIds}
             />
+          </div>
+          <div className={styles.detailWrapper}>
+            <div className={styles.infoWrapper} style={{ borderTopColor: color }}>
+              <SpanDetail
+                color={color}
+                detailState={detailState}
+                logItemToggle={logItemToggle}
+                logsToggle={logsToggle}
+                processToggle={processToggle}
+                referenceItemToggle={referenceItemToggle}
+                referencesToggle={referencesToggle}
+                warningsToggle={warningsToggle}
+                stackTracesToggle={stackTracesToggle}
+                span={span}
+                traceToProfilesOptions={traceToProfilesOptions}
+                timeZone={timeZone}
+                tagsToggle={tagsToggle}
+                traceStartTime={traceStartTime}
+                traceDuration={traceDuration}
+                traceName={traceName}
+                createSpanLink={createSpanLink}
+                focusedSpanId={focusedSpanId}
+                createFocusSpanLink={createFocusSpanLink}
+                datasourceType={datasourceType}
+                datasourceUid={datasourceUid}
+                traceFlameGraphs={traceFlameGraphs}
+                setTraceFlameGraphs={setTraceFlameGraphs}
+                setRedrawListView={setRedrawListView}
+                timeRange={timeRange}
+                app={app}
+              />
+            </div>
           </div>
         </TimelineRow.Cell>
       </TimelineRow>
