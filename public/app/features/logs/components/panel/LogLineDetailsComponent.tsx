@@ -4,6 +4,7 @@ import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'r
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -75,6 +76,10 @@ export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsCompon
   const handleToggle = useCallback(
     (option: string, isOpen: boolean) => {
       store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
+      reportInteraction('logs_log_line_details_section_toggled', {
+        section: option.replace('Open', ''),
+        state: isOpen ? 'open' : 'closed',
+      });
     },
     [logOptionsStorageKey]
   );

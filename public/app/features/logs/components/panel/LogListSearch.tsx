@@ -4,6 +4,7 @@ import { VariableSizeList } from 'react-window';
 
 import { escapeRegex, GrafanaTheme2, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { useLogListContext } from './LogListContext';
@@ -30,6 +31,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
   const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const inputRef = useRef('');
+  const searchUsedRef = useRef(false);
   const styles = useStyles2(getStyles);
 
   const matches = useMemo(() => {
@@ -44,6 +46,10 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     startTransition(() => {
       setSearch(inputRef.current);
     });
+    if (!searchUsedRef.current) {
+      reportInteraction('logs_log_list_search_used');
+      searchUsedRef.current = true;
+    }
   }, []);
 
   const prevResult = useCallback(() => {

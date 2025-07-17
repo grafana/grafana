@@ -184,31 +184,27 @@ export const LogLineDetailsField = ({
       onClickShowField(keys[0]);
     }
 
-    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+    reportInteraction('logs_log_line_details_show_field_clicked', {
       datasourceType: log.datasourceType,
-      logRowUid: log.uid,
-      type: 'enable',
     });
-  }, [onClickShowField, keys, log.datasourceType, log.uid]);
+  }, [onClickShowField, keys, log.datasourceType]);
 
   const hideField = useCallback(() => {
     if (onClickHideField) {
       onClickHideField(keys[0]);
     }
 
-    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+    reportInteraction('logs_log_line_details_hide_field_clicked', {
       datasourceType: log.datasourceType,
-      logRowUid: log.uid,
-      type: 'disable',
     });
-  }, [onClickHideField, keys, log.datasourceType, log.uid]);
+  }, [onClickHideField, keys, log.datasourceType]);
 
   const filterLabel = useCallback(() => {
     if (onClickFilterLabel) {
       onClickFilterLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
     }
 
-    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+    reportInteraction('logs_log_line_details_filter_clicked', {
       datasourceType: log.datasourceType,
       filterType: 'include',
       logRowUid: log.uid,
@@ -220,7 +216,7 @@ export const LogLineDetailsField = ({
       onClickFilterOutLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
     }
 
-    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+    reportInteraction('logs_log_line_details_filter_clicked', {
       datasourceType: log.datasourceType,
       filterType: 'exclude',
       logRowUid: log.uid,
@@ -237,9 +233,9 @@ export const LogLineDetailsField = ({
   const showStats = useCallback(() => {
     setShowFieldStats((showFieldStats: boolean) => !showFieldStats);
 
-    reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
+    reportInteraction('logs_log_line_details_stats_clicked', {
       dataSourceType: log.datasourceType,
-      fieldType: isLabel ? 'label' : 'detectedField',
+      fieldType: isLabel ? 'label' : 'field',
       type: showFieldsStats ? 'close' : 'open',
       logRowUid: log.uid,
       app,

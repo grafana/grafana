@@ -3,6 +3,7 @@ import { useCallback, useMemo, MouseEvent, useRef, ChangeEvent } from 'react';
 
 import { colorManipulator, GrafanaTheme2, LogRowModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
@@ -39,13 +40,16 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const searchUsedRef = useRef(false);
 
   const copyLogLine = useCallback(() => {
     copyText(log.entry, containerRef);
+    reportInteraction('logs_log_line_details_header_copy_clicked');
   }, [log.entry]);
 
   const copyLinkToLogLine = useCallback(() => {
     onPermalinkClick?.(log);
+    reportInteraction('logs_log_line_details_header_permalink_clicked');
   }, [log, onPermalinkClick]);
 
   const togglePinning = useCallback(() => {
@@ -54,6 +58,7 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     } else {
       onPinLine?.(log);
     }
+    reportInteraction('logs_log_line_details_header_pinning_clicked');
   }, [log, onPinLine, onUnpinLine, pinned]);
 
   const shouldlogSupportsContext = useMemo(
@@ -64,6 +69,7 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
   const showContext = useCallback(
     async (event: MouseEvent<HTMLElement>) => {
       handleOpenLogsContextClick(event, log, getRowContextQuery, (log: LogRowModel) => onOpenContext?.(log, () => {}));
+      reportInteraction('logs_log_line_details_header_context_clicked');
     },
     [onOpenContext, getRowContextQuery, log]
   );
@@ -86,6 +92,7 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     } else {
       onClickShowField?.(LOG_LINE_BODY_FIELD_NAME);
     }
+    reportInteraction('logs_log_line_details_header_show_logline_clicked');
   }, [logLineDisplayed, onClickHideField, onClickShowField]);
 
   const clearSearch = useMemo(
@@ -95,6 +102,7 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
         size="sm"
         onClick={() => {
           onSearch('');
+          reportInteraction('logs_log_line_details_header_search_cleared');
           if (inputRef.current) {
             inputRef.current.value = '';
           }
@@ -108,6 +116,10 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       onSearch(e.target.value);
+      if (!searchUsedRef.current) {
+        reportInteraction('logs_log_line_details_header_search_used');
+        searchUsedRef.current = true;
+      }
     },
     [onSearch]
   );
