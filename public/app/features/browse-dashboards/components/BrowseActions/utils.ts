@@ -261,11 +261,11 @@ export async function moveResource({
         body: fileContent,
       })
       .unwrap();
-  } catch (createError) {
+  } catch (error) {
     return {
       success: false,
       failedToCreate: true,
-      error: createError instanceof Error ? createError.message : 'Create failed',
+      error: error instanceof Error ? error.message : 'Create failed',
     };
   }
 

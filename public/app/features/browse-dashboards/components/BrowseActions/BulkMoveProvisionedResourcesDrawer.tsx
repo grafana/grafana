@@ -63,7 +63,9 @@ export function FormContent({
   const [workflow] = watch(['workflow']);
 
   const onFolderChange = (folderUid?: string) => {
-    setTargetFolderUID(folderUid || '');
+    if (folderUid) {
+      setTargetFolderUID(folderUid);
+    }
   };
 
   const handleSubmitForm = async (formData: BaseProvisionedFormData) => {
