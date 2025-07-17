@@ -417,6 +417,23 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
               size="lg"
             />
           </Dropdown>
+          {visualisationType === 'logs' && hasUnescapedContent && (
+            <IconButton
+              name="enter"
+              aria-pressed={forceEscape}
+              className={forceEscape ? styles.controlButtonActive : styles.controlButton}
+              onClick={onForceEscapeClick}
+              tooltip={
+                forceEscape
+                  ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
+                  : t(
+                      'logs.logs-controls.escape-newlines',
+                      'Fix incorrectly escaped newline and tab sequences in log lines'
+                    )
+              }
+              size="lg"
+            />
+          )}
         </>
       )}
       {visualisationType === 'logs' && (
