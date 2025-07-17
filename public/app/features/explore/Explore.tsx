@@ -625,11 +625,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && !compact && (
-              <ContentOutline
-                scroller={this.scrollElement}
-                panelId={`content-outline-container-${exploreId}`}
-                compactMode={compact}
-              />
+              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}
@@ -651,7 +647,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                         {correlationsBox}
                         <QueryRows
                           exploreId={exploreId}
-                          collapsedByDefault={!!compact}
+                          collapsedByDefault={compact}
                           changeCompactMode={(compact: boolean) =>
                             this.props.changeCompactMode(this.props.exploreId, false)
                           }

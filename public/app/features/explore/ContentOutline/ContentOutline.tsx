@@ -40,14 +40,7 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
   expanded: 'grafana.explore.contentOutline.expanded',
 };
 
-export function ContentOutline({
-  scroller,
-  panelId,
-}: {
-  scroller: HTMLElement | undefined;
-  panelId: string;
-  compactMode?: boolean;
-}) {
+export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
   );
