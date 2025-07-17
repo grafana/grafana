@@ -862,6 +862,8 @@ export type BitbucketRepositoryConfig = {
   path?: string;
   /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
   url?: string;
 };
@@ -876,6 +878,8 @@ export type GitRepositoryConfig = {
   path?: string;
   /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
   /** The repository URL (e.g. `https://github.com/example/test.git`). */
   url?: string;
 };
