@@ -206,7 +206,9 @@ FROM my_data
 ORDER BY time_date_time
 ```
 
-Table panel result: [Resultant image to be added]
+Table panel result:
+
+{{< figure alt="output of time macro" src="/media/docs/grafana/data-sources/mysql/screenshot-time-and-timefilter-macro.png" >}}
 
 Given the result in the following example, two columns named `Time` and `value_double` are returned, representing the associated data within fixed timestamps. It doesn’t filter data with respect to the time range and returns all the rows in the table.
 
@@ -221,7 +223,9 @@ WHERE $__timeFilter(time_date_time)
 ORDER BY time_date_time
 ```
 
-Table panel result: [Resultant image to be added]
+Table panel result:
+
+{{< figure alt="output of time filter macro" src="/media/docs/grafana/data-sources/mysql/screenshot-time-and-timefilter-macro.png" >}}
 
 Given the result in the following example is identical to the previous example except that you can filter the data using the Grafana time picker function.
 
@@ -237,7 +241,9 @@ GROUP BY time
 ORDER BY time
 ```
 
-Table panel result: [Resultant image to be added]
+Table panel result:
+
+{{< figure alt="output of time group macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timegroup-macro.png" >}}
 
 Given the result in the following example, the data is grouped and aggregated within buckets with timestamps of fixed interval i.e. 5 mins. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U).
 
@@ -255,7 +261,9 @@ GROUP BY time
 ORDER BY time
 ```
 
-Table panel result: [Resultant image to be added]
+Table panel result:
+
+{{< figure alt="output of time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro.png" >}}
 
 The following result is similar to the prior `$__timeGroup(dateColumn,'5m')` macro’s result where the only difference is a built-in time column alias feature.
 To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U).
@@ -274,7 +282,9 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Table panel result: [Resultant image to be added]
+Table panel result:
+
+{{< figure alt="output of null values to zero case, for time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro-conv-null-to-zero.png" >}}
 
 Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the `Time` column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U) to display the value of `${__field.labels.hostname}`.
 
@@ -291,7 +301,9 @@ GROUP BY time
 ORDER BY time
 ```
 
-Table panel result: [Resultant image to be added]
+Table panel result:
+
+{{< figure alt="output with multiple colummns for time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro-multiple-columns.png" >}}
 
 Multiple columns representing minimum and maximum values within the defined range.
 
