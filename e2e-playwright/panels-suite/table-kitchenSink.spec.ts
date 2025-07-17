@@ -11,7 +11,11 @@ test.use({
 
 // helper utils
 const getCell = async (loc: Page | Locator, rowIdx: number, colIdx: number) =>
-  loc.getByRole('row').nth(rowIdx).getByRole('gridcell').nth(colIdx);
+  loc
+    .getByRole('row')
+    .nth(rowIdx)
+    .getByRole(rowIdx === 0 ? 'columnheader' : 'gridcell')
+    .nth(colIdx);
 
 const getCellHeight = async (loc: Page | Locator, rowIdx: number, colIdx: number) => {
   const cell = await getCell(loc, rowIdx, colIdx);
@@ -30,7 +34,9 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      await expect(page.locator('.rdg')).toBeVisible();
+      expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+      ).toBeVisible();
 
       // text wrapping is enabled by default on this panel.
       await expect(getCellHeight(page, 1, 5)).resolves.toBeGreaterThan(100);
@@ -64,16 +70,18 @@ test.describe(
       await loremIpsumCell.getByLabel('Inspect value').click();
       const loremIpsumText = await loremIpsumCell.textContent();
       expect(loremIpsumText).toBeDefined();
-      await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
+      expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
     });
 
     test('Tests visibility and display name via overrides', async ({ gotoDashboardPage, selectors, page }) => {
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      await expect(page.locator('.rdg')).toBeVisible();
+      expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+      ).toBeVisible();
 
       // confirm that "State" column is hidden by default.
       expect(page.getByRole('row').nth(0)).not.toContainText('State');
@@ -83,14 +91,14 @@ test.describe(
       // the panel editor builder. we should fix that to make e2e's easier to write for our team.
       const hideStateColumnSwitch = page.locator('[id="Override 12"]').locator('label').last();
       await hideStateColumnSwitch.click();
-      await expect(page.getByRole('row').nth(0)).toContainText('State');
+      expect(page.getByRole('row').nth(0)).toContainText('State');
 
       // now change the display name of the "State" column.
       // FIXME it would be good to have a better selector here too.
       const displayNameInput = page.locator('[id="Override 12"]').locator('input[value="State"]').last();
       await displayNameInput.fill('State (renamed)');
       await displayNameInput.press('Enter');
-      await expect(page.getByRole('row').nth(0)).toContainText('State (renamed)');
+      expect(page.getByRole('row').nth(0)).toContainText('State (renamed)');
     });
 
     // we test niche cases for sorting, filtering, pagination, etc. in a unit tests already.
@@ -98,25 +106,28 @@ test.describe(
     // issues, but the unit tests can confirm that the internal logic works as expected much more quickly and thoroughly.
     // hashtag testing pyramid.
     test('Tests sorting by column', async ({ gotoDashboardPage, selectors, page }) => {
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      await expect(page.locator('.rdg')).toBeVisible();
+      expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+      ).toBeVisible();
 
       // click the "State" column header to sort it.
-      const stateColumnHeader = page.getByRole('columnheader').filter({ hasText: 'Info' });
+      const stateColumnHeader = await getCell(page, 0, 1);
+
       await stateColumnHeader.click();
-      await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
+      expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
       expect(getCell(page, 1, 1)).resolves.toContainText('down'); // down or down fast
 
       await stateColumnHeader.click();
-      await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
+      expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
       expect(getCell(page, 1, 1)).resolves.toContainText('up'); // up or up fast
 
       await stateColumnHeader.click();
-      await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
+      expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
     });
 
     test('Tests filtering within a column', async ({ gotoDashboardPage, selectors, page }) => {
@@ -125,7 +136,9 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      await expect(page.locator('.rdg')).toBeVisible();
+      expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+      ).toBeVisible();
 
       const stateColumnHeader = page.getByRole('columnheader').filter({ hasText: 'Info' });
 
@@ -138,7 +151,7 @@ test.describe(
         selectors.components.Panels.Visualization.TableNG.Filters.Container
       );
 
-      await expect(filterContainer).toBeVisible();
+      expect(filterContainer).toBeVisible();
 
       // select all, then click the first value to unselect it, filtering it out.
       await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
@@ -146,7 +159,7 @@ test.describe(
       await filterContainer.getByRole('button', { name: 'Ok' }).click();
 
       // make sure the filter container closed when we clicked "Ok".
-      await expect(filterContainer).not.toBeVisible();
+      expect(filterContainer).not.toBeVisible();
 
       // did it actually filter out our value?
       await expect(getCell(page, 1, 1)).resolves.not.toHaveText(firstStateValue);
@@ -169,14 +182,16 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      await expect(page.locator('.rdg')).toBeVisible();
+      expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+      ).toBeVisible();
 
       await page
         .getByLabel(selectors.components.PanelEditor.OptionsPane.fieldLabel(`Enable pagination`), { exact: true })
         .click();
 
       // because of text wrapping, we're guaranteed to only be showing a single row when we enable pagination.
-      await expect(page.getByText(/([\d]+) - ([\d]+) of ([\d]+) rows/)).toBeVisible();
+      expect(page.getByText(/([\d]+) - ([\d]+) of ([\d]+) rows/)).toBeVisible();
 
       // disable text wrap and see the number of rows.
       await dashboardPage
@@ -199,7 +214,7 @@ test.describe(
         .click();
       const largeRowStatus = await getRowStatus(page);
       expect(largeRowStatus.end).toBeLessThan(smallRowStatus.end);
-      await expect(page.locator('.rdg').getByRole('row')).toHaveCount(largeRowStatus.end + 1);
+      expect(page.locator('.rdg').getByRole('row')).toHaveCount(largeRowStatus.end + 1);
 
       // click a page over with the directional nav
       await page.getByLabel('next page').click();
@@ -220,16 +235,33 @@ test.describe(
       expect(fourthPageStatus.total).toBe(largeRowStatus.total);
     });
 
-    // DataLinks and Actions, context menu, right click context menu for inspection
+    test('Tests DataLinks, actions, and context menu', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        queryParams: new URLSearchParams({ editPanel: '1' }),
+      });
 
-    test('Empty Table panel', async ({ gotoDashboardPage, page }) => {
-      await gotoDashboardPage({
+      expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+      ).toBeVisible();
+
+      // Info column has a single DataLink by default.
+      const infoCell = await getCell(page, 1, 1);
+      expect(infoCell.locator('a')).toBeVisible();
+      expect(infoCell.locator('a')).toHaveAttribute('href');
+      expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
+    });
+
+    test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
         queryParams: new URLSearchParams({ editPanel: '2' }),
       });
 
-      expect(page.getByText('No data')).toBeVisible();
-      expect(page.locator('.rdg')).not.toBeVisible();
+      expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage)).toBeVisible();
+      expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
+      ).not.toBeVisible();
     });
   }
 );
