@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import OpenLayersMap from 'ol/Map';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
-import View from 'ol/View';
+import View, { ViewOptions } from 'ol/View';
 import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
@@ -132,11 +132,6 @@ export class GeomapPanel extends Component<Props, State> {
       this.dataChanged(nextProps.data);
     }
 
-    // Options changed
-    if (this.props.options !== nextProps.options) {
-      this.optionsChanged(nextProps.options);
-    }
-
     return true; // always?
   }
 
@@ -147,6 +142,10 @@ export class GeomapPanel extends Component<Props, State> {
     // Check for a difference between previous data and component data
     if (this.map && this.props.data !== prevProps.data) {
       this.dataChanged(this.props.data);
+    }
+    // Handle options changes here where this.props has the updated values
+    if (this.props.options !== prevProps.options) {
+      this.optionsChanged(prevProps.options);
     }
   }
 
@@ -179,8 +178,16 @@ export class GeomapPanel extends Component<Props, State> {
    */
   optionsChanged(options: Options) {
     const oldOptions = this.props.options;
-    if (options.view !== oldOptions.view) {
-      const view = this.initMapView(options.view);
+
+    // Check if noRepeat option changed - requires full map reinitialize
+    const noRepeatChanged = oldOptions.view?.noRepeat !== options.view?.noRepeat;
+
+    if (noRepeatChanged) {
+      if (this.mapDiv) {
+        this.initMapRef(this.mapDiv);
+      }
+    } else if (oldOptions.view !== options.view) {
+      const view = this.initMapView(oldOptions.view);
 
       if (this.map && view) {
         this.map.setView(view);
@@ -234,7 +241,12 @@ export class GeomapPanel extends Component<Props, State> {
     this.byName.clear();
     const layers: MapLayerState[] = [];
     try {
-      layers.push(await initLayer(this, map, options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
+      // Pass noRepeat setting to basemap layer
+      const basemapOptions = {
+        ...(options.basemap ?? DEFAULT_BASEMAP_CONFIG),
+        noRepeat: options.view?.noRepeat ?? false,
+      };
+      layers.push(await initLayer(this, map, basemapOptions, true));
 
       // Default layer values
       if (!options.layers) {
@@ -284,16 +296,24 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   initMapView = (config: MapViewConfig): View | undefined => {
-    // Define the world extent in EPSG:3857 (Web Mercator)
-    const worldExtent = [-180, -85.05112878, 180, 85.05112878]; // [minx, miny, maxx, maxy] in EPSG:4326
-    const projectedExtent = transformExtent(worldExtent, 'EPSG:4326', 'EPSG:3857');
-    let view = new View({
+    const noRepeat = config.noRepeat ?? false;
+
+    let viewOptions: ViewOptions = {
       center: [0, 0],
       zoom: 1,
-      extent: projectedExtent,
-      showFullExtent: false, // allows zooming so the full range is visible
-      constrainOnlyCenter: false, // Ensure the entire visible area stays within the extent
-    });
+    };
+
+    // Only apply constraints when no-repeat is enabled
+    if (noRepeat) {
+      // Define the world extent in EPSG:3857 (Web Mercator)
+      const worldExtent = [-180, -85.05112878, 180, 85.05112878]; // [minx, miny, maxx, maxy] in EPSG:4326
+      const projectedExtent = transformExtent(worldExtent, 'EPSG:4326', 'EPSG:3857');
+      viewOptions.extent = projectedExtent;
+      viewOptions.showFullExtent = false; // allows zooming so the full range is visible
+      viewOptions.constrainOnlyCenter = false; // Ensure the entire visible area stays within the extent
+    }
+
+    let view = new View(viewOptions);
 
     // With shared views, all panels use the same view instance
     if (config.shared) {

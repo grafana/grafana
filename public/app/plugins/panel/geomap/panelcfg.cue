@@ -45,6 +45,7 @@ composableKinds: PanelCfg: {
 					lastOnly?:  bool
 					layer?:     string
 					shared?:    bool
+					noRepeat?:  bool | *false
 				} @cuetsy(kind="interface")
 
 				ControlsOptions: {
