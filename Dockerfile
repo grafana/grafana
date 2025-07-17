@@ -21,6 +21,7 @@ FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
+ARG JS_YARN_INSTALL_FLAG=--immutable
 ARG JS_YARN_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
@@ -36,13 +37,12 @@ COPY conf/defaults.ini ./conf/defaults.ini
 COPY e2e e2e
 
 RUN apk add --no-cache make build-base python3
-
+#
 # Set the node env according to defaults or argument passed
 #
 ENV NODE_ENV=${JS_NODE_ENV}
 #
-# immutable causes failure in dev mode
-RUN if [ "$NODE_ENV" = "dev" ]; then \
+RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
     yarn install; \
   else \
     yarn install --immutable; \
