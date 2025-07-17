@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 )
@@ -104,6 +104,8 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	read, err = nsClient.Get(ctx, createdSv.Name, metav1.GetOptions{})
-	require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
+	var apiErr *apierrors.StatusError
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, apiErr.ErrStatus.Reason, metav1.StatusReasonNotFound)
 	require.Nil(t, read)
 }
