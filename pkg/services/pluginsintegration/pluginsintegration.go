@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -151,6 +152,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(provisionedplugins.Manager), new(*provisionedplugins.Noop)),
 	sources.ProvideService,
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
+	checkregistry.ProvideService,
+	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
 )
 
 func ProvideClientWithMiddlewares(

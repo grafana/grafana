@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Aggiungi altro"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Stato avviso",
       "annotations": "Annotazioni",
@@ -3461,6 +3470,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Annulla",
       "cannot-move-folders": "Non è possibile spostare le cartelle",
       "confirmation-text": "Elimina",
@@ -3479,7 +3490,9 @@
       "move-modal-text": "Questa azione sposterà il seguente contenuto:",
       "move-modal-title": "Sposta",
       "moving": "Spostamento in corso...",
-      "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio."
+      "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Eliminati di recente"
