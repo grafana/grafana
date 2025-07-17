@@ -1,3 +1,13 @@
+<!-- 11.3.8+security-01 START -->
+
+# 11.3.8+security-01 (2025-07-17)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-6023
+- **Security:** Fixed CVE-2025-6197
+
+<!-- 11.3.8+security-01 END -->
 <!-- 11.3.7 START -->
 
 # 11.3.7 (2025-05-22)
