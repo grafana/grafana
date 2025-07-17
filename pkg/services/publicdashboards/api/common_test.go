@@ -26,6 +26,7 @@ import (
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -155,6 +156,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		&fakeDataSourceRequestValidator{},
 		fpc,
 		pCtxProvider,
+		mtdsclient.NewNullMTDatasourceClientBuilder(),
 	)
 }
 
