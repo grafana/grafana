@@ -192,8 +192,6 @@ The examples in this section refer to the data in the following table:
 +---------------------+--------------+---------------------+----------+
 ```
 
-A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
-
 {{< admonition type="note" >}}
 For backward compatibility, an exception to the aforementioned rule applies to queries returning three columns, including a string column named `metric`. Instead of converting the metric column into field labels, it is used as the field name, and the series name is set to the value of the metric column. Refer to the following example with a metric column.
 {{< /admonition >}}
