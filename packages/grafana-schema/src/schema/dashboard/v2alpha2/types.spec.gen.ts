@@ -1250,18 +1250,22 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 // Group variable kind
 export interface GroupByVariableKind {
 	kind: "GroupByVariable";
+	group: string;
+	datasource?: {
+		name?: string;
+	};
 	spec: GroupByVariableSpec;
 }
 
 export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 	kind: "GroupByVariable",
+	group: "",
 	spec: defaultGroupByVariableSpec(),
 });
 
 // GroupBy variable specification
 export interface GroupByVariableSpec {
 	name: string;
-	datasource?: DataSourceRef;
 	defaultValue?: VariableOption;
 	current: VariableOption;
 	options: VariableOption[];
@@ -1281,33 +1285,25 @@ export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	skipUrlSync: false,
 });
 
-// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
-// This type is widely used in the codebase and changing it will have a big impact
-export interface DataSourceRef {
-	// The plugin type-id
-	type?: string;
-	// Specific datasource instance
-	uid?: string;
-}
-
-export const defaultDataSourceRef = (): DataSourceRef => ({
-});
-
 // Adhoc variable kind
 export interface AdhocVariableKind {
 	kind: "AdhocVariable";
+	group: string;
+	datasource?: {
+		name?: string;
+	};
 	spec: AdhocVariableSpec;
 }
 
 export const defaultAdhocVariableKind = (): AdhocVariableKind => ({
 	kind: "AdhocVariable",
+	group: "",
 	spec: defaultAdhocVariableSpec(),
 });
 
 // Adhoc variable specification
 export interface AdhocVariableSpec {
 	name: string;
-	datasource?: DataSourceRef;
 	baseFilters: AdHocFilterWithLabels[];
 	filters: AdHocFilterWithLabels[];
 	defaultKeys: MetricFindValue[];

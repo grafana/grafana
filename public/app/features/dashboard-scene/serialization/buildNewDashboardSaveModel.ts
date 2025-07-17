@@ -92,14 +92,21 @@ export async function buildNewDashboardSaveModelV2(
 
       const filterVariable: AdhocVariableKind = {
         kind: 'AdhocVariable',
-        spec: { ...defaultAdhocVariableSpec(), name: 'Filter', datasource: datasourceRef },
+        group: datasourceRef.type,
+        datasource: {
+          name: datasourceRef.uid,
+        },
+        spec: { ...defaultAdhocVariableSpec(), name: 'Filter' },
       };
 
       const groupByVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
+        group: datasourceRef.type,
+        datasource: {
+          name: datasourceRef.uid,
+        },
         spec: {
           ...defaultGroupByVariableSpec(),
-          datasource: datasourceRef,
           name: 'Group by',
         },
       };

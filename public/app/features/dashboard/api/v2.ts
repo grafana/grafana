@@ -28,7 +28,7 @@ import { isDashboardV2Spec } from './utils';
 
 export const K8S_V2_DASHBOARD_API_CONFIG = {
   group: 'dashboard.grafana.app',
-  version: 'v2alpha1',
+  version: 'v2alpha2',
   resource: 'dashboards',
 };
 
