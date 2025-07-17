@@ -19,7 +19,6 @@ function getTraceView(frames: DataFrame[]) {
   return (
     <Provider store={store}>
       <TraceView
-        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
