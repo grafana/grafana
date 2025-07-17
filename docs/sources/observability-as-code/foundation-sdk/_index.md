@@ -20,7 +20,7 @@ The [Grafana Foundation SDK](https://github.com/grafana/grafana-foundation-sdk) 
 - **Enhance version control:** Track changes seamlessly using standard version control systems like Git.
 - **Automate deployments:** Integrate dashboard provisioning into your CI/CD pipelines for consistent and repeatable setups.
 
-The SDK supports multiple programming languages, including Go, TypeScript, Python, PHP, and Java, allowing you to choose the one that best fits your development environment.
+The SDK supports multiple programming languages, including Go, TypeScript, Python, PHP, and Java, so you can choose the one that best fits your development environment.
 
 {{< youtube id="_OKQoABmg0Q" >}}
 
@@ -28,14 +28,16 @@ The SDK supports multiple programming languages, including Go, TypeScript, Pytho
 
 Ensure you have the following prerequisites:
 
-- **Programming environment:** Set up for your chosen language (e.g. Go, Node.js for TypeScript, Python 3.x for Python, etc).
+- **Programming environment:** Set up for your chosen language. For example: Go, Node.js for TypeScript, or Python 3.x for Python.
 - **Grafana instance:** A running Grafana instance compatible with the SDK version you’re using (refer to the [compatibility matrix](https://github.com/grafana/grafana-foundation-sdk#navigating-the-sdk)).
-- **Package manager:** Appropriate for your language (e.g. `npm` or `yarn` for TypeScript, `pip` for Python).
+- **Package manager:** Appropriate for your language, for example, `npm` or `yarn` for TypeScript or `pip` for Python.
 
-To get started quickly, clone the [intro-to-foundation-sdk repository](https://github.com/grafana/intro-to-foundation-sdk) which will give you complete examples along with a `docker-compose` stack.
+To get started, clone the [intro-to-foundation-sdk repository](https://github.com/grafana/intro-to-foundation-sdk) to access examples and a `docker-compose` stack.
 
 ## Install the Grafana Foundation SDK
 
+Select the `go` or `typescript` tab to view instructions to install the SDK. 
+For other languages, refer to the Grafana Foundation SDK documentation for installation instructions.
 {{< code >}}
 ```go
 go get github.com/grafana/grafana-foundation-sdk/go
@@ -46,17 +48,16 @@ npm install @grafana/grafana-foundation-sdk
 ```
 {{< /code >}}
 
-For other languages, refer to the Grafana Foundation SDK documentation for detailed installation instructions.
 
 ## Grafana Foundation SDK Overview
 
-Before we jump into writing code, here's a quick overview of how the Grafana Foundation SDK works behind the scenes:
+Here's a quick overview of how the Grafana Foundation SDK works:
 
 - **Builder pattern:** The SDK uses a chainable builder pattern to let you define dashboards fluently. You start with a `DashboardBuilder`, then add panels, queries, and other components step by step.
 - **Strong typing:** Everything in the SDK is strongly typed. This gives you autocompletion in your IDE, catches mistakes early, and helps ensure you're always using valid configuration values.
 - **Structured options:** When a configuration get complex (like data reduction or display settings), the SDK uses typed option builders to keep things readable and predictable.
 
-You'll see these concepts in action in the next example, then we'll break them down in more detail afterwards.
+You'll see these concepts in action in the next example. These concepts are explained in more detail afterwards.
 
 ## Create a dashboard
 
@@ -178,30 +179,33 @@ console.log(JSON.stringify(dashboard, null, 2));
 
 {{< /code >}}
 
-This code defines a dashboard titled “My Dashboard” with a two panels; a simple stat panel displaying a version number, and a time series panel displaying randomized data from the `testdata` data source `random_walk` scenario.
+This code defines a dashboard titled “My Dashboard” with a two panels:
+* a simple stat panel displaying a version number, and 
+* a time series panel displaying randomized data from the `testdata` data source `random_walk` scenario.
 
 ## Export and use the JSON
 
 After you've defined your dashboard as code, build the final dashboard representation using the dashboard builder (typically using the `build()` function depending on language choice) and output the result as a JSON.
 
-With the JSON payload you can:
+With the JSON payload, you can:
 
 - **Manually import:** Paste into Grafana’s dashboard import feature.
 - **Automate:** Use [Grafana’s API](../../developers/http_api/) or the [Grafana CLI](../grafana-cli/) to programmatically upload the dashboard JSON.
 
-## Concepts: Builders, Types, and Options
+## Concepts
 
 Now that you've seen how to define a basic dashboard using code, let's take a moment to explain how it all works behind the scenes. The Grafana Foundation SDK is built around a few core concepts that make your dashboards structured, reusable, and strongly typed.
 
 ### Builders
 
-The SDK follows a builder pattern, which lets you compose dashboards step-by-step using chained method calls. Almost every piece of the dashboard (dashboards, panels, rows, queries, variables, etc) has its own `Builder` class.
+The SDK follows a builder pattern, which lets you compose dashboards step-by-step using chained method calls. 
+Almost every piece of the dashboard, including dashboards, panels, rows, queries,  and variables, has its own `Builder` class.
 
 Here are a few you've already seen:
 
 - `DashboardBuilder` - Starts the dashboard definition and sets global configuration settings like title, UID, refresh interval, time range, etc.
 - `PanelBuilder` - Creates individual visualizations like time series panels, stat panels, or log panels.
-- `DataqueryBuilder` - Defines how a panel fetches data, e.g. from Prometheus or the `testdata` plugin.
+- `DataqueryBuilder` - Defines how a panel fetches data, for example, from Prometheus or the `testdata` plugin.
 
 Builders are chainable, so you can fluently compose dashboards in a readable, structured way:
 
@@ -304,7 +308,9 @@ The Grafana Foundation SDK is designed to make dashboard creation:
 - **Safe** with strong typing and clear APIs
 - **Configurable** using structured options for fine control
 
-As you build more advanced dashboards, you’ll work with additional builders and types to support richer functionality. The SDK supports not just panels and queries, but also variables, thresholds, field overrides, transformations, and more. See [the full API reference](https://grafana.github.io/grafana-foundation-sdk/) to explore what's possible.
+As you build more advanced dashboards, you’ll work with additional builders and types to support richer functionality.
+The SDK supports not just panels and queries, but also variables, thresholds, field overrides, transformations, and more.
+Refer to [the full API reference](https://grafana.github.io/grafana-foundation-sdk/) to explore what's possible.
 
 ## Next steps
 
