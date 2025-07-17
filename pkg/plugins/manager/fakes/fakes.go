@@ -661,3 +661,7 @@ func (p *FakeBackendPlugin) Kill() {
 func (p *FakeBackendPlugin) Target() backendplugin.Target {
 	return "test-target"
 }
+
+func (p *FakeBackendPlugin) Logger() log.Logger {
+	return log.NewTestLogger()
+}
