@@ -100,7 +100,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 }
 
 func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context {
-	ctx, span := tracing.Start(ctx, "ContextHandler.Middleware")
+	ctx, span := tracing.Start(ctx, "ContextHandler.setRequestContext")
 	defer span.End()
 
 	reqContext := &contextmodel.ReqContext{
