@@ -24,8 +24,6 @@ type SecureValueService struct {
 	keeperService              contracts.KeeperService
 }
 
-var _ contracts.SecureValueService = &SecureValueService{}
-
 func ProvideSecureValueService(
 	tracer trace.Tracer,
 	accessClient claims.AccessClient,
