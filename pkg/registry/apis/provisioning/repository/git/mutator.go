@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -17,8 +18,12 @@ func Mutator(secrets secrets.RepositorySecrets) controller.Mutator {
 			return nil
 		}
 
-		if repo.Spec.Git == nil {
+		if repo.Spec.Type != provisioning.GitRepositoryType {
 			return nil
+		}
+
+		if repo.Spec.Git == nil {
+			return fmt.Errorf("git configuration is required for git repository type")
 		}
 
 		if repo.Spec.Git.Token != "" {

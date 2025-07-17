@@ -30,6 +30,7 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
 					Git: &provisioning.GitRepositoryConfig{
 						Token: "secret-token",
 					},
@@ -44,6 +45,7 @@ func TestMutator(t *testing.T) {
 							Namespace: "default",
 						},
 						Spec: provisioning.RepositorySpec{
+							Type: provisioning.GitRepositoryType,
 							Git: &provisioning.GitRepositoryConfig{
 								Token: "secret-token",
 							},
@@ -64,6 +66,7 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
 					Git: &provisioning.GitRepositoryConfig{
 						Token: "secret-token",
 					},
@@ -78,6 +81,7 @@ func TestMutator(t *testing.T) {
 							Namespace: "default",
 						},
 						Spec: provisioning.RepositorySpec{
+							Type: provisioning.GitRepositoryType,
 							Git: &provisioning.GitRepositoryConfig{
 								Token: "secret-token",
 							},
@@ -97,12 +101,31 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
-					Git: nil,
+					Type: provisioning.LocalRepositoryType,
+					Git:  nil,
 				},
 			},
 			setupMocks: func(mockSecrets *secrets.MockRepositorySecrets) {
 				// No expectations
 			},
+		},
+
+		{
+			name: "no git spec for git repository type",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  nil,
+				},
+			},
+			setupMocks: func(mockSecrets *secrets.MockRepositorySecrets) {
+				// No expectations
+			},
+			expectedError: "git configuration is required for git repository type",
 		},
 		{
 			name: "empty token",
@@ -112,6 +135,7 @@ func TestMutator(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
 					Git: &provisioning.GitRepositoryConfig{
 						Token: "",
 					},

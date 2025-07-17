@@ -434,41 +434,6 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Sync.IntervalSeconds = 60
 	}
 
-	// TODO: move this logic into github repository concrete implementation.
-	if r.Spec.Type == provisioning.GitHubRepositoryType {
-		if r.Spec.GitHub == nil {
-			return fmt.Errorf("github configuration is required")
-		}
-
-		// Trim trailing slash or .git
-		if len(r.Spec.GitHub.URL) > 5 {
-			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
-			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
-		}
-	}
-	if r.Spec.Type == provisioning.GitRepositoryType {
-		if r.Spec.Git == nil {
-			return fmt.Errorf("git configuration is required")
-		}
-
-		if r.Spec.GitHub != nil {
-			return fmt.Errorf("git and github cannot be used together")
-		}
-
-		if r.Spec.Local != nil {
-			return fmt.Errorf("git and local cannot be used together")
-		}
-
-		// Trim trailing slash and ensure .git is present
-		if len(r.Spec.Git.URL) > 5 {
-			r.Spec.Git.URL = strings.TrimSuffix(r.Spec.Git.URL, "/")
-
-			if !strings.HasSuffix(r.Spec.Git.URL, ".git") {
-				r.Spec.Git.URL = r.Spec.Git.URL + ".git"
-			}
-		}
-	}
-
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
