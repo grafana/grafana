@@ -2,10 +2,8 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-import { renderSingleLink } from '../../DataLinksActionsTooltip';
-import { useSingleLink } from '../hooks';
 import { BarGaugeCellProps } from '../types';
-import { extractPixelValue, getCellOptions, getAlignmentFactor } from '../utils';
+import { extractPixelValue, getCellOptions, getAlignmentFactor, maybeWrapWithLink } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -65,7 +63,5 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
     />
   );
 
-  const link = useSingleLink(field, rowIdx);
-
-  return link == null ? barGaugeComponent : renderSingleLink(link, barGaugeComponent);
+  return maybeWrapWithLink(field, rowIdx, barGaugeComponent);
 };

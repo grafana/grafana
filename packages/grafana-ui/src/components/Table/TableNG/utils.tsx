@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { ReactNode } from 'react';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 
@@ -20,6 +21,7 @@ import {
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
+import { renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
@@ -624,4 +626,23 @@ export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDis
     cellType !== TableCellDisplayMode.Actions &&
     (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
   );
+}
+
+export function maybeWrapWithLink(field: Field, rowIdx: number, children: ReactNode): ReactNode {
+  const linksCount = field.config.links?.length ?? 0;
+  const actionsCount = field.config.actions?.length ?? 0;
+
+  // as real, single link
+  if (linksCount === 1 && actionsCount === 0) {
+    let link = (getCellLinks(field, rowIdx) ?? [])[0];
+    return renderSingleLink(link, children);
+  }
+  // as faux link that acts as hit-area for tooltip activation
+  else if (linksCount + actionsCount > 0) {
+    // eslint-disable-next-line jsx-a11y/anchor-is-valid
+    return <a aria-haspopup="menu">{children}</a>;
+  }
+
+  // raw value
+  return children;
 }
