@@ -19,6 +19,7 @@ import { RuleListErrors } from '../components/rules/RuleListErrors';
 import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
+import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
@@ -174,13 +175,16 @@ export function CreateAlertButton() {
 
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
-      <LinkButton
-        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
-        icon="plus"
-        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-      >
-        <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
-      </LinkButton>
+      <Stack direction="row" gap={1}>
+        <LinkButton
+          href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
+          icon="plus"
+          onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+        >
+          <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
+        </LinkButton>
+        {canCreateGrafanaRules && AIAlertRuleButtonComponent && <AIAlertRuleButtonComponent />}
+      </Stack>
     );
   }
   return null;

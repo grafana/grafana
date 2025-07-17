@@ -3215,6 +3215,9 @@
       "define-allowed-teams-ids-label": "Tentukan ID tim yang diizinkan",
       "display-name-description": "Akan ditampilkan di halaman login sebagai \"Masuk dengan ...\". Berguna jika Anda menggunakan lebih dari satu penyedia identitas atau protokol SSO.",
       "display-name-label": "Nama tampilan",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Nama kunci yang akan digunakan untuk pencarian email pengguna dalam peta atribut token ID OAuth2.",
       "email-attribute-name-label": "Nama atribut email",
       "email-attribute-path-description": "Ekspresi JMESPath yang digunakan untuk pencarian email pengguna dari informasi pengguna.",
@@ -4596,6 +4599,14 @@
     "errors": {
       "failed-to-load": "Gagal memuat dasbor"
     },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "Gagal mengambil dasbor"
@@ -5817,10 +5828,13 @@
       "description-examples": "Grup tangkapan bernama dapat digunakan untuk memisahkan teks tampilan dan nilai (<1>lihat contoh</1>).",
       "description-optional": "Opsional, jika Anda ingin mengekstrak bagian dari nama seri atau segmen node metrik.",
       "label-data-source": "Sumber data",
+      "label-static-options-sort": "",
       "label-target-data-source": "Sumber data target",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Opsi kueri",
-      "selection-options": "Opsi pemilihan"
+      "selection-options": "Opsi pemilihan",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -8609,9 +8623,7 @@
     "share-panel": {
       "config-description": "Buat tautan langsung yang dipersonalisasi untuk membagikan panel Anda dalam organisasi Anda, dengan pengaturan penyesuaian berikut:",
       "download-image": "Unduh gambar",
-      "render-image": "Buat gambar",
-      "render-image-error": "Gagal merender gambar panel",
-      "render-image-error-description": "Terjadi kesalahan saat membuat gambar"
+      "render-image": "Buat gambar"
     }
   },
   "live": {
@@ -8776,6 +8788,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11360,6 +11374,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Ekspor sebagai JSON",
       "share-externally-title": "Bagikan secara eksternal",
       "share-internally-title": "Bagikan secara internal",
@@ -11395,6 +11410,19 @@
       "view-button": "Lihat JSON",
       "view-button-yaml": "Lihat YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Buat panel pustaka."
     },
@@ -11403,7 +11431,7 @@
       "info-text": "Buat tautan langsung ke dasbor atau panel ini, disesuaikan dengan opsi di bawah ini.",
       "link-url": "Tautkan URL",
       "render-alert": "Plugin perender gambar belum diinstal",
-      "render-instructions": "Untuk merender gambar panel, Anda harus menginstal <2>plugin perender gambar Grafana </2>. Hubungi administrator Grafana Anda untuk menginstal plugin.",
+      "render-instructions": "",
       "rendered-image": "Tautan langsung gambar yang dirender",
       "save-alert": "Dasbor tidak disimpan",
       "save-dashboard": "Untuk merender gambar panel, Anda harus menyimpan dasbor terlebih dahulu.",
@@ -11471,6 +11499,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Pratinjau panel"
     },
@@ -13118,6 +13152,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

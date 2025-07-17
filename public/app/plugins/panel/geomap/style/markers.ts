@@ -1,5 +1,5 @@
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
-import { LiteralStyle } from 'ol/style/literal';
+import type { FlatStyle } from 'ol/style/flat';
 import tinycolor from 'tinycolor2';
 
 import { Registry, RegistryItem, textUtil } from '@grafana/data';
@@ -30,12 +30,6 @@ const MarkerShapePath = {
   star: 'img/icons/marker/star.svg',
   cross: 'img/icons/marker/cross.svg',
   x: 'img/icons/marker/x-mark.svg',
-};
-
-const WebGLRegularShapes: Record<string, string> = {
-  circle: 'img/icons/marker/circle.svg',
-  square: 'img/icons/marker/square.svg',
-  triangle: 'img/icons/marker/triangle.svg',
 };
 
 export function getFillColor(cfg: StyleConfigValues) {
@@ -319,34 +313,75 @@ export function getMarkerAsPath(shape?: string): string | undefined {
   return undefined;
 }
 
-// Returns literal style for WebGL markers
-export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<LiteralStyle> {
-  // style expressions
-  const symbolStyle: LiteralStyle = {
-    symbol: {
-      symbolType: 'circle',
-      size: ['get', 'size', 'number'],
-      color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
-      offset: ['array', ['get', 'offsetX'], ['get', 'offsetY']],
-      rotation: ['get', 'rotation', 'number'],
-      opacity: ['get', 'opacity', 'number'],
-    },
-  };
-  // set symbolType and src if a symbol is provided
-  if (symbol && symbolStyle.symbol) {
-    const imageString = 'image';
-    const symbolType = Object.keys(WebGLRegularShapes).find((key) => WebGLRegularShapes[key] === symbol) ?? imageString;
-    symbolStyle.symbol = { ...symbolStyle.symbol, symbolType };
-    if (symbolType === imageString) {
-      const backgroundOpacity = opacity === 0 ? 0 : 0.1 / (opacity ?? 1);
-      symbolStyle.symbol = {
-        ...symbolStyle.symbol,
-        src: await prepareSVG(getPublicOrAbsoluteUrl(symbol), undefined, backgroundOpacity),
-      };
-    }
+// Common expressions used across different style types
+export const colorExpression = ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue'], ['get', 'opacity']];
+export const sizeExpression = ['get', 'size'];
+export const opacityExpression = ['get', 'opacity'];
+export const rotationExpression = ['get', 'rotation'];
+export const offsetExpression = ['array', ['get', 'offsetX'], ['get', 'offsetY']];
+
+// Base style for regular shapes
+export const baseShapeStyle = {
+  'shape-radius': ['/', sizeExpression, 2],
+  'shape-fill-color': colorExpression,
+  'shape-stroke-color': colorExpression,
+  'shape-stroke-width': 1,
+  'shape-opacity': opacityExpression,
+  'shape-rotation': rotationExpression,
+  'shape-displacement': offsetExpression,
+};
+
+// Base style for circles
+export const baseCircleStyle = {
+  'circle-radius': ['/', sizeExpression, 2],
+  'circle-fill-color': colorExpression,
+  'circle-stroke-color': colorExpression,
+  'circle-stroke-width': 1,
+  'circle-opacity': opacityExpression,
+  'circle-displacement': offsetExpression,
+};
+
+// Returns style configuration for WebGL markers
+export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<FlatStyle> {
+  // Handle circle explicitly (before generic SVG check)
+  if (symbol === MarkerShapePath.circle) {
+    return baseCircleStyle;
   }
 
-  return symbolStyle;
+  // Handle square as WebGL regular shape
+  if (symbol === MarkerShapePath.square) {
+    return {
+      ...baseShapeStyle,
+      'shape-points': 4,
+      'shape-angle': Math.PI / 4,
+    };
+  }
+
+  // Handle triangle as WebGL regular shape
+  if (symbol === MarkerShapePath.triangle) {
+    return {
+      ...baseShapeStyle,
+      'shape-points': 3,
+      'shape-angle': 0,
+    };
+  }
+
+  // Handle custom SVG symbols and other shapes as icons
+  if (symbol && symbol.endsWith('.svg')) {
+    const backgroundOpacity = opacity === 0 ? 0 : 0.1 / (opacity ?? 1);
+    return {
+      'icon-src': await prepareSVG(getPublicOrAbsoluteUrl(symbol), undefined, backgroundOpacity),
+      'icon-width': sizeExpression,
+      'icon-height': sizeExpression,
+      'icon-opacity': opacityExpression,
+      'icon-rotation': rotationExpression,
+      'icon-displacement': offsetExpression,
+      'icon-color': colorExpression,
+    };
+  }
+
+  // Default to circle (also handles MarkerShapePath.circle)
+  return baseCircleStyle;
 }
 
 // Will prepare symbols as necessary
@@ -388,7 +423,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                 image: new RegularShape({
                   fill: new Fill({ color: 'rgba(0,0,0,0)' }),
                   points: 4,
-                  radius: cfg.size,
+                  radius: radius,
                   rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
                 }),
               }),

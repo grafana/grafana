@@ -422,6 +422,33 @@ func TestStateMachine(t *testing.T) {
 	})
 }
 
+func TestSecureValueServiceExampleBased(t *testing.T) {
+	t.Parallel()
+
+	t.Run("shouldn't be able to decrypt using deleted secure value", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		sv, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+
+		readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv.Namespace), sv.Name)
+		require.NoError(t, err)
+		require.Equal(t, sv.Status.Version, readSv.Status.Version)
+
+		deletedSv, err := sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		require.Equal(t, sv.Status.Version, deletedSv.Status.Version)
+
+		authCtx := testutils.CreateServiceAuthContext(t.Context(), sv.Spec.Decrypters[0], []string{fmt.Sprintf("secret.grafana.app/securevalues/%+v:decrypt", sv.Name)})
+		result, err := sut.DecryptService.Decrypt(authCtx, sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(result))
+		require.ErrorIs(t, result[sv.Name].Error(), contracts.ErrDecryptNotFound)
+	})
+}
+
 func deepCopy[T any](sv T) T {
 	copied, err := copystructure.Copy(sv)
 	if err != nil {

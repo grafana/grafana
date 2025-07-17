@@ -3228,6 +3228,9 @@
       "define-allowed-teams-ids-label": "Definir as ID das equipas permitidas",
       "display-name-description": "Será mostrado na página de início de sessão como \"Iniciar sessão com...\". Útil se utilizar mais de um fornecedor de identidade ou protocolos SSO.",
       "display-name-label": "Nome de exibição",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Nome da chave a utilizar para a pesquisa de e-mail do utilizador no mapa de atributos do token de ID OAuth2.",
       "email-attribute-name-label": "Nome do atributo de e-mail",
       "email-attribute-path-description": "Expressão JMESPath a utilizar para a pesquisa de e-mail do utilizador a partir das informações do utilizador.",
@@ -4614,6 +4617,14 @@
     "errors": {
       "failed-to-load": "Não foi possível carregar o painel de controlo"
     },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "Falha ao obter o painel de controlo"
@@ -5837,10 +5848,13 @@
       "description-examples": "Os grupos de captura nomeados podem ser utilizados para separar o texto e o valor de exibição (<1>ver exemplos</1>).",
       "description-optional": "Opcional, se pretender extrair parte de um nome de série ou segmento de nó métrico.",
       "label-data-source": "Origem dos dados",
+      "label-static-options-sort": "",
       "label-target-data-source": "Origem de dados de destino",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Opções de consulta",
-      "selection-options": "Opções de seleção"
+      "selection-options": "Opções de seleção",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -8635,9 +8649,7 @@
     "share-panel": {
       "config-description": "Crie um link direto e personalizado para partilhar o seu painel dentro da sua organização, com as seguintes definições de personalização:",
       "download-image": "Descarregar imagem",
-      "render-image": "Gerar imagem",
-      "render-image-error": "Falha ao processar a imagem do painel",
-      "render-image-error-description": "Ocorreu um erro ao gerar a imagem"
+      "render-image": "Gerar imagem"
     }
   },
   "live": {
@@ -8805,6 +8817,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11398,6 +11412,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exportar como JSON",
       "share-externally-title": "Partilhar externamente",
       "share-internally-title": "Partilhar internamente",
@@ -11433,6 +11448,19 @@
       "view-button": "Ver JSON",
       "view-button-yaml": "Ver YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Criar painel de biblioteca."
     },
@@ -11441,7 +11469,7 @@
       "info-text": "Crie um link direto para este painel de controlo ou painel, personalizado com as opções abaixo.",
       "link-url": "URL do link",
       "render-alert": "Plugin de renderização de imagem não instalado",
-      "render-instructions": "Para processar uma imagem de painel, tem de instalar o <2>plug-in de processamento de imagens Grafana</2>. Entre em contacto com o seu administrador da Grafana para instalar o plugin.",
+      "render-instructions": "",
       "rendered-image": "Link direto para imagem renderizada",
       "save-alert": "O painel de controlo não está guardado",
       "save-dashboard": "Para processar uma imagem de painel, tem de guardar o painel de controlo primeiro.",
@@ -11509,6 +11537,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Pré-visualização do painel"
     },
@@ -13157,6 +13191,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",
