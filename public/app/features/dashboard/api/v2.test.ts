@@ -1,7 +1,7 @@
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   AnnoKeyFolder,
@@ -37,7 +37,7 @@ const mockGet = jest.fn().mockResolvedValue(mockDashboardDto);
 
 const mockPut = jest.fn().mockImplementation((url, data) => {
   return {
-    apiVersion: 'dashboard.grafana.app/v2alpha1',
+    apiVersion: 'dashboard.grafana.app/v2alpha2',
     kind: 'Dashboard',
     metadata: {
       name: data.metadata?.name,
@@ -53,7 +53,7 @@ const mockPut = jest.fn().mockImplementation((url, data) => {
 
 const mockPost = jest.fn().mockImplementation((url, data) => {
   return {
-    apiVersion: 'dashboard.grafana.app/v2alpha1',
+    apiVersion: 'dashboard.grafana.app/v2alpha2',
     kind: 'Dashboard',
     metadata: {
       name: data.metadata?.name || 'restored-dash',
