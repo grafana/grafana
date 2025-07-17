@@ -33,7 +33,7 @@ func ProvideSecureValueService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService contracts.KeeperService,
-) *SecureValueService {
+) contracts.SecureValueService {
 	return &SecureValueService{
 		tracer:                     tracer,
 		accessClient:               accessClient,
