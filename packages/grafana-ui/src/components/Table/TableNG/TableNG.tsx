@@ -621,11 +621,17 @@ export function TableNG(props: TableNGProps) {
         rows={paginatedRows}
         headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
-        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
+        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
           // Note: could be column.field; JS says yes, but TS says no!
           const field = columns[column.idx].field;
 
-          if (colsWithTooltip[getDisplayName(field)]) {
+          if (
+            colsWithTooltip[getDisplayName(field)] &&
+            target instanceof HTMLElement &&
+            // this walks up the tree to find either a faux link wrapper or the cell root
+            // it then only proceeds if we matched the faux link wrapper
+            target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
+          ) {
             const rowIdx = row.__index;
             setTooltipState({
               coords: {
@@ -895,7 +901,6 @@ const getCellStyles = (
     minHeight: '100%',
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
     ...(shouldWrap && { whiteSpace: 'pre-line' }),
-    ...(hasTooltip && { cursor: 'pointer' }),
 
     '&:last-child': {
       borderInlineEnd: 'none',
@@ -914,7 +919,7 @@ const getCellStyles = (
       }),
     },
 
-    [hasTooltip ? '&' : 'a']: {
+    a: {
       cursor: 'pointer',
       ...(isColorized
         ? {
