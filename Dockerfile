@@ -40,7 +40,13 @@ RUN apk add --no-cache make build-base python3
 # Set the node env according to defaults or argument passed
 #
 ENV NODE_ENV=${JS_NODE_ENV}
-RUN yarn install --immutable
+#
+# immutable causes failure in dev mode
+RUN if [ "$NODE_ENV" = "dev" ]; then \
+    yarn install; \
+  else \
+    yarn install --immutable; \
+  fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
