@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -152,6 +153,16 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 	if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
 		reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
 	}
+
+	// Set open feature evaluation context with namespace
+	ns := "default"
+	if id != nil {
+		ns = id.Namespace
+	}
+	evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{
+		"namespace": ns,
+	})
+	ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 
 	return ctx
 }
