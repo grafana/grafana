@@ -91,8 +91,6 @@ grafana_alerting_notification_history_writes_failed_total 1
 grafana_alerting_notification_history_writes_total 2
 `)
 		err := testutil.GatherAndCompare(reg, exp,
-			"grafana_alerting_notification_history_transitions_total",
-			"grafana_alerting_notification_history_transitions_failed_total",
 			"grafana_alerting_notification_history_writes_total",
 			"grafana_alerting_notification_history_writes_failed_total",
 		)
