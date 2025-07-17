@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Dodaj więcej"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Stan alertu",
       "annotations": "Komentarze",
@@ -3254,6 +3263,9 @@
       "define-allowed-teams-ids-label": "Zdefiniuj dozwolone identyfikatory zespołów",
       "display-name-description": "Nazwa będzie się wyświetlać na stronie logowania jako część tekstu „Zaloguj się za pomocą...”. To przydatne, jeśli korzystasz z więcej niż jednego dostawcy tożsamości lub protokołów SSO.",
       "display-name-label": "Nazwa wyświetlana",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Nazwa klucza używanego do wyszukiwania adresu e-mail użytkownika w mapie atrybutów tokena OAuth2 ID.",
       "email-attribute-name-label": "Nazwa atrybutu adresu e-mail",
       "email-attribute-path-description": "Wyrażenie JMESPath używane do wyszukiwania adresu e-mail użytkownika na podstawie danych użytkownika.",
@@ -3484,6 +3496,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Anuluj",
       "cannot-move-folders": "Nie można przenosić folderów",
       "confirmation-text": "Usuń",
@@ -3502,7 +3516,9 @@
       "move-modal-text": "To działanie spowoduje przeniesienie następującej zawartości:",
       "move-modal-title": "Przenieś",
       "moving": "Przenoszenie…",
-      "new-folder-name-required-phrase": "Wymagana jest nazwa folderu."
+      "new-folder-name-required-phrase": "Wymagana jest nazwa folderu.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Ostatnio usunięte"
@@ -4649,6 +4665,14 @@
     },
     "errors": {
       "failed-to-load": "Nie udało się załadować pulpitu"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -8690,9 +8714,7 @@
     "share-panel": {
       "config-description": "Utwórz spersonalizowany, bezpośredni link, aby udostępnić panel w swojej organizacji z następującymi ustawieniami dostosowywania:",
       "download-image": "Pobierz obraz",
-      "render-image": "Wygeneruj obraz",
-      "render-image-error": "Nie udało się wyrenderować obrazu panelu",
-      "render-image-error-description": "Podczas generowania obrazu wystąpił błąd"
+      "render-image": "Wygeneruj obraz"
     }
   },
   "live": {
@@ -8866,6 +8888,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11477,6 +11501,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Eksportowanie jako JSON",
       "share-externally-title": "Udostępnij na zewnątrz",
       "share-internally-title": "Udostępnij wewnętrznie",
@@ -11512,6 +11537,19 @@
       "view-button": "Widok JSON",
       "view-button-yaml": "Wyświetl kod YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Utwórz panel biblioteki."
     },
@@ -11520,7 +11558,7 @@
       "info-text": "Utwórz bezpośredni link do tego pulpitu lub panelu, dostosowany za pomocą poniższych opcji.",
       "link-url": "Link URL",
       "render-alert": "Nie zainstalowano wtyczki renderowania obrazów",
-      "render-instructions": "Aby wyrenderować obraz panelu, musisz zainstalować wtyczkę <2>renderowania obrazów w usłudze Grafana</2>. Skontaktuj się z administratorem usługi Grafana, aby zainstalować wtyczkę.",
+      "render-instructions": "",
       "rendered-image": "Obraz renderowany z bezpośredniego linku",
       "save-alert": "Nie zapisano pulpitu",
       "save-dashboard": "Aby wyrenderować obraz panelu, musisz najpierw zapisać pulpit.",
@@ -11588,6 +11626,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Podgląd panelu"
     },
