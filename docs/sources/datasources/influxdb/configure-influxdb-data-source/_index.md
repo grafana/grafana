@@ -118,7 +118,9 @@ Setting the database for this data source **does not deny access to other databa
 To support data isolation and security, make sure appropriate permissions are configured in InfluxDB. 
 {{< /admonition >}}
 
-These settings identify the Influx database your data source will connect to. The required information will vary by the query language selected in **URL and Authentication**. Each query language uses a different set of connection details. The table below illustrates the details needed for each query language:
+These settings identify the Influx database your data source will connect to. The required information will vary by the query language selected in **URL and Authentication**. Each query language uses a different set of connection details. 
+
+The table below illustrates the details needed for each query language:
 
 | **Setting** | **Flux** | **InfluxQL** | **SQL**      |
 | ---------- | ----------- | ----------- | ----------- |
@@ -126,6 +128,7 @@ These settings identify the Influx database your data source will connect to. Th
 | Organization             | Yes        | No         | No         |
 | Password or Token        | Yes        | Yes        | Yes        |
 | User                     | No         | Yes        | No         |
+
 
 - **Bucket** or **Database** - Sets the ID of the bucket to query. Refer to [View buckets](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) in InfluxData's documentation on how to locate the list of available buckets and their corresponding IDs.
 - **Organization** - Sets the [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) used for Flux queries. Also used for the `v.organization` query macro.
@@ -155,7 +158,7 @@ _For Grafana Cloud only._ Private data source connect (PDC) allows you to establ
 
 Click **Manage private data source connect** to be taken to your PDC connection page, where you'll find your PDC configuration details.
 
-Once you have added your connection settings, click **Save & test** to test the data source connection.
+After you have added your connection settings, click **Save & test** to test the data source connection.
 
 ### Min time interval
 
