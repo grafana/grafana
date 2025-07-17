@@ -740,11 +740,7 @@ func configureNotificationHistorian(
 	l log.Logger,
 	tracer tracing.Tracer,
 ) (nfstatus.NotificationHistorian, error) {
-	if !featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNotificationHistory) {
-		return nil, nil
-	}
-
-	if !cfg.Enabled {
+	if !featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNotificationHistory) || !cfg.Enabled {
 		met.Info.Set(0)
 		return nil, nil
 	}
