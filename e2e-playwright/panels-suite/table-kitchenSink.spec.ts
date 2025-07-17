@@ -67,10 +67,76 @@ test.describe(
       await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
     });
 
-    // test visibility, display name
+    test('Tests visibility and display name via overrides', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        queryParams: new URLSearchParams({ editPanel: '1' }),
+      });
 
-    // test sort
+      await expect(page.locator('.rdg')).toBeVisible();
 
-    // test filter
+      // confirm that "State" column is hidden by default.
+      expect(page.getByRole('row').nth(0)).not.toContainText('State');
+
+      // toggle the "State" column visibility and test that it appears before re-hiding it.
+      // FIXME this selector is utterly godawful, but there's no way to give testIds or aria-labels or anything to
+      // the panel editor builder. we should fix that to make e2e's easier to write for our team.
+      const hideStateColumnSwitch = page.locator('[id="Override 12"]').locator('label').last();
+      await hideStateColumnSwitch.click();
+      await expect(page.getByRole('row').nth(0)).toContainText('State');
+
+      // now change the display name of the "State" column.
+      // FIXME it would be good to have a better selector here too.
+      const displayNameInput = page.locator('[id="Override 12"]').locator('input[value="State"]').last();
+      await displayNameInput.fill('State (renamed)');
+      await displayNameInput.press('Enter');
+      await expect(page.getByRole('row').nth(0)).toContainText('State (renamed)');
+    });
+
+    // we test niche cases for sorting, filtering, pagination, etc. in a unit tests already.
+    // we mainly want to test the happiest paths for these in e2es as well to check for integration
+    // issues, but the unit tests can confirm that the internal logic works as expected much more quickly and thoroughly.
+    // hashtag testing pyramid.
+    test('Tests sorting by column', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        queryParams: new URLSearchParams({ editPanel: '1' }),
+      });
+
+      await expect(page.locator('.rdg')).toBeVisible();
+
+      // click the "State" column header to sort it.
+      const stateColumnHeader = page.getByRole('columnheader').filter({ hasText: 'Info' });
+      await stateColumnHeader.click();
+      await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
+      expect(getCell(page, 1, 1)).resolves.toContainText('down'); // down or down fast
+
+      await stateColumnHeader.click();
+      await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
+      expect(getCell(page, 1, 1)).resolves.toContainText('up'); // up or up fast
+
+      await stateColumnHeader.click();
+      await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
+    });
+
+    test('Tests filtering within a column', async ({ gotoDashboardPage, selectors, page }) => {
+      // const dashboardPage = await gotoDashboardPage({
+      //   uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+      //   queryParams: new URLSearchParams({ editPanel: '1' }),
+      // });
+      // await expect(page.locator('.rdg')).toBeVisible();
+      // // click the "State" column header to sort it.
+      // const stateColumnHeader = page.getByRole('columnheader').filter({ hasText: 'Info' });
+      // await stateColumnHeader.click();
+      // await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
+      // expect(getCell(page, 1, 1)).resolves.toContainText('down'); // down or down fast
+      // await stateColumnHeader.click();
+      // await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
+      // expect(getCell(page, 1, 1)).resolves.toContainText('up'); // up or up fast
+    });
+
+    test('Tests pagination', async ({ gotoDashboardPage, selectors, page }) => {
+      // TODO
+    });
   }
 );

@@ -150,13 +150,6 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Some really long title that requires wrapping"
-            },
-            "properties": []
-          },
-          {
-            "matcher": {
-              "id": "byName",
               "options": "Image"
             },
             "properties": [
@@ -270,6 +263,10 @@
             },
             "properties": [
               {
+                "id": "displayName",
+                "value": "State"
+              },
+              {
                 "id": "custom.hidden",
                 "value": true
               }
@@ -293,7 +290,7 @@
         ]
       },
       "gridPos": {
-        "h": 15,
+        "h": 18,
         "w": 24,
         "x": 0,
         "y": 0
@@ -376,6 +373,71 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Empty Table Panel",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "h": 6,
+        "w": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "wrapHeaderText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "scenarioId": "csv_content",
+          "refId": "A",
+          "csvContent": "a,b,c"
+        }
+      ],
+      "datasource": {
+        "uid": "PD8C576611E62080A",
+        "type": "grafana-testdata-datasource"
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": ""
+        }
+      }
     }
   ],
   "preload": false,
