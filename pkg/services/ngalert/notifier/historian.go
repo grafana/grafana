@@ -26,7 +26,6 @@ const NotificationHistoryLabelValue = "notify-history"
 
 type NotificationHistoryLokiEntry struct {
 	SchemaVersion int                                 `json:"schemaVersion"`
-	RuleUIDs      []string                            `json:"ruleUIDs"`
 	Receiver      string                              `json:"receiver"`
 	Status        string                              `json:"status"`
 	GroupLabels   map[string]string                   `json:"groupLabels"`
@@ -42,6 +41,7 @@ type NotificationHistoryLokiEntryAlert struct {
 	Annotations map[string]string `json:"annotations"`
 	StartsAt    time.Time         `json:"startsAt"`
 	EndsAt      time.Time         `json:"endsAt"`
+	RuleUID     string            `json:"ruleUID"`
 }
 
 type remoteLokiClient interface {
@@ -119,20 +119,6 @@ func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*typ
 		return lokiclient.Stream{}, fmt.Errorf("now not found in context")
 	}
 
-	// Get unique rule UIDs from the alerts
-	ruleUIDs := make([]string, 0)
-	seen := make(map[string]bool)
-	for _, alert := range alerts {
-		ruleUID := string(alert.Labels[alertingModels.RuleUIDLabel])
-		if ruleUID == "" {
-			return lokiclient.Stream{}, fmt.Errorf("alert missing rule UID label: %v", alert.Labels)
-		}
-		if _, exists := seen[ruleUID]; !exists {
-			seen[ruleUID] = true
-			ruleUIDs = append(ruleUIDs, ruleUID)
-		}
-	}
-
 	entryAlerts := make([]NotificationHistoryLokiEntryAlert, len(alerts))
 	for i, alert := range alerts {
 		labels := prepareLabels(alert.Labels)
@@ -143,6 +129,7 @@ func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*typ
 			Status:      string(alert.StatusAt(now)),
 			StartsAt:    alert.StartsAt,
 			EndsAt:      alert.EndsAt,
+			RuleUID:     string(alert.Labels[alertingModels.RuleUIDLabel]),
 		}
 	}
 
@@ -153,7 +140,6 @@ func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*typ
 
 	entry := NotificationHistoryLokiEntry{
 		SchemaVersion: 1,
-		RuleUIDs:      ruleUIDs,
 		Receiver:      receiverName,
 		Status:        string(types.Alerts(alerts...).StatusAt(now)),
 		GroupLabels:   prepareLabels(groupLabels),
