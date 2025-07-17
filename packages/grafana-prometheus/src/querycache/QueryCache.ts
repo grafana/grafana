@@ -48,7 +48,7 @@ export interface CacheRequestInfo<T extends SupportedQueryTypes> {
  * This is the string used to uniquely identify a field within a "target"
  * @param field
  */
-export const getFieldIdentity = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
+const getFieldIdentity = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
 /**
  * NOMENCLATURE
@@ -282,7 +282,9 @@ export function findDatapointStep(
 
   let dataPointStep = request.intervalMs;
   if (target?.interval) {
-    const minStepMs = rangeUtil.intervalToMs(applyInterpolation(target.interval));
+    const minStepMs =
+      respFrames[0].meta?.custom?.['calculatedMinStep'] ??
+      rangeUtil.intervalToMs(applyInterpolation(target.interval, request.scopedVars));
     if (minStepMs > request.intervalMs) {
       dataPointStep = minStepMs;
     }

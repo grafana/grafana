@@ -21,6 +21,8 @@ import {
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/partitionByValues.svg';
+import lightImage from '../images/light/partitionByValues.svg';
 
 import { getPartitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
@@ -190,5 +192,7 @@ export const getPartitionByValuesTransformRegistryItem: () => TransformerRegistr
       state: PluginState.alpha,
       categories: new Set([TransformerCategory.Reformat]),
       help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
+      imageDark: darkImage,
+      imageLight: lightImage,
     };
   };

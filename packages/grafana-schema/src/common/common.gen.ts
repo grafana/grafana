@@ -888,6 +888,7 @@ export type TimeZoneBrowser = 'browser';
  */
 export enum VariableFormatID {
   CSV = 'csv',
+  CustomQueryParam = 'customqueryparam',
   Date = 'date',
   Distributed = 'distributed',
   DoubleQuote = 'doublequote',
@@ -977,8 +978,6 @@ export enum ComparisonOperation {
 }
 
 export interface TablePillCellOptions {
-  color?: string;
-  colorMode?: ('auto' | 'fixed' | 'mapped');
   type: TableCellDisplayMode.Pill;
 }
 

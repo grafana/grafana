@@ -15,6 +15,8 @@ import { t } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/reduce.svg';
+import lightImage from '../images/light/reduce.svg';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
@@ -128,4 +130,6 @@ export const getReduceTransformRegistryItem: () => TransformerRegistryItem<Reduc
   ),
   categories: new Set([TransformerCategory.CalculateNewFields]),
   help: getTransformationContent(DataTransformerID.reduce).helperDocs,
+  imageDark: darkImage,
+  imageLight: lightImage,
 });

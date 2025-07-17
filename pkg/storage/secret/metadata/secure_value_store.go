@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
@@ -22,14 +22,8 @@ var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 func ProvideSecureValueMetadataStorage(
 	db contracts.Database,
 	tracer trace.Tracer,
-	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 ) (contracts.SecureValueMetadataStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return &secureValueMetadataStorage{}, nil
-	}
-
 	return &secureValueMetadataStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
@@ -46,7 +40,7 @@ type secureValueMetadataStorage struct {
 	tracer  trace.Tracer
 }
 
-func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Create", trace.WithAttributes(
 		attribute.String("name", sv.GetName()),
@@ -197,59 +191,6 @@ func (s *secureValueMetadataStorage) getLatestVersion(ctx context.Context, names
 	return &version, nil
 }
 
-func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	start := time.Now()
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.ReadForDecrypt", trace.WithAttributes(
-		attribute.String("name", name),
-		attribute.String("namespace", namespace.String()),
-	))
-	defer span.End()
-
-	req := readSecureValueForDecrypt{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-	}
-
-	query, err := sqltemplate.Execute(sqlSecureValueReadForDecrypt, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueReadForDecrypt.Name(), err)
-	}
-
-	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("reading row: %w", err)
-	}
-	defer func() { _ = res.Close() }()
-
-	var row secureValueForDecrypt
-	if !res.Next() {
-		return nil, contracts.ErrSecureValueNotFound
-	}
-	if err := res.Scan(
-		&row.Keeper, &row.Decrypters,
-		&row.Ref, &row.ExternalID, &row.Active); err != nil {
-		return nil, fmt.Errorf("failed to scan secure value row: %w", err)
-	}
-
-	if err := res.Err(); err != nil {
-		return nil, fmt.Errorf("read rows error: %w", err)
-	}
-
-	if !row.Active {
-		return nil, fmt.Errorf("bug: read an inactive version: row=%+v", row)
-	}
-
-	secureValue, err := row.toDecrypt()
-	if err != nil {
-		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
-	}
-
-	s.metrics.SecureValueGetForDecryptDuration.Observe(time.Since(start).Seconds())
-
-	return secureValue, nil
-}
-
 func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
 	req := readSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
@@ -289,7 +230,7 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv1beta1.SecureValue, error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Read", trace.WithAttributes(
 		attribute.String("name", name),
@@ -314,7 +255,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	return secureValueKub, nil
 }
 
-func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv0alpha1.SecureValue, error error) {
+func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv1beta1.SecureValue, error error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.List", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -341,7 +282,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	}
 	defer func() { _ = rows.Close() }()
 
-	secureValues := make([]secretv0alpha1.SecureValue, 0)
+	secureValues := make([]secretv1beta1.SecureValue, 0)
 	for rows.Next() {
 		row := secureValueDB{}
 
