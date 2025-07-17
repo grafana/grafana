@@ -3136,7 +3136,7 @@ __metadata:
     "@grafana/data": "npm:11.3.9"
     "@grafana/e2e-selectors": "npm:11.3.9"
     "@grafana/experimental": "npm:2.1.1"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.9"
     "@grafana/schema": "npm:11.3.9"
     "@grafana/ui": "npm:11.3.9"
@@ -3180,7 +3180,7 @@ __metadata:
     "@grafana/data": "npm:11.3.9"
     "@grafana/e2e-selectors": "npm:11.3.9"
     "@grafana/experimental": "npm:2.1.1"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.9"
     "@grafana/sql": "npm:11.3.9"
     "@grafana/ui": "npm:11.3.9"
@@ -3209,7 +3209,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.9"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.9"
     "@grafana/schema": "npm:11.3.9"
     "@grafana/ui": "npm:11.3.9"
@@ -3252,7 +3252,7 @@ __metadata:
     "@grafana/data": "npm:11.3.9"
     "@grafana/e2e-selectors": "npm:11.3.9"
     "@grafana/experimental": "npm:2.1.1"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.9"
     "@grafana/schema": "npm:11.3.9"
     "@grafana/ui": "npm:11.3.9"
@@ -3335,7 +3335,7 @@ __metadata:
     "@grafana/data": "npm:11.3.9"
     "@grafana/e2e-selectors": "npm:11.3.9"
     "@grafana/experimental": "npm:2.1.1"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.9"
     "@grafana/sql": "npm:11.3.9"
     "@grafana/ui": "npm:11.3.9"
@@ -3366,7 +3366,7 @@ __metadata:
     "@grafana/data": "npm:11.3.9"
     "@grafana/e2e-selectors": "npm:11.3.9"
     "@grafana/experimental": "npm:2.1.1"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.9"
     "@grafana/sql": "npm:11.3.9"
     "@grafana/ui": "npm:11.3.9"
@@ -3395,7 +3395,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.9"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.9"
     "@grafana/schema": "npm:11.3.9"
     "@grafana/ui": "npm:11.3.9"
@@ -3430,7 +3430,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:11.3.9"
     "@grafana/experimental": "npm:2.1.1"
     "@grafana/google-sdk": "npm:0.1.2"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "npm:11.3.9"
     "@grafana/schema": "npm:11.3.9"
     "@grafana/ui": "npm:11.3.9"
@@ -3481,7 +3481,7 @@ __metadata:
     "@grafana/lezer-traceql": "npm:0.0.19"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
@@ -3885,7 +3885,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-configs@npm:11.3.9, @grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
+"@grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
@@ -9162,7 +9162,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
     "@grafana/eslint-config": "npm:7.0.0"
-    "@grafana/plugin-configs": "npm:11.3.9"
+    "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
