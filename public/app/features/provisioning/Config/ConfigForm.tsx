@@ -56,7 +56,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const navigate = useNavigate();
   const [type, readOnly] = watch(['type', 'readOnly']);
   const targetOptions = useMemo(() => getTargetOptions(), []);
-  const [isLoading, setIsLoading] = useState(false);
   const isGitBased = isGitProvider(type);
 
   // Get field configurations based on provider type
@@ -74,7 +73,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   }, [request.isSuccess, reset, getValues, navigate]);
 
   const onSubmit = async (form: RepositoryFormData) => {
-    setIsLoading(true);
     const spec = dataToSpec(form);
     if (spec.github) {
       spec.github.token = form.token || data?.spec?.github?.token;
@@ -82,7 +80,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
       spec.github.encryptedToken = data?.spec?.github?.encryptedToken;
     }
     await submitData(spec);
-    setIsLoading(false);
   };
 
   return (
@@ -262,8 +259,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
         )}
 
         <Stack gap={2}>
-          <Button type={'submit'} disabled={isLoading}>
-            {isLoading
+          <Button type={'submit'} disabled={request.isLoading}>
+            {request.isLoading
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
