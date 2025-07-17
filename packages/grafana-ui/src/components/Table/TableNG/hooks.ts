@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, Ref
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
