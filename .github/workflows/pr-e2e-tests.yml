@@ -110,16 +110,16 @@ jobs:
             path: e2e/panels-suite
           - suite: various-suite (old arch)
             path: e2e/old-arch/various-suite
-            flags: --flags="--env dashboardScene=false"
+            flags: --flags="--env DISABLE_SCENES=true"
           - suite: dashboards-suite (old arch)
             path: e2e/old-arch/dashboards-suite
-            flags: --flags="--env dashboardScene=false"
+            flags: --flags="--env DISABLE_SCENES=true"
           - suite: smoke-tests-suite (old arch)
             path: e2e/old-arch/smoke-tests-suite
-            flags: --flags="--env dashboardScene=false"
+            flags: --flags="--env DISABLE_SCENES=true"
           - suite: panels-suite (old arch)
             path: e2e/old-arch/panels-suite
-            flags: --flags="--env dashboardScene=false"
+            flags: --flags="--env DISABLE_SCENES=true"
     name: ${{ matrix.suite }}
     runs-on: ubuntu-latest-8-cores
     permissions:

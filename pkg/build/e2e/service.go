@@ -74,17 +74,8 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"yarn", "e2e:plugin:build"})
 
-	// Conditional container base: Alpine for OSS (better old arch compatibility), Ubuntu for Enterprise (image renderer support)
-	var container *dagger.Container
-	if opts.InstallImageRenderer {
-		// Ubuntu needed for image renderer (Enterprise workflows)
-		container = d.Container().From("ubuntu:latest")
-	} else {
-		// Alpine for OSS - better compatibility with original release-12.0.3 and old arch tests
-		container = d.Container().From("alpine").WithExec([]string{"apk", "add", "bash"})
-	}
-
-	container = container.
+	// Ubuntu base for modern daggerbuild system (supports image renderer + glibc requirements)
+	container := d.Container().From("ubuntu:latest").
 		WithMountedFile("/src/grafana.tar.gz", opts.GrafanaTarGz).
 		WithExec([]string{"mkdir", "-p", "/src/grafana"}).
 		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
