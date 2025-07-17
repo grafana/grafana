@@ -83,89 +83,89 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    // if (config.featureToggles.newDashboardSharingComponent) {
-    //   const subMenu: PanelMenuItem[] = [];
-    //   subMenu.push({
-    //     text: t('share-panel.menu.share-link-title', 'Share link'),
-    //     iconClassName: 'link',
-    //     shortcut: 'p u',
-    //     onClick: () => {
-    //       DashboardInteractions.sharingCategoryClicked({
-    //         item: shareDashboardType.link,
-    //         shareResource: getTrackingSource(panel?.getRef()),
-    //       });
+    if (config.featureToggles.newDashboardSharingComponent) {
+      const subMenu: PanelMenuItem[] = [];
+      subMenu.push({
+        text: t('share-panel.menu.share-link-title', 'Share link'),
+        iconClassName: 'link',
+        shortcut: 'p u',
+        onClick: () => {
+          DashboardInteractions.sharingCategoryClicked({
+            item: shareDashboardType.link,
+            shareResource: getTrackingSource(panel?.getRef()),
+          });
 
-    //       const drawer = new ShareDrawer({
-    //         shareView: shareDashboardType.link,
-    //         panelRef: panel.getRef(),
-    //       });
+          const drawer = new ShareDrawer({
+            shareView: shareDashboardType.link,
+            panelRef: panel.getRef(),
+          });
 
-    //       dashboard.showModal(drawer);
-    //     },
-    //   });
-    //   subMenu.push({
-    //     text: t('share-panel.menu.share-embed-title', 'Share embed'),
-    //     iconClassName: 'arrow',
-    //     shortcut: 'p e',
-    //     onClick: () => {
-    //       DashboardInteractions.sharingCategoryClicked({
-    //         item: shareDashboardType.embed,
-    //         shareResource: getTrackingSource(panel.getRef()),
-    //       });
+          dashboard.showModal(drawer);
+        },
+      });
+      subMenu.push({
+        text: t('share-panel.menu.share-embed-title', 'Share embed'),
+        iconClassName: 'arrow',
+        shortcut: 'p e',
+        onClick: () => {
+          DashboardInteractions.sharingCategoryClicked({
+            item: shareDashboardType.embed,
+            shareResource: getTrackingSource(panel.getRef()),
+          });
 
-    //       const drawer = new ShareDrawer({
-    //         shareView: shareDashboardType.embed,
-    //         panelRef: panel.getRef(),
-    //       });
+          const drawer = new ShareDrawer({
+            shareView: shareDashboardType.embed,
+            panelRef: panel.getRef(),
+          });
 
-    //       dashboard.showModal(drawer);
-    //     },
-    //   });
+          dashboard.showModal(drawer);
+        },
+      });
 
-    //   if (
-    //     contextSrv.isSignedIn &&
-    //     config.snapshotEnabled &&
-    //     contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
-    //   ) {
-    //     subMenu.push({
-    //       text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
-    //       iconClassName: 'camera',
-    //       shortcut: 'p s',
-    //       onClick: () => {
-    //         DashboardInteractions.sharingCategoryClicked({
-    //           item: shareDashboardType.snapshot,
-    //           shareResource: getTrackingSource(panel.getRef()),
-    //         });
+      if (
+        contextSrv.isSignedIn &&
+        config.snapshotEnabled &&
+        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+      ) {
+        subMenu.push({
+          text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
+          iconClassName: 'camera',
+          shortcut: 'p s',
+          onClick: () => {
+            DashboardInteractions.sharingCategoryClicked({
+              item: shareDashboardType.snapshot,
+              shareResource: getTrackingSource(panel.getRef()),
+            });
 
-    //         const drawer = new ShareDrawer({
-    //           shareView: shareDashboardType.snapshot,
-    //           panelRef: panel.getRef(),
-    //         });
+            const drawer = new ShareDrawer({
+              shareView: shareDashboardType.snapshot,
+              panelRef: panel.getRef(),
+            });
 
-    //         dashboard.showModal(drawer);
-    //       },
-    //     });
-    //   }
+            dashboard.showModal(drawer);
+          },
+        });
+      }
 
-    //   items.push({
-    //     type: 'submenu',
-    //     text: t('panel.header-menu.share', 'Share'),
-    //     iconClassName: 'share-alt',
-    //     subMenu,
-    //     onClick: (e) => {
-    //       e.preventDefault();
-    //     },
-    //   });
-    // } else {
-    //   items.push({
-    //     text: t('panel.header-menu.share', 'Share'),
-    //     iconClassName: 'share-alt',
-    //     onClick: () => {
-    //       dashboard.showModal(new ShareModal({ panelRef: panel.getRef() }));
-    //     },
-    //     shortcut: 'p s',
-    //   });
-    // }
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.share', 'Share'),
+        iconClassName: 'share-alt',
+        subMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
+    } else {
+      items.push({
+        text: t('panel.header-menu.share', 'Share'),
+        iconClassName: 'share-alt',
+        onClick: () => {
+          dashboard.showModal(new ShareModal({ panelRef: panel.getRef() }));
+        },
+        shortcut: 'p s',
+      });
+    }
 
     if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       moreSubMenu.push({

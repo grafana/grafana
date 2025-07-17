@@ -477,8 +477,6 @@ export const TooltipPlugin2 = ({
               const toTs = xScale.max!;
               const pad = (toTs - frTs) / 2;
 
-              console.log({ from: frTs - pad, to: toTs + pad });
-
               queryZoom({ from: frTs - pad, to: toTs + pad });
             }
 
