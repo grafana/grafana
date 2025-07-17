@@ -38,9 +38,9 @@ refs:
 
 # Amazon CloudWatch query editor
 
-Grafana provides a query editor for the CloudWatch data source. For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize and alert on logs and metrics stored in Amazon CLoudWatch. It's located on the Explore page. For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
-<!-- 
+<!--
 This topic explains querying specific to the CloudWatch data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data). -->
 

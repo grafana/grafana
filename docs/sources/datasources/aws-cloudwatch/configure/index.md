@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Configure
-title: Configure Amazon CloudWatch
+title: Configure CloudWatch
 weight: 100
 refs:
   logs:
@@ -83,10 +83,9 @@ Grafana takes you to the **Settings** tab, where you will set up your Microsoft 
 
 The following are configuration options for the Microsoft SQL Server data source:
 
-
-| **Setting** | **Description** |
-|-------------|----------------|
-| **Name**    | The data source name. Sets the name you use to refer to the data source in panels and queries. |
+| **Setting** | **Description**                                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Name**    | The data source name. Sets the name you use to refer to the data source in panels and queries.                                             |
 | **Default** | Toggle to select as the default name in dashboard panels. When you go to a dashboard panel, this will be the default selected data source. |
 
 A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
@@ -94,26 +93,26 @@ The IAM user or IAM role must have the associated policies to perform certain AP
 
 For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
 
+**Authentication:** - Specify which AWS credentials chain to use. A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
+The IAM user or IAM role must have the associated policies to perform certain API actions.
 
-**Authentication:** - Specify which AWS credentials chain to use. 
+For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
 
 **Access & secret key:**
 
 You must use both an access key ID AND secret access key to authenticate.
 
-| Setting               | Description                    |
-|-----------------------|--------------------------------|
-| **Access Key ID**     | Enter your key ID.             |
-| **Secret Access Key** | Enter the secret access key.   |
-
+| Setting               | Description                  |
+| --------------------- | ---------------------------- |
+| **Access Key ID**     | Enter your key ID.           |
+| **Secret Access Key** | Enter the secret access key. |
 
 Assume Role
 
-| Setting              | Description                                                                                                                                   |
-|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| **Assume Role ARN**  | *Optional.* Specify the ARN of an IAM role to assume. This ensures the selected authentication method is used to assume the role, not used directly. |
-| **External ID**      | If you're assuming a role in another AWS account that requires an external ID, specify it here.                                               |
-
+| Setting             | Description                                                                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Assume Role ARN** | _Optional._ Specify the ARN of an IAM role to assume. This ensures the selected authentication method is used to assume the role, not used directly. |
+| **External ID**     | If you're assuming a role in another AWS account that requires an external ID, specify it here.                                                      |
 
 <!-- Assume Role ARN:  *Optional*. Specifying the ARN of a role ensures that the selected authentication provider is used to assume the role rather than the credentials directly.
 
@@ -129,12 +128,24 @@ Default Region - Specify the AWS region. Example: If the region is US West (Oreg
 
 Namespaces of Custom Metrics - Add any namespace or namespaces. -->
 
-| Setting                        | Description                                                                 |
-|-------------------------------|-----------------------------------------------------------------------------|
-| **Endpoint**                  | _Optional_. Specify a custom endpoint for the AWS service.                 |
-| **Default Region**            | Specify the AWS region. Example: If the region is US West (Oregon), use `us-west-2`. |
-| **Namespaces of Custom Metrics** | Add one or more custom metric namespaces. Example:  `Namespace1,Namespace2`.   |
+| Setting                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Endpoint**                     | _Optional_. Specify a custom endpoint for the AWS service.                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Default Region**               | Specify the AWS region. Example: If the region is US West (Oregon), use `us-west-2`.                                                                                                                                                                                                                                                                                                                                                                           |
+| **Namespaces of Custom Metrics** | Add one or more custom metric namespaces, separated by commas (for example,`Namespace1,Namespace2`). Grafana can't automatically load custom namespaces using the [CloudWatch GetMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html). To make custom metrics available in the query editor, manually specify the namespaces in the `Namespaces of Custom Metrics` field in the data source configuration. |
 
+**CloudWatch Logs**:
+
+| Setting                  | Description                                                                                                                                                                                                                                                                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Query timeout result** | Grafana polls Cloudwatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana config file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
+| **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                       |
+
+**X-Ray trace link:** - Grafana automatically creates a link to a trace in X-ray data source if logs contain the `@xrayTraceId` field
+
+| Setting         | Description                                     |
+| --------------- | ----------------------------------------------- |
+| **Data source** | Select the data source from the drop-down menu. |
 
 **X-Ray trace link:**
 
@@ -156,16 +167,12 @@ To provide the field to Grafana, your log queries must also contain the `@xrayTr
 
 {{< figure src="/static/img/docs/cloudwatch/xray-link-log-details-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link in log details" >}}
 
-
-
-
-
-## Configure AWS authentication
+<!-- ## Configure AWS authentication
 
 A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
 The IAM user or IAM role must have the associated policies to perform certain API actions.
 
-For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
+For authentication options and configuration details, refer to [AWS authentication](aws-authentication/). -->
 
 ### IAM policy examples
 
@@ -325,18 +332,18 @@ Cross-account observability lets you to retrieve metrics and logs across differe
 
 #### Namespaces of Custom Metrics
 
-Grafana can't load custom namespaces through the CloudWatch [GetMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html).
+<!-- Grafana can't load custom namespaces through the CloudWatch [GetMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html).
 
 To make custom metrics appear in the data source's query editor fields, specify the names of the namespaces containing the custom metrics in the data source configuration's _Namespaces of Custom Metrics_ field.
-The field accepts multiple namespaces separated by commas.
+The field accepts multiple namespaces separated by commas. -->
 
-#### Timeout
+<!-- #### Timeout
 
 Configure the timeout specifically for CloudWatch Logs queries.
 
 Log queries don't keep a single request open, and instead periodically poll for results.
 Therefore, they don't recognize the standard Grafana query timeout.
-Because of limits on concurrently running queries in CloudWatch, they can also take longer to finish.
+Because of limits on concurrently running queries in CloudWatch, they can also take longer to finish. -->
 
 #### X-Ray trace links
 
@@ -368,10 +375,8 @@ The Grafana [configuration file](ref:configure-grafana-aws) includes an `AWS` se
 
 ### Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
-
-#### Provisioning examples
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
+For more information about provisioning, and for available configuration options, refer to [Provision Grafana](ref:provisioning-data-sources).
 
 ##### Using AWS SDK (default)
 
