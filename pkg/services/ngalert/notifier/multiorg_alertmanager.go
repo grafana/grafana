@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
@@ -77,6 +78,12 @@ type Alertmanager interface {
 	Ready() bool
 }
 
+// StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
+type StateMerger interface {
+	MergeNflog([]byte) error
+	MergeSilences([]byte) error
+}
+
 type MultiOrgAlertmanager struct {
 	Crypto    Crypto
 	ProvStore provisioningStore
@@ -128,6 +135,7 @@ func NewMultiOrgAlertmanager(
 	l log.Logger,
 	s secrets.Service,
 	featureManager featuremgmt.FeatureToggles,
+	notificationHistorian nfstatus.NotificationHistorian,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -160,7 +168,7 @@ func NewMultiOrgAlertmanager(
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
 		stateStore := NewFileStore(orgID, kvStore)
-		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager, moa.Crypto)
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager, moa.Crypto, notificationHistorian)
 	}
 
 	for _, opt := range opts {

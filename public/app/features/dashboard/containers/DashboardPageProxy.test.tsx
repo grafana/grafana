@@ -13,7 +13,7 @@ import {
   setupLoadDashboardMockReject,
   setupLoadDashboardRuntimeErrorMock,
 } from 'app/features/dashboard-scene/utils/test-utils';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+import { DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
 

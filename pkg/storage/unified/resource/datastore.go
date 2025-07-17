@@ -239,11 +239,7 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 		return nil, fmt.Errorf("invalid data key: %w", err)
 	}
 
-	obj, err := d.kv.Get(ctx, dataSection, key.String())
-	if err != nil {
-		return nil, err
-	}
-	return obj.Value, nil
+	return d.kv.Get(ctx, dataSection, key.String())
 }
 
 func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) error {
@@ -251,7 +247,17 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 		return fmt.Errorf("invalid data key: %w", err)
 	}
 
-	return d.kv.Save(ctx, dataSection, key.String(), value)
+	writer, err := d.kv.Save(ctx, dataSection, key.String())
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(writer, value)
+	if err != nil {
+		_ = writer.Close()
+		return err
+	}
+
+	return writer.Close()
 }
 
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
