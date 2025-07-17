@@ -62,7 +62,7 @@ docker_build('grafana-backend', '../..',
     "./public/build/assets-manifest.json",
   ],
   live_update = [
-    sync('./public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
     restart_container()
   ]
 )

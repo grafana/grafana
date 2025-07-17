@@ -20,7 +20,8 @@ RUN go env GOPATH
 COPY Makefile devenv/frontend-service/build-grafana.sh ./
 
 # Copy go mod files first
-# $: ls -1 {pkg,scripts,apps}**/go.{mod,sum} | sed 's#\(.*\)/go\.\(mod\|sum\)#COPY \1/go.* \1/#' | sort -u
+# run this command and replace the output below:
+# find pkg scripts apps -type f \( -name go.mod -o -name go.sum \) -print | sed -E 's#(.*)/go\.(mod|sum)$#COPY \1/go.* \1/#' | sort -u
 COPY apps/advisor/go.* apps/advisor/
 COPY apps/alerting/notifications/go.* apps/alerting/notifications/
 COPY apps/dashboard/go.* apps/dashboard/
@@ -31,7 +32,6 @@ COPY apps/playlist/go.* apps/playlist/
 COPY apps/secret/go.* apps/secret/
 COPY pkg/aggregator/go.* pkg/aggregator/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
-COPY pkg/apis/secret/go.* pkg/apis/secret/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
