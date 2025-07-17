@@ -40,8 +40,14 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
   expanded: 'grafana.explore.contentOutline.expanded',
 };
 
-export function ContentOutline({ scroller, panelId, compactMode = false }: { scroller: HTMLElement | undefined; panelId: string; compactMode?: boolean }) {
-  console.log('🔍 ContentOutline rendered with compactMode:', compactMode);
+export function ContentOutline({
+  scroller,
+  panelId,
+}: {
+  scroller: HTMLElement | undefined;
+  panelId: string;
+  compactMode?: boolean;
+}) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
   );
@@ -60,19 +66,10 @@ export function ContentOutline({ scroller, panelId, compactMode = false }: { scr
 
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
     return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
-      acc[item.id] = compactMode ? false : !!item.expanded;
+      acc[item.id] = !!item.expanded;
       return acc;
     }, {});
   });
-
-  useEffect(() => {
-    setSectionsExpanded(
-      outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
-        acc[item.id] = compactMode ? false : !!item.expanded;
-        return acc;
-      }, {})
-    );
-  }, [compactMode, outlineItems]);
 
   const scrollIntoView = (ref: HTMLElement | null, customOffsetTop = 0) => {
     let scrollValue = 0;

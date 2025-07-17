@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -52,7 +52,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const correlationDetails = useSelector(selectCorrelationDetails);
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
-  
+
   // In split view, show DrilldownAlertBox once above both panes (regardless of compact mode)
   const shouldShowTopLevelAlert = hasSplit && panes.length > 0;
   const firstPaneDatasourceType = panes[0]?.[1]?.datasourceInstance?.type;
@@ -92,10 +92,14 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
         onDragFinished={(size) => size && updateSplitSize(size)}
       >
-        {panes.map(([exploreId]) => {
+        {panes.map(([exploreId, pane]) => {
           return (
             <ErrorBoundaryAlert key={exploreId} style="page">
-              <ExplorePaneContainer exploreId={exploreId} />
+              {pane.initialized ? (
+                <ExplorePaneContainer exploreId={exploreId} />
+              ) : (
+                <LoadingPlaceholder text={'Loading...'} />
+              )}
             </ErrorBoundaryAlert>
           );
         })}

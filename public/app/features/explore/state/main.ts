@@ -42,13 +42,6 @@ export const splitSizeUpdateAction = createAction<{
   largerExploreId?: string;
 }>('explore/splitSizeUpdateAction');
 
-/**
- * Sets compact mode state
- */
-export const setCompactModeAction = createAction<{
-  compactMode: boolean;
-}>('explore/setCompactMode');
-
 export const maximizePaneAction = createAction<{
   exploreId?: string;
 }>('explore/maximizePaneAction');
@@ -103,6 +96,7 @@ export const splitOpen = createAsyncThunk(
         panelsState: options?.panelsState || originState?.panelsState,
         correlationHelperData: options?.correlationHelperData,
         eventBridge: new EventBusSrv(),
+        compact: !!options?.compact,
       })
     );
 
@@ -203,14 +197,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       largerExploreId,
       maxedExploreId: undefined,
       evenSplitPanes: largerExploreId === undefined,
-    };
-  }
-
-  if (setCompactModeAction.match(action)) {
-    const { compactMode } = action.payload;
-    return {
-      ...state,
-      compactMode,
     };
   }
 

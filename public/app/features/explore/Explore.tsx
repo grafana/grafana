@@ -58,7 +58,7 @@ import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeDatasource } from './state/datasource';
-import { changeSize } from './state/explorePane';
+import { changeSize, changeCompactMode } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
   addQueryRow,
@@ -69,7 +69,7 @@ import {
   setQueries,
   setSupplementaryQueryEnabled,
 } from './state/query';
-import { isSplit, selectExploreDSMaps, selectCompactMode } from './state/selectors';
+import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -182,14 +182,16 @@ export class Explore extends PureComponent<Props, ExploreState> {
   onContentOutlineToogle = () => {
     store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !this.state.contentOutlineVisible);
     this.setState((state) => {
+      const newContentOutlineVisible = this.props.compact ? true : !state.contentOutlineVisible;
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'outline',
-        type: state.contentOutlineVisible ? 'close' : 'open',
+        type: newContentOutlineVisible ? 'open' : 'close',
       });
       return {
-        contentOutlineVisible: !state.contentOutlineVisible,
+        contentOutlineVisible: newContentOutlineVisible,
       };
     });
+    this.props.changeCompactMode(this.props.exploreId, false);
   };
 
   /**
@@ -306,9 +308,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  /**
+   * Used for interaction from the visualizations. Will open split view in compact mode.
+   */
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
-      this.props.splitOpen(options);
+      this.props.splitOpen(options ? { ...options, compact: true } : options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
         const source =
@@ -574,7 +579,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       showQueryInspector,
       setShowQueryInspector,
       splitted,
-      compactMode,
+      compact,
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
@@ -602,8 +607,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
 
     // In split view, hide individual DrilldownAlertBoxes (will be shown once at top level)
     const shouldShowDrilldownAlert = datasourceInstance && !splitted;
-    
-    console.log('🔍 Explore rendering with compactMode:', compactMode, 'contentOutlineVisible:', contentOutlineVisible);
 
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
@@ -621,8 +624,12 @@ export class Explore extends PureComponent<Props, ExploreState> {
           }}
         >
           <div className={styles.wrapper}>
-            {contentOutlineVisible && (
-              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} compactMode={compactMode} />
+            {contentOutlineVisible && !compact && (
+              <ContentOutline
+                scroller={this.scrollElement}
+                panelId={`content-outline-container-${exploreId}`}
+                compactMode={compact}
+              />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}
@@ -642,7 +649,13 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />
                         )}
                         {correlationsBox}
-                        <QueryRows exploreId={exploreId} />
+                        <QueryRows
+                          exploreId={exploreId}
+                          collapsedByDefault={!!compact}
+                          changeCompactMode={(compact: boolean) =>
+                            this.props.changeCompactMode(this.props.exploreId, false)
+                          }
+                        />
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
                           addQueryRowButtonDisabled={
@@ -757,6 +770,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     supplementaryQueries,
     correlationEditorHelperData,
+    compact,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -783,13 +797,13 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showRawPrometheus,
     showFlameGraph,
     splitted: isSplit(state),
+    compact,
     loading,
     logsSample,
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
-    compactMode: selectCompactMode(state),
   };
 }
 
@@ -804,6 +818,7 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
+  changeCompactMode,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

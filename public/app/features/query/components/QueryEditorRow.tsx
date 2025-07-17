@@ -64,10 +64,11 @@ export interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onQueryOpenChanged?: (status?: boolean | undefined) => void;
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
-  compactMode?: boolean;
+  collapsedByDefault?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -434,7 +435,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, index, visualization, collapsable, hideActionButtons, compactMode } = this.props;
+    const { query, index, visualization, collapsable, hideActionButtons, collapsedByDefault, onQueryOpenChanged } =
+      this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
     const error =
@@ -460,7 +462,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           index={index}
           headerElement={this.renderHeader}
           actions={hideActionButtons ? undefined : this.renderActions}
-          isOpen={compactMode ? false : undefined}
+          isOpen={collapsedByDefault ? false : undefined}
+          onOpen={onQueryOpenChanged}
         >
           <div className={rowClasses} id={this.id}>
             <ErrorBoundaryAlert>

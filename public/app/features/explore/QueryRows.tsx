@@ -4,8 +4,8 @@ import { useCallback, useMemo } from 'react';
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { useDispatch, useSelector } from 'app/types/store';
 import { ExploreItemState } from 'app/types/explore';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
@@ -13,10 +13,12 @@ import { QueryEditorRows } from '../query/components/QueryEditorRows';
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { changeDatasource } from './state/datasource';
 import { changeQueries, runQueries } from './state/query';
-import { getExploreItemSelector, selectCompactMode } from './state/selectors';
+import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
   exploreId: string;
+  collapsedByDefault: boolean;
+  changeCompactMode: (compact: boolean) => void;
 }
 
 const makeSelectors = (exploreId: string) => {
@@ -33,7 +35,7 @@ const makeSelectors = (exploreId: string) => {
   };
 };
 
-export const QueryRows = ({ exploreId }: Props) => {
+export const QueryRows = ({ exploreId, collapsedByDefault, changeCompactMode }: Props) => {
   const dispatch = useDispatch();
   const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
     () => makeSelectors(exploreId),
@@ -45,7 +47,6 @@ export const QueryRows = ({ exploreId }: Props) => {
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
-  const compactMode = useSelector(selectCompactMode);
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
@@ -88,6 +89,10 @@ export const QueryRows = ({ exploreId }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
+  const onQueryOpenChanged = (queryStatus?: boolean) => {
+    changeCompactMode(false);
+  };
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
@@ -100,11 +105,12 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueryRemoved={onQueryRemoved}
       onQueryToggled={onQueryToggled}
       onQueryReplacedFromLibrary={onQueryReplacedFromLibrary}
+      onQueryOpenChanged={onQueryOpenChanged}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
-      compactMode={compactMode}
+      collapsedByDefault={collapsedByDefault}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}
