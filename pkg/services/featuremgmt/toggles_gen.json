@@ -296,6 +296,21 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistory",
+        "resourceVersion": "1752682072771",
+        "creationTimestamp": "2025-07-16T16:07:52Z"
+      },
+      "spec": {
+        "description": "Enables the notification history feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-11-22T11:07:45Z"
