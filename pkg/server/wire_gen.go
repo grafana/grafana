@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/registry/apis"
@@ -168,7 +169,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	pluginassets2 "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -349,7 +350,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
 	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	assetpathService := assetpath.ProvideService(pluginManagementCfg, pluginscdnService)
+	localProvider := pluginassets.ProvideService()
+	assetpathService := assetpath.ProvideService(pluginManagementCfg, pluginscdnService, localProvider)
 	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, assetpathService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
@@ -613,7 +615,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	pluginassetsService := pluginassets.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
+	pluginassetsService := pluginassets2.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, dashboardService, folderimplService, acimplService, teamService, userService, actionSetService, dashboardServiceImpl)
@@ -772,14 +774,16 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
+	secureValueValidator := validator3.ProvideSecureValueValidator()
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueService, decryptService)
-	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, secureValueService, decryptService, factory, renderingService, resourceClient, eventualRestConfigProvider)
+	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService)
+	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v2 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
 	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v2)
 	if err != nil {
@@ -896,7 +900,8 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
 	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	assetpathService := assetpath.ProvideService(pluginManagementCfg, pluginscdnService)
+	localProvider := pluginassets.ProvideService()
+	assetpathService := assetpath.ProvideService(pluginManagementCfg, pluginscdnService, localProvider)
 	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, assetpathService)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
@@ -1162,7 +1167,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	pluginassetsService := pluginassets.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
+	pluginassetsService := pluginassets2.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
 	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, dashboardService, folderimplService, acimplService, teamService, userService, actionSetService, dashboardServiceImpl)
@@ -1321,14 +1326,16 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
+	secureValueValidator := validator3.ProvideSecureValueValidator()
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueService, decryptService)
-	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, secureValueService, decryptService, factory, renderingService, resourceClient, eventualRestConfigProvider)
+	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService)
+	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v2 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
 	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v2)
 	if err != nil {

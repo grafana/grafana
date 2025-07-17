@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "さらに追加"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "アラートステート",
       "annotations": "注釈",
@@ -3448,6 +3457,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "キャンセル",
       "cannot-move-folders": "フォルダは移動できません",
       "confirmation-text": "削除",
@@ -3466,7 +3477,9 @@
       "move-modal-text": "この操作により、次のコンテンツが移動されます。",
       "move-modal-title": "移動",
       "moving": "移動中…",
-      "new-folder-name-required-phrase": "フォルダ名が必要です。"
+      "new-folder-name-required-phrase": "フォルダ名が必要です。",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "最近削除された"
