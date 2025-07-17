@@ -4,8 +4,8 @@ import { Property } from 'csstype';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
+import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
 import { JSONCellProps } from '../types';
-import { maybeWrapWithLink } from '../utils';
 
 export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps) => {
   const styles = useStyles2(getStyles, justifyContent);
@@ -30,7 +30,13 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps
     }
   }
 
-  return <div className={styles.jsonText}>{maybeWrapWithLink(field, rowIdx, displayValue)}</div>;
+  return (
+    <div className={styles.jsonText}>
+      <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+        {displayValue}
+      </MaybeWrapWithLink>
+    </div>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
