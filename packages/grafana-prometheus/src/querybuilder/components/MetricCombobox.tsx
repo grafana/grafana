@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
 import { Button, InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
 
-import { METRIC_LABEL } from '../../constants';
+import { DEFAULT_SUGGESTIONS_LIMIT, METRIC_LABEL } from '../../constants';
 import { PrometheusDatasource } from '../../datasource';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
@@ -44,7 +44,12 @@ export function MetricCombobox({
   const getMetricLabels = useCallback(
     async (query: string) => {
       const match = formatKeyValueStrings(query, labelsFilters);
-      const results = await datasource.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
+      const results = await datasource.languageProvider.queryLabelValues(
+        timeRange,
+        METRIC_LABEL,
+        match,
+        DEFAULT_SUGGESTIONS_LIMIT
+      );
 
       const resultsOptions = results.map((result) => {
         return {

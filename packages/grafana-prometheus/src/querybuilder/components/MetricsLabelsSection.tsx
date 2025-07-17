@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { SelectableValue, TimeRange } from '@grafana/data';
 
 import { getDebounceTimeInMilliseconds } from '../../caching';
+import { DEFAULT_SUGGESTIONS_LIMIT } from '../../constants';
 import { PrometheusDatasource } from '../../datasource';
 import { truncateResult } from '../../language_utils';
 import { PromMetricsMetadata } from '../../types';
@@ -180,13 +181,18 @@ async function getMetrics(
   // don't use it with the visual builder and there is no need to run all the start() setup anyway.
   const metadata = datasource.languageProvider.retrieveMetricsMetadata();
   if (Object.keys(metadata).length === 0) {
-    await datasource.languageProvider.queryMetricsMetadata();
+    await datasource.languageProvider.queryMetricsMetadata(DEFAULT_SUGGESTIONS_LIMIT);
   }
 
   let metrics: string[];
   const expr = promQueryModeller.renderLabels(query.labels);
   metrics =
-    (await datasource.languageProvider.queryLabelValues(timeRange, '__name__', expr === '' ? undefined : expr)) ?? [];
+    (await datasource.languageProvider.queryLabelValues(
+      timeRange,
+      '__name__',
+      expr === '' ? undefined : expr,
+      DEFAULT_SUGGESTIONS_LIMIT
+    )) ?? [];
 
   return metrics.map((m) => ({
     value: m,
