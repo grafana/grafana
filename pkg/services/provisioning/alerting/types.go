@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -21,7 +22,7 @@ type AlertingFile struct {
 	ContactPoints       []ContactPoint
 	DeleteContactPoints []DeleteContactPoint
 	Policies            []NotificiationPolicy
-	ResetPolicies       []OrgID
+	DeletePolicies      []DeleteNotificationPolicy
 	MuteTimes           []MuteTime
 	DeleteMuteTimes     []DeleteMuteTime
 	Templates           []Template
@@ -31,16 +32,17 @@ type AlertingFile struct {
 type AlertingFileV1 struct {
 	configVersion
 	Filename            string
-	Groups              []AlertRuleGroupV1      `json:"groups" yaml:"groups"`
-	DeleteRules         []RuleDeleteV1          `json:"deleteRules" yaml:"deleteRules"`
-	ContactPoints       []ContactPointV1        `json:"contactPoints" yaml:"contactPoints"`
-	DeleteContactPoints []DeleteContactPointV1  `json:"deleteContactPoints" yaml:"deleteContactPoints"`
-	Policies            []NotificiationPolicyV1 `json:"policies" yaml:"policies"`
-	ResetPolicies       []values.Int64Value     `json:"resetPolicies" yaml:"resetPolicies"`
-	MuteTimes           []MuteTimeV1            `json:"muteTimes" yaml:"muteTimes"`
-	DeleteMuteTimes     []DeleteMuteTimeV1      `json:"deleteMuteTimes" yaml:"deleteMuteTimes"`
-	Templates           []TemplateV1            `json:"templates" yaml:"templates"`
-	DeleteTemplates     []DeleteTemplateV1      `json:"deleteTemplates" yaml:"deleteTemplates"`
+	Groups              []AlertRuleGroupV1           `json:"groups" yaml:"groups"`
+	DeleteRules         []RuleDeleteV1               `json:"deleteRules" yaml:"deleteRules"`
+	ContactPoints       []ContactPointV1             `json:"contactPoints" yaml:"contactPoints"`
+	DeleteContactPoints []DeleteContactPointV1       `json:"deleteContactPoints" yaml:"deleteContactPoints"`
+	Policies            []NotificiationPolicyV1      `json:"policies" yaml:"policies"`
+	ResetPolicies       []values.Int64Value          `json:"resetPolicies" yaml:"resetPolicies"` // Legacy field, use DeletePolicies instead.
+	DeletePolicies      []DeleteNotificationPolicyV1 `json:"deletePolicies" yaml:"deletePolicies"`
+	MuteTimes           []MuteTimeV1                 `json:"muteTimes" yaml:"muteTimes"`
+	DeleteMuteTimes     []DeleteMuteTimeV1           `json:"deleteMuteTimes" yaml:"deleteMuteTimes"`
+	Templates           []TemplateV1                 `json:"templates" yaml:"templates"`
+	DeleteTemplates     []DeleteTemplateV1           `json:"deleteTemplates" yaml:"deleteTemplates"`
 }
 
 func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
@@ -101,7 +103,18 @@ func (fileV1 *AlertingFileV1) mapPolicies(alertingFile *AlertingFile) error {
 		alertingFile.Policies = append(alertingFile.Policies, np)
 	}
 	for _, orgIDV1 := range fileV1.ResetPolicies {
-		alertingFile.ResetPolicies = append(alertingFile.ResetPolicies, OrgID(orgIDV1.Value()))
+		alertingFile.DeletePolicies = append(alertingFile.DeletePolicies, DeleteNotificationPolicy{
+			OrgID: orgIDV1.Value(),
+			Name:  legacy_storage.UserDefinedRoutingTreeName,
+		})
+	}
+
+	for _, deleteV1 := range fileV1.DeletePolicies {
+		delReq, err := deleteV1.mapToModel()
+		if err != nil {
+			return err
+		}
+		alertingFile.DeletePolicies = append(alertingFile.DeletePolicies, delReq)
 	}
 	return nil
 }

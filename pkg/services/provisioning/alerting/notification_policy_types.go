@@ -2,6 +2,8 @@ package alerting
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
@@ -54,4 +56,29 @@ func (v1 *NotificiationPolicyV1) mapToModel() (NotificiationPolicy, error) {
 type NotificiationPolicy struct {
 	OrgID  int64
 	Policy definitions.Route
+}
+
+type DeleteNotificationPolicyV1 struct {
+	OrgID values.Int64Value  `json:"orgId" yaml:"orgId"`
+	Name  values.StringValue `json:"name" yaml:"name"`
+}
+
+func (v1 DeleteNotificationPolicyV1) mapToModel() (DeleteNotificationPolicy, error) {
+	name := strings.TrimSpace(v1.Name.Value())
+	if name == "" {
+		return DeleteNotificationPolicy{}, errors.New("delete policy missing name")
+	}
+	orgID := v1.OrgID.Value()
+	if orgID < 1 {
+		orgID = 1
+	}
+	return DeleteNotificationPolicy{
+		OrgID: orgID,
+		Name:  name,
+	}, nil
+}
+
+type DeleteNotificationPolicy struct {
+	OrgID int64
+	Name  string
 }

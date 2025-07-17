@@ -359,6 +359,7 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 	}
 
 	export := definitions.RouteExport{
+		Name:                route.Name,
 		Receiver:            route.Receiver,
 		GroupByStr:          NilIfEmpty(util.Pointer(route.GroupByStr)),
 		Match:               route.Match,

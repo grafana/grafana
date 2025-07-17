@@ -252,102 +252,24 @@ func (nps *NotificationPolicyService) UpdatePolicySubTree(ctx context.Context, o
 	return updated, calculateRouteFingerprint(updated), nil
 }
 
+// TODO: Remove this method once the all callers support named routes.
 func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
-	rev, err := nps.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-
-	if rev.Config.AlertmanagerConfig.Route == nil {
-		return definitions.Route{}, "", fmt.Errorf("no route present in current alertmanager config")
-	}
-
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, rev.Config.AlertmanagerConfig.Route, orgID)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-	result := *rev.Config.AlertmanagerConfig.Route
-	result.Provenance = definitions.Provenance(provenance)
-	version := calculateRouteFingerprint(result)
-	return result, version, nil
+	return nps.GetPolicySubTree(ctx, orgID, legacy_storage.UserDefinedRoutingTreeName)
 }
 
+// TODO: Remove this method once the all callers support named routes.
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
-	err := tree.Validate()
-	if err != nil {
-		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
-	}
-
-	revision, err := nps.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-
-	err = nps.checkOptimisticConcurrency(*revision.Config.AlertmanagerConfig.Route, p, version, "update")
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-
-	// check that provenance is not changed in an invalid way
-	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &tree, orgID)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-	if err := nps.validator(storedProvenance, p); err != nil {
-		return definitions.Route{}, "", err
-	}
-
-	receivers := map[string]struct{}{}
-	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
-	for _, receiver := range revision.GetReceivers(nil) {
-		receivers[receiver.Name] = struct{}{}
-	}
-
-	err = tree.ValidateReceivers(receivers)
-	if err != nil {
-		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
-	}
-
-	timeIntervals := map[string]struct{}{}
-	for _, mt := range revision.Config.AlertmanagerConfig.MuteTimeIntervals {
-		timeIntervals[mt.Name] = struct{}{}
-	}
-	for _, mt := range revision.Config.AlertmanagerConfig.TimeIntervals {
-		timeIntervals[mt.Name] = struct{}{}
-	}
-	err = tree.ValidateTimeIntervals(timeIntervals)
-	if err != nil {
-		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
-	}
-
-	revision.Config.AlertmanagerConfig.Route = &tree
-
-	_, err = revision.Config.GetMergedAlertmanagerConfig()
-	if err != nil {
-		return definitions.Route{}, "", fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
-	}
-
-	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
-			return err
-		}
-		return nps.provenanceStore.SetProvenance(ctx, &tree, orgID, p)
-	})
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-	return tree, calculateRouteFingerprint(tree), nil
+	tree.Name = legacy_storage.UserDefinedRoutingTreeName
+	return nps.UpdatePolicySubTree(ctx, orgID, tree, p, version)
 }
 
+// TODO: Remove this method once the all callers support named routes.
 func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
-	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &definitions.Route{}, orgID)
+	err := nps.DeletePolicySubTree(ctx, orgID, legacy_storage.UserDefinedRoutingTreeName, provenance, "")
 	if err != nil {
 		return definitions.Route{}, err
 	}
-	if err := nps.validator(storedProvenance, provenance); err != nil {
-		return definitions.Route{}, err
-	}
-
+	// If the tree was not found, we can just return the default route.
 	defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
 		nps.log.Error("Failed to parse default alertmanager config: %w", err)
@@ -355,48 +277,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	}
 	route := defaultCfg.AlertmanagerConfig.Route
 
-	revision, err := nps.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.Route{}, err
-	}
-	revision.Config.AlertmanagerConfig.Route = route
-	err = nps.ensureDefaultReceiverExists(revision.Config, defaultCfg)
-	if err != nil {
-		return definitions.Route{}, err
-	}
-
-	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
-			return err
-		}
-		return nps.provenanceStore.DeleteProvenance(ctx, route, orgID)
-	})
-
-	if err != nil {
-		return definitions.Route{}, nil
-	} // TODO should be error?
-
 	return *route, nil
-}
-
-func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitions.PostableUserConfig, defaultCfg *definitions.PostableUserConfig) error {
-	defaultRcv := cfg.AlertmanagerConfig.Route.Receiver
-
-	for _, rcv := range cfg.AlertmanagerConfig.Receivers {
-		if rcv.Name == defaultRcv {
-			return nil
-		}
-	}
-
-	for _, rcv := range defaultCfg.AlertmanagerConfig.Receivers {
-		if rcv.Name == defaultRcv {
-			cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, rcv)
-			return nil
-		}
-	}
-
-	nps.log.Error("Grafana Alerting has been configured with a default configuration that is internally inconsistent! The default configuration's notification policy must have a corresponding receiver.")
-	return fmt.Errorf("inconsistent default configuration")
 }
 
 func calculateRouteFingerprint(route definitions.Route) string {
