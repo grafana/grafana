@@ -8051,6 +8051,15 @@
       "field-name-picker": {
         "placeholder": "Select field"
       },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "Boolean",
+        "label-enum": "Enum",
+        "label-number": "Number",
+        "label-other": "Other",
+        "label-string": "String",
+        "label-time": "Time",
+        "label-traces": "Traces"
+      },
       "get-list-of-query-ref-ids": {
         "description": "Frames ({{framesCount}}): {{framesNames}}",
         "label": "Query: {{refId}}",
