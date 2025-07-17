@@ -1756,16 +1756,14 @@ func TestUserSync_GetUsageStats(t *testing.T) {
 	require.Contains(t, stats, "stats.features.scim.has_successful_login.count")
 	require.Equal(t, int(0), stats["stats.features.scim.has_successful_login.count"])
 
-	// Simulate setting the flag manually to test thread safety
-	userSync.scimSuccessfulLogins.Store(true)
+	userSync.scimSuccessfulLogin.Store(true)
 
 	// Test that GetUsageStats returns the updated value
 	stats = userSync.GetUsageStats(context.Background())
 	require.Equal(t, int(1), stats["stats.features.scim.has_successful_login.count"])
 }
 
-func TestUserSync_SCIMLoginFlagSet(t *testing.T) {
-	// Initialize using the same pattern as the successful validation test
+func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
 	userSync := initUserSyncService()
 	userSync.allowNonProvisionedUsers = false
 	userSync.isUserProvisioningEnabled = true

@@ -127,13 +127,11 @@ type UserSync struct {
 	lastSeenSF                *singleflight.Group
 	scimUtil                  *scimutil.SCIMUtil
 	staticConfig              *StaticSCIMConfig
-
-	// Usage stats tracking
-	scimSuccessfulLogin atomic.Bool
+	scimSuccessfulLogin       atomic.Bool
 }
 
 // GetUsageStats implements registry.ProvidesUsageStats
-func (s *UserSync) GetUsageStats() map[string]any {
+func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
 	stats := map[string]any{}
 	if s.scimSuccessfulLogin.Load() {
 		stats["stats.features.scim.has_successful_login.count"] = 1
@@ -184,8 +182,6 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
 		log.Debug("User is provisioned, access granted")
-
-		// Track successful SCIM user login for usage stats
 		s.scimSuccessfulLogin.Store(true)
 
 		return nil
