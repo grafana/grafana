@@ -605,9 +605,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
 
-    // In split view, hide individual DrilldownAlertBoxes (will be shown once at top level)
-    const shouldShowDrilldownAlert = datasourceInstance && !splitted;
-
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         <ExploreToolbar
@@ -641,9 +638,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       mergeSingleChild={true}
                     >
                       <PanelContainer className={styles.queryContainer}>
-                        {shouldShowDrilldownAlert && (
-                          <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />
-                        )}
+                        {!splitted && <DrilldownAlertBox datasourceType={datasourceInstance?.type || ''} />}
                         {correlationsBox}
                         <QueryRows
                           exploreId={exploreId}

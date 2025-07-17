@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { ErrorBoundaryAlert, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
@@ -13,7 +13,6 @@ import { ExploreQueryParams } from 'app/types/explore';
 import { useSelector } from 'app/types/store';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
-import { DrilldownAlertBox } from './DrilldownAlertBox';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
@@ -53,10 +52,6 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
 
-  // In split view, show DrilldownAlertBox once above both panes (regardless of compact mode)
-  const shouldShowTopLevelAlert = hasSplit && panes.length > 0;
-  const firstPaneDatasourceType = panes[0]?.[1]?.datasourceInstance?.type;
-
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
@@ -78,9 +73,6 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
       </h1>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
-      {shouldShowTopLevelAlert && firstPaneDatasourceType && (
-        <DrilldownAlertBox datasourceType={firstPaneDatasourceType} />
-      )}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}
@@ -98,7 +90,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
               {pane.initialized ? (
                 <ExplorePaneContainer exploreId={exploreId} />
               ) : (
-                <LoadingPlaceholder text={'Loading...'} />
+                <LoadingPlaceholder text={t('explore.pane.loading-placeholder', 'Loading...')} />
               )}
             </ErrorBoundaryAlert>
           );
