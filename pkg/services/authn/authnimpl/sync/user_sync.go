@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -126,6 +127,20 @@ type UserSync struct {
 	lastSeenSF                *singleflight.Group
 	scimUtil                  *scimutil.SCIMUtil
 	staticConfig              *StaticSCIMConfig
+
+	// Usage stats tracking
+	scimSuccessfulLogins atomic.Bool
+}
+
+// GetUsageStats implements registry.ProvidesUsageStats
+func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
+	stats := map[string]any{}
+	if s.scimSuccessfulLogins.Load() {
+		stats["stats.features.scim.has_successful_login.count"] = 1
+	} else {
+		stats["stats.features.scim.has_successful_login.count"] = 0
+	}
+	return stats
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
@@ -169,6 +184,10 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
 		}
 		log.Debug("User is provisioned, access granted")
+
+		// Track successful SCIM user login for usage stats
+		s.scimSuccessfulLogins.Store(true)
+
 		return nil
 	}
 
