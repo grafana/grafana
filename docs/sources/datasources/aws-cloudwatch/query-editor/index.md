@@ -38,9 +38,11 @@ refs:
 
 # Amazon CloudWatch query editor
 
-Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize and alert on logs and metrics stored in Amazon CLoudWatch. It's located on the Explore page. For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize and alert on logs and metrics stored in Amazon CloudWatch.  It's located on the Explore page. For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
-<!--
+
+
+<!-- 
 This topic explains querying specific to the CloudWatch data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data). -->
 
@@ -53,7 +55,21 @@ The CloudWatch data source can query data from both CloudWatch metrics and Cloud
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch API modes" >}}
 
-Select which API to query by using the query mode switch on top of the editor.
+Select which API to query by using the query mode drop-down to the right of the **Region** setting.
+
+## CloudWatch Metrics query editor components
+
+Namespace: The AWS service namespace (e.g., AWS/EC2, AWS/Lambda, or your custom namespace).
+
+Metric name: The name of the metric you want to visualize (e.g., CPUUtilization).
+
+Dimensions: Filters like InstanceId, FunctionName, etc.
+
+Statistic/Period: Choose how to aggregate the data (e.g., Average, Sum) and over what period (e.g., 1m, 5m).
+
+Region: Select the AWS region if it differs from the default.
+
+
 
 ## Query CloudWatch metrics
 
