@@ -189,11 +189,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     // Check each row to see if it matches all filters (AND logic)
     for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
       const rowMatches = filterFieldIndices.every(({ matcher, fieldIndex }) => {
-        // Handle case where field doesn't exist (fieldIndex === -1)
-        if (fieldIndex === -1) {
-          return false; // Impossible filter case
-        }
-
         const field = frame.fields[fieldIndex];
 
         // Use Grafana's value matcher system
