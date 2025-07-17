@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Daha fazlasını ekle"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Uyarı durumu",
       "annotations": "Ek açıklamalar",
@@ -3461,6 +3470,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "İptal",
       "cannot-move-folders": "Klasörler taşınamaz",
       "confirmation-text": "Sil",
@@ -3479,7 +3490,9 @@
       "move-modal-text": "Bu işlem aşağıdaki içerikleri taşıyacaktır:",
       "move-modal-title": "Taşı",
       "moving": "Taşınıyor...",
-      "new-folder-name-required-phrase": "Klasör adı gereklidir."
+      "new-folder-name-required-phrase": "Klasör adı gereklidir.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Son silinenler"
