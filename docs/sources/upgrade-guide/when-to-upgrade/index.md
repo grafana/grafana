@@ -85,22 +85,31 @@ Self-managed Grafana users have control over when they upgrade to a new version 
 
 For self-managed Grafana (both Enterprise and OSS), the support for versions is as follows:
 
-- Support for each minor release extends to nine months after the release date.
-- Support for the last minor release of a major version is extended an additional six months, for a total of 15 months of support after the release date.
+- Each minor release is supported for 9 months after its release date
+- The last minor release of a major version receives extended support for 15 months after its release date
+- Support levels change as new versions are released:
+  - **Full Support**: The most recently released major/minor version receive full support including new features, bug fixes, and security patches
+  - **Security & Critical Bugs Only**: Versions that are outside of the most recently released major/minor version, but still within their support period, receive only security patches and critical bug fixes
+  - **Not Supported**: Versions beyond their support period receive no updates
 
 Here is an overview of projected version support through 2025:
 
-| **Version**             | **Release date** | **Support end of life (EOL)**           |
-| ----------------------- | ---------------- | --------------------------------------- |
-| 10.4 (Last minor of 10) | March 2024       | June 2025 (extended support)            |
-| 11.0                    | May 2024         | NO LONGER SUPPORTED as of February 2025 |
-| 11.1                    | June 2024        | NO LONGER SUPPORTED as of March 2025    |
-| 11.2                    | August 2024      | May 2025                                |
-| 11.3                    | October 2024     | July 2025                               |
-| 11.4                    | December 2024    | September 2025                          |
-| 11.5                    | January 2025     | October 2025                            |
-| 11.6 (Last minor of 11) | March 2025       | June 2026                               |
-| 12.0                    | May 2025         | January 2026                            |
+| **Version**               | **Release date**   | **Support end date** | **Support level**             |
+| ------------------------- | ------------------ | -------------------- | ----------------------------- |
+| 10.2.x                    | October 24, 2023   | July 24, 2024        | Not Supported                 |
+| 10.3.x                    | January 23, 2024   | October 23, 2024     | Not Supported                 |
+| 10.4.x (Last minor of 10) | March 5, 2024      | June 5, 2025         | Not Supported                 |
+| 11.0.x                    | May 14, 2024       | February 14, 2025    | Not Supported                 |
+| 11.1.x                    | June 25, 2024      | April 23, 2025       | Not Supported                 |
+| 11.2.x                    | August 27, 2024    | May 27, 2025         | Not Supported                 |
+| 11.3.x                    | October 22, 2024   | July 22, 2025        | Security & Critical Bugs Only |
+| 11.4.x                    | December 5, 2024   | September 5, 2025    | Security & Critical Bugs Only |
+| 11.5.x                    | January 28, 2025   | October 28, 2025     | Security & Critical Bugs Only |
+| 11.6.x (Last minor of 11) | March 25, 2025     | May 25, 2026         | Security & Critical Bugs Only |
+| 12.0.x                    | May 5, 2025        | February 5, 2026     | Full Support until next minor |
+| 12.1.x                    | July 22, 2025      | April 22, 2026       | Full Support until next minor |
+| 12.2.x                    | September 23, 2025 | June 23, 2026        | Full Support until next minor |
+| 12.3.x                    | November 18, 2025  | August 18, 2026      | Full Support until next minor |
 
 ## How are these versions supported?
 
