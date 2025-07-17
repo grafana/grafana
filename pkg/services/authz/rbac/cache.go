@@ -45,6 +45,10 @@ func folderCacheKey(namespace string) string {
 	return namespace + ".folders"
 }
 
+func teamIDsCacheKey(namespace string) string {
+	return namespace + ".teams"
+}
+
 type cacheWrap[T any] interface {
 	Get(ctx context.Context, key string) (T, bool)
 	Set(ctx context.Context, key string, value T)
