@@ -929,9 +929,9 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       multi: false,
       options: [
         { value: '', label: '' },
-        { value: 'login', label: t('auth-config.fields.login-prompt-login', 'Login') },
-        { value: 'consent', label: t('auth-config.fields.login-prompt-consent', 'Consent') },
-        { value: 'select_account', label: t('auth-config.fields.login-prompt-select-account', 'Select account') },
+        { value: 'login', label: 'Login' },
+        { value: 'consent', label: 'Consent' },
+        { value: 'select_account', label: 'Select account' },
       ],
       defaultValue: { value: '', label: '' },
     },

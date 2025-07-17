@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -279,15 +278,6 @@ func validateInfo(info *social.OAuthInfo, oldInfo *social.OAuthInfo, requester i
 		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator,
 		validation.OrgAttributePathValidator(info, oldInfo, requester),
 		validation.OrgMappingValidator(info, oldInfo, requester),
-		validateLoginPrompt,
+		validation.LoginPromptValidator,
 	)
-}
-
-func validateLoginPrompt(info *social.OAuthInfo, requester identity.Requester) error {
-	prompt := info.LoginPrompt
-
-	if prompt != "" && prompt != "login" && prompt != "consent" && prompt != "select_account" {
-		return ssosettings.ErrInvalidOAuthConfig("Invalid value for login_prompt. Valid values are: login, consent, select_account.")
-	}
-	return nil
 }
