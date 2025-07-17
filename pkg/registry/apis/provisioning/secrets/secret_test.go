@@ -13,68 +13,35 @@ import (
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 )
 
-// MockResourceInterface is a mock for dynamic.ResourceInterface
-type MockResourceInterface struct {
-	mock.Mock
+// mockDynamicInterface implements a simplified version of the dynamic.ResourceInterface
+type mockDynamicInterface struct {
+	dynamic.ResourceInterface
+	getResult    *unstructured.Unstructured
+	getErr       error
+	createResult *unstructured.Unstructured
+	createErr    error
+	updateResult *unstructured.Unstructured
+	updateErr    error
+	deleteErr    error
 }
 
-func (m *MockResourceInterface) Get(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, name, options)
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+func (m *mockDynamicInterface) Get(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return m.getResult, m.getErr
 }
 
-func (m *MockResourceInterface) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, options)
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+func (m *mockDynamicInterface) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return m.createResult, m.createErr
 }
 
-func (m *MockResourceInterface) Update(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, options)
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+func (m *mockDynamicInterface) Update(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return m.updateResult, m.updateErr
 }
 
-func (m *MockResourceInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
-	args := m.Called(ctx, name, options)
-	return args.Error(0)
-}
-
-func (m *MockResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
-	args := m.Called(ctx, options, listOptions)
-	return args.Error(0)
-}
-
-func (m *MockResourceInterface) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	args := m.Called(ctx, opts)
-	return args.Get(0).(*unstructured.UnstructuredList), args.Error(1)
-}
-
-func (m *MockResourceInterface) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	args := m.Called(ctx, opts)
-	return args.Get(0).(watch.Interface), args.Error(1)
-}
-
-func (m *MockResourceInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, name, pt, data, options)
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-func (m *MockResourceInterface) Apply(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions, subresources ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, name, obj, options)
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-func (m *MockResourceInterface) ApplyStatus(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, name, obj, options)
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-func (m *MockResourceInterface) UpdateStatus(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, options)
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+func (m *mockDynamicInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+	return m.deleteErr
 }
 
 func TestNewSecretsService(t *testing.T) {
@@ -94,7 +61,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 		namespace     string
 		secretName    string
 		data          string
-		setupMocks    func(*MockSecureValueClient, *mocks.MockDecryptService, *MockResourceInterface)
+		setupMocks    func(*MockSecureValueClient, *mocks.MockDecryptService, *mockDynamicInterface)
 		expectedName  string
 		expectedError string
 	}{
@@ -103,22 +70,24 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "test-secret",
 			data:       "secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface) {
 				// Setup client to return the mock resource interface
 				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
 				// Mock Get call to return not found error (secret doesn't exist)
-				mockResourceInterface.On("Get", mock.Anything, "test-secret", mock.AnythingOfType("v1.GetOptions")).Return((*unstructured.Unstructured)(nil), contracts.ErrSecureValueNotFound)
+				mockResourceInterface.getResult = nil
+				mockResourceInterface.getErr = contracts.ErrSecureValueNotFound
 
-				// Mock Create call with validation
-				mockResourceInterface.On("Create", mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*unstructured.Unstructured"), mock.AnythingOfType("v1.CreateOptions")).Return(&unstructured.Unstructured{
+				// Mock Create call
+				mockResourceInterface.createResult = &unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"metadata": map[string]interface{}{
 							"name":      "test-secret",
 							"namespace": "test-namespace",
 						},
 					},
-				}, nil)
+				}
+				mockResourceInterface.createErr = nil
 			},
 			expectedName: "test-secret",
 		},
@@ -127,7 +96,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "existing-secret",
 			data:       "new-secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface) {
 				existingSecret := &unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"metadata": map[string]interface{}{
@@ -145,17 +114,19 @@ func TestSecretsService_Encrypt(t *testing.T) {
 				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
 				// Mock Get call to return existing secret
-				mockResourceInterface.On("Get", mock.Anything, "existing-secret", mock.AnythingOfType("v1.GetOptions")).Return(existingSecret, nil)
+				mockResourceInterface.getResult = existingSecret
+				mockResourceInterface.getErr = nil
 
-				// Mock Update call with validation
-				mockResourceInterface.On("Update", mock.AnythingOfType("context.backgroundCtx"), mock.AnythingOfType("*unstructured.Unstructured"), mock.AnythingOfType("v1.UpdateOptions")).Return(&unstructured.Unstructured{
+				// Mock Update call
+				mockResourceInterface.updateResult = &unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"metadata": map[string]interface{}{
 							"name":      "existing-secret",
 							"namespace": "test-namespace",
 						},
 					},
-				}, nil)
+				}
+				mockResourceInterface.updateErr = nil
 			},
 			expectedName: "existing-secret",
 		},
@@ -164,12 +135,13 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "test-secret",
 			data:       "secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface) {
 				// Setup client to return the mock resource interface
 				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
 				// Mock Get call to return error
-				mockResourceInterface.On("Get", mock.Anything, "test-secret", mock.AnythingOfType("v1.GetOptions")).Return((*unstructured.Unstructured)(nil), errors.New("database error"))
+				mockResourceInterface.getResult = nil
+				mockResourceInterface.getErr = errors.New("database error")
 			},
 			expectedError: "database error",
 		},
@@ -178,15 +150,17 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "test-secret",
 			data:       "secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface) {
 				// Setup client to return the mock resource interface
 				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
 				// Mock Get call to return not found error
-				mockResourceInterface.On("Get", mock.Anything, "test-secret", mock.AnythingOfType("v1.GetOptions")).Return((*unstructured.Unstructured)(nil), contracts.ErrSecureValueNotFound)
+				mockResourceInterface.getResult = nil
+				mockResourceInterface.getErr = contracts.ErrSecureValueNotFound
 
 				// Mock Create call to return error
-				mockResourceInterface.On("Create", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), mock.Anything).Return((*unstructured.Unstructured)(nil), errors.New("creation failed"))
+				mockResourceInterface.createResult = nil
+				mockResourceInterface.createErr = errors.New("creation failed")
 			},
 			expectedError: "creation failed",
 		},
@@ -195,7 +169,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 			namespace:  "test-namespace",
 			secretName: "existing-secret",
 			data:       "new-secret-data",
-			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface) {
 				existingSecret := &unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"metadata": map[string]interface{}{
@@ -213,10 +187,12 @@ func TestSecretsService_Encrypt(t *testing.T) {
 				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
 				// Mock Get call to return existing secret
-				mockResourceInterface.On("Get", mock.Anything, "existing-secret", mock.AnythingOfType("v1.GetOptions")).Return(existingSecret, nil)
+				mockResourceInterface.getResult = existingSecret
+				mockResourceInterface.getErr = nil
 
 				// Mock Update call to return error
-				mockResourceInterface.On("Update", mock.Anything, mock.AnythingOfType("*unstructured.Unstructured"), mock.Anything).Return((*unstructured.Unstructured)(nil), errors.New("update failed"))
+				mockResourceInterface.updateResult = nil
+				mockResourceInterface.updateErr = errors.New("update failed")
 			},
 			expectedError: "update failed",
 		},
@@ -226,7 +202,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockSecretsSvc := NewMockSecureValueClient(t)
 			mockDecryptSvc := &mocks.MockDecryptService{}
-			mockResourceInterface := &MockResourceInterface{}
+			mockResourceInterface := &mockDynamicInterface{}
 
 			tt.setupMocks(mockSecretsSvc, mockDecryptSvc, mockResourceInterface)
 
@@ -404,31 +380,31 @@ func TestSecretsService_Delete(t *testing.T) {
 		name          string
 		namespace     string
 		secretName    string
-		setupMocks    func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface)
+		setupMocks    func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface)
 		expectedError string
 	}{
 		{
 			name:       "delete success",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface) {
 				// Setup client to return the mock resource interface
 				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
 				// Mock Delete call
-				mockResourceInterface.On("Delete", mock.Anything, "test-secret", mock.AnythingOfType("v1.DeleteOptions")).Return(nil)
+				mockResourceInterface.deleteErr = nil
 			},
 		},
 		{
 			name:       "delete returns error",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface) {
 				// Setup client to return the mock resource interface
 				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
 
 				// Mock Delete call to return error
-				mockResourceInterface.On("Delete", mock.Anything, "test-secret", mock.AnythingOfType("v1.DeleteOptions")).Return(errors.New("delete failed"))
+				mockResourceInterface.deleteErr = errors.New("delete failed")
 			},
 			expectedError: "delete failed",
 		},
@@ -436,7 +412,7 @@ func TestSecretsService_Delete(t *testing.T) {
 			name:       "client error",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
-			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *MockResourceInterface) {
+			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService, mockResourceInterface *mockDynamicInterface) {
 				// Setup client to return error
 				mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(nil, errors.New("client error"))
 			},
@@ -448,7 +424,7 @@ func TestSecretsService_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockSecretsSvc := NewMockSecureValueClient(t)
 			mockDecryptSvc := &mocks.MockDecryptService{}
-			mockResourceInterface := &MockResourceInterface{}
+			mockResourceInterface := &mockDynamicInterface{}
 
 			tt.setupMocks(mockSecretsSvc, mockDecryptSvc, mockResourceInterface)
 
