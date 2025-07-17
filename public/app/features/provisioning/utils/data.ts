@@ -85,7 +85,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     url: remoteConfig?.url || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
-    prWorkflow: spec.workflows.includes('write'),
+    prWorkflow: spec.workflows.includes('branch'),
   });
 };
 
