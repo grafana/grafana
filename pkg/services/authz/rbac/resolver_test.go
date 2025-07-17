@@ -50,7 +50,7 @@ func TestService_resolveScopeMap(t *testing.T) {
 			},
 		},
 		{
-			name: "Shouldn't use cache from the  incorrect namespace",
+			name: "Shouldn't use cache from another namespace",
 			ns:   types.NamespaceInfo{Value: "org-2", OrgID: 2},
 			scopeMap: map[string]bool{
 				"teams:id:1": true,
