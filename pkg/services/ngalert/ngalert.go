@@ -260,7 +260,7 @@ func (ng *AlertNG) init() error {
 					// Create internal Alertmanager.
 					internalAM, err := factoryFn(ctx, orgID)
 					if err != nil {
-						return nil, fmt.Errorf("failed to create internal Alertmanager: %w", err)
+						return nil, err
 					}
 
 					// Create remote Alertmanager.
@@ -271,7 +271,7 @@ func (ng *AlertNG) init() error {
 							// We can't start the internal Alertmanger without the remote state.
 							return nil, fmt.Errorf("failed to create remote Alertmanager: %w", err)
 						}
-						moaLogger.Warn("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
 					}
 
