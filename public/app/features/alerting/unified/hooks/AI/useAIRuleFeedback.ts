@@ -9,7 +9,7 @@ export interface UseAIRuleFeedbackReturn {
 }
 
 export interface AIFeedbackTracker {
-  (props: { helpful: boolean; comment?: string; [key: string]: any }): void;
+  (props: { helpful: boolean; comment?: string; [key: string]: unknown }): void;
 }
 
 /**
