@@ -1759,6 +1759,15 @@ var (
 			FrontendOnly:      true,
 			Expression:        "false", // extensions will be disabled by default
 		},
+		{
+			Name:              "alertingMultiplePolicies",
+			Description:       "Enables the ability to create multiple alerting policies",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
 	}
 )
 

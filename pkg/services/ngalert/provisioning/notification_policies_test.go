@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -487,6 +488,7 @@ func createNotificationPolicyServiceSut() (*NotificationPolicyService, *legacy_s
 		validator: func(from, to models.Provenance) error {
 			return nil
 		},
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}, configStore, prov
 }
 

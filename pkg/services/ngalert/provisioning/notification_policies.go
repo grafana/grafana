@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -27,16 +28,24 @@ type NotificationPolicyService struct {
 	log             log.Logger
 	settings        setting.UnifiedAlertingSettings
 	validator       validation.ProvenanceStatusTransitionValidator
+	FeatureToggles  featuremgmt.FeatureToggles
 }
 
-func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningStore,
-	xact TransactionManager, settings setting.UnifiedAlertingSettings, log log.Logger) *NotificationPolicyService {
+func NewNotificationPolicyService(
+	am alertmanagerConfigStore,
+	prov ProvisioningStore,
+	xact TransactionManager,
+	settings setting.UnifiedAlertingSettings,
+	features featuremgmt.FeatureToggles,
+	log log.Logger,
+) *NotificationPolicyService {
 	return &NotificationPolicyService{
 		configStore:     am,
 		provenanceStore: prov,
 		xact:            xact,
 		log:             log,
 		settings:        settings,
+		FeatureToggles:  features,
 		validator:       validation.ValidateProvenanceRelaxed,
 	}
 }
