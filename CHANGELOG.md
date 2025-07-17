@@ -1,3 +1,16 @@
+<!-- 12.0.2+security-01 START -->
+
+# 12.0.2+security-01 (2025-07-17)
+
+### Features and enhancements
+
+- **Profiles:** Stop passing response headers for Grafana-Pyroscope and parca datasources [#106730](https://github.com/grafana/grafana/pull/106730), [@simonswine](https://github.com/simonswine)
+
+### Bug fixes
+
+- **FlameGraph:** Fix bug for function names that conflict with JavaScript object prototype properties [#106625](https://github.com/grafana/grafana/pull/106625), [@simonswine](https://github.com/simonswine)
+
+<!-- 12.0.2+security-01 END -->
 <!-- 12.0.1 START -->
 
 # 12.0.1 (2025-05-22)
