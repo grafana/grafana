@@ -5,18 +5,14 @@ import { Card, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
 
 import { CONNECT_URL } from '../constants';
-import { getRepositoryTypeConfigs, isGitProvider } from '../utils/repositoryTypes';
+import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
 export function RepositoryTypeCards() {
   const styles = useStyles2(getStyles);
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
 
   const availableTypes = frontendSettings?.availableRepositoryTypes || ['github', 'local'];
-  const repositoryConfigs = getRepositoryTypeConfigs().filter((config) => availableTypes.includes(config.type));
-
-  // Separate git providers from other providers
-  const gitProviders = repositoryConfigs.filter((config) => isGitProvider(config.type) && config.type !== 'git');
-  const otherProviders = repositoryConfigs.filter((config) => !isGitProvider(config.type) || config.type === 'git');
+  const { gitProviders, otherProviders } = getOrderedRepositoryConfigs(availableTypes);
 
   return (
     <Stack direction="column" gap={2}>

@@ -1,5 +1,6 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { screen, waitFor } from '@testing-library/react';
+import { UserEvent } from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -41,7 +42,7 @@ function setup(jsx: JSX.Element) {
 }
 
 // Helper function to type into SecretInput with provider-specific placeholder
-async function typeIntoTokenField(user: any, placeholder: string, value: string) {
+async function typeIntoTokenField(user: UserEvent, placeholder: string, value: string) {
   // Check if token field is configured (showing Reset button)
   const resetButton = screen.queryByRole('button', { name: /Reset/i });
   if (resetButton) {
@@ -51,12 +52,16 @@ async function typeIntoTokenField(user: any, placeholder: string, value: string)
 }
 
 // Helper function to fill connection form based on repository type
-async function fillConnectionForm(user: any, type: 'github' | 'gitlab' | 'bitbucket' | 'local', data: {
-  token?: string;
-  url?: string;
-  branch?: string;
-  path?: string;
-}) {
+async function fillConnectionForm(
+  user: UserEvent,
+  type: 'github' | 'gitlab' | 'bitbucket' | 'local',
+  data: {
+    token?: string;
+    url?: string;
+    branch?: string;
+    path?: string;
+  }
+) {
   // Token field (only for git providers)
   if (type !== 'local' && data.token) {
     const tokenPlaceholders = {

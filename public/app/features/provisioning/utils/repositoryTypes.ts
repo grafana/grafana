@@ -52,3 +52,22 @@ const GIT_PROVIDER_TYPES = ['github', 'gitlab', 'bitbucket', 'git'];
 export const isGitProvider = (type: RepoType) => {
   return GIT_PROVIDER_TYPES.includes(type);
 };
+
+/**
+ * Get repository configurations ordered by provider type priority:
+ * 1. Git providers first (github, gitlab, bitbucket) - excludes pure git
+ * 2. Other providers (pure git, local)
+ */
+export const getOrderedRepositoryConfigs = (availableTypes: RepoType[]) => {
+  const repositoryConfigs = getRepositoryTypeConfigs().filter((config) => availableTypes.includes(config.type));
+
+  // Separate git providers from other providers
+  const gitProviders = repositoryConfigs.filter((config) => isGitProvider(config.type) && config.type !== 'git');
+  const otherProviders = repositoryConfigs.filter((config) => !isGitProvider(config.type) || config.type === 'git');
+
+  return {
+    gitProviders,
+    otherProviders,
+    orderedConfigs: [...gitProviders, ...otherProviders],
+  };
+};

@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { Trans, t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { Alert, Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
 
 import { CONNECT_URL } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
-import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
+import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
 interface Props {
   items?: Repository[];
@@ -36,25 +36,19 @@ export function ConnectRepositoryButton({ items }: Props) {
   }
 
   const availableTypes = frontendSettings?.availableRepositoryTypes || ['github', 'local'];
+  const { orderedConfigs } = getOrderedRepositoryConfigs(availableTypes);
 
   return (
     <Dropdown
       overlay={
         <Menu>
-          {availableTypes.map((type) => {
-            const config = getRepositoryTypeConfig(type);
-            if (!config) {
-              return null; // Skip types without configuration
-            }
-            const label = t('provisioning.repository-types.configure-with-provider', 'Configure with {{provider}}', {
-              provider: config.label,
-            });
+          {orderedConfigs.map((config) => {
             return (
               <Menu.Item
-                key={type}
+                key={config.type}
                 icon={config.icon}
-                label={label}
-                onClick={() => navigate(`${CONNECT_URL}/${type}`)}
+                label={config.label}
+                onClick={() => navigate(`${CONNECT_URL}/${config.type}`)}
               />
             );
           })}
