@@ -184,11 +184,11 @@ The examples in this section refer to the data in the following table:
 +---------------------+--------------+---------------------+----------+
 | time_date_time      | value_double | CreatedAt           | hostname |
 +---------------------+--------------+---------------------+----------+
-| 2020-01-02 03:05:00 | 3.0          | 2020-01-02 03:05:00 | 10.0.1.1 |
-| 2020-01-02 03:06:00 | 4.0          | 2020-01-02 03:06:00 | 10.0.1.2 |
-| 2020-01-02 03:10:00 | 6.0          | 2020-01-02 03:10:00 | 10.0.1.1 |
-| 2020-01-02 03:11:00 | 7.0          | 2020-01-02 03:11:00 | 10.0.1.2 |
-| 2020-01-02 03:20:00 | 5.0          | 2020-01-02 03:20:00 | 10.0.1.2 |
+| 2025-01-02 03:05:00 | 3.0          | 2025-01-02 03:05:00 | 10.0.1.1 |
+| 2025-01-02 03:06:00 | 4.0          | 2025-01-02 03:06:00 | 10.0.1.2 |
+| 2025-01-02 03:10:00 | 6.0          | 2025-01-02 03:10:00 | 10.0.1.1 |
+| 2025-01-02 03:11:00 | 7.0          | 2025-01-02 03:11:00 | 10.0.1.2 |
+| 2025-01-02 03:20:00 | 5.0          | 2025-01-02 03:20:00 | 10.0.1.2 |
 +---------------------+--------------+---------------------+----------+
 ```
 
@@ -197,6 +197,52 @@ A time series query result is returned in a [wide data frame format](https://gra
 {{< admonition type="note" >}}
 For backward compatibility, an exception to the aforementioned rule applies to queries returning three columns, including a string column named `metric`. Instead of converting the metric column into field labels, it is used as the field name, and the series name is set to the value of the metric column. Refer to the following example with a metric column.
 {{< /admonition >}}
+
+**Example with `$__time(dateColumn)` Macro:**
+
+```sql
+SELECT
+  $__time(time_date_time),
+  value_double
+FROM my_data
+ORDER BY time_date_time
+```
+
+Table panel result: [Resultant image to be added]
+
+Given the result in the following example, two columns named `Time` and `value_double` are returned, representing the associated data within fixed timestamps. It doesn’t filter data with respect to the time range and returns all the rows in the table.
+
+**Example with `$__timeFilter(dateColumn)` Macro:**
+
+```sql
+SELECT
+  $__time(time_date_time),
+  value_double
+FROM my_data
+WHERE $__timeFilter(time_date_time)
+ORDER BY time_date_time
+```
+
+Table panel result: [Resultant image to be added]
+
+Given the result in the following example is identical to the previous example except that you can filter the data using the Grafana time picker function.
+
+**Example with `$__timeGroup(dateColumn,'5m')` Macro:**
+
+```sql
+SELECT
+  $__timeGroup(time_date_time, '5m') AS time,
+  sum(value_double) AS sum_value
+FROM my_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY time
+ORDER BY time
+```
+
+Table panel result: [Resultant image to be added]
+
+Given the result in the following example, the data is grouped and aggregated within buckets with timestamps of fixed interval i.e. 5 mins. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U).
+
 
 **Example with `metric` column:**
 
