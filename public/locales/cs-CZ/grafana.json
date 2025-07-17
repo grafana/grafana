@@ -3254,6 +3254,9 @@
       "define-allowed-teams-ids-label": "Definovat povolená ID týmů",
       "display-name-description": "Zobrazí se na přihlašovací stránce jako „Přihlásit se přes…“. Užitečné, pokud používáte více než jednoho poskytovatele identity nebo protokoly SSO.",
       "display-name-label": "Zobrazované jméno",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Název klíče, který se použije pro vyhledání e-mailu uživatele v mapě atributů ID tokenu OAuth2.",
       "email-attribute-name-label": "Název atributu e-mailu",
       "email-attribute-path-description": "Výraz JMESPath, který se použije pro vyhledání e-mailu uživatele z informací o uživateli.",
@@ -4650,6 +4653,14 @@
     "errors": {
       "failed-to-load": "Nástěnku se nepodařilo načíst"
     },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "Nepodařilo se načíst nástěnku"
@@ -5877,10 +5888,13 @@
       "description-examples": "Pojmenované skupiny zachycení lze použít k oddělení zobrazovaného textu a hodnoty (<1>viz příklady</1>).",
       "description-optional": "Volitelné, pokud chcete extrahovat část názvu řady nebo segmentu uzlu metriky.",
       "label-data-source": "Zdroj dat",
+      "label-static-options-sort": "",
       "label-target-data-source": "Cílový zdroj dat",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Možnosti dotazu",
-      "selection-options": "Možnosti výběru"
+      "selection-options": "Možnosti výběru",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -8687,9 +8701,7 @@
     "share-panel": {
       "config-description": "Vytvořte personalizovaný přímý odkaz pro sdílení panelu v rámci vaší organizace s následujícími možnostmi přizpůsobení:",
       "download-image": "Stáhnout obrázek",
-      "render-image": "Generovat obrázek",
-      "render-image-error": "Obrázek panelu se nepodařilo vykreslit",
-      "render-image-error-description": "Při generování obrázku došlo k chybě"
+      "render-image": "Generovat obrázek"
     }
   },
   "live": {
@@ -8863,6 +8875,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11474,6 +11488,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exportovat jako JSON",
       "share-externally-title": "Sdílet externě",
       "share-internally-title": "Sdílet interně",
@@ -11509,6 +11524,19 @@
       "view-button": "Zobrazit JSON",
       "view-button-yaml": "Zobrazit YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Vytvořit panel knihovny."
     },
@@ -11517,7 +11545,7 @@
       "info-text": "Vytvořte přímý odkaz na tuto nástěnku nebo panel přizpůsobený možnostmi dole.",
       "link-url": "Odkaz adresy URL",
       "render-alert": "Plugin pro renderování obrázků není nainstalován",
-      "render-instructions": "Chcete-li vyrenderovat obrázek panelu, musíte si nainstalovat <2>plugin Grafana pro renderování obrázků</2>. Chcete-li nainstalovat plugin, obraťte se na správce Grafany.",
+      "render-instructions": "",
       "rendered-image": "Přímý odkaz na vyrenderovaný obrázek",
       "save-alert": "Nástěnka není uložena",
       "save-dashboard": "Chcete-li vyrenderovat obrázek panelu, musíte nejprve uložit nástěnku.",
@@ -11585,6 +11613,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Náhled panelu"
     },
@@ -11949,14 +11983,6 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
-    "pill-cell-options-editor": {
-      "description-color-mode": "",
-      "description-fixed-color": "",
-      "description-value-mappings-info": "",
-      "label-color-mode": "",
-      "label-fixed-color": "",
-      "label-value-mappings-info": ""
-    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -13243,6 +13269,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

@@ -22,9 +22,11 @@ import {
   shallowCompare,
   store,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
+import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
@@ -240,6 +242,16 @@ export const LogListContextProvider = ({
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
 
   useEffect(() => {
+    if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
+      return;
+    }
+    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
+    if (otelDisplayedFields.length) {
+      setDisplayedFields(otelDisplayedFields);
+    }
+  }, [displayedFields.length, logs, setDisplayedFields]);
+
+  useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
     if (showControls && app !== CoreApp.PanelEditor) {
       return;
@@ -442,8 +454,11 @@ export const LogListContextProvider = ({
   );
 
   const closeDetails = useCallback(() => {
+    if (showDetails.length) {
+      removeDetailsScrollPosition(showDetails[0]);
+    }
     setShowDetails([]);
-  }, []);
+  }, [showDetails]);
 
   const toggleDetails = useCallback(
     (log: LogListModel) => {
@@ -584,4 +599,18 @@ function getDetailsWidth(
     return currentWidth ?? defaultWidth;
   }
   return detailsWidth;
+}
+
+const detailsScrollMap = new Map<string, number>();
+
+export function saveDetailsScrollPosition(log: LogListModel, position: number) {
+  detailsScrollMap.set(log.uid, position);
+}
+
+export function getDetailsScrollPosition(log: LogListModel) {
+  return detailsScrollMap.get(log.uid) ?? 0;
+}
+
+export function removeDetailsScrollPosition(log: LogListModel) {
+  detailsScrollMap.delete(log.uid);
 }

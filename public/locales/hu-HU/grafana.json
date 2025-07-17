@@ -3228,6 +3228,9 @@
       "define-allowed-teams-ids-label": "Engedélyezett csapatazonosítók meghatározása",
       "display-name-description": "A bejelentkezési oldalon „Bejelentkezés ezzel” felirattal jelenik meg. Hasznos, ha egynél több identitásszolgáltatót vagy SSO-protokollt használ.",
       "display-name-label": "Megjelenített név",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Az OAuth2-azonosítótoken attribútumtérképén belül a felhasználói e-mail-kereséshez használandó kulcs neve.",
       "email-attribute-name-label": "E-mail-attribútum neve",
       "email-attribute-path-description": "A felhasználói adatok alapján végzett felhasználói e-mail-kereséshez használandó JMESPath-kifejezés.",
@@ -4614,6 +4617,14 @@
     "errors": {
       "failed-to-load": "Az irányítópult betöltése sikertelen volt"
     },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "Az irányítópult lekérése nem sikerült"
@@ -5837,10 +5848,13 @@
       "description-examples": "Az elnevezett rögzítési csoportok felhasználhatók a megjelenített szöveg és érték elválasztására (<1>lásd a példákat</1>).",
       "description-optional": "Opcionális, ha egy sorozatnév vagy metrikai csomópontszegmens egy részét szeretné kinyerni.",
       "label-data-source": "Adatforrás",
+      "label-static-options-sort": "",
       "label-target-data-source": "Céladatforrás",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Lekérdezési beállítások",
-      "selection-options": "Kijelölés beállításai"
+      "selection-options": "Kijelölés beállításai",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -8635,9 +8649,7 @@
     "share-panel": {
       "config-description": "Létrehozhat egy személyre szabott, közvetlen hivatkozást a panel szervezeten belüli megosztásához, a következő testreszabási beállításokkal:",
       "download-image": "Kép letöltése",
-      "render-image": "Kép generálása",
-      "render-image-error": "Panel képének renderelése sikertelen",
-      "render-image-error-description": "Hiba történt a kép generálása során"
+      "render-image": "Kép generálása"
     }
   },
   "live": {
@@ -8805,6 +8817,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11398,6 +11412,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exportálás JSON-fájlként",
       "share-externally-title": "Külső megosztás",
       "share-internally-title": "Belső megosztás",
@@ -11433,6 +11448,19 @@
       "view-button": "JSON megtekintése",
       "view-button-yaml": "YAML megtekintése"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Könyvtárpanel létrehozása."
     },
@@ -11441,7 +11469,7 @@
       "info-text": "Létrehozhat egy közvetlen hivatkozást ehhez az irányítópulthoz vagy panelhez, az alábbi lehetőségekkel testreszabva.",
       "link-url": "Hivatkozás URL-címe",
       "render-alert": "Az Image Renderer bővítmény nincs telepítve",
-      "render-instructions": "Panelkép rendereléséhez telepítenie kell a <2>Grafana Image Renderer bővítményt</2>. Kérjük, vegye fel a kapcsolatot Grafana-rendszergazdájával a bővítmény telepítéséhez.",
+      "render-instructions": "",
       "rendered-image": "Renderelt kép közvetlen hivatkozása",
       "save-alert": "Az irányítópult nincs mentve",
       "save-dashboard": "Panelkép rendereléséhez először mentenie kell az irányítópultot.",
@@ -11509,6 +11537,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Panel előnézete"
     },
@@ -11871,14 +11905,6 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
-    "pill-cell-options-editor": {
-      "description-color-mode": "",
-      "description-fixed-color": "",
-      "description-value-mappings-info": "",
-      "label-color-mode": "",
-      "label-fixed-color": "",
-      "label-value-mappings-info": ""
-    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -13165,6 +13191,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",
