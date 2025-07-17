@@ -33,6 +33,7 @@ const gitTokenSecretSuffix = "-git-token"
 type RepositoryConfig struct {
 	URL            string
 	Branch         string
+	TokenUser      string
 	Token          string
 	EncryptedToken []byte
 	Path           string
@@ -54,7 +55,12 @@ func NewGitRepository(
 ) (GitRepository, error) {
 	var opts []options.Option
 	if len(gitConfig.Token) > 0 {
-		opts = append(opts, options.WithBasicAuth("git", gitConfig.Token))
+		tokenUser := gitConfig.TokenUser
+		if tokenUser == "" {
+			tokenUser = "git"
+		}
+
+		opts = append(opts, options.WithBasicAuth(tokenUser, gitConfig.Token))
 	}
 
 	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)

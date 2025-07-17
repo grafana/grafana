@@ -1196,6 +1196,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
 			Path:           r.Spec.Git.Path,
+			TokenUser:      r.Spec.Git.TokenUser,
 			Token:          token,
 			EncryptedToken: r.Spec.Git.EncryptedToken,
 		}
