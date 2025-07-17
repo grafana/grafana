@@ -131,6 +131,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		return err
 	}
 
+	opts.StorageOptsRegister(userResource.GroupResource(), apistore.StorageOptions{
+		RequireDeprecatedInternalID: true,
+	})
+
 	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient)
 
 	dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
