@@ -71,7 +71,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showMoveModal = () => {
-    if (hasProvisioned && hasNonProvisioned) {
+    if (hasProvisioned && hasNonProvisioned && provisioningEnabled) {
       // Mixed selection
       appEvents.publish(
         new ShowModalReactEvent({

@@ -1,6 +1,5 @@
-import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, getAppEvents } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import {
   RepositoryView,
   ResourceWrapper,
@@ -109,7 +108,7 @@ export const bulkMoveResources = async ({
           throw new Error(`No source path found for dashboard ${uid}`);
         }
 
-        const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/111namespaces/${config.namespace}`;
+        const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
         const url = `${baseUrl}/repositories/${repository.name}/files/${sourcePath}`;
         const fileResponse = await getBackendSrv().get(url);
 
@@ -153,9 +152,8 @@ export const bulkMoveResources = async ({
   const moveResults = await Promise.allSettled(
     fulfilledResources.map(async ({ uid, data, title }): Promise<MoveResultSuccess | MoveResultFailed> => {
       try {
-        const fileNameWithPath = data.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
-        const fileName = fileNameWithPath.split('/').pop();
-        const newPath = calculateTargetPath(targetFolderPath, fileNameWithPath);
+        const fileName = formatFileName(data);
+        const newPath = formatFilePath(targetFolderPath, fileName);
         const body = data.resource.file;
 
         if (!body) {
@@ -225,12 +223,6 @@ export const bulkMoveResources = async ({
   };
 };
 
-// Calculate target path for moving a resource
-export function calculateTargetPath(targetFolderPath: string, currentSourcePath: string): string {
-  const fileName = currentSourcePath.split('/').pop();
-  return `${targetFolderPath}/${fileName}`;
-}
-
 export interface MoveResourceResult {
   success: boolean;
   failedToCreate?: boolean;
@@ -297,4 +289,16 @@ export async function moveResource({
       error: deleteError instanceof Error ? deleteError.message : 'Delete failed',
     };
   }
+}
+
+function formatFileName(data: ResourceWrapper) {
+  const fileName = data.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
+  return fileName.split('/').pop();
+}
+
+function formatFilePath(path: string, fileName: string | undefined) {
+  if (!fileName) {
+    throw new Error('File name is required to format file path');
+  }
+  return `${path.replace(/\/$/, '')}/${fileName}`;
 }

@@ -60,7 +60,6 @@ export function MoveProvisionedDashboardForm({
   });
 
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
-
   const [createFile, createRequest] = useCreateRepositoryFilesWithPathMutation();
   const [deleteFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
