@@ -82,41 +82,36 @@ These settings identify the Influx instance and schema the data source is connec
 Refer to [Manage DBRP Mappings](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/) for guidance on setting this up via the CLI or API 
 {{< /admonition >}}
 
-**HTTP section:**
-
-
+#### Advanced HTTP Settings (Optional)
+Advanced HTTP Settings are optional settings that can be configured for more control over your data source.
 - **Allowed cookies** - Defines which cookies are forwarded to the data source. All other cookies are deleted by default.
 - **Timeout** - Set an HTTP request timeout in seconds.
 
-**Auth section:**
+##### Custom HTTP Headers
+Click **+ Add header** to add one or more HTTP headers. HTTP headers pass additional context and metadata about the request/response.
+- **Header** - Add a custom HTTP header. Select an option from the drop-down. Allows custom headers to be passed based on the needs of your InfluxDB instance.
+- **Value** - The value for the header.
 
-- **Basic auth** - The most common authentication method. Use your InfluxData user name and password to authenticate. Toggling requires you to add the user and password under **Basic auth details**.
-- **With credentials** - Toggle to enable credentials such as cookies or auth headers to be sent with cross-site requests.
-- **TLS client auth** - Toggle to use client authentication. When enabled, add the `Server name`, `Client cert` and `Client key` under the **TLS/SSL auth details** section. The client provides a certificate that the server validates to establish the client’s trusted identity. The client key encrypts the data between client and server.
-- **With CA cert** - Authenticate with a CA certificate. Follow the instructions of your CA (Certificate Authority) to download the certificate file.
-- **Skip TLS verify** - Toggle to bypass TLS certificate validation.
+#### Auth and TSL/SSL Settings (Optional)
+There are several authentication methods you can choose in the Authentication section. 
+- **No Authentication** - Make the data source available without authentication. Grafana recommends using some type of authentication method.
+- **Basic auth** - The most common authentication method. Use your Influx instance username and password to authenticate.
 - **Forward OAuth identity** - Forward the OAuth access token (and also the OIDC ID token if available) of the user querying the data source.
+- **With credentials** - Toggle to enable credentials such as cookies or auth headers to be sent with cross-site requests.
 
-**Basic auth details:**
+TLS/SSL Certificates are encrypted and stored in the Grafana database.
+- **TLS client auth** - When enabled, add the `Server name`, `Client cert` and `Client key`. The client provides a certificate that the server validates to establish the client’s trusted identity. The client key encrypts the data between client and server.
+  - **Server name** - Name of the server. Example: `server1.domain.com`
+  - **Client cert** - Add the client certificate.
+  - **Client key** - Add the client key.
+- **CA cert** - Authenticate with a CA certificate. When enabled, follow the instructions of your CA (Certificate Authority) to download the certificate file.
+- **Skip TLS verify** - Toggle to bypass TLS certificate validation.
 
-If you enable **Basic auth** under the Auth section you need to configure the following:
+### Database Settings
 
 - **User** - Add the username used to sign in to InfluxDB.
 - **Password** - Defines the token you use to query the bucket defined in **Database**. Retrieve this from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) in the InfluxDB UI.
 
-**TLS/SSL auth details:**
-
-TLS/SSL certificates are encrypted and stored in the Grafana database.
-
-- **CA cert** - If you toggle **With CA cert** add your self-signed cert here.
-- **Server name** - Name of the server. Example: server1.domain.com
-- **Client cert** - Add the client certificate.
-- **Client key** - Add the client key.
-
-**Custom HTTP headers:**
-
-- **Header** - Add a custom HTTP header. Select an option from the drop-down. Allows custom headers to be passed based on the needs of your InfluxDB instance.
-- **Value** - The value for the header.
 
 **Private data source connect:**
 
