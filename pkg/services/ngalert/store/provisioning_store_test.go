@@ -2,7 +2,11 @@ package store_test
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -126,6 +130,74 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 		p, err = store.GetProvenance(context.Background(), &ruleOrg, orgID)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceNone, p)
+	})
+}
+
+func TestSetProvenance_DeadlockScenarios(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	store := createProvisioningStoreSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
+	concurrency := 20
+
+	t.Run("Same record, different orgs", func(t *testing.T) {
+		rule := &models.AlertRule{UID: "same-record-diff-orgs"}
+
+		var wg sync.WaitGroup
+		for i := range concurrency {
+			wg.Add(1)
+			go func(orgID int64) {
+				defer wg.Done()
+				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
+				err := store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+			}(int64(i + 1))
+		}
+		wg.Wait()
+	})
+
+	t.Run("Different records, same org", func(t *testing.T) {
+		orgID := int64(1)
+
+		var wg sync.WaitGroup
+		for i := range concurrency {
+			wg.Add(1)
+			go func(uid string) {
+				defer wg.Done()
+				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
+				rule := &models.AlertRule{UID: uid}
+				err := store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceFile)
+				require.NoError(t, err)
+			}(fmt.Sprintf("diff-record-same-org-%d", i))
+		}
+		wg.Wait()
+	})
+
+	t.Run("Mixed operations", func(t *testing.T) {
+		rule := &models.AlertRule{UID: "mixed-ops"}
+		orgID := int64(1)
+
+		var wg sync.WaitGroup
+		// Mix SetProvenance and GetProvenance operations
+		for range concurrency {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
+				err := store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+			}()
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				time.Sleep(time.Microsecond * time.Duration(rand.Intn(100)))
+				_, err := store.GetProvenance(context.Background(), rule, orgID)
+				require.NoError(t, err)
+			}()
+		}
+		wg.Wait()
 	})
 }
 
