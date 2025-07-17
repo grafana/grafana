@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
+import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields, getLocalProviderFields } from './fields';
 import { WizardFormData } from './types';
@@ -20,14 +21,15 @@ export function ConnectStep() {
   const [tokenConfigured, setTokenConfigured] = useState(false);
 
   const type = getValues('repository.type');
-  const isGitBased = type !== 'local';
+  const isGitBased = isGitProvider(type);
 
   // Get field configurations based on provider type
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
-  const localFields = type === 'local' ? getLocalProviderFields(type) : null;
+  const localFields = !isGitBased ? getLocalProviderFields(type) : null;
 
   return (
     <Stack direction="column" gap={2}>
+      {/*TODO: Add same permission info for other providers*/}
       {type === 'github' && <TokenPermissionsInfo />}
 
       {gitFields && (

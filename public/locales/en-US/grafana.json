@@ -10800,7 +10800,6 @@
     "repository-types": {
       "bitbucket": "Bitbucket",
       "bitbucket-description": "Connect to Bitbucket repositories",
-      "configure-with-provider": "Configure with {{provider}}",
       "github": "GitHub",
       "github-description": "Connect to GitHub repositories",
       "gitlab": "GitLab",
