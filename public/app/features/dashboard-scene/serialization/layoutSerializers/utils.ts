@@ -20,7 +20,7 @@ import {
   QueryVariableKind,
   TabsLayoutTabKind,
   DataQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';

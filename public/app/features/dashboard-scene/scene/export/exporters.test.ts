@@ -3,10 +3,7 @@ import { find } from 'lodash';
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
 import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
-import {
-  DatasourceVariableKind,
-  QueryVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
+import { DatasourceVariableKind, QueryVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';

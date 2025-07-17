@@ -29,7 +29,7 @@ import {
   IntervalVariableKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';

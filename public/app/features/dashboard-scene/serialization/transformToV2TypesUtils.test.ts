@@ -3,7 +3,7 @@ import {
   defaultVariableSort,
   defaultVariableRefresh,
   defaultDashboardCursorSync,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import {
   transformCursorSynctoEnum,

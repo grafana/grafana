@@ -44,7 +44,7 @@ import {
   FieldConfig,
   FieldColor,
   defaultDataQueryKind,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha2/types.spec.gen';
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
