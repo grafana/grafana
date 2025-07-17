@@ -512,10 +512,10 @@ export const processNestedTableRows = (
   const childRows: Map<number, TableRow> = new Map();
 
   for (const row of rows) {
-    if (Number(row.__depth) === 0) {
+    if (row.__depth === 0) {
       parentRows.push(row);
     } else {
-      childRows.set(Number(row.__index), row);
+      childRows.set(row.__index, row);
     }
   }
 
@@ -526,7 +526,7 @@ export const processNestedTableRows = (
   const result: TableRow[] = [];
   processedParents.forEach((row) => {
     result.push(row);
-    const childRow = childRows.get(Number(row.__index));
+    const childRow = childRows.get(row.__index);
     if (childRow) {
       result.push(childRow);
     }

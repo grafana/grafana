@@ -159,7 +159,7 @@ export function TableNG(props: TableNGProps) {
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const defaultHeaderHeight = getDefaultRowHeight(theme, TableCellHeight.Sm);
   const [isInspecting, setIsInspecting] = useState(false);
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
@@ -517,12 +517,19 @@ export function TableNG(props: TableNGProps) {
       },
       renderCell: ({ row }) => {
         if (row.__depth === 0) {
+          const rowIdx = row.__index;
+
           return (
             <RowExpander
               height={defaultRowHeight}
-              isExpanded={expandedRows[row.__index] ?? false}
+              isExpanded={expandedRows.has(rowIdx)}
               onCellExpand={() => {
-                setExpandedRows({ ...expandedRows, [row.__index]: !expandedRows[row.__index] });
+                if (expandedRows.has(rowIdx)) {
+                  expandedRows.delete(rowIdx);
+                } else {
+                  expandedRows.add(rowIdx);
+                }
+                setExpandedRows(new Set(expandedRows));
               }}
             />
           );
@@ -710,16 +717,11 @@ export function TableNG(props: TableNGProps) {
  * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
  */
 const renderRowFactory =
-  (
-    fields: Field[],
-    panelContext: PanelContext,
-    expandedRows: Record<string, boolean>,
-    enableSharedCrosshair: boolean
-  ) =>
+  (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;
-    const isExpanded = !!expandedRows[rowIdx];
+    const isExpanded = expandedRows.has(rowIdx);
 
     // Don't render non expanded child rows
     if (row.__depth === 1 && !isExpanded) {
