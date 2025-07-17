@@ -3554,6 +3554,7 @@
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
+      "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
