@@ -13,7 +13,7 @@ export function TagsTimeRangeSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
 
   const selectOptions = [
-    { label: 'Last 30 mins of selected range', value: DEFAULT_TIME_RANGE_FOR_TAGS },
+    { label: 'Last 30 minutes of selected range', value: DEFAULT_TIME_RANGE_FOR_TAGS },
     { label: 'Last 3 hours of selected range', value: 10800 }, // 60 * 60 * 3
     { label: 'Last 24 hours of selected range', value: 86400 }, // 60 * 60 * 24
     { label: 'Last 3 days of selected range', value: 259200 }, // 60 * 60 * 24 * 3
