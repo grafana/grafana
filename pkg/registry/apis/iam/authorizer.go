@@ -56,8 +56,10 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 			Resource: legacyiamv0.UserResourceInfo.GetName(),
 			Attr:     "id",
 			Mapping: map[string]string{
-				utils.VerbGet:  accesscontrol.ActionOrgUsersRead,
-				utils.VerbList: accesscontrol.ActionOrgUsersRead,
+				utils.VerbCreate: accesscontrol.ActionOrgUsersWrite,
+				utils.VerbDelete: accesscontrol.ActionOrgUsersWrite,
+				utils.VerbGet:    accesscontrol.ActionOrgUsersRead,
+				utils.VerbList:   accesscontrol.ActionOrgUsersRead,
 			},
 			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns authlib.NamespaceInfo, name string) ([]string, error) {
 				res, err := store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{
