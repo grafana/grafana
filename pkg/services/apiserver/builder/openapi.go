@@ -9,8 +9,8 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
 // This should eventually live in grafana-app-sdk

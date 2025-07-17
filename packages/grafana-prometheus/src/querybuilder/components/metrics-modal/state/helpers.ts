@@ -6,12 +6,11 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../../../datasource';
 import { PromMetricsMetadata } from '../../../../types';
-import { regexifyLabelValuesQueryString } from '../../../parsingUtils';
-import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
 import { MetricsModalMetadata, MetricsModalState, setFilteredMetricCount } from './state';
+
 export async function setMetrics(
   datasource: PrometheusDatasource,
   query: PromVisualQuery,
@@ -86,11 +85,11 @@ function buildMetricData(metric: string, datasource: PrometheusDatasource): Metr
   return metricData;
 }
 
-export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
+function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
   return metadata[metric]?.help;
 }
 
-export function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
+function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
   return metadata[metric]?.type;
 }
 
@@ -110,7 +109,7 @@ export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispa
 /**
  * Filter the metrics with all the options, fuzzy, type, null metadata
  */
-export function filterMetrics(state: MetricsModalState): MetricsData {
+function filterMetrics(state: MetricsModalState): MetricsData {
   let filteredMetrics: MetricsData = state.metrics;
 
   if (state.fuzzySearchQuery && !state.useBackend) {
@@ -162,7 +161,7 @@ export function calculatePageList(state: MetricsModalState) {
   return [...Array(pages).keys()].map((i) => i + 1);
 }
 
-export function sliceMetrics(metrics: MetricsData, pageNum: number, resultsPerPage: number) {
+function sliceMetrics(metrics: MetricsData, pageNum: number, resultsPerPage: number) {
   const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
   const start: number = pageNum === 1 ? 0 : (pageNum - 1) * calcResultsPerPage;
   const end: number = start + calcResultsPerPage;
@@ -180,34 +179,6 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
 
   return results ?? defaultResults;
 };
-
-/**
- * The backend query that replaces the uFuzzy search when the option 'useBackend' has been selected
- * this is a regex search either to the series or labels Prometheus endpoint
- * depending on which the Prometheus type or version supports
- * @param metricText
- * @param labels
- * @param datasource
- */
-export async function getBackendSearchMetrics(
-  metricText: string,
-  labels: QueryBuilderLabelFilter[],
-  datasource: PrometheusDatasource
-): Promise<Array<{ value: string }>> {
-  const queryString = regexifyLabelValuesQueryString(metricText);
-
-  const labelsParams = labels.map((label) => {
-    return `,${label.label}="${label.value}"`;
-  });
-
-  const params = `label_values({__name__=~".*${queryString}"${labels ? labelsParams.join() : ''}},__name__)`;
-
-  const results = datasource.metricFindQuery(params);
-
-  return await results.then((results) => {
-    return results.map((result) => buildMetricData(result.text, datasource));
-  });
-}
 
 export function tracking(event: string, state?: MetricsModalState | null, metric?: string, query?: PromVisualQuery) {
   switch (event) {

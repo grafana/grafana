@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { flip, shift, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { ReactElement, useMemo } from 'react';
-import * as React from 'react';
+import { useMemo, ReactNode } from 'react';
 
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -16,7 +15,7 @@ import { DataLinksActionsTooltipCoords } from './utils';
 interface Props {
   links: LinkModel[];
   actions?: ActionModel[];
-  value?: string | ReactElement;
+  value?: ReactNode;
   coords: DataLinksActionsTooltipCoords;
   onTooltipClose?: () => void;
 }
@@ -102,11 +101,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
   );
 };
 
-export const renderSingleLink = (
-  link: LinkModel,
-  children: string | React.JSX.Element,
-  className?: string
-): React.JSX.Element => {
+export const renderSingleLink = (link: LinkModel, children: ReactNode, className?: string): ReactNode => {
   return (
     <a
       href={link.href}

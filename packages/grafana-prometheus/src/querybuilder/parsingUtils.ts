@@ -70,7 +70,7 @@ const varTypeFunc = [
  * Get back the text with variables in their original format.
  * @param expr
  */
-export function returnVariables(expr: string) {
+function returnVariables(expr: string) {
   return expr.replace(/__V_(\d)__(.+?)__V__(?:__F__(\w+)__F__)?/g, (match, type, v, f) => {
     return varTypeFunc[parseInt(type, 10)](v, f);
   });

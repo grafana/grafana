@@ -15,14 +15,12 @@ import (
 
 // decryptAuthorizer is the authorizer implementation for decrypt operations.
 type decryptAuthorizer struct {
-	tracer    trace.Tracer
-	allowList contracts.DecryptAllowList
+	tracer trace.Tracer
 }
 
-func ProvideDecryptAuthorizer(tracer trace.Tracer, allowList contracts.DecryptAllowList) contracts.DecryptAuthorizer {
+func ProvideDecryptAuthorizer(tracer trace.Tracer) contracts.DecryptAuthorizer {
 	return &decryptAuthorizer{
-		tracer:    tracer,
-		allowList: allowList,
+		tracer: tracer,
 	}
 }
 
@@ -56,15 +54,9 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 		return "", false
 	}
 
-	serviceIdentity := serviceIdentityList[0]
-
-	// TEMPORARY: while we can't onboard every app into secrets, we can block them from decrypting
-	// securevalues preemptively here before even reaching out to the database.
-	// This check can be removed once we open the gates for any service to use secrets.
-	if len(a.allowList) > 0 {
-		if _, exists := a.allowList[serviceIdentity]; !exists || serviceIdentity == "" {
-			return serviceIdentity, false
-		}
+	serviceIdentity := strings.TrimSpace(serviceIdentityList[0])
+	if len(serviceIdentity) == 0 {
+		return "", false
 	}
 
 	// Checks whether the token has the permission to decrypt secure values.

@@ -55,6 +55,7 @@ composableKinds: PanelCfg: {
 					logLineMenuCustomItems?: _
 					onNewLogsReceived?:      _
 					displayedFields?: [...string]
+					setDisplayedFields?:     _
 				} @cuetsy(kind="interface")
 			}
 		}]

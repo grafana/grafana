@@ -1,0 +1,214 @@
+{
+  "title": "V30 Value Mappings and Tooltip Options Migration Test Dashboard",
+  "schemaVersion": 29,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Panel with legacy value mappings and tooltip options",
+      "id": 1,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "id": 0,
+              "text": "Up",
+              "type": 1,
+              "value": "1"
+            },
+            {
+              "id": 1,
+              "text": "Down",
+              "type": 1,
+              "value": "0"
+            },
+            {
+              "from": "10",
+              "to": "20",
+              "text": "Medium",
+              "type": 2
+            },
+            {
+              "type": 1,
+              "value": "null",
+              "text": "Null Value"
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "test-field"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "id": 0,
+                    "text": "Override Up",
+                    "type": 1,
+                    "value": "1"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "tooltipOptions": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "type": "xychart",
+      "title": "XY Chart with tooltip options only",
+      "id": 2,
+      "options": {
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "type": "xychart2",
+      "title": "XY Chart2 with tooltip options",
+      "id": 3,
+      "options": {
+        "tooltipOptions": {
+          "mode": "single",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Graph panel gets migrated to timeseries and tooltip",
+      "id": 4,
+      "options": {
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with complex value mappings",
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "id": 0,
+              "text": "Critical",
+              "type": 1,
+              "value": "100"
+            },
+            {
+              "from": "50",
+              "to": "99",
+              "text": "Warning",
+              "type": 2
+            },
+            {
+              "from": "0",
+              "to": "49",
+              "text": "OK",
+              "type": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "row",
+      "title": "Collapsed Row with nested panels",
+      "id": 6,
+      "collapsed": true,
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Nested panel with both migrations",
+          "id": 7,
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "id": 0,
+                  "text": "On",
+                  "type": 1,
+                  "value": "1"
+                },
+                {
+                  "id": 1,
+                  "text": "Off",
+                  "type": 1,
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "options": {
+            "tooltipOptions": {
+              "mode": "multi"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Panel with no relevant configurations",
+      "id": 8,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list"
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with empty mappings array - should return null",
+      "id": 9,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "empty-field"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+} 

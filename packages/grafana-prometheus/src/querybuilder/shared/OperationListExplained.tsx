@@ -5,7 +5,7 @@ import { OperationExplainedBox } from './OperationExplainedBox';
 import { RawQuery } from './RawQuery';
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from './types';
 
-export interface Props<T extends QueryWithOperations> {
+interface Props<T extends QueryWithOperations> {
   query: T;
   queryModeller: VisualQueryModeller;
   explainMode?: boolean;

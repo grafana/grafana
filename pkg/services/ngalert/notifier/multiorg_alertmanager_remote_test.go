@@ -102,6 +102,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		nopLogger,
 		secretsService,
 		featuremgmt.WithFeatures(),
+		nil,
 		override,
 	)
 	require.NoError(t, err)

@@ -34,6 +34,7 @@ export interface Options {
   onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
+  setDisplayedFields?: unknown;
   showCommonLabels: boolean;
   showControls?: boolean;
   showLabels: boolean;

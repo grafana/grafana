@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
@@ -30,8 +29,7 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()

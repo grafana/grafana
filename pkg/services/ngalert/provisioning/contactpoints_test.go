@@ -435,13 +435,11 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 	keys := maps.Keys(configs)
 	slices.Sort(keys)
 	for _, integrationType := range keys {
-		cfg := configs[integrationType]
-		var settings map[string]any
-		require.NoError(t, json.Unmarshal([]byte(cfg.Config), &settings))
+		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
 		if f, ok := overrides[integrationType]; ok {
-			f(settings)
+			f(integration.Settings)
 		}
-		settingsRaw, err := json.Marshal(settings)
+		settingsRaw, err := json.Marshal(integration.Settings)
 		require.NoError(t, err)
 
 		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType)
@@ -460,7 +458,7 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 			for _, field := range expectedFields {
 				assert.Contains(t, secureFields, field)
 				path := strings.Split(field, ".")
-				var expectedValue any = settings
+				var expectedValue any = integration.Settings
 				for _, segment := range path {
 					v, ok := expectedValue.(map[string]any)
 					if !ok {

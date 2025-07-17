@@ -995,7 +995,8 @@
   "schemaVersion": 41,
   "tags": [
     "gdev",
-    "panel-tests"
+    "panel-tests",
+    "table"
   ],
   "templating": {
     "list": []

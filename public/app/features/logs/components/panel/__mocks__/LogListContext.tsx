@@ -18,6 +18,7 @@ export const LogListContext = createContext<LogListContextData>({
   enableLogDetails: false,
   filterLevels: [],
   fontSize: 'default',
+  forceEscape: false,
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
   setDetailsWidth: () => {},
@@ -85,6 +86,8 @@ export const defaultValue: LogListContextData = {
   enableLogDetails: false,
   filterLevels: [],
   fontSize: 'default',
+  forceEscape: false,
+  hasUnescapedContent: false,
   setDetailsWidth: jest.fn(),
   showDetails: [],
   toggleDetails: jest.fn(),
@@ -191,3 +194,9 @@ export const LogListContextProvider = ({
     </LogListContext.Provider>
   );
 };
+
+export const saveDetailsScrollPosition = jest.fn();
+
+export const getDetailsScrollPosition = jest.fn();
+
+export const removeDetailsScrollPosition = jest.fn();

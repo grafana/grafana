@@ -63,9 +63,6 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
   return { values: valueArray, keys: Object.keys(valueArray) };
 }
 
-// const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
-export const selectorRegexp = /\{[^}]*?(\}|$)/;
-
 // This will capture 4 groups. Example label filter => {instance="10.4.11.4:9003"}
 // 1. label:    instance
 // 2. operator: =
@@ -73,71 +70,7 @@ export const selectorRegexp = /\{[^}]*?(\}|$)/;
 // 4. comma:    if there is a comma it will give ,
 // 5. space:    if there is a space after comma it will give the whole space
 // comma and space is useful for addLabelsToExpression function
-export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")(,)?(\s*)?/g;
-
-export function parseSelector(query: string, cursorOffset = 1): { labelKeys: string[]; selector: string } {
-  if (!query.match(selectorRegexp)) {
-    // Special matcher for metrics
-    if (query.match(/^[A-Za-z:][\w:]*$/)) {
-      return {
-        selector: `{__name__="${query}"}`,
-        labelKeys: ['__name__'],
-      };
-    }
-    throw new Error('Query must contain a selector: ' + query);
-  }
-
-  // Check if inside a selector
-  const prefix = query.slice(0, cursorOffset);
-  const prefixOpen = prefix.lastIndexOf('{');
-  const prefixClose = prefix.lastIndexOf('}');
-  if (prefixOpen === -1) {
-    throw new Error('Not inside selector, missing open brace: ' + prefix);
-  }
-  if (prefixClose > -1 && prefixClose > prefixOpen) {
-    throw new Error('Not inside selector, previous selector already closed: ' + prefix);
-  }
-  const suffix = query.slice(cursorOffset);
-  const suffixCloseIndex = suffix.indexOf('}');
-  const suffixClose = suffixCloseIndex + cursorOffset;
-  const suffixOpenIndex = suffix.indexOf('{');
-  const suffixOpen = suffixOpenIndex + cursorOffset;
-  if (suffixClose === -1) {
-    throw new Error('Not inside selector, missing closing brace in suffix: ' + suffix);
-  }
-  if (suffixOpenIndex > -1 && suffixOpen < suffixClose) {
-    throw new Error('Not inside selector, next selector opens before this one closed: ' + suffix);
-  }
-
-  // Extract clean labels to form clean selector, incomplete labels are dropped
-  const selector = query.slice(prefixOpen, suffixClose);
-  const labels: { [key: string]: { value: string; operator: string } } = {};
-  selector.replace(labelRegexp, (label, key, operator, value) => {
-    const labelOffset = query.indexOf(label);
-    const valueStart = labelOffset + key.length + operator.length + 1;
-    const valueEnd = labelOffset + key.length + operator.length + value.length - 1;
-    // Skip label if cursor is in value
-    if (cursorOffset < valueStart || cursorOffset > valueEnd) {
-      labels[key] = { value, operator };
-    }
-    return '';
-  });
-
-  // Add metric if there is one before the selector
-  const metricPrefix = query.slice(0, prefixOpen);
-  const metricMatch = metricPrefix.match(/[A-Za-z:][\w:]*$/);
-  if (metricMatch) {
-    labels['__name__'] = { value: `"${metricMatch[0]}"`, operator: '=' };
-  }
-
-  // Build sorted selector
-  const labelKeys = Object.keys(labels).sort();
-  const cleanSelector = labelKeys.map((key) => `${key}${labels[key].operator}${labels[key].value}`).join(',');
-
-  const selectorString = ['{', cleanSelector, '}'].join('');
-
-  return { labelKeys, selector: selectorString };
-}
+const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")(,)?(\s*)?/g;
 
 export function expandRecordingRules(query: string, mapping: { [name: string]: RecordingRuleIdentifier }): string {
   const getRuleRegex = (ruleName: string) => new RegExp(`(\\s|\\(|^)(${ruleName})(\\s|$|\\(|\\[|\\{)`, 'ig');
@@ -334,21 +267,17 @@ export function roundMsToMin(milliseconds: number): number {
   return roundSecToMin(milliseconds / 1000);
 }
 
-export function roundSecToMin(seconds: number): number {
+function roundSecToMin(seconds: number): number {
   return Math.floor(seconds / 60);
 }
 
 // Returns number of minutes rounded up to the nearest nth minute
-export function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
+function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
   return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % secondsToRound);
 }
 
-export function limitSuggestions(items: string[]) {
+function limitSuggestions(items: string[]) {
   return items.slice(0, SUGGESTIONS_LIMIT);
-}
-
-export function addLimitInfo(items: unknown[] | undefined): string {
-  return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
 }
 
 const FromPromLikeMap: Record<string, AbstractLabelOperator> = {
@@ -363,7 +292,7 @@ const ToPromLikeMap: Record<AbstractLabelOperator, string> = invert(FromPromLike
   string
 >;
 
-export function toPromLikeExpr(labelBasedQuery: AbstractQuery): string {
+function toPromLikeExpr(labelBasedQuery: AbstractQuery): string {
   const expr = labelBasedQuery.labelMatchers
     .map((selector: AbstractLabelMatcher) => {
       const operator = ToPromLikeMap[selector.operator];
@@ -387,7 +316,7 @@ export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
   };
 }
 
-export interface PromLikeQuery extends DataQuery {
+interface PromLikeQuery extends DataQuery {
   expr: string;
   range: boolean;
 }
@@ -507,4 +436,16 @@ export function truncateResult<T>(array: T[], limit?: number): T[] {
   }
   array.length = Math.min(array.length, limit);
   return array;
+}
+
+/**
+ * Removes quotes from a string if they exist.
+ * Used to handle utf8 label keys in Prometheus queries.
+ *
+ * @param {string} input - Input string that may have surrounding quotes
+ * @returns {string} String with surrounding quotes removed if they existed
+ */
+export function removeQuotesIfExist(input: string): string {
+  const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
+  return match?.[1] ?? input;
 }

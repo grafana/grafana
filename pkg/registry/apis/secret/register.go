@@ -19,13 +19,14 @@ func RegisterDependencies(
 	secretDBMigrator contracts.SecretDBMigrator,
 	accessControlService accesscontrol.Service,
 ) (*DependencyRegisterer, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) || !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return nil, nil
-	}
-
 	// Permissions for requests in multi-tenant mode will come from HG.
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)
+	}
+
+	// TODO: Remove once the DB schema is more stable.
+	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+		return nil, nil
 	}
 
 	// We shouldn't need to create the DB in HG, as that will use the MT api server.

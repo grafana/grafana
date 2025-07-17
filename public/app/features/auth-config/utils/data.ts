@@ -25,6 +25,7 @@ export const emptySettings: SSOProviderDTO = {
   emailAttributePath: '',
   emptyScopes: false,
   enabled: false,
+  loginPrompt: '',
   extra: {},
   groupsAttributePath: '',
   hostedDomain: '',

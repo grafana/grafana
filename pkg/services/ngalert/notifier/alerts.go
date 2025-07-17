@@ -13,7 +13,3 @@ func (am *alertmanager) GetAlerts(_ context.Context, active, silenced, inhibited
 func (am *alertmanager) GetAlertGroups(_ context.Context, active, silenced, inhibited bool, filter []string, receivers string) (alertingNotify.AlertGroups, error) {
 	return am.Base.GetAlertGroups(active, silenced, inhibited, filter, receivers)
 }
-
-func (am *alertmanager) MergeNflog(b []byte) error {
-	return am.Base.MergeNflog(b)
-}

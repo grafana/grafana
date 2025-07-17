@@ -115,6 +115,13 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref common.
 							Format:      "",
 						},
 					},
+					"tokenUser": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
@@ -443,6 +450,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 						SchemaProps: spec.SchemaProps{
 							Description: "The branch to use in the repository.",
 							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tokenUser": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

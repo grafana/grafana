@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
 import { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data';
@@ -7,7 +7,7 @@ import * as ui from '@grafana/ui';
 import { CloudWatchDatasource } from '../../../datasource';
 import { setupMockedTemplateService } from '../../../mocks/CloudWatchDataSource';
 import { initialVariableModelState } from '../../../mocks/CloudWatchVariables';
-import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../../../types';
+import { CloudWatchJsonData, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../../types';
 
 import { MetricsQueryEditor, Props } from './MetricsQueryEditor';
 
@@ -18,7 +18,16 @@ jest.mock('@grafana/ui', () => ({
   },
 }));
 
-const setup = () => {
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual<typeof import('@grafana/runtime')>('@grafana/runtime'),
+  config: {
+    featureToggles: {
+      cloudWatchCrossAccountQuerying: true,
+    },
+  },
+}));
+
+const setup = (customQuery?: Partial<CloudWatchMetricsQuery>, isMonitoringAccount?: boolean) => {
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
   } as DataSourceInstanceSettings<CloudWatchJsonData>;
@@ -47,7 +56,7 @@ const setup = () => {
   datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
   datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
   datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
-  datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+  datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(isMonitoringAccount ?? false);
 
   const props: Props = {
     query: {
@@ -65,6 +74,7 @@ const setup = () => {
       matchExact: true,
       metricQueryType: MetricQueryType.Search,
       metricEditorMode: MetricEditorMode.Builder,
+      ...customQuery,
     },
     extraHeaderElementLeft: () => {},
     extraHeaderElementRight: () => {},
@@ -120,5 +130,32 @@ describe('QueryEditor', () => {
     expect(await screen.findByText('Label')).toBeInTheDocument();
     expect(screen.queryByText('Alias')).toBeNull();
     expect(screen.getByText("Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"));
+  });
+
+  it('should clear accountId field when datasource connects to a non-monitoring account', async () => {
+    const props = setup({ accountId: '123456789' });
+
+    render(<MetricsQueryEditor {...props} />);
+
+    expect(props.datasource.resources.isMonitoringAccount).toHaveBeenCalledWith('us-east-1');
+    await waitFor(async () => {
+      expect(props.onChange).toHaveBeenCalledWith({
+        ...props.query,
+        accountId: undefined,
+      });
+    });
+  });
+  it('should keep accountId field when datasource connects to a monitoring account', async () => {
+    const props = setup({ accountId: '123456789' }, true);
+
+    render(<MetricsQueryEditor {...props} />);
+
+    expect(props.datasource.resources.isMonitoringAccount).toHaveBeenCalledWith('us-east-1');
+    await waitFor(async () => {
+      expect(props.onChange).not.toHaveBeenCalledWith({
+        ...props.query,
+        accountId: undefined,
+      });
+    });
   });
 });

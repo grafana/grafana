@@ -2,8 +2,8 @@ import { memo } from 'react';
 
 import { NestedQueryList } from '../NestedQueryList';
 
-import { BaseQueryBuilderProps } from './BaseQueryBuilderProps';
 import { QueryBuilderContent } from './QueryBuilderContent';
+import { BaseQueryBuilderProps } from './types';
 
 export const BaseQueryBuilder = memo<BaseQueryBuilderProps>((props) => {
   const { query, datasource, onChange, onRunQuery, showExplain } = props;

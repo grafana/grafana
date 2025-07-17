@@ -110,7 +110,7 @@ interface Context {
  * @param node
  * @param context
  */
-export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
+function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
 
   switch (node.type.id) {

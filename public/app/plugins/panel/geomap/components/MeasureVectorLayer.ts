@@ -200,24 +200,24 @@ export class MeasureVectorLayer extends VectorLayer<VectorSource> {
           }
           const segmentPoint = new Point(segment.getCoordinateAt(0.5));
           this.segmentStyles[count].setGeometry(segmentPoint);
-          this.segmentStyles[count].getText().setText(label);
+          this.segmentStyles[count].getText()?.setText(label);
           styles.push(this.segmentStyles[count]);
           count++;
         });
       }
       if (label!) {
         this.labelStyle.setGeometry(point!);
-        this.labelStyle.getText().setText(label);
+        this.labelStyle.getText()?.setText(label);
         styles.push(this.labelStyle);
       }
       if (
         tip &&
         type === 'Point' &&
         geometry instanceof Point &&
-        !this.modify.getOverlay().getSource().getFeatures().length
+        !this.modify.getOverlay().getSource()?.getFeatures().length
       ) {
         this.tipPoint = geometry;
-        this.tipStyle.getText().setText(tip);
+        this.tipStyle.getText()?.setText(tip);
         styles.push(this.tipStyle);
       }
     }

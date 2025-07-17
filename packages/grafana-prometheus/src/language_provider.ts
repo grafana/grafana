@@ -25,9 +25,10 @@ import {
   fixSummariesMetadata,
   processHistogramMetrics,
   processLabels,
+  removeQuotesIfExist,
   toPromLikeQuery,
 } from './language_utils';
-import PromqlSyntax from './promql';
+import { promqlGrammar } from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
 import { PromMetricsMetadata, PromQuery } from './types';
@@ -45,7 +46,7 @@ const API_V1 = {
   LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
 };
 
-export interface PrometheusBaseLanguageProvider {
+interface PrometheusBaseLanguageProvider {
   datasource: PrometheusDatasource;
 
   /**
@@ -70,7 +71,7 @@ export interface PrometheusBaseLanguageProvider {
 /**
  * @deprecated This interface is deprecated and will be removed.
  */
-export interface PrometheusLegacyLanguageProvider {
+interface PrometheusLegacyLanguageProvider {
   /**
    * @deprecated Use retrieveHistogramMetrics() method instead
    */
@@ -736,7 +737,7 @@ export const exportToAbstractQuery = (query: PromQuery): AbstractQuery => {
   if (!promQuery || promQuery.length === 0) {
     return { refId: query.refId, labelMatchers: [] };
   }
-  const tokens = Prism.tokenize(promQuery, PromqlSyntax);
+  const tokens = Prism.tokenize(promQuery, promqlGrammar);
   const labelMatchers: AbstractLabelMatcher[] = extractLabelMatchers(tokens);
   const nameLabelValue = getNameLabelValue(promQuery, tokens);
   if (nameLabelValue && nameLabelValue.length > 0) {
@@ -764,18 +765,6 @@ function isCancelledError(error: unknown): error is {
   cancelled: boolean;
 } {
   return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
-}
-
-/**
- * Removes quotes from a string if they exist.
- * Used to handle utf8 label keys in Prometheus queries.
- *
- * @param {string} input - Input string that may have surrounding quotes
- * @returns {string} String with surrounding quotes removed if they existed
- */
-export function removeQuotesIfExist(input: string): string {
-  const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
-  return match?.[1] ?? input;
 }
 
 function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {

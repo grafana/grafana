@@ -1230,6 +1230,20 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if login prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"teams_url":                  "https://example.com/teams",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+					"login_prompt":               "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1269,6 +1283,7 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "login",
 				},
 			},
 			expectError: false,
@@ -1276,6 +1291,7 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "login",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",
@@ -1357,6 +1373,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 				EmailAttributeName:   "email-attr-name",
 				GroupsAttributePath:  "groups-attr-path",
 				TeamIdsAttributePath: "team-ids-attr-path",
+				LoginPrompt:          "login",
 				Extra: map[string]string{
 					teamIdsKey:              "team1",
 					allowedOrganizationsKey: "org1",
@@ -1374,6 +1391,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 					"email_attribute_name":    "new-email-attr-name",
 					"groups_attribute_path":   "new-group-attr-path",
 					"team_ids_attribute_path": "new-team-ids-attr-path",
+					"login_prompt":            "select_account",
 					teamIdsKey:                "team1,team2",
 					allowedOrganizationsKey:   "org1,org2",
 					loginAttributePathKey:     "new-login-attr-path",
@@ -1389,6 +1407,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 				EmailAttributeName:   "new-email-attr-name",
 				GroupsAttributePath:  "new-group-attr-path",
 				TeamIdsAttributePath: "new-team-ids-attr-path",
+				LoginPrompt:          "select_account",
 				Extra: map[string]string{
 					teamIdsKey:              "team1,team2",
 					allowedOrganizationsKey: "org1,org2",

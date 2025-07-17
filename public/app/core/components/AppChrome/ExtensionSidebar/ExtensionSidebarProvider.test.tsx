@@ -3,7 +3,7 @@ import { render, screen, act } from '@testing-library/react';
 import { store, EventBusSrv, EventBus } from '@grafana/data';
 import { config, getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { OpenExtensionSidebarEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent } from 'app/types/events';
 
 import {
   ExtensionSidebarContextProvider,
@@ -249,7 +249,7 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('plugin-ids')).toHaveTextContent(permittedPluginMeta.pluginId);
   });
 
-  it('should subscribe to OpenExtensionSidebarEvent when feature is enabled', async () => {
+  it('should subscribe to OpenExtensionSidebarEvent and CloseExtensionSidebarEvent when feature is enabled', async () => {
     render(
       <ExtensionSidebarContextProvider>
         <TestComponent />
@@ -257,9 +257,10 @@ describe('ExtensionSidebarProvider', () => {
     );
 
     expect(subscribeSpy).toHaveBeenCalledWith(OpenExtensionSidebarEvent, expect.any(Function));
+    expect(subscribeSpy).toHaveBeenCalledWith(CloseExtensionSidebarEvent, expect.any(Function));
   });
 
-  it('should not subscribe to OpenExtensionSidebarEvent when feature is disabled', () => {
+  it('should not subscribe to OpenExtensionSidebarEvent or CloseExtensionSidebarEvent when feature is disabled', () => {
     jest.replaceProperty(config.featureToggles, 'extensionSidebar', false);
 
     render(
@@ -341,11 +342,57 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
   });
 
-  it('should unsubscribe from OpenExtensionSidebarEvent on unmount', () => {
-    const unsubscribeMock = jest.fn();
-    subscribeSpy.mockReturnValue({
-      unsubscribe: unsubscribeMock,
+  it('should close sidebar when receiving a CloseExtensionSidebarEvent', () => {
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent);
+
+    const TestComponentWithProps = () => {
+      const context = useExtensionSidebarContext();
+      return (
+        <div>
+          <div data-testid="is-open">{context.isOpen.toString()}</div>
+          <div data-testid="docked-component-id">{context.dockedComponentId || 'undefined'}</div>
+          <button onClick={() => context.setDockedComponentId(componentId)}>Open Sidebar</button>
+        </div>
+      );
+    };
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponentWithProps />
+      </ExtensionSidebarContextProvider>
+    );
+
+    // First open the sidebar manually
+    act(() => {
+      screen.getByText('Open Sidebar').click();
     });
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
+
+    // Now test the close event
+    act(() => {
+      // Find the CloseExtensionSidebarEvent subscriber
+      const closeEventSubscriberCall = subscribeSpy.mock.calls.find((call) => call[0] === CloseExtensionSidebarEvent);
+
+      expect(closeEventSubscriberCall).toBeDefined();
+      const [, subscriberFn] = closeEventSubscriberCall!;
+
+      // Call the close event handler
+      subscriberFn(new CloseExtensionSidebarEvent());
+    });
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
+  });
+
+  it('should unsubscribe from both OpenExtensionSidebarEvent and CloseExtensionSidebarEvent on unmount', () => {
+    const unsubscribeMocks = [jest.fn(), jest.fn()];
+    let callIndex = 0;
+
+    subscribeSpy.mockImplementation(() => ({
+      unsubscribe: unsubscribeMocks[callIndex++],
+    }));
 
     const { unmount } = render(
       <ExtensionSidebarContextProvider>
@@ -354,7 +401,10 @@ describe('ExtensionSidebarProvider', () => {
     );
 
     unmount();
-    expect(unsubscribeMock).toHaveBeenCalled();
+
+    // Both event subscriptions should be unsubscribed
+    expect(unsubscribeMocks[0]).toHaveBeenCalled();
+    expect(unsubscribeMocks[1]).toHaveBeenCalled();
   });
 
   it('should subscribe to location service observable', () => {

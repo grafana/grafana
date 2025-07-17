@@ -1,14 +1,24 @@
-import { Feature } from 'ol';
-import { Geometry, LineString, Point } from 'ol/geom';
+import Feature from 'ol/Feature';
+import { Geometry } from 'ol/geom';
 import VectorSource from 'ol/source/Vector';
 
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 
 import { getGeometryField, LocationFieldMatchers } from './location';
 
 export interface FrameVectorSourceOptions {}
 
-export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSource<T> {
+// Helper function to create properly typed Features
+function createFeature<T extends Geometry>(properties: {
+  frame: DataFrame;
+  rowIndex: number;
+  geometry: T;
+}): Feature<T> {
+  const feature = new Feature(properties);
+  return feature;
+}
+
+export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSource<Feature<T>> {
   constructor(public location: LocationFieldMatchers) {
     super({});
   }
@@ -22,37 +32,15 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
     }
 
     for (let i = 0; i < frame.length; i++) {
+      const geometry = info.field.values[i] as T;
       this.addFeatureInternal(
-        new Feature({
+        createFeature({
           frame,
           rowIndex: i,
-          geometry: info.field.values[i] as T,
+          geometry,
         })
       );
     }
-
-    // only call this at the end
-    this.changed();
-  }
-
-  updateLineString(frame: DataFrame) {
-    this.clear(true);
-    const info = getGeometryField(frame, this.location);
-    if (!info.field) {
-      this.changed();
-      return;
-    }
-
-    //eslint-disable-next-line
-    const field = info.field as unknown as Field<Point>;
-    const geometry: Geometry = new LineString(field.values.map((p) => p.getCoordinates()));
-    this.addFeatureInternal(
-      new Feature({
-        frame,
-        rowIndex: 0,
-        geometry: geometry as T,
-      })
-    );
 
     // only call this at the end
     this.changed();

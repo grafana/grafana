@@ -5,7 +5,7 @@ import { DataSourceApi, getDefaultTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/plugin-ui';
 
-import promqlGrammar from '../../../promql';
+import { promqlGrammar } from '../../../promql';
 import { getInitHints } from '../../../query_hints';
 import { buildVisualQueryFromString } from '../../parsing';
 import { OperationExplainedBox } from '../../shared/OperationExplainedBox';
@@ -20,7 +20,7 @@ import { PromVisualQuery } from '../../types';
 import { MetricsLabelsSection } from '../MetricsLabelsSection';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../PromQueryBuilderExplained';
 
-import { BaseQueryBuilderProps } from './BaseQueryBuilderProps';
+import { BaseQueryBuilderProps } from './types';
 
 export const QueryBuilderContent = memo<BaseQueryBuilderProps>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;

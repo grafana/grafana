@@ -28,7 +28,7 @@ describe('useSettingsPageNav', () => {
 
     const { result } = renderHook(() => useSettingsPageNav(), { wrapper });
 
-    expect(result.current.navId).toBe('alerting');
+    expect(result.current.navId).toBe('alerting-admin');
 
     // Check the structure
     // eslint-disable-next-line testing-library/no-node-access
@@ -75,7 +75,7 @@ describe('useSettingsPageNav', () => {
 
     const { result } = renderHook(() => useSettingsPageNav(), { wrapper });
 
-    expect(result.current.navId).toBe('alerting');
+    expect(result.current.navId).toBe('alerting-admin');
 
     // Should have 3 children: alertmanager + 2 extensions
     // eslint-disable-next-line testing-library/no-node-access
