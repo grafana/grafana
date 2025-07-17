@@ -327,22 +327,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderQueryLibraryBadge = () => {
     const { queryRef } = this.props;
-
-    if (!queryRef) {
-      return null;
-    }
-
-    return (
-      <Badge
-        key="query-library-badge"
-        color="blue"
-        icon="book"
-        text={t('query-operation.query-library.from-library', 'Editing From Query Library')}
-        tooltip={t('query-operation.query-library.editing-tooltip', 'Editing query from library ({{queryRef}})', {
-          queryRef,
-        })}
-      />
-    );
+    return <QueryLibraryBadgeWrapper queryRef={queryRef} />;
   };
 
   renderExtraActions = () => {
@@ -502,6 +487,27 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       </div>
     );
   }
+}
+
+function QueryLibraryBadgeWrapper(props: { queryRef?: string }) {
+  const { queryLibraryEnabled } = useQueryLibraryContext();
+  const { queryRef } = props;
+
+  if (!queryLibraryEnabled || !queryRef) {
+    return null;
+  }
+
+  return (
+    <Badge
+      key="query-library-badge"
+      color="blue"
+      icon="book"
+      text={t('query-operation.query-library.from-library', 'Editing From Query Library')}
+      tooltip={t('query-operation.query-library.editing-tooltip', 'Editing query from library ({{queryRef}})', {
+        queryRef,
+      })}
+    />
+  );
 }
 
 /**
