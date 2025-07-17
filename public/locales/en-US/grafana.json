@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Add more"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "AI Alert Rule Button failed to load",
+        "improve-annotations-button": "AI Improve Annotations Button failed to load",
+        "improve-labels-button": "AI Improve Labels Button failed to load",
+        "template-button": "AI Template Button failed to load",
+        "triage-button": "AI Triage Button failed to load"
+      }
+    },
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
@@ -3247,6 +3256,11 @@
       "id-token-attribute-name-label": "ID token attribute name",
       "login-attribute-path-description": "JMESPath expression to use for user login lookup from the user ID token.",
       "login-attribute-path-label": "Login attribute path",
+      "login-prompt-consent": "Consent",
+      "login-prompt-description": "Indicates the type of user interaction when the user logs in with the IdP.",
+      "login-prompt-label": "Login prompt",
+      "login-prompt-login": "Login",
+      "login-prompt-select-account": "Select account",
       "managed-identity-client-id-description": "The managed identity client ID of the federated identity credential of your OAuth2 app.",
       "managed-identity-client-id-label": "FIC managed identity client ID",
       "name-attribute-path-description": "JMESPath expression to use for user name lookup from the user ID token. \nThis name will be used as the user's display name.",
@@ -3461,6 +3475,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
+      "bulk-delete-provisioned-resources-not-implemented": "Bulk delete for provisioned resources is not implemented yet.",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3479,7 +3495,9 @@
       "move-modal-text": "This action will move the following content:",
       "move-modal-title": "Move",
       "moving": "Moving...",
-      "new-folder-name-required-phrase": "Folder name is required."
+      "new-folder-name-required-phrase": "Folder name is required.",
+      "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
+      "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
     "actions": {
       "button-to-recently-deleted": "Recently deleted"

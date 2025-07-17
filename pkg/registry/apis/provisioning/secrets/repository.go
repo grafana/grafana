@@ -2,8 +2,12 @@ package secrets
 
 import (
 	"context"
+	"errors"
+	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
@@ -12,7 +16,7 @@ import (
 func ProvideRepositorySecrets(
 	features featuremgmt.FeatureToggles,
 	legacySecretsSvc grafanasecrets.Service,
-	secretsSvc *service.SecureValueService,
+	secretsSvc contracts.SecureValueClient,
 	decryptSvc service.DecryptService,
 ) RepositorySecrets {
 	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc), NewSingleTenant(legacySecretsSvc))
@@ -22,6 +26,7 @@ func ProvideRepositorySecrets(
 type RepositorySecrets interface {
 	Encrypt(ctx context.Context, r *provisioning.Repository, name string, data string) (nameOrValue []byte, err error)
 	Decrypt(ctx context.Context, r *provisioning.Repository, nameOrValue string) (data []byte, err error)
+	Delete(ctx context.Context, r *provisioning.Repository, nameOrValue string) error
 }
 
 // repositorySecrets provides a unified interface for encrypting and decrypting repository secrets,
@@ -67,32 +72,36 @@ func (s *repositorySecrets) Encrypt(ctx context.Context, r *provisioning.Reposit
 	return encrypted, nil
 }
 
-// Decrypt attempts to retrieve and decrypt secret data for a repository.
-// If the provisioning secrets service feature flag is enabled, it tries the new secrets service first.
-//   - On success, returns the decrypted data.
-//   - On failure, falls back to the legacy secrets service.
+// Decrypt retrieves and decrypts secret data for a repository, supporting migration between secret backends.
+// The backend used for decryption is determined by a heuristic:
+//   - If the provided nameOrValue starts with the repository name, it is assumed to be a Kubernetes secret name
+//     and the new secrets service is used for decryption.
+//   - Otherwise, it is treated as a legacy secret value and the legacy secrets service is used.
 //
-// If the feature flag is disabled, it tries the legacy secrets service first.
-//   - On success, returns the decrypted data.
-//   - On failure, falls back to the new secrets service.
+// HACK: This approach relies on checking the prefix of nameOrValue to distinguish between secret backends.
+// This is a temporary workaround to support both backends during migration and should be removed once
+// migration is complete.
 //
-// This dual-path logic is intended to support migration between secret backends.
+// This method ensures compatibility and minimizes disruption during the transition between secret backends.
 func (s *repositorySecrets) Decrypt(ctx context.Context, r *provisioning.Repository, nameOrValue string) ([]byte, error) {
-	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
-		data, err := s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
-		if err == nil {
-			return data, nil
-		}
-
-		// If the new service fails, fall back to legacy
+	logger := logging.FromContext(ctx)
+	// HACK: this is a hack to identify if the name is a potential Kubernetes name for a secret.
+	if strings.HasPrefix(nameOrValue, r.GetName()) {
+		logger.Info("Decrypting secret with new secrets service", "name", nameOrValue)
+		return s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
+	} else {
+		logger.Info("Decrypting secret with legacy secrets service", "name", nameOrValue)
 		return s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
 	}
+}
 
-	// If the new service is disabled, use the legacy service first
-	data, err := s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
-	if err == nil {
-		return data, nil
+func (s *repositorySecrets) Delete(ctx context.Context, r *provisioning.Repository, nameOrValue string) error {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+		err := s.secretsSvc.Delete(ctx, r.GetNamespace(), nameOrValue)
+		if err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
+			return err
+		}
 	}
 
-	return s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
+	return nil
 }
