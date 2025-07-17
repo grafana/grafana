@@ -73,6 +73,78 @@
     },
     {
       "metadata": {
+        "name": "alertingAIAnalyzeCentralStateHistory",
+        "resourceVersion": "1752215431801",
+        "creationTimestamp": "2025-07-07T14:40:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-11 06:30:31.801024 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable AI-analyze central state history.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingAIGenAlertRules",
+        "resourceVersion": "1752215431801",
+        "creationTimestamp": "2025-07-07T14:40:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-11 06:30:31.801024 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable AI-generated alert rules.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingAIGenTemplates",
+        "resourceVersion": "1752215431801",
+        "creationTimestamp": "2025-07-07T14:40:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-11 06:30:31.801024 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable AI-generated alerting templates.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingAIImproveAlertRules",
+        "resourceVersion": "1752215431801",
+        "creationTimestamp": "2025-07-07T14:40:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-11 06:30:31.801024 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable AI-improve alert rules labels and annotations.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingBacktesting",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2022-12-14T14:44:14Z"
@@ -220,6 +292,21 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingNotificationHistory",
+        "resourceVersion": "1752682072771",
+        "creationTimestamp": "2025-07-16T16:07:52Z"
+      },
+      "spec": {
+        "description": "Enables the notification history feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -472,13 +559,17 @@
     {
       "metadata": {
         "name": "awsDatasourcesTempCredentials",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-07-06T15:06:11Z"
+        "resourceVersion": "1752523189825",
+        "creationTimestamp": "2023-07-06T15:06:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 19:59:49.825959 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
-        "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources"
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources",
+        "expression": "true"
       }
     },
     {
@@ -961,6 +1052,23 @@
     },
     {
       "metadata": {
+        "name": "enableAppChromeExtensions",
+        "resourceVersion": "1751899214406",
+        "creationTimestamp": "2025-07-07T14:40:14Z",
+        "deletionTimestamp": "2025-07-07T15:15:21Z"
+      },
+      "spec": {
+        "description": "Set this to true to enable all app chrome extensions registered by plugins.",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-04-24T14:46:31Z"
@@ -997,6 +1105,22 @@
         "codeowner": "@grafana/grafana-backend-services-squad",
         "requiresRestart": true,
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "enablePluginImporter",
+        "resourceVersion": "1752591728321",
+        "creationTimestamp": "2025-07-15T15:02:08Z"
+      },
+      "spec": {
+        "description": "Set this to true to use the new PluginImporter functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -2023,8 +2147,11 @@
     {
       "metadata": {
         "name": "multiTenantTempCredentials",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-04-02T20:25:50Z"
+        "resourceVersion": "1752523189825",
+        "creationTimestamp": "2025-04-02T20:25:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 19:59:49.825959 +0000 UTC"
+        }
       },
       "spec": {
         "description": "use multi-tenant path for awsTempCredentials",
@@ -2204,6 +2331,19 @@
     },
     {
       "metadata": {
+        "name": "otelLogsFormatting",
+        "resourceVersion": "1750152612973",
+        "creationTimestamp": "2025-06-17T09:30:12Z"
+      },
+      "spec": {
+        "description": "Applies OTel formatting templates to displayed logs",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-11-03T12:15:54Z"
@@ -2308,6 +2448,39 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginLoadingRefactor",
+        "resourceVersion": "1752218524617",
+        "creationTimestamp": "2025-07-11T07:22:04Z",
+        "deletionTimestamp": "2025-07-11T07:23:34Z"
+      },
+      "spec": {
+        "description": "Set this to true to use the new plugin loading functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginAssetProvider",
+        "resourceVersion": "1752486584712",
+        "creationTimestamp": "2025-07-14T09:49:44Z"
+      },
+      "spec": {
+        "description": "Allows decoupled core plugins to load from the Grafana CDN",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -2501,6 +2674,22 @@
       },
       "spec": {
         "description": "Next generation provisioning... and git",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioningSecretsService",
+        "resourceVersion": "1752501981893",
+        "creationTimestamp": "2025-07-14T14:05:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 14:06:21.89322 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
@@ -2794,6 +2983,20 @@
     },
     {
       "metadata": {
+        "name": "sharingDashboardImage",
+        "resourceVersion": "1747090555040",
+        "creationTimestamp": "2025-05-12T22:55:55Z"
+      },
+      "spec": {
+        "description": "Enables image sharing functionality for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "showDashboardValidationWarnings",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2022-10-14T13:51:05Z"
@@ -2894,7 +3097,8 @@
       "metadata": {
         "name": "ssoSettingsSAML",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2024-03-14T11:04:45Z"
+        "creationTimestamp": "2024-03-14T11:04:45Z",
+        "deletionTimestamp": "2025-07-15T09:43:39Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure the SAML connector",
@@ -2994,6 +3198,19 @@
         "description": "Use new **Combobox** component for template variables",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "tempoAlerting",
+        "resourceVersion": "1750158458662",
+        "creationTimestamp": "2025-06-17T11:07:38Z"
+      },
+      "spec": {
+        "description": "Enables creating alerts from Tempo data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true
       }
     },

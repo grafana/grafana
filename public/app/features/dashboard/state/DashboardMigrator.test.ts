@@ -1043,7 +1043,7 @@ describe('DashboardModel', () => {
       });
     });
 
-    it('should have 11 variables after migration', () => {
+    it('should have 14 variables after migration', () => {
       expect(model.templating.list.length).toBe(14);
     });
 

@@ -13,6 +13,9 @@
 #
 # Example: ./scripts/releasefinder.sh a1b2c3d4e5f6
 #
+# Note: This script requires a full repository clone with all branches and tags.
+# It will not work correctly with shallow clones (--depth) or single-branch clones.
+#
 # If you get a "Permission denied" error, make the script executable with:
 #   chmod +x scripts/releasefinder.sh
 
