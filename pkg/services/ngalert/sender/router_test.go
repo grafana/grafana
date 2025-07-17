@@ -504,6 +504,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 		log.New("testlogger"),
 		secretsService,
 		featuremgmt.WithFeatures(),
+		nil,
 	)
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))

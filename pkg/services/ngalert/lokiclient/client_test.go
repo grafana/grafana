@@ -1,4 +1,4 @@
-package historian
+package lokiclient
 
 import (
 	"bytes"
@@ -21,11 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
+const lokiClientSpanName = "testLokiClientSpanName"
+
 func TestLokiConfig(t *testing.T) {
 	t.Run("test URL options", func(t *testing.T) {
 		type testCase struct {
 			name     string
-			in       setting.UnifiedAlertingStateHistorySettings
+			in       setting.UnifiedAlertingLokiSettings
 			expRead  string
 			expWrite string
 			expErr   string
@@ -34,7 +36,7 @@ func TestLokiConfig(t *testing.T) {
 		cases := []testCase{
 			{
 				name: "remote url only",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiRemoteURL: "http://url.com",
 				},
 				expRead:  "http://url.com",
@@ -42,7 +44,7 @@ func TestLokiConfig(t *testing.T) {
 			},
 			{
 				name: "separate urls",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiReadURL:  "http://read.url.com",
 					LokiWriteURL: "http://write.url.com",
 				},
@@ -51,7 +53,7 @@ func TestLokiConfig(t *testing.T) {
 			},
 			{
 				name: "single fallback",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiRemoteURL: "http://url.com",
 					LokiReadURL:   "http://read.url.com",
 				},
@@ -60,21 +62,21 @@ func TestLokiConfig(t *testing.T) {
 			},
 			{
 				name: "missing read",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiWriteURL: "http://url.com",
 				},
 				expErr: "either read path URL or remote",
 			},
 			{
 				name: "missing write",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiReadURL: "http://url.com",
 				},
 				expErr: "either write path URL or remote",
 			},
 			{
 				name: "invalid",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiRemoteURL: "://://",
 				},
 				expErr: "failed to parse",
@@ -95,7 +97,7 @@ func TestLokiConfig(t *testing.T) {
 	})
 
 	t.Run("captures external labels", func(t *testing.T) {
-		set := setting.UnifiedAlertingStateHistorySettings{
+		set := setting.UnifiedAlertingLokiSettings{
 			LokiRemoteURL:  "http://url.com",
 			ExternalLabels: map[string]string{"a": "b"},
 		}
@@ -127,8 +129,8 @@ func TestLokiHTTPClient(t *testing.T) {
 		err := client.Push(context.Background(), data)
 
 		require.NoError(t, err)
-		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
-		sent := reqBody(t, req.lastRequest)
+		require.Contains(t, "/loki/api/v1/push", req.LastRequest.URL.Path)
+		sent := reqBody(t, req.LastRequest)
 		exp := fmt.Sprintf(`{"streams": [{"stream": {}, "values": [["%d", "some line"]]}]}`, now.UnixNano())
 		require.JSONEq(t, exp, sent)
 	})
@@ -149,7 +151,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			_, err := client.RangeQuery(context.Background(), q, now-100, now, 1100)
 
 			require.NoError(t, err)
-			params := req.lastRequest.URL.Query()
+			params := req.LastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(1100), params.Get("limit"))
 		})
@@ -169,7 +171,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			_, err := client.RangeQuery(context.Background(), q, now-100, now, 0)
 
 			require.NoError(t, err)
-			params := req.lastRequest.URL.Query()
+			params := req.LastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(defaultPageSize), params.Get("limit"))
 		})
@@ -189,7 +191,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			_, err := client.RangeQuery(context.Background(), q, now-100, now, -100)
 
 			require.NoError(t, err)
-			params := req.lastRequest.URL.Query()
+			params := req.LastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(defaultPageSize), params.Get("limit"))
 		})
@@ -209,7 +211,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			_, err := client.RangeQuery(context.Background(), q, now-100, now, maximumPageSize+1000)
 
 			require.NoError(t, err)
-			params := req.lastRequest.URL.Query()
+			params := req.LastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(maximumPageSize), params.Get("limit"))
 		})
@@ -224,11 +226,12 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
 		require.NoError(t, err)
 
+		metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		client := NewLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
 			Encoder:      JsonEncoder{},
-		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem), log.NewNopLogger(), tracing.InitializeTracerForTest())
+		}, NewRequester(), metrics.BytesWritten, metrics.WriteDuration, log.NewNopLogger(), tracing.InitializeTracerForTest(), lokiClientSpanName)
 
 		// Unauthorized request should fail against Grafana Cloud.
 		err = client.Ping(context.Background())
@@ -250,13 +253,14 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
 		require.NoError(t, err)
 
+		metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		client := NewLokiClient(LokiConfig{
 			ReadPathURL:       url,
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
 			Encoder:           JsonEncoder{},
-		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem), log.NewNopLogger(), tracing.InitializeTracerForTest())
+		}, NewRequester(), metrics.BytesWritten, metrics.WriteDuration, log.NewNopLogger(), tracing.InitializeTracerForTest(), lokiClientSpanName)
 
 		// When running on prem, you might need to set the tenant id,
 		// so the x-scope-orgid header is set.
@@ -390,7 +394,7 @@ func createTestLokiClient(req client.Requester) *HttpLokiClient {
 		Encoder:      JsonEncoder{},
 	}
 	met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
-	return NewLokiClient(cfg, req, met, log.NewNopLogger(), tracing.InitializeTracerForTest())
+	return NewLokiClient(cfg, req, met.BytesWritten, met.WriteDuration, log.NewNopLogger(), tracing.InitializeTracerForTest(), lokiClientSpanName)
 }
 
 func reqBody(t *testing.T, req *http.Request) string {
