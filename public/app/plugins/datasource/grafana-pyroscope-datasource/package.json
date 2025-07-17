@@ -42,9 +42,11 @@
     "@grafana/runtime": "*"
   },
   "scripts": {
-    "build": "webpack -c ./webpack.config.ts --env production",
-    "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
-    "dev": "webpack -w -c ./webpack.config.ts --env development"
+    "build": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production",
+    "build:commit": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
+    "dev": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -w -c ./webpack.config.ts --env development",
+    "test": "jest --watch --onlyChanged",
+    "test:ci": "jest --maxWorkers 4"
   },
   "packageManager": "yarn@4.9.2"
 }

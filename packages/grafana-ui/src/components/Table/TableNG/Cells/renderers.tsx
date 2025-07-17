@@ -25,19 +25,11 @@ const GAUGE_RENDERER: TableCellRenderer = (props) => (
     height={props.height}
     width={props.width}
     rowIdx={props.rowIdx}
-    actions={props.actions}
   />
 );
 
 const AUTO_RENDERER: TableCellRenderer = (props) => (
-  <AutoCell
-    value={props.value}
-    field={props.field}
-    justifyContent={props.justifyContent}
-    rowIdx={props.rowIdx}
-    cellOptions={props.cellOptions}
-    actions={props.actions}
-  />
+  <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
 const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
@@ -53,13 +45,7 @@ const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
 );
 
 const JSON_RENDERER: TableCellRenderer = (props) => (
-  <JSONCell
-    justifyContent={props.justifyContent}
-    value={props.value}
-    field={props.field}
-    rowIdx={props.rowIdx}
-    actions={props.actions}
-  />
+  <JSONCell justifyContent={props.justifyContent} value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
 const GEO_RENDERER: TableCellRenderer = (props) => (
@@ -74,13 +60,14 @@ const IMAGE_RENDERER: TableCellRenderer = (props) => (
     justifyContent={props.justifyContent}
     value={props.value}
     rowIdx={props.rowIdx}
-    actions={props.actions}
   />
 );
 
 const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />;
 
-const ACTIONS_RENDERER: TableCellRenderer = (props) => <ActionsCell actions={props.actions} />;
+const ACTIONS_RENDERER: TableCellRenderer = ({ field, rowIdx, getActions = () => [] }) => (
+  <ActionsCell field={field} rowIdx={rowIdx} getActions={getActions} />
+);
 
 const PILL_RENDERER: TableCellRenderer = (props) => <PillCell {...props} />;
 
@@ -116,7 +103,13 @@ export function getCellRenderer(field: Field, cellOptions: TableCellOptions): Ta
   if (cellType === TableCellDisplayMode.Auto) {
     return getAutoRendererResult(field);
   }
-  return CELL_RENDERERS[cellType];
+
+  // TODO: add support boolean, enum, (maybe int). but for now just string fields
+  if (cellType === TableCellDisplayMode.Pill && field.type !== FieldType.string) {
+    return AUTO_RENDERER;
+  }
+
+  return CELL_RENDERERS[cellType] ?? AUTO_RENDERER;
 }
 
 /** @internal */

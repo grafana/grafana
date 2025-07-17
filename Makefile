@@ -279,6 +279,18 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 run-air: ## [Experimental] Build and run backend, and watch for changes. See .air.toml for configuration. Check https://github.com/air-verse/air for installation instructions.
 	air -c .air.toml
 
+.PHONY: frontend-service-check
+frontend-service-check:
+	./devenv/frontend-service/local-init.sh
+
+.PHONY: frontend-service-up
+frontend-service-up: frontend-service-check
+	tilt up -f devenv/frontend-service/Tiltfile
+
+.PHONY: frontend-service-down
+frontend-service-down: frontend-service-check
+	tilt down -f devenv/frontend-service/Tiltfile
+
 ##@ Testing
 
 .PHONY: test-go
@@ -471,7 +483,7 @@ protobuf: ## Compile protobuf definitions
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
-	buf generate pkg/apis/secret/v0alpha1/decrypt --template pkg/apis/secret/v0alpha1/decrypt/buf.gen.yaml
+	buf generate apps/secret/decrypt/v1beta1 --template apps/secret/decrypt/v1beta1/buf.gen.yaml
 	buf generate pkg/storage/unified/proto --template pkg/storage/unified/proto/buf.gen.yaml
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml

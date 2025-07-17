@@ -476,8 +476,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-prometheus/src/querybuilder/shared/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-prometheus/src/resource_clients.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1281,9 +1280,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rule-editor/AnnotationKeyInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/alerting/unified/components/rule-editor/AnnotationsStep.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
     "public/app/features/alerting/unified/components/rule-editor/CloudEvaluationBehavior.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
@@ -1686,15 +1682,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/serialization/transformToV1TypesUtils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/dashboard-scene/settings/GeneralSettingsEditView.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"]
     ],
     "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsEdit.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -2343,8 +2330,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/geo/utils/frameVectorSource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/inspector/InspectDataOptions.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -2544,10 +2530,10 @@ exports[`better eslint`] = {
     "public/app/features/plugins/loader/sharedDependencies.ts:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
-    "public/app/features/plugins/sandbox/distortion_map.ts:5381": [
+    "public/app/features/plugins/sandbox/distortions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/plugins/sandbox/sandbox_plugin_loader.ts:5381": [
+    "public/app/features/plugins/sandbox/sandboxPluginLoader.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
@@ -2790,10 +2776,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/editors/CalculateFieldTransformerEditor/WindowOptionsEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/transformers/editors/CalculateFieldTransformerEditor/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`CalculateFieldTransformerEditor\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`calculateFieldTransformRegistryItem\`)", "1"]
     ],
     "public/app/features/transformers/editors/ConvertFieldTypeTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3127,9 +3109,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloud-monitoring/types/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/cloud-monitoring/webpack.config.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
-    ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
@@ -3295,9 +3274,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/grafana-testdata-datasource/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/grafana-testdata-datasource/webpack.config.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/datasource/grafana/components/AnnotationQueryEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -3474,8 +3450,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./trace\`)", "0"]
     ],
     "public/app/plugins/datasource/jaeger/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3650,9 +3625,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
-    "public/app/plugins/datasource/tempo/webpack.config.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
-    ],
     "public/app/plugins/datasource/zipkin/QueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -3662,9 +3634,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/zipkin/utils/transforms.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/zipkin/webpack.config.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/panel/annolist/AnnoListPanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3783,9 +3752,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/geomap/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
-    ],
-    "public/app/plugins/panel/geomap/utils/layers.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/geomap/utils/tooltip.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4009,9 +3975,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/types/acl.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`OrgRole\`)", "0"]
-    ],
     "public/app/types/alerting.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -4032,29 +3995,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
-    ],
-    "public/app/types/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`CoreEvents\`)", "0"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "6"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "7"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "8"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "9"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "10"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "11"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "12"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "13"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "14"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "15"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "16"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "17"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "18"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "19"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "20"]
     ],
     "public/app/types/jquery/jquery.d.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

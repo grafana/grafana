@@ -36,7 +36,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 		expectedGenericOAuthSkipOrgRoleSync bool
 	}{
 		{
-			name:                                "should load all social connectors when ssoSettingsApi is enabled",
+			name:                                "should load all social connectors",
 			expectedSocialMapLength:             7,
 			expectedGenericOAuthSkipOrgRoleSync: false,
 		},
