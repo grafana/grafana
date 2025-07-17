@@ -210,7 +210,7 @@ export const bulkMoveResources = async ({
 
       // Add delay between operations to prevent GitHub API rate limits and conflicts
       if (index < fulfilledResources.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 300)); // 300ms delay
+        await new Promise((resolve) => setTimeout(resolve, 20000)); // 20000 delay to prevent Git corruption
       }
     } catch (error) {
       console.error(`❌ Failed to move dashboard ${uid}:`, error);
