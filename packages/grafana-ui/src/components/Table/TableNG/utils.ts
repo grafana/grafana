@@ -128,11 +128,14 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
+  let type = getCellOptions(field).type;
+
   return (
     field.type === FieldType.string &&
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensure we don't apply overflow hover states for type image
-    getCellOptions(field).type !== TableCellDisplayMode.Image &&
+    type !== TableCellDisplayMode.Image &&
+    type !== TableCellDisplayMode.Pill &&
     !shouldTextWrap(field) &&
     !isCellInspectEnabled(field)
   );
@@ -227,7 +230,6 @@ export function getAlignmentFactor(
 
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
-const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
 const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
 
 /**
@@ -245,7 +247,7 @@ export function getCellColors(
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
-  let bgHoverColor: string | undefined = undefined;
+  // let bgHoverColor: string | undefined = undefined;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
@@ -255,23 +257,23 @@ export function getCellColors(
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-      bgHoverColor = tinycolor(displayValue.color)
-        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
-        .toRgbString();
+      // bgHoverColor = tinycolor(displayValue.color)
+      //   .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+      //   .toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const hoverColor = tinycolor(displayValue.color)
-        .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
-        .toRgbString();
+      // const hoverColor = tinycolor(displayValue.color)
+      //   .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
+      //   .toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
         .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
         .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-      bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
+      // bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
     }
   }
 
-  return { textColor, bgColor, bgHoverColor };
+  return { textColor, bgColor };
 }
 
 /**
