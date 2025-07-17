@@ -15,6 +15,7 @@ export const pluginVersion = "12.1.0-pre";
 export interface Options {
   controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
+  detailsMode?: ('inline' | 'sidebar');
   displayedFields?: Array<string>;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
@@ -35,6 +36,7 @@ export interface Options {
   onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
+  setDisplayedFields?: unknown;
   showCommonLabels: boolean;
   showControls?: boolean;
   showLabels: boolean;

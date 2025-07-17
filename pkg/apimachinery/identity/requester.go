@@ -3,7 +3,9 @@ package identity
 import (
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/go-jose/go-jose/v3/jwt"
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	claims "github.com/grafana/authlib/types"
@@ -124,4 +126,32 @@ func intIdentifier(typ claims.IdentityType, id string, expected ...claims.Identi
 	}
 
 	return 0, ErrNotIntIdentifier
+}
+
+// IsIDTokenExpired returns true if the ID token is expired.
+// If no ID token exists, returns false.
+func IsIDTokenExpired(requester Requester) bool {
+	idToken := requester.GetIDToken()
+	if idToken == "" {
+		return false
+	}
+
+	parsed, err := jwt.ParseSigned(idToken)
+	if err != nil {
+		return false
+	}
+
+	var claims struct {
+		Expiry *jwt.NumericDate `json:"exp"`
+	}
+	if err := parsed.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return false
+	}
+
+	if claims.Expiry != nil {
+		expiryTime := claims.Expiry.Time()
+		return time.Now().After(expiryTime)
+	}
+
+	return false
 }

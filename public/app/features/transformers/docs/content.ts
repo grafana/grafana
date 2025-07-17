@@ -581,7 +581,7 @@ This transformation goes in two steps. First you specify one or multiple fields 
 | 2020-07-07 10:31:22 | **_server 3_** | 55              | OK            |
 | 2020-07-07 09:30:57 | **_server 3_** | 62              | Rebooting     |
 
-All rows with the same value of Server ID are grouped together.
+All rows with the same value of Server ID are grouped together. Optionally, you can add a count of how may values fall in the selected group.
 
 After choosing which field you want to group your data by, you can add various calculations on the other fields, and apply the calculation to each group of rows. For instance, we could want to calculate the average CPU temperature for each of those servers. So we can add the _mean_ calculation applied on the CPU Temperature field to get the following:
 
@@ -590,6 +590,14 @@ After choosing which field you want to group your data by, you can add various c
 | server 1  | 82                     |
 | server 2  | 88.6                   |
 | server 3  | 59.6                   |
+
+If you had added the count stat to the group by transformation, there would be an extra column showing that the count of each server from above was 3.
+
+| Server ID | CPU Temperature (mean) | Server ID (count) |
+| --------- | ---------------------- | ----------------- |
+| server 1  | 82                     | 3                 |
+| server 2  | 88.6                   | 3                 |
+| server 3  | 59.6                   | 3                 |
 
 And we can add more than one calculation. For instance:
 
@@ -1595,8 +1603,6 @@ ${buildImageContent(
   imageRenderType,
   'A time series visualization with a curved line representing the polynomial function'
 )}
-
-> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
   `;
     },
   },

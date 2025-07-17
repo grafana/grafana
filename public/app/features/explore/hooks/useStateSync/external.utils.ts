@@ -2,7 +2,7 @@ import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
 import { ExploreUrlState, toURLRange } from '@grafana/data';
 import { clearQueryKeys } from 'app/core/utils/explore';
-import { ExploreItemState } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
 
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {
@@ -21,7 +21,19 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
  * if the resulting object is empty, returns undefined
  **/
 function pruneObject(obj: object): object | undefined {
-  let pruned = mapValues(obj, (value) => (isObject(value) ? pruneObject(value) : value));
+  let pruned = mapValues(obj, (value: unknown) => {
+    if (isObject(value)) {
+      if (Array.isArray(value)) {
+        // For arrays, recursively prune each item and filter out empty results
+        const prunedArray = value
+          .map((item: unknown) => (isObject(item) ? pruneObject(item) : item))
+          .filter((item: unknown) => !isEmpty(item));
+        return prunedArray.length > 0 ? prunedArray : undefined;
+      }
+      return pruneObject(value);
+    }
+    return value;
+  });
   pruned = omitBy<typeof pruned>(pruned, isEmpty);
   if (isEmpty(pruned)) {
     return undefined;

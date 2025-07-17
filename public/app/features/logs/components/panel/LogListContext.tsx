@@ -22,10 +22,13 @@ import {
   shallowCompare,
   store,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
+import { getDisplayedFieldsForLogs } from '../otel/formats';
 
+import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
@@ -34,15 +37,18 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
   detailsDisplayed: (log: LogListModel) => boolean;
+  detailsMode: LogLineDetailsMode;
   detailsWidth: number;
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
+  forceEscape: boolean;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
-  hasUnescapedContent?: boolean;
+  hasUnescapedContent: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
+  setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
   setFontSize: (size: LogListFontSize) => void;
@@ -64,14 +70,17 @@ export const LogListContext = createContext<LogListContextData>({
   closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
   detailsDisplayed: () => false,
+  detailsMode: 'sidebar',
   detailsWidth: 0,
   displayedFields: [],
   downloadLogs: () => {},
   enableLogDetails: false,
   filterLevels: [],
+  forceEscape: false,
   fontSize: 'default',
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
+  setDetailsMode: () => {},
   setDetailsWidth: () => {},
   setFilterLevels: () => {},
   setFontSize: () => {},
@@ -117,7 +126,6 @@ export type LogListState = Pick<
   | 'fontSize'
   | 'forceEscape'
   | 'filterLevels'
-  | 'hasUnescapedContent'
   | 'pinnedLogs'
   | 'prettifyJSON'
   | 'showUniqueLabels'
@@ -132,13 +140,12 @@ export interface Props {
   children?: ReactNode;
   // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
+  detailsMode?: LogLineDetailsMode;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   enableLogDetails: boolean;
   filterLevels?: LogLevel[];
   fontSize: LogListFontSize;
-  forceEscape?: boolean;
-  hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
@@ -162,6 +169,7 @@ export interface Props {
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   prettifyJSON?: boolean;
+  setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showUniqueLabels?: boolean;
   showTime: boolean;
@@ -175,12 +183,11 @@ export const LogListContextProvider = ({
   children,
   containerElement,
   enableLogDetails,
+  detailsMode: detailsModeProp,
   dedupStrategy,
   displayedFields,
   filterLevels,
   fontSize,
-  forceEscape = false,
-  hasUnescapedContent,
   isLabelFilterActive,
   getRowContextQuery,
   logs,
@@ -204,6 +211,7 @@ export const LogListContextProvider = ({
   pinLineButtonTooltipTitle,
   pinnedLogs,
   prettifyJSON,
+  setDisplayedFields,
   showControls,
   showTime,
   showUniqueLabels,
@@ -216,8 +224,7 @@ export const LogListContextProvider = ({
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
     fontSize,
-    forceEscape,
-    hasUnescapedContent,
+    forceEscape: logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.forceEscape`, false) : false,
     pinnedLogs,
     prettifyJSON,
     showTime,
@@ -228,6 +235,17 @@ export const LogListContextProvider = ({
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+
+  useEffect(() => {
+    if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
+      return;
+    }
+    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
+    if (otelDisplayedFields.length) {
+      setDisplayedFields(otelDisplayedFields);
+    }
+  }, [displayedFields.length, logs, setDisplayedFields]);
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -272,12 +290,6 @@ export const LogListContextProvider = ({
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
   }, [fontSize]);
-
-  useEffect(() => {
-    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
-      setLogListState({ ...logListState, hasUnescapedContent });
-    }
-  }, [hasUnescapedContent, logListState]);
 
   useEffect(() => {
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
@@ -432,8 +444,11 @@ export const LogListContextProvider = ({
   );
 
   const closeDetails = useCallback(() => {
+    if (showDetails.length) {
+      removeDetailsScrollPosition(showDetails[0]);
+    }
     setShowDetails([]);
-  }, []);
+  }, [showDetails]);
 
   const toggleDetails = useCallback(
     (log: LogListModel) => {
@@ -470,6 +485,7 @@ export const LogListContextProvider = ({
 
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
+  const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
   return (
     <LogListContext.Provider
@@ -478,6 +494,7 @@ export const LogListContextProvider = ({
         closeDetails,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
+        detailsMode,
         detailsWidth,
         displayedFields,
         downloadLogs,
@@ -487,11 +504,12 @@ export const LogListContextProvider = ({
         forceEscape: logListState.forceEscape,
         hasLogsWithErrors,
         hasSampledLogs,
-        hasUnescapedContent: logListState.hasUnescapedContent,
+        hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
         logLineMenuCustomItems,
+        logOptionsStorageKey,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
@@ -508,7 +526,9 @@ export const LogListContextProvider = ({
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
+        setDetailsMode,
         setDetailsWidth,
+        setDisplayedFields,
         setFilterLevels,
         setFontSize,
         setForceEscape,
@@ -559,7 +579,9 @@ function getDetailsWidth(
   const defaultWidth = containerElement.clientWidth * 0.4;
   const detailsWidth =
     currentWidth ||
-    (logOptionsStorageKey ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10) : defaultWidth);
+    (logOptionsStorageKey
+      ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`) ?? defaultWidth, 10)
+      : defaultWidth);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
@@ -568,4 +590,18 @@ function getDetailsWidth(
     return currentWidth ?? defaultWidth;
   }
   return detailsWidth;
+}
+
+const detailsScrollMap = new Map<string, number>();
+
+export function saveDetailsScrollPosition(log: LogListModel, position: number) {
+  detailsScrollMap.set(log.uid, position);
+}
+
+export function getDetailsScrollPosition(log: LogListModel) {
+  return detailsScrollMap.get(log.uid) ?? 0;
+}
+
+export function removeDetailsScrollPosition(log: LogListModel) {
+  detailsScrollMap.delete(log.uid);
 }

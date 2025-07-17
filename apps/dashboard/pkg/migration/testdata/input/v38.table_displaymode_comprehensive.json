@@ -1,0 +1,187 @@
+{
+  "title": "V38 Table Migration Comprehensive Test Dashboard",
+  "schemaVersion": 37,
+  "panels": [
+    {
+      "type": "table",
+      "title": "Table with Basic Gauge",
+      "id": 1,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "basic"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table", 
+      "title": "Table with Gradient Gauge",
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "gradient-gauge"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table with LCD Gauge", 
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "lcd-gauge"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table with Color Background",
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "color-background"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table with Color Background Solid",
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "color-background-solid"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table with Unknown Mode",
+      "id": 6,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "some-other-mode"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table with No Display Mode",
+      "id": 7,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "width": 100
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "title": "Table with Overrides",
+      "id": 8,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "displayMode": "basic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Field1"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "gradient-gauge"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName", 
+              "options": "Field2"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Non-table Panel (Should Remain Unchanged)",
+      "id": 9
+    },
+    {
+      "type": "row",
+      "title": "Row with Nested Table Panels",
+      "id": 10,
+      "collapsed": false,
+      "panels": [
+        {
+          "type": "table",
+          "title": "Nested Table with Basic Mode",
+          "id": 11,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "displayMode": "basic"
+              }
+            },
+            "overrides": []
+          }
+        },
+        {
+          "type": "table",
+          "title": "Nested Table with Gradient Gauge",
+          "id": 12,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "displayMode": "gradient-gauge"
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "NestedField"
+                },
+                "properties": [
+                  {
+                    "id": "custom.displayMode",
+                    "value": "lcd-gauge"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+} 

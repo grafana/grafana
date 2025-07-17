@@ -7,7 +7,7 @@ import { EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
-import { DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';

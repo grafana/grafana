@@ -14,7 +14,7 @@ import {
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
@@ -218,6 +218,39 @@ describe('DashboardScenePageStateManager v1', () => {
     });
 
     describe('caching', () => {
+      it('should return cached scene if updated_at matches', async () => {
+        const loader = new DashboardScenePageStateManager({});
+
+        // set cache
+        loader.setSceneCache(
+          'fake-dash',
+          new DashboardScene({ title: 'Dashboard 1', uid: 'fake-dash', meta: { created: '1' }, version: 0 }, 'v1')
+        );
+
+        // should return cached scene
+        expect(
+          loader.transformResponseToScene(
+            {
+              meta: { created: '1' },
+              dashboard: { title: 'Dashboard 1', uid: 'fake-dash', schemaVersion: 1, version: 0 },
+            },
+            { uid: 'fake-dash', route: DashboardRoutes.Normal }
+          )?.state.title
+        ).toBe('Dashboard 1');
+
+        // try loading new scene
+        loader.transformResponseToScene(
+          {
+            meta: { created: '2' },
+            dashboard: { title: 'Dashboard 2', uid: 'fake-dash', schemaVersion: 1, version: 0 },
+          },
+          { uid: 'fake-dash', route: DashboardRoutes.Normal }
+        );
+
+        // should update cache with new scene
+        expect(loader.getSceneFromCache('fake-dash').state.title).toBe('Dashboard 2');
+      });
+
       it('should take scene from cache if it exists', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 10 }, meta: {} });
 

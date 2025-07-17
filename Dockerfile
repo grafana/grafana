@@ -69,9 +69,9 @@ COPY go.* ./
 COPY .bingo .bingo
 COPY .citools .citools
 
-# Include vendored dependencies
+# Copy go dependencies first
+# If updating this, please also update devenv/frontend-service/backend.dockerfile
 COPY pkg/util/xorm pkg/util/xorm
-COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
@@ -83,6 +83,7 @@ COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
 COPY pkg/aggregator pkg/aggregator
 COPY apps/playlist apps/playlist
+COPY apps/secret apps/secret
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard

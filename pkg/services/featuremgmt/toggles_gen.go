@@ -183,9 +183,9 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
-	// FlagNanoGit
-	// Use experimental git library for provisioning
-	FlagNanoGit = "nanoGit"
+	// FlagProvisioningSecretsService
+	// Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+	FlagProvisioningSecretsService = "provisioningSecretsService"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -355,10 +355,6 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
-	// FlagSsoSettingsApi
-	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
-	FlagSsoSettingsApi = "ssoSettingsApi"
-
 	// FlagCanvasPanelPanZoom
 	// Allow pan and zoom in canvas panel
 	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
@@ -382,10 +378,6 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
-
-	// FlagLokiQueryHints
-	// Enables query hints for Loki
-	FlagLokiQueryHints = "lokiQueryHints"
 
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
@@ -466,10 +458,6 @@ const (
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
-
-	// FlagSsoSettingsSAML
-	// Use the new SSO Settings API to configure the SAML connector
-	FlagSsoSettingsSAML = "ssoSettingsSAML"
 
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
@@ -679,10 +667,6 @@ const (
 	// Enables browser crash detection reporting to Faro.
 	FlagCrashDetection = "crashDetection"
 
-	// FlagJaegerBackendMigration
-	// Enables querying the Jaeger data source without the proxy
-	FlagJaegerBackendMigration = "jaegerBackendMigration"
-
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
@@ -690,6 +674,22 @@ const (
 	// FlagAzureMonitorEnableUserAuth
 	// Enables user auth for Azure Monitor datasource only
 	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
+
+	// FlagAlertingAIGenAlertRules
+	// Enable AI-generated alert rules.
+	FlagAlertingAIGenAlertRules = "alertingAIGenAlertRules"
+
+	// FlagAlertingAIImproveAlertRules
+	// Enable AI-improve alert rules labels and annotations.
+	FlagAlertingAIImproveAlertRules = "alertingAIImproveAlertRules"
+
+	// FlagAlertingAIGenTemplates
+	// Enable AI-generated alerting templates.
+	FlagAlertingAIGenTemplates = "alertingAIGenTemplates"
+
+	// FlagAlertingAIAnalyzeCentralStateHistory
+	// Enable AI-analyze central state history.
+	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
@@ -867,6 +867,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagTempoAlerting
+	// Enables creating alerts from Tempo data source
+	FlagTempoAlerting = "tempoAlerting"
+
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
@@ -886,10 +890,6 @@ const (
 	// FlagAlertingBulkActionsInUI
 	// Enables the alerting bulk actions in the UI
 	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
-
-	// FlagExtensionsReadOnlyProxy
-	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
-	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
 
 	// FlagKubernetesAuthzApis
 	// Registers AuthZ /apis endpoint
@@ -911,6 +911,10 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
+	// FlagSharingDashboardImage
+	// Enables image sharing functionality for dashboards
+	FlagSharingDashboardImage = "sharingDashboardImage"
+
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
@@ -926,4 +930,24 @@ const (
 	// FlagEnableAppChromeExtensions
 	// Set this to true to enable all app chrome extensions registered by plugins.
 	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
+
+	// FlagFoldersAppPlatformAPI
+	// Enables use of app platform API for folders
+	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
+
+	// FlagEnablePluginImporter
+	// Set this to true to use the new PluginImporter functionality
+	FlagEnablePluginImporter = "enablePluginImporter"
+
+	// FlagOtelLogsFormatting
+	// Applies OTel formatting templates to displayed logs
+	FlagOtelLogsFormatting = "otelLogsFormatting"
+
+	// FlagAlertingNotificationHistory
+	// Enables the notification history feature
+	FlagAlertingNotificationHistory = "alertingNotificationHistory"
+
+	// FlagPluginAssetProvider
+	// Allows decoupled core plugins to load from the Grafana CDN
+	FlagPluginAssetProvider = "pluginAssetProvider"
 )
