@@ -34,11 +34,13 @@ func ConvertToK8sResource(
 			Labels:    make(map[string]string),
 		},
 		Spec: model.RecordingRuleSpec{
-			Title:    rule.Title,
-			Paused:   util.Pointer(rule.IsPaused),
-			Data:     make(map[string]model.RecordingRuleQuery),
-			Interval: model.RecordingRulePromDuration(strconv.FormatInt(rule.IntervalSeconds, 10)),
-			Labels:   make(map[string]model.RecordingRuleTemplateString),
+			Title:  rule.Title,
+			Paused: util.Pointer(rule.IsPaused),
+			Data:   make(map[string]model.RecordingRuleQuery),
+			Trigger: model.RecordingRuleIntervalTrigger{
+				Interval: model.RecordingRulePromDuration(strconv.FormatInt(rule.IntervalSeconds, 10)),
+			},
+			Labels: make(map[string]model.RecordingRuleTemplateString),
 
 			Metric:              rule.Record.Metric,
 			TargetDatasourceUID: rule.Record.TargetDatasourceUID,
@@ -103,6 +105,12 @@ func ConvertToDomainModel(k8sRule *model.RecordingRule) (*ngmodels.AlertRule, er
 			TargetDatasourceUID: k8sRule.Spec.TargetDatasourceUID,
 		},
 	}
+
+	interval, err := strconv.Atoi(string(k8sRule.Spec.Trigger.Interval))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse interval: %w", err)
+	}
+	domainRule.IntervalSeconds = int64(interval)
 
 	for k, v := range k8sRule.Spec.Labels {
 		domainRule.Labels[k] = string(v)

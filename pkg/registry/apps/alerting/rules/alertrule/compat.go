@@ -38,11 +38,13 @@ func ConvertToK8sResource(
 			Labels:          make(map[string]string),
 		},
 		Spec: model.AlertRuleSpec{
-			Title:    rule.Title,
-			Paused:   util.Pointer(rule.IsPaused),
-			Data:     make(map[string]model.AlertRuleQuery),
-			Interval: model.AlertRulePromDuration(strconv.FormatInt(rule.IntervalSeconds, 10)),
-			Labels:   make(map[string]model.AlertRuleTemplateString),
+			Title:  rule.Title,
+			Paused: util.Pointer(rule.IsPaused),
+			Data:   make(map[string]model.AlertRuleQuery),
+			Trigger: model.AlertRuleIntervalTrigger{
+				Interval: model.AlertRulePromDuration(strconv.FormatInt(rule.IntervalSeconds, 10)),
+			},
+			Labels: make(map[string]model.AlertRuleTemplateString),
 
 			For:                         rule.For.String(),
 			KeepFiringFor:               rule.KeepFiringFor.String(),
@@ -198,7 +200,7 @@ func ConvertToDomainModel(k8sRule *model.AlertRule) (*ngmodels.AlertRule, error)
 	}
 	domainRule.KeepFiringFor = time.Duration(keepFiringFor)
 
-	interval, err := strconv.Atoi(string(k8sRule.Spec.Interval))
+	interval, err := strconv.Atoi(string(k8sRule.Spec.Trigger.Interval))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval: %w", err)
 	}
