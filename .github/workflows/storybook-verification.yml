@@ -14,26 +14,30 @@ on:
       - '!docs/**'
       - '!*.md'
 
+permissions: {}
+
 jobs:
   verify-storybook:
     name: Verify Storybook
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: 'package.json'
           cache: 'yarn'
-      
+
       - name: Install dependencies
         run: yarn install --immutable
-      
+
       - name: Run Storybook and E2E tests
         uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:

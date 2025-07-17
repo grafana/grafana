@@ -4,7 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/grafana/grafana/pkg/build"
+	"github.com/grafana/grafana/pkg/build/cmd/util"
+	"github.com/grafana/grafana/pkg/build/daggerbuild/cmd"
 	"github.com/urfave/cli/v2"
 )
 
@@ -16,15 +17,131 @@ func registerAppCommand(c *cli.Command) {
 }
 
 func main() {
-	app := cli.NewApp()
-	app.Commands = cli.Commands{
+	// TODO change the registerer if the user is running using a JSON file etc
+	for k, v := range cmd.Artifacts {
+		if err := cmd.GlobalCLI.Register(k, v); err != nil {
+			panic(err)
+		}
+	}
+
+	app := cmd.GlobalCLI.App()
+	artifactsCommand := cmd.GlobalCLI.ArtifactsCommand()
+	artifactsCommand.Subcommands = cli.Commands{
 		{
-			Name:   "build",
-			Action: build.RunCmdCLI,
+			Name:   "storybook",
+			Usage:  "[ARCHIVED] Publish Grafana storybook",
+			Action: PublishStorybookAction,
+			Flags: []cli.Flag{
+				&editionFlag,
+				&tagFlag,
+				&srcFlag,
+				&cli.StringFlag{
+					Name:  "storybook-bucket",
+					Value: "grafana-storybook",
+					Usage: "Google Cloud Storage bucket for storybooks",
+				},
+			},
 		},
 		{
+			Name:   "static-assets",
+			Usage:  "[ARCHIVED] Publish Grafana static assets",
+			Action: PublishStaticAssetsAction,
+			Flags: []cli.Flag{
+				&editionFlag,
+				&securityFlag,
+				&securityDestBucketFlag,
+				&tagFlag,
+				&srcFlag,
+				&destFlag,
+				&cli.StringFlag{
+					Name:  "static-assets-bucket",
+					Value: "grafana-static-assets",
+					Usage: "Google Cloud Storage bucket for static assets",
+				},
+				&cli.StringSliceFlag{
+					Name:  "static-asset-editions",
+					Usage: "All the editions of the static assets (or $STATIC_ASSET_EDITIONS)",
+				},
+			},
+		},
+		{
+			Name:   "packages",
+			Usage:  "[ARCHIVED] Publish Grafana packages",
+			Action: PublishArtifactsAction,
+			Flags: []cli.Flag{
+				&editionFlag,
+				&securityFlag,
+				&securityDestBucketFlag,
+				&tagFlag,
+				&srcFlag,
+				&destFlag,
+				&cli.StringSliceFlag{
+					Name:  "artifacts-editions",
+					Value: cli.NewStringSlice("oss", "enterprise", "enterprise2"),
+					Usage: "Editions for which the artifacts should be delivered (oss,enterprise,enterprise2), (or $ARTIFACTS_EDITIONS)",
+				},
+				&cli.StringFlag{
+					Name:  "enterprise2-dest-bucket",
+					Value: "grafana-downloads-enterprise2",
+					Usage: "Google Cloud Storage bucket for published packages",
+				},
+				&cli.StringFlag{
+					Name:  "enterprise2-security-prefix",
+					Usage: "Bucket path prefix for enterprise2 security releases (or $ENTERPRISE2_SECURITY_PREFIX)",
+				},
+			},
+		},
+		{
+			Name:  "docker",
+			Usage: "[ARCHIVED] Handle Grafana Docker images",
+			Subcommands: cli.Commands{
+				{
+					Name:      "fetch",
+					Usage:     "Fetch Grafana Docker images",
+					ArgsUsage: "[version]",
+					Action:    util.MaxArgCountWrapper(1, FetchImages),
+					Flags: []cli.Flag{
+						&editionFlag,
+					},
+				},
+			},
+		},
+		{
+			Name:  "npm",
+			Usage: "[ARCHIVED] Handle Grafana npm packages",
+			Subcommands: cli.Commands{
+				{
+					Name:      "release",
+					Usage:     "Release npm packages",
+					ArgsUsage: "[version]",
+					Action:    NpmReleaseAction,
+					Flags: []cli.Flag{
+						&tagFlag,
+					},
+				},
+				{
+					Name:   "store",
+					Usage:  "Store npm packages tarball",
+					Action: NpmStoreAction,
+					Flags: []cli.Flag{
+						&tagFlag,
+					},
+				},
+				{
+					Name:   "retrieve",
+					Usage:  "Retrieve npm packages tarball",
+					Action: NpmRetrieveAction,
+					Flags: []cli.Flag{
+						&tagFlag,
+					},
+				},
+			},
+		},
+	}
+	app.Commands = append(app.Commands, []*cli.Command{
+		{
 			Name:   "e2e-tests",
-			Usage:  "Run Grafana e2e tests",
+			Usage:  "[ARCHIVED] Run Grafana e2e tests",
 			Action: EndToEndTests,
 			Flags: []cli.Flag{
 				&triesFlag,
@@ -50,13 +167,8 @@ func main() {
 			},
 		},
 		{
-			Name:   "whatsnew-checker",
-			Usage:  "Checks whatsNewUrl in package.json for differences between the tag and the docs version",
-			Action: WhatsNewChecker,
-		},
-		{
 			Name:   "upload-cdn",
-			Usage:  "Upload public/* to a cdn bucket",
+			Usage:  "[ARCHIVED] Upload public/* to a cdn bucket",
 			Action: UploadCDN,
 			Flags: []cli.Flag{
 				&editionFlag,
@@ -64,18 +176,18 @@ func main() {
 		},
 		{
 			Name:      "publish-metrics",
-			Usage:     "Publish a set of metrics from stdin",
+			Usage:     "[ARCHIVED] Publish a set of metrics from stdin",
 			ArgsUsage: "<api-key>",
-			Action:    MaxArgCountWrapper(1, PublishMetrics),
+			Action:    util.MaxArgCountWrapper(1, PublishMetrics),
 		},
 		{
 			Name:   "verify-drone",
-			Usage:  "Verify Drone configuration",
+			Usage:  "[ARCHIVED] Verify Drone configuration",
 			Action: VerifyDrone,
 		},
 		{
 			Name:   "store-storybook",
-			Usage:  "Stores storybook to GCS buckets",
+			Usage:  "[ARCHIVED] Stores storybook to GCS buckets",
 			Action: StoreStorybook,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -86,12 +198,12 @@ func main() {
 		},
 		{
 			Name:   "verify-storybook",
-			Usage:  "Integrity check for storybook build",
+			Usage:  "[ARCHIVED] Integrity check for storybook build",
 			Action: VerifyStorybook,
 		},
 		{
 			Name:   "upload-packages",
-			Usage:  "Upload Grafana packages",
+			Usage:  "[ARCHIVED] Upload Grafana packages",
 			Action: UploadPackages,
 			Flags: []cli.Flag{
 				&jobsFlag,
@@ -102,125 +214,10 @@ func main() {
 				},
 			},
 		},
-		{
-			Name:  "artifacts",
-			Usage: "Handle Grafana artifacts",
-			Subcommands: cli.Commands{
-				{
-					Name:   "storybook",
-					Usage:  "Publish Grafana storybook",
-					Action: PublishStorybookAction,
-					Flags: []cli.Flag{
-						&editionFlag,
-						&tagFlag,
-						&srcFlag,
-						&cli.StringFlag{
-							Name:  "storybook-bucket",
-							Value: "grafana-storybook",
-							Usage: "Google Cloud Storage bucket for storybooks",
-						},
-					},
-				},
-				{
-					Name:   "static-assets",
-					Usage:  "Publish Grafana static assets",
-					Action: PublishStaticAssetsAction,
-					Flags: []cli.Flag{
-						&editionFlag,
-						&securityFlag,
-						&securityDestBucketFlag,
-						&tagFlag,
-						&srcFlag,
-						&destFlag,
-						&cli.StringFlag{
-							Name:  "static-assets-bucket",
-							Value: "grafana-static-assets",
-							Usage: "Google Cloud Storage bucket for static assets",
-						},
-						&cli.StringSliceFlag{
-							Name:  "static-asset-editions",
-							Usage: "All the editions of the static assets (or $STATIC_ASSET_EDITIONS)",
-						},
-					},
-				},
-				{
-					Name:   "packages",
-					Usage:  "Publish Grafana packages",
-					Action: PublishArtifactsAction,
-					Flags: []cli.Flag{
-						&editionFlag,
-						&securityFlag,
-						&securityDestBucketFlag,
-						&tagFlag,
-						&srcFlag,
-						&destFlag,
-						&cli.StringSliceFlag{
-							Name:  "artifacts-editions",
-							Value: cli.NewStringSlice("oss", "enterprise", "enterprise2"),
-							Usage: "Editions for which the artifacts should be delivered (oss,enterprise,enterprise2), (or $ARTIFACTS_EDITIONS)",
-						},
-						&cli.StringFlag{
-							Name:  "enterprise2-dest-bucket",
-							Value: "grafana-downloads-enterprise2",
-							Usage: "Google Cloud Storage bucket for published packages",
-						},
-						&cli.StringFlag{
-							Name:  "enterprise2-security-prefix",
-							Usage: "Bucket path prefix for enterprise2 security releases (or $ENTERPRISE2_SECURITY_PREFIX)",
-						},
-					},
-				},
-				{
-					Name:  "docker",
-					Usage: "Handle Grafana Docker images",
-					Subcommands: cli.Commands{
-						{
-							Name:      "fetch",
-							Usage:     "Fetch Grafana Docker images",
-							ArgsUsage: "[version]",
-							Action:    MaxArgCountWrapper(1, FetchImages),
-							Flags: []cli.Flag{
-								&editionFlag,
-							},
-						},
-					},
-				},
-				{
-					Name:  "npm",
-					Usage: "Handle Grafana npm packages",
-					Subcommands: cli.Commands{
-						{
-							Name:      "release",
-							Usage:     "Release npm packages",
-							ArgsUsage: "[version]",
-							Action:    NpmReleaseAction,
-							Flags: []cli.Flag{
-								&tagFlag,
-							},
-						},
-						{
-							Name:   "store",
-							Usage:  "Store npm packages tarball",
-							Action: NpmStoreAction,
-							Flags: []cli.Flag{
-								&tagFlag,
-							},
-						},
-						{
-							Name:   "retrieve",
-							Usage:  "Retrieve npm packages tarball",
-							Action: NpmRetrieveAction,
-							Flags: []cli.Flag{
-								&tagFlag,
-							},
-						},
-					},
-				},
-			},
-		},
+		artifactsCommand,
 		{
 			Name:  "publish",
-			Usage: "Publish packages to Grafana com and repositories",
+			Usage: "[ARCHIVED] Publish packages to Grafana com and repositories",
 			Subcommands: cli.Commands{
 				{
 					Name:   "grafana-com",
@@ -229,7 +226,7 @@ func main() {
 					Flags: []cli.Flag{
 						&editionFlag,
 						&buildIDFlag,
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "src-bucket",
 							Value: "grafana-downloads",
@@ -242,7 +239,7 @@ func main() {
 					Usage:  "Publish packages to GitHub releases",
 					Action: PublishGithub,
 					Flags: []cli.Flag{
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "path",
 							Usage: "Path to the asset to be published",
@@ -267,7 +264,7 @@ func main() {
 					Usage:  "Publish image to AWS Marketplace releases",
 					Action: PublishAwsMarketplace,
 					Flags: []cli.Flag{
-						&dryRunFlag,
+						&util.DryRunFlag,
 						&cli.StringFlag{
 							Name:  "version",
 							Usage: "Release version (default from metadata)",
@@ -291,7 +288,7 @@ func main() {
 				},
 			},
 		},
-	}
+	}...)
 
 	app.Commands = append(app.Commands, additionalCommands...)
 
