@@ -16,9 +16,8 @@ TemplateString: string                       // =~ figure out the regex for the 
 		// Note: any issues with go hash map key sorting?
 		[string]: #Query
 	}
-	paused?:  bool
-	trigger:  #IntervalTrigger
-	interval: #PromDuration
+	paused?: bool
+	trigger: #IntervalTrigger
 	labels: {
 		[string]: TemplateString
 	}

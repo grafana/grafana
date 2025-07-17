@@ -66,7 +66,6 @@ export interface Spec {
 	data: Record<string, Query>;
 	paused?: boolean;
 	trigger: IntervalTrigger;
-	interval: PromDuration;
 	noDataState: string;
 	execErrState: string;
 	for: string;
@@ -93,7 +92,6 @@ export const defaultSpec = (): Spec => ({
 	title: "",
 	data: {},
 	trigger: defaultIntervalTrigger(),
-	interval: defaultPromDuration(),
 	noDataState: "NoData",
 	execErrState: "Error",
 	for: "",

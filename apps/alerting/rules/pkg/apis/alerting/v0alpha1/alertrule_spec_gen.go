@@ -67,7 +67,6 @@ type AlertRuleSpec struct {
 	Data                        map[string]AlertRuleQuery                  `json:"data"`
 	Paused                      *bool                                      `json:"paused,omitempty"`
 	Trigger                     AlertRuleIntervalTrigger                   `json:"trigger"`
-	Interval                    AlertRulePromDuration                      `json:"interval"`
 	NoDataState                 string                                     `json:"noDataState"`
 	ExecErrState                string                                     `json:"execErrState"`
 	For                         string                                     `json:"for"`

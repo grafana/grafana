@@ -56,7 +56,6 @@ export interface Spec {
 	data: Record<string, Query>;
 	paused?: boolean;
 	trigger: IntervalTrigger;
-	interval: PromDuration;
 	metric: string;
 	labels: Record<string, TemplateString>;
 	targetDatasourceUID: string;
@@ -66,7 +65,6 @@ export const defaultSpec = (): Spec => ({
 	title: "",
 	data: {},
 	trigger: defaultIntervalTrigger(),
-	interval: defaultPromDuration(),
 	metric: "",
 	labels: {},
 	targetDatasourceUID: "",

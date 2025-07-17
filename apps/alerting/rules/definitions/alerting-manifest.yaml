@@ -61,9 +61,6 @@ spec:
                         for:
                             pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                             type: string
-                        interval:
-                            pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
-                            type: string
                         keepFiringFor:
                             pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                             type: string
@@ -132,7 +129,6 @@ spec:
                         - title
                         - data
                         - trigger
-                        - interval
                         - noDataState
                         - execErrState
                         - for
@@ -225,9 +221,6 @@ spec:
                                     - model
                                 type: object
                             type: object
-                        interval:
-                            pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
-                            type: string
                         labels:
                             additionalProperties:
                                 type: string
@@ -254,7 +247,6 @@ spec:
                         - title
                         - data
                         - trigger
-                        - interval
                         - metric
                         - labels
                         - targetDatasourceUID

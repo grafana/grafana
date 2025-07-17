@@ -13,14 +13,17 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRule":                                 schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
+		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleIntervalTrigger":                  schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleList":                             schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleQuery":                            schema_pkg_apis_alerting_v0alpha1_AlertRuleQuery(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleRelativeTimeRange":                schema_pkg_apis_alerting_v0alpha1_AlertRuleRelativeTimeRange(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleSpec":                             schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleStatus":                           schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecNotificationSettings": schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecNotificationSettings(ref),
+		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecPanelRef":             schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecPanelRef(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRulestatusOperatorState":              schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRule":                             schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
+		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleIntervalTrigger":              schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleList":                         schema_pkg_apis_alerting_v0alpha1_RecordingRuleList(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleQuery":                        schema_pkg_apis_alerting_v0alpha1_RecordingRuleQuery(ref),
 		"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleRelativeTimeRange":            schema_pkg_apis_alerting_v0alpha1_RecordingRuleRelativeTimeRange(ref),
@@ -75,6 +78,26 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRule(ref common.ReferenceCallback) c
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleSpec", "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"interval": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"interval"},
+			},
+		},
 	}
 }
 
@@ -213,12 +236,6 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 							Format:  "",
 						},
 					},
-					"paused": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
 					"data": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -231,6 +248,18 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 									},
 								},
 							},
+						},
+					},
+					"paused": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"trigger": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleIntervalTrigger"),
 						},
 					},
 					"interval": {
@@ -254,11 +283,6 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 							Format:  "",
 						},
 					},
-					"notificationSettings": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecNotificationSettings"),
-						},
-					},
 					"for": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -279,6 +303,11 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 							Format: "int64",
 						},
 					},
+					"notificationSettings": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecNotificationSettings"),
+						},
+					},
 					"annotations": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -292,12 +321,6 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 									},
 								},
 							},
-						},
-					},
-					"dashboardUID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
 						},
 					},
 					"labels": {
@@ -315,18 +338,17 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref common.ReferenceCallbac
 							},
 						},
 					},
-					"panelID": {
+					"panelRef": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
+							Ref: ref("github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecPanelRef"),
 						},
 					},
 				},
-				Required: []string{"title", "data", "interval", "noDataState", "execErrState", "for", "keepFiringFor", "annotations", "labels"},
+				Required: []string{"title", "data", "trigger", "interval", "noDataState", "execErrState", "for", "keepFiringFor", "annotations", "labels"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleQuery", "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecNotificationSettings"},
+			"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleIntervalTrigger", "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleQuery", "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecNotificationSettings", "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.AlertRuleV0alpha1SpecPanelRef"},
 	}
 }
 
@@ -454,6 +476,33 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecNotificationSettings
 	}
 }
 
+func schema_pkg_apis_alerting_v0alpha1_AlertRuleV0alpha1SpecPanelRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboardUID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"panelID": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"dashboardUID", "panelID"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -550,6 +599,26 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref common.ReferenceCallbac
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleSpec", "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"interval": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"interval"},
+			},
+		},
 	}
 }
 
@@ -688,12 +757,6 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref common.ReferenceCal
 							Format:  "",
 						},
 					},
-					"paused": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
 					"data": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -706,6 +769,18 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref common.ReferenceCal
 									},
 								},
 							},
+						},
+					},
+					"paused": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"trigger": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleIntervalTrigger"),
 						},
 					},
 					"interval": {
@@ -745,11 +820,11 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleSpec(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"title", "data", "interval", "metric", "labels", "targetDatasourceUID"},
+				Required: []string{"title", "data", "trigger", "interval", "metric", "labels", "targetDatasourceUID"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleQuery"},
+			"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleIntervalTrigger", "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1.RecordingRuleQuery"},
 	}
 }
 

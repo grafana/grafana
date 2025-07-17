@@ -59,7 +59,6 @@ type RecordingRuleSpec struct {
 	Data                map[string]RecordingRuleQuery          `json:"data"`
 	Paused              *bool                                  `json:"paused,omitempty"`
 	Trigger             RecordingRuleIntervalTrigger           `json:"trigger"`
-	Interval            RecordingRulePromDuration              `json:"interval"`
 	Metric              string                                 `json:"metric"`
 	Labels              map[string]RecordingRuleTemplateString `json:"labels"`
 	TargetDatasourceUID string                                 `json:"targetDatasourceUID"`
