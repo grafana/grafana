@@ -309,8 +309,8 @@ export class GeomapPanel extends Component<Props, State> {
       const worldExtent = [-180, -85.05112878, 180, 85.05112878]; // [minx, miny, maxx, maxy] in EPSG:4326
       const projectedExtent = transformExtent(worldExtent, 'EPSG:4326', 'EPSG:3857');
       viewOptions.extent = projectedExtent;
-      viewOptions.showFullExtent = false; // allows zooming so the full range is visible
-      viewOptions.constrainOnlyCenter = false; // Ensure the entire visible area stays within the extent
+      viewOptions.showFullExtent = false;
+      viewOptions.constrainOnlyCenter = false;
     }
 
     let view = new View(viewOptions);
