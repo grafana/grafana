@@ -129,13 +129,13 @@ type UserSync struct {
 	staticConfig              *StaticSCIMConfig
 
 	// Usage stats tracking
-	scimSuccessfulLogins atomic.Bool
+	scimSuccessfulLogin atomic.Bool
 }
 
 // GetUsageStats implements registry.ProvidesUsageStats
-func (s *UserSync) GetUsageStats(ctx context.Context) map[string]any {
+func (s *UserSync) GetUsageStats() map[string]any {
 	stats := map[string]any{}
-	if s.scimSuccessfulLogins.Load() {
+	if s.scimSuccessfulLogin.Load() {
 		stats["stats.features.scim.has_successful_login.count"] = 1
 	} else {
 		stats["stats.features.scim.has_successful_login.count"] = 0
@@ -186,7 +186,7 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 		log.Debug("User is provisioned, access granted")
 
 		// Track successful SCIM user login for usage stats
-		s.scimSuccessfulLogins.Store(true)
+		s.scimSuccessfulLogin.Store(true)
 
 		return nil
 	}
