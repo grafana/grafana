@@ -21,6 +21,7 @@ func TestMutator(t *testing.T) {
 		expectedToken          string
 		expectedEncryptedToken string
 		expectedError          string
+		expectedURL            string
 	}{
 		{
 			name: "successful token encryption",
@@ -152,6 +153,101 @@ func TestMutator(t *testing.T) {
 				// No expectations
 			},
 		},
+		{
+			name: "URL normalization - add .git suffix",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL: "https://github.com/grafana/grafana",
+					},
+				},
+			},
+			setupMocks: func(mockSecrets *secrets.MockRepositorySecrets) {
+				// No expectations
+			},
+			expectedURL: "https://github.com/grafana/grafana.git",
+		},
+		{
+			name: "URL normalization - keep existing .git suffix",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL: "https://github.com/grafana/grafana.git",
+					},
+				},
+			},
+			setupMocks: func(mockSecrets *secrets.MockRepositorySecrets) {
+				// No expectations
+			},
+			expectedURL: "https://github.com/grafana/grafana.git",
+		},
+		{
+			name: "URL normalization - remove trailing slash and add .git",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL: "https://github.com/grafana/grafana/",
+					},
+				},
+			},
+			setupMocks: func(mockSecrets *secrets.MockRepositorySecrets) {
+				// No expectations
+			},
+			expectedURL: "https://github.com/grafana/grafana.git",
+		},
+		{
+			name: "URL normalization - trim whitespace and add .git",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL: "  https://github.com/grafana/grafana  ",
+					},
+				},
+			},
+			setupMocks: func(mockSecrets *secrets.MockRepositorySecrets) {
+				// No expectations
+			},
+			expectedURL: "https://github.com/grafana/grafana.git",
+		},
+		{
+			name: "URL normalization - empty URL after trim",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL: "   ",
+					},
+				},
+			},
+			setupMocks: func(mockSecrets *secrets.MockRepositorySecrets) {
+				// No expectations
+			},
+			expectedURL: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -175,6 +271,11 @@ func TestMutator(t *testing.T) {
 						assert.Empty(t, repo.Spec.Git.Token, "Token should be cleared after encryption")
 						// EncryptedToken should be set to the expected value
 						assert.Equal(t, tt.expectedEncryptedToken, string(repo.Spec.Git.EncryptedToken), "EncryptedToken should match expected value")
+					}
+
+					// Check URL normalization
+					if tt.expectedURL != "" {
+						assert.Equal(t, tt.expectedURL, repo.Spec.Git.URL, "URL should be normalized correctly")
 					}
 				}
 			}
