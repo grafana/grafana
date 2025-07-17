@@ -83,99 +83,114 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	err := RegisterConversions(scheme)
 	require.NoError(t, err)
 
-	// Read input dashboard file
-	inputFile := filepath.Join("testdata", "in", "dashboard-v2alpha1.json")
-	inputData, err := os.ReadFile(inputFile)
-	require.NoError(t, err, "Failed to read input file")
+	// Read all files from input directory
+	files, err := os.ReadDir(filepath.Join("testdata", "in"))
+	require.NoError(t, err, "Failed to read input directory")
 
-	// Parse the input dashboard to get its version
-	var rawDash map[string]interface{}
-	err = json.Unmarshal(inputData, &rawDash)
-	require.NoError(t, err, "Failed to unmarshal dashboard JSON")
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
 
-	// Extract apiVersion
-	apiVersion, ok := rawDash["apiVersion"].(string)
-	require.True(t, ok, "apiVersion not found or not a string")
+		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
+			// Read input dashboard file
+			inputFile := filepath.Join("testdata", "in", file.Name())
+			inputData, err := os.ReadFile(inputFile)
+			require.NoError(t, err, "Failed to read input file")
 
-	// Parse group and version from apiVersion (format: "group/version")
-	parts := strings.Split(apiVersion, "/")
-	require.Equal(t, 2, len(parts), "apiVersion should be in format 'group/version'")
-	sourceVersion := parts[1]
+			// Parse the input dashboard to get its version
+			var rawDash map[string]interface{}
+			err = json.Unmarshal(inputData, &rawDash)
+			require.NoError(t, err, "Failed to unmarshal dashboard JSON")
 
-	// Create source object based on version
-	var sourceDash v1.Object
-	switch sourceVersion {
-	case "v0alpha1":
-		var dash dashv0.Dashboard
-		err = json.Unmarshal(inputData, &dash)
-		sourceDash = &dash
-	case "v1beta1":
-		var dash dashv1.Dashboard
-		err = json.Unmarshal(inputData, &dash)
-		sourceDash = &dash
-	case "v2alpha1":
-		var dash dashv2alpha1.Dashboard
-		err = json.Unmarshal(inputData, &dash)
-		sourceDash = &dash
-	case "v2alpha2":
-		var dash dashv2alpha2.Dashboard
-		err = json.Unmarshal(inputData, &dash)
-		sourceDash = &dash
-	default:
-		t.Fatalf("Unsupported source version: %s", sourceVersion)
-	}
-	require.NoError(t, err, "Failed to unmarshal dashboard into typed object")
+			// Extract apiVersion
+			apiVersion, ok := rawDash["apiVersion"].(string)
+			require.True(t, ok, "apiVersion not found or not a string")
 
-	// Ensure output directory exists
-	outDir := filepath.Join("testdata", "out")
-	err = os.MkdirAll(outDir, 0755)
-	require.NoError(t, err, "Failed to create output directory")
+			// Parse group and version from apiVersion (format: "group/version")
+			parts := strings.Split(apiVersion, "/")
+			require.Equal(t, 2, len(parts), "apiVersion should be in format 'group/version'")
+			sourceVersion := parts[1]
 
-	// Get target versions from the dashboard manifest
-	manifest := apis.LocalManifest()
-	targetVersions := make(map[string]runtime.Object)
+			// Create source object based on version
+			var sourceDash v1.Object
+			switch sourceVersion {
+			case "v0alpha1":
+				var dash dashv0.Dashboard
+				err = json.Unmarshal(inputData, &dash)
+				sourceDash = &dash
+			case "v1beta1":
+				var dash dashv1.Dashboard
+				err = json.Unmarshal(inputData, &dash)
+				sourceDash = &dash
+			case "v2alpha1":
+				var dash dashv2alpha1.Dashboard
+				err = json.Unmarshal(inputData, &dash)
+				sourceDash = &dash
+			case "v2alpha2":
+				var dash dashv2alpha2.Dashboard
+				err = json.Unmarshal(inputData, &dash)
+				sourceDash = &dash
+			default:
+				t.Fatalf("Unsupported source version: %s", sourceVersion)
+			}
+			require.NoError(t, err, "Failed to unmarshal dashboard into typed object")
 
-	// Get all Dashboard versions from the manifest
-	for _, kind := range manifest.ManifestData.Kinds {
-		if kind.Kind == "Dashboard" {
-			for _, version := range kind.Versions {
-				// Skip converting to the same version
-				if version.Name == sourceVersion {
-					continue
-				}
+			// Ensure output directory exists
+			outDir := filepath.Join("testdata", "out")
+			err = os.MkdirAll(outDir, 0755)
+			require.NoError(t, err, "Failed to create output directory")
 
-				filename := fmt.Sprintf("dashboard-%s.json", version.Name)
+			// Get target versions from the dashboard manifest
+			manifest := apis.LocalManifest()
+			targetVersions := make(map[string]runtime.Object)
 
-				// Create target object based on version
-				switch version.Name {
-				case "v0alpha1":
-					targetVersions[filename] = &dashv0.Dashboard{}
-				case "v1beta1":
-					targetVersions[filename] = &dashv1.Dashboard{}
-				case "v2alpha1":
-					targetVersions[filename] = &dashv2alpha1.Dashboard{}
-				case "v2alpha2":
-					targetVersions[filename] = &dashv2alpha2.Dashboard{}
-				default:
-					t.Logf("Unknown version %s, skipping", version.Name)
+			// Get original filename without extension
+			originalName := strings.TrimSuffix(file.Name(), ".json")
+
+			// Get all Dashboard versions from the manifest
+			for _, kind := range manifest.ManifestData.Kinds {
+				if kind.Kind == "Dashboard" {
+					for _, version := range kind.Versions {
+						// Skip converting to the same version
+						if version.Name == sourceVersion {
+							continue
+						}
+
+						filename := fmt.Sprintf("%s.%s.json", originalName, version.Name)
+
+						// Create target object based on version
+						switch version.Name {
+						case "v0alpha1":
+							targetVersions[filename] = &dashv0.Dashboard{}
+						case "v1beta1":
+							targetVersions[filename] = &dashv1.Dashboard{}
+						case "v2alpha1":
+							targetVersions[filename] = &dashv2alpha1.Dashboard{}
+						case "v2alpha2":
+							targetVersions[filename] = &dashv2alpha2.Dashboard{}
+						default:
+							t.Logf("Unknown version %s, skipping", version.Name)
+						}
+					}
+					break
 				}
 			}
-			break
-		}
-	}
 
-	// Convert to each target version
-	for filename, target := range targetVersions {
-		t.Run(fmt.Sprintf("Convert_to_%s", filename), func(t *testing.T) {
-			// Create a copy of the input dashboard for conversion
-			inputCopy := sourceDash.(runtime.Object).DeepCopyObject()
+			// Convert to each target version
+			for filename, target := range targetVersions {
+				t.Run(fmt.Sprintf("Convert_to_%s", filename), func(t *testing.T) {
+					// Create a copy of the input dashboard for conversion
+					inputCopy := sourceDash.(runtime.Object).DeepCopyObject()
 
-			// Convert to target version
-			err = scheme.Convert(inputCopy, target, nil)
-			require.NoError(t, err, "Conversion failed for %s", filename)
+					// Convert to target version
+					err = scheme.Convert(inputCopy, target, nil)
+					require.NoError(t, err, "Conversion failed for %s", filename)
 
-			// Test the conversion using the same pattern as migrate_test.go
-			testConversion(t, target.(v1.Object), filename, outDir)
+					// Test the changes in the conversion result
+					testConversion(t, target.(v1.Object), filename, outDir)
+				})
+			}
 		})
 	}
 }
@@ -194,8 +209,6 @@ func testConversion(t *testing.T, convertedDash v1.Object, filename, outputDir s
 		return
 	}
 
-	// We can ignore gosec G304 here since it's a test
-	// nolint:gosec
 	existingBytes, err := os.ReadFile(outPath)
 	require.NoError(t, err, "failed to read existing output file")
 	require.JSONEq(t, string(existingBytes), string(outBytes), "%s did not match", outPath)
