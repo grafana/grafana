@@ -72,15 +72,18 @@ type Alertmanager interface {
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
+	// State
+	MergeState(ExternalState) error
+
 	// Lifecycle
 	StopAndWait()
 	Ready() bool
 }
 
-// StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
-type StateMerger interface {
-	MergeNflog([]byte) error
-	MergeSilences([]byte) error
+// ExternalState holds nflog entries and silences from an external Alertmanager.
+type ExternalState struct {
+	Silences []byte
+	Nflog    []byte
 }
 
 type MultiOrgAlertmanager struct {
