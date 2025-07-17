@@ -34,7 +34,7 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      expect(
+      await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).toBeVisible();
 
@@ -70,7 +70,7 @@ test.describe(
       await loremIpsumCell.getByLabel('Inspect value').click();
       const loremIpsumText = await loremIpsumCell.textContent();
       expect(loremIpsumText).toBeDefined();
-      expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
+      await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
     });
 
     test('Tests visibility and display name via overrides', async ({ gotoDashboardPage, selectors, page }) => {
@@ -79,7 +79,7 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      expect(
+      await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).toBeVisible();
 
@@ -111,7 +111,7 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      expect(
+      await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).toBeVisible();
 
@@ -136,7 +136,7 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      expect(
+      await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).toBeVisible();
 
@@ -151,7 +151,7 @@ test.describe(
         selectors.components.Panels.Visualization.TableNG.Filters.Container
       );
 
-      expect(filterContainer).toBeVisible();
+      await expect(filterContainer).toBeVisible();
 
       // select all, then click the first value to unselect it, filtering it out.
       await filterContainer.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll).click();
@@ -159,7 +159,7 @@ test.describe(
       await filterContainer.getByRole('button', { name: 'Ok' }).click();
 
       // make sure the filter container closed when we clicked "Ok".
-      expect(filterContainer).not.toBeVisible();
+      await expect(filterContainer).not.toBeVisible();
 
       // did it actually filter out our value?
       await expect(getCell(page, 1, 1)).resolves.not.toHaveText(firstStateValue);
@@ -182,7 +182,7 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      expect(
+      await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).toBeVisible();
 
@@ -191,7 +191,7 @@ test.describe(
         .click();
 
       // because of text wrapping, we're guaranteed to only be showing a single row when we enable pagination.
-      expect(page.getByText(/([\d]+) - ([\d]+) of ([\d]+) rows/)).toBeVisible();
+      await expect(page.getByText(/([\d]+) - ([\d]+) of ([\d]+) rows/)).toBeVisible();
 
       // disable text wrap and see the number of rows.
       await dashboardPage
@@ -246,11 +246,13 @@ test.describe(
           .click();
 
         // DataLinks dialog has popped open - fill it in and add a global datalink.
-        expect(page.getByRole('dialog')).toBeVisible();
+        await expect(page.getByRole('dialog')).toBeVisible();
         await page.getByRole('dialog').locator('#link-title').fill(title);
+        await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').focus();
         await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').fill(url);
+        await page.getByRole('dialog').locator('#data-link-input [contenteditable="true"]').blur();
         await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
-        expect(page.getByRole('dialog')).not.toBeVisible();
+        await expect(page.getByRole('dialog')).not.toBeVisible();
       };
 
       const dashboardPage = await gotoDashboardPage({
@@ -258,13 +260,20 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      expect(
+      await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).toBeVisible();
 
+      // disable text wrapping for this test to make it easier to click the links, the long lorem ipsum
+      // can push the links off the screen.
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text'))
+        .last()
+        .click();
+
       // Info column has a single DataLink by default.
       const infoCell = await getCell(page, 1, 1);
-      expect(infoCell.locator('a')).toBeVisible();
+      await expect(infoCell.locator('a')).toBeVisible();
       expect(infoCell.locator('a')).toHaveAttribute('href');
       expect(infoCell.locator('a')).not.toHaveAttribute('aria-haspopup');
 
@@ -275,7 +284,7 @@ test.describe(
       const colCount = await page.getByRole('row').nth(1).getByRole('gridcell').count();
       for (let colIdx = 0; colIdx < colCount; colIdx++) {
         const cell = await getCell(page, 1, colIdx);
-        expect(cell.locator('a')).toBeVisible();
+        await expect(cell.locator('a')).toBeVisible();
         expect(cell.locator('a')).toHaveAttribute('href');
         expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
       }
@@ -285,14 +294,20 @@ test.describe(
       // add another data link. now we'll check that the multi-link popups work.
       await addDataLink('Another test link', 'https://grafana.com/foo');
 
+      // loop thru the columns, click the links, observe that the tooltip appears, and close the tooltip.
       for (let colIdx = 0; colIdx < colCount; colIdx++) {
         const cell = await getCell(page, 1, colIdx);
+        if (colIdx === 1) {
+          // the Info column should still have its single link.
+          expect(cell.locator('a')).not.toHaveAttribute('aria-haspopup', 'menu');
+          continue;
+        }
+
         await cell.locator('a').click({ force: true });
-        page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper).waitFor({ state: 'visible' });
-        expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).toBeVisible();
+        await expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).toBeVisible();
 
         await headerContainer.click(); // convenient just to click the header to close the tooltip.
-        expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeVisible();
+        await expect(page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeVisible();
       }
 
       // add an Action to the whole table and check that the action button is added to the tooltip.
@@ -305,8 +320,10 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '2' }),
       });
 
-      expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage)).toBeVisible();
-      expect(
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage)
+      ).toBeVisible();
+      await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
       ).not.toBeVisible();
     });
