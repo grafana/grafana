@@ -101,7 +101,7 @@ func NewService(
 		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL),
-		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, settings.CacheTTL),
+		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
