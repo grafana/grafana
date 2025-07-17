@@ -132,6 +132,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		EncryptedValueStorage:      encryptedValueStorage,
 		SQLKeeper:                  sqlKeeper,
 		Database:                   database,
+		AccessClient:               accessClient,
 	}
 }
 
@@ -143,6 +144,7 @@ type Sut struct {
 	EncryptedValueStorage      contracts.EncryptedValueStorage
 	SQLKeeper                  *sqlkeeper.SQLKeeper
 	Database                   *database.Database
+	AccessClient               types.AccessClient
 }
 
 type CreateSvConfig struct {
