@@ -162,7 +162,7 @@ export const bulkMoveResources = async ({
 
         const result = await moveResource({
           repositoryName: repository.name,
-          currentPath: `${options.path}/${fileName}`,
+          currentPath: formatFilePath(targetFolderPath, fileName),
           targetPath: newPath,
           fileContent: body,
           commitMessage: options.comment || `Move dashboard: ${title || uid}`,

@@ -39,7 +39,7 @@ interface BulkMoveProvisionResourceProps {
   onClose: () => void;
 }
 
-export function FormContent({
+function FormContent({
   selectedItems,
   initialValues,
   folderUid,
@@ -53,7 +53,7 @@ export function FormContent({
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<BulkMoveResult | undefined>(); // This only gets set if there are any failed moves
 
-  const [targetFolderUID, setTargetFolderUID] = useState<string>(folderUid || '');
+  const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
   const navigate = useNavigate();
   const appEvents = getAppEvents();

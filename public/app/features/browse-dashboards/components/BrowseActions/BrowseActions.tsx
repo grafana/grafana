@@ -71,7 +71,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showMoveModal = () => {
-    if (hasProvisioned && hasNonProvisioned && provisioningEnabled) {
+    if (provisioningEnabled && hasProvisioned && hasNonProvisioned) {
       // Mixed selection
       appEvents.publish(
         new ShowModalReactEvent({
@@ -79,21 +79,26 @@ export function BrowseActions({ folderDTO }: Props) {
           props: {},
         })
       );
-    } else if (hasProvisioned && provisioningEnabled) {
+      return;
+    }
+
+    if (provisioningEnabled && hasProvisioned) {
       // Only provisioned items
       setShowBulkMoveProvisionedResource(true);
-    } else {
-      // Only non-provisioned items
-      appEvents.publish(
-        new ShowModalReactEvent({
-          component: MoveModal,
-          props: {
-            selectedItems,
-            onConfirm: onMove,
-          },
-        })
-      );
+      return;
     }
+
+    // Only non-provisioned items
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: MoveModal,
+        props: {
+          selectedItems,
+          onConfirm: onMove,
+        },
+      })
+    );
+    return;
   };
 
   const showDeleteModal = () => {
@@ -105,21 +110,25 @@ export function BrowseActions({ folderDTO }: Props) {
           props: {},
         })
       );
-    } else if (hasProvisioned && provisioningEnabled) {
+      return;
+    }
+
+    if (hasProvisioned && provisioningEnabled) {
       // Only provisioned items
       setShowBulkDeleteProvisionedResource(true);
-    } else {
-      // Only non-provisioned items
-      appEvents.publish(
-        new ShowModalReactEvent({
-          component: DeleteModal,
-          props: {
-            selectedItems,
-            onConfirm: onDelete,
-          },
-        })
-      );
+      return;
     }
+
+    // Only non-provisioned items
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: DeleteModal,
+        props: {
+          selectedItems,
+          onConfirm: onDelete,
+        },
+      })
+    );
   };
 
   const moveButton = (
