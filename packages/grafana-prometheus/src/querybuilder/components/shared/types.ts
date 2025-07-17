@@ -1,20 +1,12 @@
-import { DataSourceApi, PanelData } from '@grafana/data';
+import { PanelData } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
 
-export interface NestedQueryProps {
-  query: PromVisualQuery;
-  datasource: DataSourceApi;
-  onChange: (query: PromVisualQuery) => void;
-  onRunQuery: () => void;
-  showExplain: boolean;
-}
-
-export interface QueryBuilderProps {
+export interface BaseQueryBuilderProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
-  onChange: (query: PromVisualQuery) => void;
+  onChange: (update: PromVisualQuery) => void;
   onRunQuery: () => void;
   data?: PanelData;
   showExplain: boolean;

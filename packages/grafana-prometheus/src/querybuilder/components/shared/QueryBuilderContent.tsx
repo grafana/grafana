@@ -20,7 +20,7 @@ import { PromVisualQuery } from '../../types';
 import { MetricsLabelsSection } from '../MetricsLabelsSection';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../PromQueryBuilderExplained';
 
-import { BaseQueryBuilderProps } from './BaseQueryBuilderProps';
+import { BaseQueryBuilderProps } from './types';
 
 export const QueryBuilderContent = memo<BaseQueryBuilderProps>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
