@@ -88,16 +88,17 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// Preserve the original span so the auth middleware span doesn't get propagated as a parent of the rest of the request
 		span := trace.SpanFromContext(ctx)
-		ctx = h.doAuthStuff(ctx)
+		ctx = h.setRequestContext(ctx)
+
+		// Preserve the original span so the auth middleware span doesn't get propagated as a parent of the rest of the request
 		ctx = trace.ContextWithSpan(ctx, span)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func (h *ContextHandler) doAuthStuff(ctx context.Context) context.Context {
+func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context {
 	ctx, span := tracing.Start(ctx, "ContextHandler.Middleware")
 	defer span.End()
 
