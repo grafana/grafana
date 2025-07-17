@@ -272,21 +272,7 @@ func (ng *AlertNG) init() error {
 							return nil, fmt.Errorf("failed to create remote Alertmanager: %w", err)
 						}
 						moaLogger.Warn("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
-					}
-
-					if remoteSecondaryWithRemoteState {
-						// Pull and merge the remote Alertmanager state.
-						rs, err := remoteAM.GetRemoteState(ctx)
-						if err != nil {
-							return nil, fmt.Errorf("failed to fetch remote state: %w", err)
-						}
-
-						// The internal Alertmanager should implement the StateMerger interface.
-						sm := internalAM.(notifier.StateMerger)
-						if err := sm.MergeState(rs); err != nil {
-							return nil, fmt.Errorf("failed to merge remote state: %w", err)
-						}
-						moaLogger.Info("Successfully merged remote silences and nflog entries")
+						return internalAM, nil
 					}
 
 					// Use both Alertmanager implementations in the forked Alertmanager.

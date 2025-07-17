@@ -36,6 +36,8 @@ type RemoteSecondaryForkedAlertmanager struct {
 
 	lastSync     time.Time
 	syncInterval time.Duration
+
+	shouldFetchRemoteState bool
 }
 
 type RemoteSecondaryConfig struct {
@@ -46,6 +48,9 @@ type RemoteSecondaryConfig struct {
 	// SyncInterval determines how often we should attempt to synchronize
 	// the configuration on the remote Alertmanager.
 	SyncInterval time.Duration
+
+	// WithRemoteState is used to fetch and merge the state from the remote Alertmanager before starting the internal one.
+	WithRemoteState bool
 }
 
 func (c *RemoteSecondaryConfig) Validate() error {
@@ -60,12 +65,13 @@ func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 		return nil, err
 	}
 	return &RemoteSecondaryForkedAlertmanager{
-		log:          cfg.Logger,
-		orgID:        cfg.OrgID,
-		store:        cfg.Store,
-		internal:     internal,
-		remote:       remote,
-		syncInterval: cfg.SyncInterval,
+		log:                    cfg.Logger,
+		orgID:                  cfg.OrgID,
+		store:                  cfg.Store,
+		internal:               internal,
+		remote:                 remote,
+		syncInterval:           cfg.SyncInterval,
+		shouldFetchRemoteState: cfg.WithRemoteState,
 	}, nil
 }
 
@@ -99,6 +105,28 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 			fam.log.Debug("Finished syncing configuration with the remote Alertmanager")
 		}
 	}()
+
+	if fam.shouldFetchRemoteState {
+		wg.Wait()
+		if !fam.remote.Ready() {
+			return fmt.Errorf("remote Alertmanager not ready, can't fetch remote state")
+		}
+		// Pull and merge the remote Alertmanager state.
+		rs, err := fam.remote.GetRemoteState(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to fetch remote state: %w", err)
+		}
+
+		// The internal Alertmanager should implement the StateMerger interface.
+		sm := fam.internal.(notifier.StateMerger)
+		if err := sm.MergeState(rs); err != nil {
+			return fmt.Errorf("failed to merge remote state: %w", err)
+		}
+		fam.log.Info("Successfully merged remote silences and nflog entries")
+
+		// This operation should only be performed at startup.
+		fam.shouldFetchRemoteState = false
+	}
 
 	// Call ApplyConfig on the internal Alertmanager - we only care about errors for this one.
 	err := fam.internal.ApplyConfig(ctx, config)
