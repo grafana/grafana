@@ -34,10 +34,6 @@ This document provides instructions for configuring the InfluxDB data source and
 
 To configure the InfluxDB data source you must have the `Administrator` role.
 
-{{< admonition type="note" >}}
-Select the query language you want to use with InfluxDB before adding the InfluxDB data source. Configuration options differ based on query language type.
-{{< /admonition >}}
-
 InfluxData provides three query languages. Some key points to consider:
 
 - SQL is only available for InfluxDB v3.x.
@@ -60,20 +56,35 @@ Complete the following steps to set up a new InfluxDB data source:
 
 You are taken to the **Settings** tab where you will configure the data source.
 
-## InfluxDB common configuration options
+## Configuration Options
 
-The following configuration options apply to **all three query language options**.
+The following is a list of configuration options for InfluxDB.
+
+The first option is to configure the name of your connection.
 
 - **Name** - Sets the name you use to refer to the data source in panels and queries. Examples: `InfluxDB-InfluxQL`, `InfluxDB_SQL`.
 - **Default** - Toggle to set as the default data source.
+
+### URL and Authentication
+![URL and Authentication for InfluxDB configuration](https://grafana.com/media/docs/influxdb/InfluxDB-ConfigV2-URLAuth-Section.png) 
+
+These settings identify the Influx instance and schema the data source is connecting to. 
+- **URL** - The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB’s default API port is `8086`.
+- **Product** - Select the product version of your Influx instance.
 - **Query language** - Select the query language for your InfluxDB instance. The three options are:
-  - **InfluxQL** - SQL-like language for querying InfluxDB, with statements such as SELECT, FROM, WHERE, and GROUP BY that are familiar to SQL users.
-  - **SQL** - Native SQL language starting with InfluxDB v.3.0. Refer to InfluxData's [SQL reference documentation](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for a list of supported statements, operators, and functions.
   - **Flux** - Flux is a data scripting language developed by InfluxData that allows you to query, analyze, and act on data. Refer to [Get started with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/) for guidance on using Flux.
+  - **InfluxQL** - SQL-like language for querying InfluxDB, with statements such as SELECT, FROM, WHERE, and GROUP BY that are familiar to SQL users.
+  - **SQL** - Native SQL language starting with **InfluxDB v.3.0**. Refer to InfluxData's [SQL reference documentation](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for a list of supported statements, operators, and functions.
+
+{{< admonition type="note" >}}
+**Database + Retention Policy (DBRP) Mapping** must be configured before data can be queried using InfluxQL for the following product versions: Influx OSS 1.x, Influx OSS 2.x,  Influx Enterprise 1.x, Influx Cloud (TSM), Influx Cloud Serverless
+
+Refer to [Manage DBRP Mappings](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/) for guidance on setting this up via the CLI or API 
+{{< /admonition >}}
 
 **HTTP section:**
 
-- **URL** - The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB’s default API port is `8086`.
+
 - **Allowed cookies** - Defines which cookies are forwarded to the data source. All other cookies are deleted by default.
 - **Timeout** - Set an HTTP request timeout in seconds.
 
