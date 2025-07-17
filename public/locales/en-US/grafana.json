@@ -10515,9 +10515,6 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "configure-file": "Configure file provisioning",
-      "configure-git-sync": "Configure Git Sync",
-      "configure-with-provider": "Configure with {{provider}}",
       "repository-limit-info-alert": "Repository limit reached ({{count}})"
     },
     "delete-repository-button": {
