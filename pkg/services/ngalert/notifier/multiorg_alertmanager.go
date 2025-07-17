@@ -78,7 +78,7 @@ type Alertmanager interface {
 	Ready() bool
 }
 
-// ExternalState represents an external Alertmanager state that can be merged into Grafana's
+// ExternalState holds nflog entries and silences from an external Alertmanager.
 type ExternalState struct {
 	Silences []byte
 	Nflog    []byte

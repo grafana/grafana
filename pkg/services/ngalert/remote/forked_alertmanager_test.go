@@ -766,12 +766,12 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	})
 }
 
-type internalAMMock struct {
+type internalAlertmanagerMock struct {
 	*alertmanager_mock.AlertmanagerMock
 	mergeStateCalled bool
 }
 
-func (m *internalAMMock) MergeState(notifier.ExternalState) error {
+func (m *internalAlertmanagerMock) MergeState(notifier.ExternalState) error {
 	m.mergeStateCalled = true
 	return nil
 }
@@ -788,10 +788,9 @@ func withSyncInterval(syncInterval time.Duration) func(RemoteSecondaryConfig) Re
 	}
 }
 
-func genTestAlertmanagers(t *testing.T, mode int, options ...func(RemoteSecondaryConfig) RemoteSecondaryConfig) (*internalAMMock, *remote_alertmanager_mock.RemoteAlertmanagerMock, notifier.Alertmanager) {
+func genTestAlertmanagers(t *testing.T, mode int, options ...func(RemoteSecondaryConfig) RemoteSecondaryConfig) (*internalAlertmanagerMock, *remote_alertmanager_mock.RemoteAlertmanagerMock, notifier.Alertmanager) {
 	t.Helper()
-
-	internal := &internalAMMock{
+	internal := &internalAlertmanagerMock{
 		alertmanager_mock.NewAlertmanagerMock(t),
 		false,
 	}
