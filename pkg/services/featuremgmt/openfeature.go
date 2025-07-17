@@ -2,13 +2,14 @@ package featuremgmt
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/clientauth/middleware"
+	clientauthmiddleware "github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
@@ -16,17 +17,26 @@ const (
 	featuresProviderAudience = "features.grafana.app"
 )
 
-func InitOpenFeatureWithCfg(
-	cfg *setting.Cfg,
-	httpClientProvider *sdkhttpclient.Provider,
-	exchangeMiddleware *middleware.TokenExchangeMiddleware,
-) error {
+func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
 		return fmt.Errorf("failed to read feature flags from config: %w", err)
 	}
 
-	err = initOpenFeature(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags, httpClientProvider, exchangeMiddleware)
+	var httpcli *http.Client
+	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
+		m, err := clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to create token exchange middleware: %w", err)
+		}
+
+		httpcli, err = goffHTTPClient(m)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = initOpenFeature(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags, httpcli)
 	if err != nil {
 		return fmt.Errorf("failed to initialize OpenFeature: %w", err)
 	}
@@ -39,12 +49,11 @@ func initOpenFeature(
 	providerType string,
 	u *url.URL,
 	staticFlags map[string]bool,
-	httpClientProvider *sdkhttpclient.Provider,
-	exchangeMiddleware *middleware.TokenExchangeMiddleware,
+	httpClient *http.Client,
 ) error {
-	p, err := createProvider(providerType, u, staticFlags, httpClientProvider, exchangeMiddleware)
+	p, err := createProvider(providerType, u, staticFlags, httpClient)
 	if err != nil {
-		return fmt.Errorf("failed to create feature provider: type %s, %w", providerType, err)
+		return err
 	}
 
 	if err := openfeature.SetProviderAndWait(p); err != nil {
@@ -58,8 +67,7 @@ func createProvider(
 	providerType string,
 	u *url.URL,
 	staticFlags map[string]bool,
-	httpClientProvider *sdkhttpclient.Provider,
-	exchangeMiddleware *middleware.TokenExchangeMiddleware,
+	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
 	if providerType != setting.GOFFProviderType {
 		return newStaticProvider(staticFlags)
@@ -69,14 +77,17 @@ func createProvider(
 		return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
 	}
 
-	httpcli, err := httpClientProvider.New(sdkhttpclient.Options{
-		// TODO: remove this before merge
+	return newGOFFProvider(u.String(), httpClient)
+}
+
+func goffHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
+	httpcli, err := sdkhttpclient.NewProvider().New(sdkhttpclient.Options{
 		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
 		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout: 10 * time.Second,
 		},
 		Middlewares: []sdkhttpclient.Middleware{
-			exchangeMiddleware.New([]string{featuresProviderAudience}),
+			m.New([]string{featuresProviderAudience}),
 		},
 	})
 
@@ -84,5 +95,5 @@ func createProvider(
 		return nil, fmt.Errorf("failed to create http client for openfeature: %w", err)
 	}
 
-	return newGOFFProvider(u.String(), httpcli)
+	return httpcli, nil
 }

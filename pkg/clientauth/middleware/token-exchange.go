@@ -35,12 +35,10 @@ func TestingTokenExchangeMiddleware(tokenExchangeClient authlib.TokenExchanger) 
 	}
 }
 
-func ProvideTokenExchangeMiddleware(cfg *setting.Cfg) (*TokenExchangeMiddleware, error) {
+func NewTokenExchangeMiddleware(cfg *setting.Cfg) (*TokenExchangeMiddleware, error) {
 	clientCfg, err := readSignerSettings(cfg)
 	if err != nil {
-		return &TokenExchangeMiddleware{
-			tokenExchangeClient: authlib.NewStaticTokenExchanger("unused-token-exchanger"),
-		}, nil
+		return nil, err
 	}
 
 	tokenExchangeClient, err := authlib.NewTokenExchangeClient(authlib.TokenExchangeConfig{

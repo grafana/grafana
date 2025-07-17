@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,7 +69,6 @@ func TestCreateProvider(t *testing.T) {
 		},
 	}
 
-	httpClientProvider := httpclient.NewProvider()
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
@@ -98,7 +96,9 @@ func TestCreateProvider(t *testing.T) {
 			}
 
 			tokenExchangeMiddleware := middleware.TestingTokenExchangeMiddleware(tokenExchangeClient)
-			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, httpClientProvider, tokenExchangeMiddleware)
+			goffClient, err := goffHTTPClient(tokenExchangeMiddleware)
+			require.NoError(t, err, "failed to create goff http client")
+			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, goffClient)
 			require.NoError(t, err)
 
 			err = openfeature.SetProviderAndWait(provider)

@@ -83,7 +83,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
-	err = featuremgmt.InitOpenFeatureWithCfg(cfg, nil, nil)
+	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
 	require.NoError(t, err)
 	env, err := server.InitializeForTest(t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)

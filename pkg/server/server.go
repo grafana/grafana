@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"sync"
 
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	clientauthmiddleware "github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"golang.org/x/sync/errgroup"
 
@@ -135,11 +133,7 @@ func (s *Server) Init() error {
 	}
 
 	// Initialize the OpenFeature feature flag system
-	m, err := clientauthmiddleware.ProvideTokenExchangeMiddleware(s.cfg)
-	if err != nil {
-		return fmt.Errorf("failed to provide token exchange middleware: %w", err)
-	}
-	if err := featuremgmt.InitOpenFeatureWithCfg(s.cfg, sdkhttpclient.NewProvider(), m); err != nil {
+	if err := featuremgmt.InitOpenFeatureWithCfg(s.cfg); err != nil {
 		return err
 	}
 
