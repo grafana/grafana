@@ -5,7 +5,15 @@ import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
-import { generatedAPI, JobSpec, JobStatus, RepositorySpec, RepositoryStatus, ErrorDetails, Status } from './endpoints.gen';
+import {
+  generatedAPI,
+  JobSpec,
+  JobStatus,
+  RepositorySpec,
+  RepositoryStatus,
+  ErrorDetails,
+  Status,
+} from './endpoints.gen';
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -91,7 +99,14 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             // Handle Status error responses (Kubernetes style)
             if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
               const statusError: Status = e.error.data;
-              dispatch(notifyApp(createErrorNotification('Error validating repository', new Error(statusError.message || 'Unknown error'))));
+              dispatch(
+                notifyApp(
+                  createErrorNotification(
+                    'Error validating repository',
+                    new Error(statusError.message || 'Unknown error')
+                  )
+                )
+              );
             }
             // Handle TestResults error responses with field errors
             else if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
