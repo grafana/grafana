@@ -454,6 +454,27 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storage[dashv0.DashboardResourceInfo.StoragePath()] = store
 		apiGroupInfo.VersionedResourcesStorageMap[dashv0.DashboardResourceInfo.GroupVersion().Version] = storage
 
+		store, err = grafanaregistry.NewRegistryStore(opts.Scheme, dashv1.DashboardResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[dashv1.DashboardResourceInfo.StoragePath()] = store
+		apiGroupInfo.VersionedResourcesStorageMap[dashv1.DashboardResourceInfo.GroupVersion().Version] = storage
+
+		store, err = grafanaregistry.NewRegistryStore(opts.Scheme, dashv2alpha1.DashboardResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[dashv2alpha1.DashboardResourceInfo.StoragePath()] = store
+		apiGroupInfo.VersionedResourcesStorageMap[dashv2alpha1.DashboardResourceInfo.GroupVersion().Version] = storage
+
+		store, err = grafanaregistry.NewRegistryStore(opts.Scheme, dashv2alpha2.DashboardResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[dashv2alpha2.DashboardResourceInfo.StoragePath()] = store
+		apiGroupInfo.VersionedResourcesStorageMap[dashv2alpha2.DashboardResourceInfo.GroupVersion().Version] = storage
+
 		return nil
 	}
 
