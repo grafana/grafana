@@ -157,17 +157,17 @@ func isNotFoundError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	// Check for Grafana's secure value not found error
 	if errors.Is(err, contracts.ErrSecureValueNotFound) {
 		return true
 	}
-	
+
 	// Check for k8s not found error
 	if apierrors.IsNotFound(err) {
 		return true
 	}
-	
+
 	// Fallback for generic not found error messages
 	return err.Error() == "not found"
 }
