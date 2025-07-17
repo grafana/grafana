@@ -192,7 +192,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         const field = frame.fields[fieldIndex];
 
         // Use Grafana's value matcher system
-        return matcher!(rowIndex, field, frame, [frame]);
+        return matcher?.(rowIndex, field, frame, [frame]) ?? false;
       });
 
       if (rowMatches) {
