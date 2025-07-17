@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
@@ -145,9 +146,23 @@ func (s *secretsService) Delete(ctx context.Context, namespace string, name stri
 }
 
 // Helper function to check if error is a not found error
+// FIXME: This is a temporary workaround until the client abstraction properly handles
+// k8s not found errors. The client should normalize these errors to return contracts.ErrSecureValueNotFound
 func isNotFoundError(err error) bool {
-	// You might need to adjust this based on the specific error types returned by your client
-	return err != nil && (errors.Is(err, contracts.ErrSecureValueNotFound) ||
-		// Add other not found error checks as needed
-		err.Error() == "not found")
+	if err == nil {
+		return false
+	}
+	
+	// Check for Grafana's secure value not found error
+	if errors.Is(err, contracts.ErrSecureValueNotFound) {
+		return true
+	}
+	
+	// Check for k8s not found error
+	if apierrors.IsNotFound(err) {
+		return true
+	}
+	
+	// Fallback for generic not found error messages
+	return err.Error() == "not found"
 }

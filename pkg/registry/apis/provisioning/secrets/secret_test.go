@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -441,4 +443,83 @@ func TestSecretsService_Delete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIsNotFoundError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected bool
+	}{
+		{
+			name:     "nil error",
+			err:      nil,
+			expected: false,
+		},
+		{
+			name:     "grafana secure value not found error",
+			err:      contracts.ErrSecureValueNotFound,
+			expected: true,
+		},
+		{
+			name:     "k8s not found error",
+			err:      apierrors.NewNotFound(schema.GroupResource{Group: "secret.grafana.app", Resource: "securevalues"}, "test-secret"),
+			expected: true,
+		},
+		{
+			name:     "generic not found error message",
+			err:      errors.New("not found"),
+			expected: true,
+		},
+		{
+			name:     "other error",
+			err:      errors.New("internal server error"),
+			expected: false,
+		},
+		{
+			name:     "wrapped grafana error",
+			err:      errors.New("wrapped: " + contracts.ErrSecureValueNotFound.Error()),
+			expected: false, // wrapped errors won't match errors.Is unless properly wrapped
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isNotFoundError(tt.err)
+			assert.Equal(t, tt.expected, result, "isNotFoundError(%v) = %v, want %v", tt.err, result, tt.expected)
+		})
+	}
+}
+
+func TestSecretsService_Encrypt_WithK8sNotFoundError(t *testing.T) {
+	mockSecretsSvc := NewMockSecureValueClient(t)
+	mockDecryptSvc := &mocks.MockDecryptService{}
+	mockResourceInterface := &mockDynamicInterface{}
+
+	// Setup client to return the mock resource interface
+	mockSecretsSvc.EXPECT().Client(mock.Anything, "test-namespace").Return(mockResourceInterface, nil)
+
+	// Mock Get call to return k8s not found error
+	k8sNotFoundErr := apierrors.NewNotFound(schema.GroupResource{Group: "secret.grafana.app", Resource: "securevalues"}, "test-secret")
+	mockResourceInterface.getResult = nil
+	mockResourceInterface.getErr = k8sNotFoundErr
+
+	// Mock Create call to succeed
+	mockResourceInterface.createResult = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      "test-secret",
+				"namespace": "test-namespace",
+			},
+		},
+	}
+	mockResourceInterface.createErr = nil
+
+	svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
+	ctx := context.Background()
+
+	result, err := svc.Encrypt(ctx, "test-namespace", "test-secret", "secret-data")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "test-secret", result)
 }
