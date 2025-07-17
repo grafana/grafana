@@ -32,9 +32,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	authtypes "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -60,6 +60,9 @@ type StorageOptions struct {
 
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
+
+	// Process inline secure values
+	SecureValues secrets.InlineSecureValueSupport
 
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
@@ -296,6 +299,10 @@ func (s *Storage) Delete(
 	}
 	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
+	}
+
+	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+		return err
 	}
 
 	rsp, err := s.store.Delete(ctx, cmd)
