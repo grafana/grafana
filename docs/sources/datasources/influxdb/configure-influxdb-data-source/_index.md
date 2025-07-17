@@ -12,7 +12,7 @@ keywords:
   - flux
 labels:
   products:
-    - clouds
+    - cloud
     - enterprise
     - oss
 menuTitle: Configure the InfluxDB data source
