@@ -377,9 +377,9 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       aiFeedback={
                         aiGeneratedTemplate
                           ? {
-                            onFeedback: handleAiFeedback,
-                            feedbackGiven: aiFeedbackGiven,
-                          }
+                              onFeedback: handleAiFeedback,
+                              feedbackGiven: aiFeedbackGiven,
+                            }
                           : undefined
                       }
                     />

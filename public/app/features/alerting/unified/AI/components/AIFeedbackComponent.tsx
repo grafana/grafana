@@ -51,7 +51,7 @@ export const AIFeedbackComponent = ({
 
   if (feedbackGiven) {
     return (
-      <Stack direction="row" alignItems="center" gap={1} width={"100%"}>
+      <Stack direction="row" alignItems="center" gap={1} width={'100%'}>
         <Icon name="check" color="success" />
         <Text variant="bodySmall" color="success">
           <Trans i18nKey="alerting.ai-feedback.thank-you">Thank you for your feedback!</Trans>
@@ -62,8 +62,8 @@ export const AIFeedbackComponent = ({
 
   if (showCommentField && selectedFeedback !== null) {
     return (
-      <Box width={"100%"} padding={2} borderStyle="solid" borderColor={"weak"} >
-        <Stack direction="column" gap={2} width={"100%"}>
+      <Box width={'100%'} padding={2} borderStyle="solid" borderColor={'weak'}>
+        <Stack direction="column" gap={2} width={'100%'}>
           <Text variant="body">
             <Trans i18nKey="alerting.ai-feedback.comment-prompt">
               Would you like to tell us more about your experience?
@@ -98,8 +98,8 @@ export const AIFeedbackComponent = ({
   }
 
   return (
-    <Box width={"100%"} padding={2} borderStyle="solid" borderColor={"weak"} >
-      <Stack direction="column" gap={2} width={"100%"}>
+    <Box width={'100%'} padding={2} borderStyle="solid" borderColor={'weak'}>
+      <Stack direction="column" gap={2} width={'100%'}>
         <Stack direction="row" alignItems="center" gap={1}>
           <Icon name="ai-sparkle" className={styles.aiSparkle} />
           <Text variant="body" color="info">
@@ -116,12 +116,7 @@ export const AIFeedbackComponent = ({
           >
             <Trans i18nKey="alerting.ai-feedback.helpful">Yes, helpful</Trans>
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handleFeedback(false)}
-            className={styles.feedbackButton}
-          >
+          <Button variant="secondary" size="sm" onClick={() => handleFeedback(false)} className={styles.feedbackButton}>
             <Stack direction="row" alignItems="center" gap={1}>
               <Icon name="thumbs-up" className={styles.thumbsDown} />
               <Trans i18nKey="alerting.ai-feedback.not-helpful">No, not helpful</Trans>
@@ -134,7 +129,6 @@ export const AIFeedbackComponent = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-
   feedbackButton: css({
     minWidth: '120px',
   }),
@@ -144,4 +138,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   aiSparkle: css({
     color: theme.colors.info.main,
   }),
-}); 
+});

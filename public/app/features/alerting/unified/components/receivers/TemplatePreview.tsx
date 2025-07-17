@@ -225,9 +225,7 @@ export function getPreviewResults(
       {previewResponseResults.length > 0 && <PreviewResultViewer previews={previewResponseResults} />}
       {!hasContent && (
         <div className={styles.viewer.emptyState}>
-          <Trans i18nKey="alerting.template-preview.empty-state">
-            Add template content to see preview
-          </Trans>
+          <Trans i18nKey="alerting.template-preview.empty-state">Add template content to see preview</Trans>
         </div>
       )}
     </>

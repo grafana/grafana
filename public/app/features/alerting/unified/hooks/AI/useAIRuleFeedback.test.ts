@@ -22,48 +22,44 @@ describe('useAIRuleFeedback', () => {
     testWithFeatureToggles(['alertingAIGenAlertRules']);
 
     it('should return isFromAI as true when fromAI param is true', () => {
-      mockUseURLSearchParams.mockReturnValue([
-        new URLSearchParams('fromAI=true'),
-        jest.fn(),
-      ]);
+      mockUseURLSearchParams.mockReturnValue([new URLSearchParams('fromAI=true'), jest.fn()]);
 
-      const { result } = renderHook(() => useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true));
+      const { result } = renderHook(() =>
+        useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true)
+      );
 
       expect(result.current.isFromAI).toBe(true);
       expect(result.current.feedbackGiven).toBe(false);
     });
 
     it('should return isFromAI as false when fromAI param is not present', () => {
-      mockUseURLSearchParams.mockReturnValue([
-        new URLSearchParams(''),
-        jest.fn(),
-      ]);
+      mockUseURLSearchParams.mockReturnValue([new URLSearchParams(''), jest.fn()]);
 
-      const { result } = renderHook(() => useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true));
+      const { result } = renderHook(() =>
+        useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true)
+      );
 
       expect(result.current.isFromAI).toBe(false);
       expect(result.current.feedbackGiven).toBe(false);
     });
 
     it('should return isFromAI as false when fromAI param is false', () => {
-      mockUseURLSearchParams.mockReturnValue([
-        new URLSearchParams('fromAI=false'),
-        jest.fn(),
-      ]);
+      mockUseURLSearchParams.mockReturnValue([new URLSearchParams('fromAI=false'), jest.fn()]);
 
-      const { result } = renderHook(() => useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true));
+      const { result } = renderHook(() =>
+        useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true)
+      );
 
       expect(result.current.isFromAI).toBe(false);
       expect(result.current.feedbackGiven).toBe(false);
     });
 
     it('should handle feedback submission correctly', () => {
-      mockUseURLSearchParams.mockReturnValue([
-        new URLSearchParams('fromAI=true'),
-        jest.fn(),
-      ]);
+      mockUseURLSearchParams.mockReturnValue([new URLSearchParams('fromAI=true'), jest.fn()]);
 
-      const { result } = renderHook(() => useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true));
+      const { result } = renderHook(() =>
+        useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true)
+      );
 
       // Initial state
       expect(result.current.feedbackGiven).toBe(false);
@@ -84,12 +80,11 @@ describe('useAIRuleFeedback', () => {
     });
 
     it('should handle feedback submission without comment', () => {
-      mockUseURLSearchParams.mockReturnValue([
-        new URLSearchParams('fromAI=true'),
-        jest.fn(),
-      ]);
+      mockUseURLSearchParams.mockReturnValue([new URLSearchParams('fromAI=true'), jest.fn()]);
 
-      const { result } = renderHook(() => useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true));
+      const { result } = renderHook(() =>
+        useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true)
+      );
 
       act(() => {
         result.current.handleAIFeedback(false);
@@ -104,12 +99,11 @@ describe('useAIRuleFeedback', () => {
     });
 
     it('should maintain feedbackGiven state between renders', () => {
-      mockUseURLSearchParams.mockReturnValue([
-        new URLSearchParams('fromAI=true'),
-        jest.fn(),
-      ]);
+      mockUseURLSearchParams.mockReturnValue([new URLSearchParams('fromAI=true'), jest.fn()]);
 
-      const { result, rerender } = renderHook(() => useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true));
+      const { result, rerender } = renderHook(() =>
+        useAIRuleFeedback(mockTracker, config.featureToggles.alertingAIGenAlertRules === true)
+      );
 
       // Submit feedback
       act(() => {
@@ -128,10 +122,7 @@ describe('useAIRuleFeedback', () => {
     testWithFeatureToggles([]);
 
     it('should return isFromAI as false when fromAI param is true but feature is disabled', () => {
-      mockUseURLSearchParams.mockReturnValue([
-        new URLSearchParams('fromAI=true'),
-        jest.fn(),
-      ]);
+      mockUseURLSearchParams.mockReturnValue([new URLSearchParams('fromAI=true'), jest.fn()]);
 
       const { result } = renderHook(() => useAIRuleFeedback(mockTracker, false));
 
@@ -139,4 +130,4 @@ describe('useAIRuleFeedback', () => {
       expect(result.current.feedbackGiven).toBe(false);
     });
   });
-}); 
+});
