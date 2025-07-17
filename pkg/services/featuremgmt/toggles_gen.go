@@ -615,6 +615,10 @@ const (
 	// Enable permission filtering on unified storage search
 	FlagUnifiedStorageSearchPermissionFiltering = "unifiedStorageSearchPermissionFiltering"
 
+	// FlagUnifiedSearchShadowTraffic
+	// Enable shadow traffic for search API to validate unified search
+	FlagUnifiedSearchShadowTraffic = "unifiedSearchShadowTraffic"
+
 	// FlagManagedDualWriter
 	// Pick the dual write mode from database configs
 	FlagManagedDualWriter = "managedDualWriter"

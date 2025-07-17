@@ -679,6 +679,10 @@ export interface FeatureToggles {
   */
   unifiedStorageSearchPermissionFiltering?: boolean;
   /**
+  * Enable shadow traffic for search API to validate unified search
+  */
+  unifiedSearchShadowTraffic?: boolean;
+  /**
   * Pick the dual write mode from database configs
   */
   managedDualWriter?: boolean;

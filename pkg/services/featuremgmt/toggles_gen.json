@@ -3266,6 +3266,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedSearchShadowTraffic",
+        "resourceVersion": "1752742182377",
+        "creationTimestamp": "2025-07-17T08:49:42Z"
+      },
+      "spec": {
+        "description": "Enable shadow traffic for search API to validate unified search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageBigObjectsSupport",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-10-17T10:18:29Z"

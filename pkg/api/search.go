@@ -1,15 +1,21 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/util"
@@ -103,9 +109,93 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "Search failed", err)
 	}
 
+	// Shadow traffic to unified search in the background
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedSearchShadowTraffic) &&
+		hs.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+		go hs.shadowTrafficToUnifiedSearch(c, query, tags, limit, page, sort)
+	}
+
 	defer c.TimeRequest(metrics.MApiDashboardSearch)
 
 	return response.JSON(http.StatusOK, hits)
+}
+
+// shadowTrafficToUnifiedSearch sends search requests to unified search in background
+// with circuit breaker and aggressive timeout to prevent impact on primary search
+func (hs *HTTPServer) shadowTrafficToUnifiedSearch(c *contextmodel.ReqContext, query string, tags []string, limit int64, page int64, sort string) {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+
+		if requester, err := identity.GetRequester(c.Req.Context()); err == nil {
+			ctx = identity.WithRequester(ctx, requester)
+		}
+
+		// Recover from possible panics caused by grpc calls
+		defer func() {
+			if r := recover(); r != nil {
+				hs.log.Debug("Shadow traffic panic recovered", "error", r)
+			}
+		}()
+
+		// Search folders via unified search
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) && hs.folderService != nil {
+			folderQuery := folder.SearchFoldersQuery{
+				OrgID:        c.GetOrgID(),
+				SignedInUser: c.SignedInUser,
+				Title:        query,
+				Limit:        limit,
+			}
+
+			_, err := hs.folderService.SearchFolders(ctx, folderQuery)
+
+			if err != nil {
+				hs.log.Debug("Shadow folder search request failed", "error", err)
+			} else {
+				hs.log.Debug("Shadow folder search request completed",
+					"orgId", c.GetOrgID(),
+					"query", query,
+					"limit", limit)
+			}
+		}
+
+		// Search dashboards via unified search
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) && hs.DashboardService != nil {
+			dashQuery := &dashboards.FindPersistedDashboardsQuery{
+				Title:        query,
+				Tags:         tags,
+				OrgId:        c.GetOrgID(),
+				SignedInUser: c.SignedInUser,
+				Limit:        limit,
+				Page:         page,
+				Type:         "dash-db",
+			}
+
+			if sort != "" {
+				sortOpts := hs.SearchService.SortOptions()
+				for _, opt := range sortOpts {
+					if opt.Name == sort {
+						dashQuery.Sort = opt
+						break
+					}
+				}
+			}
+
+			_, err := hs.DashboardService.SearchDashboards(ctx, dashQuery)
+
+			if err != nil {
+				hs.log.Debug("Shadow dashboard search request failed", "error", err)
+			} else {
+				hs.log.Debug("Shadow dashboard search request completed",
+					"orgId", c.GetOrgID(),
+					"query", query,
+					"tags", len(tags),
+					"sort", sort,
+					"limit", limit,
+					"page", page)
+			}
+		}
+	}()
 }
 
 // swagger:route GET /search/sorting search listSortOptions

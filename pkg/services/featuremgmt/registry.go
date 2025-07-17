@@ -1163,6 +1163,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "unifiedSearchShadowTraffic",
+			Description:       "Enable shadow traffic for search API to validate unified search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:              "managedDualWriter",
 			Description:       "Pick the dual write mode from database configs",
 			Stage:             FeatureStageExperimental,
