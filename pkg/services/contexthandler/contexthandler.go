@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -87,72 +86,73 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := tracing.Start(r.Context(), "Auth - Middleware")
-		defer span.End()
+		ctx := r.Context()
 
-		reqContext := &contextmodel.ReqContext{
-			Context: web.FromContext(ctx),
-			SignedInUser: &user.SignedInUser{
-				Permissions: map[int64]map[string][]string{},
-			},
-			IsSignedIn:                false,
-			AllowAnonymous:            false,
-			SkipDSCache:               false,
-			Logger:                    log.New("context"),
-			UseSessionStorageRedirect: h.features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection),
-		}
-
-		// inject ReqContext in the context
-		ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
-		// store list of possible auth header in context
-		ctx = WithAuthHTTPHeaders(ctx, h.cfg)
-		// Set the context for the http.Request.Context
-		// This modifies both r and reqContext.Req since they point to the same value
-		*reqContext.Req = *reqContext.Req.WithContext(ctx)
-
-		traceID := tracing.TraceIDFromContext(ctx, false)
-		if traceID != "" {
-			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
-		}
-
-		id, err := h.authenticator.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
-		if err != nil {
-			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
-			reqContext.LookupTokenErr = err
-		} else {
-			reqContext.SignedInUser = id.SignedInUser()
-			reqContext.UserToken = id.SessionToken
-			reqContext.IsSignedIn = !reqContext.IsAnonymous
-			reqContext.AllowAnonymous = reqContext.IsAnonymous
-			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
-			ctx = identity.WithRequester(ctx, id)
-		}
-
-		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
-
-		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
-		span.AddEvent("user", trace.WithAttributes(
-			attribute.String("uname", reqContext.Login),
-			attribute.Int64("orgId", reqContext.OrgID),
-			attribute.Int64("userId", reqContext.UserID),
-		))
-
-		if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
-			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
-		}
-
-		// Set open feature evaluation context with namespace
-		ns := "default"
-		if id != nil {
-			ns = id.Namespace
-		}
-		evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{
-			"namespace": ns,
-		})
-		ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
+		// Preserve the original span so the auth middleware span doesn't get propagated as a parent of the rest of the request
+		span := trace.SpanFromContext(ctx)
+		ctx = h.doAuthStuff(ctx)
+		ctx = trace.ContextWithSpan(ctx, span)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func (h *ContextHandler) doAuthStuff(ctx context.Context) context.Context {
+	ctx, span := tracing.Start(ctx, "ContextHandler.Middleware")
+	defer span.End()
+
+	reqContext := &contextmodel.ReqContext{
+		Context: web.FromContext(ctx),
+		SignedInUser: &user.SignedInUser{
+			Permissions: map[int64]map[string][]string{},
+		},
+		IsSignedIn:                false,
+		AllowAnonymous:            false,
+		SkipDSCache:               false,
+		Logger:                    log.New("context"),
+		UseSessionStorageRedirect: h.features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection),
+	}
+
+	// inject ReqContext in the context
+	ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
+	// store list of possible auth header in context
+	ctx = WithAuthHTTPHeaders(ctx, h.cfg)
+	// Set the context for the http.Request.Context
+	// This modifies both r and reqContext.Req since they point to the same value
+	*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
+	traceID := tracing.TraceIDFromContext(ctx, false)
+	if traceID != "" {
+		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
+	}
+
+	id, err := h.authenticator.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req})
+	if err != nil {
+		// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
+		reqContext.LookupTokenErr = err
+	} else {
+		reqContext.SignedInUser = id.SignedInUser()
+		reqContext.UserToken = id.SessionToken
+		reqContext.IsSignedIn = !reqContext.IsAnonymous
+		reqContext.AllowAnonymous = reqContext.IsAnonymous
+		reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
+		ctx = identity.WithRequester(ctx, id)
+	}
+
+	h.excludeSensitiveHeadersFromRequest(reqContext.Req)
+
+	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
+	span.AddEvent("user", trace.WithAttributes(
+		attribute.String("uname", reqContext.Login),
+		attribute.Int64("orgId", reqContext.OrgID),
+		attribute.Int64("userId", reqContext.UserID),
+	))
+
+	if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
+		reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
+	}
+
+	return ctx
 }
 
 func (h *ContextHandler) excludeSensitiveHeadersFromRequest(req *http.Request) {
