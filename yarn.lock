@@ -2923,7 +2923,7 @@ __metadata:
     "@lezer/lr": "npm:1.4.2"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.34.0"
+    "@opentelemetry/semantic-conventions": "npm:1.36.0"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
@@ -3454,7 +3454,7 @@ __metadata:
     "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
-    "@prometheus-io/lezer-promql": "npm:0.304.2"
+    "@prometheus-io/lezer-promql": "npm:0.305.0"
     "@reduxjs/toolkit": "npm:2.5.1"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
@@ -5873,10 +5873,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.34.0, @opentelemetry/semantic-conventions@npm:^1.29.0, @opentelemetry/semantic-conventions@npm:^1.32.0":
-  version: 1.34.0
-  resolution: "@opentelemetry/semantic-conventions@npm:1.34.0"
-  checksum: 10/1892b4cc69c9e00456c809604a980e32696563e96463ff5f9d07e72d5aca73836a7378090509f28f54445ac6e072d2343a888c9d64d9ce287198e899082ff7aa
+"@opentelemetry/semantic-conventions@npm:1.36.0, @opentelemetry/semantic-conventions@npm:^1.29.0, @opentelemetry/semantic-conventions@npm:^1.32.0":
+  version: 1.36.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.36.0"
+  checksum: 10/f1939066c30147348b326840d67cc48e73072b762f2e2af5c3ea894268d64c62fc4e73fad49a72ed4a52a543b2fa0824c969a676e658ae727f75182f52104007
   languageName: node
   linkType: hard
 
@@ -6138,13 +6138,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:0.304.2":
-  version: 0.304.2
-  resolution: "@prometheus-io/lezer-promql@npm:0.304.2"
+"@prometheus-io/lezer-promql@npm:0.305.0":
+  version: 0.305.0
+  resolution: "@prometheus-io/lezer-promql@npm:0.305.0"
   peerDependencies:
     "@lezer/highlight": ^1.1.2
     "@lezer/lr": ^1.2.3
-  checksum: 10/dd2ce48e0f7a90ab3afb707e56252cf9debf483149bf1d63f8f80e408f76b8f8df3a99fc147876f4d360879be800e323ed53bde52c4599cd7263dac54a3d7ac6
+  checksum: 10/7bb35c48c51fc66deaa074810fcf7568252cbe04b9eaf08634d3286cd3f506726a5557943dbe57d08fac3c2f8e580a483cc5bfc47018ba45f526f35bbac1251b
   languageName: node
   linkType: hard
 
@@ -18141,7 +18141,7 @@ __metadata:
     "@npmcli/package-json": "npm:^5.2.0"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.34.0"
+    "@opentelemetry/semantic-conventions": "npm:1.36.0"
     "@playwright/test": "npm:1.52.0"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
@@ -27275,7 +27275,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:*, react-virtualized-auto-sizer@npm:1.0.26":
+"react-virtualized-auto-sizer@npm:*, react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.6":
   version: 1.0.26
   resolution: "react-virtualized-auto-sizer@npm:1.0.26"
   peerDependencies:
@@ -27292,16 +27292,6 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
   checksum: 10/02101a340bdbe3e40c49dbc52e524eb7ca18832690e91f045a25675600d7adc0a63e800a4ace6a014132adcdcce0e12a8137971de408427a5a3112d7c87c9f3e
-  languageName: node
-  linkType: hard
-
-"react-virtualized-auto-sizer@npm:^1.0.6":
-  version: 1.0.25
-  resolution: "react-virtualized-auto-sizer@npm:1.0.25"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/43678a904019f0413a3c649b5b64ea51263283120c991b285077b5075cf2ea564571f6d48b3a396b588d500d45820d1c98989cb7091e2a009e73e4faa7da9d20
   languageName: node
   linkType: hard
 
