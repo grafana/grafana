@@ -30,6 +30,11 @@ import (
 )
 
 var (
+	// Generate a "no group" string that exceeds 190 char limit to fail validation
+	NoGroupRuleGroup = "no_group" + strings.Repeat("_", 200-len("no_group"))
+)
+
+var (
 	// ErrAlertRuleNotFound is an error for an unknown alert rule.
 	ErrAlertRuleNotFound = fmt.Errorf("could not find alert rule")
 	// ErrAlertRuleFailedGenerateUniqueUID is an error for failure to generate alert rule UID

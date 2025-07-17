@@ -348,7 +348,14 @@ func ValidateRuleGroup(
 	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
-		rule, err := ValidateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespaceUID, limits)
+		ruleInterval := time.Duration(ruleGroupConfig.Interval)
+		if ruleGroupConfig.Name == ngmodels.NoGroupRuleGroup {
+			if ruleGroupConfig.Rules[idx].GrafanaManagedAlert.IntervalSeconds == nil {
+				return nil, fmt.Errorf("interval_seconds is required for rules in the \"no group\" rule group")
+			}
+			ruleInterval = time.Duration(*ruleGroupConfig.Rules[idx].GrafanaManagedAlert.IntervalSeconds) * time.Second
+		}
+		rule, err := ValidateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, ruleInterval, orgId, namespaceUID, limits)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
 			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)

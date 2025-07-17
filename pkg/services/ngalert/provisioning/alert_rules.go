@@ -98,6 +98,11 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 	if err != nil {
 		return nil, nil, "", err
 	}
+	for _, rule := range rules {
+		if rule.RuleGroup == "" {
+			rule.RuleGroup = models.NoGroupRuleGroup
+		}
+	}
 	provenances = make(map[string]models.Provenance)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()
@@ -140,6 +145,11 @@ func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identit
 	rules, _, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
 		return nil, nil, err
+	}
+	for _, rule := range rules {
+		if rule.RuleGroup == "" {
+			rule.RuleGroup = models.NoGroupRuleGroup
+		}
 	}
 	provenances := make(map[string]models.Provenance)
 	if len(rules) > 0 {
@@ -234,10 +244,14 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 	}, nil
 }
 
-// CreateAlertRule creates a new alert rule. This function will ignore any
-// interval that is set in the rule struct and use the already existing group
-// interval or the default one.
+// CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
+// interval that is set in the rule struct and use the already existing group interval or the default one.
+// For the sentinel NoGroupRuleGroup, the rule's individual interval will be preserved if set.
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
+	if rule.RuleGroup == models.NoGroupRuleGroup {
+		// TODO(@rwwiv): throw error
+	}
+
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	} else if err := util.ValidateUID(rule.UID); err != nil {
@@ -252,14 +266,20 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	// FIXME(@moustafab||@rwwiv): need to allow for different intervals for sentinel group (non-grouped apis)
 	if canWriteAllRules {
-		groupInterval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
-		// if the alert group does not exist we just use the default interval
-		if err == nil {
-			interval = groupInterval
-		} else if !errors.Is(err, models.ErrAlertRuleGroupNotFound) {
-			return models.AlertRule{}, err
+		if rule.RuleGroup == models.NoGroupRuleGroup {
+			// For sentinel group, use the interval from the rule itself if set, otherwise fallback to default
+			if rule.IntervalSeconds > 0 {
+				interval = rule.IntervalSeconds
+			}
+		} else {
+			groupInterval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
+			// if the alert group does not exist we just use the default interval
+			if err == nil {
+				interval = groupInterval
+			} else if !errors.Is(err, models.ErrAlertRuleGroupNotFound) {
+				return models.AlertRule{}, err
+			}
 		}
 	} else {
 		delta, err := store.CalculateRuleCreate(ctx, service.ruleStore, &rule)
@@ -292,9 +312,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		}
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		ids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), []models.AlertRule{
+		ids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), cleanRulesForDatabase([]models.AlertRule{
 			rule,
-		})
+		}))
 		if err != nil {
 			return err
 		}
@@ -351,6 +371,11 @@ func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertR
 }
 
 func (service *AlertRuleService) GetRuleGroup(ctx context.Context, user identity.Requester, namespaceUID, group string) (models.AlertRuleGroup, error) {
+	// The NoGroupRuleGroup is a sentinel value for individual rule management, not actual group management
+	if group == models.NoGroupRuleGroup {
+		return models.AlertRuleGroup{}, fmt.Errorf("%w: cannot retrieve the sentinel NoGroupRuleGroup as a group", models.ErrAlertRuleGroupNotFound)
+	}
+
 	q := models.ListAlertRulesQuery{
 		OrgID:         user.GetOrgID(),
 		NamespaceUIDs: []string{namespaceUID},
@@ -390,6 +415,11 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, user identity
 
 // UpdateRuleGroup will update the interval for all rules in the group.
 func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user identity.Requester, namespaceUID string, ruleGroup string, intervalSeconds int64) error {
+	// The NoGroupRuleGroup is a sentinel value for individual rule management, not actual group management
+	if ruleGroup == models.NoGroupRuleGroup {
+		return fmt.Errorf("%w: cannot perform group operations on the sentinel NoGroupRuleGroup", models.ErrAlertRuleFailedValidation)
+	}
+
 	if err := models.ValidateRuleGroupInterval(intervalSeconds, service.baseIntervalSeconds); err != nil {
 		return err
 	}
@@ -748,7 +778,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
-	rule.IntervalSeconds = storedRule.IntervalSeconds
+	// For sentinel group, keep the rule's interval instead of using the "group" interval
+	if rule.RuleGroup != models.NoGroupRuleGroup {
+		rule.IntervalSeconds = storedRule.IntervalSeconds
+	}
 
 	// Currently metadata contains only editor settings, so we can just copy it.
 	// If we add more fields to metadata, we might need to handle them separately,
@@ -762,12 +795,12 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), []models.UpdateRule{
+		err := service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), cleanUpdateRulesForDatabase([]models.UpdateRule{
 			{
 				Existing: storedRule,
 				New:      rule,
 			},
-		})
+		}))
 		if err != nil {
 			return err
 		}
@@ -965,7 +998,10 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.
 func syncGroupRuleFields(group *models.AlertRuleGroup, orgID int64) *models.AlertRuleGroup {
 	for i := range group.Rules {
-		group.Rules[i].IntervalSeconds = group.Interval
+		// For sentinel group, preserve the rule's individual interval if set
+		if group.Title != models.NoGroupRuleGroup || group.Rules[i].IntervalSeconds == 0 {
+			group.Rules[i].IntervalSeconds = group.Interval
+		}
 		group.Rules[i].RuleGroup = group.Title
 		group.Rules[i].NamespaceUID = group.FolderUID
 		group.Rules[i].OrgID = orgID
@@ -1031,4 +1067,39 @@ func userUidOrFallback(user identity.Requester) *models.UserUID {
 		return &models.FileProvisioningUserUID
 	}
 	return userUID
+}
+
+// cleanRuleGroupName converts the sentinel NoGroupRuleGroup to empty string for database storage
+func cleanRuleGroupName(ruleGroup string) string {
+	if ruleGroup == models.NoGroupRuleGroup {
+		return ""
+	}
+	return ruleGroup
+}
+
+// cleanRuleForDatabase prepares a rule for database storage by cleaning the rule group name
+func cleanRuleForDatabase(rule models.AlertRule) models.AlertRule {
+	rule.RuleGroup = cleanRuleGroupName(rule.RuleGroup)
+	return rule
+}
+
+// cleanRulesForDatabase prepares multiple rules for database storage by cleaning rule group names
+func cleanRulesForDatabase(rules []models.AlertRule) []models.AlertRule {
+	cleaned := make([]models.AlertRule, len(rules))
+	for i, rule := range rules {
+		cleaned[i] = cleanRuleForDatabase(rule)
+	}
+	return cleaned
+}
+
+// cleanUpdateRulesForDatabase prepares update rules for database storage by cleaning rule group names
+func cleanUpdateRulesForDatabase(updates []models.UpdateRule) []models.UpdateRule {
+	cleaned := make([]models.UpdateRule, len(updates))
+	for i, update := range updates {
+		cleaned[i] = models.UpdateRule{
+			Existing: update.Existing,
+			New:      cleanRuleForDatabase(update.New),
+		}
+	}
+	return cleaned
 }

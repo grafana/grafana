@@ -594,6 +594,10 @@ type PostableGrafanaRule struct {
 	// required: false
 	// example: 3
 	MissingSeriesEvalsToResolve *int64 `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
+	// Number of seconds between evaluations. This field is included for compatibility with the app-platform rules API.
+	// required: false
+	// example: 30
+	IntervalSeconds *int64 `json:"interval_seconds,omitempty" yaml:"interval_seconds,omitempty"`
 }
 
 // swagger:model

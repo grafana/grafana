@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
@@ -612,11 +612,18 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		var groupsMap map[string]struct{}
 		if len(query.RuleGroups) > 0 {
 			groupsMap = make(map[string]struct{})
+			for i, group := range query.RuleGroups {
+				g := group
+				// replace NoGroupRuleGroup with empty string for IN clause
+				if group == ngmodels.NoGroupRuleGroup {
+					g = ""
+					query.RuleGroups[i] = g
+				}
+				groupsMap[g] = struct{}{}
+			}
+
 			args, in := getINSubQueryArgs(query.RuleGroups)
 			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(in, ",")), args...)
-			for _, group := range query.RuleGroups {
-				groupsMap[group] = struct{}{}
-			}
 		}
 
 		if query.ReceiverName != "" {
@@ -718,26 +725,29 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 					continue
 				}
 			}
+			// Use the sentinel rule group name for the "no group" rule group.
+			if converted.RuleGroup == "" {
+				converted.RuleGroup = ngmodels.NoGroupRuleGroup
+			}
+
 			alertRules = append(alertRules, &converted)
 		}
 
-		hasMore := len(alertRules) > int(query.Limit)
-		if hasMore {
+		genToken := query.Limit > 0 && len(alertRules) > int(query.Limit)
+		if genToken {
 			// Remove the extra item we fetched
 			alertRules = alertRules[:query.Limit]
 
 			// Generate next continue token from the last item
-			if len(alertRules) > 0 {
-				lastRule := alertRules[len(alertRules)-1]
-				cursor := continueCursor{
-					NamespaceUID: lastRule.NamespaceUID,
-					RuleGroup:    lastRule.RuleGroup,
-					RuleGroupIdx: int64(lastRule.RuleGroupIndex),
-					ID:           lastRule.ID,
-				}
-
-				nextToken = encodeCursor(cursor)
+			lastRule := alertRules[len(alertRules)-1]
+			cursor := continueCursor{
+				NamespaceUID: lastRule.NamespaceUID,
+				RuleGroup:    lastRule.RuleGroup,
+				RuleGroupIdx: int64(lastRule.RuleGroupIndex),
+				ID:           lastRule.ID,
 			}
+
+			nextToken = encodeCursor(cursor)
 		}
 
 		result = alertRules

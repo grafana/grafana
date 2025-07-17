@@ -323,6 +323,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) respo
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
+	useSentinelGroupMulti(rules)
 	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRules(rules, provenances))
 }
 
@@ -334,6 +335,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, U
 		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
 	}
+	rule = useSentinelGroupSingle(rule)
 	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRule(rule, provenace))
 }
 
@@ -358,6 +360,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
+	createdAlertRule = useSentinelGroupSingle(createdAlertRule)
 
 	resp := ProvisionedAlertRuleFromAlertRule(createdAlertRule, alerting_models.Provenance(provenance))
 	return response.JSON(http.StatusCreated, resp)
@@ -390,6 +393,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
+	updatedAlertRule = useSentinelGroupSingle(updatedAlertRule)
 
 	resp := ProvisionedAlertRuleFromAlertRule(updatedAlertRule, alerting_models.Provenance(provenance))
 	return response.JSON(http.StatusOK, resp)
@@ -760,4 +764,19 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 			SetHeader("Content-Disposition", `attachment;filename=export.tf`)
 	}
 	return resp.SetHeader("Content-Type", "text/hcl")
+}
+
+func useSentinelGroupSingle(rule alerting_models.AlertRule) alerting_models.AlertRule {
+	if rule.RuleGroup == "" {
+		rule.RuleGroup = alerting_models.NoGroupRuleGroup
+	}
+	return rule
+}
+
+func useSentinelGroupMulti(rules []*alerting_models.AlertRule) {
+	for _, rule := range rules {
+		if rule.RuleGroup == "" {
+			rule.RuleGroup = alerting_models.NoGroupRuleGroup
+		}
+	}
 }

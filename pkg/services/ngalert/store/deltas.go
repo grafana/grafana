@@ -179,7 +179,7 @@ func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {
 	}
 	var toUpdate []RuleDelta
 	for groupKey, rules := range ch.AffectedGroups {
-		if groupKey != ch.GroupKey {
+		if groupKey != ch.GroupKey && groupKey.RuleGroup != models.NoGroupRuleGroup {
 			rules.SortByGroupIndex()
 		}
 		idx := 1
@@ -191,7 +191,7 @@ func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {
 				Existing: rule,
 				New:      rule,
 			}
-			if groupKey != ch.GroupKey {
+			if groupKey != ch.GroupKey && groupKey.RuleGroup != models.NoGroupRuleGroup {
 				if rule.RuleGroupIndex != idx {
 					upd.New = rule.Copy()
 					upd.New.RuleGroupIndex = idx
