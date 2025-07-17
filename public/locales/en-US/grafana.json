@@ -389,6 +389,18 @@
         "triage-button": "AI Triage Button failed to load"
       }
     },
+    "ai-feedback": {
+      "comment-description": "Help us improve by sharing what worked well or what could be better",
+      "comment-label": "Additional feedback (optional)",
+      "comment-placeholder": "Share your thoughts on the AI response...",
+      "comment-prompt": "Would you like to tell us more about your experience?",
+      "helpful": "Yes, helpful",
+      "not-helpful": "No, not helpful",
+      "question": "Was this AI response helpful?",
+      "skip": "Skip",
+      "submit": "Submit Feedback",
+      "thank-you": "Thank you for your feedback!"
+    },
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
@@ -2802,6 +2814,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Refresh preview",
+      "empty-state": "Add template content to see preview",
       "label-preview": "Preview",
       "refresh": "Refresh"
     },
