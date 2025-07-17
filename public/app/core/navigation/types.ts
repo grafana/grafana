@@ -20,4 +20,5 @@ export interface RouteDescriptor {
   routeName?: string;
   chromeless?: boolean;
   sensitive?: boolean;
+  allowAnonymous?: boolean;
 }
