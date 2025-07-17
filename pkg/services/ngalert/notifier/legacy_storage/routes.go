@@ -2,6 +2,7 @@ package legacy_storage
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 
@@ -17,11 +18,11 @@ func (rev *ConfigRevision) GetNamedRoute(name string, log log.Logger) (*definiti
 		return nil, fmt.Errorf("no root route defined in the existing configuration")
 	}
 
-	namedRoutes, err := parseNamedRoutes(rev.Config.AlertmanagerConfig.Route, log)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse named routes: %w", err)
+	if name == "" {
+		return nil, fmt.Errorf("route name is required")
 	}
-	return NamedRoutes(namedRoutes).GetNamedRoute(name)
+
+	return parseNamedRoutes(rev.Config.AlertmanagerConfig.Route, log).GetNamedRoute(name), nil
 }
 
 func (rev *ConfigRevision) GetNamedRoutes(log log.Logger) ([]*definitions.Route, error) {
@@ -29,7 +30,7 @@ func (rev *ConfigRevision) GetNamedRoutes(log log.Logger) ([]*definitions.Route,
 		return nil, fmt.Errorf("no root route defined in the existing configuration")
 	}
 
-	return parseNamedRoutes(rev.Config.AlertmanagerConfig.Route, log)
+	return parseNamedRoutes(rev.Config.AlertmanagerConfig.Route, log), nil
 }
 
 func (rev *ConfigRevision) DeleteNamedRoute(name string) error {
@@ -42,7 +43,7 @@ func (rev *ConfigRevision) DeleteNamedRoute(name string) error {
 	}
 
 	newRoutes := make([]*definitions.Route, 0, len(rev.Config.AlertmanagerConfig.Route.Routes))
-	for _, subRoute := range rev.Config.AlertmanagerConfig.Route.Routes {
+	for _, subRoute := range parseNamedRoutes(rev.Config.AlertmanagerConfig.Route, nil) {
 		if subRoute.Name == name {
 			// Remove the sub-route from the routes.
 			continue
@@ -79,16 +80,15 @@ func (rev *ConfigRevision) CreateNamedRoute(subtree definitions.Route) (definiti
 		return definitions.Route{}, fmt.Errorf("cannot create the user-defined route, use update instead")
 	}
 
-	newRoutes := make([]*definitions.Route, 0, len(rev.Config.AlertmanagerConfig.Route.Routes)+1)
-	// Prepend the new subtree to the existing routes.
-	newRoutes = append(newRoutes, &namedRoute)
-	for _, subRoute := range rev.Config.AlertmanagerConfig.Route.Routes {
-		if subRoute.Name == namedRoute.Name {
-			return definitions.Route{}, ErrRouteExists.Errorf("")
-		}
-		newRoutes = append(newRoutes, subRoute)
+	namedRoutes := parseNamedRoutes(rev.Config.AlertmanagerConfig.Route, nil)
+	if existing := namedRoutes.GetNamedRoute(namedRoute.Name); existing == nil {
+		// Prepend the new subtree to the existing routes.
+		namedRoutes = slices.Concat([]*definitions.Route{&namedRoute}, namedRoutes)
+		rev.Config.AlertmanagerConfig.Route.Routes = namedRoutes
+	} else {
+		return definitions.Route{}, ErrRouteExists.Errorf("")
 	}
-	rev.Config.AlertmanagerConfig.Route.Routes = newRoutes
+
 	return namedRoute, nil
 }
 
@@ -121,30 +121,14 @@ func (rev *ConfigRevision) UpdateNamedRoute(subtree definitions.Route, log log.L
 		rev.Config.AlertmanagerConfig.Route = &root
 	}
 
-	for _, subRoute := range rev.Config.AlertmanagerConfig.Route.Routes {
+	namedRoutes := parseNamedRoutes(rev.Config.AlertmanagerConfig.Route, log)
+	for _, subRoute := range namedRoutes {
 		if subRoute.Name == namedRoute.Name {
 			// Update the existing sub-route.
 			*subRoute = namedRoute
+			rev.Config.AlertmanagerConfig.Route.Routes = namedRoutes
 			return namedRoute, nil
 		}
-	}
-
-	if namedRoute.Name == UserDefinedRoutingTreeName {
-		// To be backwards compatible from before named routes, the user-defined route might not yet be explicitly
-		// named in the configuration. We take this opportunity to migrate the empty-named user-defined subtrees at
-		// this point and make it explicit.
-		namedRoutes, err := parseNamedRoutes(rev.Config.AlertmanagerConfig.Route, log)
-		if err != nil {
-			return definitions.Route{}, fmt.Errorf("failed to parse named routes: %w", err)
-		}
-		userDefined, err := NamedRoutes(namedRoutes).GetNamedRoute(UserDefinedRoutingTreeName)
-		if err != nil {
-			return definitions.Route{}, err
-		}
-		*userDefined = namedRoute
-		rev.Config.AlertmanagerConfig.Route.Routes = namedRoutes
-
-		return namedRoute, nil
 	}
 
 	return definitions.Route{}, fmt.Errorf("named route %q not found", namedRoute.Name)
@@ -176,8 +160,8 @@ func (rev *ConfigRevision) ValidateRouteReferences(route definitions.Route) erro
 	return nil
 }
 
-func parseNamedRoutes(root *definitions.Route, log log.Logger) ([]*definitions.Route, error) {
-	named := make([]*definitions.Route, 0, len(root.Routes))
+func parseNamedRoutes(root *definitions.Route, log log.Logger) parsedRoutes {
+	named := make(parsedRoutes, 0, len(root.Routes))
 	legacyUnnamedRoutes := make([]*definitions.Route, 0)
 
 	var userDefinedRoute *definitions.Route
@@ -186,8 +170,9 @@ func parseNamedRoutes(root *definitions.Route, log log.Logger) ([]*definitions.R
 		if subRoute == nil {
 			continue
 		}
+		name := legacyRouteToName(subRoute)
 		// For legacy reasons, we consider sub-routes with no name to be part of the user-defined named route.
-		if subRoute.Name == "" {
+		if name == "" {
 			legacyUnnamedRoutes = append(legacyUnnamedRoutes, subRoute)
 			continue
 		}
@@ -213,7 +198,22 @@ func parseNamedRoutes(root *definitions.Route, log log.Logger) ([]*definitions.R
 	}
 	named = append(named, userDefinedRoute)
 
-	return named, nil
+	return named
+}
+
+func legacyRouteToName(route *definitions.Route) string {
+	if route.Name != "" {
+		// If the route has a name, we use it as is. This is the case for non-legacy routes.
+		return route.Name
+	}
+	for _, matcher := range route.ObjectMatchers {
+		if matcher.Type == labels.MatchEqual && matcher.Name == NamedRouteMatcher {
+			// In the edge case that named routes previously existed but are now missing the Name field, we can
+			// still extract the name from the matcher. This can happen if the feature was enabled and then disabled.
+			return matcher.Value
+		}
+	}
+	return ""
 }
 
 // Create a new root node for a named route.
@@ -248,19 +248,16 @@ func newUserDefinedNamedRoute(root definitions.Route, subroutes []*definitions.R
 	return &udr
 }
 
-type NamedRoutes []*definitions.Route
+type parsedRoutes []*definitions.Route
 
-func (nr NamedRoutes) GetNamedRoute(name string) (*definitions.Route, error) {
-	if name == "" {
-		return nil, fmt.Errorf("route name is required")
-	}
+func (nr parsedRoutes) GetNamedRoute(name string) *definitions.Route {
 	for _, subRoute := range nr {
 		if subRoute == nil {
 			continue
 		}
 		if subRoute.Name == name {
-			return subRoute, nil
+			return subRoute
 		}
 	}
-	return nil, ErrRouteNotFound.Errorf("")
+	return nil
 }

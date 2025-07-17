@@ -13,7 +13,6 @@ var (
 		errutil.WithPublic("Invalid receiver: '{{ .Public.Reason }}'"),
 	)
 
-	ErrRouteNotFound      = errutil.NotFound("alerting.notifications.routes.notFound", errutil.WithPublicMessage("Route not found"))
 	ErrRouteExists        = errutil.Conflict("alerting.notifications.routes.exists", errutil.WithPublicMessage("Route with this name already exists. Use a different name or update an existing one."))
 	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
 		"Invalid format of the submitted route.",

@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"hash"
 	"hash/fnv"
@@ -112,10 +111,10 @@ func (nps *NotificationPolicyService) DeletePolicySubTree(ctx context.Context, o
 
 	existing, err := revision.GetNamedRoute(name, nps.log)
 	if err != nil {
-		if errors.Is(err, legacy_storage.ErrRouteNotFound) {
-			return nil
-		}
 		return err
+	}
+	if existing == nil {
+		return ErrRouteNotFound.Errorf("")
 	}
 
 	err = nps.checkOptimisticConcurrency(*existing, p, version, "delete")

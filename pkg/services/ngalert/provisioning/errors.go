@@ -37,6 +37,8 @@ var (
 		"Invalid format of the submitted route.",
 		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
 	)
+
+	ErrRouteNotFound = errutil.NotFound("alerting.notifications.routes.notFound", errutil.WithPublicMessage("Route not found"))
 )
 
 // MakeErrTimeIntervalInvalid creates an error with the ErrTimeIntervalInvalid template
