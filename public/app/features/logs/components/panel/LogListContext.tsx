@@ -42,9 +42,10 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
+  forceEscape: boolean;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
-  hasUnescapedContent?: boolean;
+  hasUnescapedContent: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsMode: (mode: LogLineDetailsMode) => void;
@@ -75,6 +76,7 @@ export const LogListContext = createContext<LogListContextData>({
   downloadLogs: () => {},
   enableLogDetails: false,
   filterLevels: [],
+  forceEscape: false,
   fontSize: 'default',
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
@@ -124,7 +126,6 @@ export type LogListState = Pick<
   | 'fontSize'
   | 'forceEscape'
   | 'filterLevels'
-  | 'hasUnescapedContent'
   | 'pinnedLogs'
   | 'prettifyJSON'
   | 'showUniqueLabels'
@@ -145,8 +146,6 @@ export interface Props {
   enableLogDetails: boolean;
   filterLevels?: LogLevel[];
   fontSize: LogListFontSize;
-  forceEscape?: boolean;
-  hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
@@ -189,8 +188,6 @@ export const LogListContextProvider = ({
   displayedFields,
   filterLevels,
   fontSize,
-  forceEscape = false,
-  hasUnescapedContent,
   isLabelFilterActive,
   getRowContextQuery,
   logs,
@@ -227,8 +224,7 @@ export const LogListContextProvider = ({
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
     fontSize,
-    forceEscape,
-    hasUnescapedContent,
+    forceEscape: logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.forceEscape`, false) : false,
     pinnedLogs,
     prettifyJSON,
     showTime,
@@ -294,12 +290,6 @@ export const LogListContextProvider = ({
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
   }, [fontSize]);
-
-  useEffect(() => {
-    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
-      setLogListState({ ...logListState, hasUnescapedContent });
-    }
-  }, [hasUnescapedContent, logListState]);
 
   useEffect(() => {
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
@@ -495,6 +485,7 @@ export const LogListContextProvider = ({
 
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
+  const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
   return (
     <LogListContext.Provider
@@ -513,7 +504,7 @@ export const LogListContextProvider = ({
         forceEscape: logListState.forceEscape,
         hasLogsWithErrors,
         hasSampledLogs,
-        hasUnescapedContent: logListState.hasUnescapedContent,
+        hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
