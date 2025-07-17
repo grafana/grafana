@@ -23,7 +23,8 @@ jobs:
     steps:
       - name: Calculate fetch depth
         id: fetch_depth
-        run: echo "fetch_depth=$((echo ${{ github.event.pull_request.commits }} + 2))" >> $GITHUB_OUTPUT
+        shell: bash
+        run: echo "fetch_depth=$(( ${{ github.event.pull_request.commits }} + 2 ))" >> "$GITHUB_OUTPUT"
       - name: Checkout code
         uses: actions/checkout@v4
         with:
