@@ -44,18 +44,29 @@ func Convert_V2alpha1_to_V1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, s
 func Convert_V2alpha1_to_V2alpha2(in *dashv2alpha1.Dashboard, out *dashv2alpha2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
-	// TODO: implement V2alpha1 to V2alpha2 conversion
+	// Convert the spec
+	if err := ConvertDashboard_V2alpha1_to_V2alpha2(in, out, scope); err != nil {
+		out.Status = dashv2alpha2.DashboardStatus{
+			Conversion: &dashv2alpha2.DashboardConversionStatus{
+				StoredVersion: dashv2alpha1.VERSION,
+				Failed:        true,
+				Error:         err.Error(),
+			},
+		}
+		return err
+	}
 
+	// Set successful conversion status
 	out.Status = dashv2alpha2.DashboardStatus{
 		Conversion: &dashv2alpha2.DashboardConversionStatus{
 			StoredVersion: dashv2alpha1.VERSION,
-			Failed:        true,
-			Error:         "backend conversion not yet implemented",
+			Failed:        false,
 		},
 	}
 
 	return nil
 }
+
 func Convert_V2alpha2_to_V0(in *dashv2alpha2.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
