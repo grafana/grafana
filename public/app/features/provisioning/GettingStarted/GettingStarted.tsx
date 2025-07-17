@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning/v0alpha1';
 import provisioningSvg from 'img/provisioning/provisioning.svg';
@@ -121,7 +123,10 @@ interface Props {
 
 export default function GettingStarted({ items }: Props) {
   const styles = useStyles2(getStyles);
-  const settingsQuery = useGetFrontendSettingsQuery(undefined, { refetchOnMountOrArgChange: true });
+  const settingsArg = config.featureToggles.provisioning ? undefined : skipToken;
+  const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
+    refetchOnMountOrArgChange: true,
+  });
   const legacyStorage = settingsQuery.data?.legacyStorage;
   const hasItems = Boolean(settingsQuery.data?.items?.length);
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
