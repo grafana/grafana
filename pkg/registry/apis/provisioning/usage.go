@@ -59,6 +59,10 @@ func (b *APIBuilder) collectProvisioningStats(ctx context.Context) (metrics map[
 	}
 
 	// Inspect all configs
+	if b.repositoryLister == nil {
+		span.SetStatus(codes.Ok, "repository lister is not available yet")
+		return m, nil
+	}
 	repos, err := b.repositoryLister.List(labels.Everything())
 	if err != nil {
 		return m, fmt.Errorf("list repositories: %w", err)
