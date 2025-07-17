@@ -509,11 +509,6 @@ export interface FeatureToggles {
   */
   scopeFilters?: boolean;
   /**
-  * Use the new SSO Settings API to configure the SAML connector
-  * @default true
-  */
-  ssoSettingsSAML?: boolean;
-  /**
   * Require that sub claims is present in oauth tokens.
   */
   oauthRequireSubClaim?: boolean;
@@ -748,6 +743,26 @@ export interface FeatureToggles {
   * @default true
   */
   azureMonitorEnableUserAuth?: boolean;
+  /**
+  * Enable AI-generated alert rules.
+  * @default false
+  */
+  alertingAIGenAlertRules?: boolean;
+  /**
+  * Enable AI-improve alert rules labels and annotations.
+  * @default false
+  */
+  alertingAIImproveAlertRules?: boolean;
+  /**
+  * Enable AI-generated alerting templates.
+  * @default false
+  */
+  alertingAIGenTemplates?: boolean;
+  /**
+  * Enable AI-analyze central state history.
+  * @default false
+  */
+  alertingAIAnalyzeCentralStateHistory?: boolean;
   /**
   * Enables simplified step mode in the notifications section
   * @default true
@@ -1026,6 +1041,15 @@ export interface FeatureToggles {
   * @default false
   */
   enablePluginImporter?: boolean;
+  /**
+  * Applies OTel formatting templates to displayed logs
+  */
+  otelLogsFormatting?: boolean;
+  /**
+  * Enables the notification history feature
+  * @default false
+  */
+  alertingNotificationHistory?: boolean;
   /**
   * Allows decoupled core plugins to load from the Grafana CDN
   * @default false

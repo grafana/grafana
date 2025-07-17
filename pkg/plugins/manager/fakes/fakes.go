@@ -668,6 +668,10 @@ func (p *FakeBackendPlugin) Target() backendplugin.Target {
 	return "test-target"
 }
 
+func (p *FakeBackendPlugin) Logger() log.Logger {
+	return log.NewTestLogger()
+}
+
 type AssetProvider struct {
 	ModuleFunc    func(plugin pluginassets.PluginInfo) (string, error)
 	AssetPathFunc func(plugin pluginassets.PluginInfo, assetPath ...string) (string, error)
