@@ -3495,6 +3495,19 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
+    "bulk-move-resources-form": {
+      "cancel-action": "Cancel",
+      "failed-alert": "Move Failed",
+      "failed-create": "Failed to create resource in target location",
+      "failed-delete": "Resource was created at new location but could not be deleted from original location. Please manually remove the old file.",
+      "failed-fetch": "Failed to fetch resource data",
+      "move-action": "Move Resources",
+      "move-warning": "This will move selected resources and their descendants. In total, this will affect:",
+      "moving": "Moving...",
+      "success": "Bulk move completed successfully",
+      "target-folder": "Target Folder",
+      "title": "Bulk Move Resources"
+    },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
       "alertRule_other": "{{count}} alert rule",
@@ -5742,7 +5755,6 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
-      "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
       "current-file-not-found": "Current dashboard file could not be found",
       "drawer-title": "Move Provisioned Dashboard",
@@ -5751,7 +5763,6 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
-      "partial-failure-warning": "Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -9303,6 +9314,10 @@
       "link-title": "More questions? Talk to an expert",
       "title": "Why host with Grafana?"
     }
+  },
+  "move-operations": {
+    "error": "Failed to move {{resourceName}}",
+    "partial-success-warning": "{{resourceName}} was created at new location but could not be deleted from original location. Please manually remove the old file."
   },
   "multicombobox": {
     "all": {

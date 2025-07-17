@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { AppEvents } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Drawer, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
@@ -20,8 +22,9 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 
 import { DashboardTreeSelection } from '../../types';
 
+import { BulkMoveFailedBanner } from './BulkMoveFailedBanner';
 import { DescendantCount } from './DescendantCount';
-import { bulkMoveResources, notifyBulkMoveResult } from './utils';
+import { bulkMoveResources, BulkMoveResult } from './utils';
 
 interface FormProps extends BulkMoveProvisionResourceProps {
   initialValues: BaseProvisionedFormData;
@@ -48,10 +51,12 @@ export function FormContent({
   const [createFile] = useCreateRepositoryFilesWithPathMutation();
   const [deleteFile] = useDeleteRepositoryFilesWithPathMutation();
   const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<BulkMoveResult | undefined>(); // This only gets set if there are any failed moves
 
   const [targetFolderUID, setTargetFolderUID] = useState<string>(folderUid || '');
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
   const navigate = useNavigate();
+  const appEvents = getAppEvents();
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
@@ -78,10 +83,15 @@ export function FormContent({
       options: { ...formData },
     });
 
-    notifyBulkMoveResult('move', results, () => onClose());
-
     if (results.successful.length > 0 && results.failed.length === 0) {
+      // All resources moved successfully, navigate to the dashboard list
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [t('browse-dashboards.bulk-move-resources-form.success', 'Bulk move completed successfully')],
+      });
       navigate('/dashboards');
+    } else {
+      setResults(results);
     }
 
     setIsLoading(false);
@@ -94,6 +104,9 @@ export function FormContent({
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           <Stack direction="column" gap={2}>
+            {/* Bulk move failed banner */}
+            {results && <BulkMoveFailedBanner result={results} onDismiss={() => setResults(undefined)} />}
+
             <Box paddingBottom={2}>
               <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-warning">
                 This will move selected resources and their descendants. In total, this will affect:
@@ -115,7 +128,7 @@ export function FormContent({
             />
 
             <Stack gap={2}>
-              <Button variant="primary" type="submit" disabled={!canSubmit}>
+              <Button variant="primary" type="submit" disabled={!canSubmit || !!results}>
                 {isLoading
                   ? t('browse-dashboards.bulk-move-resources-form.moving', 'Moving...')
                   : t('browse-dashboards.bulk-move-resources-form.move-action', 'Move Resources')}

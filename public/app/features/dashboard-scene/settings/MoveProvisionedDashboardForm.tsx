@@ -13,7 +13,7 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { notifyMoveResult, moveResource } from 'app/features/browse-dashboards/components/BrowseActions/utils';
+import { moveResource, MoveResourceResult } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
@@ -109,15 +109,8 @@ export function MoveProvisionedDashboardForm({
       mutations: { createFile, deleteFile },
     });
 
-    notifyMoveResult(result, 'Dashboard');
-
-    if (result.success || result.partialSuccess) {
-      panelEditor?.onDiscard();
-      if (targetFolderUID && targetFolderTitle) {
-        onSuccess(targetFolderUID, targetFolderTitle);
-      }
-      navigate('/dashboards');
-    }
+    // failed or partial failed message, all success message will be handle below in useProvisionedRequestHandler hook
+    notifyFailedResult(result, 'Dashboard');
   };
 
   const onWriteSuccess = () => {
@@ -223,4 +216,27 @@ export function MoveProvisionedDashboardForm({
       </FormProvider>
     </Drawer>
   );
+}
+
+// Common error handling for move operations
+function notifyFailedResult(result: MoveResourceResult, resourceName: string) {
+  const appEvents = getAppEvents();
+
+  if (result.failedToDelete) {
+    appEvents.publish({
+      type: AppEvents.alertWarning.name,
+      payload: [
+        t(
+          'move-operations.partial-success-warning',
+          `{{resourceName}} was created at new location but could not be deleted from original location. Please manually remove the old file.`,
+          { resourceName }
+        ),
+      ],
+    });
+  } else {
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload: [t('move-operations.error', `Failed to move {{resourceName}}`, { resourceName }), result.error],
+    });
+  }
 }

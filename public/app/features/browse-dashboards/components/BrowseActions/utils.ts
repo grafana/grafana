@@ -61,15 +61,12 @@ interface MoveResultSuccess {
 interface MoveResultFailed {
   uid: string;
   status: 'failed';
+  title?: string;
+  failureType: 'create' | 'delete' | 'data-fetch';
+  error?: string;
 }
 
-interface FulfilledResource {
-  uid: string;
-  data: ResourceWrapper;
-  title: string;
-}
-
-interface BulkMoveResult {
+export interface BulkMoveResult {
   successful: MoveResultSuccess[];
   failed: MoveResultFailed[];
   summary: {
@@ -77,6 +74,12 @@ interface BulkMoveResult {
     successCount: number;
     failedCount: number;
   };
+}
+
+interface FulfilledResource {
+  uid: string;
+  data: ResourceWrapper;
+  title: string;
 }
 
 /**
@@ -106,7 +109,7 @@ export const bulkMoveResources = async ({
           throw new Error(`No source path found for dashboard ${uid}`);
         }
 
-        const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
+        const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/111namespaces/${config.namespace}`;
         const url = `${baseUrl}/repositories/${repository.name}/files/${sourcePath}`;
         const fileResponse = await getBackendSrv().get(url);
 
@@ -134,6 +137,7 @@ export const bulkMoveResources = async ({
         acc.dataFetchFailures.push({
           uid: dashboardsToMove[index],
           status: 'failed',
+          failureType: 'data-fetch',
         });
       }
       return acc;
@@ -181,6 +185,7 @@ export const bulkMoveResources = async ({
         return {
           uid,
           status: 'failed',
+          failureType: 'create',
         };
       }
     })
@@ -201,6 +206,7 @@ export const bulkMoveResources = async ({
       const failedResult: MoveResultFailed = {
         uid: 'unknown',
         status: 'failed',
+        failureType: 'data-fetch',
       };
       failed.push(failedResult);
     }
@@ -219,9 +225,7 @@ export const bulkMoveResources = async ({
   };
 };
 
-/**
- * Calculate target path for moving a resource
- */
+// Calculate target path for moving a resource
 export function calculateTargetPath(targetFolderPath: string, currentSourcePath: string): string {
   const fileName = currentSourcePath.split('/').pop();
   return `${targetFolderPath}/${fileName}`;
@@ -229,7 +233,8 @@ export function calculateTargetPath(targetFolderPath: string, currentSourcePath:
 
 export interface MoveResourceResult {
   success: boolean;
-  partialSuccess?: boolean; // Created but not deleted
+  failedToCreate?: boolean;
+  failedToDelete?: boolean; // Created but not deleted
   error?: string;
 }
 
@@ -253,8 +258,8 @@ export async function moveResource({
   ref,
   mutations,
 }: MoveResourceParams): Promise<MoveResourceResult> {
+  // Step 1: Create file at target location
   try {
-    // Step 1: Create file at target location
     await mutations
       .createFile({
         name: repositoryName,
@@ -264,98 +269,32 @@ export async function moveResource({
         body: fileContent,
       })
       .unwrap();
-
-    try {
-      // Step 2: Delete file from current location
-      await mutations
-        .deleteFile({
-          name: repositoryName,
-          path: currentPath,
-          ref,
-          message: commitMessage,
-        })
-        .unwrap();
-
-      return { success: true };
-    } catch (deleteError) {
-      // Partial success: created but couldn't delete
-      return {
-        success: false,
-        partialSuccess: true,
-        error: deleteError instanceof Error ? deleteError.message : 'Delete failed',
-      };
-    }
   } catch (createError) {
     return {
       success: false,
+      failedToCreate: true,
       error: createError instanceof Error ? createError.message : 'Create failed',
     };
   }
-}
 
-/**
- * Common error handling for move operations
- */
-export function notifyMoveResult(result: MoveResourceResult, resourceName: string) {
-  const appEvents = getAppEvents();
+  // Step 2: Delete file from current location
+  try {
+    await mutations
+      .deleteFile({
+        name: repositoryName,
+        path: currentPath,
+        ref,
+        message: commitMessage,
+      })
+      .unwrap();
 
-  if (result.success) {
-    appEvents.publish({
-      type: AppEvents.alertSuccess.name,
-      payload: [t('move-operations.success', `${resourceName} moved successfully`)],
-    });
-  } else if (result.partialSuccess) {
-    appEvents.publish({
-      type: AppEvents.alertWarning.name,
-      payload: [
-        t(
-          'move-operations.partial-success-warning',
-          `${resourceName} was created at new location but could not be deleted from original location. Please manually remove the old file.`
-        ),
-      ],
-    });
-  } else {
-    appEvents.publish({
-      type: AppEvents.alertError.name,
-      payload: [t('move-operations.error', `Failed to move ${resourceName}`), result.error],
-    });
-  }
-}
-
-/**
- * Handle bulk move/delete operation results with appropriate notifications
- */
-export function notifyBulkMoveResult(action: 'move' | 'delete', result: BulkMoveResult, onSuccess?: () => void) {
-  const appEvents = getAppEvents();
-
-  if (result.failed.length === 0) {
-    // Complete success
-    appEvents.publish({
-      type: AppEvents.alertSuccess.name,
-      payload: [
-        t('browse-dashboards.bulk-action-resources-form.success', 'Bulk {{action}} completed successfully', { action }),
-      ],
-    });
-    onSuccess?.();
-  } else if (result.successful.length > 0) {
-    // Partial success
-    appEvents.publish({
-      type: AppEvents.alertWarning.name,
-      payload: [
-        t(
-          'browse-dashboards.bulk-action-resources-form.partial-success',
-          'Bulk {{action}} partially completed: {{successCount}} successful, {{failedCount}} failed',
-          { successCount: result.summary.successCount, failedCount: result.summary.failedCount, action }
-        ),
-      ],
-    });
-  } else {
-    // Complete failure
-    appEvents.publish({
-      type: AppEvents.alertError.name,
-      payload: [
-        t('browse-dashboards.bulk-action-resources-form.complete-failure', 'Bulk {{action}} failed', { action }),
-      ],
-    });
+    return { success: true }; // Only return true if both create and delete succeed
+  } catch (deleteError) {
+    // Partial success: created but couldn't delete
+    return {
+      success: false,
+      failedToDelete: true,
+      error: deleteError instanceof Error ? deleteError.message : 'Delete failed',
+    };
   }
 }
