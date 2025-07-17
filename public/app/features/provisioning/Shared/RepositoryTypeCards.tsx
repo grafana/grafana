@@ -15,8 +15,8 @@ export function RepositoryTypeCards() {
   const repositoryConfigs = getRepositoryTypeConfigs().filter((config) => availableTypes.includes(config.type));
 
   // Separate git providers from other providers
-  const gitProviders = repositoryConfigs.filter((config) => isGitProvider(config.type));
-  const otherProviders = repositoryConfigs.filter((config) => !isGitProvider(config.type));
+  const gitProviders = repositoryConfigs.filter((config) => isGitProvider(config.type) && config.type !== 'git');
+  const otherProviders = repositoryConfigs.filter((config) => !isGitProvider(config.type) || config.type === 'git');
 
   return (
     <Stack direction="column" gap={2}>
