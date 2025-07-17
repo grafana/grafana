@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "더 추가하기"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "경고 상태",
       "annotations": "주석",
@@ -3448,6 +3457,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "취소",
       "cannot-move-folders": "폴더는 이동할 수 없습니다.",
       "confirmation-text": "삭제",
@@ -3466,7 +3477,9 @@
       "move-modal-text": "이 작업을 수행하면 다음 콘텐츠가 이동됩니다.",
       "move-modal-title": "이동",
       "moving": "이동 중...",
-      "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다."
+      "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "최근에 삭제됨"
