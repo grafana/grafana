@@ -13,6 +13,14 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 describe('SignInLink', () => {
+  it('should render a link to the login page', () => {
+    const { getByText } = render(<SignInLink />);
+    const link = getByText('Sign in');
+
+    expect(link).toHaveAttribute('href', '/?forceLogin=true');
+    expect(link).toHaveAttribute('target', '_self');
+  });
+
   describe('with multiTenantFrontend toggle enabled', () => {
     beforeAll(() => {
       config.featureToggles.multiTenantFrontend = true;
