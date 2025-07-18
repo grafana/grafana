@@ -28213,11 +28213,11 @@ __metadata:
   linkType: hard
 
 "rollup-plugin-node-externals@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "rollup-plugin-node-externals@npm:8.0.0"
+  version: 8.0.1
+  resolution: "rollup-plugin-node-externals@npm:8.0.1"
   peerDependencies:
     rollup: ^4.0.0
-  checksum: 10/ef5565e8fdba4acbba81c4b214f789e03d3a3d049cbbe372679151c4f749a21a7f51d8448eff82b0b1bbbe5d2d64862cd292795e0f92e1fcad2afc9954a6fbdd
+  checksum: 10/576fa3cd16a3cbbeffe6ea84833c820117d76b62e5625ed5c94ebb769dea1c763093c7f3ec62b49f77a2487f9b5988283d97e54ecd6750915ab754dfe0ae0e25
   languageName: node
   linkType: hard
 
