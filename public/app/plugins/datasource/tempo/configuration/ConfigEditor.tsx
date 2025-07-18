@@ -132,9 +132,8 @@ const ConfigEditor = ({ options, onOptionsChange }: ConfigEditorProps) => {
             <TagsTimeRangeSettings options={options} onOptionsChange={onOptionsChange} />
           </ConfigSubSection>
 
-          <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
-
           <TagLimitSection options={options} onOptionsChange={onOptionsChange} />
+          <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
         </Stack>
       </ConfigSection>
     </div>
