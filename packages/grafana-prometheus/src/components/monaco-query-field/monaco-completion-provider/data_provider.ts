@@ -1,5 +1,4 @@
 import { HistoryItem } from '@grafana/data';
-import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
 import { DEFAULT_COMPLETION_LIMIT } from '../../../constants';
 import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
@@ -39,10 +38,6 @@ export interface DataProviderParams {
 export class DataProvider {
   readonly languageProvider: PrometheusLanguageProviderInterface;
   readonly historyProvider: Array<HistoryItem<PromQuery>>;
-  readonly getSeriesLabels: typeof this.languageProvider.queryLabelKeys;
-  readonly getSeriesValues: typeof this.languageProvider.queryLabelValues;
-  readonly getAllLabelNames: typeof this.languageProvider.retrieveLabelKeys;
-  readonly getLabelValues: typeof this.languageProvider.queryLabelValues;
 
   readonly metricNamesSuggestionLimit: number = DEFAULT_COMPLETION_LIMIT;
   readonly queryLabelKeys: typeof this.languageProvider.queryLabelKeys;
@@ -61,10 +56,6 @@ export class DataProvider {
     this.historyProvider = params.historyProvider;
     this.inputInRange = '';
     this.suggestionsIncomplete = false;
-    this.getSeriesLabels = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
-    this.getSeriesValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
-    this.getAllLabelNames = this.languageProvider.retrieveLabelKeys.bind(this.languageProvider);
-    this.getLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
 
     this.queryLabelKeys = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.queryLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);

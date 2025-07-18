@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { SUGGESTIONS_LIMIT } from '../../../constants';
+import { DEFAULT_COMPLETION_LIMIT } from '../../../constants';
 import { FUNCTIONS } from '../../../promql';
 import { getMockTimeRange } from '../../../test/mocks/datasource';
 
@@ -12,8 +12,9 @@ const history: string[] = ['previous_metric_name_1', 'previous_metric_name_2', '
 const dataProviderSettings = {
   languageProvider: {
     datasource: {
-      metricNamesAutocompleteSuggestionLimit: SUGGESTIONS_LIMIT,
+      metricNamesAutocompleteSuggestionLimit: DEFAULT_COMPLETION_LIMIT,
     },
+    // retrieveMetrics: jest.fn(),
     queryLabelKeys: jest.fn(),
     queryLabelValues: jest.fn(),
     retrieveLabelKeys: jest.fn(),
@@ -23,9 +24,9 @@ const dataProviderSettings = {
 } as unknown as DataProviderParams;
 let dataProvider = new DataProvider(dataProviderSettings);
 const metrics = {
-  beyondLimit: Array.from(Array(SUGGESTIONS_LIMIT + 1), (_, i) => `metric_name_${i}`),
+  beyondLimit: Array.from(Array(DEFAULT_COMPLETION_LIMIT + 1), (_, i) => `metric_name_${i}`),
   get atLimit() {
-    return this.beyondLimit.slice(0, SUGGESTIONS_LIMIT - 1);
+    return this.beyondLimit.slice(0, DEFAULT_COMPLETION_LIMIT - 1);
   },
 };
 
@@ -171,7 +172,7 @@ type MetricNameSituation = Extract<Situation['type'], 'AT_ROOT' | 'EMPTY' | 'IN_
 const metricNameCompletionSituations = ['AT_ROOT', 'IN_FUNCTION', 'EMPTY'] as MetricNameSituation[];
 
 function getSuggestionCountForSituation(situationType: MetricNameSituation, metricsCount: number): number {
-  const limitedMetricNamesCount = metricsCount < SUGGESTIONS_LIMIT ? metricsCount : SUGGESTIONS_LIMIT;
+  const limitedMetricNamesCount = metricsCount < DEFAULT_COMPLETION_LIMIT ? metricsCount : DEFAULT_COMPLETION_LIMIT;
   let suggestionsCount = limitedMetricNamesCount + FUNCTIONS.length;
 
   if (situationType === 'EMPTY') {
@@ -284,7 +285,7 @@ describe('Label value completions', () => {
       getAllMetricNames: jest.fn(),
       metricNamesToMetrics: jest.fn(),
       getHistory: jest.fn(),
-      getLabelValues: jest.fn().mockResolvedValue(['value1', 'value"2', 'value\\3', "value'4"]),
+      queryLabelValues: jest.fn().mockResolvedValue(['value1', 'value"2', 'value\\3', "value'4"]),
       monacoSettings: {
         setInputInRange: jest.fn(),
         inputInRange: '',
@@ -397,7 +398,7 @@ describe('Label value completions', () => {
     const timeRange = getMockTimeRange();
 
     it('should handle empty values', async () => {
-      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue(['']);
+      jest.spyOn(dataProvider, 'queryLabelValues').mockResolvedValue(['']);
 
       const situation: Situation = {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
@@ -412,7 +413,7 @@ describe('Label value completions', () => {
     });
 
     it('should handle values with multiple special characters', async () => {
-      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue(['test"\\value']);
+      jest.spyOn(dataProvider, 'queryLabelValues').mockResolvedValue(['test"\\value']);
 
       const situation: Situation = {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
@@ -427,7 +428,7 @@ describe('Label value completions', () => {
     });
 
     it('should handle non-string values', async () => {
-      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue([123 as unknown as string]);
+      jest.spyOn(dataProvider, 'queryLabelValues').mockResolvedValue([123 as unknown as string]);
 
       const situation: Situation = {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
