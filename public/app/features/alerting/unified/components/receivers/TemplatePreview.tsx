@@ -15,7 +15,6 @@ import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHead
 
 import { usePreviewTemplate } from './usePreviewTemplate';
 
-
 export function TemplatePreview({
   payload,
   templateName,

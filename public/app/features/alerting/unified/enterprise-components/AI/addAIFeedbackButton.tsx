@@ -15,7 +15,6 @@ export interface GenAIFeedbackButtonProps {
   useRouteDetection?: boolean;
 }
 
-
 let InternalAIFeedbackButtonComponent: ComponentType<GenAIFeedbackButtonProps> | null = null;
 
 export const AIFeedbackButtonComponent: ComponentType<GenAIFeedbackButtonProps> = (props) => {
