@@ -85,7 +85,7 @@ Following is a list of MySQL configuration options:
 
 **Connection:**
 
-- **Host URL** - Enter the IP address/hostname and optional port of your MySQL instance. If the port is omitted the default 3306 port will be used.
+- **Host URL** - Enter the IP address/hostname and optional port of your MySQL instance. If the port is omitted the default `3306` port will be used.
 - **Database** - Enter the name of your MySQL database.
 
 **Authentication:**
