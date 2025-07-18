@@ -482,7 +482,7 @@ export const LogListContextProvider = ({
         setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
       } else {
         // Supporting one displayed details for now
-        setShowDetails([log]);
+        setShowDetails([...showDetails, log]);
       }
     },
     [enableLogDetails, showDetails]
