@@ -118,15 +118,15 @@ test.describe(
       // click the "State" column header to sort it.
       const stateColumnHeader = await getCell(page, 0, 1);
 
-      await stateColumnHeader.click();
+      await stateColumnHeader.getByText('Info').click();
       await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
       expect(getCell(page, 1, 1)).resolves.toContainText('down'); // down or down fast
 
-      await stateColumnHeader.click();
+      await stateColumnHeader.getByText('Info').click();
       await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
       expect(getCell(page, 1, 1)).resolves.toContainText('up'); // up or up fast
 
-      await stateColumnHeader.click();
+      await stateColumnHeader.getByText('Info').click();
       await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
     });
 
