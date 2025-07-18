@@ -11,6 +11,7 @@ import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { changeDatasource } from './state/datasource';
+import { updateQueryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -86,6 +87,10 @@ export const QueryRows = ({ exploreId }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
+  const onCancelQueryLibraryEdit = useCallback(() => {
+    dispatch(updateQueryRefAction({ exploreId, queryRef: undefined }));
+  }, [dispatch, exploreId]);
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
@@ -103,6 +108,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       history={history}
       eventBus={eventBridge}
       queryRef={queryRef}
+      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}

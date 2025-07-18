@@ -13,7 +13,8 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     range: toURLRange(pane.range.raw),
     // don't include panelsState in the url unless a piece of state is actually set
     panelsState: pruneObject(pane.panelsState),
-    queryRef: pane.queryRef || undefined,
+    // don't include queryRef in the url unless it's actually set
+    ...(pane.queryRef && { queryRef: pane.queryRef }),
   };
 }
 

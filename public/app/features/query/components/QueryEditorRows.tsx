@@ -41,6 +41,7 @@ export interface Props {
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
   queryRef?: string;
+  onCancelQueryLibraryEdit?: () => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -177,6 +178,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryReplacedFromLibrary,
       queryRowWrapper,
       queryRef,
+      onCancelQueryLibraryEdit,
     } = this.props;
 
     return (
@@ -215,6 +217,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       history={history}
                       eventBus={eventBus}
                       queryRef={queryRef}
+                      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
                     />
                   );
 
