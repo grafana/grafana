@@ -95,6 +95,8 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
 			// Read input dashboard file
 			inputFile := filepath.Join("testdata", "input", file.Name())
+			// ignore gosec G304 as this function is only used in the test process
+			//nolint:gosec
 			inputData, err := os.ReadFile(inputFile)
 			require.NoError(t, err, "Failed to read input file")
 
@@ -138,6 +140,8 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 
 			// Ensure output directory exists
 			outDir := filepath.Join("testdata", "output")
+			// ignore gosec G301 as this function is only used in the test process
+			//nolint:gosec
 			err = os.MkdirAll(outDir, 0755)
 			require.NoError(t, err, "Failed to create output directory")
 
@@ -203,6 +207,8 @@ func testConversion(t *testing.T, convertedDash v1.Object, filename, outputDir s
 	require.NoError(t, err, "failed to marshal converted dashboard")
 
 	if _, err := os.Stat(outPath); os.IsNotExist(err) {
+		// ignore gosec G304 as this function is only used in the test process
+		//nolint:gosec
 		err = os.WriteFile(outPath, outBytes, 0644)
 		require.NoError(t, err, "failed to write new output file %s", outPath)
 		t.Logf("✓ Created new output file: %s", filename)

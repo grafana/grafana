@@ -694,7 +694,7 @@ describe('dashboard exporter v2', () => {
     expect(convertedPanel.spec.id).toBe(123);
 
     // Check that the panel was properly converted
-    expect(convertedPanel.spec.data.spec.queries[0].spec.query.kind).toBe('testdb');
+    expect(convertedPanel.spec.data.spec.queries[0].spec.query.kind).toBe('DataQuery');
     expect(convertedPanel.spec.data.spec.queries[0].spec.refId).toBe('A');
   });
 
