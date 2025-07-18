@@ -7,7 +7,7 @@ import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { getDefaultValues } from '../Config/defaults';
@@ -94,6 +94,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const repoName = watch('repositoryName');
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
+  const [createJob, { isLoading: isCreatingSkipJob }] = useCreateRepositoryJobsMutation();
   const { shouldSkipSync } = useResourceStats(repoName || '', settingsQuery.data?.legacyStorage);
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
@@ -171,6 +172,30 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       // Skip synchronize step if no sync is needed
       if (activeStep === 'bootstrap' && shouldSkipSync) {
         nextStepIndex = currentStepIndex + 2; // Skip to finish step
+        
+        // Create a pull job to initialize the repository
+        if (repoName) {
+          try {
+            setStepStatusInfo({ status: 'running' });
+            
+            await createJob({
+              name: repoName,
+              jobSpec: {
+                pull: {
+                  incremental: false,
+                },
+              },
+            }).unwrap();
+            
+            setStepStatusInfo({ status: 'success' });
+          } catch (error) {
+            setStepStatusInfo({
+              status: 'error',
+              error: t('provisioning.wizard.error-creating-pull-job', 'Failed to initialize repository'),
+            });
+            return; // Don't proceed if job creation fails
+          }
+        }
       }
 
       // Ensure we don't go beyond the last step
@@ -249,7 +274,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     if (activeStep === 'synchronize') {
       return !isStepSuccess; // Disable next button if the step is not successful
     }
-    return isSubmitting || isCancelling || isStepRunning;
+    return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   };
 
   return (
