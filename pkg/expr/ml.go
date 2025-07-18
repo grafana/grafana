@@ -19,9 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 )
 
-var (
-	errMLPluginDoesNotExist = fmt.Errorf("expression type Machine Learning cannot be executed. Plugin '%s' must be installed and initialized", mlPluginID)
-)
+var errMLPluginDoesNotExist = fmt.Errorf("expression type Machine Learning cannot be executed. Plugin '%s' must be installed and initialized", mlPluginID)
 
 const (
 	// mlDatasourceID is similar to a fake ID for CMDNode. There is no specific reason for the selection of this value.
@@ -114,7 +112,6 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		}
 		return resp, nil
 	})
-
 	if err != nil {
 		return result, MakeQueryError(m.refID, "ml", err)
 	}
@@ -139,7 +136,7 @@ func (s *Service) buildMLNode(_ *simple.DirectedGraph, rn *rawNode, req *Request
 		return nil, errors.New("time range must be specified")
 	}
 
-	cmd, err := ml.UnmarshalCommand(rn.QueryRaw, s.cfg.AppURL)
+	cmd, err := ml.UnmarshalCommand(rn.QueryRaw, s.cfg.Get().AppURL)
 	if err != nil {
 		return nil, err
 	}

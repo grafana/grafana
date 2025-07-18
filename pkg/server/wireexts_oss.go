@@ -134,6 +134,8 @@ var wireExtsBasicSet = wire.NewSet(
 	search2.ProvideDocumentBuilders,
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
+	setting.ProvideService,
+	wire.Bind(new(setting.ConfigProvider), new(*setting.OSSConfigProvider)),
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,

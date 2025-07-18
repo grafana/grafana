@@ -483,7 +483,7 @@ func setup(t *testing.T) *testContext {
 		}, &fakeDatasources.FakeCacheService{}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService), pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
-	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
+	exprService := expr.ProvideService(setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true}), pc, pCtxProvider,
 		featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest(), mtdsclient.NewNullMTDatasourceClientBuilder())
 	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider, mtdsclient.NewNullMTDatasourceClientBuilder()) // provider belonging to this package
 	return &testContext{
