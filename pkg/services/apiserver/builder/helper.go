@@ -107,9 +107,11 @@ func SetupConfig(
 	buildCommit string,
 	buildBranch string,
 	buildHandlerChainFuncFromBuilders BuildHandlerChainFuncFromBuilders,
+	gvs []schema.GroupVersion,
+	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
-	defsGetter := GetOpenAPIDefinitions(builders)
+	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
@@ -119,7 +121,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		meta := r.Metadata()
 		kind := ""
@@ -226,6 +228,7 @@ func SetupConfig(
 	// Set the swagger build versions
 	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIConfig.Info.Version = buildVersion
+	serverConfig.OpenAPIV3Config.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false

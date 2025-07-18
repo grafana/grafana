@@ -1,17 +1,17 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Generic API Server",
-    "version": "1.33"
+    "description": "Grafana folders",
+    "title": "folder.grafana.app/v1beta1"
   },
   "paths": {
     "/apis/folder.grafana.app/v1beta1/": {
       "get": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "API Discovery"
         ],
-        "description": "get available resources",
-        "operationId": "getFolderGrafanaAppV1beta1APIResources",
+        "description": "Describe the available kubernetes resources",
+        "operationId": "getAPIResources",
         "responses": {
           "200": {
             "description": "OK",
@@ -36,161 +36,13 @@
         }
       }
     },
-    "/apis/folder.grafana.app/v1beta1/folders": {
-      "get": {
-        "tags": [
-          "folderGrafanaApp_v1beta1"
-        ],
-        "description": "list objects of kind Folder",
-        "operationId": "listFolderGrafanaAppV1beta1FolderForAllNamespaces",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "folder.grafana.app",
-          "version": "v1beta1",
-          "kind": "Folder"
-        }
-      },
-      "parameters": [
-        {
-          "name": "allowWatchBookmarks",
-          "in": "query",
-          "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "continue",
-          "in": "query",
-          "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "fieldSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "labelSelector",
-          "in": "query",
-          "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "limit",
-          "in": "query",
-          "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersion",
-          "in": "query",
-          "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "resourceVersionMatch",
-          "in": "query",
-          "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "sendInitialEvents",
-          "in": "query",
-          "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "timeoutSeconds",
-          "in": "query",
-          "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-          "schema": {
-            "type": "integer",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "watch",
-          "in": "query",
-          "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-          "schema": {
-            "type": "boolean",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders": {
       "get": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "list objects of kind Folder",
-        "operationId": "listFolderGrafanaAppV1beta1NamespacedFolder",
+        "operationId": "listFolder",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -324,10 +176,10 @@
       },
       "post": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "create a Folder",
-        "operationId": "createFolderGrafanaAppV1beta1NamespacedFolder",
+        "operationId": "createFolder",
         "parameters": [
           {
             "name": "dryRun",
@@ -359,7 +211,17 @@
         ],
         "requestBody": {
           "content": {
-            "*/*": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
               }
@@ -438,10 +300,10 @@
       },
       "delete": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "delete collection of Folder",
-        "operationId": "deleteFolderGrafanaAppV1beta1CollectionNamespacedFolder",
+        "operationId": "deletecollectionFolder",
         "parameters": [
           {
             "name": "continue",
@@ -561,15 +423,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -624,10 +477,10 @@
     "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}": {
       "get": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "read the specified Folder",
-        "operationId": "readFolderGrafanaAppV1beta1NamespacedFolder",
+        "operationId": "getFolder",
         "responses": {
           "200": {
             "description": "OK",
@@ -659,10 +512,10 @@
       },
       "put": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "replace the specified Folder",
-        "operationId": "replaceFolderGrafanaAppV1beta1NamespacedFolder",
+        "operationId": "replaceFolder",
         "parameters": [
           {
             "name": "dryRun",
@@ -694,7 +547,17 @@
         ],
         "requestBody": {
           "content": {
-            "*/*": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+              }
+            },
+            "application/vnd.kubernetes.protobuf": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
+              }
+            },
+            "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.Folder"
               }
@@ -753,10 +616,10 @@
       },
       "delete": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "delete a Folder",
-        "operationId": "deleteFolderGrafanaAppV1beta1NamespacedFolder",
+        "operationId": "deleteFolder",
         "parameters": [
           {
             "name": "dryRun",
@@ -804,15 +667,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -864,10 +718,10 @@
       },
       "patch": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "partially update the specified Folder",
-        "operationId": "patchFolderGrafanaAppV1beta1NamespacedFolder",
+        "operationId": "updateFolder",
         "parameters": [
           {
             "name": "dryRun",
@@ -1015,10 +869,10 @@
     "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}/access": {
       "get": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "connect GET requests to access of Folder",
-        "operationId": "connectFolderGrafanaAppV1beta1GetNamespacedFolderAccess",
+        "operationId": "getFolderAccess",
         "responses": {
           "200": {
             "description": "OK",
@@ -1064,10 +918,10 @@
     "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}/children": {
       "get": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "connect GET requests to children of Folder",
-        "operationId": "connectFolderGrafanaAppV1beta1GetNamespacedFolderChildren",
+        "operationId": "getFolderChildren",
         "responses": {
           "200": {
             "description": "OK",
@@ -1113,10 +967,10 @@
     "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}/counts": {
       "get": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "connect GET requests to counts of Folder",
-        "operationId": "connectFolderGrafanaAppV1beta1GetNamespacedFolderCounts",
+        "operationId": "getFolderCounts",
         "responses": {
           "200": {
             "description": "OK",
@@ -1162,10 +1016,10 @@
     "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}/parents": {
       "get": {
         "tags": [
-          "folderGrafanaApp_v1beta1"
+          "Folder"
         ],
         "description": "connect GET requests to parents of Folder",
-        "operationId": "connectFolderGrafanaAppV1beta1GetNamespacedFolderParents",
+        "operationId": "getFolderParents",
         "responses": {
           "200": {
             "description": "OK",
@@ -1241,11 +1095,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "DescendantCounts",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "DescendantCounts",
             "version": "v1beta1"
           }
         ]
@@ -1296,11 +1145,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "Folder",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "Folder",
             "version": "v1beta1"
           }
         ]
@@ -1341,11 +1185,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderAccessInfo",
-            "version": "__internal"
-          },
           {
             "group": "folder.grafana.app",
             "kind": "FolderAccessInfo",
@@ -1428,11 +1267,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderInfoList",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderInfoList",
             "version": "v1beta1"
           }
         ]
@@ -1473,11 +1307,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderList",
-            "version": "__internal"
-          },
           {
             "group": "folder.grafana.app",
             "kind": "FolderList",
@@ -1632,14 +1461,7 @@
             },
             "x-kubernetes-list-type": "atomic"
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "",
-            "kind": "APIResourceList",
-            "version": "v1"
-          }
-        ]
+        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions": {
         "description": "DeleteOptions may be provided when deleting an API object.",
@@ -1687,344 +1509,7 @@
             "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
             "type": "string"
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "admissionregistration.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "admissionregistration.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "admissionregistration.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "apps",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "apps",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "apps",
-            "kind": "DeleteOptions",
-            "version": "v1beta2"
-          },
-          {
-            "group": "authentication.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "authentication.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "authentication.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "authorization.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "authorization.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "autoscaling",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "autoscaling",
-            "kind": "DeleteOptions",
-            "version": "v2"
-          },
-          {
-            "group": "autoscaling",
-            "kind": "DeleteOptions",
-            "version": "v2beta1"
-          },
-          {
-            "group": "autoscaling",
-            "kind": "DeleteOptions",
-            "version": "v2beta2"
-          },
-          {
-            "group": "batch",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "batch",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "certificates.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "certificates.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "certificates.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "coordination.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "coordination.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha2"
-          },
-          {
-            "group": "coordination.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v2alpha1"
-          },
-          {
-            "group": "dashboard.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v2alpha2"
-          },
-          {
-            "group": "discovery.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "discovery.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "events.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "events.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "extensions",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "features.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "featuretoggle.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "flowcontrol.apiserver.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "flowcontrol.apiserver.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "flowcontrol.apiserver.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta2"
-          },
-          {
-            "group": "flowcontrol.apiserver.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta3"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "iam.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "internal.apiserver.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "networking.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "networking.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "networking.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "node.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "node.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "node.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "playlist.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "policy",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "policy",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "query.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "rbac.authorization.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "rbac.authorization.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "rbac.authorization.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "resource.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha3"
-          },
-          {
-            "group": "resource.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "resource.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta2"
-          },
-          {
-            "group": "scheduling.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "scheduling.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "scheduling.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "storage.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1"
-          },
-          {
-            "group": "storage.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "storage.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1beta1"
-          },
-          {
-            "group": "storagemigration.k8s.io",
-            "kind": "DeleteOptions",
-            "version": "v1alpha1"
-          },
-          {
-            "group": "userstorage.grafana.app",
-            "kind": "DeleteOptions",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
         "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
@@ -2314,19 +1799,7 @@
             "description": "Status of the operation. One of: \"Success\" or \"Failure\". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
             "type": "string"
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "",
-            "kind": "Status",
-            "version": "v1"
-          },
-          {
-            "group": "features.grafana.app",
-            "kind": "Status",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause": {
         "description": "StatusCause provides more information about an api.Status failure, including cases when multiple errors are encountered.",

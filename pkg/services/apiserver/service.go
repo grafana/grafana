@@ -12,14 +12,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
-	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
-	"k8s.io/apiserver/pkg/util/openapi"
-	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
@@ -333,6 +331,10 @@ func (s *service) start(ctx context.Context) error {
 		serverConfig.RESTOptionsGetter = getter
 	}
 
+	defGetters := []common.GetOpenAPIDefinitions{
+		appinstaller.BuildOpenAPIDefGetter(s.appInstallers),
+	}
+
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,
@@ -343,25 +345,12 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
 		s.buildHandlerChainFuncFromBuilders,
+		groupVersions,
+		defGetters,
 	)
 	if err != nil {
 		return err
 	}
-
-	combinedDefsGetter := appinstaller.SetupOpenAPIDefinitions(
-		ctx,
-		s.appInstallers,
-		serverConfig.OpenAPIConfig.GetDefinitions,
-	)
-	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
-		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(combinedDefsGetter),
-		openapinamer.NewDefinitionNamer(s.scheme, k8sscheme.Scheme))
-
-	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
-		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(combinedDefsGetter),
-		openapinamer.NewDefinitionNamer(s.scheme, k8sscheme.Scheme))
-
-	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 

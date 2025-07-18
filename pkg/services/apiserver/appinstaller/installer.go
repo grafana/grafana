@@ -86,15 +86,11 @@ func RegisterAdmissionPlugins(
 	return nil
 }
 
-// SetupOpenAPIDefinitions sets up OpenAPI definitions for app installers
-func SetupOpenAPIDefinitions(
-	ctx context.Context,
+func BuildOpenAPIDefGetter(
 	appInstallers []appsdkapiserver.AppInstaller,
-	existingGetter func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition,
 ) func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := make(map[string]common.OpenAPIDefinition)
-		maps.Copy(defs, existingGetter(ref))
 		maps.Copy(defs, appsdkapiserver.GetCommonOpenAPIDefinitions(ref))
 		for _, installer := range appInstallers {
 			maps.Copy(defs, installer.GetOpenAPIDefinitions(ref))
