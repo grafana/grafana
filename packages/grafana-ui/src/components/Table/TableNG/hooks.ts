@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, Ref
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
@@ -17,7 +17,6 @@ import {
   getColumnTypes,
   GetMaxWrapCellOptions,
   getMaxWrapCell,
-  getCellLinks,
 } from './utils';
 
 // Helper function to get displayed value
@@ -461,7 +460,7 @@ interface UseRowHeightOptions {
   hasNestedFrames: boolean;
   defaultHeight: number;
   headerHeight: number;
-  expandedRows: Record<string, boolean>;
+  expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
 
@@ -517,9 +516,9 @@ export function useRowHeight({
 
     return (row: TableRow) => {
       // nested rows
-      if (Number(row.__depth) > 0) {
+      if (row.__depth > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows[row.__index]) {
+        if (!expandedRows.has(row.__index)) {
           return 0;
         }
 
@@ -632,13 +631,6 @@ export function useColumnResize(
   );
 
   return dataGridResizeHandler;
-}
-
-export function useSingleLink(field: Field, rowIdx: number): LinkModel | undefined {
-  const linksCount = field.config.links?.length ?? 0;
-  const actionsCount = field.config.actions?.length ?? 0;
-  const shouldShowLink = linksCount === 1 && actionsCount === 0;
-  return useMemo(() => (shouldShowLink ? (getCellLinks(field, rowIdx) ?? []) : [])[0], [field, shouldShowLink, rowIdx]);
 }
 
 export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {

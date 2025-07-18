@@ -28,7 +28,6 @@ var (
 	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
 	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
 	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
-	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
 
 	sqlGetLatestSecureValueVersion     = mustTemplate("secure_value_get_latest_version.sql")
 	sqlSecureValueSetVersionToActive   = mustTemplate("secure_value_set_version_to_active.sql")
@@ -209,11 +208,3 @@ type updateExternalIdSecureValue struct {
 func (r updateExternalIdSecureValue) Validate() error {
 	return nil // TODO
 }
-
-type readSecureValueForDecrypt struct {
-	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
-}
-
-func (r readSecureValueForDecrypt) Validate() error { return nil }
