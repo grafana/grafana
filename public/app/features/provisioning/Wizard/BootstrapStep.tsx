@@ -11,12 +11,11 @@ import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
 export interface Props {
-  onOptionSelect: (requiresMigration: boolean) => void;
   settingsData?: RepositoryViewList;
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props) {
+export function BootstrapStep({ settingsData, repoName }: Props) {
   const { setStepStatusInfo } = useStepStatus();
   const {
     register,
@@ -30,10 +29,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
   const selectedTarget = watch('repository.sync.target');
   const options = useModeOptions(repoName, settingsData);
   const { target } = options[0];
-  const { resourceCountString, fileCountString, isLoading, requiresMigration } = useResourceStats(
-    repoName,
-    settingsData?.legacyStorage
-  );
+  const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, settingsData?.legacyStorage);
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -55,8 +51,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
 
   useEffect(() => {
     setValue('repository.sync.target', target);
-    onOptionSelect(requiresMigration);
-  }, [target, setValue, onOptionSelect, requiresMigration]);
+  }, [target, setValue]);
 
   if (isLoading) {
     return (

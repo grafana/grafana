@@ -167,18 +167,18 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       navigate(PROVISIONING_URL);
     } else {
       let nextStepIndex = currentStepIndex + 1;
-      
+
       // Skip synchronize step if no sync is needed
       if (activeStep === 'bootstrap' && shouldSkipSync) {
         nextStepIndex = currentStepIndex + 2; // Skip to finish step
       }
-      
+
       // Ensure we don't go beyond the last step
       if (nextStepIndex >= steps.length) {
         navigate(PROVISIONING_URL);
         return;
       }
-      
+
       setActiveStep(steps[nextStepIndex].id);
       setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
       setStepStatusInfo({ status: 'idle' });
@@ -271,16 +271,10 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && (
-                <BootstrapStep
-                  onOptionSelect={() => {}} // No longer needed
-                  settingsData={settingsQuery.data}
-                  repoName={repoName ?? ''}
-                />
+                <BootstrapStep settingsData={settingsQuery.data} repoName={repoName ?? ''} />
               )}
               {activeStep === 'synchronize' && (
-                <SynchronizeStep
-                  isLegacyStorage={Boolean(settingsQuery.data?.legacyStorage)}
-                />
+                <SynchronizeStep isLegacyStorage={Boolean(settingsQuery.data?.legacyStorage)} />
               )}
               {activeStep === 'finish' && <FinishStep />}
             </div>

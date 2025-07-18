@@ -56,7 +56,6 @@ function setup(props: Partial<Props> = {}, formDefaultValues?: Partial<WizardFor
   const user = userEvent.setup();
 
   const defaultProps: Props = {
-    onOptionSelect: jest.fn(),
     repoName: 'test-repo',
     settingsData: undefined,
     ...props,
