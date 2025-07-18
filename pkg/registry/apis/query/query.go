@@ -134,7 +134,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 					if ok && o.Responses != nil {
 						for refId, response := range o.Responses {
 							if response.ErrorSource == backend.ErrorSourceDownstream {
-								*statusCode = http.StatusBadRequest //force this to be a 400 since it's downstream
+								*statusCode = http.StatusBadRequest // force this to be a 400 since it's downstream
 								span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
 								span.SetAttributes(attribute.String("error.source", "downstream"))
 								break
@@ -176,7 +176,6 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		}
 
 		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder)
-
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
 			logEmptyRefids(raw.Queries, b.log)
@@ -200,7 +199,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 }
 
 func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper) (*backend.QueryDataResponse, error) {
-	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
+	jsonQueries := make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
 		jsonBytes, err := json.Marshal(query)
 		if err != nil {
@@ -242,12 +241,12 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	)
 
 	exprService := expr.ProvideService(
-		&setting.Cfg{
+		setting.ProvideService(&setting.Cfg{
 			ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
 			SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
 			SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
 			SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
-		},
+		}),
 		nil,
 		nil,
 		instanceConfig.FeatureToggles,
@@ -257,7 +256,6 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	)
 
 	qdr, err := service.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
-
 	if err != nil {
 		return qdr, err
 	}

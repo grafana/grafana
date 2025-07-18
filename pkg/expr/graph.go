@@ -262,7 +262,6 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 
 		rawQueryProp := make(map[string]any)
 		queryBytes, err := query.JSON.MarshalJSON()
-
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +286,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeDatasourceNode:
 			node, err = s.buildDSNode(dp, rn, req)
 		case TypeCMDNode:
-			node, err = buildCMDNode(rn, s.features, s.cfg)
+			node, err = buildCMDNode(rn, s.features, s.cfg.Get())
 		case TypeMLNode:
 			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)

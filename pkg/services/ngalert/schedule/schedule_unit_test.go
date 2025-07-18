@@ -71,7 +71,7 @@ func TestProcessTicks(t *testing.T) {
 		setting.UnifiedAlertingSettings{},
 		cacheServ,
 		expr.ProvideService(
-			&setting.Cfg{ExpressionsEnabled: true},
+			setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true}),
 			nil,
 			nil,
 			featuremgmt.WithFeatures(),
@@ -1203,13 +1203,13 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		is = &state.FakeInstanceStore{}
 	}
 
-	var evaluator = evalMock
+	evaluator := evalMock
 	if evalMock == nil {
 		evaluator = eval.NewEvaluatorFactory(
 			setting.UnifiedAlertingSettings{},
 			&datasources.FakeCacheService{},
 			expr.ProvideService(
-				&setting.Cfg{ExpressionsEnabled: true},
+				setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true}),
 				nil,
 				nil,
 				featuremgmt.WithFeatures(),
