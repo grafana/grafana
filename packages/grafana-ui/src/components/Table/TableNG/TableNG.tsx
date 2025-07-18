@@ -346,15 +346,7 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.ColorText:
           case TableCellDisplayMode.DataLinks:
           case TableCellDisplayMode.JSONView:
-            cellClass = getCellStyles(
-              theme,
-              textAlign,
-              justifyContent,
-              shouldWrap,
-              shouldOverflow,
-              withTooltip,
-              canBeColorized
-            );
+            cellClass = getCellStyles(theme, textAlign, justifyContent, shouldWrap, shouldOverflow, canBeColorized);
             break;
         }
 
@@ -796,10 +788,10 @@ const getGridStyles = (
 
     border: 'none',
 
-    // add a box shadow on hover and selection for all cells
-    '.rdg-cell': {
+    // add a box shadow on hover and selection for all body cells
+    '& :not(.rdg-summary-row, .rdg-header-row) .rdg-cell': {
       '&:hover, &[aria-selected=true]': {
-        boxShadow: theme.shadows.z3,
+        boxShadow: theme.shadows.z2,
         zIndex: theme.zIndex.tooltip - 2,
       },
     },
@@ -909,7 +901,6 @@ const getCellStyles = (
   justifyContent: Property.JustifyContent,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  hasTooltip: boolean,
   isColorized: boolean
 ) =>
   css({
