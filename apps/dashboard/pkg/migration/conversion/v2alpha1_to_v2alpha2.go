@@ -39,10 +39,13 @@ import (
 
 func ConvertDashboard_V2alpha1_to_V2alpha2(in *dashv2alpha1.Dashboard, out *dashv2alpha2.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	return ConvertDashboardSpec_V2alpha1_to_V2alpha2(&in.Spec, &out.Spec, scope)
+	out.APIVersion = dashv2alpha2.VERSION
+	out.Kind = in.Kind
+
+	return convertDashboardSpec_V2alpha1_to_V2alpha2(&in.Spec, &out.Spec, scope)
 }
 
-func ConvertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, out *dashv2alpha2.DashboardSpec, scope conversion.Scope) error {
+func convertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, out *dashv2alpha2.DashboardSpec, scope conversion.Scope) error {
 	// Convert annotations
 	out.Annotations = make([]dashv2alpha2.DashboardAnnotationQueryKind, len(in.Annotations))
 	for i, annotation := range in.Annotations {

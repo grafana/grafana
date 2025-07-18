@@ -84,7 +84,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 	require.NoError(t, err)
 
 	// Read all files from input directory
-	files, err := os.ReadDir(filepath.Join("testdata", "in"))
+	files, err := os.ReadDir(filepath.Join("testdata", "input"))
 	require.NoError(t, err, "Failed to read input directory")
 
 	for _, file := range files {
@@ -94,7 +94,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 
 		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
 			// Read input dashboard file
-			inputFile := filepath.Join("testdata", "in", file.Name())
+			inputFile := filepath.Join("testdata", "input", file.Name())
 			inputData, err := os.ReadFile(inputFile)
 			require.NoError(t, err, "Failed to read input file")
 
@@ -137,7 +137,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			require.NoError(t, err, "Failed to unmarshal dashboard into typed object")
 
 			// Ensure output directory exists
-			outDir := filepath.Join("testdata", "out")
+			outDir := filepath.Join("testdata", "output")
 			err = os.MkdirAll(outDir, 0755)
 			require.NoError(t, err, "Failed to create output directory")
 
