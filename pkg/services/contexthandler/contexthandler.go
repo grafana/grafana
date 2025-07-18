@@ -92,7 +92,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		span := trace.SpanFromContext(ctx)
 		ctx = h.setRequestContext(ctx)
 
-		// Preserve the original span so the auth middleware span doesn't get propagated as a parent of the rest of the request
+		// Preserve the original span so the setRequestContext span doesn't get propagated as a parent of the rest of the request
 		ctx = trace.ContextWithSpan(ctx, span)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
