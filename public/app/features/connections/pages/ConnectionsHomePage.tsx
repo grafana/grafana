@@ -10,15 +10,12 @@ import { Page } from 'app/core/components/Page/Page';
 import { cloudCardData, ossCardData } from '../components/PageCard/CardData';
 import PageCard from '../components/PageCard/PageCard';
 
-const OSS_SUBTITLE = 'connections.connections-home-page.oss-subtitle';
-const CLOUD_SUBTITLE = 'connections.connections-home-page.cloud-subtitle';
-
 export default function ConnectionsHomePage() {
   const styles = useStyles2(getStyles);
 
   const isOSS = config.buildInfo.edition === GrafanaEdition.OpenSource;
 
-  let children = isOSS ? ossCardData : cloudCardData;
+  let cardsData = isOSS ? ossCardData : cloudCardData;
 
   return (
     <Page
@@ -34,11 +31,13 @@ export default function ConnectionsHomePage() {
             <Trans i18nKey="connections.connections-home-page.welcome-to-connections">Welcome to Connections</Trans>
           </h1>
           <p className={styles.subTitle}>
-            <Trans i18nKey={isOSS ? OSS_SUBTITLE : CLOUD_SUBTITLE} />
+            {isOSS ?
+              <Trans i18nKey="connections.connections-home-page.oss-subtitle">Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections.</Trans> :
+              <Trans i18nKey="connections.connections-home-page.cloud-subtitle">Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines.</Trans>}
           </p>
-          {children && children.length > 0 && (
+          {cardsData && cardsData.length > 0 && (
             <section className={styles.cardsSection}>
-              {children?.map((child, index) => (
+              {cardsData?.map((child, index) => (
                 <PageCard
                   key={index}
                   title={child.text}
