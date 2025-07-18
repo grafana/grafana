@@ -45,9 +45,18 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 					storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
 
 					// For v2 we need to request the original version
-					if strings.HasPrefix(storedVersion, "v2") {
+					if strings.HasPrefix(storedVersion, "v2alpha1") {
 						if v2client == nil {
-							v2client, _, err = clients.ForResource(resources.DashboardResourceV2)
+							v2client, _, err = clients.ForResource(resources.DashboardResourceV2alpha1)
+							if err != nil {
+								return nil, err
+							}
+						}
+						return v2client.Get(ctx, item.GetName(), metav1.GetOptions{})
+					}
+					if strings.HasPrefix(storedVersion, "v2alpha2") {
+						if v2client == nil {
+							v2client, _, err = clients.ForResource(resources.DashboardResourceV2alpha2)
 							if err != nil {
 								return nil, err
 							}
