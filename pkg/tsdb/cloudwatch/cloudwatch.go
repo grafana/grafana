@@ -64,6 +64,7 @@ const (
 func ProvideService(httpClientProvider *httpclient.Provider) *CloudWatchService {
 	logger := backend.NewLoggerWith("logger", "tsdb.cloudwatch")
 	logger.Debug("Initializing")
+	fmt.Println("this should make no difference")
 
 	executor := newExecutor(
 		datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)),
