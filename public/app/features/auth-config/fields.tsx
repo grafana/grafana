@@ -44,6 +44,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'loginPrompt',
         ],
       },
       {
@@ -87,6 +88,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'loginPrompt',
         ],
       },
       {
@@ -132,7 +134,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -166,7 +177,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -199,7 +219,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -889,6 +918,22 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t('auth-config.fields.domain-hint-valid-domain', 'This field must be a valid domain.'),
       },
+    },
+    loginPrompt: {
+      label: t('auth-config.fields.login-prompt-label', 'Login prompt'),
+      type: 'select',
+      description: t(
+        'auth-config.fields.login-prompt-description',
+        'Indicates the type of user interaction when the user logs in with the IdP.'
+      ),
+      multi: false,
+      options: [
+        { value: '', label: '' },
+        { value: 'login', label: t('auth-config.fields.login-prompt-login', 'Login') },
+        { value: 'consent', label: t('auth-config.fields.login-prompt-consent', 'Consent') },
+        { value: 'select_account', label: t('auth-config.fields.login-prompt-select-account', 'Select account') },
+      ],
+      defaultValue: { value: '', label: '' },
     },
   };
 }

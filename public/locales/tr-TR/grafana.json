@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Daha fazlasını ekle"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Uyarı durumu",
       "annotations": "Ek açıklamalar",
@@ -3247,6 +3256,11 @@
       "id-token-attribute-name-label": "Kimlik belirteci özniteliği adı",
       "login-attribute-path-description": "Kullanıcı kimliği belirtecinden giriş bilgisini aramak için kullanılacak JMESPath ifadesi.",
       "login-attribute-path-label": "Giriş özniteliği yolu",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "OAuth2 uygulamanızın birleşik kimlik bilgilerinin yönetilen kimlik istemci kimliği.",
       "managed-identity-client-id-label": "FIC tarafından yönetilen kimlik istemci kimliği",
       "name-attribute-path-description": "Kullanıcı kimliği belirtecinden kullanıcı adını aramak için kullanılacak JMESPath ifadesi.\nBu ad, kullanıcının görünen adı olarak kullanılacaktır.",
@@ -3461,6 +3475,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "İptal",
       "cannot-move-folders": "Klasörler taşınamaz",
       "confirmation-text": "Sil",
@@ -3479,7 +3495,9 @@
       "move-modal-text": "Bu işlem aşağıdaki içerikleri taşıyacaktır:",
       "move-modal-title": "Taşı",
       "moving": "Taşınıyor...",
-      "new-folder-name-required-phrase": "Klasör adı gereklidir."
+      "new-folder-name-required-phrase": "Klasör adı gereklidir.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Son silinenler"

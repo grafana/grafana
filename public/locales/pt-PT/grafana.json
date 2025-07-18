@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Adicionar mais"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Estado de alerta",
       "annotations": "Anotações",
@@ -3247,6 +3256,11 @@
       "id-token-attribute-name-label": "Nome do atributo do token de ID",
       "login-attribute-path-description": "Expressão JMESPath a utilizar para a pesquisa de início de sessão do utilizador a partir do token de ID do utilizador.",
       "login-attribute-path-label": "Caminho do atributo de início de sessão",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "A ID de cliente de identidade gerida da credencial de identidade federada da sua aplicação OAuth2.",
       "managed-identity-client-id-label": "ID de cliente de identidade gerida FIC",
       "name-attribute-path-description": "Expressão JMESPath a utilizar para a pesquisa de início de sessão do utilizador a partir do token de ID do utilizador. \nEste nome será utilizado como o nome a apresentar do utilizador.",
@@ -3461,6 +3475,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Cancelar",
       "cannot-move-folders": "Não é possível mover as pastas",
       "confirmation-text": "Eliminar",
@@ -3479,7 +3495,9 @@
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
       "move-modal-title": "Mover",
       "moving": "A mover...",
-      "new-folder-name-required-phrase": "O nome da pasta é obrigatório."
+      "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Eliminado recentemente"
