@@ -37,6 +37,8 @@ def rgm_artifacts_step(
         depends_on = ["yarn-install"],
         tag_format = "{{ .version }}-{{ .arch }}",
         ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}",
+        ubuntu = images["ubuntu"],
+        alpine = images["alpine"],
         verify = "false"):
     cmd = artifacts_cmd(artifacts = artifacts)
 
@@ -55,8 +57,8 @@ def rgm_artifacts_step(
             cmd +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
-            "--ubuntu-base=ubuntu-base " +
-            "--alpine-base=alpine-base " +
+            "--ubuntu-base={} ".format(ubuntu) +
+            "--alpine-base={} ".format(alpine) +
             "--tag-format='{}' ".format(tag_format) +
             "--ubuntu-tag-format='{}' ".format(ubuntu_tag_format) +
             "--verify='{}' ".format(verify) +
@@ -70,7 +72,7 @@ def rgm_artifacts_step(
 def rgm_build_backend_step(artifacts = ["backend:grafana:linux/amd64", "backend:grafana:linux/arm64"]):
     return rgm_artifacts_step(name = "rgm-build-backend", artifacts = artifacts, depends_on = [])
 
-def rgm_build_docker_step(depends_on = ["yarn-install"], file = "docker.txt", tag_format = "{{ .version }}-{{ .arch }}", ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}"):
+def rgm_build_docker_step(depends_on = ["yarn-install"], file = "docker.txt", tag_format = "{{ .version }}-{{ .arch }}", ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}", ubuntu = images["ubuntu"], alpine = images["alpine"]):
     return {
         "name": "rgm-build-docker",
         "image": images["go"],
@@ -91,8 +93,8 @@ def rgm_build_docker_step(depends_on = ["yarn-install"], file = "docker.txt", ta
             "-a docker:grafana:linux/arm/v7:ubuntu " +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
-            "--ubuntu-base=ubuntu-base " +
-            "--alpine-base=alpine-base " +
+            "--ubuntu-base={} ".format(ubuntu) +
+            "--alpine-base={} ".format(alpine) +
             "--tag-format='{}' ".format(tag_format) +
             "--grafana-dir=$$PWD " +
             "--ubuntu-tag-format='{}' > {}".format(ubuntu_tag_format, file),
