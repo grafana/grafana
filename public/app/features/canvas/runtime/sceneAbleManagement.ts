@@ -16,6 +16,8 @@ import { FrameState } from './frame';
 import { Scene } from './scene';
 import { findElementByTarget } from './sceneElementManagement';
 
+const ZOOM_RANGE = [0.1, 4]; // Minimum zoom 0.1x (10%), maximum zoom 4x (400%)
+
 // Helper function that disables custom able functionality
 const disableCustomables = (moveable: Moveable) => {
   moveable!.props = {
@@ -431,6 +433,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       useWheelScroll: scene.shouldPanZoom,
       displayHorizontalScroll: false,
       displayVerticalScroll: false,
+      zoomRange: ZOOM_RANGE,
     });
     scene.infiniteViewer.setZoom(scene.scale);
     scene.infiniteViewer.scrollTo(scene.scrollLeft, scene.scrollTop);
