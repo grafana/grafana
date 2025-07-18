@@ -19,7 +19,6 @@ export function GrafanaRoute(props: Props) {
   chrome.setMatchedRoute(props.route);
 
   useLayoutEffect(() => {
-    chrome.update({}); // update chrome state with new route
     keybindings.clearAndInitGlobalBindings(props.route);
   }, [keybindings, chrome, props.route]);
 
