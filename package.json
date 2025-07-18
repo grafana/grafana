@@ -428,7 +428,7 @@
     "uplot": "1.6.32",
     "uuid": "11.1.0",
     "vis-data": "^8.0.0",
-    "vis-network": "9.1.13",
+    "vis-network": "10.0.1",
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
