@@ -79,7 +79,7 @@ These settings identify the Influx instance and schema the data source is connec
   - **SQL** - Native SQL language starting with **InfluxDB v.3.0**. Refer to InfluxData's [SQL reference documentation](https://docs.influxdata.com/influxdb/cloud-serverless/reference/sql/) for a list of supported statements, operators, and functions.
 
 {{< admonition type="note" >}}
-_For InfluxQL only._ **Database + Retention Policy (DBRP) Mapping** must be configured before data can be queried for the following product versions: Influx OSS 1.x, Influx OSS 2.x,  Influx Enterprise 1.x, Influx Cloud (TSM), Influx Cloud Serverless
+_For InfluxQL only._ **Database + Retention Policy (DBRP) Mapping** must be configured before data can be queried for the following product versions: _Influx OSS 1.x_, _Influx OSS 2.x_, _Influx Enterprise 1.x_, _Influx Cloud (TSM)_, _Influx Cloud Serverless_
 
 Refer to [Manage DBRP Mappings](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/) for guidance on setting this up via the CLI or API 
 {{< /admonition >}}
@@ -124,10 +124,10 @@ The table below illustrates the details needed for each query language:
 
 | **Setting** | **Flux** | **InfluxQL** | **SQL**      |
 | ---------- | ----------- | ----------- | ----------- |
-| Bucket or Database       | Yes        | Yes        | Yes        |
-| Organization             | Yes        | No         | No         |
-| Password or Token        | Yes        | Yes        | Yes        |
-| User                     | No         | Yes        | No         |
+| Bucket or Database       | &#x2611;    | &#x2611;    | &#x2611;   |
+| Organization             | &#x2611;    |             |            |
+| Password or Token        | &#x2611;    | &#x2611;    | &#x2611;   |
+| User                     |             | &#x2611;    |            |
 
 
 - **Bucket** or **Database** - Sets the ID of the bucket to query. Refer to [View buckets](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) in InfluxData's documentation on how to locate the list of available buckets and their corresponding IDs.
