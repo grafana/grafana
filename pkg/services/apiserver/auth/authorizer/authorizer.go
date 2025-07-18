@@ -2,6 +2,8 @@ package authorizer
 
 import (
 	"context"
+	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,7 +20,8 @@ type GrafanaAuthorizer struct {
 	auth authorizer.Authorizer
 }
 
-// NewGrafanaAuthorizerBuiltInST returns an authorizer configured for a grafana instance.
+// NewGrafanaBuiltInSTAuthorizer returns an authorizer configured for a grafana instance.
+// should not be used anywhere except the ST builtin
 // This authorizer is a chain of smaller authorizers that together form the decision if
 // access should be granted.
 //  1. We deny all impersonate request.
@@ -28,7 +31,18 @@ type GrafanaAuthorizer struct {
 //  4. We check authorizer that is configured speficially for an api.
 //  5. As a last fallback we check Role, this will only happen if an api have not configured
 //     an authorizer or return authorizer.DecisionNoOpinion
-func NewGrafanaAuthorizerBuiltInST(cfg *setting.Cfg) *GrafanaAuthorizer {
+func NewGrafanaBuiltInSTAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
+	// Runtime check: ensure this function is only called from the apiserver package
+	if pc, _, _, ok := runtime.Caller(1); ok {
+		if fn := runtime.FuncForPC(pc); fn != nil {
+			callerName := fn.Name()
+			// Allow calls only from the apiserver package
+			if !strings.Contains(callerName, "/services/apiserver.") {
+				panic("NewGrafanaBuiltInSTAuthorizer can only be used from the apiserver package for ST builtin mode")
+			}
+		}
+	}
+
 	authorizers := []authorizer.Authorizer{
 		newImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
