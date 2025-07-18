@@ -181,7 +181,7 @@ func convertPanelKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardPanelKind, 
 	}
 
 	// Convert vizConfig
-	if err := convertVizConfig_V2alpha1_to_V2alpha2(&in.Spec.VizConfig, &out.Spec.VizConfig, scope); err != nil {
+	if err := convertVizConfig_V2alpha1_to_V2alpha2(&in.Spec.VizConfig, &out.Spec.VizConfig); err != nil {
 		return err
 	}
 
@@ -254,10 +254,13 @@ func convertQueryOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryOpt
 	out.HideTimeOverride = in.HideTimeOverride
 }
 
-func convertVizConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVizConfigKind, out *dashv2alpha2.DashboardVizConfigKind, scope conversion.Scope) error {
-	out.Kind = in.Kind
-	out.Spec.PluginVersion = in.Spec.PluginVersion
-	out.Spec.Options = in.Spec.Options
+func convertVizConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVizConfigKind, out *dashv2alpha2.DashboardVizConfigKind) error {
+	out.Kind = "VizConfig"
+	out.Group = in.Kind
+	out.Version = in.Spec.PluginVersion
+	out.Spec = dashv2alpha2.DashboardVizConfigSpec{
+		Options: in.Spec.Options,
+	}
 
 	// Convert field config
 	convertFieldConfigSource_V2alpha1_to_V2alpha2(&in.Spec.FieldConfig, &out.Spec.FieldConfig)
