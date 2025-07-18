@@ -104,9 +104,9 @@ function FormContent({
 
     if (workflow === 'branch') {
       onDismiss?.();
-      const prUrl = successes[0].data.urls?.newPullRequestURL;
-      if (prUrl) {
-        navigate({ search: `?new_pull_request_url=${encodeURIComponent(prUrl)}` });
+      const repoUrl = successes[0].data.urls?.repositoryURL;
+      if (repoUrl) {
+        navigate({ search: `?repo_url=${encodeURIComponent(repoUrl)}` });
         return;
       }
       window.location.reload();

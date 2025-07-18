@@ -172,7 +172,7 @@ export function setAllSelection(
       }
 
       for (const child of collection.items) {
-        // Don't traverse into the sharedwithme folders
+        // Don't traverse into the sharedwithme folder
         if (isSharedWithMe(child.uid)) {
           continue;
         }
