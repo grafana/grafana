@@ -21,12 +21,131 @@ This limits the ability for plugins to provide contextual actions and integratio
 - `PluginExtensionPoints.DataSourceConfigErrorStatus` - For links in error status only
 
 ### Current Implementation
+✅ **IMPLEMENTED** - See implementation status section below for details.
+
+## Implementation Status
+
+**Status:** ✅ **COMPLETED** (Commit: `7abb4ce91`)
+
+### What Was Implemented
+
+All core components of the specification have been successfully implemented:
+
+#### ✅ **Core Extension Points**
+- `PluginExtensionPoints.DataSourceConfigActions` - For action buttons in datasource configuration
+- `PluginExtensionPoints.DataSourceConfigStatus` - For status-aware links (all status types)
+
+#### ✅ **Context Types**
+- `PluginExtensionDataSourceConfigActionsContext` - Context for datasource actions
+- `PluginExtensionDataSourceConfigStatusContext` - Context for datasource status with severity awareness
+
+#### ✅ **Enhanced Components**
+- **EditDataSourceActions.tsx** - Added plugin extension support with allowlist filtering
+- **DataSourceTestingStatus.tsx** - Enhanced with dual extension point support (new + backward compatible)
+
+#### ✅ **Core Infrastructure**
+- **getDataSourceExtensionConfigs.tsx** - Core extension configurations with examples
+- **getCoreExtensionConfigurations.ts** - Integration into core extension system
+- **Type exports** - All new types exported in packages/grafana-data/src/index.ts
+
+### Key Implementation Details
+
+#### **Plugin Security & Filtering**
 ```typescript
-<code_block_to_apply_changes_from>
+const allowedPlugins = [
+  'grafana-lokiexplore-app',
+  'grafana-exploretraces-app',
+  'grafana-metricsdrilldown-app',
+  'grafana-pyroscope-app',
+  'grafana-monitoring-app',
+  'grafana-troubleshooting-app'
+];
 ```
 
-This comprehensive specification covers all aspects of adding plugin extension support to the datasource configuration components. It includes technical implementation details, examples, migration strategy, testing approach, and future considerations. The spec should provide a solid foundation for implementation and iteration.
+#### **Context-Aware Extensions**
+Extensions receive rich context including datasource metadata, testing status, and severity information, enabling intelligent filtering based on:
+- Datasource type (prometheus, loki, etc.)
+- Testing status (success, error, warning, info)
+- User permissions and capabilities
+
+#### **Backward Compatibility**
+- Existing `DataSourceConfigErrorStatus` extension point preserved
+- All existing functionality maintained
+- Gradual migration path available
+
+### Files Modified
+1. **packages/grafana-data/src/types/pluginExtensions.ts** - Added extension points and context types
+2. **packages/grafana-data/src/index.ts** - Exported new types
+3. **public/app/features/datasources/components/EditDataSourceActions.tsx** - Enhanced with extensions
+4. **public/app/features/datasources/components/DataSourceTestingStatus.tsx** - Enhanced with extensions
+5. **public/app/features/datasources/extensions/getDataSourceExtensionConfigs.tsx** - New core configurations
+6. **public/app/features/plugins/extensions/getCoreExtensionConfigurations.ts** - Integration point
+
+## Lessons Learned
+
+### 🚫 **Critical Discovery: Translation Limitations**
+
+**Issue:** Cannot use `t()` translation functions in extension configurations.
+
+**Root Cause:** Extension configurations are evaluated at **module load time** (top level), before the i18n system is initialized.
+
+**Solution:** Use plain English strings with eslint disable comments:
+```typescript
+// This is called at the top level, so will break if we add a translation here 😱
+// eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+title: 'View in Monitoring Tool',
 ```
+
+**Learning:** Follow the same pattern as `getExploreExtensionConfigs.tsx` for consistency.
+
+### 🔒 **Security Through Plugin Filtering**
+
+**Insight:** Plugin allowlist filtering is essential for:
+- **Quality Control** - Only tested grafana plugins
+- **Security** - Prevent arbitrary third-party extensions
+- **Performance** - Limit extension count
+- **UX Consistency** - Maintain clean interface
+
+### ⚡ **Performance Considerations**
+
+**Implementation:** `limitPerPlugin: 1` prevents UI overcrowding while maintaining functionality.
+
+**Result:** Clean, non-overwhelming user interface with targeted functionality.
+
+### 🎯 **Context Design Success**
+
+**Achievement:** Rich context types enable intelligent extension filtering:
+```typescript
+configure: (context) => {
+  // Datasource type filtering
+  if (context?.dataSource?.type !== 'prometheus') return undefined;
+
+  // Status severity filtering
+  if (context?.severity !== 'error') return undefined;
+
+  return {}; // Show extension
+}
+```
+
+### 🔄 **Extension Registration Timing**
+
+**Discovery:** Extensions are registered at module load time, not runtime.
+
+**Implication:**
+- Static configuration only
+- Dynamic behavior must be in `configure()` or `onClick()` functions
+- Cannot access runtime services in top-level config
+
+### 📦 **TypeScript Generic Patterns**
+
+**Success:** Using generic types for context enforcement:
+```typescript
+createAddedLinkConfig<PluginExtensionDataSourceConfigActionsContext>({
+  // TypeScript ensures context type matches extension point
+})
+```
+
+**Benefit:** Compile-time type safety for extension configurations.
 
 ## Proposed Solution
 
@@ -719,31 +838,37 @@ describe('EditDataSourceActions', () => {
 
 ## Implementation Checklist
 
-### Phase 1: Core Infrastructure
-- [ ] Add new extension points to PluginExtensionPoints enum
-- [ ] Define context types for new extension points
-- [ ] Update core extension configurations
+### Phase 1: Core Infrastructure ✅ **COMPLETED**
+- [x] Add new extension points to PluginExtensionPoints enum
+- [x] Define context types for new extension points
+- [x] Update core extension configurations
 - [ ] Add comprehensive unit tests
 
-### Phase 2: Component Updates
-- [ ] Update EditDataSourceActions.tsx with plugin filtering
-- [ ] Update DataSourceTestingStatus.tsx with plugin filtering
-- [ ] Implement grafana-owned plugin allowlist
-- [ ] Add styling for extension links/buttons
-- [ ] Add loading states and error handling
-- [ ] Set limitPerPlugin to 1 for clean UI
+### Phase 2: Component Updates ✅ **COMPLETED**
+- [x] Update EditDataSourceActions.tsx with plugin filtering
+- [x] Update DataSourceTestingStatus.tsx with plugin filtering
+- [x] Implement grafana-owned plugin allowlist
+- [x] Add styling for extension links/buttons
+- [x] Add loading states and error handling
+- [x] Set limitPerPlugin to 1 for clean UI
 
-### Phase 3: Documentation & Testing
-- [ ] Update plugin development documentation
-- [ ] Add example implementations
+### Phase 3: Documentation & Testing 🚧 **PARTIALLY COMPLETED**
+- [x] Update plugin development documentation (this spec)
+- [x] Add example implementations (in getDataSourceExtensionConfigs.tsx)
 - [ ] Create integration tests
 - [ ] Add E2E test coverage
 
-### Phase 4: Validation & Polish
+### Phase 4: Validation & Polish 📋 **PENDING**
 - [ ] Performance testing with multiple extensions
 - [ ] Accessibility review
 - [ ] Security audit
 - [ ] Plugin developer feedback incorporation
+
+### Additional Tasks Identified During Implementation
+- [x] **Translation limitations discovered** - Documented no-translation requirement
+- [x] **Security model refined** - Implemented plugin allowlist filtering
+- [x] **Backward compatibility ensured** - Maintained existing DataSourceConfigErrorStatus
+- [x] **Type safety enhanced** - Added generic context types with compile-time checking
 
 ## Success Metrics
 
@@ -751,3 +876,58 @@ describe('EditDataSourceActions', () => {
 - **User Experience**: No regression in datasource configuration UX
 - **Performance**: Page load times remain within acceptable limits
 - **Stability**: No increase in error rates or crashes
+
+## Next Steps & Recommendations
+
+### Immediate Actions 🔥 **HIGH PRIORITY**
+1. **Unit Testing** - Add comprehensive test coverage for new extension points
+2. **E2E Testing** - Validate extension behavior in real datasource configurations
+3. **Plugin Developer Documentation** - Create guides for grafana-owned plugin teams
+
+### Near-term Enhancements 📈 **MEDIUM PRIORITY**
+1. **Performance Monitoring** - Track extension load times and impact
+2. **Accessibility Review** - Ensure extensions meet a11y standards
+3. **User Feedback** - Gather input from datasource configuration users
+
+### Future Considerations 🔮 **FUTURE**
+1. **Translation Support** - Investigate runtime translation solutions for extensions
+2. **Dynamic Plugin Allowlist** - Consider configuration-driven plugin filtering
+3. **Extension Analytics** - Track usage patterns for optimization
+4. **Advanced Context** - Add more datasource metadata to extension context
+
+### Plugin Development Guidelines
+
+Based on implementation learnings, plugin developers should:
+
+#### ✅ **Do:**
+- Use the `configure()` function for intelligent extension filtering
+- Implement proper error handling in extension logic
+- Follow the allowlist pattern for security
+- Use TypeScript generics for type safety
+- Test extensions across different datasource types and statuses
+
+#### ❌ **Don't:**
+- Use `t()` translation functions in top-level extension configuration
+- Rely on runtime services being available during configuration
+- Create extensions without proper context filtering
+- Ignore the `limitPerPlugin` constraint
+- Add extensions that don't provide clear user value
+
+### Architectural Insights
+
+The implementation revealed several architectural patterns that should be carried forward:
+
+1. **Extension Point Naming Convention** - Use hierarchical naming (`grafana/feature/subfeature/action`)
+2. **Context Type Patterns** - Rich context objects with optional properties for flexibility
+3. **Security Model** - Always implement allowlist filtering for production systems
+4. **Graceful Degradation** - Extensions should fail silently and not break core functionality
+5. **Performance Budgets** - Limit extensions per plugin to maintain UI responsiveness
+
+### Documentation Updates Needed
+
+1. **Plugin Development Guide** - Add section on datasource extensions
+2. **Extension API Reference** - Document new context types and extension points
+3. **Security Guidelines** - Document allowlist requirements and rationale
+4. **Migration Guide** - Help existing plugins adopt new extension points
+
+This implementation provides a solid foundation for plugin extensibility in datasource configuration while maintaining security, performance, and user experience standards.
