@@ -401,7 +401,6 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideIdentitySynchronizer,
 	authnimpl.ProvideAuthnService,
 	authnimpl.ProvideAuthnServiceAuthenticateOnly,
-	authnimpl.ProvideRegistration,
 	supportbundlesimpl.ProvideService,
 	extsvcaccounts.ProvideExtSvcAccountsService,
 	wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)),
