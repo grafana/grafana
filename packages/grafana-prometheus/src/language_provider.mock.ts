@@ -10,16 +10,6 @@ export class EmptyLanguageProviderMock {
     });
   }
 
-  getLabelKeys = jest.fn().mockReturnValue([]);
-  getLabelValues = jest.fn().mockReturnValue([]);
-  getSeries = jest.fn().mockReturnValue({ __name__: [] });
-  getSeriesValues = jest.fn().mockReturnValue([]);
-  fetchSeries = jest.fn().mockReturnValue([]);
-  fetchSeriesLabels = jest.fn().mockReturnValue([]);
-  fetchSeriesLabelsMatch = jest.fn().mockReturnValue([]);
-  fetchLabelsWithMatch = jest.fn().mockReturnValue([]);
-  fetchLabels = jest.fn();
-  loadMetricsMetadata = jest.fn();
   retrieveMetrics = jest.fn().mockReturnValue(['metric']);
   queryLabelKeys = jest.fn().mockResolvedValue([]);
   queryLabelValues = jest.fn().mockResolvedValue([]);
