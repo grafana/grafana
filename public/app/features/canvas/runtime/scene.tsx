@@ -238,8 +238,10 @@ export class Scene {
 
     if (svgConnections) {
       const scale = this.infiniteViewer!.getZoom();
-      const left = this.infiniteViewer!.getScrollLeft();
-      const top = this.infiniteViewer!.getScrollTop();
+      // NOTE: sometimes getScrollLeft and getScrollTop return NaN,
+      // so we use || 0 to ensure we have a valid number
+      const left = this.infiniteViewer!.getScrollLeft() || 0;
+      const top = this.infiniteViewer!.getScrollTop() || 0;
       const width = this.width;
       const height = this.height;
 
