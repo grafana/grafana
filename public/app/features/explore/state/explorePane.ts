@@ -43,6 +43,7 @@ export interface ChangeSizePayload {
   exploreId: string;
   width: number;
 }
+
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
 /**
@@ -52,11 +53,13 @@ interface ChangePanelsState {
   exploreId: string;
   panelsState: ExplorePanelsState;
 }
+
 export const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
+
 export function changePanelState(
   exploreId: string,
   panel: PreferredVisualisationType,
-  panelState: ExplorePanelsState[PreferredVisualisationType]
+  panelState: ExplorePanelsState[PreferredVisualisationType],
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreItem = getState().explore.panes[exploreId];
@@ -71,7 +74,7 @@ export function changePanelState(
           ...panelsState,
           [panel]: panelState,
         },
-      })
+      }),
     );
   };
 }
@@ -83,8 +86,9 @@ interface ChangeCorrelationHelperData {
   exploreId: string;
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 }
+
 export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
-  'explore/changeCorrelationHelperData'
+  'explore/changeCorrelationHelperData',
 );
 
 /**
@@ -99,17 +103,20 @@ interface InitializeExplorePayload {
   datasourceInstance?: DataSourceApi;
   eventBridge: EventBusExtended;
 }
+
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
 export interface SetUrlReplacedPayload {
   exploreId: string;
 }
+
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
 
 export interface SaveCorrelationsPayload {
   exploreId: string;
   correlations: CorrelationData[];
 }
+
 export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('explore/saveCorrelationsAction');
 
 /**
@@ -130,6 +137,7 @@ export interface InitializeExploreOptions {
   position?: number;
   eventBridge: EventBusExtended;
 }
+
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -150,7 +158,7 @@ export const initializeExplore = createAsyncThunk(
       correlationHelperData,
       eventBridge,
     }: InitializeExploreOptions,
-    { dispatch, getState, fulfillWithValue }
+    { dispatch, getState, fulfillWithValue },
   ) => {
     let instance = undefined;
     let history: HistoryItem[] = [];
@@ -170,7 +178,7 @@ export const initializeExplore = createAsyncThunk(
         datasourceInstance: instance,
         history,
         eventBridge,
-      })
+      }),
     );
     if (panelsState !== undefined) {
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
@@ -192,12 +200,12 @@ export const initializeExplore = createAsyncThunk(
         changeCorrelationHelperData({
           exploreId,
           correlationEditorHelperData: correlationHelperData,
-        })
+        }),
       );
     }
 
     return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
-  }
+  },
 );
 
 /**
@@ -214,7 +222,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = timeReducer(state, action);
 
   if (changeSizeAction.match(action)) {
-    const containerWidth = action.payload.width;
+    const containerWidth = Math.floor(action.payload.width);
     return { ...state, containerWidth };
   }
 
