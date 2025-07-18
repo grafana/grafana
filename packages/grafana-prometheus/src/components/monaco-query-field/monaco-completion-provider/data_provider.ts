@@ -1,6 +1,7 @@
 import { HistoryItem } from '@grafana/data';
 import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
+import { SUGGESTIONS_LIMIT } from '../../../constants';
 import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { PromQuery } from '../../../types';
 import { isValidLegacyName } from '../../../utf8_support';
@@ -56,7 +57,7 @@ export class DataProvider {
     this.languageProvider = params.languageProvider;
     this.historyProvider = params.historyProvider;
     this.inputInRange = '';
-    this.metricNamesSuggestionLimit = this.languageProvider.datasource.metricNamesAutocompleteSuggestionLimit;
+    this.metricNamesSuggestionLimit = SUGGESTIONS_LIMIT;
     this.suggestionsIncomplete = false;
     this.getSeriesLabels = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.getSeriesValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
