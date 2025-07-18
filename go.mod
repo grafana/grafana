@@ -210,11 +210,11 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.33.2 // indirect; @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.33.2 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.33.2 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.33.2 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.33.2 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.33.3 // indirect; @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.33.3 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.33.3 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.33.3 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.33.3 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20241210054802-24370beab758 // @grafana/partner-datasources
@@ -244,7 +244,13 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 )
 
-require cloud.google.com/go/spanner v1.82.0 // @grafana/grafana-search-and-storage
+require (
+	cloud.google.com/go/spanner v1.82.0 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/build v0.0.0-20250717212255-3fad863fd116 // @grafana/grafana-developer-enablement-squad
+	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-sharing-squad
+	gocloud.dev/secrets/hashivault v0.42.0 // @grafana/grafana-operator-experience-squad
+	k8s.io/kube-aggregator v0.33.3 // @grafana/grafana-app-platform-squad
+)
 
 require (
 	cel.dev/expr v0.23.1 // indirect
@@ -408,12 +414,17 @@ require (
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/hashicorp/go-msgpack/v2 v2.1.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
+	github.com/hashicorp/go-secure-stdlib/parseutil v0.2.0 // indirect
+	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.2 // indirect
 	github.com/hashicorp/serf v0.10.2 // indirect
+	github.com/hashicorp/vault/api v1.16.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
@@ -500,6 +511,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
@@ -578,7 +590,7 @@ require (
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/telebot.v3 v3.2.1 // indirect
 	k8s.io/apiextensions-apiserver v0.33.2 // indirect
-	k8s.io/kms v0.33.2 // indirect
+	k8s.io/kms v0.33.3 // indirect
 	modernc.org/libc v1.65.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.10.0 // indirect

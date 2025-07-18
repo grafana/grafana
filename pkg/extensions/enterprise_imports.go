@@ -19,6 +19,7 @@ import (
 	_ "github.com/go-jose/go-jose/v3"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
+	_ "github.com/grafana/grafana/pkg/build"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	_ "github.com/hashicorp/go-multierror"
@@ -28,8 +29,11 @@ import (
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
+	_ "github.com/spyzhov/ajson"
 	_ "github.com/stretchr/testify/require"
+	_ "gocloud.dev/secrets/hashivault"
 	_ "golang.org/x/time/rate"
+	_ "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	_ "xorm.io/builder"
 
 	_ "github.com/grafana/dskit/backoff"
