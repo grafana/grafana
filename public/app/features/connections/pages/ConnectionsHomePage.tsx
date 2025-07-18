@@ -20,24 +20,40 @@ export default function ConnectionsHomePage() {
 
   let children = isOSS ? ossCardData : cloudCardData;
 
-  return <Page navId="connections" pageNav={{
-    text: '',
-    active: true,
-  }}>
-    <Page.Contents>
-      <div className={styles.centeredContainer}>
-        <h1 className={styles.mainTitle}><Trans i18nKey="connections.connections-home-page.welcome-to-connections">Welcome to Connections</Trans></h1>
-        <p className={styles.subTitle}><Trans i18nKey={isOSS ? OSS_SUBTITLE : CLOUD_SUBTITLE} /></p>
-        {children && children.length > 0 && (
-          <section className={styles.cardsSection}>
-            {children?.map((child, index) => (
-              <PageCard key={index} title={child.text} description={child.subTitle} icon={child.icon as IconName} url={child.url} index={index} />
-            ))}
-          </section>
-        )}
-      </div>
-    </Page.Contents>
-  </Page>
+  return (
+    <Page
+      navId="connections"
+      pageNav={{
+        text: '',
+        active: true,
+      }}
+    >
+      <Page.Contents>
+        <div className={styles.centeredContainer}>
+          <h1 className={styles.mainTitle}>
+            <Trans i18nKey="connections.connections-home-page.welcome-to-connections">Welcome to Connections</Trans>
+          </h1>
+          <p className={styles.subTitle}>
+            <Trans i18nKey={isOSS ? OSS_SUBTITLE : CLOUD_SUBTITLE} />
+          </p>
+          {children && children.length > 0 && (
+            <section className={styles.cardsSection}>
+              {children?.map((child, index) => (
+                <PageCard
+                  key={index}
+                  title={child.text}
+                  description={child.subTitle}
+                  icon={child.icon as IconName}
+                  url={child.url}
+                  index={index}
+                />
+              ))}
+            </section>
+          )}
+        </div>
+      </Page.Contents>
+    </Page>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

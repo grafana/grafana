@@ -1,8 +1,8 @@
-import { css } from "@emotion/css";
+import { css } from '@emotion/css';
 
-import { GrafanaTheme2, IconName } from "@grafana/data";
-import { locationService } from "@grafana/runtime";
-import { Icon, useStyles2 } from "@grafana/ui";
+import { GrafanaTheme2, IconName } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 type PageCardProps = {
   title: string;
@@ -10,7 +10,7 @@ type PageCardProps = {
   icon: IconName;
   url: string;
   index: number;
-}
+};
 
 export default function PageCard({ title, description, icon, url, index }: PageCardProps) {
   const styles = useStyles2(getStyles);
@@ -20,7 +20,7 @@ export default function PageCard({ title, description, icon, url, index }: PageC
       e.preventDefault();
       locationService.push(url);
     }
-  }
+  };
 
   return (
     <div
@@ -36,7 +36,7 @@ export default function PageCard({ title, description, icon, url, index }: PageC
         <p className={styles.description}>{description}</p>
       </div>
     </div>
-  )
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
