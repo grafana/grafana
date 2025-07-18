@@ -24,9 +24,9 @@ jest.mock('../../../utf8_support', () => ({
   }),
 }));
 
-// Mock the language provider functions
-jest.mock('../../../language_provider', () => ({
-  ...jest.requireActual('../../../language_provider'),
+// Mock the language_utils functions
+jest.mock('../../../language_utils', () => ({
+  ...jest.requireActual('../../../language_utils'),
   removeQuotesIfExist: jest.fn((value: string) => {
     // Mock implementation - remove quotes if they exist
     return value.replace(/^"(.*)"$/, '$1');
@@ -193,7 +193,7 @@ describe('DataProvider', () => {
 
     it('should use escapeForUtf8Support on the word filter', async () => {
       const { escapeForUtf8Support } = require('../../../utf8_support');
-      const { removeQuotesIfExist } = require('../../../language_provider');
+      const { removeQuotesIfExist } = require('../../../language_utils');
 
       const mockMetrics = ['utf8_metric'];
       mockLanguageProvider.queryLabelValues.mockResolvedValue(mockMetrics);
