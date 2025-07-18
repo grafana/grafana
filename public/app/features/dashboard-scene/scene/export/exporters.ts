@@ -10,7 +10,7 @@ import {
   AnnotationQueryKind,
   QueryVariableKind,
   LibraryPanelRef,
-  LibraryPanelKind
+  LibraryPanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { notifyApp } from 'app/core/actions';
 import config from 'app/core/config';
