@@ -36,32 +36,30 @@ import (
 var _ builder.APIGroupBuilder = (*QueryAPIBuilder)(nil)
 
 type QueryAPIBuilder struct {
-	log                    log.Logger
-	concurrentQueryLimit   int
-	userFacingDefaultError string
-	features               featuremgmt.FeatureToggles
+	log                  log.Logger
+	concurrentQueryLimit int
+	features             featuremgmt.FeatureToggles
 
 	authorizer authorizer.Authorizer
 
-	tracer         tracing.Tracer
-	metrics        *metrics.ExprMetrics
-	parser         *queryParser
-	clientSupplier clientapi.DataSourceClientSupplier
-	registry       query.DataSourceApiServerRegistry
-	converter      *expr.ResultConverter
-	queryTypes     *query.QueryTypeDefinitionList
+	tracer                 tracing.Tracer
+	metrics                *metrics.ExprMetrics
+	clientSupplier         clientapi.DataSourceClientSupplier
+	registry               query.DataSourceApiServerRegistry
+	converter              *expr.ResultConverter
+	queryTypes             *query.QueryTypeDefinitionList
+	legacyDatasourceLookup service.LegacyDataSourceLookup
 }
 
-func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
+func NewQueryAPIBuilder(
+	features featuremgmt.FeatureToggles,
 	clientSupplier clientapi.DataSourceClientSupplier,
 	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
-	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
+	legacyDatasourceLookup service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
-	reader := expr.NewExpressionQueryReader(features)
-
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
 	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
@@ -83,7 +81,6 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		clientSupplier:       clientSupplier,
 		authorizer:           ar,
 		registry:             registry,
-		parser:               newQueryParser(reader, legacy, tracer, log.New("query_parser")),
 		metrics:              metrics.NewQueryServiceExpressionsMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
@@ -92,6 +89,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 			Features: features,
 			Tracer:   tracer,
 		},
+		legacyDatasourceLookup: legacyDatasourceLookup,
 	}, nil
 }
 
@@ -104,7 +102,8 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	pCtxProvider *plugincontext.Provider,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
-	legacy service.LegacyDataSourceLookup,
+	legacyDatasourceLookup service.LegacyDataSourceLookup,
+	exprService *expr.Service,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -132,7 +131,9 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 		},
 		ar,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
-		legacy, registerer, tracer,
+		registerer,
+		tracer,
+		legacyDatasourceLookup,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err

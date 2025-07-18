@@ -13,7 +13,7 @@ import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { isDashboardV2Spec, isV1ClassicDashboard } from 'app/features/dashboard/api/utils';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -27,7 +27,7 @@ import { transformSceneToSaveModel } from '../serialization/transformSceneToSave
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, hasLibraryPanelsInV1Dashboard } from '../utils/utils';
 
 import { ExportMode, ResourceExport } from './ExportButton/ResourceExport';
 import { SceneShareTabState, ShareView } from './types';
@@ -186,7 +186,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
               status: {},
             },
             initialSaveModelVersion,
-            hasLibraryPanels: undefined,
+            hasLibraryPanels: hasLibraryPanelsInV1Dashboard(spec1),
           };
         } catch (err) {
           return {
@@ -210,7 +210,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
             status: {},
           },
           initialSaveModelVersion,
-          hasLibraryPanels: undefined,
+          hasLibraryPanels: hasLibraryPanelsInV1Dashboard(spec),
         };
       }
     }
@@ -231,6 +231,10 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
           status: {},
         },
         initialSaveModelVersion,
+        hasLibraryPanels:
+          initialSaveModelVersion === 'v1' && !isDashboardV2Spec(origDashboard)
+            ? hasLibraryPanelsInV1Dashboard(origDashboard)
+            : false,
       };
     }
 
@@ -253,15 +257,19 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       const exportableV1 = isSharingExternally ? await makeExportableV1(oldModel) : initialSaveModel;
       return {
         json: exportableV1,
-        hasLibraryPanels: undefined,
+        hasLibraryPanels: hasLibraryPanelsInV1Dashboard(initialSaveModel),
         initialSaveModelVersion,
       };
     }
 
     // legacy mode or classic mode when dashboardNewLayouts is disabled
+    // At this point we know that dashboard should be V1 or could have produced an error
     return {
       json: exportable,
-      hasLibraryPanels: undefined,
+      hasLibraryPanels:
+        'error' in exportable || !isV1ClassicDashboard(origDashboard)
+          ? false
+          : hasLibraryPanelsInV1Dashboard(origDashboard),
       initialSaveModelVersion,
     };
   };
@@ -282,8 +290,27 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     }
     const extension = isViewingYAML ? 'yaml' : 'json';
     saveAs(blob, `${title}-${time}.${extension}`);
+
     DashboardInteractions.exportDownloadJsonClicked({
       externally: isSharingExternally,
+      dashboard_schema_version: dashboard.initialSaveModelVersion,
+      has_library_panels: Boolean(dashboard.hasLibraryPanels),
+      format: isViewingYAML ? 'yaml' : 'json',
+      action: 'download',
+    });
+  };
+
+  public onClipboardCopy = async () => {
+    const dashboard = await this.getExportableDashboardJson();
+    const { isSharingExternally, isViewingYAML, exportMode } = this.state;
+
+    DashboardInteractions.exportCopyJsonClicked({
+      externally: isSharingExternally,
+      dashboard_schema_version: dashboard.initialSaveModelVersion,
+      has_library_panels: Boolean(dashboard.hasLibraryPanels),
+      export_mode: exportMode || 'classic',
+      format: isViewingYAML ? 'yaml' : 'json',
+      action: 'copy',
     });
   };
 }
@@ -443,6 +470,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
               icon="copy"
               disabled={dashboardJson.loading}
               getText={() => stringifiedDashboard ?? ''}
+              onClipboardCopy={model.onClipboardCopy}
             >
               <Trans i18nKey="share-modal.view-json.copy-button">Copy to Clipboard</Trans>
             </ClipboardButton>
