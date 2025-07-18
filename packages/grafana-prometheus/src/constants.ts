@@ -1,10 +1,5 @@
 // // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
-export const DEFAULT_SUGGESTIONS_LIMIT = 1000;
-
-/**
- * @deprecated
- */
-export const SUGGESTIONS_LIMIT = 10000;
+export const SUGGESTIONS_LIMIT = 1000;
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 

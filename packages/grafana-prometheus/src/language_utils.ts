@@ -15,7 +15,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { getCacheDurationInMinutes } from './caching';
-import { SUGGESTIONS_LIMIT, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './constants';
+import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './constants';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
@@ -277,7 +277,7 @@ function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
 }
 
 function limitSuggestions(items: string[]) {
-  return items.slice(0, SUGGESTIONS_LIMIT);
+  return items.slice(0, 10000);
 }
 
 const FromPromLikeMap: Record<string, AbstractLabelOperator> = {

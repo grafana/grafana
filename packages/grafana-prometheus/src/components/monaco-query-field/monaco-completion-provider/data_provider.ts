@@ -1,7 +1,7 @@
 import { HistoryItem, TimeRange } from '@grafana/data';
 import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
-import { DEFAULT_SUGGESTIONS_LIMIT, METRIC_LABEL } from '../../../constants';
+import { SUGGESTIONS_LIMIT, METRIC_LABEL } from '../../../constants';
 import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { removeQuotesIfExist } from '../../../language_utils';
 import { PromQuery } from '../../../types';
@@ -41,7 +41,7 @@ export class DataProvider {
   readonly languageProvider: PrometheusLanguageProviderInterface;
   readonly historyProvider: Array<HistoryItem<PromQuery>>;
 
-  readonly metricNamesSuggestionLimit: number = DEFAULT_SUGGESTIONS_LIMIT;
+  readonly metricNamesSuggestionLimit: number = SUGGESTIONS_LIMIT;
   readonly queryLabelKeys: typeof this.languageProvider.queryLabelKeys;
   readonly queryLabelValues: typeof this.languageProvider.queryLabelValues;
   /**
@@ -79,12 +79,7 @@ export class DataProvider {
         match = `{__name__=~".*${escapedWord}.*"}`;
       }
 
-      const result = await this.languageProvider.queryLabelValues(
-        timeRange,
-        METRIC_LABEL,
-        match,
-        DEFAULT_SUGGESTIONS_LIMIT
-      );
+      const result = await this.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match, SUGGESTIONS_LIMIT);
 
       return Array.isArray(result) ? result : [];
     } catch (error) {
@@ -112,30 +107,12 @@ export class DataProvider {
     return result;
   }
 
-  private enableAutocompleteSuggestionsUpdate(): void {
-    this.suggestionsIncomplete = true;
-    dispatchEvent(
-      new CustomEvent(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, {
-        detail: { limit: DEFAULT_SUGGESTIONS_LIMIT, datasourceUid: this.languageProvider.datasource.uid },
-      })
-    );
-  }
-
   private setInputInRange(textInput: string): void {
     this.inputInRange = textInput;
   }
 
   get monacoSettings() {
     return {
-      /**
-       * Enable autocomplete suggestions update on every input change.
-       *
-       * @remarks
-       * If fuzzy search is used in `getCompletions` to trim down results to improve performance,
-       * we need to instruct Monaco to update the completions on every input change, so that the
-       * completions reflect the current input.
-       */
-      enableAutocompleteSuggestionsUpdate: this.enableAutocompleteSuggestionsUpdate.bind(this),
       inputInRange: this.inputInRange,
       setInputInRange: this.setInputInRange.bind(this),
       suggestionsIncomplete: this.suggestionsIncomplete,

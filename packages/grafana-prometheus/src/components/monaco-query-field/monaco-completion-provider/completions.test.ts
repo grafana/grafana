@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { DEFAULT_SUGGESTIONS_LIMIT } from '../../../constants';
+import { SUGGESTIONS_LIMIT } from '../../../constants';
 import { FUNCTIONS } from '../../../promql';
 import { getMockTimeRange } from '../../../test/mocks/datasource';
 
@@ -23,17 +23,14 @@ const dataProviderSettings = {
 } as unknown as DataProviderParams;
 let dataProvider = new DataProvider(dataProviderSettings);
 const metrics = {
-  beyondLimit: Array.from(Array(DEFAULT_SUGGESTIONS_LIMIT + 1), (_, i) => `metric_name_${i}`),
+  beyondLimit: Array.from(Array(SUGGESTIONS_LIMIT + 1), (_, i) => `metric_name_${i}`),
   get atLimit() {
-    return this.beyondLimit.slice(0, DEFAULT_SUGGESTIONS_LIMIT - 1);
+    return this.beyondLimit.slice(0, SUGGESTIONS_LIMIT - 1);
   },
 };
 
 beforeEach(() => {
   dataProvider = new DataProvider(dataProviderSettings);
-  jest.replaceProperty(config, 'featureToggles', {
-    prometheusCodeModeMetricNamesSearch: true,
-  });
 });
 
 afterEach(() => {
@@ -171,7 +168,7 @@ type MetricNameSituation = Extract<Situation['type'], 'AT_ROOT' | 'EMPTY' | 'IN_
 const metricNameCompletionSituations = ['AT_ROOT', 'IN_FUNCTION', 'EMPTY'] as MetricNameSituation[];
 
 function getSuggestionCountForSituation(situationType: MetricNameSituation, metricsCount: number): number {
-  const limitedMetricNamesCount = metricsCount < DEFAULT_SUGGESTIONS_LIMIT ? metricsCount : DEFAULT_SUGGESTIONS_LIMIT;
+  const limitedMetricNamesCount = metricsCount < SUGGESTIONS_LIMIT ? metricsCount : SUGGESTIONS_LIMIT;
   let suggestionsCount = limitedMetricNamesCount + FUNCTIONS.length;
 
   if (situationType === 'EMPTY') {
@@ -206,7 +203,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     const situation: Situation = {
       type: situationType,
     };
-    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.beyondLimit.length);
+    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, SUGGESTIONS_LIMIT);
     jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(metrics.beyondLimit);
 
     // Complex query
@@ -271,7 +268,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     dataProvider.monacoSettings.setInputInRange('metric name 1 2 3 4 5');
     const completions = await getCompletions(situation, dataProvider, timeRange);
 
-    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.beyondLimit.length);
+    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, SUGGESTIONS_LIMIT);
     expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 });

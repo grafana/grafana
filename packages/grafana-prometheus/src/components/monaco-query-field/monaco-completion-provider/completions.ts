@@ -5,7 +5,7 @@ import { languages } from 'monaco-editor';
 import { TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { DEFAULT_SUGGESTIONS_LIMIT } from '../../../constants';
+import { SUGGESTIONS_LIMIT } from '../../../constants';
 import { escapeLabelValueInExactSelector, prometheusRegularEscape } from '../../../escaping';
 import { FUNCTIONS } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
@@ -155,10 +155,10 @@ async function getLabelNames(
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
-    return Promise.resolve(dataProvider.queryLabelKeys(timeRange, undefined, DEFAULT_SUGGESTIONS_LIMIT));
+    return Promise.resolve(dataProvider.queryLabelKeys(timeRange, undefined, SUGGESTIONS_LIMIT));
   } else {
     const selector = makeSelector(metric, otherLabels);
-    const labelNames = await dataProvider.queryLabelKeys(timeRange, selector, DEFAULT_SUGGESTIONS_LIMIT);
+    const labelNames = await dataProvider.queryLabelKeys(timeRange, selector, SUGGESTIONS_LIMIT);
 
     // Exclude __name__ from output
     otherLabels.push({ name: '__name__', value: '', op: '!=' });
@@ -222,10 +222,10 @@ async function getLabelValues(
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
-    return dataProvider.queryLabelValues(timeRange, labelName, undefined, DEFAULT_SUGGESTIONS_LIMIT);
+    return dataProvider.queryLabelValues(timeRange, labelName, undefined, SUGGESTIONS_LIMIT);
   } else {
     const selector = makeSelector(metric, otherLabels);
-    return await dataProvider.queryLabelValues(timeRange, labelName, selector, DEFAULT_SUGGESTIONS_LIMIT);
+    return await dataProvider.queryLabelValues(timeRange, labelName, selector, SUGGESTIONS_LIMIT);
   }
 }
 

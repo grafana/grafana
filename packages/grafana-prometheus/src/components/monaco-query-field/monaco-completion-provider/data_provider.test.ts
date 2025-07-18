@@ -1,6 +1,6 @@
 import { HistoryItem } from '@grafana/data';
 
-import { DEFAULT_SUGGESTIONS_LIMIT, METRIC_LABEL } from '../../../constants';
+import { SUGGESTIONS_LIMIT, METRIC_LABEL } from '../../../constants';
 import { PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { getMockTimeRange } from '../../../test/mocks/datasource';
 import { PromQuery } from '../../../types';
@@ -80,7 +80,7 @@ describe('DataProvider', () => {
 
       expect(dataProvider.languageProvider).toBe(mockLanguageProvider);
       expect(dataProvider.historyProvider).toBe(mockHistoryProvider);
-      expect(dataProvider.metricNamesSuggestionLimit).toBe(DEFAULT_SUGGESTIONS_LIMIT);
+      expect(dataProvider.metricNamesSuggestionLimit).toBe(SUGGESTIONS_LIMIT);
       expect(dataProvider.monacoSettings.inputInRange).toBe('');
       expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
     });
@@ -156,7 +156,7 @@ describe('DataProvider', () => {
         mockTimeRange,
         METRIC_LABEL,
         undefined,
-        DEFAULT_SUGGESTIONS_LIMIT
+        SUGGESTIONS_LIMIT
       );
       expect(result).toEqual(mockMetrics);
     });
@@ -171,7 +171,7 @@ describe('DataProvider', () => {
         mockTimeRange,
         METRIC_LABEL,
         '{__name__=~".*http.*"}',
-        DEFAULT_SUGGESTIONS_LIMIT
+        SUGGESTIONS_LIMIT
       );
       expect(result).toEqual(mockMetrics);
     });
@@ -186,7 +186,7 @@ describe('DataProvider', () => {
         mockTimeRange,
         METRIC_LABEL,
         '{__name__=~".*quoted_metric.*"}',
-        DEFAULT_SUGGESTIONS_LIMIT
+        SUGGESTIONS_LIMIT
       );
       expect(result).toEqual(mockMetrics);
     });
@@ -214,7 +214,7 @@ describe('DataProvider', () => {
         mockTimeRange,
         METRIC_LABEL,
         undefined,
-        DEFAULT_SUGGESTIONS_LIMIT
+        SUGGESTIONS_LIMIT
       );
       expect(result).toEqual(mockMetrics);
     });
@@ -299,7 +299,7 @@ describe('DataProvider', () => {
         expect.objectContaining({
           type: CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT,
           detail: {
-            limit: DEFAULT_SUGGESTIONS_LIMIT,
+            limit: SUGGESTIONS_LIMIT,
             datasourceUid: 'test-datasource-uid',
           },
         })
@@ -315,7 +315,7 @@ describe('DataProvider', () => {
       expect(dispatchedEvent).toBeInstanceOf(CustomEvent);
       expect(dispatchedEvent.type).toBe(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT);
       expect(dispatchedEvent.detail).toEqual({
-        limit: DEFAULT_SUGGESTIONS_LIMIT,
+        limit: SUGGESTIONS_LIMIT,
         datasourceUid: 'test-datasource-uid',
       });
     });
