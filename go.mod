@@ -2,7 +2,7 @@ module github.com/grafana/grafana
 
 go 1.24.4
 
-replace github.com/grafana/grafana-aws-sdk-frankenstein => /Users/njv/Code/gr/grafana-aws-sdk-frankenstein
+replace github.com/grafana/grafana-aws-sdk-frankenstein => github.com/grafana/grafana-aws-sdk v1.0.3-0.20250718094030-d01ef0625c18
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
