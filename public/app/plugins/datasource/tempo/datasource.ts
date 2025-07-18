@@ -782,6 +782,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         )
       )
     ).pipe(
+      map((response) => {
+        return enhanceTraceQlMetricsResponse(response, this.instanceSettings);
+      }),
       catchError((error) => {
         reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
           success: false,
