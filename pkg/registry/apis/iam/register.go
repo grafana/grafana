@@ -126,23 +126,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := legacyiamv0.UserResourceInfo
-	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
-	if err != nil {
-		return err
-	}
-
-	opts.StorageOptsRegister(userResource.GroupResource(), apistore.StorageOptions{
-		RequireDeprecatedInternalID: true,
-	})
-
 	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient)
 
-	dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
-	if err != nil {
-		return err
-	}
+	// TODO: Figure out what's missing for the DualWriter setup in a MT setup
+	// MT app is unable to start if DW is configured
+	// store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+	// if err != nil {
+	// 	return err
+	// }
 
-	storage[userResource.StoragePath()] = dw
+	// dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// storage[userResource.StoragePath()] = dw
+	storage[userResource.StoragePath()] = legacyStore
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo
