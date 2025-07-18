@@ -79,7 +79,7 @@ describe('Explore QueryRows', () => {
 
     render(
       <Provider store={store}>
-        <QueryRows exploreId={'left'} />
+        <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
       </Provider>
     );
 
@@ -100,7 +100,7 @@ describe('Explore QueryRows', () => {
     render(
       <Provider store={store}>
         <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
-          <QueryRows exploreId={'left'} />
+          <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
         </QueryLibraryContextProviderMock>
       </Provider>
     );
@@ -117,7 +117,7 @@ describe('Explore QueryRows', () => {
     render(
       <Provider store={store}>
         <QueryLibraryContextProviderMock queryLibraryEnabled={false}>
-          <QueryRows exploreId={'left'} />
+          <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
         </QueryLibraryContextProviderMock>
       </Provider>
     );
