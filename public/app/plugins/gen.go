@@ -44,6 +44,7 @@ func main() {
 
 	pluginKindGen.Append(
 		&codegen.PluginRegistryJenny{},
+		&codegen.UpdateCodeOwners{Root: groot, PanelsFolder: "public/app/plugins"},
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins"),
 	)
