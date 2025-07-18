@@ -777,7 +777,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	}
 	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	secureValueValidator := validator3.ProvideSecureValueValidator()
-	secureValueClientProvider := secret.ProvideSecureValueClientProvider(secureValueService, secureValueValidator)
+	secureValueClientProvider := secret.ProvideSecureValueClientProvider(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
@@ -1330,7 +1330,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	}
 	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	secureValueValidator := validator3.ProvideSecureValueValidator()
-	secureValueClientProvider := secret.ProvideSecureValueClientProvider(secureValueService, secureValueValidator)
+	secureValueClientProvider := secret.ProvideSecureValueClientProvider(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {

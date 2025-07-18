@@ -5,12 +5,16 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/admission"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 // SecureValueClientProvider provides a typed and namespaced SecureValueClient interface implementation.
@@ -23,13 +27,15 @@ type newSecureValueClient struct {
 	schema    resource.Schema
 	service   contracts.SecureValueService
 	validator contracts.SecureValueValidator
+	access    authorizer.Authorizer
 }
 
-func ProvideSecureValueClientProvider(service contracts.SecureValueService, validator contracts.SecureValueValidator) SecureValueClientProvider {
+func ProvideSecureValueClientProvider(service contracts.SecureValueService, validator contracts.SecureValueValidator, access claims.AccessClient) SecureValueClientProvider {
 	return &newSecureValueClient{
 		schema:    secretv1beta1.SecureValueSchema(),
 		service:   service,
 		validator: validator,
+		access:    authsvc.NewResourceAuthorizer(access),
 	}
 }
 
@@ -70,6 +76,10 @@ func (c *newSecureValueClient) CreateInto(ctx context.Context, identifier resour
 		return fmt.Errorf("missing auth info in context")
 	}
 
+	if err := c.checkAccess(ctx, identifier.Namespace, identifier.Name, utils.VerbCreate); err != nil {
+		return err
+	}
+
 	createdSv, err := c.service.Create(ctx, sv, user.GetUID())
 	if err != nil {
 		return err
@@ -103,6 +113,10 @@ func (c *newSecureValueClient) GetInto(ctx context.Context, identifier resource.
 	}
 	if len(identifier.Name) == 0 {
 		return fmt.Errorf("name is required")
+	}
+
+	if err := c.checkAccess(ctx, identifier.Namespace, identifier.Name, utils.VerbGet); err != nil {
+		return err
 	}
 
 	sv, err := c.service.Read(ctx, xkube.Namespace(identifier.Namespace), identifier.Name)
@@ -164,6 +178,10 @@ func (c *newSecureValueClient) UpdateInto(ctx context.Context, identifier resour
 		return fmt.Errorf("missing auth info in context")
 	}
 
+	if err := c.checkAccess(ctx, identifier.Namespace, identifier.Name, utils.VerbUpdate); err != nil {
+		return err
+	}
+
 	updatedSv, _, err := c.service.Update(ctx, sv, user.GetUID())
 	if err != nil {
 		return err
@@ -187,6 +205,10 @@ func (c *newSecureValueClient) Delete(ctx context.Context, identifier resource.I
 		return fmt.Errorf("name is required")
 	}
 
+	if err := c.checkAccess(ctx, identifier.Namespace, identifier.Name, utils.VerbDelete); err != nil {
+		return err
+	}
+
 	_, err := c.service.Delete(ctx, xkube.Namespace(identifier.Namespace), identifier.Name)
 	return err
 }
@@ -205,6 +227,10 @@ func (c *newSecureValueClient) ListInto(ctx context.Context, namespace string, o
 	}
 	if len(namespace) == 0 {
 		return fmt.Errorf("namespace is required")
+	}
+
+	if err := c.checkAccess(ctx, namespace, "", utils.VerbList); err != nil {
+		return err
 	}
 
 	secureValueList, err := c.service.List(ctx, xkube.Namespace(namespace))
@@ -232,4 +258,27 @@ func (c *newSecureValueClient) PatchInto(ctx context.Context, identifier resourc
 
 func (c *newSecureValueClient) Watch(ctx context.Context, namespace string, options resource.WatchOptions) (resource.WatchResponse, error) {
 	return nil, fmt.Errorf("watch is not supported")
+}
+
+func (c *newSecureValueClient) checkAccess(ctx context.Context, namespace, name, verb string) error {
+	gr := secretv1beta1.SecureValuesResourceInfo.GroupResource()
+
+	decision, reason, err := c.access.Authorize(ctx, authorizer.AttributesRecord{
+		Verb:            verb,
+		APIGroup:        gr.Group,
+		Resource:        gr.Resource,
+		Namespace:       namespace,
+		Name:            name,
+		ResourceRequest: true,
+	})
+
+	if err != nil {
+		return apierrors.NewForbidden(gr, name, fmt.Errorf("failed to check access: %w", err))
+	}
+
+	if decision != authorizer.DecisionAllow {
+		return apierrors.NewForbidden(gr, name, fmt.Errorf("no access to %s: %s", verb, reason))
+	}
+
+	return nil
 }
