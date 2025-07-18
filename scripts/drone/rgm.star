@@ -210,16 +210,20 @@ def rgm_main():
     )
 
 def rgm_tag():
-    # Runs a package / build process (with all distros) when a tag is made
+    """Tag release pipeline that builds and packages all distributions.
+
+    Returns:
+      Drone pipeline.
+    """
     generate_token_step = github_app_generate_token_step()
     build_steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh")
-    
+
     # Add dependency on token generation step
     for step in build_steps:
         step["depends_on"] = [generate_token_step["name"]]
-    
+
     steps = [generate_token_step] + build_steps
-    
+
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
