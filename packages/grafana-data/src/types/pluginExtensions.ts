@@ -174,6 +174,11 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
    * @param props The props to be passed to the component.
    */
   openSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
+  /**
+   * @internal
+   * Closes the extension sidebar.
+   */
+  closeSidebar: () => void;
 };
 
 // Extension Points & Contexts
@@ -188,6 +193,7 @@ export enum PluginExtensionPoints {
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
+  DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
@@ -246,6 +252,19 @@ export type PluginExtensionResourceAttributesContext = {
   datasource: {
     type: string;
     uid: string;
+  };
+};
+
+export type DataSourceConfigErrorStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+  };
+  testingStatus: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
   };
 };
 

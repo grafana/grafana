@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Добавить еще"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Состояние оповещения",
       "annotations": "Аннотации",
@@ -3254,6 +3263,9 @@
       "define-allowed-teams-ids-label": "Определить идентификаторы разрешенных команд",
       "display-name-description": "Будет отображаться на странице входа как «Войти с помощью...». Параметр полезен, если вы используете несколько поставщиков удостоверений или протоколов единого входа.",
       "display-name-label": "Отображаемое имя",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Имя ключа, используемого для поиска адреса эл. почты пользователя в карте атрибутов идентификационного токена OAuth2.",
       "email-attribute-name-label": "Имя атрибута эл. почты",
       "email-attribute-path-description": "Выражение JMESPath, используемое для поиска адреса эл. почты в информации пользователя.",
@@ -3270,6 +3282,11 @@
       "id-token-attribute-name-label": "Путь атрибута идентификационного токена",
       "login-attribute-path-description": "Выражение JMESPath, используемое для поиска логина в идентификационном токене пользователя.",
       "login-attribute-path-label": "Путь атрибута логина",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "Идентификатор клиента управляемого удостоверения федеративных учетных данных вашего приложения OAuth2.",
       "managed-identity-client-id-label": "Идентификатор клиента управляемого удостоверения FIC",
       "name-attribute-path-description": "Выражение JMESPath, используемое для поиска имени пользователя в его идентификационном токене. \nЭто имя будет использоваться в качестве отображаемого имени пользователя.",
@@ -3484,6 +3501,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Отмена",
       "cannot-move-folders": "Папки нельзя перемещать",
       "confirmation-text": "Удалить",
@@ -3502,7 +3521,9 @@
       "move-modal-text": "Это действие приведет к перемещению следующего контента:",
       "move-modal-title": "Перемещение",
       "moving": "Перемещение...",
-      "new-folder-name-required-phrase": "Необходимо указать имя папки."
+      "new-folder-name-required-phrase": "Необходимо указать имя папки.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Последние удаленные"
@@ -4649,6 +4670,14 @@
     },
     "errors": {
       "failed-to-load": "Не удалось загрузить дашборд"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -5877,10 +5906,13 @@
       "description-examples": "Именованные группы записи можно использовать для разделения отображаемого текста и значения (<1>см. примеры</1>).",
       "description-optional": "Дополнительно, если вы хотите извлечь часть имени ряда или сегмента узла метрики.",
       "label-data-source": "Источник данных",
+      "label-static-options-sort": "",
       "label-target-data-source": "Целевой источник данных",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Параметры запросов",
-      "selection-options": "Параметры выбора"
+      "selection-options": "Параметры выбора",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -8687,9 +8719,7 @@
     "share-panel": {
       "config-description": "Создайте индивидуальную прямую ссылку, чтобы делиться своей панелью внутри организации, с помощью следующих параметров настройки:",
       "download-image": "Загрузить изображение",
-      "render-image": "Создать изображение",
-      "render-image-error": "Не удалось визуализировать изображение панели",
-      "render-image-error-description": "Ошибка при создании изображения"
+      "render-image": "Создать изображение"
     }
   },
   "live": {
@@ -8863,6 +8893,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11474,6 +11506,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Экспорт в формате JSON",
       "share-externally-title": "Общий доступ с внешними пользователями",
       "share-internally-title": "Общий доступ с внутренними пользователями",
@@ -11509,6 +11542,19 @@
       "view-button": "Просмотр JSON-файла",
       "view-button-yaml": "Просмотр YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Создайте панель библиотеки."
     },
@@ -11517,7 +11563,7 @@
       "info-text": "Создайте прямую ссылку на дашборд или панель, настроенные с помощью приведенных ниже параметров.",
       "link-url": "Привязать URL-адрес",
       "render-alert": "Плагин визуализации изображений не установлен",
-      "render-instructions": "Чтобы визуализировать изображение панели, необходимо установить <2>плагин визуализации изображений Grafana</2>. Чтобы установить плагин, обратитесь к администратору Grafana.",
+      "render-instructions": "",
       "rendered-image": "Прямая ссылка на визуализированное изображение",
       "save-alert": "Дашборд не сохранен",
       "save-dashboard": "Чтобы визуализировать изображение панели, сначала необходимо сохранить дашборд.",
@@ -11585,6 +11631,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Предварительный просмотр панели"
     },
@@ -13235,6 +13287,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

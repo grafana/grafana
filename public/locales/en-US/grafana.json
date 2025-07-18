@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Add more"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "AI Alert Rule Button failed to load",
+        "improve-annotations-button": "AI Improve Annotations Button failed to load",
+        "improve-labels-button": "AI Improve Labels Button failed to load",
+        "template-button": "AI Template Button failed to load",
+        "triage-button": "AI Triage Button failed to load"
+      }
+    },
     "alert": {
       "alert-state": "Alert state",
       "annotations": "Annotations",
@@ -3228,6 +3237,9 @@
       "define-allowed-teams-ids-label": "Define allowed teams IDs",
       "display-name-description": "Will be displayed on the login page as \"Sign in with ...\". Helpful if you use more than one identity providers or SSO protocols.",
       "display-name-label": "Display name",
+      "domain-hint-description": "Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.",
+      "domain-hint-label": "Domain hint",
+      "domain-hint-valid-domain": "This field must be a valid domain.",
       "email-attribute-name-description": "Name of the key to use for user email lookup within the attributes map of OAuth2 ID token.",
       "email-attribute-name-label": "Email attribute name",
       "email-attribute-path-description": "JMESPath expression to use for user email lookup from the user information.",
@@ -3244,6 +3256,11 @@
       "id-token-attribute-name-label": "ID token attribute name",
       "login-attribute-path-description": "JMESPath expression to use for user login lookup from the user ID token.",
       "login-attribute-path-label": "Login attribute path",
+      "login-prompt-consent": "Consent",
+      "login-prompt-description": "Indicates the type of user interaction when the user logs in with the IdP.",
+      "login-prompt-label": "Login prompt",
+      "login-prompt-login": "Login",
+      "login-prompt-select-account": "Select account",
       "managed-identity-client-id-description": "The managed identity client ID of the federated identity credential of your OAuth2 app.",
       "managed-identity-client-id-label": "FIC managed identity client ID",
       "name-attribute-path-description": "JMESPath expression to use for user name lookup from the user ID token. \nThis name will be used as the user's display name.",
@@ -3458,6 +3475,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
+      "bulk-delete-provisioned-resources-not-implemented": "Bulk delete for provisioned resources is not implemented yet.",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3476,7 +3495,9 @@
       "move-modal-text": "This action will move the following content:",
       "move-modal-title": "Move",
       "moving": "Moving...",
-      "new-folder-name-required-phrase": "Folder name is required."
+      "new-folder-name-required-phrase": "Folder name is required.",
+      "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
+      "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
@@ -3538,6 +3559,7 @@
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
+      "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
@@ -4613,6 +4635,14 @@
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
+    },
+    "export": {
+      "button": {
+        "label": "Export dashboard"
+      },
+      "menu": {
+        "label": "Export dashboard menu"
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -5837,10 +5867,13 @@
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
+      "label-static-options-sort": "Static options sort",
       "label-target-data-source": "Target data source",
+      "label-use-static-options": "Use static options",
       "name-regex": "Regex",
       "query-options": "Query options",
-      "selection-options": "Selection options"
+      "selection-options": "Selection options",
+      "static-options-legend": "Static options"
     },
     "resource-export": {
       "label": {
@@ -7922,6 +7955,60 @@
       "previous-label": "Previous month",
       "select-placeholder": "Select date/time"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "April",
+        "label-august": "August",
+        "label-december": "December",
+        "label-february": "February",
+        "label-january": "January",
+        "label-july": "July",
+        "label-june": "June",
+        "label-march": "March",
+        "label-may": "May",
+        "label-november": "November",
+        "label-october": "October",
+        "label-september": "September"
+      },
+      "quick-options": {
+        "day-before-yesterday": "Day before yesterday",
+        "last-1-hour": "Last 1 hour",
+        "last-1-year": "Last 1 year",
+        "last-12-hours": "Last 12 hours",
+        "last-15-mins": "Last 15 minutes",
+        "last-2-days": "Last 2 days",
+        "last-2-years": "Last 2 years",
+        "last-24-hours": "Last 24 hours",
+        "last-3-hours": "Last 3 hours",
+        "last-30-days": "Last 30 days",
+        "last-30-mins": "Last 30 minutes",
+        "last-5-mins": "Last 5 minutes",
+        "last-5-years": "Last 5 years",
+        "last-6-hours": "Last 6 hours",
+        "last-6-months": "Last 6 months",
+        "last-7-days": "Last 7 days",
+        "last-90-days": "Last 90 days",
+        "previous-fiscal-quarter": "Previous fiscal quarter",
+        "previous-fiscal-year": "Previous fiscal year",
+        "previous-month": "Previous month",
+        "previous-week": "Previous week",
+        "previous-year": "Previous year",
+        "this-day-last-week": "This day last week",
+        "this-fiscal-quarter": "This fiscal quarter",
+        "this-fiscal-quarter-so-far": "This fiscal quarter so far",
+        "this-fiscal-year": "This fiscal year",
+        "this-fiscal-year-so-far": "This fiscal year so far",
+        "this-month": "This month",
+        "this-month-so-far": "This month so far",
+        "this-week": "This week",
+        "this-week-so-far": "This week so far",
+        "this-year": "This year",
+        "this-year-so-far": "This year so far",
+        "today": "Today",
+        "today-so-far": "Today so far",
+        "yesterday": "Yesterday"
+      }
+    },
     "drawer": {
       "close": "Close"
     },
@@ -7968,6 +8055,20 @@
       "description-fields-with-value": "Set properties for fields with reducer condition",
       "field-name-picker": {
         "placeholder": "Select field"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "Boolean",
+        "label-enum": "Enum",
+        "label-number": "Number",
+        "label-other": "Other",
+        "label-string": "String",
+        "label-time": "Time",
+        "label-traces": "Traces"
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "Frames ({{framesCount}}): {{framesNames}}",
+        "label": "Query: {{refId}}",
+        "label-missing-ref-id": "Query: (missing refId)"
       },
       "name-field-name-by-regex-matcher": "Fields with name matching regex",
       "name-fields-by-query": "Fields returned by query",
@@ -8635,9 +8736,7 @@
     "share-panel": {
       "config-description": "Create a personalized, direct link to share your panel within your organization, with the following customization settings:",
       "download-image": "Download image",
-      "render-image": "Generate image",
-      "render-image-error": "Failed to render panel image",
-      "render-image-error-description": "An error occurred when generating the image"
+      "render-image": "Generate image"
     }
   },
   "live": {
@@ -8805,6 +8904,8 @@
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
+      "move-displayed-field-down": "Move down",
+      "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
@@ -11398,6 +11499,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "Export as image",
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
@@ -11433,6 +11535,19 @@
       "view-button": "View JSON",
       "view-button-yaml": "View YAML"
     },
+    "image": {
+      "actions": "Image export actions",
+      "cancel-button": "Cancel",
+      "download-button": "Download image",
+      "error-title": "Failed to generate image",
+      "generate-button": "Generate image",
+      "generating": "Generating image...",
+      "info-text": "Save this dashboard as an image",
+      "preview": "Preview",
+      "preview-aria": "Generated image preview",
+      "preview-region": "Image preview",
+      "title": "Export as image"
+    },
     "library": {
       "info": "Create library panel."
     },
@@ -11441,7 +11556,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render an image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
@@ -11509,6 +11624,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "Save the dashboard to enable image generation",
+    "download-disabled-help": "Generate an image first to enable download",
+    "error-title": "Failed to generate image",
+    "form": {
+      "label": "Panel image settings"
+    },
     "preview": {
       "title": "Panel preview"
     },
@@ -13157,6 +13278,16 @@
           "numerical-desc": "Numerical (desc)"
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "Add option",
+      "description": "Add custom options in addition to query results",
+      "label-placeholder": "display label",
+      "remove-option-button-label": "Remove option",
+      "value-placeholder": "value, default empty string"
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": "How to sort static options with query results"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",
