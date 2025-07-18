@@ -15,9 +15,6 @@ fi
 if [ "$BASE_URL" != "" ]; then
     echo -e "BASE_URL set, skipping starting server"
 else
-  # Start it in the background
-  ./scripts/grafana-server/start-server $LICENSE_PATH 2>&1 > scripts/grafana-server/server.log &
-  ./scripts/grafana-server/wait-for-grafana
+  ./scripts/grafana-server/start-server $LICENSE_PATH 2>&1 > scripts/grafana-server/server.log
 fi
 
-PORT=3001 HOST=localhost yarn playwright test
