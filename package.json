@@ -240,7 +240,7 @@
     "redux-mock-store": "1.5.5",
     "rimraf": "6.0.1",
     "sass": "1.83.4",
-    "sass-loader": "16.0.4",
+    "sass-loader": "16.0.5",
     "smtp-tester": "^2.1.0",
     "style-loader": "4.0.0",
     "stylelint": "16.14.1",
