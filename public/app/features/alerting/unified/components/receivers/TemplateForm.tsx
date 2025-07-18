@@ -26,7 +26,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { trackAITemplateFeedback } from 'app/extensions/alerting/AI/analytics/tracking';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
@@ -110,8 +109,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   // AI feedback state
   const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
-  const [aiFeedbackGiven, setAiFeedbackGiven] = useState(false);
-  const [templateGenerationStartTime, setTemplateGenerationStartTime] = useState<number | null>(null);
 
   const { isProvisioned } = useNotificationTemplateMetadata(originalTemplate);
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
@@ -174,21 +171,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const handleTemplateGenerated = (template: string) => {
     setValue('content', template);
     setAiGeneratedTemplate(true);
-    setAiFeedbackGiven(false);
-    setTemplateGenerationStartTime(Date.now());
-  };
-
-  const handleAiFeedback = (helpful: boolean, comment?: string) => {
-    const timeToFeedback = templateGenerationStartTime ? Date.now() - templateGenerationStartTime : undefined;
-
-    // Track template feedback
-    trackAITemplateFeedback({
-      helpful,
-      comment,
-      ...(timeToFeedback && { timeToFeedback }),
-    });
-
-    setAiFeedbackGiven(true);
   };
 
   return (
@@ -374,14 +356,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}
-                      aiFeedback={
-                        aiGeneratedTemplate
-                          ? {
-                              onFeedback: handleAiFeedback,
-                              feedbackGiven: aiFeedbackGiven,
-                            }
-                          : undefined
-                      }
+                      aiGeneratedTemplate={aiGeneratedTemplate}
+                      setAiGeneratedTemplate={setAiGeneratedTemplate}
                     />
                   </div>
                 )}

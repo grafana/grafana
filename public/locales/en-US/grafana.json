@@ -383,23 +383,12 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "AI Alert Rule Button failed to load",
+        "feedback-button": "AI Feedback Button failed to load",
         "improve-annotations-button": "AI Improve Annotations Button failed to load",
         "improve-labels-button": "AI Improve Labels Button failed to load",
         "template-button": "AI Template Button failed to load",
         "triage-button": "AI Triage Button failed to load"
       }
-    },
-    "ai-feedback": {
-      "comment-description": "Help us improve by sharing what worked well or what could be better",
-      "comment-label": "Additional feedback (optional)",
-      "comment-placeholder": "Share your thoughts on the AI response...",
-      "comment-prompt": "Would you like to tell us more about your experience?",
-      "helpful": "Yes, helpful",
-      "not-helpful": "No, not helpful",
-      "question": "Was this AI response helpful?",
-      "skip": "Skip",
-      "submit": "Submit Feedback",
-      "thank-you": "Thank you for your feedback!"
     },
     "alert": {
       "alert-state": "Alert state",

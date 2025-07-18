@@ -5,19 +5,16 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 
-import { AIFeedbackComponent } from '../../AI/components/AIFeedbackComponent';
 import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
+import { AIFeedbackButtonComponent } from '../../enterprise-components/AI/addAIFeedbackButton';
 import { stringifyErrorLike } from '../../utils/misc';
 import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 
 import { usePreviewTemplate } from './usePreviewTemplate';
 
-export interface AITemplateFeedbackProps {
-  onFeedback: (helpful: boolean, comment?: string) => void;
-  feedbackGiven: boolean;
-}
 
 export function TemplatePreview({
   payload,
@@ -26,7 +23,8 @@ export function TemplatePreview({
   payloadFormatError,
   setPayloadFormatError,
   className,
-  aiFeedback,
+  aiGeneratedTemplate,
+  setAiGeneratedTemplate,
 }: {
   payload: string;
   templateName: string;
@@ -34,7 +32,8 @@ export function TemplatePreview({
   payloadFormatError: string | null;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
   className?: string;
-  aiFeedback?: AITemplateFeedbackProps;
+  aiGeneratedTemplate: boolean;
+  setAiGeneratedTemplate: (aiGeneratedTemplate: boolean) => void;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -56,7 +55,10 @@ export function TemplatePreview({
             disabled={isLoading}
             icon="sync"
             aria-label={t('alerting.template-preview.aria-label-refresh-preview', 'Refresh preview')}
-            onClick={onPreview}
+            onClick={() => {
+              onPreview();
+              setAiGeneratedTemplate(false);
+            }}
             size="sm"
             variant="secondary"
           >
@@ -65,13 +67,12 @@ export function TemplatePreview({
         }
       />
       <div className={styles.viewer.feedbackContainer}>
-        {aiFeedback && (
-          <AIFeedbackComponent
-            onFeedback={aiFeedback.onFeedback}
-            feedbackGiven={aiFeedback.feedbackGiven}
-            showComment={true}
-          />
-        )}
+        <AIFeedbackButtonComponent
+          origin="template"
+          featureEnabled={config.featureToggles.alertingAIGenTemplates === true && aiGeneratedTemplate}
+          showComment={true}
+          useRouteDetection={false}
+        />
       </div>
       <Box flex={1}>
         <AutoSizer disableWidth>
