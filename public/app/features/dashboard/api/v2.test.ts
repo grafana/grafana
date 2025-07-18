@@ -329,7 +329,7 @@ describe('v2 dashboard API', () => {
           conversion: {
             failed: true,
             error: 'other-error',
-            storedVersion: 'v2alpha1',
+            storedVersion: 'v2alpha2',
           },
         },
       };
