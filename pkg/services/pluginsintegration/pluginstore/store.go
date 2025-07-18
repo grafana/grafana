@@ -27,45 +27,42 @@ type Store interface {
 type Service struct {
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
+	pluginSources  sources.Registry
+
+	log     log.Logger
+	readyCh chan struct{}
 }
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service) (*Service, error) {
-	ctx := context.Background()
-	start := time.Now()
-	totalPlugins := 0
-	logger := log.New("plugin.store")
-	logger.Info("Loading plugins...")
+	return New(pluginRegistry, pluginLoader, pluginSources), nil
+}
 
-	for _, ps := range pluginSources.List(ctx) {
-		loadedPlugins, err := pluginLoader.Load(ctx, ps)
-		if err != nil {
-			logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
-			return nil, err
-		}
-
-		totalPlugins += len(loadedPlugins)
+func New(pluginRegistry registry.Service, pluginLoader loader.Service,
+	pluginSources sources.Registry) *Service {
+	return &Service{
+		pluginRegistry: pluginRegistry,
+		pluginLoader:   pluginLoader,
+		pluginSources:  pluginSources,
+		readyCh:        make(chan struct{}),
+		log:            log.New("plugin.store"),
 	}
-
-	logger.Info("Plugins loaded", "count", totalPlugins, "duration", time.Since(start))
-
-	return New(pluginRegistry, pluginLoader), nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	if err := s.loadPlugins(ctx); err != nil {
+		return err
+	}
 	<-ctx.Done()
 	s.shutdown(ctx)
 	return ctx.Err()
 }
 
-func New(pluginRegistry registry.Service, pluginLoader loader.Service) *Service {
-	return &Service{
-		pluginRegistry: pluginRegistry,
-		pluginLoader:   pluginLoader,
-	}
-}
-
 func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
+	if err := s.awaitReadyOrTimeout(ctx); err != nil {
+		return Plugin{}, false
+	}
+
 	p, exists := s.plugin(ctx, pluginID)
 	if !exists {
 		return Plugin{}, false
@@ -75,6 +72,10 @@ func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
 }
 
 func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Plugin {
+	if err := s.awaitReadyOrTimeout(ctx); err != nil {
+		return nil
+	}
+
 	// if no types passed, assume all
 	if len(pluginTypes) == 0 {
 		pluginTypes = plugins.PluginTypes
@@ -92,6 +93,30 @@ func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Pl
 		}
 	}
 	return pluginsList
+}
+
+func (s *Service) awaitReadyOrTimeout(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-s.readyCh:
+		return nil
+	}
+}
+
+func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
+	staticRoutes := make([]*plugins.StaticRoute, 0)
+
+	if err := s.awaitReadyOrTimeout(ctx); err != nil {
+		return staticRoutes
+	}
+
+	for _, p := range s.availablePlugins(ctx) {
+		if p.StaticRoute() != nil {
+			staticRoutes = append(staticRoutes, p.StaticRoute())
+		}
+	}
+	return staticRoutes
 }
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
@@ -124,20 +149,11 @@ func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 	return res
 }
 
-func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
-	staticRoutes := make([]*plugins.StaticRoute, 0)
-
-	for _, p := range s.availablePlugins(ctx) {
-		if p.StaticRoute() != nil {
-			staticRoutes = append(staticRoutes, p.StaticRoute())
-		}
-	}
-	return staticRoutes
-}
-
 func (s *Service) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, plugin := range s.pluginRegistry.Plugins(ctx) {
+	// TODO figure out reliable shutdown when experiencing "apiserver is shutting down" error
+	// Shutdown() on Registry
+	for _, plugin := range s.pluginRegistry.Plugins(context.WithoutCancel(ctx)) {
 		wg.Add(1)
 		go func(ctx context.Context, p *plugins.Plugin) {
 			defer wg.Done()
@@ -149,4 +165,24 @@ func (s *Service) shutdown(ctx context.Context) {
 		}(ctx, plugin)
 	}
 	wg.Wait()
+}
+
+func (s *Service) loadPlugins(ctx context.Context) error {
+	start := time.Now()
+	totalPlugins := 0
+	s.log.Info("Loading plugins...")
+
+	for _, ps := range s.pluginSources.List(ctx) {
+		loadedPlugins, err := s.pluginLoader.Load(ctx, ps)
+		if err != nil {
+			s.log.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
+			return err
+		}
+
+		totalPlugins += len(loadedPlugins)
+	}
+
+	s.log.Info("Plugins loaded", "count", totalPlugins, "duration", time.Since(start))
+	close(s.readyCh)
+	return nil
 }

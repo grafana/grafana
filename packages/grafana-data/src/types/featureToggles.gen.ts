@@ -1059,4 +1059,8 @@ export interface FeatureToggles {
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
+  /**
+  * Enable the plugins app
+  */
+  pluginsApp?: boolean;
 }

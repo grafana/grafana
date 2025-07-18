@@ -55,7 +55,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn, pluginassets.ProvideService()))
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
 	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest())
-	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
+	term, err := pipeline.ProvideTerminationStage(pCfg, proc)
 	require.NoError(t, err)
 
 	l := CreateTestLoader(t, pCfg, LoaderOpts{
@@ -105,8 +105,7 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts Lo
 
 	if opts.Terminator == nil {
 		var err error
-		reg := registry.ProvideService()
-		opts.Terminator, err = pipeline.ProvideTerminationStage(cfg, reg, process.ProvideService())
+		opts.Terminator, err = pipeline.ProvideTerminationStage(cfg, process.ProvideService())
 		require.NoError(t, err)
 	}
 

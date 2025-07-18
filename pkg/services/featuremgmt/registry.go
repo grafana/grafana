@@ -1827,6 +1827,15 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
+		{
+			Name:              "pluginsApp",
+			Description:       "Enable the plugins app",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			RequiresRestart:   true,
+		},
 	}
 )
 

@@ -32,6 +32,7 @@ import { folderAPIv1beta1 } from '../../api/clients/folder/v1beta1';
 import { iamAPIv0alpha1 } from '../../api/clients/iam/v0alpha1';
 import { playlistAPIv0alpha1 } from '../../api/clients/playlist/v0alpha1';
 import { provisioningAPIv0alpha1 } from '../../api/clients/provisioning/v0alpha1';
+import { pluginsAPI } from '../../api/clients/plugins';
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
 import { userPreferencesAPI } from '../../features/preferences/api';
 import { cleanUpAction } from '../actions/cleanUp';
@@ -71,6 +72,7 @@ const rootReducers = {
   [provisioningAPIv0alpha1.reducerPath]: provisioningAPIv0alpha1.reducer,
   [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
   [advisorAPIv0alpha1.reducerPath]: advisorAPIv0alpha1.reducer,
+  [pluginsAPI.reducerPath]: pluginsAPI.reducer,
   // PLOP_INJECT_REDUCER
   // Used by the API client generator
 };

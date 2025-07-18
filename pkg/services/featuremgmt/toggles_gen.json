@@ -2498,6 +2498,21 @@
     },
     {
       "metadata": {
+        "name": "pluginsApp",
+        "resourceVersion": "1752853440771",
+        "creationTimestamp": "2025-07-18T15:44:00Z"
+      },
+      "spec": {
+        "description": "Enable the plugins app",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsAutoUpdate",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2025-04-16T11:44:39Z"

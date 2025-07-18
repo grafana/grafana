@@ -3,6 +3,7 @@ package appregistry
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
@@ -15,4 +16,5 @@ var WireSet = wire.NewSet(
 	investigations.RegisterApp,
 	advisor.RegisterApp,
 	notifications.RegisterApp,
+	plugins.RegisterApp,
 )

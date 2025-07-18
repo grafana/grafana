@@ -85,11 +85,10 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 	})
 }
 
-func ProvideTerminationStage(cfg *config.PluginManagementCfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
+func ProvideTerminationStage(cfg *config.PluginManagementCfg, pm process.Manager) (*termination.Terminate, error) {
 	return termination.New(cfg, termination.Opts{
 		TerminateFuncs: []termination.TerminateFunc{
 			termination.BackendProcessTerminatorStep(pm),
-			termination.DeregisterStep(pr),
 		},
 	})
 }
