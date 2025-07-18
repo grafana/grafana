@@ -108,6 +108,7 @@ const dummyProps: Props = {
     dsToExplore: [],
   },
   changeDatasource: jest.fn(),
+  compact: false,
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
