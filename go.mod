@@ -244,7 +244,7 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 )
 
-require cloud.google.com/go/spanner v1.82.0
+require cloud.google.com/go/spanner v1.82.0 // @grafana/grafana-search-and-storage
 
 require (
 	cel.dev/expr v0.23.1 // indirect
