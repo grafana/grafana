@@ -140,7 +140,7 @@ var wireExtsBasicSet = wire.NewSet(
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
 	gsmKMSProviders.ProvideOSSKMSProviders,
-	secret.ProvideSecureValueClient,
+	secret.ProvideSecureValueClientProvider,
 	provisioningExtras,
 )
 

@@ -5,227 +5,231 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
-// SecureValueClient is a CRUD client for the secure value API.
+// SecureValueClientProvider provides a typed and namespaced SecureValueClient interface implementation.
+type SecureValueClientProvider = contracts.SecureValueClientProvider
+
+// SecureValueClient is a CRUD client for the secure value API which implements resource.Client.
 type SecureValueClient = contracts.SecureValueClient
 
-type secureValueClient struct {
-	namespace string
+type newSecureValueClient struct {
+	schema    resource.Schema
 	service   contracts.SecureValueService
 	validator contracts.SecureValueValidator
 }
 
-var _ SecureValueClient = &secureValueClient{}
-
-func ProvideSecureValueClient(service contracts.SecureValueService, validator contracts.SecureValueValidator) SecureValueClient {
-	return &secureValueClient{
+func ProvideSecureValueClientProvider(service contracts.SecureValueService, validator contracts.SecureValueValidator) SecureValueClientProvider {
+	return &newSecureValueClient{
+		schema:    secretv1beta1.SecureValueSchema(),
 		service:   service,
 		validator: validator,
 	}
 }
 
-// Client returns a resource interface that is scoped to a specific namespace.
-func (c *secureValueClient) Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error) {
-	return c.Namespace(namespace), nil
+func (c *newSecureValueClient) Client(ctx context.Context, namespace string) (SecureValueClient, error) {
+	return resource.NewNamespaced(
+		resource.NewTypedClient[*secretv1beta1.SecureValue, *secretv1beta1.SecureValueList](c, secretv1beta1.SecureValueKind()),
+		namespace,
+	), nil
 }
 
-// Namespace returns a resource interface that is scoped to a specific namespace.
-func (c *secureValueClient) Namespace(ns string) dynamic.ResourceInterface {
-	info, err := claims.ParseNamespace(ns)
-	if err != nil {
-		panic(err)
-	}
-	if len(info.Value) == 0 {
-		panic("namespace is required")
-	}
-
-	ret := *c
-	ret.namespace = ns
-	return &ret
-}
-
-// Create a new secure value. Options and subresources are not supported and ignored.
-func (c *secureValueClient) Create(ctx context.Context, obj *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
-	if len(c.namespace) == 0 {
-		return nil, fmt.Errorf("namespace is required")
-	}
-
-	sv, err := fromUnstructured(obj)
-	if err != nil {
+func (c *newSecureValueClient) Create(ctx context.Context, identifier resource.Identifier, obj resource.Object, options resource.CreateOptions) (resource.Object, error) {
+	into := c.schema.ZeroValue()
+	if err := c.CreateInto(ctx, identifier, obj, options, into); err != nil {
 		return nil, err
 	}
+	return into, nil
+}
 
-	if sv.Namespace != c.namespace {
-		return nil, fmt.Errorf("namespace mismatch")
+func (c *newSecureValueClient) CreateInto(ctx context.Context, identifier resource.Identifier, obj resource.Object, _ resource.CreateOptions, into resource.Object) error {
+	if obj == nil {
+		return fmt.Errorf("obj cannot be nil")
 	}
+	if into == nil {
+		return fmt.Errorf("into cannot be nil")
+	}
+
+	sv, ok := obj.(*secretv1beta1.SecureValue)
+	if !ok {
+		return fmt.Errorf("expected obj to be *secretv1beta1.SecureValue, got %T", obj)
+	}
+
 	if errs := c.validator.Validate(sv, nil, admission.Create); len(errs) > 0 {
-		return nil, fmt.Errorf("invalid secure value: %w", errs.ToAggregate())
+		return fmt.Errorf("invalid secure value: %w", errs.ToAggregate())
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
+		return fmt.Errorf("missing auth info in context")
 	}
 
 	createdSv, err := c.service.Create(ctx, sv, user.GetUID())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return toUnstructured(createdSv)
+	ret, ok := into.(*secretv1beta1.SecureValue)
+	if !ok {
+		return fmt.Errorf("expected into to be *secretv1beta1.SecureValue, got %T", into)
+	}
+
+	createdSv.DeepCopyInto(ret)
+
+	return nil
 }
 
-// Get a secure value by name. Options and subresources are not supported and ignored.
-func (c *secureValueClient) Get(ctx context.Context, name string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
-	if len(c.namespace) == 0 {
-		return nil, fmt.Errorf("namespace is required")
-	}
-	if len(name) == 0 {
-		return nil, fmt.Errorf("name is required")
-	}
-
-	sv, err := c.service.Read(ctx, xkube.Namespace(c.namespace), name)
+func (c *newSecureValueClient) Get(ctx context.Context, identifier resource.Identifier) (resource.Object, error) {
+	into := c.schema.ZeroValue()
+	err := c.GetInto(ctx, identifier, into)
 	if err != nil {
 		return nil, err
 	}
-
-	return toUnstructured(sv)
+	return into, nil
 }
 
-// Update a secure value. Options and subresources are not supported and ignored.
-func (c *secureValueClient) Update(ctx context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
-	if len(c.namespace) == 0 {
-		return nil, fmt.Errorf("namespace is required")
+func (c *newSecureValueClient) GetInto(ctx context.Context, identifier resource.Identifier, into resource.Object) error {
+	if into == nil {
+		return fmt.Errorf("into cannot be nil")
+	}
+	if len(identifier.Namespace) == 0 {
+		return fmt.Errorf("namespace is required")
+	}
+	if len(identifier.Name) == 0 {
+		return fmt.Errorf("name is required")
 	}
 
-	oldUnstructured, err := c.Get(ctx, obj.GetName(), metav1.GetOptions{})
+	sv, err := c.service.Read(ctx, xkube.Namespace(identifier.Namespace), identifier.Name)
+	if err != nil {
+		return err
+	}
+
+	ret, ok := into.(*secretv1beta1.SecureValue)
+	if !ok {
+		return fmt.Errorf("expected into to be *secretv1beta1.SecureValue, got %T", into)
+	}
+
+	sv.DeepCopyInto(ret)
+
+	return nil
+}
+
+func (c *newSecureValueClient) Update(ctx context.Context, identifier resource.Identifier, obj resource.Object, options resource.UpdateOptions) (resource.Object, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("obj cannot be nil")
+	}
+	into := c.schema.ZeroValue()
+	err := c.UpdateInto(ctx, identifier, obj, options, into)
 	if err != nil {
 		return nil, err
 	}
+	return into, nil
+}
 
-	oldSv, err := fromUnstructured(oldUnstructured)
+func (c *newSecureValueClient) UpdateInto(ctx context.Context, identifier resource.Identifier, obj resource.Object, _ resource.UpdateOptions, into resource.Object) error {
+	if obj == nil {
+		return fmt.Errorf("obj cannot be nil")
+	}
+	if into == nil {
+		return fmt.Errorf("into cannot be nil")
+	}
+
+	oldObj, err := c.Get(ctx, identifier)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	sv, err := fromUnstructured(obj)
-	if err != nil {
-		return nil, err
+	oldSv, ok := oldObj.(*secretv1beta1.SecureValue)
+	if !ok {
+		return fmt.Errorf("expected oldObj to be *secretv1beta1.SecureValue, got %T", oldObj)
 	}
 
-	if sv.Namespace != c.namespace {
-		return nil, fmt.Errorf("namespace mismatch")
+	sv, ok := obj.(*secretv1beta1.SecureValue)
+	if !ok {
+		return fmt.Errorf("expected obj to be *secretv1beta1.SecureValue, got %T", obj)
 	}
+
 	if errs := c.validator.Validate(sv, oldSv, admission.Update); len(errs) > 0 {
-		return nil, fmt.Errorf("invalid secure value: %w", errs.ToAggregate())
+		return fmt.Errorf("invalid secure value: %w", errs.ToAggregate())
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
+		return fmt.Errorf("missing auth info in context")
 	}
 
 	updatedSv, _, err := c.service.Update(ctx, sv, user.GetUID())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return toUnstructured(updatedSv)
+	ret, ok := into.(*secretv1beta1.SecureValue)
+	if !ok {
+		return fmt.Errorf("expected into to be *secretv1beta1.SecureValue, got %T", into)
+	}
+
+	updatedSv.DeepCopyInto(ret)
+
+	return nil
 }
 
-// Delete a secure value by name. Options and subresources are not supported and ignored.
-func (c *secureValueClient) Delete(ctx context.Context, name string, _ metav1.DeleteOptions, _ ...string) error {
-	if len(c.namespace) == 0 {
+func (c *newSecureValueClient) Delete(ctx context.Context, identifier resource.Identifier, _ resource.DeleteOptions) error {
+	if len(identifier.Namespace) == 0 {
 		return fmt.Errorf("namespace is required")
 	}
-	if len(name) == 0 {
+	if len(identifier.Name) == 0 {
 		return fmt.Errorf("name is required")
 	}
 
-	_, err := c.service.Delete(ctx, xkube.Namespace(c.namespace), name)
+	_, err := c.service.Delete(ctx, xkube.Namespace(identifier.Namespace), identifier.Name)
 	return err
 }
 
-// List all secure values in the namespace. Options and subresources are not supported and ignored.
-func (c *secureValueClient) List(ctx context.Context, _ metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	if len(c.namespace) == 0 {
-		return nil, fmt.Errorf("namespace is required")
-	}
-
-	list, err := c.service.List(ctx, xkube.Namespace(c.namespace))
-	if err != nil {
+func (c *newSecureValueClient) List(ctx context.Context, namespace string, options resource.ListOptions) (resource.ListObject, error) {
+	into := c.schema.ZeroListValue()
+	if err := c.ListInto(ctx, namespace, options, into); err != nil {
 		return nil, err
 	}
+	return into, nil
+}
 
-	items := make([]unstructured.Unstructured, 0, len(list.Items))
-	for _, sv := range list.Items {
-		u, err := toUnstructured(&sv)
-		if err != nil {
-			return nil, err
-		}
-
-		items = append(items, *u)
+func (c *newSecureValueClient) ListInto(ctx context.Context, namespace string, options resource.ListOptions, into resource.ListObject) error {
+	if into == nil {
+		return fmt.Errorf("into cannot be nil")
+	}
+	if len(namespace) == 0 {
+		return fmt.Errorf("namespace is required")
 	}
 
-	return &unstructured.UnstructuredList{
-		Items: items,
-	}, nil
+	secureValueList, err := c.service.List(ctx, xkube.Namespace(namespace))
+	if err != nil {
+		return err
+	}
+
+	ret, ok := into.(*secretv1beta1.SecureValueList)
+	if !ok {
+		return fmt.Errorf("expected into to be *secretv1beta1.SecureValueList, got %T", into)
+	}
+
+	secureValueList.DeepCopyInto(ret)
+
+	return nil
 }
 
-// DeleteCollection is not supported and returns an error.
-func (c *secureValueClient) DeleteCollection(_ context.Context, _ metav1.DeleteOptions, _ metav1.ListOptions) error {
-	return fmt.Errorf("deleteCollection is not supported")
+func (c *newSecureValueClient) Patch(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions) (resource.Object, error) {
+	return nil, fmt.Errorf("patch is not supported used Update instead")
 }
 
-// Watch is not supported and returns an error.
-func (c *secureValueClient) Watch(_ context.Context, _ metav1.ListOptions) (watch.Interface, error) {
+func (c *newSecureValueClient) PatchInto(ctx context.Context, identifier resource.Identifier, patch resource.PatchRequest, options resource.PatchOptions, into resource.Object) error {
+	return fmt.Errorf("patchInto is not supported used UpdateInto instead")
+}
+
+func (c *newSecureValueClient) Watch(ctx context.Context, namespace string, options resource.WatchOptions) (resource.WatchResponse, error) {
 	return nil, fmt.Errorf("watch is not supported")
-}
-
-// Patch is not supported and returns an error.
-func (c *secureValueClient) Patch(_ context.Context, _ string, _ types.PatchType, _ []byte, _ metav1.PatchOptions, _ ...string) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("patch is not supported")
-}
-
-// Apply is not supported and returns an error.
-func (c *secureValueClient) Apply(_ context.Context, _ string, _ *unstructured.Unstructured, _ metav1.ApplyOptions, _ ...string) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("apply is not supported")
-}
-
-// UpdateStatus is not supported and returns an error.
-func (c *secureValueClient) UpdateStatus(_ context.Context, _ *unstructured.Unstructured, _ metav1.UpdateOptions) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("updateStatus is not supported")
-}
-
-// ApplyStatus is not supported and returns an error.
-func (c *secureValueClient) ApplyStatus(_ context.Context, _ string, _ *unstructured.Unstructured, _ metav1.ApplyOptions) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("applyStatus is not supported")
-}
-
-func toUnstructured(sv *secretv1beta1.SecureValue) (*unstructured.Unstructured, error) {
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(sv)
-	if err != nil {
-		return nil, err
-	}
-	return &unstructured.Unstructured{Object: unstructuredObj}, nil
-}
-
-func fromUnstructured(u *unstructured.Unstructured) (*secretv1beta1.SecureValue, error) {
-	sv := new(secretv1beta1.SecureValue)
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, sv); err != nil {
-		return nil, err
-	}
-	return sv, nil
 }

@@ -5,21 +5,23 @@ import (
 	"errors"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
+
+	"github.com/grafana/grafana-app-sdk/resource"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 )
 
 const svcName = "provisioning"
 
+type SecureValueClientProvider = secret.SecureValueClientProvider
+
 //go:generate mockery --name SecureValueClient --structname MockSecureValueClient --inpackage --filename secure_value_client_mock.go --with-expecter
-type SecureValueClient interface {
-	Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error)
-}
+type SecureValueClient = secret.SecureValueClient
 
 //go:generate mockery --name Service --structname MockService --inpackage --filename secret_mock.go --with-expecter
 type Service interface {
@@ -32,11 +34,11 @@ var _ Service = (*secretsService)(nil)
 
 //go:generate mockery --name DecryptService --structname MockDecryptService --srcpkg=github.com/grafana/grafana/pkg/registry/apis/secret/service --filename decrypt_service_mock.go --with-expecter
 type secretsService struct {
-	secureValues SecureValueClient
+	secureValues SecureValueClientProvider
 	decryptSvc   grafanasecrets.DecryptService
 }
 
-func NewSecretsService(secretsSvc SecureValueClient, decryptSvc grafanasecrets.DecryptService) Service {
+func NewSecretsService(secretsSvc SecureValueClientProvider, decryptSvc grafanasecrets.DecryptService) Service {
 	return &secretsService{
 		secureValues: secretsSvc,
 		decryptSvc:   decryptSvc,
@@ -50,7 +52,7 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 	}
 
 	// Try to get existing secret
-	existingUnstructured, err := client.Get(ctx, name, metav1.GetOptions{})
+	existingSv, err := client.Get(ctx, name)
 	if err != nil {
 		// If secret doesn't exist (not found error), we'll create it
 		// For other errors, return the error
@@ -62,14 +64,12 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 		}
 	}
 
-	if existingUnstructured != nil {
-		// Update the value directly in the unstructured object
-		if err := unstructured.SetNestedField(existingUnstructured.Object, data, "spec", "value"); err != nil {
-			return "", err
-		}
+	if existingSv != nil {
+		// Update the value directly
+		secret := secretv1beta1.NewExposedSecureValue(data)
+		existingSv.Spec.Value = &secret
 
-		// Update using dynamic client
-		result, err := client.Update(ctx, existingUnstructured, metav1.UpdateOptions{})
+		result, err := client.Update(ctx, existingSv, resource.UpdateOptions{})
 		if err != nil {
 			return "", err
 		}
@@ -77,25 +77,21 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 		return result.GetName(), nil
 	}
 
-	// Create the secret directly as unstructured
-	secret := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "secret.grafana.app/v1beta1",
-			"kind":       "SecureValue",
-			"metadata": map[string]interface{}{
-				"namespace": namespace,
-				"name":      name,
-			},
-			"spec": map[string]interface{}{
-				"description": "provisioning: " + name,
-				"value":       data,
-				"decrypters":  []string{svcName},
-			},
+	secret := secretv1beta1.NewExposedSecureValue(data)
+	secureValue := &secretv1beta1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Spec: secretv1beta1.SecureValueSpec{
+			Description: "provisioning: " + name,
+			Value:       &secret,
+			Decrypters:  []string{svcName},
 		},
 	}
 
 	// Create new secret
-	finalSecret, err := client.Create(ctx, secret, metav1.CreateOptions{})
+	finalSecret, err := client.Create(ctx, secureValue, resource.CreateOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -138,7 +134,7 @@ func (s *secretsService) Delete(ctx context.Context, namespace string, name stri
 		return err
 	}
 
-	if err := client.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
+	if err := client.Delete(ctx, name, resource.DeleteOptions{}); err != nil {
 		// FIXME: This is a temporary workaround until the client abstraction properly handles
 		// k8s not found errors. The client should normalize these errors to return contracts.ErrSecureValueNotFound
 		if isNotFoundError(err) {
