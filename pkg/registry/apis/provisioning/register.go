@@ -74,7 +74,8 @@ var (
 )
 
 type APIBuilder struct {
-	features featuremgmt.FeatureToggles
+	features   featuremgmt.FeatureToggles
+	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
 	getter              rest.Getter
@@ -117,6 +118,7 @@ func NewAPIBuilder(
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
+	usageStats usagestats.Service,
 	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
@@ -134,6 +136,7 @@ func NewAPIBuilder(
 	b := &APIBuilder{
 		mutators:            mutators,
 		tracer:              tracer,
+		usageStats:          usageStats,
 		localFileResolver:   local,
 		features:            features,
 		ghFactory:           ghFactory,
@@ -184,7 +187,7 @@ func RegisterAPIService(
 	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
-	usageStatsService usagestats.Service,
+	usageStats usagestats.Service,
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -202,13 +205,13 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
+		usageStats,
 		repositorySecrets,
 		access,
 		tracer,
 		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
-	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
 	return builder, nil
 }
 
@@ -595,6 +598,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.repositoryLister = repoInformer.Lister()
+			b.usageStats.RegisterMetricsFunc(b.collectProvisioningStats)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
