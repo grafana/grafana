@@ -4,6 +4,7 @@ import { VariableSizeList } from 'react-window';
 
 import { escapeRegex, GrafanaTheme2, shallowCompare } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { useLogListContext } from './LogListContext';
@@ -26,10 +27,11 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     searchVisible,
     toggleFilterLogs,
   } = useLogListSearchContext();
-  const { displayedFields } = useLogListContext();
+  const { displayedFields, noInteractions } = useLogListContext();
   const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const inputRef = useRef('');
+  const searchUsedRef = useRef(false);
   const styles = useStyles2(getStyles);
 
   const matches = useMemo(() => {
@@ -39,12 +41,19 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     return findMatchingLogs(logs, search, displayedFields);
   }, [displayedFields, logs, search, searchVisible]);
 
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    inputRef.current = e.target.value;
-    startTransition(() => {
-      setSearch(inputRef.current);
-    });
-  }, []);
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      inputRef.current = e.target.value;
+      startTransition(() => {
+        setSearch(inputRef.current);
+      });
+      if (!searchUsedRef.current && !noInteractions) {
+        reportInteraction('logs_log_list_search_used');
+        searchUsedRef.current = true;
+      }
+    },
+    [noInteractions]
+  );
 
   const prevResult = useCallback(() => {
     if (currentResult === null) {

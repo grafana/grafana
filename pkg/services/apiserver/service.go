@@ -149,7 +149,7 @@ func ProvideService(
 		rr:                                rr,
 		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
