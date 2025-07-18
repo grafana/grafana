@@ -220,7 +220,6 @@ export interface ImageCellProps {
 }
 
 export interface JSONCellProps {
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
   field: Field;
   rowIdx: number;

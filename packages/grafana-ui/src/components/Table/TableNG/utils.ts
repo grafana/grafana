@@ -26,7 +26,7 @@ import { COLUMN, TABLE } from './constants';
 import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export type CellHeightCalculator = (text: string, cellWidth: number) => number;
+export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
 
 /**
  * @internal
@@ -128,42 +128,78 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
-  let type = getCellOptions(field).type;
-
-  return (
-    field.type === FieldType.string &&
+  const cellOptions = getCellOptions(field);
+  const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-    // so we need to ensure we don't apply overflow hover states for type image
-    type !== TableCellDisplayMode.Image &&
-    type !== TableCellDisplayMode.Pill &&
-    !shouldTextWrap(field) &&
-    !isCellInspectEnabled(field)
-  );
+    // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
+    (field.type === FieldType.string &&
+      cellOptions.type !== TableCellDisplayMode.Image &&
+      cellOptions.type !== TableCellDisplayMode.Pill) ||
+    // regardless of the underlying cell type, data links cells have text overflow.
+    cellOptions.type === TableCellDisplayMode.DataLinks;
+
+  return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
+}
+
+// we only want to infer justifyContent and textAlign for these cellTypes
+const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
+  TableCellDisplayMode.Auto,
+  TableCellDisplayMode.ColorText,
+  TableCellDisplayMode.ColorBackground,
+]);
+
+/**
+ * @internal
+ * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
+ */
+export function getTextAlign(field?: Field): Property.TextAlign {
+  if (!field) {
+    return 'inherit';
+  }
+
+  const custom: TableFieldOptionsType | undefined = field.config.custom;
+  if (custom?.align && custom.align !== 'auto') {
+    return (
+      (
+        {
+          right: 'right',
+          left: 'left',
+          center: 'center',
+        } as const
+      )[custom.align] ?? 'inherit'
+    );
+  }
+
+  if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
+    return 'right';
+  }
+
+  return 'inherit';
 }
 
 /**
  * @internal
- * Returns the text alignment for a field based on its type and configuration.
+ * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
  */
-export function getTextAlign(field?: Field): Property.JustifyContent {
+export function getJustifyContent(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
   }
 
-  if (field.config.custom) {
-    const custom: TableFieldOptionsType = field.config.custom;
-
-    switch (custom.align) {
-      case 'right':
-        return 'flex-end';
-      case 'left':
-        return 'flex-start';
-      case 'center':
-        return 'center';
-    }
+  const custom: TableFieldOptionsType | undefined = field.config.custom;
+  if (custom?.align && custom.align !== 'auto') {
+    return (
+      (
+        {
+          right: 'flex-end',
+          left: 'flex-start',
+          center: 'center',
+        } as const
+      )[custom.align] ?? 'flex-start'
+    );
   }
 
-  if (field.type === FieldType.number) {
+  if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
     return 'flex-end';
   }
 

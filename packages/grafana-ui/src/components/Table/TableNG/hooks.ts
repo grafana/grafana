@@ -439,7 +439,6 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: number;
-  headerHeight: number;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
@@ -449,7 +448,6 @@ export function useRowHeight({
   fields,
   hasNestedFrames,
   defaultHeight,
-  headerHeight,
   expandedRows,
   typographyCtx: { calcRowHeight, avgCharWidth },
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {

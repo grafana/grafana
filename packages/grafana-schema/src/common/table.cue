@@ -55,6 +55,7 @@ TableImageCellOptions: {
 // Show data links in the cell
 TableDataLinksCellOptions: {
 	type: TableCellDisplayMode & "data-links"
+  // wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Show actions in the cell
