@@ -226,38 +226,27 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       }
     }
 
-    // Convert AdHoc filter to value matcher configuration
-    const matcherConfig = this.adHocFilterToMatcherConfig(filter);
-    if (!matcherConfig) {
-      return null;
+    // Map operator to matcher ID
+    let matcherId: ValueMatcherID;
+    switch (filter.operator) {
+      case '=':
+        matcherId = ValueMatcherID.equal;
+        break;
+      case '!=':
+        matcherId = ValueMatcherID.notEqual;
+        break;
+      default:
+        return null; // Unknown operator
     }
 
     try {
-      return getValueMatcher(matcherConfig);
+      return getValueMatcher({
+        id: matcherId,
+        options: { value: filter.value },
+      });
     } catch (error) {
       console.warn('Failed to create value matcher for filter:', filter, error);
       return null;
-    }
-  }
-
-  /**
-   * Convert AdHocVariableFilter to MatcherConfig for value matchers
-   */
-  private adHocFilterToMatcherConfig(filter: AdHocVariableFilter): MatcherConfig | null {
-    switch (filter.operator) {
-      case '=':
-        return {
-          id: ValueMatcherID.equal,
-          options: { value: filter.value },
-        };
-      case '!=':
-        return {
-          id: ValueMatcherID.notEqual,
-          options: { value: filter.value },
-        };
-      default:
-        // Unknown operator
-        return null;
     }
   }
 
