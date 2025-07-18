@@ -124,10 +124,10 @@ The table below illustrates the details needed for each query language:
 
 | **Setting** | **Flux** | **InfluxQL** | **SQL**      |
 | ---------- | ----------- | ----------- | ----------- |
-| Bucket or Database       | &#x2611;    | &#x2611;    | &#x2611;   |
-| Organization             | &#x2611;    |             |            |
-| Password or Token        | &#x2611;    | &#x2611;    | &#x2611;   |
-| User                     |             | &#x2611;    |            |
+| Bucket or Database       | &#x2713;    | &#x2713;    | &#x2713;   |
+| Organization             | &#x2713;    |             |            |
+| Password or Token        | &#x2713;    | &#x2713;    | &#x2713;   |
+| User                     |             | &#x2713;    |            |
 
 
 - **Bucket** or **Database** - Sets the ID of the bucket to query. Refer to [View buckets](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) in InfluxData's documentation on how to locate the list of available buckets and their corresponding IDs.
