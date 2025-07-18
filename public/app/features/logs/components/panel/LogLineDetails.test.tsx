@@ -515,4 +515,31 @@ describe('LogLineDetails', () => {
       expect(setDisplayedFields).toHaveBeenCalledWith(['key1', 'key3', 'key2']);
     });
   });
+
+  describe('Multiple log details', () => {
+    test('Does not render tabs when displaying a single log', () => {
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.queryAllByRole('tab')).toHaveLength(0);
+    });
+
+    test('Renders multiple log details', async () => {
+      const logs = [
+        createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
+        createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
+      ];
+      setup({ logs }, undefined, { showDetails: logs });
+
+      expect(screen.queryAllByRole('tab')).toHaveLength(2);
+
+      await userEvent.click(screen.getByText('Log line'));
+
+      expect(screen.getAllByText('First log')).toHaveLength(1);
+      expect(screen.getAllByText('Second log')).toHaveLength(2);
+
+      await userEvent.click(screen.queryAllByRole('tab')[0]);
+
+      expect(screen.getAllByText('First log')).toHaveLength(2);
+      expect(screen.getAllByText('Second log')).toHaveLength(1);
+    });
+  });
 });
