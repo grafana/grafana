@@ -38,30 +38,30 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 		// When requesting v2 (or v0) dashboards over the v1 api, we want to keep the original apiVersion if conversion fails
 		var shim conversionShim
 		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
-			var v2client dynamic.ResourceInterface
+			var v2clientAlphaV1, v2clientAlphaV2 dynamic.ResourceInterface
 			shim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
 				if failed {
 					storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
-
 					// For v2 we need to request the original version
 					if strings.HasPrefix(storedVersion, "v2alpha1") {
-						if v2client == nil {
-							v2client, _, err = clients.ForResource(resources.DashboardResourceV2alpha1)
+						if v2clientAlphaV1 == nil {
+							v2clientAlphaV1, _, err = clients.ForResource(resources.DashboardResourceV2alpha1)
 							if err != nil {
 								return nil, err
 							}
 						}
-						return v2client.Get(ctx, item.GetName(), metav1.GetOptions{})
+						return v2clientAlphaV1.Get(ctx, item.GetName(), metav1.GetOptions{})
 					}
+
 					if strings.HasPrefix(storedVersion, "v2alpha2") {
-						if v2client == nil {
-							v2client, _, err = clients.ForResource(resources.DashboardResourceV2alpha2)
+						if v2clientAlphaV2 == nil {
+							v2clientAlphaV2, _, err = clients.ForResource(resources.DashboardResourceV2alpha2)
 							if err != nil {
 								return nil, err
 							}
 						}
-						return v2client.Get(ctx, item.GetName(), metav1.GetOptions{})
+						return v2clientAlphaV2.Get(ctx, item.GetName(), metav1.GetOptions{})
 					}
 
 					// For v0 we can simply fallback -- the full model is saved, but
@@ -95,6 +95,10 @@ func exportResource(ctx context.Context,
 	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
+		if shim != nil {
+			item, err = shim(ctx, item)
+		}
+
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
 			Name:     item.GetName(),
@@ -103,9 +107,6 @@ func exportResource(ctx context.Context,
 			Action:   repository.FileActionCreated,
 		}
 
-		if shim != nil {
-			item, err = shim(ctx, item)
-		}
 		if err == nil {
 			result.Path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
 				Path: options.Path,
