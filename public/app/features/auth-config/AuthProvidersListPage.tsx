@@ -7,12 +7,14 @@ import { reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
+import { appEvents } from 'app/core/core';
 import { StoreState } from 'app/types/store';
 
 import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard, ProviderSAMLCard, ProviderSCIMCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
+import { PageBannerDisplayEvent, PageBannerSeverity } from 'app/extensions/banners/types';
 
 import { getRegisteredAuthProviders } from './index';
 
@@ -44,6 +46,29 @@ export const AuthConfigPageUnconnected = ({
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  useEffect(() => {
+    const isSCIMEnabled = config.featureToggles.enableSCIM;
+
+    if (isSCIMEnabled) {
+      const SCIMBannerBody = () => (
+        <div>
+          <Trans i18nKey="auth-config.scim-banner.message">
+            SCIM is currently in development and not recommended for production use. Please use with caution and expect
+            potential changes.
+          </Trans>
+        </div>
+      );
+
+      appEvents.publish(
+        new PageBannerDisplayEvent({
+          severity: PageBannerSeverity.warning,
+          body: SCIMBannerBody,
+          onClose: () => {},
+        })
+      );
+    }
+  }, []);
 
   const [showDrawer, setShowDrawer] = useState(false);
 
