@@ -11,7 +11,7 @@ describe('Panel edit tests', () => {
     cy.intercept({
       pathname: '/api/ds/query',
     }).as('query');
-    e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
+    e2e.flows.openDashboard({ uid: 'TkZXxlNG3', queryParams: { '__feature.tableNextGen': false } });
     cy.wait('@query');
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);

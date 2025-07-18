@@ -7,6 +7,12 @@ const NUM_ROOT_DASHBOARDS = 60;
 const NUM_NESTED_FOLDERS = 60;
 const NUM_NESTED_DASHBOARDS = 60;
 
+test.use({
+  featureToggles: {
+    tableNextGen: true,
+  },
+});
+
 // TODO change this test so it doesn't conflict with the existing dashboard browse test
 // probably needs a separate user
 test.describe.skip(
@@ -101,7 +107,7 @@ test.describe.skip(
       await expect(page.getByText('Nested folder 00')).toBeVisible();
 
       // Get the table body container for scrolling
-      const tableBody = page.getByTestId(selectors.pages.BrowseDashboards.table.body).locator('> div');
+      const tableBody = page.getByRole('grid');
 
       // Scroll the page and check visibility of next set of items
       await tableBody.evaluate((el) => el.scrollTo(0, 2100));

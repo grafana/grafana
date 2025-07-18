@@ -93,6 +93,7 @@
     "rows-to-fields": (import '../dev-dashboards/transforms/rows-to-fields.json'),
     "shared_queries": (import '../dev-dashboards/panel-common/shared_queries.json'),
     "slow_queries_and_annotations": (import '../dev-dashboards/scenarios/slow_queries_and_annotations.json'),
+    "table_kitchen_sink": (import '../dev-dashboards/panel-table/table_kitchen_sink.json'),
     "table_pagination": (import '../dev-dashboards/panel-table/table_pagination.json'),
     "table_sparkline_cell": (import '../dev-dashboards/panel-table/table_sparkline_cell.json'),
     "table_tests": (import '../dev-dashboards/panel-table/table_tests.json'),

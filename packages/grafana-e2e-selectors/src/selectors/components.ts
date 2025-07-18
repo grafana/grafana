@@ -481,6 +481,19 @@ export const versionedComponents = {
           '10.2.0': 'data-testid table body',
         },
       },
+      TableNG: {
+        Filters: {
+          HeaderButton: {
+            '12.1.0': 'data-testid tableng header filter',
+          },
+          Container: {
+            '12.1.0': 'data-testid tablenf filter container',
+          },
+          SelectAll: {
+            '12.1.0': 'data-testid tableng filter select-all',
+          },
+        },
+      },
     },
   },
   VizLegend: {
