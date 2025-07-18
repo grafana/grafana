@@ -193,7 +193,7 @@ steps:
 - commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
-  - apk add docker
+  - apk add docker bash
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
@@ -661,7 +661,7 @@ steps:
 - commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
-  - apk add docker
+  - apk add docker bash
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --version
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-*'
   - docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
@@ -1757,7 +1757,7 @@ steps:
 - commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
-  - apk add docker
+  - apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - ./pkg/build/daggerbuild/scripts/drone_build_main.sh
@@ -1832,12 +1832,29 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > /github-app/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  failure: ignore
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
-  - apk add docker
+  - apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - ./pkg/build/daggerbuild/scripts/drone_build_tag_grafana.sh
+  depends_on:
+  - github-app-generate-token
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -1889,6 +1906,10 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: github-app
+  path: /github-app
+- name: github-app
+  temp: {}
 ---
 clone:
   retries: 3
@@ -1953,7 +1974,7 @@ steps:
 - commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
-  - apk add docker
+  - apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - ./pkg/build/daggerbuild/scripts/drone_build_tag_grafana.sh
@@ -2060,7 +2081,7 @@ steps:
 - commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
-  - apk add docker
+  - apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - ./pkg/build/daggerbuild/scripts/drone_build_nightly_grafana.sh
@@ -2204,7 +2225,7 @@ steps:
 - commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
-  - apk add docker
+  - apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - ./pkg/build/daggerbuild/scripts/drone_publish_nightly_grafana.sh
@@ -2333,7 +2354,7 @@ steps:
 - commands:
   - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
     | tar zx -C /bin
-  - apk add docker
+  - apk add docker bash
   - export GITHUB_TOKEN=$(cat /github-app/token)
   - dagger run --silent go run ./pkg/build/cmd artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
     --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --build-id=$${DRONE_BUILD_NUMBER}
@@ -2986,6 +3007,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1198b1489e48a9ced211633a0325d112814553246847fc7320fb5ac2bcb32b7d
+hmac: dce4ef9b8d45f32e1b2153b8418f668144325ed9fc0c51f2f8245fb091a4cba2
 
 ...
