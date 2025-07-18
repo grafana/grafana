@@ -3037,7 +3037,7 @@ __metadata:
     react-redux: "npm:^9.2.0"
     rimraf: "npm:^6.0.1"
     rollup: "npm:^4.22.4"
-    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.8.3"
@@ -3119,7 +3119,7 @@ __metadata:
     react-use: "npm:17.6.0"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
-    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.2"
     string-hash: "npm:^1.1.3"
@@ -3145,7 +3145,7 @@ __metadata:
     esbuild: "npm:0.25.6"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
-    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     semver: "npm:^7.7.0"
     tslib: "npm:2.8.1"
@@ -3261,7 +3261,7 @@ __metadata:
     react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.26"
     rollup: "npm:^4.22.4"
-    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     tinycolor2: "npm:1.6.0"
     ts-jest: "npm:29.2.5"
@@ -3517,7 +3517,7 @@ __metadata:
     react-window: "npm:1.8.11"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
-    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rxjs: "npm:7.8.2"
     semver: "npm:7.7.2"
@@ -3560,7 +3560,7 @@ __metadata:
     react-use: "npm:17.6.0"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
-    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-sourcemaps: "npm:0.6.3"
     rxjs: "npm:7.8.2"
@@ -3628,7 +3628,7 @@ __metadata:
     glob: "npm:^11.0.0"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
-    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     tslib: "npm:2.8.1"
     typescript: "npm:5.8.3"
@@ -3825,7 +3825,7 @@ __metadata:
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-copy: "npm:3.5.0"
-    rollup-plugin-esbuild: "npm:6.2.0"
+    rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-svg-import: "npm:3.0.0"
     rxjs: "npm:7.8.2"
@@ -28197,18 +28197,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-esbuild@npm:6.2.0":
-  version: 6.2.0
-  resolution: "rollup-plugin-esbuild@npm:6.2.0"
+"rollup-plugin-esbuild@npm:6.2.1":
+  version: 6.2.1
+  resolution: "rollup-plugin-esbuild@npm:6.2.1"
   dependencies:
     debug: "npm:^4.4.0"
     es-module-lexer: "npm:^1.6.0"
     get-tsconfig: "npm:^4.10.0"
-    unplugin-utils: "npm:^0.2.3"
+    unplugin-utils: "npm:^0.2.4"
   peerDependencies:
     esbuild: ">=0.18.0"
     rollup: ^1.20.0 || ^2.0.0 || ^3.0.0 || ^4.0.0
-  checksum: 10/305563dfa72a843fd7db7b885583f22f62d4d584cbce7e8d80f138692ce67eb34e45dc1227b3420662f22fa75fa603ca09b64e7d1670919275a8577da653fada
+  checksum: 10/e5731b86c4e01c6ccd3998a2f90794bd738fe83a3a809b9e82456e4b1d173c296ef302c2a6669b966b12c757c1787f0585ae88cd73b98f3c0ad6ad7f779940aa
   languageName: node
   linkType: hard
 
@@ -31628,13 +31628,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"unplugin-utils@npm:^0.2.3":
-  version: 0.2.3
-  resolution: "unplugin-utils@npm:0.2.3"
+"unplugin-utils@npm:^0.2.4":
+  version: 0.2.4
+  resolution: "unplugin-utils@npm:0.2.4"
   dependencies:
     pathe: "npm:^2.0.2"
     picomatch: "npm:^4.0.2"
-  checksum: 10/95a18001b4a3aa92e58259162ee70be74f49780bff7aca0272035b206143772d07f3b117922ec9d7caaed8bd24578afcf7baa4330943796ea9f011dcc96af1d9
+  checksum: 10/9cb0f9b364e57d5939f1bc75cdebca0637b0aa177847970c1c1032770e06013fed730bf94168709eb406092812f516e8bfee4aef0cfebc085520d95db1c7f529
   languageName: node
   linkType: hard
 
