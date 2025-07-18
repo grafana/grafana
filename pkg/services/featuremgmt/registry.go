@@ -1802,6 +1802,16 @@ var (
 			HideFromDocs:      true,
 			Expression:        "false",
 		},
+		{
+			Name:              "pluginAssetProvider",
+			Description:       "Allows decoupled core plugins to load from the Grafana CDN",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+			RequiresRestart:   true,
+		},
 	}
 )
 

@@ -233,3 +233,4 @@ foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,fal
 enablePluginImporter,experimental,@grafana/plugins-platform-backend,false,false,true
 otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
 alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
+pluginAssetProvider,experimental,@grafana/plugins-platform-backend,false,true,false

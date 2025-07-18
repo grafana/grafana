@@ -302,7 +302,7 @@ Complete the following steps to set up notifications.
 
       All notifications for this alert rule are sent to this contact point automatically and notification policies aren't used.
 
-   1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
+   1. You can also optionally select a mute or active timing as well as groupings and timings to define when not to send notifications.
 
    **Use notification policy**
 

@@ -1046,4 +1046,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
+  /**
+  * Allows decoupled core plugins to load from the Grafana CDN
+  * @default false
+  */
+  pluginAssetProvider?: boolean;
 }
