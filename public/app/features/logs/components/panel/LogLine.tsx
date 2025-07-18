@@ -323,10 +323,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   const { matchingUids, search } = useLogListSearchContext();
 
   const highlight = useMemo(() => {
-    if (!syntaxHighlighting) {
-      return undefined;
-    }
-    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
+    const searchWords = syntaxHighlighting && log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
     if (search && matchingUids?.includes(log.uid)) {
       searchWords.push(search);
     }
