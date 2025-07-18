@@ -20,7 +20,11 @@ import { TableNG } from '@grafana/ui/unstable';
 
 import { getActions } from '../../../../features/actions/utils';
 
-import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
+import {
+  hasDeprecatedParentRowIndex,
+  migrateFromParentRowIndexToNestedFrames,
+  migrateFooterOptions,
+} from './migrations';
 import { Options } from './panelcfg.gen';
 
 interface Props extends PanelProps<Options> {}
@@ -41,6 +45,7 @@ export function TablePanel(props: Props) {
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
     : data.series;
+
   const count = frames?.length;
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
@@ -51,6 +56,8 @@ export function TablePanel(props: Props) {
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
+
+  const footerOptions = migrateFooterOptions(options.footer, frames);
 
   if (count > 1) {
     const inputHeight = theme.spacing.gridSize * theme.components.height.md;
@@ -73,8 +80,8 @@ export function TablePanel(props: Props) {
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
-      footerOptions={options.footer}
-      enablePagination={options.footer?.enablePagination}
+      footerOptions={footerOptions}
+      enablePagination={footerOptions?.enablePagination}
       cellHeight={options.cellHeight}
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
