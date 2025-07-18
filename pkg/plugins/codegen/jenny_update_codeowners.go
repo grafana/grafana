@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -39,13 +38,14 @@ func (jenny *UpdateCodeOwners) Generate(decl *pfs.PluginDecl) (codejen.Files, er
 		return nil, nil
 	}
 	
-	codeownerPath := fmt.Sprintf(generatedSchemas, strings.Split(decl.PluginPath, "/")[1])
+	pathName := strings.ReplaceAll(strings.ToLower(decl.PluginMeta.Name), " ", "")
+	codeownerPath := fmt.Sprintf(generatedSchemas, pathName)
 	genCodeOwner := lookForCodeOwner(lines, codeownerPath)
 	if genCodeOwner != "" {
 		return nil, nil
 	}
 	
-	fmt.Println("assigning codeowner for", strings.Split(decl.PluginPath, "/")[1])
+	fmt.Println("assigning codeowner for", pathName)
 	return nil, jenny.insertCodeOwner(lines, fmt.Sprintf("/%s %s", codeownerPath, codeOwner))
 }
 
@@ -68,15 +68,12 @@ func lookForCodeOwner(lines []string, path string) string {
 }
 
 func (jenny *UpdateCodeOwners) insertCodeOwner(lines []string, path string) error {
-	fmt.Println(path)
 	var pkgStart, pkgEnd = -1, -1
-	var packageLines []string
-	
 	for i, line := range lines {
-		if strings.HasPrefix(line, "# Package") {
-			pkgStart = i + 1
-			for j := pkgStart; j < len(lines); j++ {
-				if strings.HasPrefix(lines[j], "#") && j != pkgStart {
+		if strings.HasPrefix(strings.ToLower(line), "# packages") {
+			pkgStart = i
+			for j := pkgStart + 1; j < len(lines); j++ {
+				if strings.HasPrefix(lines[j], "#") {
 					pkgEnd = j
 					break
 				}
@@ -84,32 +81,25 @@ func (jenny *UpdateCodeOwners) insertCodeOwner(lines []string, path string) erro
 			if pkgEnd == -1 {
 				pkgEnd = len(lines)
 			}
-			packageLines = lines[pkgStart:pkgEnd]
 			break
 		}
 	}
 	
+	if pkgStart == -1 {
+		return nil
+	}
+	
+	packageLines := lines[pkgStart+1 : pkgEnd-1]
 	packageLines = append(packageLines, path)
+	sort.Strings(packageLines)
 	
-	var cleanLines []string
-	for _, l := range packageLines {
-		if strings.TrimSpace(l) != "" {
-			cleanLines = append(cleanLines, l)
-		}
+	var output []string
+	output = append(output, lines[:pkgStart+1]...)
+	output = append(output, packageLines...)
+	if pkgEnd < len(lines) && (len(output) == 0 || output[len(output)-1] != "") {
+		output = append(output, "")
 	}
 	
-	sort.Strings(cleanLines)
-	
-	var newContent bytes.Buffer
-	for i := 0; i < pkgStart; i++ {
-		newContent.WriteString(lines[i] + "\n")
-	}
-	for _, l := range cleanLines {
-		newContent.WriteString(l + "\n")
-	}
-	for i := pkgEnd; i < len(lines); i++ {
-		newContent.WriteString(lines[i] + "\n")
-	}
-	
-	return os.WriteFile(filepath.Join(jenny.Root, ".github", "CODEOWNERS"), newContent.Bytes(), 0644)
+	output = append(output, lines[pkgEnd:]...)
+	return os.WriteFile(filepath.Join(jenny.Root, ".github", "CODEOWNERS"), []byte(strings.Join(output, "\n")), 0644)
 }
