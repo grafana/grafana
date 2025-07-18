@@ -12,11 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
+	resourcegroupstaggingapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
 )
 
 type suggestData struct {
@@ -39,12 +41,12 @@ func parseMultiSelectValue(input string) []string {
 	return []string{trimmedInput}
 }
 
-func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (ds *DataSource) handleGetEbsVolumeIds(ctx context.Context, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	instanceId := parameters.Get("instanceId")
 
-	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
-	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, nil, instanceIds)
+	instanceIds := parseMultiSelectValue(instanceId)
+	instances, err := ds.ec2DescribeInstances(ctx, region, nil, instanceIds)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +63,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCt
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (ds *DataSource) handleGetEc2InstanceAttribute(ctx context.Context, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	attributeName := parameters.Get("attributeName")
 	filterJson := parameters.Get("filters")
@@ -72,23 +74,23 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 		return nil, fmt.Errorf("error unmarshaling filter: %v", err)
 	}
 
-	var filters []*ec2.Filter
+	var filters []ec2types.Filter
 	for k, v := range filterMap {
 		if vv, ok := v.([]any); ok {
-			var values []*string
+			var values []string
 			for _, vvv := range vv {
 				if vvvv, ok := vvv.(string); ok {
-					values = append(values, &vvvv)
+					values = append(values, vvvv)
 				}
 			}
-			filters = append(filters, &ec2.Filter{
+			filters = append(filters, ec2types.Filter{
 				Name:   aws.String(k),
 				Values: values,
 			})
 		}
 	}
 
-	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, filters, nil)
+	instances, err := ds.ec2DescribeInstances(ctx, region, filters, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -97,39 +99,13 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	dupCheck := make(map[string]bool)
 	for _, reservation := range instances.Reservations {
 		for _, instance := range reservation.Instances {
-			tags := make(map[string]string)
-			for _, tag := range instance.Tags {
-				tags[*tag.Key] = *tag.Value
+			data, found, err := getInstanceAttributeValue(attributeName, instance)
+			if err != nil {
+				return nil, err
 			}
-
-			var data string
-			if strings.Index(attributeName, "Tags.") == 0 {
-				tagName := attributeName[5:]
-				data = tags[tagName]
-			} else {
-				attributePath := strings.Split(attributeName, ".")
-				v := reflect.ValueOf(instance)
-				for _, key := range attributePath {
-					if v.Kind() == reflect.Ptr {
-						v = v.Elem()
-					}
-					if v.Kind() != reflect.Struct {
-						return nil, errors.New("invalid attribute path")
-					}
-					v = v.FieldByName(key)
-					if !v.IsValid() {
-						return nil, errors.New("invalid attribute path")
-					}
-				}
-				if attr, ok := v.Interface().(*string); ok {
-					data = *attr
-				} else if attr, ok := v.Interface().(*time.Time); ok {
-					data = attr.String()
-				} else {
-					return nil, errors.New("invalid attribute path")
-				}
+			if !found {
+				continue
 			}
-
 			if _, exists := dupCheck[data]; exists {
 				continue
 			}
@@ -146,7 +122,60 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func getInstanceAttributeValue(attributeName string, instance ec2types.Instance) (value string, found bool, err error) {
+	tags := make(map[string]string)
+	for _, tag := range instance.Tags {
+		tags[*tag.Key] = *tag.Value
+	}
+
+	var data string
+	if strings.Index(attributeName, "Tags.") == 0 {
+		tagName := attributeName[5:]
+		data = tags[tagName]
+	} else {
+		attributePath := strings.Split(attributeName, ".")
+		v := reflect.ValueOf(instance)
+		for _, key := range attributePath {
+			if v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					return "", false, nil
+				}
+				v = v.Elem()
+			}
+			if v.Kind() != reflect.Struct {
+				return "", false, errors.New("invalid attribute path")
+			}
+			v = v.FieldByName(key)
+			if !v.IsValid() {
+				return "", false, errors.New("invalid attribute path")
+			}
+		}
+
+		if v.Kind() == reflect.Ptr && v.IsNil() {
+			return "", false, nil
+		}
+		if v.Kind() == reflect.String {
+			if v.String() == "" {
+				return "", false, nil
+			}
+			data = v.String()
+		} else if attr, ok := v.Interface().(*string); ok {
+			data = *attr
+		} else if attr, ok := v.Interface().(*time.Time); ok {
+			data = attr.String()
+		} else if _, ok := v.Interface().(*bool); ok {
+			data = fmt.Sprint(v.Elem().Bool())
+		} else if v.Kind() == reflect.Ptr && v.Elem().CanInt() {
+			data = fmt.Sprint(v.Elem().Int())
+		} else {
+			return "", false, errors.New("cannot parse attribute")
+		}
+	}
+
+	return data, true, nil
+}
+
+func (ds *DataSource) handleGetResourceArns(ctx context.Context, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	resourceType := parameters.Get("resourceType")
 	tagsJson := parameters.Get("tags")
@@ -157,26 +186,25 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCt
 		return nil, fmt.Errorf("error unmarshaling filter: %v", err)
 	}
 
-	var filters []*resourcegroupstaggingapi.TagFilter
+	var filters []resourcegroupstaggingapitypes.TagFilter
 	for k, v := range tagsMap {
 		if vv, ok := v.([]any); ok {
-			var values []*string
+			var values []string
 			for _, vvv := range vv {
 				if vvvv, ok := vvv.(string); ok {
-					values = append(values, &vvvv)
+					values = append(values, vvvv)
 				}
 			}
-			filters = append(filters, &resourcegroupstaggingapi.TagFilter{
+			filters = append(filters, resourcegroupstaggingapitypes.TagFilter{
 				Key:    aws.String(k),
 				Values: values,
 			})
 		}
 	}
 
-	var resourceTypes []*string
-	resourceTypes = append(resourceTypes, &resourceType)
+	resourceTypes := []string{resourceType}
 
-	resources, err := e.resourceGroupsGetResources(ctx, pluginCtx, region, filters, resourceTypes)
+	resources, err := ds.resourceGroupsGetResources(ctx, region, filters, resourceTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -190,75 +218,77 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCt
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) ec2DescribeInstances(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
+func (ds *DataSource) ec2DescribeInstances(ctx context.Context, region string, filters []ec2types.Filter, instanceIds []string) (*ec2.DescribeInstancesOutput, error) {
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.getEC2Client(ctx, pluginCtx, region)
+	client, err := ds.getEC2Client(ctx, region)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp ec2.DescribeInstancesOutput
-	if err := client.DescribeInstancesPagesWithContext(ctx, params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+	resp := &ec2.DescribeInstancesOutput{}
+	pager := ec2.NewDescribeInstancesPaginator(client, params)
+	for pager.HasMorePages() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return resp, fmt.Errorf("describe instances pager failed: %w", err)
+		}
 		resp.Reservations = append(resp.Reservations, page.Reservations...)
-		return !lastPage
-	}); err != nil {
-		return nil, fmt.Errorf("failed to call ec2:DescribeInstances, %w", err)
 	}
-
-	return &resp, nil
+	return resp, nil
 }
 
-func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []*resourcegroupstaggingapi.TagFilter,
-	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+func (ds *DataSource) resourceGroupsGetResources(ctx context.Context, region string, filters []resourcegroupstaggingapitypes.TagFilter,
+	resourceTypes []string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
 	}
 
-	client, err := e.getRGTAClient(ctx, pluginCtx, region)
+	client, err := ds.getRGTAClient(ctx, region)
 	if err != nil {
 		return nil, err
 	}
 
 	var resp resourcegroupstaggingapi.GetResourcesOutput
-	if err := client.GetResourcesPagesWithContext(ctx, params,
-		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
-			return !lastPage
-		}); err != nil {
-		return nil, fmt.Errorf("failed to call tag:GetResources, %w", err)
+	paginator := resourcegroupstaggingapi.NewGetResourcesPaginator(client, params)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get resource groups paginator failed: %w", err)
+		}
+		resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
 	}
 
 	return &resp, nil
 }
 
 // legacy route, will be removed once GovCloud supports Cross Account Observability
-func (e *cloudWatchExecutor) handleGetLogGroups(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (ds *DataSource) handleGetLogGroups(ctx context.Context, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	limit := parameters.Get("limit")
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
 
-	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
+	logsClient, err := ds.getCWLogsClient(ctx, region)
 	if err != nil {
 		return nil, err
 	}
 
 	logGroupLimit := defaultLogGroupLimit
-	intLimit, err := strconv.ParseInt(limit, 10, 64)
+	intLimit, err := strconv.ParseInt(limit, 10, 32)
 	if err == nil && intLimit > 0 {
-		logGroupLimit = intLimit
+		logGroupLimit = int32(intLimit)
 	}
 
-	input := &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(logGroupLimit)}
+	input := &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int32(logGroupLimit)}
 	if len(logGroupNamePrefix) > 0 {
 		input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
 	}
 	var response *cloudwatchlogs.DescribeLogGroupsOutput
-	response, err = logsClient.DescribeLogGroupsWithContext(ctx, input)
+	response, err = logsClient.DescribeLogGroups(ctx, input)
 	if err != nil || response == nil {
 		return nil, err
 	}
