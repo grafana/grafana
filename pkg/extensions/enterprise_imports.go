@@ -6,7 +6,6 @@ package extensions
 import (
 	_ "cloud.google.com/go/kms/apiv1"
 	_ "cloud.google.com/go/kms/apiv1/kmspb"
-	_ "cloud.google.com/go/spanner"
 	_ "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	_ "github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys"
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
@@ -19,7 +18,6 @@ import (
 	_ "github.com/go-jose/go-jose/v3"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
-	_ "github.com/grafana/grafana/pkg/build"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	_ "github.com/hashicorp/go-multierror"
