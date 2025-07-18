@@ -188,12 +188,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return options;
   }
 
-  async getOptionsV2({
-    tag,
-    query,
-    timeRangeForTags,
-    range,
-  }: GetOptionsV2): Promise<Array<SelectableValue<string>>> {
+  async getOptionsV2({ tag, query, timeRangeForTags, range }: GetOptionsV2): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
     const params: { q?: string; limit: number; start?: number; end?: number } = {
       limit: this.getTagsLimit(),
