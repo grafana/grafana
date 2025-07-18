@@ -24,6 +24,7 @@ export interface Options {
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
+  noInteractions?: boolean;
   /**
    * TODO: figure out how to define callbacks
    */

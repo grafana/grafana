@@ -3,6 +3,7 @@ import { Resizable } from 're-resizable';
 import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
 
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
@@ -20,13 +21,18 @@ export interface Props {
 export type LogLineDetailsMode = 'inline' | 'sidebar';
 
 export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize }: Props) => {
-  const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
+  const { detailsWidth, noInteractions, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles, 'sidebar');
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     focusLogLine(showDetails[0]);
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_displayed', {
+        mode: 'sidebar',
+      });
+    }
     // Just once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -38,6 +44,14 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize 
     onResize();
   }, [onResize, setDetailsWidth]);
 
+  const reportResize = useCallback(() => {
+    if (containerRef.current && !noInteractions) {
+      reportInteraction('logs_log_line_details_sidebar_resized', {
+        width: Math.round(containerRef.current.clientWidth),
+      });
+    }
+  }, [noInteractions]);
+
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
   if (!showDetails.length) {
@@ -47,6 +61,7 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize 
   return (
     <Resizable
       onResize={handleResize}
+      onResizeStop={reportResize}
       handleClasses={{ left: dragStyles.dragHandleVertical }}
       defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
       size={{ width: detailsWidth, height: containerElement.clientHeight }}
@@ -68,9 +83,17 @@ export interface InlineLogLineDetailsProps {
 }
 
 export const InlineLogLineDetails = memo(({ logs }: InlineLogLineDetailsProps) => {
-  const { showDetails } = useLogListContext();
+  const { noInteractions, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_displayed', {
+        mode: 'inline',
+      });
+    }
+  }, [noInteractions]);
 
   const saveScroll = useCallback(() => {
     saveDetailsScrollPosition(showDetails[0], scrollRef.current?.scrollTop ?? 0);

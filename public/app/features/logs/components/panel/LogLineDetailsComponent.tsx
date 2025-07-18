@@ -4,6 +4,7 @@ import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'r
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -23,7 +24,7 @@ interface LogLineDetailsComponentProps {
 }
 
 export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
+  const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -75,8 +76,14 @@ export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsCompon
   const handleToggle = useCallback(
     (option: string, isOpen: boolean) => {
       store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
+      if (!noInteractions) {
+        reportInteraction('logs_log_line_details_section_toggled', {
+          section: option.replace('Open', ''),
+          state: isOpen ? 'open' : 'closed',
+        });
+      }
     },
-    [logOptionsStorageKey]
+    [logOptionsStorageKey, noInteractions]
   );
 
   const handleSearch = useCallback((newSearch: string) => {
