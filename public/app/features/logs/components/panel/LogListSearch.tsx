@@ -27,7 +27,7 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     searchVisible,
     toggleFilterLogs,
   } = useLogListSearchContext();
-  const { displayedFields } = useLogListContext();
+  const { displayedFields, noInteractions } = useLogListContext();
   const [search, setSearch] = useState('');
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const inputRef = useRef('');
@@ -41,16 +41,19 @@ export const LogListSearch = ({ listRef, logs }: Props) => {
     return findMatchingLogs(logs, search, displayedFields);
   }, [displayedFields, logs, search, searchVisible]);
 
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    inputRef.current = e.target.value;
-    startTransition(() => {
-      setSearch(inputRef.current);
-    });
-    if (!searchUsedRef.current) {
-      reportInteraction('logs_log_list_search_used');
-      searchUsedRef.current = true;
-    }
-  }, []);
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      inputRef.current = e.target.value;
+      startTransition(() => {
+        setSearch(inputRef.current);
+      });
+      if (!searchUsedRef.current && !noInteractions) {
+        reportInteraction('logs_log_list_search_used');
+        searchUsedRef.current = true;
+      }
+    },
+    [noInteractions]
+  );
 
   const prevResult = useCallback(() => {
     if (currentResult === null) {

@@ -79,6 +79,7 @@ export const LogListContext = createContext<LogListContextData>({
   forceEscape: false,
   fontSize: 'default',
   hasUnescapedContent: false,
+  noInteractions: false,
   setDedupStrategy: () => {},
   setDetailsMode: () => {},
   setDetailsWidth: () => {},
@@ -153,6 +154,7 @@ export interface Props {
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
+  noInteractions?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterString?: (value: string, refId?: string) => void;
@@ -195,6 +197,7 @@ export const LogListContextProvider = ({
   logsMeta,
   logOptionsStorageKey,
   logSupportsContext,
+  noInteractions,
   onClickFilterLabel,
   onClickFilterOutLabel,
   onClickFilterString,
@@ -238,7 +241,10 @@ export const LogListContextProvider = ({
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
 
   useEffect(() => {
-    reportInteraction('logs_log_list_logs_displayed', {
+    if (noInteractions) {
+      return;
+    }
+    reportInteractionOnce(`logs_log_list_${app}_logs_displayed`, {
       dedupStrategy,
       fontSize,
       forceEscape: logListState.forceEscape,
@@ -526,6 +532,7 @@ export const LogListContextProvider = ({
         logSupportsContext,
         logLineMenuCustomItems,
         logOptionsStorageKey,
+        noInteractions: noInteractions ?? false,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
@@ -621,3 +628,12 @@ export function getDetailsScrollPosition(log: LogListModel) {
 export function removeDetailsScrollPosition(log: LogListModel) {
   detailsScrollMap.delete(log.uid);
 }
+
+const reportInteractionOnce = (interactionName: string, properties?: Record<string, unknown>) => {
+  const key = `logs.log-list-context.events.${interactionName}`;
+  if (sessionStorage.getItem(key)) {
+    return;
+  }
+  sessionStorage.setItem(key, '1');
+  reportInteraction(interactionName, properties);
+};

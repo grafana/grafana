@@ -24,7 +24,7 @@ interface LogLineDetailsComponentProps {
 }
 
 export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
+  const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -76,12 +76,14 @@ export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsCompon
   const handleToggle = useCallback(
     (option: string, isOpen: boolean) => {
       store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
-      reportInteraction('logs_log_line_details_section_toggled', {
-        section: option.replace('Open', ''),
-        state: isOpen ? 'open' : 'closed',
-      });
+      if (!noInteractions) {
+        reportInteraction('logs_log_line_details_section_toggled', {
+          section: option.replace('Open', ''),
+          state: isOpen ? 'open' : 'closed',
+        });
+      }
     },
-    [logOptionsStorageKey]
+    [logOptionsStorageKey, noInteractions]
   );
 
   const handleSearch = useCallback((newSearch: string) => {

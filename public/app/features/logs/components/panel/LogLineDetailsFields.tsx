@@ -143,6 +143,7 @@ export const LogLineDetailsField = ({
     closeDetails,
     displayedFields,
     isLabelFilterActive,
+    noInteractions,
     onClickFilterLabel,
     onClickFilterOutLabel,
     onClickShowField,
@@ -179,49 +180,59 @@ export const LogLineDetailsField = ({
     }
   }, [showFieldsStats, updateStats]);
 
+  const reportInteractionWrapper = useCallback(
+    (interactionName: string, properties?: Record<string, unknown>) => {
+      if (noInteractions) {
+        return;
+      }
+      reportInteraction(interactionName, properties);
+    },
+    [noInteractions]
+  );
+
   const showField = useCallback(() => {
     if (onClickShowField) {
       onClickShowField(keys[0]);
     }
 
-    reportInteraction('logs_log_line_details_show_field_clicked', {
+    reportInteractionWrapper('logs_log_line_details_show_field_clicked', {
       datasourceType: log.datasourceType,
     });
-  }, [onClickShowField, keys, log.datasourceType]);
+  }, [onClickShowField, reportInteractionWrapper, log.datasourceType, keys]);
 
   const hideField = useCallback(() => {
     if (onClickHideField) {
       onClickHideField(keys[0]);
     }
 
-    reportInteraction('logs_log_line_details_hide_field_clicked', {
+    reportInteractionWrapper('logs_log_line_details_hide_field_clicked', {
       datasourceType: log.datasourceType,
     });
-  }, [onClickHideField, keys, log.datasourceType]);
+  }, [onClickHideField, reportInteractionWrapper, log.datasourceType, keys]);
 
   const filterLabel = useCallback(() => {
     if (onClickFilterLabel) {
       onClickFilterLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
     }
 
-    reportInteraction('logs_log_line_details_filter_clicked', {
+    reportInteractionWrapper('logs_log_line_details_filter_clicked', {
       datasourceType: log.datasourceType,
       filterType: 'include',
       logRowUid: log.uid,
     });
-  }, [onClickFilterLabel, keys, values, log]);
+  }, [onClickFilterLabel, reportInteractionWrapper, log, keys, values]);
 
   const filterOutLabel = useCallback(() => {
     if (onClickFilterOutLabel) {
       onClickFilterOutLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
     }
 
-    reportInteraction('logs_log_line_details_filter_clicked', {
+    reportInteractionWrapper('logs_log_line_details_filter_clicked', {
       datasourceType: log.datasourceType,
       filterType: 'exclude',
       logRowUid: log.uid,
     });
-  }, [onClickFilterOutLabel, keys, values, log]);
+  }, [onClickFilterOutLabel, reportInteractionWrapper, log, keys, values]);
 
   const labelFilterActive = useCallback(async () => {
     if (isLabelFilterActive) {
@@ -233,14 +244,14 @@ export const LogLineDetailsField = ({
   const showStats = useCallback(() => {
     setShowFieldStats((showFieldStats: boolean) => !showFieldStats);
 
-    reportInteraction('logs_log_line_details_stats_clicked', {
+    reportInteractionWrapper('logs_log_line_details_stats_clicked', {
       dataSourceType: log.datasourceType,
       fieldType: isLabel ? 'label' : 'field',
       type: showFieldsStats ? 'close' : 'open',
       logRowUid: log.uid,
       app,
     });
-  }, [app, isLabel, log.datasourceType, log.uid, showFieldsStats]);
+  }, [app, isLabel, log.datasourceType, log.uid, reportInteractionWrapper, showFieldsStats]);
 
   const refIdTooltip = useMemo(
     () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
