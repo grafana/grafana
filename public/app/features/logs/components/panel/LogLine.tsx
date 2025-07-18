@@ -241,7 +241,7 @@ const LogLineComponent = memo(
             </Button>
           </div>
         )}
-        {detailsMode === 'inline' && detailsShown && <InlineLogLineDetails logs={logs} />}
+        {detailsMode === 'inline' && detailsShown && <InlineLogLineDetails logs={logs} log={log} />}
       </>
     );
   }
