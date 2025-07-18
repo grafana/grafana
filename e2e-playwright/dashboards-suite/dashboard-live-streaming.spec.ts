@@ -40,7 +40,7 @@ test.describe(
     test('Should receive streaming data', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Live'))).toBeVisible();
-      await expect.poll(async () => await page.locator('.rdg').getByRole('row').count()).toBeGreaterThan(5);
+      await expect.poll(async () => await page.getByRole('grid').getByRole('row').count()).toBeGreaterThan(5);
     });
   }
 );

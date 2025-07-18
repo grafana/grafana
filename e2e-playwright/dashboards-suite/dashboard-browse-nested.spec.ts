@@ -107,7 +107,7 @@ test.describe.skip(
       await expect(page.getByText('Nested folder 00')).toBeVisible();
 
       // Get the table body container for scrolling
-      const tableBody = page.locator('.rdg');
+      const tableBody = page.getByRole('grid');
 
       // Scroll the page and check visibility of next set of items
       await tableBody.evaluate((el) => el.scrollTo(0, 2100));

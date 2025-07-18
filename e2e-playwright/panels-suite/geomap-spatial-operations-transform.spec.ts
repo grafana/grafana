@@ -46,7 +46,7 @@ test.describe(
       await locationInput.press('Enter');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = page.locator('.rdg-header-row');
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('Point')).toBeVisible();
     });
@@ -96,7 +96,7 @@ test.describe(
       await longitudeInput.press('Enter');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = page.locator('.rdg-header-row');
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('Point')).toBeVisible();
     });
@@ -143,7 +143,7 @@ test.describe(
       await geohashFieldInput.press('Enter');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = page.locator('.rdg-header-row');
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('State 1')).toBeVisible();
     });
@@ -193,7 +193,7 @@ test.describe(
       await gazetteerFieldInput.press('Enter');
 
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = page.locator('.rdg-header-row');
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('Geometry')).toBeVisible();
     });

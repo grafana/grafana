@@ -19,7 +19,7 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '2' }),
       });
 
-      await expect(page.locator('.rdg')).toBeVisible();
+      await expect(page.getByRole('grid')).toBeVisible();
 
       const uplotCount = await page.locator('.uplot').count();
       const rowCount = await page.getByRole('row').count();

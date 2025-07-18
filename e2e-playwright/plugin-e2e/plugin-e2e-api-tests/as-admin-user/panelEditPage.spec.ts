@@ -69,7 +69,7 @@ test.describe(
           formatExpectError('Did not expect panel error to be displayed after query execution')
         ).toBeHidden();
         await expect(
-          page.locator('.rdg'),
+          page.getByRole('grid'),
           formatExpectError('Expected certain select options to be displayed after clicking on the select input')
         ).toHaveText(/val1val2val3val4/);
       });

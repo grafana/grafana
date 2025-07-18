@@ -204,7 +204,7 @@ test.describe(
       // in a second, though.
       const smallRowStatus = await getRowStatus(page);
       expect(smallRowStatus.end).toBeGreaterThan(1);
-      expect(page.locator('.rdg').getByRole('row')).toHaveCount(smallRowStatus.end + 1);
+      expect(page.getByRole('grid').getByRole('row')).toHaveCount(smallRowStatus.end + 1);
 
       // change cell height to Large
       await dashboardPage
@@ -214,7 +214,7 @@ test.describe(
         .click();
       const largeRowStatus = await getRowStatus(page);
       expect(largeRowStatus.end).toBeLessThan(smallRowStatus.end);
-      expect(page.locator('.rdg').getByRole('row')).toHaveCount(largeRowStatus.end + 1);
+      expect(page.getByRole('grid').getByRole('row')).toHaveCount(largeRowStatus.end + 1);
 
       // click a page over with the directional nav
       await page.getByLabel('next page').click();
