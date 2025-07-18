@@ -16,8 +16,7 @@ import (
 func (s *frontendService) contextMiddleware() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, span := tracer.Start(r.Context(), "Context middleware")
-			defer span.End()
+			ctx := r.Context()
 
 			reqContext := &contextmodel.ReqContext{
 				Context: web.FromContext(ctx),
@@ -35,8 +34,6 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 			if traceID != "" {
 				reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 			}
-
-			span.AddEvent("request")
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
