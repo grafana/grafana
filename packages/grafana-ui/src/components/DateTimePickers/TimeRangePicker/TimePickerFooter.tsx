@@ -18,7 +18,7 @@ import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
-import { monthOptions } from '../options';
+import { getMonthOptions } from '../options';
 
 interface Props {
   timeZone?: TimeZone;
@@ -146,7 +146,7 @@ export const TimePickerFooter = (props: Props) => {
                 >
                   <Combobox
                     value={fiscalYearStartMonth ?? null}
-                    options={monthOptions}
+                    options={getMonthOptions()}
                     onChange={(value) => {
                       if (onChangeFiscalYearStartMonth) {
                         onChangeFiscalYearStartMonth(value?.value ?? 0);

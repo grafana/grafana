@@ -16,7 +16,7 @@ import { getInputStyles, Input } from '../../Input/Input';
 import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
-import { quickOptions } from '../options';
+import { getQuickOptions } from '../options';
 
 import {
   isRangeValid,
@@ -39,8 +39,6 @@ type InputState = {
   validation: RangeValidation;
 };
 
-const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
-
 /**
  * @internal
  */
@@ -57,6 +55,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     ref
   );
   const { dialogProps } = useDialog({}, ref);
+  const validOptions = getQuickOptions().filter((o) => isRelativeFormat(o.from));
 
   // the order of middleware is important!
   // see https://floating-ui.com/docs/arrow#order
