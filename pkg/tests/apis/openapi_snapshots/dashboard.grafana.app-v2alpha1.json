@@ -1250,7 +1250,6 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQuerySpec": {
         "type": "object",
         "required": [
-          "query",
           "enable",
           "hide",
           "iconColor",
@@ -1259,6 +1258,9 @@
         "properties": {
           "builtIn": {
             "type": "boolean"
+          },
+          "datasource": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
           },
           "enable": {
             "type": "boolean",
@@ -1287,12 +1289,7 @@
             "default": ""
           },
           "query": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
-              }
-            ]
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
           }
         }
       },
@@ -1868,24 +1865,11 @@
         "type": "object",
         "required": [
           "kind",
-          "group",
-          "version",
           "spec"
         ],
         "properties": {
-          "datasource": {
-            "description": "New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1DataQueryKindDatasource"
-              }
-            ]
-          },
-          "group": {
-            "type": "string",
-            "default": ""
-          },
           "kind": {
+            "description": "The kind of a DataQueryKind is the datasource type",
             "type": "string",
             "default": ""
           },
@@ -1894,15 +1878,10 @@
             "additionalProperties": {
               "type": "object"
             }
-          },
-          "version": {
-            "type": "string",
-            "default": ""
           }
         }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef": {
-        "description": "Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec This type is widely used in the codebase and changing it will have a big impact",
         "type": "object",
         "properties": {
           "type": {
@@ -2764,6 +2743,9 @@
           "hidden"
         ],
         "properties": {
+          "datasource": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+          },
           "hidden": {
             "type": "boolean",
             "default": false
@@ -3011,6 +2993,9 @@
               }
             ]
           },
+          "datasource": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+          },
           "definition": {
             "type": "string"
           },
@@ -3073,6 +3058,20 @@
           "sort": {
             "type": "string",
             "default": ""
+          },
+          "staticOptions": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                }
+              ]
+            }
+          },
+          "staticOptionsOrder": {
+            "type": "string"
           }
         }
       },
@@ -3737,14 +3736,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataTransformerConfig"
               }
             ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1DataQueryKindDatasource": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
           }
         }
       },

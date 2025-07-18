@@ -109,7 +109,6 @@ func getGrafanaDataSourceSettings(ctx context.Context) (*backend.DataSourceInsta
 	return adapters.ModelToInstanceSettings(ds, decryptFunc)
 }
 
-// ExecuteQueryData implements QueryHelper.
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {
