@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { FALLBACK_COLOR, GrafanaTheme2 } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 import { ColorIndicator, DEFAULT_COLOR_INDICATOR } from './types';
@@ -19,6 +19,7 @@ interface Props {
   colorIndicator?: ColorIndicator;
   position?: ColorIndicatorPosition;
   lineStyle?: LineStyle;
+  isHidden?: boolean; // for hidden metadata
 }
 
 export type ColorIndicatorStyles = ReturnType<typeof getStyles>;
@@ -28,8 +29,19 @@ export const VizTooltipColorIndicator = ({
   colorIndicator = DEFAULT_COLOR_INDICATOR,
   position = ColorIndicatorPosition.Leading,
   lineStyle,
+  isHidden,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+
+  if (isHidden) {
+    return (
+      <div
+        style={{ border: `1px solid ${color}`, borderRadius: theme.shape.radius.pill }}
+        className={cx(position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing, styles.container)}
+      />
+    );
+  }
 
   if (colorIndicator === ColorIndicator.series) {
     return (
@@ -88,5 +100,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '12px',
     borderRadius: theme.shape.radius.circle,
     minWidth: '12px',
+  }),
+  container: css({
+    marginRight: '8px',
+    display: 'inline-block',
+    width: '14px',
+    height: '4px',
   }),
 });

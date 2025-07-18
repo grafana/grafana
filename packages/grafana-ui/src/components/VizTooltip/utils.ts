@@ -80,7 +80,8 @@ export const getContentItems = (
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
   fieldFilter = (field: Field) => true,
-  hideZeros = false
+  hideZeros = false,
+  _restFields?: Field[]
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -129,15 +130,7 @@ export const getContentItems = (
         ? Number.MIN_SAFE_INTEGER
         : Number.MAX_SAFE_INTEGER;
 
-    const colorMode = getFieldColorModeForField(field);
-
-    let colorIndicator = ColorIndicator.series;
-    let colorPlacement = ColorPlacement.first;
-
-    if (colorMode.isByValue) {
-      colorIndicator = ColorIndicator.value;
-      colorPlacement = ColorPlacement.trailing;
-    }
+    const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
 
     rows.push({
       label: field.state?.displayName ?? field.name,
@@ -151,6 +144,23 @@ export const getContentItems = (
     });
   }
 
+  _restFields?.forEach((field) => {
+    if (!field.config.custom?.hideFrom?.tooltip) {
+      const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
+      const display = field.display!(field.values[dataIdxs[0]!]);
+
+      rows.push({
+        label: field.state?.displayName ?? field.name,
+        value: formattedValueToString(display),
+        color: FALLBACK_COLOR,
+        colorIndicator,
+        colorPlacement,
+        lineStyle: field.config.custom?.lineStyle,
+        isHidden: true,
+      });
+    }
+  });
+
   if (sortOrder !== SortOrder.None && rows.length > 1) {
     const cmp = allNumeric ? numberCmp : stringCmp;
     const mult = sortOrder === SortOrder.Descending ? -1 : 1;
@@ -158,4 +168,18 @@ export const getContentItems = (
   }
 
   return rows;
+};
+
+const getIndicatorAndPlacement = (field: Field) => {
+  const colorMode = getFieldColorModeForField(field);
+
+  let colorIndicator = ColorIndicator.series;
+  let colorPlacement = ColorPlacement.first;
+
+  if (colorMode.isByValue) {
+    colorIndicator = ColorIndicator.value;
+    colorPlacement = ColorPlacement.trailing;
+  }
+
+  return { colorIndicator, colorPlacement };
 };
