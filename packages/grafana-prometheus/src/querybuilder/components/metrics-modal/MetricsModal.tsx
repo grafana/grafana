@@ -22,26 +22,41 @@ import {
 import { getDebounceTimeInMilliseconds } from '../../../caching';
 import { METRIC_LABEL } from '../../../constants';
 import { regexifyLabelValuesQueryString } from '../../parsingUtils';
-import { formatPrometheusLabelFilters } from '../MetricCombobox';
+import { formatPrometheusLabelFilters } from '../shared/formatter';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { ResultsTable } from './ResultsTable';
+import { metricsModaltestIds } from './shared/testIds';
 import { MetricsModalProps } from './shared/types';
 import {
   calculatePageList,
   calculateResultsPerPage,
   displayedMetrics,
-  placeholders,
-  promTypes,
+  getPlaceholders,
+  getPromTypes,
   setMetrics,
   tracking,
 } from './state/helpers';
 import {
+  buildMetrics,
   DEFAULT_RESULTS_PER_PAGE,
+  filterMetricsBackend,
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
   MetricsModalMetadata,
+  setDisableTextWrap,
+  setFullMetaSearch,
+  setFuzzySearchQuery,
+  setIncludeNullMetadata,
+  setIsLoading,
+  setMetaHaystack,
+  setNameHaystack,
+  setPageNum,
+  setResultsPerPage,
+  setSelectedTypes,
+  setUseBackend,
+  showAdditionalSettings,
   stateSlice,
 } from './state/state';
 import { getStyles } from './styles';
@@ -55,6 +70,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
+  const placeholders = getPlaceholders();
+  const promTypes = getPromTypes();
 
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
@@ -88,7 +105,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
       value: t.value,
-      label: t.value,
+      label: t.label,
       description: t.description,
     };
   });
@@ -339,34 +356,3 @@ export const MetricsModal = (props: MetricsModalProps) => {
     </Modal>
   );
 };
-
-export const metricsModaltestIds = {
-  metricModal: 'metric-modal',
-  searchMetric: 'search-metric',
-  searchWithMetadata: 'search-with-metadata',
-  selectType: 'select-type',
-  metricCard: 'metric-card',
-  useMetric: 'use-metric',
-  searchPage: 'search-page',
-  resultsPerPage: 'results-per-page',
-  setUseBackend: 'set-use-backend',
-  showAdditionalSettings: 'show-additional-settings',
-};
-// actions to update the state
-export const {
-  setIsLoading,
-  buildMetrics,
-  filterMetricsBackend,
-  setResultsPerPage,
-  setPageNum,
-  setFuzzySearchQuery,
-  setNameHaystack,
-  setMetaHaystack,
-  setFullMetaSearch,
-  setIncludeNullMetadata,
-  setSelectedTypes,
-  setUseBackend,
-  setDisableTextWrap,
-  showAdditionalSettings,
-  setFilteredMetricCount,
-} = stateSlice.actions;

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import * as React from 'react';
+import { parse, stringify } from 'lossless-json';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -24,7 +24,7 @@ interface LogLineDetailsFieldsProps {
   search?: string;
 }
 
-export const LogLineDetailsFields = ({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
+export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
   if (!fields.length) {
     return null;
   }
@@ -52,7 +52,8 @@ export const LogLineDetailsFields = ({ disableActions, fields, log, logs, search
       ))}
     </div>
   );
-};
+});
+LogLineDetailsFields.displayName = 'LogLineDetailsFields';
 
 interface LinkModelWithIcon extends LinkModel<Field> {
   icon?: IconName;
@@ -104,12 +105,12 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} minmax(15%, 30%) 1fr`,
+    gridTemplateColumns: `${theme.spacing(11.5)} auto 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `minmax(15%, 30%) 1fr`,
+    gridTemplateColumns: `auto 1fr`,
   }),
 });
 
@@ -142,12 +143,14 @@ export const LogLineDetailsField = ({
     closeDetails,
     displayedFields,
     isLabelFilterActive,
+    noInteractions,
     onClickFilterLabel,
     onClickFilterOutLabel,
     onClickShowField,
     onClickHideField,
     onPinLine,
     pinLineButtonTooltipTitle,
+    syntaxHighlighting,
   } = useLogListContext();
 
   const styles = useStyles2(getFieldStyles);
@@ -177,53 +180,59 @@ export const LogLineDetailsField = ({
     }
   }, [showFieldsStats, updateStats]);
 
+  const reportInteractionWrapper = useCallback(
+    (interactionName: string, properties?: Record<string, unknown>) => {
+      if (noInteractions) {
+        return;
+      }
+      reportInteraction(interactionName, properties);
+    },
+    [noInteractions]
+  );
+
   const showField = useCallback(() => {
     if (onClickShowField) {
       onClickShowField(keys[0]);
     }
 
-    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+    reportInteractionWrapper('logs_log_line_details_show_field_clicked', {
       datasourceType: log.datasourceType,
-      logRowUid: log.uid,
-      type: 'enable',
     });
-  }, [onClickShowField, keys, log.datasourceType, log.uid]);
+  }, [onClickShowField, reportInteractionWrapper, log.datasourceType, keys]);
 
   const hideField = useCallback(() => {
     if (onClickHideField) {
       onClickHideField(keys[0]);
     }
 
-    reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
+    reportInteractionWrapper('logs_log_line_details_hide_field_clicked', {
       datasourceType: log.datasourceType,
-      logRowUid: log.uid,
-      type: 'disable',
     });
-  }, [onClickHideField, keys, log.datasourceType, log.uid]);
+  }, [onClickHideField, reportInteractionWrapper, log.datasourceType, keys]);
 
   const filterLabel = useCallback(() => {
     if (onClickFilterLabel) {
       onClickFilterLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
     }
 
-    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+    reportInteractionWrapper('logs_log_line_details_filter_clicked', {
       datasourceType: log.datasourceType,
       filterType: 'include',
       logRowUid: log.uid,
     });
-  }, [onClickFilterLabel, keys, values, log]);
+  }, [onClickFilterLabel, reportInteractionWrapper, log, keys, values]);
 
   const filterOutLabel = useCallback(() => {
     if (onClickFilterOutLabel) {
       onClickFilterOutLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
     }
 
-    reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
+    reportInteractionWrapper('logs_log_line_details_filter_clicked', {
       datasourceType: log.datasourceType,
       filterType: 'exclude',
       logRowUid: log.uid,
     });
-  }, [onClickFilterOutLabel, keys, values, log]);
+  }, [onClickFilterOutLabel, reportInteractionWrapper, log, keys, values]);
 
   const labelFilterActive = useCallback(async () => {
     if (isLabelFilterActive) {
@@ -235,14 +244,14 @@ export const LogLineDetailsField = ({
   const showStats = useCallback(() => {
     setShowFieldStats((showFieldStats: boolean) => !showFieldStats);
 
-    reportInteraction('grafana_explore_logs_log_details_stats_clicked', {
+    reportInteractionWrapper('logs_log_line_details_stats_clicked', {
       dataSourceType: log.datasourceType,
-      fieldType: isLabel ? 'label' : 'detectedField',
+      fieldType: isLabel ? 'label' : 'field',
       type: showFieldsStats ? 'close' : 'open',
       logRowUid: log.uid,
       app,
     });
-  }, [app, isLabel, log.datasourceType, log.uid, showFieldsStats]);
+  }, [app, isLabel, log.datasourceType, log.uid, reportInteractionWrapper, showFieldsStats]);
 
   const refIdTooltip = useMemo(
     () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
@@ -309,8 +318,11 @@ export const LogLineDetailsField = ({
         <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
-            {singleValue ? values[0] : <MultipleValue showCopy={true} values={values} />}
-            {singleValue && <ClipboardButtonWrapper value={values[0]} />}
+            {singleValue ? (
+              <SingleValue value={values[0]} syntaxHighlighting={syntaxHighlighting} />
+            ) : (
+              <MultipleValue showCopy={true} values={values} />
+            )}
           </div>
         </div>
       </div>
@@ -406,10 +418,11 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   }),
   valueContainer: css({
     display: 'flex',
-    alignItems: 'center',
     lineHeight: theme.typography.body.lineHeight,
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-all',
+    maxHeight: '50vh',
+    overflow: 'auto',
   }),
 });
 
@@ -433,6 +446,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   button: css({
     '& > button': {
       color: theme.colors.text.secondary,
+      gap: 0,
       padding: 0,
       justifyContent: 'center',
       borderRadius: theme.shape.radius.circle,
@@ -469,6 +483,28 @@ const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: 
         })}
       </tbody>
     </table>
+  );
+};
+
+const SingleValue = ({ value: originalValue, syntaxHighlighting }: { value: string; syntaxHighlighting?: boolean }) => {
+  const value = useMemo(() => {
+    if (!syntaxHighlighting) {
+      return originalValue;
+    }
+    try {
+      const parsed = stringify(parse(originalValue), undefined, 2);
+      if (parsed) {
+        return parsed;
+      }
+    } catch (error) {}
+    return originalValue;
+  }, [originalValue, syntaxHighlighting]);
+
+  return (
+    <>
+      {value}
+      <ClipboardButtonWrapper value={value} />
+    </>
   );
 };
 

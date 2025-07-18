@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { useState } from 'react';
 import { RequireAtLeastOne } from 'type-fest';
 
@@ -19,7 +20,13 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { logWarning } from '../../Analytics';
 import { AlertRuleAction, skipToken, useGrafanaPromRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
 import * as ruleId from '../../utils/rule-id';
-import { isProvisionedPromRule, isProvisionedRule, prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import {
+  getRuleUID,
+  isProvisionedPromRule,
+  isProvisionedRule,
+  prometheusRuleType,
+  rulerRuleType,
+} from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 
 type RuleProps = RequireAtLeastOne<{
@@ -69,6 +76,12 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
     return null;
   }
 
+  // determine if this rule can be silenced by checking for Grafana Alert rule type and extracting the UID
+  const ruleUid = getRuleUID(rule ?? promRule);
+  const silenceableRule =
+    isString(ruleUid) &&
+    (rulerRuleType.grafana.alertingRule(rule) || prometheusRuleType.grafana.alertingRule(promRule));
+
   if (canEditRule) {
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
@@ -96,13 +109,13 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         promRule={promRule}
         groupIdentifier={groupIdentifier}
         identifier={identifier}
-        handleDelete={() => showDeleteModal(identifier, groupIdentifier)}
+        handleDelete={(identifier, groupIdentifier) => showDeleteModal(identifier, groupIdentifier)}
         handleSilence={() => setShowSilenceDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
       />
       {deleteModal}
-      {rulerRuleType.grafana.alertingRule(rule) && showSilenceDrawer && (
-        <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
+      {silenceableRule && showSilenceDrawer && (
+        <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

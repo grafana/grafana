@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "더 추가하기"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "경고 상태",
       "annotations": "주석",
@@ -503,6 +512,9 @@
           "text": "기록 규칙의 평가 방법을 정의하세요."
         }
       }
+    },
+    "alert-rule": {
+      "term": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -1499,15 +1511,12 @@
     "group-details": {
       "ds-features-error": "데이터 소스 세부 정보 로딩 중 오류 발생",
       "edit": "편집",
-      "evaluations-to-fire": "경고 발생 평가 주기",
       "export": "내보내기",
       "folder": "폴더",
       "group-loading-error": "그룹 로딩 중 오류 발생",
       "interval": "간격",
       "namespace": "네임스페이스",
-      "pending-period": "보류 기간",
-      "recording": "기록",
-      "rule-name": "규칙 이름"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "데이터 소스 세부 정보 로딩 중 오류 발생",
@@ -2228,6 +2237,9 @@
         "label-export-all": "모두 내보내기"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "{{errorMessage}}(으)로 인해 쿼리 편집기를 로딩할 수 없습니다"
     },
@@ -2637,6 +2649,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "원하는 데이터 소스를 찾을 수 없나요? 일부 데이터 소스는 경고용으로 지원되지 않습니다. 자세한 내용을 보려면 아이콘을 클릭하세요."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "새로운 Alertmanager 추가",
       "builtin-alertmanager": "내장 Alertmanager",
@@ -2871,6 +2888,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} 전)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3117,6 +3139,16 @@
       "info-box-content-2": "자세한 내용은 <2>주석 문서</2>를 확인하세요.",
       "title": "아직 추가된 사용자 정의 주석 쿼리 없음"
     },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "",
+        "results-split-on-comma": ""
+      },
+      "placeholder": {
+        "text-or-the-first-field": "",
+        "time-or-the-first-field": ""
+      }
+    },
     "standard-annotation-query-editor": {
       "events-found": "{{numEvents}}개의 이벤트({{numFields}}개의 필드에서 발견)",
       "no-events-found": "이벤트를 찾을 수 없습니다",
@@ -3192,6 +3224,9 @@
       "define-allowed-teams-ids-label": "허용된 팀 ID 정의",
       "display-name-description": "로그인 페이지에 '다음으로 로그인'으로 표시됩니다. 두 개 이상의 ID 제공자 또는 SSO 프로토콜을 사용하는 경우 유용합니다.",
       "display-name-label": "표시 이름",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "OAuth2 ID 토큰의 속성 맵 내에서 사용자 이메일 조회에 사용할 키의 이름입니다.",
       "email-attribute-name-label": "이메일 속성 이름",
       "email-attribute-path-description": "사용자 정보에서 사용자 이메일 조회에 사용할 JMESPath 표현식입니다.",
@@ -3208,6 +3243,11 @@
       "id-token-attribute-name-label": "ID 토큰 속성 이름",
       "login-attribute-path-description": "사용자 ID 토큰에서 사용자 로그인 조회에 사용할 JMESPath 표현식입니다.",
       "login-attribute-path-label": "로그인 속성 경로",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "OAuth2 앱의 페더레이션 ID 자격 증명의 관리 ID 클라이언트 ID입니다.",
       "managed-identity-client-id-label": "FIC 관리 ID 클라이언트 ID",
       "name-attribute-path-description": "사용자 ID 토큰에서 사용자 이름 조회에 사용할 JMESPath 표현식입니다.이 이름은 사용자의 표시 이름으로 사용됩니다.",
@@ -3422,6 +3462,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "취소",
       "cannot-move-folders": "폴더는 이동할 수 없습니다.",
       "confirmation-text": "삭제",
@@ -3440,7 +3482,9 @@
       "move-modal-text": "이 작업을 수행하면 다음 콘텐츠가 이동됩니다.",
       "move-modal-title": "이동",
       "moving": "이동 중...",
-      "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다."
+      "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "최근에 삭제됨"
@@ -3519,11 +3563,11 @@
       "button-create": "생성",
       "button-creating": "생성 중...",
       "cancel": "취소",
-      "error-invalid-folder-name": "유효하지 않은 폴더 이름",
       "error-required": "폴더 이름은 필수 입력 항목입니다",
       "folder-name-input-placeholder-enter-folder-name": "폴더 이름 입력",
       "label-folder-name": "폴더 이름",
       "text-pull-request-created": "이 폴더에 대한 변경 사항을 포함하는 풀 요청이 생성되었습니다.",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "풀 요청 생성됨",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다."
     },
@@ -4381,7 +4425,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "공개",
         "tooltip-view-as-scene": "씬으로 보기"
       }
     },
@@ -4574,6 +4617,14 @@
     "errors": {
       "failed-to-load": "대시보드 로딩에 실패했습니다."
     },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "대시보드 가져오기 실패"
@@ -4644,6 +4695,18 @@
         "alert": "경보",
         "query": "쿼리",
         "transform-data": "데이터 변환"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
       }
     },
     "get-panel-frame-category": {
@@ -5154,7 +5217,6 @@
       "playlist-next": "다음 대시보드로 이동",
       "playlist-previous": "이전 대시보드로 이동",
       "playlist-stop": "플레이리스트 중지",
-      "public-dashboard": "공개",
       "refresh": "대시보드 새로 고침",
       "save": "대시보드 저장",
       "save-dashboard": {
@@ -5207,7 +5269,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "변환 검색",
       "show-images": "이미지 표시",
-      "title-add-another-transformation": "다른 변환 추가"
+      "title-add-another-transformation": "다른 변환 추가",
+      "view-all": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": ""
@@ -5455,15 +5518,9 @@
       "type": "유형"
     },
     "dashboard-preview-banner": {
-      "not-saved": "값이 아직 Grafana 데이터베이스에 저장되지 않았습니다.",
       "not-yet-saved": "값이 Grafana 데이터베이스에 저장되지 않았습니다.",
-      "open-pull-request-in-git-hub": "GitHub에서 풀 요청 열기",
-      "title-dashboard-loaded-branch-git-hub": "이 대시보드는 GitHub의 브랜치에서 로딩됩니다.",
       "title-dashboard-loaded-external-repository": "이 대시보드는 외부 리포지토리에서 로딩됩니다.",
-      "title-dashboard-loaded-request-git-hub": "이 대시보드는 GitHub의 풀 요청에서 로딩됩니다.",
-      "title-error-loading-dashboard": "대시보드 로딩 중 오류 발생",
-      "value-not-saved": "값이 아직 Grafana 데이터베이스에 저장되지 않았습니다.",
-      "view-pull-request-in-git-hub": "GitHub에서 풀 요청 보기"
+      "title-error-loading-dashboard": "대시보드 로딩 중 오류 발생"
     },
     "dashboard-scene": {
       "text": {
@@ -5557,6 +5614,40 @@
         "row-height-options": "열 높이 옵션"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "",
+        "dynamically-switch-source-multiple-panels": "",
+        "group": "",
+        "hidden-constant-variable": "",
+        "users-enter-arbitrary-strings-textbox": "",
+        "values-are-static-and-defined-manually": "",
+        "values-fetched-source-query": "",
+        "values-timespans": ""
+      },
+      "name": {
+        "ad-hoc-filters": "",
+        "constant": "",
+        "custom": "",
+        "data-source": "",
+        "group-by": "",
+        "interval": "",
+        "query": "",
+        "textbox": ""
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5643,6 +5734,20 @@
     "library-viz-panel-info": {
       "last-edited": "<person /> 님({{timeAgo}}에)",
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다. 그래도 이 대시보드를 저장하시겠어요?",
@@ -5741,10 +5846,13 @@
       "description-examples": "이름을 지정한 캡처 그룹을 사용하여 표시 텍스트와 값을 분리할 수 있습니다(<1>예시 참고</1>).",
       "description-optional": "선택 사항, 시리즈 이름 또는 메트릭 노드 세그먼트의 일부를 추출하려는 경우.",
       "label-data-source": "데이터 소스",
+      "label-static-options-sort": "",
       "label-target-data-source": "대상 데이터 소스",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "쿼리 옵션",
-      "selection-options": "선택 옵션"
+      "selection-options": "선택 옵션",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -5775,7 +5883,8 @@
       "label-folder": "폴더",
       "render-footer": {
         "title-failed-to-save-dashboard": "대시보드 저장 실패"
-      }
+      },
+      "required": ""
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -7196,6 +7305,7 @@
       "when": "다음과 같은 때"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "연산"
     },
     "math": {
@@ -7970,6 +8080,9 @@
       "filter-popup-match-case": "대소문자 일치",
       "inspect-drawer-title": "값 검사",
       "inspect-menu-label": "값 검사",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}"
     },
@@ -7978,6 +8091,7 @@
     },
     "tags-input": {
       "add": "추가",
+      "placeholder-new-tag": "",
       "remove": "태그 제거: {{name}}"
     },
     "time-sync-button": {
@@ -8479,7 +8593,7 @@
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "이름 또는 설명으로 검색"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "라이브러리 패널 로딩 중..."
@@ -8527,9 +8641,7 @@
     "share-panel": {
       "config-description": "다음 사용자 지정 설정을 사용하여 조직 내에서 패널을 공유할 수 있는 개인화된 직접 링크를 생성합니다.",
       "download-image": "이미지 다운로드",
-      "render-image": "이미지 생성",
-      "render-image-error": "패널 이미지 렌더링 실패",
-      "render-image-error-description": "이미지를 생성하던 중 오류 발생"
+      "render-image": "이미지 생성"
     }
   },
   "live": {
@@ -8618,12 +8730,9 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_other": "",
+          "parsedl-label_other": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8680,6 +8789,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8692,16 +8802,22 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8804,6 +8920,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -8909,6 +9030,12 @@
       "text": {
         "import-dashboard": "대시보드 가져오기"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "",
+      "message-reserved-name": "",
+      "message-same-name": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -9062,6 +9189,8 @@
     "resource-details": {
       "dismiss-button": "확인",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "대시보드가 이미 클라우드 인스턴스에서 Grafana에 의해 프로비저닝 및 관리되고 있습니다. 앞으로 프로비저닝된 대시보드를 사용하는 것이 좋습니다. 대시보드를 클라우드 인스턴스에 복사하려는 경우, 대시보드 JSON에서 대시보드 ID를 변경하고 새 스냅샷을 저장한 다음 다시 업로드하세요.",
         "datasource-already-managed": "데이터 소스가 이미 클라우드 인스턴스에서 Grafana에 의해 프로비저닝 및 관리되고 있습니다. 다른 리소스인 경우 다른 UID를 설정하고 다시 시도하세요.",
         "datasource-invalid-url": "잘못된 URL을 가진 데이터 소스가 있습니다. 유효한 URL을 입력하고 다시 시도해 주세요.",
@@ -10282,6 +10411,15 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "이 기능은 현재 적극적으로 개발 중입니다. 최상의 경험과 최신 개선 사항 적용을 위해 Grafana의 <2>야간 빌드</2>를 사용하는 것이 좋습니다."
@@ -11254,6 +11392,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "JSON으로 내보내기",
       "share-externally-title": "외부 공유",
       "share-internally-title": "내부 공유",
@@ -11289,6 +11428,19 @@
       "view-button": "JSON 보기",
       "view-button-yaml": "YAML 보기"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "라이브러리 패널을 생성합니다."
     },
@@ -11297,7 +11449,7 @@
       "info-text": "아래 옵션으로 사용자 정의된 이 대시보드 또는 패널에 대한 직접 링크를 생성합니다.",
       "link-url": "링크 URL",
       "render-alert": "이미지 렌더러 플러그인 미설치",
-      "render-instructions": "패널 이미지를 렌더링하려면 <2>Grafana 이미지 렌더러 플러그인</2>을 설치해야 합니다. 플러그인을 설치하려면 Grafana 관리자에게 문의하세요.",
+      "render-instructions": "",
       "rendered-image": "렌더링된 이미지에 직접 연결",
       "save-alert": "대시보드 저장되지 않음",
       "save-dashboard": "패널 이미지를 렌더링하려면 먼저 대시보드를 저장해야 합니다.",
@@ -11365,6 +11517,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "패널 미리 보기"
     },
@@ -12078,6 +12236,18 @@
       "placeholder-fields-or-number": "필드 또는 숫자"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "",
+          "reduce-row": "",
+          "row-index": "",
+          "unary-operation": ""
+        }
+      },
+      "label": {
+        "cumulative-functions": "",
+        "window-functions": ""
+      },
       "label-alias": "별칭",
       "label-mode": "모드",
       "label-replace-all-fields": "모든 필드 교체"
@@ -12092,6 +12262,13 @@
     "concatenate-transformer-editor": {
       "label-label": "라벨",
       "label-name": "이름",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "",
+          "ignore-the-frame-name": "",
+          "label-frame": ""
+        }
+      },
       "placeholder-frame": "프레임"
     },
     "config-from-query-transformer-editor": {
@@ -12103,6 +12280,9 @@
       "aria-label-add-a-convert-field-type-transformer": "변환 필드 유형 변환기 추가",
       "aria-label-remove-convert-field-type-transformer": "변환 필드 유형 변환기 제거",
       "convert-field-type": "",
+      "description": {
+        "convert-to-specified-field-type": ""
+      },
       "label": {
         "browser": "브라우저",
         "utc": "UTC"
@@ -12113,7 +12293,13 @@
       "label-input-format": "입력 형식",
       "label-join-with": "조인 대상",
       "label-set-timezone": "시간대 설정",
+      "name": {
+        "convert-field-type": ""
+      },
       "placeholder-type": "유형",
+      "tags": {
+        "format-field": ""
+      },
       "tooltip-explicit-separator-joining-array-values": "배열 값을 조인할 때 명시적인 구분 기호를 사용합니다",
       "tooltip-input-format": "Grafana가 날짜 문자열을 올바르게 분석할 수 있도록 입력 필드의 형식을 지정하세요.",
       "tooltip-specify-the-output-format": "출력 형식을 지정하세요.",
@@ -12135,6 +12321,19 @@
       "desc": "",
       "off": "끄기"
     },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": ""
+        },
+        "name": {
+          "concatenate-fields": ""
+        },
+        "tags": {
+          "combine": ""
+        }
+      }
+    },
     "enum-mapping-editor": {
       "add-enum-value": "열거형 값 추가",
       "generate-enum-values-from-data": "데이터에서 열거형 값 생성"
@@ -12145,6 +12344,9 @@
       "remove-enum-row-tooltip-delete": "삭제"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": ""
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": ""
@@ -12155,6 +12357,9 @@
       "label-keep-time": "시간 유지",
       "label-replace-all-fields": "모든 필드 교체",
       "label-source": "소스",
+      "name": {
+        "extract-fields": ""
+      },
       "placeholder-auto": "자동",
       "placeholder-select-delimiter": "구분 기호 선택...",
       "tooltip-regexp": "예: {{regexExample}}"
@@ -12163,6 +12368,9 @@
       "aria-label-threshold-color": "임계값 색상"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": ""
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": ""
@@ -12172,7 +12380,10 @@
         }
       },
       "label-field": "필드",
-      "label-lookup": "조회"
+      "label-lookup": "조회",
+      "name": {
+        "lookup-fields-from-resource": ""
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "추가 설정",
@@ -12181,11 +12392,25 @@
       "use-as": "다음으로 사용"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": ""
+      },
       "label-from-variable": "변수에서",
       "label-identifier": "식별자",
       "label-use-variable": "변수 사용",
       "label-variable": "변수",
+      "name": {
+        "filter-fields-by-name": ""
+      },
       "placeholder-regular-expression-pattern": "정규 표현식 패턴"
+    },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": ""
+      },
+      "name": {
+        "filter-data-by-query": ""
+      }
     },
     "filter-by-value-filter-editor": {
       "label-field": "필드",
@@ -12196,6 +12421,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "조건 추가",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": ""
+      },
       "filter-match": {
         "label": {
           "match-all": "",
@@ -12209,7 +12437,10 @@
         }
       },
       "label-conditions": "조건",
-      "label-filter-type": "필터 유형"
+      "label-filter-type": "필터 유형",
+      "name": {
+        "filter-data-by-values": ""
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12224,12 +12455,84 @@
       "label-format": "형식",
       "label-substring-range": "부분 문자열 범위"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": ""
+      },
+      "name": {
+        "format-string": ""
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "형식",
       "label-set-timezone": "시간대 설정",
       "label-time-field": "시간 필드",
       "tooltip-format": "<2>Moment.js 형식 문자열</2>로 지정된 필드의 출력 형식입니다.",
       "tooltip-timezone-manually": "날짜의 시간대를 수동으로 설정합니다"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": ""
+      },
+      "name": {
+        "format-time": ""
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": ""
+      },
+      "name": {
+        "add-field-from-calculation": ""
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": ""
+      },
+      "name": {
+        "config-from-query-results": ""
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": ""
+      },
+      "name": {
+        "create-heatmap": ""
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": ""
+      },
+      "name": {
+        "join-by-labels": ""
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": ""
+      },
+      "name": {
+        "partition-by-values": ""
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": ""
+      },
+      "name": {
+        "rows-to-fields": ""
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": ""
+      },
+      "name": {
+        "spatial-operations": ""
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12258,22 +12561,46 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "",
+          "group-by": ""
+        }
+      },
       "placeholder-ignored": "무시됨",
       "placeholder-select-stats": "통계 선택"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": ""
+      },
+      "name": {
+        "group-by": ""
+      },
       "title-calc-alert": "그룹화된 필드가 없는 경우 계산이 영향을 미치지 않습니다"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": ""
+      },
       "description-show-field-names": "활성화하면 중첩 테이블의 필드 이름이 테이블 헤더에 표시됩니다",
       "label-show-field-names-in-nested-tables": "중첩된 테이블에 필드 이름 표시",
+      "name": {
+        "group-to-nested-tables": ""
+      },
       "title-calc-alert": "그룹화된 필드가 없는 경우 계산이 영향을 미치지 않습니다."
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": ""
+      },
       "label-cell-value": "셀 값",
       "label-column": "열",
       "label-empty-value": "빈 값",
       "label-row": "행",
+      "name": {
+        "grouping-to-matrix": ""
+      },
       "special-value-options": {
         "description": {
           "boolean-false-value": "부울 거짓값",
@@ -12292,6 +12619,12 @@
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": ""
+      },
+      "name": {
+        "histogram": ""
+      },
       "placeholder-auto": "자동",
       "placeholder-default": "기본값: 30",
       "placeholder-none": "없음"
@@ -12300,7 +12633,16 @@
       "label-as-percentile": "백분위수로",
       "tooltip-transform-index-percentile": "행 인덱스를 백분위수로 변환합니다."
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": ""
+      },
+      "name": {
+        "join-by-field": ""
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "",
       "info": {
         "input-contain-labels": "입력에 라벨이 포함되어 있지 않습니다",
         "no-input-or-labels-found": "입력(또는 라벨)을 찾을 수 없습니다",
@@ -12322,10 +12664,30 @@
       "label-labels": "라벨",
       "label-mode": "모드",
       "label-value-field-name": "값 필드 이름",
+      "modes": {
+        "label": {
+          "columns": "",
+          "rows": ""
+        }
+      },
       "placeholder-optional-select-label": "라벨 선택(선택 사항)",
       "tooltip-replace-value-field-label": "값 필드 이름을 레이블로 교체합니다"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": ""
+      },
+      "name": {
+        "labels-to-fields": ""
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": ""
+      },
+      "name": {
+        "limit": ""
+      },
       "placeholder-value-or-variable": "값 또는 변수"
     },
     "long-info": {
@@ -12336,7 +12698,13 @@
       "string-values-separate": "문자열 값은 라벨이 아닌 별도의 필드로 표시됩니다"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "단일 프레임에 병합을 적용하면 아무런 효과가 없습니다."
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "merge-effect-applied-single-frame": "단일 프레임에 병합을 적용하면 아무런 효과가 없습니다.",
+      "name": {
+        "merge": ""
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "모든 값은 숫자입니다",
@@ -12346,10 +12714,16 @@
       "time-in-ascending-order": "시간(오름차순)"
     },
     "organize-fields-transformer-editor": {
+      "description": {
+        "reorder-hide-or-rename-fields": ""
+      },
       "field-order": "",
       "field-order-auto": "자동",
       "field-order-manual": "",
-      "first-frame-warning": "필드 정리는 단일 프레임에서만 가능합니다. 먼저 조인 변환을 적용하거나 입력을 필터링하는 것이 좋습니다."
+      "first-frame-warning": "필드 정리는 단일 프레임에서만 가능합니다. 먼저 조인 변환을 적용하거나 입력을 필터링하는 것이 좋습니다.",
+      "name": {
+        "organize-fields": ""
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "선택한 필드의 이름을 표시하는 방법을 설정합니다. 표 형식 데이터에는 프레임 이름을 사용하는 것이 일반적으로 더 좋습니다"
@@ -12374,9 +12748,41 @@
       "partition-values-works-single-frame": "값을 기준으로 분할하는 것은 단일 프레임에서만 가능합니다.",
       "tooltip-keeps-partition-fields-frames": "프레임의 분할 필드 유지"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": ""
+      },
+      "name": {
+        "prepare-time-series": ""
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "형식",
-      "label-info": "정보"
+      "label-info": "정보",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": ""
+        },
+        "label": {
+          "long-time-series": ""
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": ""
+        },
+        "label": {
+          "multiframe-time-series": ""
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": ""
+        },
+        "label": {
+          "wide-time-series": ""
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "및",
@@ -12388,6 +12794,9 @@
       "label-operation": "연산"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": ""
+      },
       "label-calculations": "계산",
       "label-include-time": "시간 포함",
       "label-labels-to-fields": "라벨을 필드로",
@@ -12402,11 +12811,22 @@
           "series-to-rows": "계열에서 행으로"
         }
       },
+      "name": {
+        "reduce": ""
+      },
       "placeholder-choose-stat": "통계 선택"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "값 또는 변수",
       "variable-regex-documentation": "다중 값 변수를 정규식 문자열로 형식 지정"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": ""
+      },
+      "name": {
+        "regression-analysis": ""
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12429,6 +12849,14 @@
       "regression": "",
       "tooltip-number-of-xy-points-to-predict": "예측할 X, Y 포인트 수"
     },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": ""
+      },
+      "name": {
+        "rename-fields-by-regex": ""
+      }
+    },
     "rename-by-regex-transformer-editor": {
       "label-match": "일치",
       "label-replace": "교체",
@@ -12437,11 +12865,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "필드",
-      "label-mode": "모드"
+      "label-mode": "모드",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "",
+          "join-on-a-field": "",
+          "keep-all-rows": ""
+        },
+        "label": {
+          "inner": "",
+          "outer-tabular": "",
+          "outer-time-series": ""
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "name": {
+        "series-to-rows": ""
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": ""
+      },
       "label-field": "필드",
       "label-reverse": "되돌리기",
+      "name": {
+        "sort-by": ""
+      },
       "placeholder-select-field": "필드 선택"
     },
     "supplier": {
@@ -12461,6 +12915,17 @@
         "transform": "변환"
       }
     },
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": ""
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": ""
+      },
+      "name": {
+        "time-series-to-table": ""
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "통계",
       "label-time-field": "시간 필드",
@@ -12474,9 +12939,33 @@
       "placeholder-value": "값",
       "tooltip-name-for-value-fields": "값 필드의 이름"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": ""
+      },
+      "name": {
+        "transpose": ""
+      },
+      "tags": {
+        "pivot": "",
+        "transform": "",
+        "translate": ""
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "연산",
       "placeholder-field": "필드"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "",
+        "combine": "",
+        "create-new-visualization": "",
+        "filter": "",
+        "perform-spatial-operations": "",
+        "reformat": "",
+        "reorder-and-rename": ""
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "모든 유형의 여러 값 필드",
@@ -12681,6 +13170,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",
