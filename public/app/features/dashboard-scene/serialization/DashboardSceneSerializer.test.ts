@@ -565,14 +565,14 @@ describe('DashboardSceneSerializer', () => {
             variables: [
               {
                 kind: 'GroupByVariable',
+                group: 'ds',
+                datasource: {
+                  name: 'ds-uid',
+                },
                 spec: {
                   current: {
                     text: 'Host',
                     value: 'host',
-                  },
-                  datasource: {
-                    type: 'ds',
-                    uid: 'ds-uid',
                   },
                   name: 'GroupBy',
                   options: [
@@ -607,14 +607,14 @@ describe('DashboardSceneSerializer', () => {
             variables: [
               {
                 kind: 'AdhocVariable',
+                group: 'prometheus',
+                datasource: {
+                  name: 'gdev-prometheus',
+                },
                 spec: {
                   name: 'adhoc',
                   label: 'Adhoc Label',
                   description: 'Adhoc Description',
-                  datasource: {
-                    uid: 'gdev-prometheus',
-                    type: 'prometheus',
-                  },
                   hide: 'dontHide',
                   skipUrlSync: false,
                   filters: [],

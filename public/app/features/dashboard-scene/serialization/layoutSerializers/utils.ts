@@ -223,7 +223,7 @@ export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
  * @param queryKind - The kind of query being performed
  * @returns The resolved DataSourceRef
  */
-function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
+export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
   // If datasource is specified and has a uid, use it
   if (querySpecDS?.uid) {
     return querySpecDS;

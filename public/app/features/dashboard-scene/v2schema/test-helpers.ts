@@ -41,7 +41,8 @@ export function validateVariable<
     expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
       `${variableKind.spec.filters[0].key}="${variableKind.spec.filters[0].value}"`
     );
-    expect(sceneVariable?.state.datasource).toEqual(variableKind.spec.datasource);
+    expect(sceneVariable?.state.datasource?.type).toEqual(variableKind.group);
+    expect(sceneVariable?.state.datasource?.uid).toEqual(variableKind.datasource?.name);
   } else if (variableKind.kind !== 'AdhocVariable') {
     expect(sceneVariable).toBeInstanceOf(sceneVariableClass);
     expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(

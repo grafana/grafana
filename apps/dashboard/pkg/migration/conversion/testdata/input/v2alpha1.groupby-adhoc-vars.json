@@ -1,0 +1,73 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2alpha1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "test-v2alpha1-groupby-adhoc-vars"
+  },
+  "spec": {
+    "title": "Test: V2alpha1 dashboard with group by and adhoc variables",
+    "variables": [
+      {
+        "kind": "GroupByVariable",
+        "spec": {
+          "current": {
+            "text": "text7",
+            "value": "value7"
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "gdev-prometheus"
+          },
+          "description": "A group by variable",
+          "hide": "dontHide",
+          "label": "Group By Variable"
+        }
+      },
+      {
+        "kind": "AdhocVariable",
+        "spec": {
+          "baseFilters": [
+            {
+              "condition": "AND",
+              "key": "key1",
+              "operator": "=",
+              "value": "value1"
+            },
+            {
+              "condition": "OR",
+              "key": "key2",
+              "operator": "=",
+              "value": "value2"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "datasource-3"
+          },
+          "defaultKeys": [
+            {
+              "expandable": true,
+              "group": "defaultGroup1",
+              "text": "defaultKey1",
+              "value": "defaultKey1"
+            }
+          ],
+          "description": "An adhoc variable",
+          "filters": [
+            {
+              "condition": "AND",
+              "key": "key3",
+              "operator": "=",
+              "value": "value3"
+            }
+          ],
+          "hide": "dontHide",
+          "label": "Adhoc Variable",
+          "name": "adhocVar",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
+      }
+    ]
+  }
+}

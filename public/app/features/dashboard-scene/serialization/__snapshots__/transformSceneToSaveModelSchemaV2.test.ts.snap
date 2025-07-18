@@ -297,15 +297,15 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       },
     },
     {
+      "datasource": {
+        "name": "datasource2",
+      },
+      "group": "prometheus",
       "kind": "GroupByVariable",
       "spec": {
         "current": {
           "text": "text7",
           "value": "value7",
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "datasource2",
         },
         "description": "A group by variable",
         "hide": "dontHide",
@@ -326,6 +326,10 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       },
     },
     {
+      "datasource": {
+        "name": "datasource3",
+      },
+      "group": "prometheus",
       "kind": "AdhocVariable",
       "spec": {
         "allowCustomValue": true,
@@ -343,10 +347,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
             "value": "value2",
           },
         ],
-        "datasource": {
-          "type": "prometheus",
-          "uid": "datasource3",
-        },
         "defaultKeys": [
           {
             "expandable": true,
