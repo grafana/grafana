@@ -119,15 +119,15 @@ test.describe(
       const stateColumnHeader = await getCell(page, 0, 1);
 
       await stateColumnHeader.click();
-      expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
+      await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'ascending');
       expect(getCell(page, 1, 1)).resolves.toContainText('down'); // down or down fast
 
       await stateColumnHeader.click();
-      expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
+      await expect(stateColumnHeader).toHaveAttribute('aria-sort', 'descending');
       expect(getCell(page, 1, 1)).resolves.toContainText('up'); // up or up fast
 
       await stateColumnHeader.click();
-      expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
+      await expect(stateColumnHeader).not.toHaveAttribute('aria-sort');
     });
 
     test('Tests filtering within a column', async ({ gotoDashboardPage, selectors, page }) => {
