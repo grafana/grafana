@@ -200,6 +200,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       }
     }
 
+    // Early return if no filtering occurred
+    if (matchingRows.size === frame.length) {
+      return frame;
+    }
+
     return this.reconstructDataFrame(frame, matchingRows);
   }
 
