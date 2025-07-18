@@ -122,6 +122,7 @@ func ProvideService(
 			userService,
 			resourceClient,
 			sorter,
+			features,
 		)
 
 		unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
@@ -140,6 +141,7 @@ func ProvideService(
 			userService,
 			resourceClient,
 			sorter,
+			features,
 		)
 		srv.dashboardK8sClient = dashHandler
 	}
