@@ -407,23 +407,57 @@
 
 # Packages
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
+/packages/grafana-alerting/ @grafana/alerting-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-data/src/transformations/ @grafana/datapro
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
+/packages/grafana-i18n/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs
 /packages/grafana-o11y-ds-frontend/src/IntervalInput/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/src/NodeGraph/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/observability-traces-and-profiling
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
 /packages/grafana-prometheus/ @grafana/oss-big-tent
+/packages/grafana-schema/src/**/*annotationslist* @grafana/dashboards-squad
+/packages/grafana-schema/src/**/*azuremonitor* @grafana/partner-datasources
+/packages/grafana-schema/src/**/*barchart* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*bargauge* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*candlestick* @grafana/dataviz-squad
 /packages/grafana-schema/src/**/*canvas* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*cloudwatch* @grafana/aws-datasources
+/packages/grafana-schema/src/**/*dashboardlist* @grafana/grafana-search-navigate-organise
+/packages/grafana-schema/src/**/*datagrid* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*debug* @ryantxu
+/packages/grafana-schema/src/**/*elasticsearch* @grafana/partner-datasources
+/packages/grafana-schema/src/**/*gauge* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*geomap* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*googlecloudmonitoring* @grafana/partner-datasources
+/packages/grafana-schema/src/**/*grafanapyroscope* @grafana/observability-traces-and-profiling
+/packages/grafana-schema/src/**/*heatmap* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*histogram* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*logs* @grafana/observability-logs
+/packages/grafana-schema/src/**/*logsnew* @grafana/observability-logs
+/packages/grafana-schema/src/**/*loki* @grafana/oss-big-tent @grafana/observability-logs
+/packages/grafana-schema/src/**/*news* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*nodegraph* @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
+/packages/grafana-schema/src/**/*parca* @grafana/oss-big-tent
+/packages/grafana-schema/src/**/*piechart* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*stat* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*statetimeline* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*statushistory* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*table* @grafana/dataviz-squad
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
+/packages/grafana-schema/src/**/*text* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*timeseries* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*trend* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*xychart* @grafana/dataviz-squad
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
+/packages/grafana-test-utils @grafana/grafana-frontend-platform
 /packages/grafana-ui/.storybook/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
@@ -434,19 +468,16 @@
 /packages/grafana-ui/src/components/Sparkline/ @grafana/grafana-frontend-platform @grafana/app-o11y-visualizations
 /packages/grafana-ui/src/components/Table/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/Cells/SparklineCell.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
-/packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/ValuePicker/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizLayout/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizLegend/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/grafana-frontend-platform
-/packages/grafana-alerting/ @grafana/alerting-frontend
-/packages/grafana-i18n/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
-/packages/grafana-test-utils @grafana/grafana-frontend-platform
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
