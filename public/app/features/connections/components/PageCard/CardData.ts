@@ -1,4 +1,5 @@
 import type { IconName } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 type CardData = {
   text: string;
@@ -7,50 +8,72 @@ type CardData = {
   icon: IconName;
 };
 
-export const cloudCardData: CardData[] = [
-  {
-    text: 'Add new connection',
-    subTitle: 'Connect data to Grafana through data sources, integrations and apps',
-    url: '/connections/add-new-connection',
-    icon: 'plus-circle',
-  },
-  {
-    text: 'Collector:',
-    subTitle: 'Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector',
-    url: '/a/grafana-collector-app',
-    icon: 'frontend-observability',
-  },
-  {
-    text: 'Data sources',
-    subTitle: 'Manage your existing data source connections',
-    url: '/connections/datasources',
-    icon: 'database',
-  },
-  {
-    text: 'Integrations',
-    subTitle: 'Manage your active integrations',
-    url: '/connections/infrastructure',
-    icon: 'apps',
-  },
-  {
-    text: 'Private data source connect',
-    subTitle: 'Manage your private network connections for data sources',
-    url: '/connections/private-data-source-connections',
-    icon: 'sitemap',
-  },
-];
+export function getCloudCardData(): CardData[] {
+  return [
+    {
+      text: t('connections.cloud.connections-home-page.add-new-connection.title', 'Add new connection'),
+      subTitle: t(
+        'connections.cloud.connections-home-page.add-new-connection.subtitle',
+        'Connect data to Grafana through data sources, integrations and apps'
+      ),
+      url: '/connections/add-new-connection',
+      icon: 'plus-circle',
+    },
+    {
+      text: t('connections.cloud.connections-home-page.collector.title', 'Collector:'),
+      subTitle: t(
+        'connections.cloud.connections-home-page.collector.subtitle',
+        'Manage the configuration of Grafana Alloy, our distribution of the OpenTelemetry Collector'
+      ),
+      url: '/a/grafana-collector-app',
+      icon: 'frontend-observability',
+    },
+    {
+      text: t('connections.cloud.connections-home-page.data-sources.title', 'Data sources'),
+      subTitle: t(
+        'connections.cloud.connections-home-page.data-sources.subtitle',
+        'Manage your existing data source connections'
+      ),
+      url: '/connections/datasources',
+      icon: 'database',
+    },
+    {
+      text: t('connections.cloud.connections-home-page.integrations.title', 'Integrations'),
+      subTitle: t('connections.cloud.connections-home-page.integrations.subtitle', 'Manage your active integrations'),
+      url: '/connections/infrastructure',
+      icon: 'apps',
+    },
+    {
+      text: t(
+        'connections.cloud.connections-home-page.private-data-source-connections.title',
+        'Private data source connect'
+      ),
+      subTitle: t(
+        'connections.cloud.connections-home-page.private-data-source-connections.subtitle',
+        'Manage your private network connections for data sources'
+      ),
+      url: '/connections/private-data-source-connections',
+      icon: 'sitemap',
+    },
+  ];
+}
 
-export const ossCardData: CardData[] = [
-  {
-    text: 'Add new connection',
-    subTitle: 'Connect to a new data source',
-    url: '/connections/add-new-connection',
-    icon: 'plus-circle',
-  },
-  {
-    text: 'View configured data sources',
-    subTitle: 'Manage your existing data source connections',
-    url: '/connections/datasources',
-    icon: 'database',
-  },
-];
+export function getOssCardData(): CardData[] {
+  return [
+    {
+      text: t('connections.oss.connections-home-page.add-new-connection.title', 'Add new connection'),
+      subTitle: t('connections.oss.connections-home-page.add-new-connection.subtitle', 'Connect to a new data source'),
+      url: '/connections/add-new-connection',
+      icon: 'plus-circle',
+    },
+    {
+      text: t('connections.oss.connections-home-page.data-sources.title', 'View configured data sources'),
+      subTitle: t(
+        'connections.oss.connections-home-page.data-sources.subtitle',
+        'Manage your existing data source connections'
+      ),
+      url: '/connections/datasources',
+      icon: 'database',
+    },
+  ];
+}

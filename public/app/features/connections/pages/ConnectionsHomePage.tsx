@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { cloudCardData, ossCardData } from '../components/PageCard/CardData';
+import { getCloudCardData, getOssCardData } from '../components/PageCard/CardData';
 import PageCard from '../components/PageCard/PageCard';
 
 export default function ConnectionsHomePage() {
@@ -15,7 +15,7 @@ export default function ConnectionsHomePage() {
 
   const isOSS = config.buildInfo.edition === GrafanaEdition.OpenSource;
 
-  let cardsData = isOSS ? ossCardData : cloudCardData;
+  let cardsData = isOSS ? getOssCardData() : getCloudCardData();
 
   return (
     <Page
@@ -32,12 +32,12 @@ export default function ConnectionsHomePage() {
           </h1>
           <p className={styles.subTitle}>
             {isOSS ? (
-              <Trans i18nKey="connections.connections-home-page.oss-subtitle">
+              <Trans i18nKey="connections.oss.connections-home-page.subtitle">
                 Manage your data source connections in one place. Use this page to add a new data source or manage your
                 existing connections.
               </Trans>
             ) : (
-              <Trans i18nKey="connections.connections-home-page.cloud-subtitle">
+              <Trans i18nKey="connections.cloud.connections-home-page.subtitle">
                 Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to
                 add to manage everything from data ingestion to private connections and telemetry pipelines.
               </Trans>
