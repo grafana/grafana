@@ -8,13 +8,13 @@ import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
 import { appEvents } from 'app/core/core';
+import { PageBannerDisplayEvent, PageBannerSeverity } from 'app/extensions/banners/types';
 import { StoreState } from 'app/types/store';
 
 import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard, ProviderSAMLCard, ProviderSCIMCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
-import { PageBannerDisplayEvent, PageBannerSeverity } from 'app/extensions/banners/types';
 
 import { getRegisteredAuthProviders } from './index';
 
