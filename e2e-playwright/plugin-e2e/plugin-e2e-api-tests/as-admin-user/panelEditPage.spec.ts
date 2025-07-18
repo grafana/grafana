@@ -11,6 +11,12 @@ const STANDARD_OTIONS_CATEGORY = 'Standard options';
 const DISPLAY_NAME_LABEL = 'Display name';
 const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
 
+test.use({
+  featureToggles: {
+    tableNextGen: true,
+  },
+});
+
 test.describe(
   'plugin-e2e-api-tests admin',
   {
@@ -53,7 +59,7 @@ test.describe(
         ).toHaveText(scenarios.map((s) => s.name));
       });
 
-      test('mocked query data response', async ({ panelEditPage, selectors }) => {
+      test('mocked query data response', async ({ panelEditPage, page }) => {
         await panelEditPage.mockQueryDataResponse(successfulDataQuery, 200);
         await panelEditPage.datasource.set('gdev-testdata');
         await panelEditPage.setVisualization(TABLE_VIZ_NAME);
@@ -63,9 +69,9 @@ test.describe(
           formatExpectError('Did not expect panel error to be displayed after query execution')
         ).toBeHidden();
         await expect(
-          panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.body),
+          page.getByRole('grid'),
           formatExpectError('Expected certain select options to be displayed after clicking on the select input')
-        ).toHaveText('val1val2val3val4');
+        ).toHaveText(/val1val2val3val4/);
       });
     });
 
