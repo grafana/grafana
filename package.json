@@ -80,9 +80,9 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@babel/core": "7.26.10",
-    "@babel/preset-env": "7.26.9",
-    "@babel/runtime": "7.27.0",
+    "@babel/core": "7.28.0",
+    "@babel/preset-env": "7.28.0",
+    "@babel/runtime": "7.27.6",
     "@betterer/betterer": "5.4.0",
     "@betterer/cli": "5.4.0",
     "@crowdin/crowdin-api-client": "^1.42.0",
