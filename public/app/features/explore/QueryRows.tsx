@@ -17,8 +17,8 @@ import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
   exploreId: string;
-  collapsedByDefault: boolean;
   changeCompactMode: (compact: boolean) => void;
+  isOpen?: boolean;
 }
 
 const makeSelectors = (exploreId: string) => {
@@ -35,7 +35,7 @@ const makeSelectors = (exploreId: string) => {
   };
 };
 
-export const QueryRows = ({ exploreId, collapsedByDefault, changeCompactMode }: Props) => {
+export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const dispatch = useDispatch();
   const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
     () => makeSelectors(exploreId),
@@ -110,7 +110,7 @@ export const QueryRows = ({ exploreId, collapsedByDefault, changeCompactMode }: 
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
-      collapsedByDefault={collapsedByDefault}
+      isOpen={isOpen}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}

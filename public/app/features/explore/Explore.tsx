@@ -642,7 +642,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
                         {correlationsBox}
                         <QueryRows
                           exploreId={exploreId}
-                          collapsedByDefault={compact}
+                          // Don't simply pass isOpen here to avoid opening the row when content outline is openend and
+                          // triggers exiting from compact mode. If it's confusing we can change the behavior to exit
+                          // compact mode explicitly with a button in the UI instead of exiting when row is opened or
+                          // content outline is opened.
+                          isOpen={compact ? false : undefined}
                           changeCompactMode={(compact: boolean) =>
                             this.props.changeCompactMode(this.props.exploreId, false)
                           }

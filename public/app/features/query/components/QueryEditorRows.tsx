@@ -41,7 +41,7 @@ export interface Props {
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
-  collapsedByDefault?: boolean;
+  isOpen?: boolean;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -178,7 +178,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryOpenChanged,
       onQueryReplacedFromLibrary,
       queryRowWrapper,
-      collapsedByDefault,
+      isOpen,
     } = this.props;
 
     return (
@@ -217,7 +217,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       range={getTimeSrv().timeRange()}
                       history={history}
                       eventBus={eventBus}
-                      collapsedByDefault={collapsedByDefault}
+                      isOpen={isOpen}
                     />
                   );
 
