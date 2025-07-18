@@ -577,7 +577,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       ctx.fillStyle = theme.colors.text.primary;
       ctx.font = font;
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
 
       for (let seriesIdx = 1; seriesIdx < u.data.length; seriesIdx++) {
         const field = frame.fields[seriesIdx];
@@ -600,7 +599,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
             const displayValue = field.display?.(value);
             const text = displayValue?.text ?? String(value);
 
-            ctx.fillText(text, x, y - 5);
+            const isNegative = value < 0;
+            const textOffset = isNegative ? 15 : -5;
+            const textBaseline = isNegative ? 'top' : 'bottom';
+
+            ctx.textBaseline = textBaseline;
+            ctx.fillText(text, x, y + textOffset);
           }
         }
       }
