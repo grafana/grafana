@@ -78,3 +78,11 @@ The following dashboards in Grafana Play provide examples of template variables:
 The following topics describe how to add and manage variables in your dashboards:
 
 {{< section >}}
+
+<!-- seems like this kinda goes with query params
+Variable values are always synced to the URL using the syntax `var-<varname>=value`.
+For example:
+```
+https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&from=now-6h&to=now&timezone=utc&var-Server=CCC&var-MyCustomDashboardVariable=Hello%20World%21
+```
+In the preceding example, the includes variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.-->
