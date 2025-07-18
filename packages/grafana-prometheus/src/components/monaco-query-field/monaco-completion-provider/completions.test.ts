@@ -11,9 +11,6 @@ import type { Situation } from './situation';
 const history: string[] = ['previous_metric_name_1', 'previous_metric_name_2', 'previous_metric_name_3'];
 const dataProviderSettings = {
   languageProvider: {
-    datasource: {
-      metricNamesAutocompleteSuggestionLimit: SUGGESTIONS_LIMIT,
-    },
     queryLabelKeys: jest.fn(),
     queryLabelValues: jest.fn(),
     retrieveLabelKeys: jest.fn(),
@@ -23,9 +20,8 @@ const dataProviderSettings = {
 } as unknown as DataProviderParams;
 let dataProvider = new DataProvider(dataProviderSettings);
 const metrics = {
-  beyondLimit: Array.from(Array(SUGGESTIONS_LIMIT + 1), (_, i) => `metric_name_${i}`),
   get atLimit() {
-    return this.beyondLimit.slice(0, SUGGESTIONS_LIMIT - 1);
+    return Array.from(Array(SUGGESTIONS_LIMIT - 1), (_, i) => `metric_name_${i}`);
   },
 };
 
@@ -72,48 +68,6 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     expect(completions?.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 
-  it('should limit completions for metric names when the number exceeds the limit', async () => {
-    const situation: Situation = {
-      type: situationType,
-    };
-    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.beyondLimit.length);
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.beyondLimit);
-
-    // Complex query
-    dataProvider.monacoSettings.setInputInRange('metric name one two three four five');
-    let completions = await getCompletions(situation, dataProvider, timeRange);
-    expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
-
-    // Simple query with fuzzy match
-    dataProvider.monacoSettings.setInputInRange('metric_name_');
-    completions = await getCompletions(situation, dataProvider, timeRange);
-    expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
-  });
-
-  it('should enable autocomplete suggestions update when the number of metric names is greater than the limit', async () => {
-    const situation: Situation = {
-      type: situationType,
-    };
-
-    // Do not cross the metrics names threshold
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.atLimit);
-    dataProvider.monacoSettings.setInputInRange('name_1');
-    await getCompletions(situation, dataProvider, timeRange);
-    expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
-
-    // Cross the metric names threshold, without text input
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
-    dataProvider.monacoSettings.setInputInRange('');
-    await getCompletions(situation, dataProvider, timeRange);
-    expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
-
-    // Cross the metric names threshold, with text input
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
-    dataProvider.monacoSettings.setInputInRange('name_1');
-    await getCompletions(situation, dataProvider, timeRange);
-    expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
-  });
-
   it('should handle complex queries efficiently', async () => {
     const situation: Situation = {
       type: situationType,
@@ -135,13 +89,13 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
       type: situationType,
     };
 
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.beyondLimit);
+    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
 
     // Test with multiple terms
     dataProvider.monacoSettings.setInputInRange('metric name 1 2 3 4 5');
     const completions = await getCompletions(situation, dataProvider, timeRange);
 
-    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.beyondLimit.length);
+    const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.atLimit.length);
     expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 });
@@ -158,8 +112,6 @@ describe('Label value completions', () => {
       monacoSettings: {
         setInputInRange: jest.fn(),
         inputInRange: '',
-        suggestionsIncomplete: false,
-        enableAutocompleteSuggestionsUpdate: jest.fn(),
       },
       metricNamesSuggestionLimit: 100,
     } as unknown as DataProvider;
