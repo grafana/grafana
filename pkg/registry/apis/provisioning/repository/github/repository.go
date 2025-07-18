@@ -114,7 +114,10 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 }
 
 func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) {
-	parsed, e := url.Parse(strings.TrimSuffix(giturl, ".git"))
+	giturl = strings.TrimSuffix(giturl, ".git")
+	giturl = strings.TrimSuffix(giturl, "/")
+
+	parsed, e := url.Parse(giturl)
 	if e != nil {
 		err = e
 		return

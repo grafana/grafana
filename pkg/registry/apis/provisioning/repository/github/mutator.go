@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -19,6 +20,15 @@ func Mutator(secrets secrets.RepositorySecrets) controller.Mutator {
 
 		if repo.Spec.GitHub == nil {
 			return nil
+		}
+
+		// Trim trailing ".git" and any trailing slash from the GitHub URL, if present, using the strings package.
+		if repo.Spec.GitHub.URL != "" {
+			url := repo.Spec.GitHub.URL
+			url = strings.TrimRight(url, "/")
+			url = strings.TrimSuffix(url, ".git")
+			url = strings.TrimRight(url, "/")
+			repo.Spec.GitHub.URL = url
 		}
 
 		if repo.Spec.GitHub.Token != "" {
