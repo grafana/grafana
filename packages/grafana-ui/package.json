@@ -133,7 +133,7 @@
     "uwrap": "0.1.1"
   },
   "devDependencies": {
-    "@babel/core": "7.26.10",
+    "@babel/core": "7.28.0",
     "@faker-js/faker": "^9.0.0",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "16.0.1",
