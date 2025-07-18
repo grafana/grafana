@@ -31,9 +31,17 @@ export default function ConnectionsHomePage() {
             <Trans i18nKey="connections.connections-home-page.welcome-to-connections">Welcome to Connections</Trans>
           </h1>
           <p className={styles.subTitle}>
-            {isOSS ?
-              <Trans i18nKey="connections.connections-home-page.oss-subtitle">Manage your data source connections in one place. Use this page to add a new data source or manage your existing connections.</Trans> :
-              <Trans i18nKey="connections.connections-home-page.cloud-subtitle">Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to add to manage everything from data ingestion to private connections and telemetry pipelines.</Trans>}
+            {isOSS ? (
+              <Trans i18nKey="connections.connections-home-page.oss-subtitle">
+                Manage your data source connections in one place. Use this page to add a new data source or manage your
+                existing connections.
+              </Trans>
+            ) : (
+              <Trans i18nKey="connections.connections-home-page.cloud-subtitle">
+                Connect your infrastructure to Grafana Cloud using data sources, integrations and apps. Use this page to
+                add to manage everything from data ingestion to private connections and telemetry pipelines.
+              </Trans>
+            )}
           </p>
           {cardsData && cardsData.length > 0 && (
             <section className={styles.cardsSection}>
