@@ -17,7 +17,6 @@ import {
   MetricFindValue,
   getValueMatcher,
   ValueMatcherID,
-  MatcherConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
