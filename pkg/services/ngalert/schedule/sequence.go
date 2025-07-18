@@ -92,7 +92,7 @@ func (sch *schedule) buildSequence(groupKey groupKey, groupItems []readyToRunIte
 
 	// iterate over the group items backwards to set the afterEval callback
 	for i := len(groupItems) - 2; i >= 0; i-- {
-		groupItems[i].Evaluation.afterEval = runJobFn(groupItems[i+1], groupItems[i])
+		groupItems[i].afterEval = runJobFn(groupItems[i+1], groupItems[i])
 	}
 
 	uids := make([]string, 0, len(groupItems))
@@ -117,7 +117,7 @@ func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) boo
 
 	// only evaluate rules in imported groups sequentially
 	for _, item := range groupItems {
-		if item.rule.ImportedFromPrometheus() {
+		if item.rule.ImportedPrometheusRule() {
 			return true
 		}
 	}

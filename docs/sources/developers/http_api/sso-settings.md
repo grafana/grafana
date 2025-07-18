@@ -22,10 +22,6 @@ title: SSO Settings API
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
-{{% admonition type="note" %}}
-Available since Grafana 11. SAML support is in public preview behind the `ssoSettingsSAML` feature flag.
-{{% /admonition %}}
-
 The API can be used to create, update, delete, get, and list SSO Settings for OAuth2 and SAML.
 
 The settings managed by this API are stored in the database and override
@@ -167,11 +163,11 @@ Grafana verifies whether the given settings are allowed and valid.
 If they are, then Grafana stores the settings in the database and reloads
 Grafana services with no need to restart the instance.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you run Grafana in high availability mode, configuration changes
 may not get applied to all Grafana instances immediately. You may need
 to wait a few minutes for the configuration to propagate to all Grafana instances.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Required permissions**
 

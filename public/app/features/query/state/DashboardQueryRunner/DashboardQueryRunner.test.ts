@@ -12,7 +12,7 @@ import {
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import * as store from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
@@ -115,9 +115,6 @@ function getTestContext() {
           file: 'my-namespace',
         },
       ],
-      totals: {
-        alerting: 2,
-      },
     },
   };
 

@@ -1,10 +1,13 @@
 import { DataSourceApi, DataSourceWithQueryExportSupport, DataSourceWithQueryImportSupport } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
-import { TestQuery } from 'app/core/utils/query.test';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { updateQueries } from './updateQueries';
+
+interface TestQuery extends DataQuery {
+  name?: string;
+}
 
 const oldUidDS = {
   uid: 'old-uid',

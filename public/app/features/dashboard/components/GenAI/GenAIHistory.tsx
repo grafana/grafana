@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Icon, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { STOP_GENERATION_TEXT } from './GenAIButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
@@ -145,16 +145,18 @@ export const GenAIHistory = ({
       <div className={styles.footer}>
         <Icon name="exclamation-circle" className={styles.infoColor} />
         <Text variant="bodySmall" color="secondary">
-          This content is AI-generated using the{' '}
-          <TextLink
-            variant="bodySmall"
-            inline={true}
-            href="https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
-            external
-            onClick={onClickDocs}
-          >
-            Grafana LLM plugin
-          </TextLink>
+          <Trans i18nKey="dashboard.gen-aihistory.footer-text">
+            This content is AI-generated using the{' '}
+            <TextLink
+              variant="bodySmall"
+              inline={true}
+              href="https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
+              external
+              onClick={onClickDocs}
+            >
+              Grafana LLM plugin
+            </TextLink>
+          </Trans>
         </Text>
       </div>
     </div>

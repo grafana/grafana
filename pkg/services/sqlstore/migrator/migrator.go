@@ -18,7 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -416,11 +416,6 @@ type dbTransactionFunc func(sess *xorm.Session) error
 func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
-
-	// XXX: Spanner cannot execute DDL statements in transactions
-	if mg.Dialect.DriverName() == Spanner {
-		return callback(sess)
-	}
 
 	if err := sess.Begin(); err != nil {
 		return err

@@ -1,20 +1,45 @@
 package schemaversion
 
-import "strconv"
-
-type SchemaVersionMigrationFunc func(map[string]interface{}) error
+import (
+	"strconv"
+)
 
 const (
-	MIN_VERSION    = 36
+	MIN_VERSION    = 28
 	LATEST_VERSION = 41
 )
 
-var Migrations = map[int]SchemaVersionMigrationFunc{
-	37: V37,
-	38: V38,
-	39: V39,
-	40: V40,
-	41: V41,
+type SchemaVersionMigrationFunc func(map[string]interface{}) error
+
+type DataSourceInfo struct {
+	Default    bool
+	UID        string
+	Name       string
+	Type       string
+	ID         int64
+	APIVersion string
+}
+
+type DataSourceInfoProvider interface {
+	GetDataSourceInfo() []DataSourceInfo
+}
+
+func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
+	return map[int]SchemaVersionMigrationFunc{
+		29: V29,
+		30: V30,
+		31: V31,
+		32: V32,
+		33: V33(dsInfoProvider),
+		34: V34,
+		35: V35,
+		36: V36(dsInfoProvider),
+		37: V37,
+		38: V38,
+		39: V39,
+		40: V40,
+		41: V41,
+	}
 }
 
 func GetSchemaVersion(dash map[string]interface{}) int {

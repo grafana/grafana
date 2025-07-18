@@ -4,8 +4,8 @@ import { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface RuleEditorSectionProps {
   title: string;
@@ -27,6 +27,7 @@ export const RuleEditorSection = ({
   switchMode,
 }: React.PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
+
   const AlertRuleSelectors = selectors.components.AlertRules;
   return (
     <div className={styles.parent} data-testid={AlertRuleSelectors.step(stepNo.toString())}>

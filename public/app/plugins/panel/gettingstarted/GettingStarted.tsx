@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -89,19 +90,23 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
       <div className={styles.container}>
         {!checksDone ? (
           <div className={styles.loading}>
-            <div className={styles.loadingText}>Checking completed setup steps</div>
+            <div className={styles.loadingText}>
+              <Trans i18nKey="gettingstarted.getting-started.checking-completed-setup-steps">
+                Checking completed setup steps
+              </Trans>
+            </div>
             <Spinner size="xl" inline />
           </div>
         ) : (
           <>
             <Button variant="secondary" fill="text" className={styles.dismiss} onClick={this.dismiss}>
-              Remove this panel
+              <Trans i18nKey="gettingstarted.getting-started.remove-this-panel">Remove this panel</Trans>
             </Button>
             {currentStep === steps.length - 1 && (
               <Button
                 className={cx(styles.backForwardButtons, styles.previous)}
                 onClick={this.onPreviousClick}
-                aria-label="To basic tutorials"
+                aria-label={t('gettingstarted.getting-started.aria-label-to-basic-tutorials', 'To basic tutorials')}
                 icon="angle-left"
                 variant="secondary"
               />
@@ -113,7 +118,10 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
               <Button
                 className={cx(styles.backForwardButtons, styles.forward)}
                 onClick={this.onForwardClick}
-                aria-label="To advanced tutorials"
+                aria-label={t(
+                  'gettingstarted.getting-started.aria-label-to-advanced-tutorials',
+                  'To advanced tutorials'
+                )}
                 icon="angle-right"
                 variant="secondary"
               />

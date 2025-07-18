@@ -53,7 +53,7 @@ func generateLogin(prefix string, orgId int64, name string) string {
 	generatedLogin := fmt.Sprintf("%v-%v-%v", prefix, orgId, strings.ToLower(name))
 	// in case the name has multiple spaces or dashes in the prefix or otherwise, replace them with a single dash
 	generatedLogin = strings.Replace(generatedLogin, "--", "-", 1)
-	return strings.Replace(generatedLogin, " ", "-", -1)
+	return strings.ReplaceAll(generatedLogin, " ", "-")
 }
 
 // CreateServiceAccount creates service account
@@ -327,9 +327,11 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
-			queryWithWildcards := "%" + query.Query + "%"
-			whereConditions = append(whereConditions, "(email "+s.sqlStore.GetDialect().LikeStr()+" ? OR name "+s.sqlStore.GetDialect().LikeStr()+" ? OR login "+s.sqlStore.GetDialect().LikeStr()+" ?)")
-			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+			sql1, param1 := s.sqlStore.GetDialect().LikeOperator("email", true, query.Query, true)
+			sql2, param2 := s.sqlStore.GetDialect().LikeOperator("name", true, query.Query, true)
+			sql3, param3 := s.sqlStore.GetDialect().LikeOperator("login", true, query.Query, true)
+			whereConditions = append(whereConditions, fmt.Sprintf("(%s OR %s OR %s)", sql1, sql2, sql3))
+			whereParams = append(whereParams, param1, param2, param3)
 		}
 
 		switch query.Filter {
@@ -348,10 +350,9 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				"is_disabled = ?")
 			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanValue(true))
 		case serviceaccounts.FilterOnlyExternal:
-			whereConditions = append(
-				whereConditions,
-				"login "+s.sqlStore.GetDialect().LikeStr()+" ?")
-			whereParams = append(whereParams, serviceaccounts.ExtSvcLoginPrefix(query.OrgID)+"%")
+			sql, param := s.sqlStore.GetDialect().LikeOperator("login", false, serviceaccounts.ExtSvcLoginPrefix(query.OrgID), true)
+			whereConditions = append(whereConditions, sql)
+			whereParams = append(whereParams, param)
 		default:
 			s.log.Warn("Invalid filter user for service account filtering", "service account search filtering", query.Filter)
 		}
@@ -477,26 +478,6 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 		}
 	}
 	return migrationResult, nil
-}
-
-func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int64, keyId int64) error {
-	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
-	if err != nil {
-		return err
-	}
-	if len(basicKeys) == 0 {
-		return fmt.Errorf("no API keys to convert found")
-	}
-	for _, key := range basicKeys {
-		if keyId == key.ID {
-			err := s.CreateServiceAccountFromApikey(ctx, key)
-			if err != nil {
-				s.log.Error("Converting to service account failed with error", "keyId", keyId, "error", err)
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {

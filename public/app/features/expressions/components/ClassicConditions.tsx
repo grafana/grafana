@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ClassicCondition, ExpressionQuery } from '../types';
 import { defaultCondition } from '../utils/expressionTypes';

@@ -146,7 +146,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     scopeMeta: state.scopeMeta,
   };
 
-  return sortedDeepCloneWithoutNulls(dashboard);
+  return sortedDeepCloneWithoutNulls(dashboard, true);
 }
 
 export function gridItemToPanel(gridItem: DashboardGridItem, isSnapshot = false): Panel {

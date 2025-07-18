@@ -1,12 +1,30 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
-import { Switch, Field, InlineField, InlineFieldRow, RadioButtonGroup, JSONFormatter, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import {
+  Action,
+  GrafanaTheme2,
+  httpMethodOptions,
+  HttpRequestMethod,
+  VariableSuggestion,
+  ActionVariable,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import {
+  Switch,
+  Field,
+  InlineField,
+  InlineFieldRow,
+  RadioButtonGroup,
+  JSONFormatter,
+  useStyles2,
+  ColorPicker,
+  useTheme2,
+} from '@grafana/ui';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
+import { ActionVariablesEditor } from './ActionVariablesEditor';
 import { ParamsEditor } from './ParamsEditor';
 
 interface ActionEditorProps {
@@ -21,6 +39,7 @@ const LABEL_WIDTH = 13;
 
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
@@ -64,6 +83,13 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
+  const onVariablesChange = (variables: ActionVariable[]) => {
+    onChange(index, {
+      ...value,
+      variables,
+    });
+  };
+
   const onQueryParamsChange = (queryParams: Array<[string, string]>) => {
     onChange(index, {
       ...value,
@@ -80,6 +106,16 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       fetch: {
         ...value.fetch,
         headers,
+      },
+    });
+  };
+
+  const onBackgroundColorChange = (backgroundColor: string) => {
+    onChange(index, {
+      ...value,
+      style: {
+        ...value.style,
+        backgroundColor,
       },
     });
   };
@@ -133,6 +169,19 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         />
       </Field>
 
+      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')}>
+        <InlineField
+          label={t('actions.action-editor.button.style.background-color', 'Color')}
+          labelWidth={LABEL_WIDTH}
+          className={styles.colorPicker}
+        >
+          <ColorPicker
+            color={value?.style?.backgroundColor || theme.colors.secondary.main}
+            onChange={onBackgroundColorChange}
+          />
+        </InlineField>
+      </Field>
+
       {showOneClick && (
         <Field
           label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
@@ -170,6 +219,14 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
           />
         </InlineField>
       </InlineFieldRow>
+
+      <Field
+        label={t('grafana-ui.action-editor.modal.action-variables', 'Variables')}
+        className={styles.fieldGap}
+        noMargin
+      >
+        <ActionVariablesEditor onChange={onVariablesChange} value={value.variables ?? []} />
+      </Field>
 
       <Field
         label={t('grafana-ui.action-editor.modal.action-query-params', 'Query parameters')}
@@ -222,6 +279,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   inputField: css({
     marginRight: 4,
+  }),
+  colorPicker: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
 });
 

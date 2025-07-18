@@ -5,10 +5,10 @@ import userEvent from '@testing-library/user-event';
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromQuery } from '../../types';
-import { getOperationParamId } from '../operationUtils';
+import { getOperationParamId } from '../shared/param_utils';
 import { addOperationInQueryBuilder } from '../testUtils';
 
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
@@ -17,7 +17,6 @@ describe('PromQueryBuilderContainer', () => {
   it('translates query between string and model', async () => {
     const { props } = setup({ expr: 'rate(metric_test{job="testjob"}[$__rate_interval])' });
 
-    expect(screen.getByText('metric_test')).toBeInTheDocument();
     await addOperationInQueryBuilder('Range functions', 'Rate');
     // extra fields here are for storing metrics explorer settings. Future work: store these in local storage.
     expect(props.onChange).toHaveBeenCalledWith({
@@ -41,7 +40,7 @@ describe('PromQueryBuilderContainer', () => {
 });
 
 function setup(queryOverrides: Partial<PromQuery> = {}) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
   const datasource = new PrometheusDatasource(
     {
       url: '',

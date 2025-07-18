@@ -3,7 +3,6 @@ package sqltemplate
 import (
 	"bytes"
 	"errors"
-	"strconv"
 	"strings"
 )
 
@@ -24,8 +23,6 @@ func DialectForDriver(driverName string) Dialect {
 		return PostgreSQL
 	case "sqlite", "sqlite3":
 		return SQLite
-	case "spanner":
-		return Spanner
 	default:
 		return nil
 	}
@@ -94,7 +91,6 @@ func ParseRowLockingClause(s ...string) (RowLockingClause, error) {
 	return opt, nil
 }
 
-// Row-locking clause options.
 const (
 	SelectForShare            RowLockingClause = "SHARE"
 	SelectForShareNoWait      RowLockingClause = "SHARE NOWAIT"
@@ -131,9 +127,6 @@ var rowLockingClauseAll = rowLockingClauseMap{
 	SelectForUpdateSkipLocked: SelectForUpdateSkipLocked,
 }
 
-// standardIdent provides standard SQL escaping of identifiers.
-type standardIdent struct{}
-
 func escapeIdentity(s string, quote rune, clean func(string) string) (string, error) {
 	if s == "" {
 		return "", ErrEmptyIdent
@@ -156,31 +149,11 @@ func escapeIdentity(s string, quote rune, clean func(string) string) (string, er
 	return buffer.String(), nil
 }
 
-func (standardIdent) Ident(s string) (string, error) {
+// standardIdent provides standard SQL escaping of identifiers.
+func standardIdent(s string) (string, error) {
 	return escapeIdentity(s, '"', func(s string) string {
 		// not sure we should support escaping quotes in table/column names,
 		// but it is valid so we will support it for now
 		return strings.ReplaceAll(s, `"`, `""`)
 	})
-}
-
-type argPlaceholderFunc func(int) string
-
-func (f argPlaceholderFunc) ArgPlaceholder(argNum int) string {
-	return f(argNum)
-}
-
-var (
-	argFmtSQL92 = argPlaceholderFunc(func(int) string {
-		return "?"
-	})
-	argFmtPositional = argPlaceholderFunc(func(argNum int) string {
-		return "$" + strconv.Itoa(argNum)
-	})
-)
-
-type name string
-
-func (n name) DialectName() string {
-	return string(n)
 }

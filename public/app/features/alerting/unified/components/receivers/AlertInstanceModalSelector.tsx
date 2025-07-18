@@ -4,6 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   FilterInput,
@@ -15,7 +16,6 @@ import {
   clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -247,7 +247,11 @@ export function AlertInstanceModalSelector({
           <div className={styles.column}>
             {!selectedRule && !loading && (
               <div className={styles.selectedRulePlaceholder}>
-                <div>Select an alert rule to get a list of available firing instances</div>
+                <div>
+                  <Trans i18nKey="alerting.alert-instance-modal-selector.select-alert-rule">
+                    Select an alert rule to get a list of available firing instances
+                  </Trans>
+                </div>
               </div>
             )}
             {loading && (

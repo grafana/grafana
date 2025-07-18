@@ -16,8 +16,9 @@ import (
 )
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema) (*data.Frame, error) {
+func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, maxOutputCells int64) (*data.Frame, error) {
 	f := &data.Frame{}
+
 	// Create fields based on the schema
 	for _, col := range schema {
 		fT, err := MySQLColToFieldType(col)
@@ -29,8 +30,17 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		f.Fields = append(f.Fields, field)
 	}
 
+	cellCount := int64(0)
+
 	// Iterate through the rows and append data to fields
 	for {
+		// Check for context cancellation or timeout
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
 		row, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
 			break
@@ -39,10 +49,24 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 			return nil, fmt.Errorf("error reading row: %v", err)
 		}
 
+		// We check the cell count here to avoid appending an incomplete row, so the
+		// the number returned may be less than the maxOutputCells.
+		// If the maxOutputCells is 0, we don't check the cell count.
+		if maxOutputCells > 0 {
+			cellCount += int64(len(row))
+			if cellCount > maxOutputCells {
+				f.AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     fmt.Sprintf("Query exceeded max output cells (%d). Only %d cells returned.", maxOutputCells, cellCount-int64(len(row))),
+				})
+				return f, nil
+			}
+		}
+
 		for i, val := range row {
 			// Run val through mysql.Type.Convert to normalize underlying value
 			// of the interface
-			nV, _, err := schema[i].Type.Convert(val)
+			nV, _, err := schema[i].Type.Convert(ctx, val)
 			if err != nil {
 				return nil, err
 			}

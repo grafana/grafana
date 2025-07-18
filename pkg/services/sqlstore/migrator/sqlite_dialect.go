@@ -7,7 +7,7 @@ import (
 
 	"github.com/mattn/go-sqlite3"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type SQLite3 struct {
@@ -16,8 +16,8 @@ type SQLite3 struct {
 
 func NewSQLite3Dialect() Dialect {
 	d := SQLite3{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = SQLite
+	d.dialect = &d
+	d.driverName = SQLite
 	return &d
 }
 

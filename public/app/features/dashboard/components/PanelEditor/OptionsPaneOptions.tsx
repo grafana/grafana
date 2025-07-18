@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
@@ -100,7 +100,12 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <div className={styles.formRow}>
-          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
+          <FilterInput
+            width={0}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('dashboard.options-pane-options.placeholder-search-options', 'Search options')}
+          />
         </div>
         {showSearchRadioButtons && (
           <div className={styles.formRow}>
@@ -140,7 +145,10 @@ export function renderSearchHits(
     <div key="search results">
       <OptionsPaneCategory
         id="Found options"
-        title={`Matched ${optionHits.length}/${totalCount} options`}
+        title={t('dashboard.options-pane-options.title-matched', 'Matched {{count}}/{{totalCount}} options', {
+          count: optionHits.length,
+          totalCount,
+        })}
         key="Normal options"
         forceOpen={true}
       >

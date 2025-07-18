@@ -257,7 +257,7 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 	}
 	s, err := cma.cloudMigrationService.CreateSession(ctx, c.SignedInUser, cloudmigration.CloudMigrationSessionRequest{
 		AuthToken: cmd.AuthToken,
-		OrgID:     c.SignedInUser.OrgID,
+		OrgID:     c.OrgID,
 	})
 	if err != nil {
 		span.SetStatus(codes.Error, "session creation error")
@@ -411,7 +411,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	q := cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
 		SessionUID:  sessUid,
-		OrgID:       c.SignedInUser.OrgID,
+		OrgID:       c.OrgID,
 		SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
 			ResultPage:  page,
 			ResultLimit: lim,
@@ -536,7 +536,7 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 		Page:       getQueryPageParams(c.QueryInt("page"), 1),
 		// TODO: change to pattern used by GetSnapshot results
 		Sort:  c.Query("sort"),
-		OrgID: c.SignedInUser.OrgID,
+		OrgID: c.OrgID,
 	}
 
 	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, q)

@@ -4,6 +4,7 @@ import { MutableRefObject, ReactNode, useCallback, useState } from 'react';
 
 import { getDefaultTimeRange, isDataFrame, QueryEditorProps, QueryHint, toLegacyResponseData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, useTheme2 } from '@grafana/ui';
 
@@ -12,7 +13,8 @@ import { getInitHints } from '../query_hints';
 import { PromOptions, PromQuery } from '../types';
 
 import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
-import { PrometheusMetricsBrowser } from './metrics-browser/PrometheusMetricsBrowser';
+import { MetricsBrowser } from './metrics-browser/MetricsBrowser';
+import { MetricsBrowserProvider } from './metrics-browser/MetricsBrowserContext';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 import { useMetricsState } from './useMetricsState';
 import { usePromQueryFieldEffects } from './usePromQueryFieldEffects';
@@ -43,7 +45,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
 
   const updateLanguage = useCallback(() => {
-    if (languageProvider.metrics) {
+    if (languageProvider.retrieveMetrics()) {
       setSyntaxLoaded(true);
     }
   }, [languageProvider]);
@@ -164,7 +166,10 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
             onChange={onChangeQuery}
             onRunQuery={onRunQuery}
             initialValue={query.expr ?? ''}
-            placeholder="Enter a PromQL query…"
+            placeholder={t(
+              'grafana-prometheus.components.prom-query-field.placeholder-enter-a-prom-ql-query',
+              'Enter a PromQL query…'
+            )}
             datasource={datasource}
             timeRange={range ?? getDefaultTimeRange()}
           />
@@ -172,11 +177,13 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
       </div>
       {labelBrowserVisible && (
         <div className="gf-form">
-          <PrometheusMetricsBrowser
+          <MetricsBrowserProvider
+            timeRange={range ?? getDefaultTimeRange()}
             languageProvider={languageProvider}
             onChange={onChangeLabelBrowser}
-            timeRange={range}
-          />
+          >
+            <MetricsBrowser />
+          </MetricsBrowserProvider>
         </div>
       )}
       {ExtraFieldElement}

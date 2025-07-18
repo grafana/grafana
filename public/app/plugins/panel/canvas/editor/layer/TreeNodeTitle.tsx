@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -72,17 +73,17 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
         <div className={styles.actionButtonsWrapper}>
           <IconButton
             name="copy"
-            title="Duplicate"
+            title={t('canvas.tree-node-title.title-duplicate', 'Duplicate')}
             className={styles.actionIcon}
             onClick={() => onDuplicate(element)}
-            tooltip="Duplicate"
+            tooltip={t('canvas.tree-node-title.tooltip-duplicate', 'Duplicate')}
           />
           <IconButton
             name="trash-alt"
-            title="remove"
+            title={t('canvas.tree-node-title.title-remove', 'Remove')}
             className={styles.actionIcon}
             onClick={() => onDelete(element)}
-            tooltip="Remove"
+            tooltip={t('canvas.tree-node-title.tooltip-remove', 'Remove')}
           />
         </div>
       )}

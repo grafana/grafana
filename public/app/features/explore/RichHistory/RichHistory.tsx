@@ -3,20 +3,19 @@ import { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import {
   SortOrder,
   RichHistorySearchFilters,
   RichHistorySettings,
   createDatasourcesList,
 } from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
-import { i18n } from '../QueriesDrawer/utils';
 import { selectExploreDSMaps } from '../state/selectors';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
@@ -94,7 +93,7 @@ export function RichHistory(props: RichHistoryProps) {
     .filter((name): name is string => !!name);
 
   const QueriesTab: TabConfig = {
-    label: i18n.queryHistory,
+    label: t('explore.rich-history.query-history', 'Query history'),
     value: Tabs.RichHistory,
     content: (
       <RichHistoryQueriesTab

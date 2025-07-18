@@ -239,6 +239,14 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 	ReaderNames []string
 }
 
+type DashboardProvisioningSearchResults struct {
+	Dashboard       Dashboard `xorm:"extends"`
+	Provisioner     string    `xorm:"name"`
+	ExternalID      string    `xorm:"external_id"`
+	CheckSum        string    `xorm:"check_sum"`
+	ProvisionUpdate int64     `xorm:"provisioning_updated"`
+}
+
 //
 // QUERIES
 //
@@ -291,6 +299,8 @@ type DashboardRef struct {
 	UID       string `xorm:"uid"`
 	Slug      string
 	FolderUID string `xorm:"folder_uid"`
+	// Deprecated: use UID instead
+	ID int64 `xorm:"id"`
 }
 
 type GetDashboardRefByIDQuery struct {
@@ -422,12 +432,13 @@ type DashboardACLInfoDTO struct {
 }
 
 type FindPersistedDashboardsQuery struct {
-	Title         string
-	OrgId         int64
-	SignedInUser  identity.Requester
-	DashboardIds  []int64
-	DashboardUIDs []string
-	Type          string
+	Title           string
+	TitleExactMatch bool
+	OrgId           int64
+	SignedInUser    identity.Requester
+	DashboardIds    []int64
+	DashboardUIDs   []string
+	Type            string
 	// Deprecated: use FolderUIDs instead
 	FolderIds  []int64
 	FolderUIDs []string

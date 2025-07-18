@@ -1,12 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
+
 import { PlaylistEditPage } from './PlaylistEditPage';
-import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -19,28 +21,32 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-async function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
+async function getTestContext() {
   jest.clearAllMocks();
-  const playlist = { name, items, interval, uid } as unknown as Playlist;
 
-  const getMock = jest.spyOn(backendSrv, 'get');
-  const putMock = jest.spyOn(backendSrv, 'put').mockImplementation(() => Promise.resolve());
-
-  getMock.mockResolvedValue({
-    name: 'Test Playlist',
-    interval: '5s',
-    items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
-    uid: 'foo',
-  });
+  const backendSrvMock = jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
+    of(
+      createFetchResponse({
+        spec: {
+          title: 'Test Playlist',
+          interval: '5s',
+          items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
+        },
+        metadata: {
+          name: 'foo',
+        },
+      })
+    )
+  );
 
   const { rerender } = render(
     <TestProvider>
       <PlaylistEditPage />
     </TestProvider>
   );
-  await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
 
-  return { playlist, rerender, putMock };
+  return { rerender, backendSrvMock };
 }
 
 describe('PlaylistEditPage', () => {
@@ -57,22 +63,32 @@ describe('PlaylistEditPage', () => {
 
   describe('when submitted', () => {
     it('then correct api should be called', async () => {
-      const { putMock } = await getTestContext();
+      const { backendSrvMock } = await getTestContext();
 
       expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(locationService.getLocation().pathname).toEqual('/');
-      await userEvent.clear(screen.getByRole('textbox', { name: /playlist name/i }));
+      await userEvent.clear(await screen.findByRole('textbox', { name: /playlist name/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
-      await userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
+      await userEvent.clear(await screen.findByRole('textbox', { name: /playlist interval/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /playlist interval/i }), '10s');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-      await waitFor(() => expect(putMock).toHaveBeenCalledTimes(1));
-      expect(putMock).toHaveBeenCalledWith('/api/playlists/foo', {
-        uid: 'foo',
-        name: 'A Name',
-        interval: '10s',
-        items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
-      });
+      await waitFor(() =>
+        expect(backendSrvMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            body: expect.objectContaining({
+              spec: {
+                title: 'A Name',
+                interval: '10s',
+                items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
+              },
+              metadata: {
+                name: 'foo',
+              },
+            }),
+            method: 'PUT',
+          })
+        )
+      );
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });
   });

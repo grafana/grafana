@@ -3,16 +3,17 @@ import { escapeRegExp } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 
 import {
-  BuilderQueryExpression,
   BuilderQueryEditorExpressionType,
-  BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
-  BuilderQueryEditorWhereExpression,
   BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorOrderByExpression,
   BuilderQueryEditorPropertyExpression,
+  BuilderQueryEditorPropertyType,
+  BuilderQueryEditorReduceExpression,
+  BuilderQueryEditorWhereExpression,
+  BuilderQueryExpression,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
 export const inputFieldSize = 20;
@@ -88,6 +89,7 @@ export interface BuildAndUpdateOptions {
   orderBy?: BuilderQueryEditorOrderByExpression[];
   columns?: string[];
   from?: BuilderQueryEditorPropertyExpression;
+  basicLogsQuery?: boolean;
 }
 
 export const aggregateOptions = [

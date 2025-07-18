@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import {
   useCreateContactPoint,
@@ -76,7 +76,9 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
     <>
       {!isVanillaAM && (
         <Alert title={t('alerting.cloud-receiver-form.title-info', 'Info')} severity="info">
-          Note that empty string values will be replaced with global defaults where appropriate.
+          <Trans i18nKey="alerting.cloud-receiver-form.body-info">
+            Note that empty string values will be replaced with global defaults where appropriate.
+          </Trans>
         </Alert>
       )}
       <ReceiverForm<CloudChannelValues>

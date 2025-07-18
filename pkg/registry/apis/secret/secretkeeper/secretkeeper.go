@@ -1,45 +1,35 @@
 package secretkeeper
 
 import (
-	"fmt"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
+	"github.com/prometheus/client_golang/prometheus"
 )
-
-// Service is the interface for secret keeper services.
-// This exists because OSS and Enterprise have different amounts of keepers available.
-type Service interface {
-	GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error)
-}
 
 // OSSKeeperService is the OSS implementation of the Service interface.
 type OSSKeeperService struct {
-	tracer            tracing.Tracer
-	encryptionManager contracts.EncryptionManager
-	store             contracts.EncryptedValueStorage
+	systemKeeper *sqlkeeper.SQLKeeper
 }
+
+var _ contracts.KeeperService = (*OSSKeeperService)(nil)
 
 func ProvideService(
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	store contracts.EncryptedValueStorage,
 	encryptionManager contracts.EncryptionManager,
-) (OSSKeeperService, error) {
-	return OSSKeeperService{
-		tracer:            tracer,
-		encryptionManager: encryptionManager,
-		store:             store,
+	reg prometheus.Registerer,
+) (*OSSKeeperService, error) {
+	return &OSSKeeperService{
+		// TODO: rename to system keeper or something like that
+		systemKeeper: sqlkeeper.NewSQLKeeper(tracer, encryptionManager, store, reg),
 	}, nil
 }
 
-func (ks OSSKeeperService) GetKeepers() (map[contracts.KeeperType]contracts.Keeper, error) {
-	sqlKeeper, err := sqlkeeper.NewSQLKeeper(ks.tracer, ks.encryptionManager, ks.store)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create sql keeper: %w", err)
-	}
-
-	return map[contracts.KeeperType]contracts.Keeper{
-		contracts.SQLKeeperType: sqlKeeper,
-	}, nil
+// Ignore the config, but we could use it to get the keeper type and then return the correct keeper.
+// Instantiation only happens on ProvideService ONCE.
+func (k *OSSKeeperService) KeeperForConfig(secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
+	return k.systemKeeper, nil
 }

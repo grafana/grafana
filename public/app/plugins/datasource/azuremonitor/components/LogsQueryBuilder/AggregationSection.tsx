@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 
 import { BuilderQueryEditorReduceExpression } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import AggregateItem from './AggregateItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -70,9 +72,12 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
       <EditorRow>
         <EditorFieldGroup>
           <EditorField
-            label="Aggregate"
+            label={t('components.aggregate-section.label-aggregate', 'Aggregate')}
             optional={true}
-            tooltip={`Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard deviation or percentiles.`}
+            tooltip={t(
+              'components.aggregate-section.tooltip-aggregate',
+              'Perform calculations across rows of data, such as count, sum, average, minimum, maximum, standard deviation or percentiles.'
+            )}
           >
             <EditorList
               items={aggregates}

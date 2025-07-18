@@ -135,7 +135,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 			eq.Properties = q
 			// TODO: Cascade limit from Grafana config in this (new Expression Parser) branch of the code
 			cellLimit := 0 // zero means no limit
-			eq.Command, err = NewSQLCommand(common.RefID, q.Format, q.Expression, int64(cellLimit))
+			eq.Command, err = NewSQLCommand(common.RefID, q.Format, q.Expression, int64(cellLimit), 0, 0)
 		}
 
 	case QueryTypeThreshold:
@@ -158,7 +158,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 			eq.Command = threshold
 			eq.Properties = q
 
-			if firstCondition.UnloadEvaluator != nil && h.features.IsEnabledGlobally(featuremgmt.FlagRecoveryThreshold) {
+			if firstCondition.UnloadEvaluator != nil {
 				unloading, err := NewThresholdCommand(common.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
 				unloading.Invert = true
 				if err != nil {

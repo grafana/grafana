@@ -72,7 +72,7 @@ type rowIter struct {
 	row int
 }
 
-func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
+func (ri *rowIter) Next(ctx *mysql.Context) (mysql.Row, error) {
 	// We assume each field in the Frame has the same number of rows.
 	numRows := 0
 	if len(ri.ft.Frame.Fields) > 0 {
@@ -95,7 +95,7 @@ func (ri *rowIter) Next(_ *mysql.Context) (mysql.Row, error) {
 
 		// If the field is JSON, convert json.RawMessage to types.JSONDocument
 		if raw, ok := val.(json.RawMessage); ok {
-			doc, inRange, err := types.JSON.Convert(raw)
+			doc, inRange, err := types.JSON.Convert(ctx, raw)
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert json.RawMessage to JSONDocument: %w", err)
 			}

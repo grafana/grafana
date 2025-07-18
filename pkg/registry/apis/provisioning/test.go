@@ -3,12 +3,14 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"reflect"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -43,7 +45,12 @@ func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	ns, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing namespace")
+	}
+
+	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := readBody(r, defaultMaxBodySize)
 		if err != nil {
 			responder.Error(err)
@@ -60,6 +67,23 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 
 			// In case the body is an empty object
 			if !reflect.ValueOf(cfg).IsZero() {
+				// HACK: Set the name and namespace if not set so that the temporary repository can be created
+				// This can be removed once we deprecate legacy secrets is deprecated or we use InLineSecureValues as we
+				// use the same field and repository name to detect which one to use.
+				if cfg.GetName() == "" {
+					if name == "new" {
+						// HACK: frontend is passing a "new" we need to remove the hack there as well
+						// Otherwise creation will fail as `new` is a reserved word. Not relevant here as we only "test"
+						name = "hack-on-hack-for-new"
+					}
+
+					cfg.SetName(name)
+				}
+
+				if cfg.GetNamespace() == "" {
+					cfg.SetNamespace(ns)
+				}
+
 				// Create a temporary repository
 				tmp, err := s.getter.AsRepository(ctx, &cfg)
 				if err != nil {
@@ -99,9 +123,9 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 	if res == nil {
 		res = &provisioning.TestResults{
 			Success: false,
-			Errors: []string{
-				"missing health status",
-			},
+			Errors: []provisioning.ErrorDetails{{
+				Detail: "missing health status",
+			}},
 		}
 	}
 
@@ -109,7 +133,11 @@ func (t *RepositoryTester) UpdateHealthStatus(ctx context.Context, cfg *provisio
 	repo.Status.Health = provisioning.HealthStatus{
 		Healthy: res.Success,
 		Checked: time.Now().UnixMilli(),
-		Message: res.Errors,
+	}
+	for _, err := range res.Errors {
+		if err.Detail != "" {
+			repo.Status.Health.Message = append(repo.Status.Health.Message, err.Detail)
+		}
 	}
 
 	_, err := t.client.Repositories(repo.GetNamespace()).

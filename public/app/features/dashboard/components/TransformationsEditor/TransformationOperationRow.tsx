@@ -12,6 +12,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import {
@@ -20,7 +21,6 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import config from 'app/core/config';
-import { t } from 'app/core/internationalization';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
@@ -138,7 +138,17 @@ export const TransformationOperationRow = ({
       .subscribe(setOutput);
     const prevOutputSubscription = transformDataFrame(prevInputTransforms, data.series, ctx)
       .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
-      .subscribe(setPrevOutput);
+      .subscribe((result) => {
+        let mergedResult = [...result];
+        // add refIds that were requested even if they did not return a result
+        data.request?.targets.forEach((series) => {
+          const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
+          if (!refIdInResult) {
+            mergedResult.push({ refId: series.refId, fields: [], length: 0 });
+          }
+        });
+        setPrevOutput(mergedResult);
+      });
 
     return function unsubscribe() {
       inputSubscription.unsubscribe();
@@ -194,9 +204,14 @@ export const TransformationOperationRow = ({
         {config.featureToggles.transformationsRedesign && (
           <ConfirmModal
             isOpen={showDeleteModal}
-            title={`Delete ${uiConfig.name}?`}
-            body="Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen."
-            confirmText="Delete"
+            title={t('dashboard.transformation-operation-row.title-delete', 'Delete {{name}}?', {
+              name: uiConfig.name,
+            })}
+            body={t(
+              'dashboard.transformation-operation-row.body-delete',
+              'Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.'
+            )}
+            confirmText={t('dashboard.transformation-operation-row.render-actions.confirmText-delete', 'Delete')}
             onConfirm={() => {
               setShowDeleteModal(false);
               onRemove(index);
@@ -213,6 +228,7 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}

@@ -145,7 +145,7 @@ func TestCanBeInstant(t *testing.T) {
 	}
 }
 
-func TestMigrateLokiQueryToInstant(t *testing.T) {
+func TestIntegrationMigrateLokiQueryToInstant(t *testing.T) {
 	original := createMigrateableLokiRule(t)
 	migrated := createMigrateableLokiRule(t, func(r *models.AlertRule) {
 		r.Data[0] = lokiQuery(t, "A", "instant", "grafanacloud-logs")
@@ -168,7 +168,7 @@ func TestMigrateLokiQueryToInstant(t *testing.T) {
 	require.False(t, canBeOptimized)
 }
 
-func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
+func TestIntegrationMigrateMultiLokiQueryToInstant(t *testing.T) {
 	original := createMultiQueryMigratableLokiRule(t)
 	migrated := createMultiQueryMigratableLokiRule(t, func(r *models.AlertRule) {
 		r.Data[0] = lokiQuery(t, "TotalRequests", "instant", "grafanacloud-logs")
@@ -205,7 +205,7 @@ func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
 	require.False(t, canBeOptimized)
 }
 
-func TestMigratePromQueryToInstant(t *testing.T) {
+func TestIntegrationMigratePromQueryToInstant(t *testing.T) {
 	original := createMigratablePromRule(t)
 	migrated := createMigratablePromRule(t, func(r *models.AlertRule) {
 		r.Data[0] = prometheusQuery(t, "A", promExternalDS, promIsInstant)
@@ -226,7 +226,7 @@ func TestMigratePromQueryToInstant(t *testing.T) {
 	require.False(t, canBeOptimized)
 }
 
-func TestMigrateMultiPromQueryToInstant(t *testing.T) {
+func TestIntegrationMigrateMultiPromQueryToInstant(t *testing.T) {
 	original := createMultiQueryMigratablePromRule(t)
 	migrated := createMultiQueryMigratablePromRule(t, func(r *models.AlertRule) {
 		r.Data[0] = prometheusQuery(t, "TotalRequests", promExternalDS, promIsInstant)

@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import ConditionalWrap from '../ConditionalWrap';
@@ -19,6 +19,7 @@ const INVALID_FORMAT_MESSAGE = 'Times must be between 00:00 and 24:00 UTC';
 export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   const styles = useStyles2(getStyles);
   const { register, formState, getValues, watch } = useFormContext<MuteTimingFields>();
+
   const isDisabled = watch(`time_intervals.${intervalIndex}.disable`);
 
   const {
@@ -37,7 +38,10 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
       <Field
         className={styles.field}
         label={t('alerting.mute-timing-time-range.label-time-range', 'Time range')}
-        description="The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time)"
+        description={t(
+          'alerting.mute-timing-time-range.description-time-range',
+          'The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time)'
+        )}
         invalid={timeRangeInvalid}
       >
         <>
@@ -142,7 +146,13 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
       <ConditionalWrap
         shouldWrap={isDisabled}
         wrap={(children) => (
-          <Tooltip content="This time interval is disabled" placement="right-start">
+          <Tooltip
+            content={t(
+              'alerting.mute-timing-time-range.content-this-time-interval-is-disabled',
+              'This time interval is disabled'
+            )}
+            placement="right-start"
+          >
             {children}
           </Tooltip>
         )}

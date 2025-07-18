@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // AddAlertRuleGuidMigration sets up migrations for adding and managing GUID columns in alert_rule and alert_rule_version tables.

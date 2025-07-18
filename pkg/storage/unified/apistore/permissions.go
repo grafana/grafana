@@ -8,14 +8,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	authtypes "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type permissionCreatorFunc = func(ctx context.Context) error
 
 func afterCreatePermissionCreator(ctx context.Context,
-	key *resource.ResourceKey,
+	key *resourcepb.ResourceKey,
 	grantPermisions string,
 	obj runtime.Object,
 	setter DefaultPermissionSetter,
@@ -42,7 +43,7 @@ func afterCreatePermissionCreator(ctx context.Context,
 	}
 
 	idtype := auth.GetIdentityType()
-	if !(idtype == authtypes.TypeUser || idtype == authtypes.TypeServiceAccount) {
+	if idtype != authtypes.TypeUser && idtype != authtypes.TypeServiceAccount {
 		return nil, fmt.Errorf("only users or service accounts may grant themselves permissions using an annotation")
 	}
 

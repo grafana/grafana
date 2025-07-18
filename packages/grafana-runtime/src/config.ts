@@ -20,6 +20,7 @@ import {
   PluginLoadingStrategy,
   PluginDependencies,
   PluginExtensions,
+  TimeOption,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -159,6 +160,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
     recordingRulesEnabled: false,
+    defaultRecordingRulesTargetDatasourceUID: undefined,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
@@ -184,12 +186,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackIntegrationsUrl: undefined;
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
+  panelSeriesLimit = 0;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
     connMaxLifetime: 14400,
   };
   defaultDatasourceManageAlertsUiToggle = true;
+  defaultAllowRecordingRulesTargetAlertsUiToggle = true;
 
   tokenExpirationDayLimit: undefined;
   enableFrontendSandboxForPlugins: string[] = [];
@@ -201,12 +205,19 @@ export class GrafanaBootConfig implements GrafanaConfig {
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset = '1h';
   exploreHideLogsDownload: boolean | undefined;
+  quickRanges?: TimeOption[];
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
    * Grafana's supported language.
    */
   language: string | undefined;
+
+  /**
+   * regionalFormat used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences.
+   * This is the regionalFormat that is used for date formatting and other locale-specific features.
+   */
+  regionalFormat: string;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -243,6 +254,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
+    this.regionalFormat = options.bootData.user.regionalFormat;
   }
   geomapDefaultBaseLayer?: MapLayerOptions<any> | undefined;
   listDashboardScopesEndpoint?: string | undefined;
@@ -297,11 +309,19 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   });
 }
 
-const bootData = (window as any).grafanaBootData || {
-  settings: {},
-  user: {},
-  navTree: [],
-};
+let bootData = (window as any).grafanaBootData;
+
+if (!bootData) {
+  if (process.env.NODE_ENV !== 'test') {
+    console.error('window.grafanaBootData was not set by the time config was initialized');
+  }
+
+  bootData = {
+    settings: {},
+    user: {},
+    navTree: [],
+  };
+}
 
 const options = bootData.settings;
 options.bootData = bootData;

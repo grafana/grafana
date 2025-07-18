@@ -7,9 +7,9 @@ import {
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface SpanBarOptions {
   type?: string;
@@ -28,6 +28,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<SpanBarOptionsData> {
 
 export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
+
   const selectOptions = [NONE, DURATION, TAG].map(toOption);
 
   return (
@@ -51,7 +52,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
             }}
             placeholder={t('explore.span-bar-settings.placeholder-duration', 'Duration')}
             isClearable
-            aria-label={'select-label-name'}
+            aria-label={t('explore.span-bar-settings.aria-label-selectlabelname', 'Select label name')}
             width={40}
           />
         </InlineField>
@@ -61,7 +62,10 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
           <InlineField
             label={t('explore.span-bar-settings.label-tag-key', 'Tag key')}
             labelWidth={26}
-            tooltip="Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
+            tooltip={t(
+              'explore.span-bar-settings.tooltip-tag-key',
+              "Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
+            )}
           >
             <Input
               type="text"
@@ -91,7 +95,10 @@ export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOpt
       title={t('explore.span-bar-section.title-span-bar', 'Span bar')}
       description={
         <ConfigDescriptionLink
-          description="Add additional info next to the service and operation on a span bar row in the trace view."
+          description={t(
+            'explore.span-bar-section.description-link',
+            'Add additional info next to the service and operation on a span bar row in the trace view.'
+          )}
           suffix={suffix}
           feature="the span bar"
         />

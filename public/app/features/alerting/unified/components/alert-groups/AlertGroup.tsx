@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { createContactPointSearchLink } from '../../utils/misc';
@@ -43,15 +43,17 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
 
               {receiverInGroup && (
                 <MetaText icon="at">
-                  Delivered to{' '}
-                  <TextLink
-                    href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
-                    variant="bodySmall"
-                    color="primary"
-                    inline={false}
-                  >
-                    {group.receiver.name}
-                  </TextLink>
+                  <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
+                    Delivered to{' '}
+                    <TextLink
+                      href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
+                      variant="bodySmall"
+                      color="primary"
+                      inline={false}
+                    >
+                      {'{{name}}'}
+                    </TextLink>
+                  </Trans>
                 </MetaText>
               )}
             </Stack>

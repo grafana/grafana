@@ -1,6 +1,6 @@
 import { isArray } from 'lodash';
 
-import { FieldConfigSource, MappingType, PanelModel, ValueMap } from '@grafana/data';
+import { FieldConfigSource, MappingType, PanelModel, ValueMap, RangeMap, ValueMapping } from '@grafana/data';
 
 import { FieldConfig, Options } from './panelcfg.gen';
 
@@ -74,9 +74,64 @@ export const timelinePanelChangedHandler = (
       }
     }
 
+    if (fieldConfig.defaults.mappings?.length) {
+      fieldConfig.defaults.mappings = expandColorMappings(fieldConfig.defaults.mappings);
+    }
+
     // mutates the input
     panel.fieldConfig = fieldConfig;
   }
 
   return options;
 };
+
+function expandColorMappings(mappings: ValueMapping[]): ValueMapping[] {
+  let keyToColor: Record<string, string> = {};
+  for (const m of mappings) {
+    if (isValueToText(m)) {
+      for (const key in m.options) {
+        const target = m.options[key];
+        if (target.color?.length) {
+          keyToColor[key] = target.color;
+        }
+      }
+    } else if (isRangeMap(m)) {
+      const { text, color } = m.options.result;
+      if (text?.length && color?.length && !keyToColor[text]) {
+        keyToColor[text] = color;
+      }
+    }
+  }
+
+  // Set a color for values that match
+  return mappings.map((m) => {
+    if (isValueToText(m)) {
+      for (const key in m.options) {
+        const target = m.options[key];
+        if (!target.color?.length) {
+          let c = keyToColor[key];
+          if (!c && target.text) {
+            c = keyToColor[target.text];
+          }
+          if (c) {
+            target.color = c; // link the mapped color
+          }
+        }
+      }
+    } else if (isRangeMap(m)) {
+      const { text, color } = m.options.result;
+      if (!color && text && keyToColor[text]) {
+        m.options.result.color = keyToColor[text];
+      }
+    }
+    return m;
+  });
+}
+
+function isValueToText(m: ValueMapping): m is ValueMap {
+  return m.type === MappingType.ValueToText;
+}
+
+function isRangeMap(m: ValueMapping): m is RangeMap {
+  return m.type === MappingType.RangeToText;
+}

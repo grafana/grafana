@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { IntervalVariableModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
@@ -15,7 +16,11 @@ import { initialIntervalVariableModelState, intervalVariableReducer } from './re
 export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariableModel> => {
   return {
     id: 'interval',
-    description: 'Define a timespan interval (ex 1m, 1h, 1d)',
+    description: t(
+      'variables.create-interval-variable-adapter.description.define-timespan-interval',
+      'Define a timespan interval (for example: {{timeIntervals}})',
+      { timeIntervals: '1m, 1h, 1d' }
+    ),
     name: 'Interval',
     initialState: initialIntervalVariableModelState,
     reducer: intervalVariableReducer,

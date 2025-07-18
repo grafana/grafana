@@ -5,8 +5,8 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { KeyValueField } from '../../../api/templateApi';
@@ -81,14 +81,18 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   };
   const alertOptions: AlertOption[] = [
     {
-      label: 'Firing',
+      label: t('alerting.generate-alert-data-modal.alert-options.label.firing', 'Firing'),
       value: 'firing',
     },
-    { label: 'Resolved', value: 'resolved' },
+    { label: t('alerting.generate-alert-data-modal.alert-options.label.resolved', 'Resolved'), value: 'resolved' },
   ];
 
   return (
-    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Add custom alerts'}>
+    <Modal
+      onDismiss={onDismiss}
+      isOpen={isOpen}
+      title={t('alerting.generate-alert-data-modal.title-add-custom-alerts', 'Add custom alerts')}
+    >
       <FormProvider {...formMethods}>
         <form
           onSubmit={(e) => {

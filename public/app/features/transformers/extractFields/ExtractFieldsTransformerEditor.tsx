@@ -9,32 +9,37 @@ import {
   StandardEditorsRegistryItem,
   TransformerCategory,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/extractFields.svg';
+import lightImage from '../images/light/extractFields.svg';
 
 import { JSONPathEditor } from './components/JSONPathEditor';
 import { extractFieldsTransformer } from './extractFields';
 import { fieldExtractors } from './fieldExtractors';
 import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
 
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: {
-    width: 30,
-    placeholderText: 'Select field',
-  },
-  name: '',
-  id: '',
-  editor: () => null,
-};
-
 export const extractFieldsTransformerEditor = ({
   input,
   options = { delimiter: ',' },
   onChange,
 }: TransformerUIProps<ExtractFieldsOptions>) => {
+  const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+    settings: {
+      width: 30,
+      placeholderText: t(
+        'transformers.extract-fields-transformer-editor.field-name-picker-settings.placeholderText.select-field',
+        'Select field'
+      ),
+    },
+    name: '',
+    id: '',
+    editor: () => null,
+  };
+
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,
@@ -93,7 +98,7 @@ export const extractFieldsTransformerEditor = ({
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label={'Source'} labelWidth={16}>
+        <InlineField label={t('transformers.extract-fields-transformer-editor.label-source', 'Source')} labelWidth={16}>
           <FieldNamePicker
             context={{ data: input }}
             value={options.source ?? ''}
@@ -103,20 +108,33 @@ export const extractFieldsTransformerEditor = ({
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Format'} labelWidth={16}>
+        <InlineField label={t('transformers.extract-fields-transformer-editor.label-format', 'Format')} labelWidth={16}>
           <Select
             value={format.current[0] as any}
             options={format.options as any}
             onChange={onFormatChange}
             width={24}
-            placeholder={'Auto'}
+            placeholder={t('transformers.extract-fields-transformer-editor.placeholder-auto', 'Auto')}
           />
         </InlineField>
       </InlineFieldRow>
       {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
-          <InlineField label="RegExp" labelWidth={16} interactive={true} tooltip="Example: /(?<NewField>.*)/">
-            <Input placeholder="/(?<NewField>.*)/" value={options.regExp} onChange={onRegexpChange} />
+          <InlineField
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            label="RegExp"
+            labelWidth={16}
+            interactive={true}
+            tooltip={t('transformers.extract-fields-transformer-editor.tooltip-regexp', 'Example: {{regexExample}}', {
+              regexExample: '/(?<NewField>.*)/',
+            })}
+          >
+            <Input
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              placeholder="/(?<NewField>.*)/"
+              value={options.regExp}
+              onChange={onRegexpChange}
+            />
           </InlineField>
         </InlineFieldRow>
       )}
@@ -143,13 +161,19 @@ export const extractFieldsTransformerEditor = ({
         </InlineFieldRow>
       )}
       <InlineFieldRow>
-        <InlineField label={'Replace all fields'} labelWidth={16}>
+        <InlineField
+          label={t('transformers.extract-fields-transformer-editor.label-replace-all-fields', 'Replace all fields')}
+          labelWidth={16}
+        >
           <InlineSwitch value={options.replace ?? false} onChange={onToggleReplace} />
         </InlineField>
       </InlineFieldRow>
       {options.replace && (
         <InlineFieldRow>
-          <InlineField label={'Keep time'} labelWidth={16}>
+          <InlineField
+            label={t('transformers.extract-fields-transformer-editor.label-keep-time', 'Keep time')}
+            labelWidth={16}
+          >
             <InlineSwitch value={options.keepTime ?? false} onChange={onToggleKeepTime} />
           </InlineField>
         </InlineFieldRow>
@@ -158,12 +182,17 @@ export const extractFieldsTransformerEditor = ({
   );
 };
 
-export const extractFieldsTransformRegistryItem: TransformerRegistryItem<ExtractFieldsOptions> = {
+export const getExtractFieldsTransformRegistryItem: () => TransformerRegistryItem<ExtractFieldsOptions> = () => ({
   id: DataTransformerID.extractFields,
   editor: extractFieldsTransformerEditor,
   transformation: extractFieldsTransformer,
-  name: extractFieldsTransformer.name,
-  description: `Parse fields from content (JSON, labels, etc).`,
+  name: t('transformers.extract-fields-transformer-editor.name.extract-fields', 'Extract fields'),
+  description: t(
+    'transformers.extract-fields-transformer-editor.description.parse-fields-from-content',
+    'Parse fields from content (JSON, labels, etc).'
+  ),
   categories: new Set([TransformerCategory.Reformat]),
   help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

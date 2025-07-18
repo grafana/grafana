@@ -5,10 +5,11 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
+import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
@@ -138,6 +139,7 @@ const AnnotationsStep = () => {
       fullWidth
     >
       <Stack direction="column" gap={1}>
+        {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
@@ -173,6 +175,7 @@ const AnnotationsStep = () => {
                       className={cx(styles.flexRowItemMargin, styles.field)}
                       invalid={!!errors.annotations?.[index]?.value?.message}
                       error={errors.annotations?.[index]?.value?.message}
+                      noMargin
                     >
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
@@ -181,9 +184,16 @@ const AnnotationsStep = () => {
                         {...register(`annotations.${index}.value`)}
                         placeholder={
                           isUrl
-                            ? 'https://'
-                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
-                              'Enter custom annotation content...'
+                            ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                              'https://'
+                            : (annotationField.key &&
+                                t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
+                                  key: annotationField.key,
+                                })) ||
+                              t(
+                                'alerting.annotations-step.placeholder-value-input-default',
+                                'Enter custom annotation content...'
+                              )
                         }
                         defaultValue={annotationField.value}
                       />

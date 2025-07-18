@@ -362,6 +362,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
+        dashboardTitle: dashboard.title,
         timeData,
         width,
       });

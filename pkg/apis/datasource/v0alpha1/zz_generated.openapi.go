@@ -110,6 +110,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnectionList(ref common.Ref
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

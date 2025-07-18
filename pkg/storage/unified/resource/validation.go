@@ -2,12 +2,14 @@ package resource
 
 import (
 	"regexp"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var validNameCharPattern = `a-zA-Z0-9:\-\_\.`
 var validNamePattern = regexp.MustCompile(`^[` + validNameCharPattern + `]*$`).MatchString
 
-func validateName(name string) *ErrorResult {
+func validateName(name string) *resourcepb.ErrorResult {
 	if len(name) == 0 {
 		return NewBadRequestError("name is too short")
 	}

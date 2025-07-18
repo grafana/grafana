@@ -12,8 +12,8 @@ import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { DataProvider } from './monaco-completion-provider/data_provider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/monaco-completion-provider';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 import { language, languageConfiguration } from './promql';
 
@@ -257,23 +257,30 @@ const MonacoQueryField = (props: Props) => {
                 return;
               }
               const query = model.getValue();
-              const errors =
-                validateQuery(
-                  query,
-                  datasource.interpolateString(query, placeHolderScopedVars),
-                  model.getLinesContent(),
-                  parser
-                ) || [];
+              const { errors, warnings } = validateQuery(
+                query,
+                datasource.interpolateString(query, placeHolderScopedVars),
+                model.getLinesContent(),
+                parser
+              );
 
-              const markers = errors.map(({ error, ...boundary }) => ({
-                message: `${
-                  error ? `Error parsing "${error}"` : 'Parse error'
-                }. The query appears to be incorrect and could fail to be executed.`,
-                severity: monaco.MarkerSeverity.Error,
-                ...boundary,
-              }));
+              const errorMarkers = errors.map(({ issue, ...boundary }) => {
+                return {
+                  message: `${issue ? `Error parsing "${issue}"` : 'Parse error'}. The query appears to be incorrect and could fail to be executed.`,
+                  severity: monaco.MarkerSeverity.Error,
+                  ...boundary,
+                };
+              });
 
-              monaco.editor.setModelMarkers(model, 'owner', markers);
+              const warningMarkers = warnings.map(({ issue, ...boundary }) => {
+                return {
+                  message: `Warning: ${issue}`,
+                  severity: monaco.MarkerSeverity.Warning,
+                  ...boundary,
+                };
+              });
+
+              monaco.editor.setModelMarkers(model, 'owner', [...errorMarkers, ...warningMarkers]);
             });
           }
         }}

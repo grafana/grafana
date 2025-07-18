@@ -7,6 +7,7 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -25,10 +26,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -164,6 +165,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     setValue('content', newValue);
   };
 
+  const handleTemplateGenerated = (template: string) => {
+    setValue('content', template);
+  };
+
   return (
     <>
       <FormProvider {...formApi}>
@@ -202,7 +207,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                 >
                   <Input
                     {...register('title', {
-                      required: { value: true, message: 'Required.' },
+                      required: { value: true, message: t('alerting.template-form.message.required', 'Required.') },
                       validate: { titleIsUnique },
                     })}
                     placeholder={t(
@@ -259,7 +264,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                         ))}
                                         <Menu.Divider />
                                         <Menu.Item
-                                          label={'Examples documentation'}
+                                          label={t(
+                                            'alerting.template-form.label-examples-documentation',
+                                            'Examples documentation'
+                                          )}
                                           url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
                                           target="_blank"
                                           icon="external-link-alt"
@@ -271,6 +279,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                       <Trans i18nKey="alerting.templates.editor.add-example">Add example</Trans>
                                     </Button>
                                   </Dropdown>
+                                )}
+                                {/* GenAI button – only available for Grafana Alertmanager and enterprise */}
+                                {isGrafanaAlertManager && (
+                                  <AITemplateButtonComponent
+                                    onTemplateGenerated={handleTemplateGenerated}
+                                    disabled={isProvisioned}
+                                  />
                                 )}
                                 <Button
                                   icon="question-circle"
@@ -333,6 +348,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                     <TemplatePreview
                       payload={payload}
                       templateName={watch('title')}
+                      templateContent={watch('content')}
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}

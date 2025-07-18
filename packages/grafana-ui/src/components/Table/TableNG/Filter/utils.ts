@@ -1,5 +1,7 @@
 import { Field, formattedValueToString, SelectableValue } from '@grafana/data';
 
+import { getDisplayName } from '../utils';
+
 export function calculateUniqueFieldValues(rows: any[], field?: Field) {
   if (!field || rows.length === 0) {
     return {};
@@ -9,7 +11,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
 
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index];
-    const fieldValue = row[field.name];
+    const fieldValue = row[getDisplayName(field)];
     const displayValue = field.display ? field.display(fieldValue) : fieldValue;
     const value = field.display ? formattedValueToString(displayValue) : displayValue;
 

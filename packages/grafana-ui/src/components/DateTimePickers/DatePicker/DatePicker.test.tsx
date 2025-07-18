@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { DatePicker } from './DatePicker';
 
@@ -27,27 +28,29 @@ describe('DatePicker', () => {
     expect(screen.getByText('December 2020')).toBeInTheDocument();
   });
 
-  it('calls onChange when date is selected', () => {
+  it('calls onChange when date is selected', async () => {
     const onChange = jest.fn();
+    const user = userEvent.setup();
 
     render(<DatePicker isOpen={true} onChange={onChange} onClose={jest.fn()} />);
 
     expect(onChange).not.toHaveBeenCalled();
 
     // clicking the date
-    fireEvent.click(screen.getByText('14'));
+    await user.click(screen.getByText('14'));
 
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onClose when outside of wrapper is clicked', () => {
+  it('calls onClose when outside of wrapper is clicked', async () => {
     const onClose = jest.fn();
+    const user = userEvent.setup();
 
     render(<DatePicker isOpen={true} onChange={jest.fn()} onClose={onClose} />);
 
     expect(onClose).not.toHaveBeenCalled();
 
-    fireEvent.click(document);
+    await user.click(document.body);
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });

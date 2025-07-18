@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -15,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -24,14 +25,11 @@ var (
 	errAPIKeyExpired     = errutil.Unauthorized("api-key.expired", errutil.WithPublicMessage("Expired API key"))
 	errAPIKeyRevoked     = errutil.Unauthorized("api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 	errAPIKeyOrgMismatch = errutil.Unauthorized("api-key.organization-mismatch", errutil.WithPublicMessage("API key does not belong to the requested organization"))
-
-	errAPIKeyInvalidType = errutil.BadRequest("api-key.invalid-type-id")
 )
 
 var (
-	_ authn.HookClient             = new(APIKey)
-	_ authn.ContextAwareClient     = new(APIKey)
-	_ authn.IdentityResolverClient = new(APIKey)
+	_ authn.HookClient         = new(APIKey)
+	_ authn.ContextAwareClient = new(APIKey)
 )
 
 const (
@@ -39,16 +37,18 @@ const (
 	metaKeySkipLastUsed = "keySkipLastUsed"
 )
 
-func ProvideAPIKey(apiKeyService apikey.Service) *APIKey {
+func ProvideAPIKey(apiKeyService apikey.Service, tracer trace.Tracer) *APIKey {
 	return &APIKey{
 		log:           log.New(authn.ClientAPIKey),
 		apiKeyService: apiKeyService,
+		tracer:        tracer,
 	}
 }
 
 type APIKey struct {
 	log           log.Logger
 	apiKeyService apikey.Service
+	tracer        trace.Tracer
 }
 
 func (s *APIKey) Name() string {
@@ -56,6 +56,8 @@ func (s *APIKey) Name() string {
 }
 
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.Authenticate")
+	defer span.End()
 	key, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
 		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
@@ -80,11 +82,6 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		r.SetMeta(metaKeySkipLastUsed, "true")
 	}
 
-	// if the api key don't belong to a service account construct the identity and return it
-	if key.ServiceAccountId == nil || *key.ServiceAccountId < 1 {
-		return newAPIKeyIdentity(key), nil
-	}
-
 	return newServiceAccountIdentity(key), nil
 }
 
@@ -93,6 +90,8 @@ func (s *APIKey) IsEnabled() bool {
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.getAPIKey")
+	defer span.End()
 	fn := s.getFromToken
 	if !strings.HasPrefix(token, satokengen.GrafanaPrefix) {
 		fn = s.getFromTokenLegacy
@@ -107,6 +106,8 @@ func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, e
 }
 
 func (s *APIKey) getFromToken(ctx context.Context, token string) (*apikey.APIKey, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.getFromToken")
+	defer span.End()
 	decoded, err := satokengen.Decode(token)
 	if err != nil {
 		return nil, err
@@ -121,6 +122,8 @@ func (s *APIKey) getFromToken(ctx context.Context, token string) (*apikey.APIKey
 }
 
 func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.APIKey, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.getFromTokenLegacy")
+	defer span.End()
 	decoded, err := apikeygen.Decode(token)
 	if err != nil {
 		return nil, err
@@ -152,39 +155,10 @@ func (s *APIKey) Priority() uint {
 	return 30
 }
 
-func (s *APIKey) IdentityType() claims.IdentityType {
-	return claims.TypeAPIKey
-}
-
-func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
-	if !claims.IsIdentityType(typ, claims.TypeAPIKey) {
-		return nil, errAPIKeyInvalidType.Errorf("got unexpected type: %s", typ)
-	}
-
-	apiKeyID, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	key, err := s.apiKeyService.GetApiKeyById(ctx, &apikey.GetByIDQuery{
-		ApiKeyID: apiKeyID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if err := validateApiKey(orgID, key); err != nil {
-		return nil, err
-	}
-
-	if key.ServiceAccountId != nil && *key.ServiceAccountId >= 1 {
-		return nil, errAPIKeyInvalidType.Errorf("api key belongs to service account")
-	}
-
-	return newAPIKeyIdentity(key), nil
-}
-
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook") //nolint:ineffassign,staticcheck
+	defer span.End()
+
 	if r.GetMeta(metaKeySkipLastUsed) != "" {
 		return nil
 	}
@@ -248,18 +222,12 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 		return errAPIKeyOrgMismatch.Errorf("API does not belong in Organization")
 	}
 
-	return nil
-}
-
-func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
-	return &authn.Identity{
-		ID:              strconv.FormatInt(key.ID, 10),
-		Type:            claims.TypeAPIKey,
-		OrgID:           key.OrgID,
-		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
-		ClientParams:    authn.ClientParams{SyncPermissions: true},
-		AuthenticatedBy: login.APIKeyAuthModule,
+	// plain API keys are no longer supported so an error is returned if the api key doesn't belong to a service account
+	if key.ServiceAccountId == nil || *key.ServiceAccountId < 1 {
+		return errAPIKeyInvalid.Errorf("API key does not belong to a service account")
 	}
+
+	return nil
 }
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {

@@ -1,8 +1,8 @@
 package sync
 
 import (
+	"context"
 	"fmt"
-	"sort"
 	"strings"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -18,6 +18,31 @@ type ResourceFileChange struct {
 
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
+}
+
+func Compare(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, error) {
+	target, err := repositoryResources.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error listing current: %w", err)
+	}
+
+	source, err := repo.ReadTree(ctx, ref)
+	if err != nil {
+		return nil, fmt.Errorf("error reading tree: %w", err)
+	}
+
+	changes, err := Changes(source, target)
+	if err != nil {
+		return nil, fmt.Errorf("calculate changes: %w", err)
+	}
+
+	if len(changes) > 0 {
+		// FIXME: this is a way to load in different ways the resources
+		// maybe we can structure the code in better way to avoid this
+		repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
+	}
+
+	return changes, nil
 }
 
 func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error) {
@@ -41,6 +66,11 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
 	for _, file := range source {
+		// TODO: why do we have to do this here?
+		if !file.Blob && !strings.HasSuffix(file.Path, "/") {
+			file.Path = file.Path + "/"
+		}
+
 		check, ok := lookup[file.Path]
 		if ok {
 			if check.Hash != file.Hash && check.Resource != resources.FolderResource.Resource {
@@ -112,9 +142,7 @@ func Changes(source []repository.FileTreeEntry, target *provisioning.ResourceLis
 	}
 
 	// Deepest first (stable sort order)
-	sort.Slice(changes, func(i, j int) bool {
-		return safepath.Depth(changes[i].Path) > safepath.Depth(changes[j].Path)
-	})
+	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 
 	return changes, nil
 }

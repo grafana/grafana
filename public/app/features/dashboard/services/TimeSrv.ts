@@ -13,11 +13,11 @@ import {
   AppEvents,
   dateTimeForTimeZone,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
-import { t } from 'app/core/internationalization';
 import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';

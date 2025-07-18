@@ -1,5 +1,6 @@
 import { FieldValues, RegisterOptions } from 'react-hook-form';
 
+import { t } from '@grafana/i18n';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { MIN_TIME_RANGE_STEP_S } from '../components/rule-editor/GrafanaEvaluationBehavior';
@@ -10,7 +11,7 @@ import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusD
 export const evaluateEveryValidationOptions = <T extends FieldValues>(rules: RulerRuleDTO[]): RegisterOptions<T> => ({
   required: {
     value: true,
-    message: 'Required.',
+    message: t('alerting.evaluate-every-validation-options.message.required', 'Required.'),
   },
   validate: (evaluateEvery: string) => {
     try {

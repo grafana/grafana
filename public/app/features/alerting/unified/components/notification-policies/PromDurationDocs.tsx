@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { TimeOptions } from '../../types/time';
 
@@ -10,9 +10,13 @@ export function PromDurationDocs() {
   const styles = useStyles2(getPromDurationStyles);
   return (
     <div>
-      Prometheus duration format consist of a number followed by a time unit.
+      <Trans i18nKey="alerting.prom-duration-docs.explanation">
+        Prometheus duration format consist of a number followed by a time unit.
+      </Trans>
       <br />
-      Different units can be combined for more granularity.
+      <Trans i18nKey="alerting.prom-duration-docs.different-units">
+        Different units can be combined for more granularity.
+      </Trans>
       <hr />
       <div className={styles.list}>
         <div className={styles.header}>
@@ -35,7 +39,7 @@ export function PromDurationDocs() {
           <div>
             <Trans i18nKey="alerting.prom-duration-docs.multiple-units-combined">Multiple units combined</Trans>
           </div>
-          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+          {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
           <code>1m30s, 2h30m20s, 1w2d</code>
         </div>
       </div>

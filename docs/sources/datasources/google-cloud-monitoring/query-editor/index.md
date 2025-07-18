@@ -74,9 +74,9 @@ In the case that the metric value type is a distribution, the aggregation will b
 
 The various metrics are documented [here](https://cloud.google.com/monitoring/api/metrics_gcp) and further details on the kinds and types of metrics can be found [here](https://cloud.google.com/monitoring/api/v3/kinds-and-types).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Distribution metrics are typically best visualized as either a heatmap or histogram. When visualizing in this way, aggregation is not necessary. However, for other visualization types, performance degradation may be observed when attempting to query distribution metrics that are not aggregated due to the number of potential buckets that can be returned. For more information on how to visualize distribution metrics refer to [this page](https://cloud.google.com/monitoring/charts/charting-distribution-metrics).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Apply a filter
 

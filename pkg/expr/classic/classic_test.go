@@ -639,7 +639,7 @@ func TestConditionsCmd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.cmd.Execute(context.Background(), time.Now(), tt.vars, tracing.InitializeTracerForTest())
+			res, err := tt.cmd.Execute(context.Background(), time.Now(), tt.vars, tracing.InitializeTracerForTest(), nil)
 			require.NoError(t, err)
 			require.Equal(t, tt.expected(), res)
 		})

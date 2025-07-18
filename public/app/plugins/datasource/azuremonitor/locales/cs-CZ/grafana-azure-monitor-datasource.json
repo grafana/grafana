@@ -1,0 +1,304 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "Pokročilé"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "Přidat",
+      "aria-label-remove": "Odebrat",
+      "button-add-resource": "Přidat zdroj",
+      "button-add-resource-uri": "Přidat URI zdroje",
+      "label-namespace": "Jmenný prostor",
+      "label-region": "Oblast",
+      "label-resource-group": "Skupina zdrojů",
+      "label-resource-name": "Název zdroje",
+      "label-resource-number": "Zdroj {{resourceNum}}",
+      "label-resource-uri": "URI zdroje ",
+      "label-subscription": "Předplatné",
+      "placeholder-resource-name": "název",
+      "tooltip-region": "Oblast kódu zdroje. Volitelné pro jeden zdroj, ale povinné při výběru více zdrojů.",
+      "tooltip-resource-uri": "Ručně upravte <2>identifikátor URI zdroje</2>. Podporuje použití více proměnných šablony (např.: /subscriptions/$subId/resourceGroups/$rg)"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "Funkce agregování",
+      "aria-label-column": "Sloupec",
+      "aria-label-remove": "Odebrat",
+      "label-percentile": "Z"
+    },
+    "aggregate-section": {
+      "label-aggregate": "Agregovat",
+      "tooltip-aggregate": "Provádějte výpočty napříč řádky dat, jako je počet, součet, průměr, minimum, maximum, směrodatná odchylka nebo percentily."
+    },
+    "aggregation-field": {
+      "label-aggregation": "Agregace"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "ID klienta",
+      "aria-label-client-secret": "Tajné heslo klienta",
+      "aria-label-symbol-client-secret": "Tajné heslo klienta",
+      "aria-label-tenant-id": "ID tenanta",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "ID aplikace (klienta)",
+      "label-client-secret": "Tajné heslo klienta",
+      "label-symbol-client-secret": "Tajné heslo klienta",
+      "label-tenant-id": "ID adresáře (tenanta)",
+      "placeholder-symbol-client-secret": "nastaveno",
+      "reset-symbol-client-secret": "Obnovit"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "Nezpracovaný dotaz: {{queryDisplayName}}",
+      "aria-label-use-query": "Použít toto tlačítko dotazu",
+      "button-use-query": "Použít tento dotaz",
+      "label-categories": "Kategorie",
+      "label-query-results": "Výsledky dotazu: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "Všechny kategorie",
+      "placeholder-search-logs": "Hledat dotazy protokolů",
+      "text-loading": "Načítání…"
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "Spustit modální okno dotazu",
+      "title-kick-start": "Spustit dotaz"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "Vyberte typ ověření pro služby Azure",
+      "label-authentication": "Ověření",
+      "title-authentication": "Ověření"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "Základní protokoly",
+      "description-basic-logs": "Povolení této funkce zapříčiní vznik nákladů Azure Monitor na dotaz na panelech nástěnek, které dotazují tabulky nakonfigurované pro <2>základní protokoly</2>.",
+      "label-enable-basic-logs": "Povolit základní protokoly"
+    },
+    "config-editor": {
+      "description-additional-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat. To zahrnuje zabezpečený proxy server Socks.",
+      "description-request-timeout": "Nastavte časový limit požadavku v sekundách. Výchozí hodnota je 30 sekund.",
+      "title-additional-settings": "Další nastavení",
+      "title-request-timeout": "Vypršení časového limitu požadavku"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "Záložní přihlašovací údaje byly zakázány. Vzhledem k tomu, že ověření uživatele samo o sobě podporuje pouze požadavky s uživatelem v rozsahu, funkce, jako je upozorňování, zaznamenané dotazy nebo vykazování, nebudou fungovat podle očekávání. Další podrobnosti najdete v <2>dokumentaci</2>.",
+      "body-service-credentials": "Ověření uživatele samo o sobě nepodporuje funkce Grafany, které odesílají požadavky na zdroj dat bez podrobností o uživatelích, které jsou k dispozici pro požadavek. Příkladem je upozorňování. Pokud chcete zajistit, aby funkce, které nemají uživatele v kontextu požadavku, stále fungovaly, uveďte záložní přihlašovací údaje níže.",
+      "description-authentication": "Vyberte typ ověření pro služby Azure",
+      "description-service-credentials": "Vyberte, zda jsou pro tento zdroj dat povoleny nebo zakázány záložní přihlašovací údaje služby",
+      "label-authentication": "Ověření",
+      "label-service-credentials": "Přihlašovací údaje služby",
+      "note-service-credentials": "Poznámka: Funkce, jako je upozorňování, budou omezeny na úroveň přístupu záložních přihlašovacích údajů, nikoli na uživatele. To může být pro uživatele matoucí a vyžaduje objasnění.",
+      "title-fallback-credentials-disabled": "Záložní přihlašovací údaje jsou zakázány",
+      "title-fallback-service-credentials": "Záložní přihlašovací údaje služby",
+      "title-service-credentials": "Přihlašovací údaje služby"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "Výchozí předplatné",
+      "label-default-subscription": "Výchozí předplatné",
+      "load-subscriptions": "Načíst předplatné"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "Odebrat",
+      "label-dimensions": "Rozměry",
+      "placeholder-field": "Pole",
+      "placeholder-operation": "Činnost",
+      "placeholder-select-value": "Vyberte hodnotu",
+      "placeholder-select-values": "Vyberte hodnoty"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "{{type}} bylo v Grafaně 9 zastaralé. Další informace o migraci dotazů najdete v <3>oznámení o zastaralosti</3>. Toto je aktuální definice dotazu:",
+      "title-unknown-query-type": "Neznámý typ dotazu"
+    },
+    "filter": {
+      "aria-label-remove-filter": "Odebrat filtr",
+      "placeholder-property": "Vlastnost",
+      "placeholder-value": "Hodnota"
+    },
+    "filter-item": {
+      "aria-label-column": "Sloupec",
+      "aria-label-column-value": "Hodnota sloupce",
+      "aria-label-operator": "Operátor",
+      "label-or": "NEBO"
+    },
+    "filter-section": {
+      "label-add-group": "Přidat skupinu",
+      "label-and": "A",
+      "label-filters": "Filtry",
+      "tooltip-filters": "Zužte výsledky použitím podmínek na konkrétní sloupce."
+    },
+    "filters": {
+      "label-filters": "Filtry"
+    },
+    "format-as-field": {
+      "label-format-as": "Formátovat jako"
+    },
+    "fuzzy-search": {
+      "aria-label-select-column": "Vybrat sloupec",
+      "label-fuzzy-search": "Hledání s přibližnými výsledky",
+      "placeholder-search-team": "Zadejte hledaný výraz",
+      "tooltip-fuzzy-search": "Najděte přibližné textové shody s tolerancí pro pravopisné variace. Ve výchozím nastavení hledání s přibližnými výsledky skenuje všechny sloupce (*) v celé tabulce, nejen konkrétní pole."
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Funkce proměnné šablony Grafana",
+      "placeholder-grafana-template-variable": "Zadejte funkci proměnné šablony Grafany, např. {{example}}"
+    },
+    "group-by-item": {
+      "aria-label-column": "Sloupec",
+      "aria-label-remove": "Odebrat"
+    },
+    "group-by-section": {
+      "label-group-by": "Seřadit podle",
+      "tooltip-group-by": "Uspořádejte výsledky do kategorií na základě zadaných sloupců. Funkci Seřadit podle lze použít nezávisle k výpisu jedinečných hodnot ve vybraných sloupcích nebo v kombinaci s agregovanými funkcemi k vytvoření souhrnných statistik pro každou skupinu. Při samostatném použití vrátí odlišné kombinace zadaných sloupců."
+    },
+    "kql-preview": {
+      "button-hide": "Skrýt",
+      "button-show": "Zobrazit",
+      "label-query-preview": "Náhled dotazu"
+    },
+    "legend-format-field": {
+      "label-legend-format": "Formát legendy",
+      "placeholder-legend-format": "Vzory přezdívek"
+    },
+    "limit-section": {
+      "label-limit": "Limit",
+      "placeholder-limit": "Zadat limit",
+      "tooltip-limit": "Omezte počet vrácených řádků (výchozí hodnota je 1 000)."
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "Dotazy na základní protokoly jsou zpoplatněny na základě množství naskenovaných dat.",
+      "label-logs": "Protokoly",
+      "title-basic-logs-queries": "Dotazy na základní protokoly",
+      "tooltip-logs": "Určuje, zda se má spustit dotaz Základní protokoly nebo Analytické protokoly."
+    },
+    "logs-query-builder": {
+      "title-no-tables": "Zdroj byl úspěšně načten, ale bez tabulek"
+    },
+    "logs-query-editor": {
+      "learn-more": "Další informace",
+      "view-query": "Zobrazit dotaz na Azure Portal"
+    },
+    "metric-name-field": {
+      "label-metric": "Metrika"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "Metrický jmenný prostor"
+    },
+    "nested-row": {
+      "text-loading": "Načítání…"
+    },
+    "order-by-section": {
+      "aria-label-order-by-column": "Seřazení podle sloupce",
+      "aria-label-order-direction": "Směr řazení",
+      "label-by": "PODLE",
+      "label-order-by": "Seřadit podle",
+      "tooltip-order-by": "Seřadit výsledky podle jednoho nebo více sloupců ve vzestupném nebo sestupném pořadí."
+    },
+    "query-editor": {
+      "alert-error-occurred": "Při požadování metadat ze služby Azure Monitor došlo k chybě"
+    },
+    "query-header": {
+      "aria-label-kick-start": "Tlačítko Spustit dotaz protokolů Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "Spustit dotaz",
+      "button-run-query": "Spustit dotaz",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "Služba",
+      "placeholder-service": "Služba…",
+      "title-switch-mode": "Přepnout režim editoru?"
+    },
+    "raw-query": {
+      "aria-label-selector": "Volič"
+    },
+    "resource-field": {
+      "label-resource": "Zdroj",
+      "title-select-resource": "Vyberte zdroj"
+    },
+    "resource-label": {
+      "select-resource": "Vyberte zdroj"
+    },
+    "resource-picker": {
+      "button-apply": "Použít",
+      "button-cancel": "Zrušit",
+      "header-location": "Poloha",
+      "header-scope": "Rozsah",
+      "header-type": "Typ",
+      "heading-selection": "Výběr",
+      "result-limit": "Zobrazují se první {{numResults}} výsledky",
+      "text-loading": "Načítání…",
+      "text-no-resources": "Nebyly nalezeny žádné zdroje",
+      "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě"
+    },
+    "scope-selector": {
+      "label": "Rozsah"
+    },
+    "search": {
+      "aria-label-resource-search": "Vyhledávání zdrojů",
+      "placeholder-resource-search": "Hledat zdroj"
+    },
+    "subscription-field": {
+      "label-subscriptions": "Předplatné",
+      "validation-subscriptions": "Musí být vybráno alespoň jedno předplatné."
+    },
+    "table-section": {
+      "aria-label-columns": "Sloupce",
+      "aria-label-table": "Tabulka",
+      "label-columns": "Sloupce",
+      "label-table": "Tabulka",
+      "placeholder-select-columns": "Zvolte sloupce",
+      "placeholder-select-table": "Vyberte tabulku"
+    },
+    "time-grain-field": {
+      "label-time-grain": "Časové zrno"
+    },
+    "time-management": {
+      "label-time-column": "Časový sloupec",
+      "label-time-range": "Časový rozsah",
+      "tooltip-time-column": "<0>Určuje časový sloupec používaný pro filtrování. Výchozí nastavení je první sloupec tabulek <1>timeSpan</1>, první nalezený sloupec <3>datetime</3> nebo <5>TimeGenerated</5>.</0>",
+      "tooltip-time-range": "<0>Určuje časový rozsah použitý pro dotaz. Možnost <1>Dotaz</1> použije pouze časové rozsahy uvedené v dotazu. <3>Nástěnka</3> použije pouze časový rozsah Grafany. V režimu Tvorba protokolů se použije pouze čas nástěnky.</0>"
+    },
+    "top-field": {
+      "label-top": "Horní část"
+    },
+    "trace-type-field": {
+      "label-event-type": "Typ události",
+      "placeholder-event-type": "Vyberte typy událostí"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "ID operace"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "Použití tohoto zdroje dat vyžaduje ověření prostřednictvím služby Azure Entra (dříve Azure Active Directory). Další informace najdete v <2>dokumentaci</2>.",
+      "title-unsupported-auth": "Nepodporovaný poskytovatel ověření"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "Funkce backendu zdroje dat (například upozorňování) vyžadují k fungování přihlašovací údaje služby. Tento zdroj dat je nakonfigurován bez záložních přihlašovacích údajů služby nebo je funkce záložních přihlašovacích údajů zakázána. Další informace najdete v <2>dokumentaci</2>.",
+      "title-no-fallback-credentials": "Nejsou k dispozici žádné záložní přihlašovací údaje"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "Vyberte vlastní jmenný prostor",
+      "aria-label-select-namespace": "Vyberte jmenný prostor",
+      "aria-label-select-query-type": "Vyberte typ dotazu",
+      "aria-label-select-region": "Vyberte oblast",
+      "aria-label-select-resource": "Vyberte zdroj",
+      "aria-label-select-resource-group": "Vyberte skupinu zdrojů",
+      "aria-label-select-subscription": "Vyberte předplatné",
+      "label-custom-namespace": "Vlastní jmenný prostor",
+      "label-namespace": "Jmenný prostor",
+      "label-query-type": "Typ dotazu",
+      "label-region": "Oblast",
+      "label-resource": "Zdroj",
+      "label-resource-group": "Skupina zdrojů",
+      "label-resource-type": "Typ zdroje",
+      "label-subscription": "Předplatné",
+      "placeholder-custom-namespace": "Nepovinný",
+      "placeholder-namespace": "Nepovinný",
+      "placeholder-region": "Nepovinný",
+      "placeholder-resource-group": "Nepovinný",
+      "title-error-occurred": "Při požadování metadat ze služby Azure Monitor došlo k chybě"
+    }
+  }
+}

@@ -2,14 +2,14 @@ import { Meta } from '@storybook/react';
 import { useState } from 'react';
 
 import { Alert } from '../Alert/Alert';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 
 import { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary';
 import mdx from './ErrorBoundary.mdx';
 import { ErrorWithStack } from './ErrorWithStack';
 
 const meta: Meta<typeof ErrorBoundary> = {
-  title: 'General/ErrorBoundary',
+  title: 'Utilities/ErrorBoundary',
   component: ErrorBoundary,
   parameters: {
     docs: {

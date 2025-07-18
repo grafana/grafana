@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
@@ -42,9 +43,13 @@ export function DurationQuickPick({ selectedDuration, groupEvaluationInterval, o
             onSelect(duration);
           }}
         >
-          {duration === '0s' ? 'None' : duration}
+          {stringifyPendingPeriod(duration)}
         </Button>
       ))}
     </Stack>
   );
+}
+
+export function stringifyPendingPeriod(duration: string): string {
+  return duration === '0s' ? t('alerting.duration-quick-pick.none', 'None') : duration;
 }

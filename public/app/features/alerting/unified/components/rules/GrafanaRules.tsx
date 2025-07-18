@@ -2,19 +2,20 @@ import { css } from '@emotion/css';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { LogMessages, logInfo } from '../../Analytics';
-import { useGrafanaManagedRecordingRulesSupport } from '../../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
+import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
@@ -56,8 +57,8 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const hasGrafanaAlerts = namespaces.length > 0;
-
-  const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
+  const { canCreateGrafanaRules } = useRulesAccess();
+  const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
 
   return (
     <section className={styles.wrapper}>
@@ -96,7 +97,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
             {grafanaRecordingRulesEnabled && (
               <LinkButton
                 href={createRelativeUrl('/alerting/new/grafana-recording', {
-                  returnTo: '/alerting/list' + location.search,
+                  returnTo: '/alerting/list' + window.location.search,
                 })}
                 icon="plus"
                 variant="secondary"

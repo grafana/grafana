@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { FolderDTO } from 'app/types/folders';
 
-import { FolderDTO } from '../../../../../types';
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
@@ -20,7 +20,9 @@ export function GrafanaRuleFolderExporter({ folder, onClose }: GrafanaRuleFolder
 
   return (
     <GrafanaExportDrawer
-      title={`Export ${folder.title} rules`}
+      title={t('alerting.grafana-rule-folder-exporter.title-drawer', 'Export {{folderName}} rules', {
+        folderName: folder.title,
+      })}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}

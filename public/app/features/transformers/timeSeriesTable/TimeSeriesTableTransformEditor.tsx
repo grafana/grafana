@@ -11,13 +11,15 @@ import {
   FieldType,
   isTimeSeriesField,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/timeSeriesTable.svg';
+import lightImage from '../images/light/timeSeriesTable.svg';
 
 import {
-  timeSeriesTableTransformer,
+  getTimeSeriesTableTransformer,
   TimeSeriesTableTransformerOptions,
   getRefData,
 } from './timeSeriesTableTransformer';
@@ -91,7 +93,10 @@ export function TimeSeriesTableTransformEditor({
         </InlineField>
         <InlineField
           label={t('transformers.time-series-table-transform-editor.label-time-field', 'Time field')}
-          tooltip="The time field that will be used for the time series. If not selected the first found will be used."
+          tooltip={t(
+            'transformers.time-series-table-transform-editor.tooltip-time-field',
+            'The time field that will be used for the time series. If not selected the first found will be used.'
+          )}
         >
           <Select
             onChange={onSelectTimefield.bind(null, refId)}
@@ -120,12 +125,18 @@ export function TimeSeriesTableTransformEditor({
   return <>{configRows}</>;
 }
 
-export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
-  id: timeSeriesTableTransformer.id,
-  editor: TimeSeriesTableTransformEditor,
-  transformation: timeSeriesTableTransformer,
-  name: timeSeriesTableTransformer.name,
-  description: timeSeriesTableTransformer.description,
-  state: PluginState.beta,
-  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
-};
+export const getTimeSeriesTableTransformRegistryItem: () => TransformerRegistryItem<TimeSeriesTableTransformerOptions> =
+  () => {
+    const timeSeriesTableTransformer = getTimeSeriesTableTransformer();
+    return {
+      id: timeSeriesTableTransformer.id,
+      editor: TimeSeriesTableTransformEditor,
+      transformation: timeSeriesTableTransformer,
+      name: timeSeriesTableTransformer.name,
+      description: timeSeriesTableTransformer.description,
+      state: PluginState.beta,
+      help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
+      imageDark: darkImage,
+      imageLight: lightImage,
+    };
+  };

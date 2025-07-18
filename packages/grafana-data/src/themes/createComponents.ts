@@ -36,6 +36,9 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  drawer: {
+    padding: number;
+  };
   textHighlight: {
     background: string;
     text: string;
@@ -86,6 +89,9 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     dashboard: {
       background: colors.background.canvas,
       padding: 1,
+    },
+    drawer: {
+      padding: 2,
     },
     overlay: {
       background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)',

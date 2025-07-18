@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { getConnectedDashboards } from 'app/features/library-panels/state/api';
 import { getModalStyles } from 'app/features/library-panels/styles';
 
@@ -53,12 +53,13 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
     <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
-          {'This update will affect '}
-          <strong>
-            {libraryPanel.state._loadedPanel?.meta?.connectedDashboards}{' '}
-            {libraryPanel.state._loadedPanel?.meta?.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}.
-          </strong>
-          The following dashboards using the panel will be affected:
+          <Trans
+            i18nKey="dashboard-scene.save-library-viz-panel-modal.affected-dashboards"
+            count={libraryPanel.state._loadedPanel?.meta?.connectedDashboards}
+          >
+            This update will affect <strong>{'{{count}}'} dashboards.</strong> The following dashboards using the panel
+            will be affected:
+          </Trans>
         </p>
         <Input
           className={styles.dashboardSearch}

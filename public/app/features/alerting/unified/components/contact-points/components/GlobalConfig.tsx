@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';

@@ -3,10 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
-
-import { t } from '../../internationalization';
 
 export interface Props {
   value: string;

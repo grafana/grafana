@@ -4,10 +4,8 @@ import {
   DataFrame,
   DisplayProcessor,
   DisplayValue,
-  ensureTimeField,
   Field,
   fieldReducers,
-  FieldType,
   getDisplayProcessor,
   GrafanaTheme2,
   reduceField,
@@ -15,7 +13,7 @@ import {
 } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
-import { attachDebugger } from '../../utils';
+import { attachDebugger } from '../../utils/debug';
 import { createLogger } from '../../utils/logger';
 
 import { buildScaleKey } from './internal';
@@ -197,11 +195,7 @@ export function preparePlotData2(
     let vals = field.values;
 
     if (i === 0) {
-      if (field.type === FieldType.time) {
-        data[0] = ensureTimeField(field).values;
-      } else {
-        data[0] = vals;
-      }
+      data[i] = vals;
       return;
     }
 

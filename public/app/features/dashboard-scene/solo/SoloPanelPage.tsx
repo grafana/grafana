@@ -4,14 +4,14 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
-import { DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -77,7 +77,7 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   if (!panel) {
     return (
       <span>
-        Loading <Spinner />
+        <Trans i18nKey="dashboard-scene.solo-panel-page.loading">Loading</Trans> <Spinner />
       </span>
     );
   }

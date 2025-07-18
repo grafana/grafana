@@ -10,12 +10,13 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PublicDashboardFooter } from 'app/features/dashboard/components/PublicDashboard/PublicDashboardsFooter';
+import { useGetPublicDashboardConfig } from 'app/features/dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { PublicDashboardNotAvailable } from 'app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import {
   PublicDashboardPageRouteParams,
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
-import { AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -73,6 +74,7 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
   const { timePicker, refreshPicker, hideTimeControls } = controls!.useState();
   const bodyToRender = model.getBodyToRender();
   const styles = useStyles2(getStyles);
+  const conf = useGetPublicDashboardConfig();
 
   useEffect(() => {
     return refreshPicker.activate();
@@ -91,9 +93,11 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
     <Page layout={PageLayoutType.Custom} className={styles.page} data-testid={selectors.page}>
       <div className={styles.controls}>
         <Stack alignItems="center">
-          <div className={styles.iconTitle}>
-            <Icon name="grafana" size="lg" aria-hidden />
-          </div>
+          {!conf.headerLogoHide && (
+            <div className={styles.iconTitle}>
+              <Icon name="grafana" size="lg" aria-hidden />
+            </div>
+          )}
           <span className={styles.title}>{title}</span>
         </Stack>
         {!hideTimeControls && (

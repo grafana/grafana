@@ -26,6 +26,11 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
+  alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
   sns:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-amazon-sns/
@@ -128,9 +133,9 @@ On the **Contact Points** tab, you can:
 - Export individual contact points or all contact points in JSON, YAML, or Terraform format.
 - Delete contact points. Note that you cannot delete contact points that are in use by a notification policy. To proceed, either delete the notification policy or update it to use another contact point.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Contact points are assigned to a [specific Alertmanager](ref:configure-alertmanager) and cannot be used by notification policies in other Alertmanagers.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Supported contact point integrations
 
@@ -138,7 +143,7 @@ Each contact point integration has its own configuration options and setup proce
 
 {{< column-list >}}
 
-- Alertmanager
+- [Alertmanager](ref:alertmanager)
 - [AWS SNS](ref:sns)
 - Cisco Webex Teams
 - DingDing

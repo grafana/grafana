@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -27,9 +28,9 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -37,25 +38,26 @@ import (
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/rendering"
-	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -73,14 +75,12 @@ var (
 )
 
 type APIBuilder struct {
-	urlProvider      func(namespace string) string
-	webhookSecretKey string
-	isPublic         bool
+	features   featuremgmt.FeatureToggles
+	usageStats usagestats.Service
 
-	features            featuremgmt.FeatureToggles
+	tracer              tracing.Tracer
 	getter              rest.Getter
-	localFileResolver   *repository.LocalFolderResolver
-	render              rendering.Service
+	localFileResolver   *local.LocalFolderResolver
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -90,62 +90,88 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistory       jobs.History
-	tester           *RepositoryTester
-	resourceLister   resources.ResourceLister
-	repositoryLister listers.RepositoryLister
-	legacyMigrator   legacy.LegacyMigrator
-	storageStatus    dualwrite.Service
-	unified          resource.ResourceClient
-	secrets          secrets.Service
-	client           client.ProvisioningV0alpha1Interface
-	access           authlib.AccessChecker
+	jobHistory        jobs.History
+	tester            *RepositoryTester
+	resourceLister    resources.ResourceLister
+	repositoryLister  listers.RepositoryLister
+	legacyMigrator    legacy.LegacyMigrator
+	storageStatus     dualwrite.Service
+	unified           resource.ResourceClient
+	repositorySecrets secrets.RepositorySecrets
+	client            client.ProvisioningV0alpha1Interface
+	access            authlib.AccessChecker
+	mutators          []controller.Mutator
+	statusPatcher     *controller.RepositoryStatusPatcher
+	// Extras provides additional functionality to the API.
+	extras                   []Extra
+	availableRepositoryTypes map[provisioning.RepositoryType]bool
 }
 
 // NewAPIBuilder creates an API builder.
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
-	local *repository.LocalFolderResolver,
-	urlProvider func(namespace string) string,
-	webhookSecretKey string,
+	local *local.LocalFolderResolver,
 	features featuremgmt.FeatureToggles,
-	render rendering.Service,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
-	secrets secrets.Service,
+	usageStats usagestats.Service,
+	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
+	tracer tracing.Tracer,
+	extraBuilders []ExtraBuilder,
 ) *APIBuilder {
-	// HACK: Assume is only public if it is HTTPS
-	isPublic := strings.HasPrefix(urlProvider(""), "https://")
-
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
+	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
-	return &APIBuilder{
-		urlProvider:         urlProvider,
+	mutators := []controller.Mutator{
+		git.Mutator(repositorySecrets),
+		github.Mutator(repositorySecrets),
+	}
+
+	b := &APIBuilder{
+		mutators:            mutators,
+		tracer:              tracer,
+		usageStats:          usageStats,
 		localFileResolver:   local,
-		webhookSecretKey:    webhookSecretKey,
-		isPublic:            isPublic,
 		features:            features,
 		ghFactory:           ghFactory,
 		clients:             clients,
 		parsers:             parsers,
-		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients),
-		render:              render,
+		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		clonedir:            clonedir,
-		resourceLister:      resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		resourceLister:      resourceLister,
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
-		secrets:             secrets,
+		repositorySecrets:   repositorySecrets,
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
+		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
+			provisioning.LocalRepositoryType:  true,
+			provisioning.GitHubRepositoryType: true,
+		},
 	}
+
+	for _, builder := range extraBuilders {
+		b.extras = append(b.extras, builder(b))
+	}
+
+	// Add the available repository types and mutators from the extras
+	for _, extra := range b.extras {
+		for _, t := range extra.RepositoryTypes() {
+			b.availableRepositoryTypes[t] = true
+		}
+
+		b.mutators = append(b.mutators, extra.Mutators()...)
+	}
+
+	return b
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -156,39 +182,37 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
 	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
-	usageStatsService usagestats.Service,
-	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
-	secretsSvc grafanasecrets.Service,
+	usageStats usagestats.Service,
+	repositorySecrets secrets.RepositorySecrets,
+	tracer tracing.Tracer,
+	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
+	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		return nil, nil
 	}
 
-	folderResolver := &repository.LocalFolderResolver{
+	folderResolver := &local.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}
-	urlProvider := func(namespace string) string {
-		return cfg.AppURL
-	}
-
-	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
-		render, client,
+	builder := NewAPIBuilder(folderResolver, features,
+		client,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc), access,
+		usageStats,
+		repositorySecrets,
+		access,
+		tracer,
+		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
-	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
 	return builder, nil
 }
 
@@ -206,6 +230,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// * Reading and modifying a repository's configuration requires administrator privileges.
 			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
 			// * Reading a repository's files requires viewer privileges.
+			// * Reading a repository's refs requires viewer privileges.
 			// * Editing a repository's files requires editor privileges.
 			// * Syncing a repository requires editor privileges.
 			// * Exporting a repository requires administrator privileges.
@@ -216,6 +241,14 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			id, err := identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "failed to find requester", err
+			}
+
+			// Check if any extra authorizer has a decision.
+			for _, extra := range b.extras {
+				decision, reason, err := extra.Authorize(ctx, a)
+				if decision != authorizer.DecisionNoOpinion {
+					return decision, reason, err
+				}
 			}
 
 			switch a.GetResource() {
@@ -229,19 +262,14 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
-				case "webhook":
-					// When the resource is a webhook, we'll deal with permissions manually by checking signatures or similar in the webhook handler.
-					// The user in this context is usually an anonymous user, but may also be an authenticated synthetic check by the Grafana instance's operator as well.
-					// For context on the anonymous user, check the authn/clients/provisioning.go file.
-					return authorizer.DecisionAllow, "", nil
-
+				case "refs":
+					// This is strictly a read operation. It is handy on the frontend for viewers.
+					if id.GetOrgRole().Includes(identity.RoleViewer) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "viewer role is required", nil
 				case "files":
 					// Access to files is controlled by the AccessClient
-					return authorizer.DecisionAllow, "", nil
-
-				case "render":
-					// This is used to read a blob from unified storage, for GitHub PR comments.
-					// GH uses a proxy for all images, so we need to accept it, always.
 					return authorizer.DecisionAllow, "", nil
 
 				case "resources", "sync", "history":
@@ -299,6 +327,14 @@ func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
 	return b.client
 }
 
+func (b *APIBuilder) GetJobQueue() jobs.Queue {
+	return b.jobs
+}
+
+func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
+	return b.statusPatcher
+}
+
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := provisioning.AddToScheme(scheme)
 	if err != nil {
@@ -316,6 +352,10 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
 }
 
+func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
+}
+
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.RepositoryResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -329,7 +369,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
 
-	b.jobs, err = jobs.NewStore(realJobStore, time.Second*30)
+	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
@@ -344,11 +384,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = NewWebhookConnector(b, b, b.jobs, b.isPublic)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -361,9 +401,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		jobs:       b.jobs,
 		historic:   b.jobHistory,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
-		blob: b.unified,
+
+	// Add any extra storage
+	for _, extra := range b.extras {
+		if err := extra.UpdateStorage(storage); err != nil {
+			return fmt.Errorf("update storage for extra %T: %w", extra, err)
+		}
 	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
@@ -393,25 +438,15 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Sync.IntervalSeconds = 60
 	}
 
-	// TODO: move this logic into github repository concrete implementation.
-	if r.Spec.Type == provisioning.GitHubRepositoryType {
-		if r.Spec.GitHub == nil {
-			return fmt.Errorf("github configuration is required")
-		}
-
-		// Trim trailing slash or .git
-		if len(r.Spec.GitHub.URL) > 5 {
-			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
-			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
-		}
-	}
-
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
-	if err := b.encryptSecrets(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt secrets: %w", err)
+	// Mutate the repository with any extra mutators
+	for _, mutator := range b.mutators {
+		if err := mutator(ctx, r); err != nil {
+			return fmt.Errorf("failed to mutate repository: %w", err)
+		}
 	}
 
 	return nil
@@ -519,7 +554,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
+			go repoInformer.Informer().Run(postStartHookCtx.Done())
 
 			b.client = c.ProvisioningV0alpha1()
 
@@ -530,37 +565,74 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			b.repositoryLister = repoInformer.Lister()
 
+			// Create the repository resources factory
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.repositoryLister, b.unified)
+			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
+
+			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
 				export.ExportAll,
-				repository.WrapWithCloneAndPushIfPossible,
+				stageIfPossible,
 			)
 
+			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
-				b.GetClient(),
-				b.parsers,
 				b.clients,
-				b.resourceLister,
+				b.repositoryResources,
 				b.storageStatus,
+				b.statusPatcher.Patch,
+				syncer,
 			)
-			migrationWorker := migrate.NewMigrationWorker(
-				b.legacyMigrator,
+			signerFactory := signature.NewSignerFactory(b.clients)
+			legacyResources := migrate.NewLegacyResourcesMigrator(
+				b.repositoryResources,
 				b.parsers,
+				b.legacyMigrator,
+				signerFactory,
 				b.clients,
-				b.storageStatus,
-				b.unified,
+				export.ExportAll,
+			)
+			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
+			legacyMigrator := migrate.NewLegacyMigrator(
+				legacyResources,
+				storageSwapper,
+				syncWorker,
+				stageIfPossible,
+			)
+
+			cleaner := migrate.NewNamespaceCleaner(b.clients)
+			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+				cleaner,
 				exportWorker,
 				syncWorker,
 			)
 
-			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
-			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
-			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, previewer)
+			migrationWorker := migrate.NewMigrationWorker(
+				legacyMigrator,
+				unifiedStorageMigrator,
+				b.storageStatus,
+			)
 
-			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
-				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
+			workers := []jobs.Worker{migrationWorker, syncWorker, exportWorker}
+
+			// Add any extra workers
+			for _, extra := range b.extras {
+				workers = append(workers, extra.GetJobWorkers()...)
+			}
+
+			driver, err := jobs.NewJobDriver(
+				time.Minute*20, // Max time for each job
+				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				time.Second*30, // Periodically look for new jobs
+				b.jobs, b, b.jobHistory,
+				workers...,
+			)
+			if err != nil {
+				return err
+			}
 			go driver.Run(postStartHookCtx.Context)
 
 			repoController, err := controller.NewRepositoryController(
@@ -572,7 +644,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.clients,
 				&repository.Tester{},
 				b.jobs,
-				b.secrets,
 				b.storageStatus,
 			)
 			if err != nil {
@@ -583,6 +654,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			return nil
 		},
 	}
+
 	return postStartHooks, nil
 }
 
@@ -617,11 +689,6 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 				},
 			},
 		}
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/webhook"]
-	if sub != nil && sub.Get != nil {
-		sub.Post.Description = "Currently only supports github webhooks"
 	}
 
 	ref := &spec3.Parameter{
@@ -666,6 +733,22 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 	}
 
+	// Show refs endpoint documentation
+	sub = oas.Paths.Paths[repoprefix+"/refs"]
+	if sub != nil {
+		sub.Get.Description = "Get the repository references"
+		sub.Get.Summary = "Repository refs listing"
+		sub.Get.Parameters = []*spec3.Parameter{}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs[defsBase+"RefList"].Schema
+		mt["*/*"].Schema = &s
+	}
+
 	// Show a special list command
 	sub = oas.Paths.Paths[repoprefix+"/files"]
 	if sub != nil {
@@ -699,6 +782,15 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 					In:          "query",
 					Description: "optional message sent with any changes",
 					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "skipDryRun",
+					In:          "query",
+					Description: "do not pro-actively verify the payload",
+					Schema:      spec.BooleanProperty(),
 					Required:    false,
 				},
 			},
@@ -843,36 +935,11 @@ spec:
 		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
-	delete(oas.Paths.Paths, repoprefix+"/render")
-	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
-	if sub != nil {
-		sub.Get.Description = "get a rendered preview image"
-		sub.Get.Responses = &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {
-						ResponseProps: spec3.ResponseProps{
-							Content: map[string]*spec3.MediaType{
-								"image/png": {},
-							},
-							Description: "OK",
-						},
-					},
-				},
-			},
+	// Run all extra post-processors.
+	for _, extra := range b.extras {
+		if err := extra.PostProcessOpenAPI(oas); err != nil {
+			return nil, fmt.Errorf("post-process OpenAPI for extra %T: %w", extra, err)
 		}
-
-		// Replace {path} with {guid} (it is a GUID, but all k8s sub-resources are called path)
-		for _, v := range sub.Parameters {
-			if v.Name == "path" {
-				v.Name = "guid"
-				v.Description = "Image GUID"
-				break
-			}
-		}
-
-		delete(oas.Paths.Paths, repoprefix+"/render/{path}")
-		oas.Paths.Paths[repoprefix+"/render/{guid}"] = sub
 	}
 
 	// Add any missing definitions
@@ -939,29 +1006,6 @@ spec:
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	return oas, nil
-}
-
-// TODO: move this to a more appropriate place
-func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
-	var err error
-	if repo.Spec.GitHub != nil &&
-		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
-		if err != nil {
-			return err
-		}
-		repo.Spec.GitHub.Token = ""
-	}
-
-	if repo.Status.Webhook != nil &&
-		repo.Status.Webhook.Secret != "" {
-		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
-		if err != nil {
-			return err
-		}
-		repo.Status.Webhook.Secret = ""
-	}
-	return nil
 }
 
 // FIXME: This logic does not belong in provisioning! (but required for now)
@@ -1091,28 +1135,84 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repo
 }
 
 func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	switch r.Spec.Type {
-	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver), nil
-	case provisioning.GitHubRepositoryType:
-		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		var webhookURL string
-		if b.isPublic {
-			webhookURL = fmt.Sprintf(
-				"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-				b.urlProvider(r.GetNamespace()),
-				gvr.Group,
-				gvr.Version,
-				r.GetNamespace(),
-				gvr.Resource,
-				r.GetName(),
-			)
-		}
-		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
+	// Try first with any extra
+	for _, extra := range b.extras {
+		r, err := extra.AsRepository(ctx, r)
+		if err != nil {
+			return nil, fmt.Errorf("convert repository for extra %T: %w", extra, err)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
+		if r != nil {
+			return r, nil
+		}
+	}
+
+	switch r.Spec.Type {
+	case provisioning.BitbucketRepositoryType:
+		return nil, errors.New("repository type bitbucket is not available")
+	case provisioning.GitLabRepositoryType:
+		return nil, errors.New("repository type gitlab is not available")
+	case provisioning.LocalRepositoryType:
+		return local.NewLocal(r, b.localFileResolver), nil
+	case provisioning.GitRepositoryType:
+		// Decrypt token if needed
+		token := r.Spec.Git.Token
+		if token == "" && len(r.Spec.Git.EncryptedToken) > 0 {
+			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(r.Spec.Git.EncryptedToken))
+			if err != nil {
+				return nil, fmt.Errorf("decrypt git token: %w", err)
+			}
+			token = string(decrypted)
+		}
+
+		cfg := git.RepositoryConfig{
+			URL:            r.Spec.Git.URL,
+			Branch:         r.Spec.Git.Branch,
+			Path:           r.Spec.Git.Path,
+			TokenUser:      r.Spec.Git.TokenUser,
+			Token:          token,
+			EncryptedToken: r.Spec.Git.EncryptedToken,
+		}
+
+		return git.NewGitRepository(ctx, r, cfg, b.repositorySecrets)
+	case provisioning.GitHubRepositoryType:
+		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
+		logger.Info("Instantiating Github repository")
+
+		ghCfg := r.Spec.GitHub
+		if ghCfg == nil {
+			return nil, fmt.Errorf("github configuration is required for nano git")
+		}
+
+		// Decrypt GitHub token if needed
+		ghToken := ghCfg.Token
+		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
+			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
+			if err != nil {
+				return nil, fmt.Errorf("decrypt github token: %w", err)
+			}
+			ghToken = string(decrypted)
+		}
+
+		gitCfg := git.RepositoryConfig{
+			URL:            ghCfg.URL,
+			Branch:         ghCfg.Branch,
+			Path:           ghCfg.Path,
+			Token:          ghToken,
+			EncryptedToken: ghCfg.EncryptedToken,
+		}
+
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, b.repositorySecrets)
+		if err != nil {
+			return nil, fmt.Errorf("error creating git repository: %w", err)
+		}
+
+		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken, b.repositorySecrets)
+		if err != nil {
+			return nil, fmt.Errorf("error creating github repository: %w", err)
+		}
+
+		return ghRepo, nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

@@ -5,7 +5,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byText } from 'testing-library-selector';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { RecordingRuleEditorProps } from '../components/rule-editor/RecordingRuleEditor';
 import { grantUserPermissions } from '../mocks';
@@ -39,8 +39,6 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-// there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
-// lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
   // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,
@@ -82,7 +80,7 @@ describe('RuleEditor recording rules', () => {
     await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
 
     // try to save, find out that recording rule name is invalid
-    await userEvent.click(ui.buttons.saveAndExit.get());
+    await userEvent.click(ui.buttons.save.get());
     await waitFor(() =>
       expect(
         byText(
@@ -97,7 +95,7 @@ describe('RuleEditor recording rules', () => {
 
     // save and check what was sent to backend
     const capture = captureRequests();
-    await userEvent.click(ui.buttons.saveAndExit.get());
+    await userEvent.click(ui.buttons.save.get());
     const requests = await capture;
 
     const serializedRequests = await serializeRequests(requests);

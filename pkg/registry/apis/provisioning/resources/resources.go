@@ -3,7 +3,6 @@ package resources
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -41,23 +40,21 @@ type ResourcesManager struct {
 	folders         *FolderManager
 	parser          Parser
 	clients         ResourceClients
-	userInfo        map[string]repository.CommitSignature
 	resourcesLookup map[resourceID]string // the path with this k8s name
 }
 
-func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients, userInfo map[string]repository.CommitSignature) *ResourcesManager {
+func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, parser Parser, clients ResourceClients) *ResourcesManager {
 	return &ResourcesManager{
 		repo:            repo,
 		folders:         folders,
 		parser:          parser,
 		clients:         clients,
-		userInfo:        userInfo,
 		resourcesLookup: map[resourceID]string{},
 	}
 }
 
 // CreateResource writes an object to the repository
-func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
+func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", fmt.Errorf("context error: %w", err)
 	}
@@ -78,15 +75,13 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 		}
 	}
 
-	ctx = r.withAuthorSignature(ctx, meta)
-
 	name := meta.GetName()
 	if name == "" {
 		return "", ErrMissingName
 	}
 
 	manager, _ := meta.GetManagerProperties()
-	// TODO: how we should handle this?
+	// TODO: how should we handle this?
 	if manager.Identity == r.repo.Config().GetName() {
 		// If it's already in the repository, we don't need to write it
 		return "", ErrAlreadyInRepository
@@ -99,24 +94,10 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	folder := meta.GetFolder()
 
 	// Get the absolute path of the folder
-	fid, ok := r.folders.Tree().DirPath(folder, "")
+	rootFolder := RootFolder(r.repo.Config())
+	fid, ok := r.folders.Tree().DirPath(folder, rootFolder)
 	if !ok {
-		// FIXME: Shouldn't this fail instead?
-		fid = Folder{
-			Path: "__folder_not_found/" + slugify.Slugify(folder),
-		}
-		// r.logger.Error("folder of item was not in tree of repository")
-	}
-
-	// Clear the metadata
-	delete(obj.Object, "metadata")
-
-	// Always write the identifier
-	meta.SetName(name)
-
-	body, err := json.MarshalIndent(obj.Object, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal dashboard: %w", err)
+		return "", fmt.Errorf("folder not found in tree: %s", folder)
 	}
 
 	fileName := slugify.Slugify(title) + ".json"
@@ -127,9 +108,21 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 		fileName = safepath.Join(options.Path, fileName)
 	}
 
+	parsed := ParsedResource{
+		Info: &repository.FileInfo{
+			Path: fileName,
+			Ref:  options.Ref,
+		},
+		Obj: obj,
+	}
+	body, err := parsed.ToSaveBytes()
+	if err != nil {
+		return "", err
+	}
+
 	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
 	if err != nil {
-		return "", fmt.Errorf("failed to write file: %w", err)
+		return "", fmt.Errorf("failed to write file: %s, %w", fileName, err)
 	}
 
 	return fileName, nil
@@ -177,11 +170,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parsed.Meta.SetUID("")
 	parsed.Meta.SetResourceVersion("")
 
-	// Update or Create resource
-	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
-	if apierrors.IsNotFound(err) {
-		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
-	}
+	err = parsed.Run(ctx)
 
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
@@ -218,31 +207,12 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return objName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+		}
+
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
 	}
 
 	return objName, schema.GroupVersionKind{}, nil
-}
-
-func (r *ResourcesManager) withAuthorSignature(ctx context.Context, item utils.GrafanaMetaAccessor) context.Context {
-	id := item.GetUpdatedBy()
-	if id == "" {
-		id = item.GetCreatedBy()
-	}
-	if id == "" {
-		id = "grafana"
-	}
-
-	sig := r.userInfo[id] // lookup
-	if sig.Name == "" && sig.Email == "" {
-		sig.Name = id
-	}
-	t, err := item.GetUpdatedTimestamp()
-	if err == nil && t != nil {
-		sig.When = *t
-	} else {
-		sig.When = item.GetCreationTimestamp().Time
-	}
-
-	return repository.WithAuthorSignature(ctx, sig)
 }

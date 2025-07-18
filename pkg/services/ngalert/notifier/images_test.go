@@ -118,6 +118,7 @@ func TestGetImage(t *testing.T) {
 				require.Nil(tt, image)
 				return
 			}
+			require.Equal(tt, test.token, image.ID)
 			require.Equal(tt, test.expImage.URL, image.URL)
 			if test.expImageContent != nil {
 				ic, err := image.RawData(context.Background())
@@ -134,7 +135,7 @@ func TestGetImage(t *testing.T) {
 
 func generateTestFile(t *testing.T, b []byte) string {
 	t.Helper()
-	f, err := os.CreateTemp("/tmp", "image")
+	f, err := os.CreateTemp("", "image")
 	require.NoError(t, err)
 	defer func(f *os.File) {
 		_ = f.Close()

@@ -6,9 +6,9 @@ import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
 import { GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
@@ -46,7 +46,9 @@ export function PreviewRule(): React.ReactElement | null {
             title={t('alerting.preview-rule.title-preview-is-not-available', 'Preview is not available')}
             severity="warning"
           >
-            Cannot display the query preview. Some of the data sources used in the queries are not available.
+            <Trans i18nKey="alerting.preview-rule.body-preview-is-not-available">
+              Cannot display the query preview. Some of the data sources used in the queries are not available.
+            </Trans>
           </Alert>
         )}
       </Stack>

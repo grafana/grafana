@@ -4,7 +4,9 @@ import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZ
 import { config, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ExplorePanelData } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { getExploreItemSelector, isLeftPaneSelector, selectCorrelationDetails } from '../state/selectors';
 
@@ -18,7 +20,12 @@ type Props = {
   extensionsToShow: 'queryless' | 'basic';
 };
 
-const QUERYLESS_APPS = ['grafana-pyroscope-app', 'grafana-lokiexplore-app', 'grafana-exploretraces-app'];
+const QUERYLESS_APPS = [
+  'grafana-pyroscope-app',
+  'grafana-lokiexplore-app',
+  'grafana-exploretraces-app',
+  'grafana-metricsdrilldown-app',
+];
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { exploreId, extensionsToShow } = props;

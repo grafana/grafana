@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { HorizontalGroup, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
@@ -74,13 +75,20 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
           </div>
           {(canEdit || canDelete) && (
             <div className={styles.editControls}>
-              {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} tooltip="Edit" />}
+              {canEdit && (
+                <IconButton
+                  name={'pen'}
+                  size={'sm'}
+                  onClick={onEdit}
+                  tooltip={t('timeseries.annotation-tooltip2.tooltip-edit', 'Edit')}
+                />
+              )}
               {canDelete && (
                 <IconButton
                   name={'trash-alt'}
                   size={'sm'}
                   onClick={() => onAnnotationDelete(annoId)}
-                  tooltip="Delete"
+                  tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
                 />
               )}
             </div>

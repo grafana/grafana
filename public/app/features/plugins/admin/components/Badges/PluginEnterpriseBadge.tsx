@@ -1,8 +1,8 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Badge, PluginSignatureBadge, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../../types';
 

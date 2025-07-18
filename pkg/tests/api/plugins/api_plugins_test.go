@@ -31,12 +31,12 @@ import (
 )
 
 const (
-	usernameAdmin    = "admin"
+	usernameAdmin    = "otherAdmin"
 	usernameNonAdmin = "nonAdmin"
 	defaultPassword  = "password"
 )
 
-var updateSnapshotFlag = true
+var updateSnapshotFlag = false
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)

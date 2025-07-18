@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     branches:
-      - '**' 
+      - '**'
 
 env:
   ARCH: linux-amd64
@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Pin Go version to mod file
         uses: actions/setup-go@v5
         with:
@@ -26,19 +28,19 @@ jobs:
       - run: go version
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
           cache: 'yarn'
       - name: Install dependencies
         run: yarn install --immutable
       - name: Build grafana
         run: make build
       - name: Install Cypress dependencies
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:
           runTests: false
       - name: Run dashboard scenes e2e
         run: yarn e2e:schema-v2 || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
-      
+
       - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
         if: failure()
         run: exit 0

@@ -11,6 +11,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAccess) (runtime.Object, error)
@@ -109,7 +111,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	blobInfo := obj.GetBlob()
 	if blobInfo != nil && r.largeObjects != nil {
 		gr := r.largeObjects.GroupResource()
-		err = r.largeObjects.Reconstruct(ctx, &resource.ResourceKey{
+		err = r.largeObjects.Reconstruct(ctx, &resourcepb.ResourceKey{
 			Group:     gr.Group,
 			Resource:  gr.Resource,
 			Namespace: obj.GetNamespace(),

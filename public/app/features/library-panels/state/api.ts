@@ -83,7 +83,14 @@ export async function getLibraryPanel(uid: string, isHandled = false): Promise<L
 }
 
 export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {
-  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(`/api/library-elements/name/${name}`);
+  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(
+    `/api/library-elements/name/${name}`,
+    undefined,
+    undefined,
+    {
+      validatePath: true,
+    }
+  );
   return result;
 }
 

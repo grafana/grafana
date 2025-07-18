@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import { chain } from 'lodash';
-import pluralize from 'pluralize';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { isPrivateLabel } from '../utils/labels';
 
@@ -56,7 +55,9 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props)
           tooltipPlacement="top"
           size="sm"
         >
-          +{commonLabelsCount} common {pluralize('label', commonLabelsCount)}
+          <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
+            +{'{{count}}'} common labels
+          </Trans>
         </Button>
       )}
       {showCommonLabels && hasCommonLabels && (

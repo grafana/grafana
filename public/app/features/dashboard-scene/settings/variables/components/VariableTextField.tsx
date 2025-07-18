@@ -7,7 +7,7 @@ import { Field, Input } from '@grafana/ui';
 interface VariableTextFieldProps {
   value?: string;
   defaultValue?: string;
-  name: string;
+  name?: string;
   placeholder?: string;
   onChange?: (event: FormEvent<HTMLInputElement>) => void;
   testId?: string;

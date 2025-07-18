@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { isEqual } from 'lodash';
 
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 import { EditableRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 

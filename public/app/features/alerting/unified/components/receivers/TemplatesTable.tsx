@@ -1,9 +1,9 @@
 import { Fragment, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { logError } from '@grafana/runtime';
 import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
@@ -102,8 +102,12 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
         <ConfirmModal
           isOpen={true}
           title={t('alerting.templates-table.title-delete-template-group', 'Delete template group')}
-          body={`Are you sure you want to delete template group "${templateToDelete.title}"?`}
-          confirmText="Yes, delete"
+          body={t(
+            'alerting.templates-table.body-delete-template-group',
+            'Are you sure you want to delete template group "{{template}}"?',
+            { template: templateToDelete.title }
+          )}
+          confirmText={t('alerting.templates-table.confirmText-yes-delete', 'Yes, delete')}
           onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}
         />
@@ -143,8 +147,10 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
                   <Trans i18nKey="alerting.templates.misconfigured-warning">This template is misconfigured.</Trans>
                   <br />
                   <Trans i18nKey="alerting.templates.misconfigured-warning-details">
-                    Templates must be defined in both the <CodeText content="template_files" /> and{' '}
-                    <CodeText content="templates" /> sections of your alertmanager configuration.
+                    Templates must be defined in both the{' '}
+                    <CodeText content={t('alerting.template-row.content-templatefiles', 'template_files')} /> and{' '}
+                    <CodeText content={t('alerting.template-row.content-templates', 'templates')} /> sections of your
+                    alertmanager configuration.
                   </Trans>
                 </>
               }

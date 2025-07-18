@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
@@ -103,10 +104,10 @@ func (gn *CMDNode) NeedsVars() []string {
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
-	return gn.Command.Execute(ctx, now, vars, s.tracer)
+	return gn.Command.Execute(ctx, now, vars, s.tracer, s.metrics)
 }
 
-func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, sqlExpressionCellLimit int64) (*CMDNode, error) {
+func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.Cfg) (*CMDNode, error) {
 	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
@@ -161,9 +162,9 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, sqlExpression
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
-		node.Command, err = UnmarshalThresholdCommand(rn, toggles)
+		node.Command, err = UnmarshalThresholdCommand(rn)
 	case TypeSQL:
-		node.Command, err = UnmarshalSQLCommand(rn, sqlExpressionCellLimit)
+		node.Command, err = UnmarshalSQLCommand(rn, cfg)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
@@ -212,7 +213,7 @@ func (dn *DSNode) NeedsVars() []string {
 	return []string{}
 }
 
-func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
+func (s *Service) buildDSNode(_ *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	if rn.TimeRange == nil {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
@@ -320,7 +321,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 				logger.Debug("Data source queried", "responseType", responseType)
 				useDataplane := strings.HasPrefix(responseType, "dataplane-")
-				s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
+				s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
 			}
 
 			resp, err := s.dataService.QueryData(ctx, req)
@@ -360,17 +361,12 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 	defer span.End()
 
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
-	if err != nil {
-		return mathexp.Results{}, err
-	}
 	span.SetAttributes(
 		attribute.String("datasource.type", dn.datasource.Type),
 		attribute.String("datasource.uid", dn.datasource.UID),
 	)
 
 	req := &backend.QueryDataRequest{
-		PluginContext: pCtx,
 		Queries: []backend.DataQuery{
 			{
 				RefID:         dn.refID,
@@ -395,12 +391,41 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix(responseType, "dataplane-")
-		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
+		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
 	}()
 
-	resp, err := s.dataService.QueryData(ctx, req)
-	if err != nil {
-		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+	var resp *backend.QueryDataResponse
+	mtDSClient, ok := s.mtDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
+	if !ok { // use single tenant client
+		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
+		if err != nil {
+			return mathexp.Results{}, err
+		}
+		req.PluginContext = pCtx
+		resp, err = s.dataService.QueryData(ctx, req)
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+		}
+	} else {
+		// transform request from backend.QueryDataRequest to k8s request
+		k8sReq := &data.QueryDataRequest{}
+		for _, q := range req.Queries {
+			var dataQuery data.DataQuery
+			err := json.Unmarshal(q.JSON, &dataQuery)
+			if err != nil {
+				return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+			}
+
+			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
+		}
+		var err error
+		// make the query with a mt client
+		resp, err = mtDSClient.QueryData(ctx, *k8sReq)
+
+		// handle error
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+		}
 	}
 
 	dataFrames, err := getResponseFrame(logger, resp, dn.refID)

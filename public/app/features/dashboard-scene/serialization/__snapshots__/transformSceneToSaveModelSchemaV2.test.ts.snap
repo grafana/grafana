@@ -35,10 +35,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "AnnotationQuery",
       "spec": {
         "builtIn": false,
-        "datasource": {
-          "type": "loki",
-          "uid": "Loki",
-        },
         "enable": true,
         "hide": true,
         "iconColor": "green",
@@ -75,36 +71,9 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           },
         ],
         "title": "Test Panel",
+        "transparent": true,
         "vizConfig": {
           "kind": "timeseries",
-          "spec": {
-            "fieldConfig": {
-              "defaults": {},
-              "overrides": [],
-            },
-            "options": {},
-            "pluginVersion": "7.0.0",
-          },
-        },
-      },
-    },
-    "panel-2": {
-      "kind": "Panel",
-      "spec": {
-        "data": {
-          "kind": "QueryGroup",
-          "spec": {
-            "queries": [],
-            "queryOptions": {},
-            "transformations": [],
-          },
-        },
-        "description": "Test Description 2",
-        "id": 2,
-        "links": [],
-        "title": "Test Panel 2",
-        "vizConfig": {
-          "kind": "graph",
           "spec": {
             "fieldConfig": {
               "defaults": {},
@@ -132,33 +101,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
             "width": 0,
             "x": 0,
             "y": 0,
-          },
-        },
-        {
-          "kind": "GridLayoutRow",
-          "spec": {
-            "collapsed": false,
-            "elements": [
-              {
-                "kind": "GridLayoutItem",
-                "spec": {
-                  "element": {
-                    "kind": "ElementReference",
-                    "name": "panel-2",
-                  },
-                  "height": 0,
-                  "width": 0,
-                  "x": 0,
-                  "y": 0,
-                },
-              },
-            ],
-            "repeat": {
-              "mode": "variable",
-              "value": "customVar",
-            },
-            "title": "Test Row",
-            "y": 10,
           },
         },
       ],
@@ -205,6 +147,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "QueryVariable",
       "spec": {
         "allValue": "*",
+        "allowCustomValue": true,
         "current": {
           "text": "text1",
           "value": "value1",
@@ -238,6 +181,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "CustomVariable",
       "spec": {
         "allValue": "All",
+        "allowCustomValue": true,
         "current": {
           "text": "option1",
           "value": "option1",
@@ -267,6 +211,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "DatasourceVariable",
       "spec": {
+        "allowCustomValue": true,
         "current": {
           "text": "text1",
           "value": "value1",
@@ -382,6 +327,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AdhocVariable",
       "spec": {
+        "allowCustomValue": true,
         "baseFilters": [
           {
             "condition": "AND",

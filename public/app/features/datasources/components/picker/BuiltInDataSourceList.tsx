@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { DataSourceRef } from '@grafana/schema';
-import { t } from 'app/core/internationalization';
 
 import { useDatasources } from '../../hooks';
 

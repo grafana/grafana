@@ -126,8 +126,9 @@ type AddedComponent struct {
 }
 
 type AddedFunction struct {
-	Targets []string `json:"targets"`
-	Title   string   `json:"title"`
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
 }
 
 type ExposedComponent struct {
@@ -174,10 +175,9 @@ func (e Includes) RequiresRBACAction() bool {
 }
 
 type Dependency struct {
-	ID      string `json:"id"`
-	Type    string `json:"type"`
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	ID   string `json:"id"`
+	Type string `json:"type"`
+	Name string `json:"name"`
 }
 
 type BuildInfo struct {
@@ -342,9 +342,9 @@ type AppDTO struct {
 }
 
 const (
-	errorCodeSignatureMissing   ErrorCode = "signatureMissing"
-	errorCodeSignatureModified  ErrorCode = "signatureModified"
-	errorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
+	ErrorCodeSignatureMissing   ErrorCode = "signatureMissing"
+	ErrorCodeSignatureModified  ErrorCode = "signatureModified"
+	ErrorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
 	ErrorCodeFailedBackendStart ErrorCode = "failedBackendStart"
 	ErrorAngular                ErrorCode = "angular"
 )
@@ -393,11 +393,11 @@ func (e Error) AsErrorCode() ErrorCode {
 
 	switch e.SignatureStatus {
 	case SignatureStatusInvalid:
-		return errorCodeSignatureInvalid
+		return ErrorCodeSignatureInvalid
 	case SignatureStatusModified:
-		return errorCodeSignatureModified
+		return ErrorCodeSignatureModified
 	case SignatureStatusUnsigned:
-		return errorCodeSignatureMissing
+		return ErrorCodeSignatureMissing
 	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
@@ -412,11 +412,11 @@ func (e *Error) WithMessage(m string) *Error {
 
 func (e Error) PublicMessage() string {
 	switch e.ErrorCode {
-	case errorCodeSignatureInvalid:
+	case ErrorCodeSignatureInvalid:
 		return "Invalid plugin signature"
-	case errorCodeSignatureModified:
+	case ErrorCodeSignatureModified:
 		return "Plugin signature does not match"
-	case errorCodeSignatureMissing:
+	case ErrorCodeSignatureMissing:
 		return "Plugin signature is missing"
 	case ErrorCodeFailedBackendStart:
 		return "Plugin failed to start"

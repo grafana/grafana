@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { t, Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
-import { UserSession } from 'app/types';
+import { UserSession } from 'app/types/user';
 
 interface Props {
   sessions: UserSession[];
@@ -66,7 +66,12 @@ class UserSessions extends PureComponent<Props> {
                       <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>
-                        {session.browser} on {session.os} {session.osVersion}
+                        <Trans
+                          i18nKey="profile.user-sessions.browser-details"
+                          values={{ browser: session.browser, os: session.os, osVersion: session.osVersion }}
+                        >
+                          {'{{browser}}'} on {'{{os}}'} {'{{osVersion}}'}
+                        </Trans>
                       </td>
                       <td>
                         {session.authModule && <TagBadge label={session.authModule} removeIcon={false} count={0} />}

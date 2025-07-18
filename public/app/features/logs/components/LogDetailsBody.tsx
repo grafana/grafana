@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 
 import { CoreApp, GrafanaTheme2, LogRowModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Themeable2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getLogRowStyles } from './getLogRowStyles';
 

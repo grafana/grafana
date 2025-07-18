@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { PluginErrorCode } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 type Props = { error?: PluginErrorCode };
 

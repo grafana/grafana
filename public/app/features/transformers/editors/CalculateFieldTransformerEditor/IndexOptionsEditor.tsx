@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { CalculateFieldTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineSwitch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 

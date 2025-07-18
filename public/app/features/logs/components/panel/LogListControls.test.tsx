@@ -2,20 +2,29 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { downloadLogs } from '../../utils';
-import { createLogRow } from '../__mocks__/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 
+import { LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { ScrollToLogsEvent } from './virtualization';
 
-jest.mock('../../utils');
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  downloadLogs: jest.fn(),
+}));
 
+const fontSize: LogListFontSize = 'default';
 const contextProps = {
   app: CoreApp.Unknown,
+  containerElement: document.createElement('div'),
   dedupStrategy: LogsDedupStrategy.exact,
   displayedFields: [],
+  enableLogDetails: false,
+  fontSize,
   logs: [],
   showControls: true,
   showTime: false,
@@ -32,7 +41,7 @@ describe('LogListControls', () => {
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
-    expect(screen.getByLabelText('Oldest logs first')).toBeInTheDocument();
+    expect(screen.getByLabelText(/oldest logs first/)).toBeInTheDocument();
     expect(screen.getByLabelText('Deduplication')).toBeInTheDocument();
     expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
     expect(screen.getByLabelText('Show timestamps')).toBeInTheDocument();
@@ -41,11 +50,15 @@ describe('LogListControls', () => {
     expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
     expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Expand JSON logs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Fix incorrectly escaped newline and tab sequences in log lines')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Remove escaping')).not.toBeInTheDocument();
   });
 
   test('Renders legacy controls', () => {
     render(
-      <LogListContextProvider {...contextProps} showUniqueLabels={false} prettifyJSON={false}>
+      <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false} prettifyJSON={false}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
@@ -64,13 +77,35 @@ describe('LogListControls', () => {
       expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
       expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
       expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Oldest logs first')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/oldest logs first/)).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Deduplication')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Show timestamps')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Wrap lines')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Enable highlighting')).not.toBeInTheDocument();
     }
   );
+
+  test('Renders a subset of options for plugins', () => {
+    render(
+      <LogListContextProvider {...contextProps} app={CoreApp.Unknown}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
+    expect(screen.getByLabelText(/oldest logs first/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Deduplication')).toBeInTheDocument();
+    expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
+    expect(screen.getByLabelText('Show timestamps')).toBeInTheDocument();
+    expect(screen.getByLabelText('Wrap lines')).toBeInTheDocument();
+    expect(screen.getByLabelText('Enable highlighting')).toBeInTheDocument();
+    expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Expand JSON logs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Fix incorrectly escaped newline and tab sequences in log lines')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Remove escaping')).not.toBeInTheDocument();
+  });
 
   test('Allows to scroll', async () => {
     const eventBus = new EventBusSrv();
@@ -106,7 +141,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Oldest logs first'));
+    await userEvent.click(screen.getByLabelText(/oldest logs first/));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('sortOrder', LogsSortOrder.Descending);
   });
@@ -181,13 +216,13 @@ describe('LogListControls', () => {
 
   test('Controls unique labels', async () => {
     const { rerender } = render(
-      <LogListContextProvider {...contextProps} showUniqueLabels={false}>
+      <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
     await userEvent.click(screen.getByLabelText('Show unique labels'));
     rerender(
-      <LogListContextProvider {...contextProps} showUniqueLabels={false}>
+      <LogListContextProvider {...contextProps} app={CoreApp.Explore} showUniqueLabels={false}>
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
@@ -207,6 +242,24 @@ describe('LogListControls', () => {
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Collapse JSON logs'));
+  });
+
+  test('Controls font size', async () => {
+    const originalValue = config.featureToggles.newLogsPanel;
+    config.featureToggles.newLogsPanel = true;
+
+    render(
+      <LogListContextProvider {...contextProps}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Use small font size'));
+    await screen.findByLabelText('Use default font size');
+
+    await userEvent.click(screen.getByLabelText('Use default font size'));
+    await screen.findByLabelText('Use small font size');
+
+    config.featureToggles.newLogsPanel = originalValue;
   });
 
   test.each([
@@ -241,5 +294,21 @@ describe('LogListControls', () => {
     await userEvent.click(screen.getByLabelText('Download logs'));
     await userEvent.click(await screen.findByText('txt'));
     expect(downloadLogs).toHaveBeenCalledWith('text', filteredLogs, undefined);
+  });
+
+  test('Controls new lines', async () => {
+    const log = createLogLine({ entry: 'the\\r\\nentry', hasUnescapedContent: true });
+    const { rerender } = render(
+      <LogListContextProvider {...contextProps} logs={[log]}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Fix incorrectly escaped newline and tab sequences in log lines'));
+    rerender(
+      <LogListContextProvider {...contextProps} logs={[log]}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    await userEvent.click(screen.getByLabelText('Remove escaping'));
   });
 });

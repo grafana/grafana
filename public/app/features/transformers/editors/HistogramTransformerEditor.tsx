@@ -8,10 +8,12 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/histogram.svg';
+import lightImage from '../images/light/histogram.svg';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../utils';
 
@@ -102,7 +104,7 @@ export const HistogramTransformerEditor = ({
           <SuggestionsInput
             suggestions={suggestions}
             value={options.bucketSize}
-            placeholder="auto"
+            placeholder={t('transformers.histogram-transformer-editor.placeholder-auto', 'Auto')}
             onChange={onVariableBucketSizeChanged}
           />
         </InlineField>
@@ -118,7 +120,7 @@ export const HistogramTransformerEditor = ({
           <SuggestionsInput
             suggestions={suggestions}
             value={options.bucketOffset}
-            placeholder="none"
+            placeholder={t('transformers.histogram-transformer-editor.placeholder-none', 'None')}
             onChange={onVariableBucketOffsetChanged}
           />
         </InlineField>
@@ -136,12 +138,17 @@ export const HistogramTransformerEditor = ({
   );
 };
 
-export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTransformerInputs> = {
+export const getHistogramTransformRegistryItem: () => TransformerRegistryItem<HistogramTransformerInputs> = () => ({
   id: DataTransformerID.histogram,
   editor: HistogramTransformerEditor,
   transformation: standardTransformers.histogramTransformer,
-  name: standardTransformers.histogramTransformer.name,
-  description: standardTransformers.histogramTransformer.description,
+  name: t('transformers.histogram-transformer-editor.name.histogram', 'Histogram'),
+  description: t(
+    'transformers.histogram-transformer-editor.description.calculate-histogram-from-input-data',
+    'Calculate a histogram from input data.'
+  ),
   categories: new Set([TransformerCategory.CreateNewVisualization]),
   help: getTransformationContent(DataTransformerID.histogram).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

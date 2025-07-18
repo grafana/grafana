@@ -2,14 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
-import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
@@ -21,13 +20,11 @@ import {
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
-import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-import { RulesViewModeSelector } from './RulesViewModeSelector';
+import { RulesViewModeSelector, SupportedView } from './RulesViewModeSelector';
 
 const RuleTypeOptions: SelectableValue[] = [
   { label: 'Alert ', value: PromRuleType.Alerting },
@@ -40,16 +37,23 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'Error', value: RuleHealth.Error },
 ];
 
+// Contact point selector is not supported in Alerting ListView V2 yet
+const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+
 interface RulesFilerProps {
   onClear?: () => void;
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
 }
 
-const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
-  label: alertStateToReadable(value),
-  value,
-}));
+const RuleStateOptions = Object.entries(PromAlertingRuleState)
+  .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
+  .map(([key, value]) => ({
+    label: alertStateToReadable(value),
+    value,
+  }));
 
-const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
+const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
@@ -122,10 +126,6 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     trackRulesSearchComponentInteraction('contactPoint');
   };
 
-  const canRenderContactPointSelector =
-    (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
-      config.featureToggles.alertingSimplifiedRouting) ??
-    false;
   const searchIcon = <Icon name={'search'} />;
 
   return (
@@ -143,12 +143,16 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
                   content={
                     <div>
                       <p>
-                        Data sources containing configured alert rules are Mimir or Loki data sources where alert rules
-                        are stored and evaluated in the data source itself.
+                        <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
+                          rules are stored and evaluated in the data source itself.
+                        </Trans>
                       </p>
                       <p>
-                        In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
-                        alert rules in the Grafana UI as well as in the data source where they were configured.
+                        <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                          alert rules in the Grafana UI as well as in the data source where they were configured.
+                        </Trans>
                       </p>
                     </div>
                   }
@@ -225,29 +229,29 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
           />
         </div>
         {canRenderContactPointSelector && (
-          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
-            <Stack direction="column" gap={0}>
-              <Field
-                label={
-                  <Label htmlFor="contactPointFilter">
-                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                  </Label>
-                }
-              >
-                <ContactPointSelector
-                  selectedContactPointName={filterState.contactPoint}
-                  selectProps={{
-                    inputId: 'contactPointFilter',
-                    width: 40,
-                    onChange: (selectValue) => {
-                      handleContactPointChange(selectValue?.value?.name!);
-                    },
-                    isClearable: true,
-                  }}
-                />
-              </Field>
-            </Stack>
-          </AlertmanagerProvider>
+          <Stack direction="column" gap={0}>
+            <Field
+              label={
+                <Label htmlFor="contactPointFilter">
+                  <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                </Label>
+              }
+            >
+              <ContactPointSelector
+                id="contactPointFilter"
+                value={filterState.contactPoint ?? null}
+                width={40}
+                placeholder={t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                )}
+                isClearable
+                onChange={(contactPoint) => {
+                  handleContactPointChange(contactPoint?.spec.title ?? '');
+                }}
+              />
+            </Field>
+          </Stack>
         )}
         {pluginsFilterEnabled && (
           <div>
@@ -256,8 +260,8 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             </Label>
             <RadioButtonGroup<'hide'>
               options={[
-                { label: 'Show', value: undefined },
-                { label: 'Hide', value: 'hide' },
+                { label: t('alerting.rules-filter.label.show', 'Show'), value: undefined },
+                { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
               ]}
               value={filterState.plugins}
               onChange={(value) => updateFilters({ ...filterState, plugins: value })}
@@ -314,7 +318,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             <Label>
               <Trans i18nKey="alerting.rules-filter.view-as">View as</Trans>
             </Label>
-            <RulesViewModeSelector />
+            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
           </div>
         </Stack>
         {hasActiveFilters && (
@@ -351,7 +355,11 @@ function SearchQueryHelp() {
 
   return (
     <div>
-      <div>Search syntax allows to query alert rules by the parameters defined below.</div>
+      <div>
+        <Trans i18nKey="alerting.search-query-help.search-syntax">
+          Search syntax allows to query alert rules by the parameters defined below.
+        </Trans>
+      </div>
       <hr />
       <div className={styles.grid}>
         <div>

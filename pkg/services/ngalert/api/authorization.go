@@ -8,7 +8,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -53,7 +52,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
 			ac.EvalPermission(dashboards.ActionFoldersRead, scope),
 		)
-	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}":
+	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}",
+		http.MethodPatch + "/api/ruler/grafana/api/v1/rules/{Namespace}":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAll(
@@ -147,6 +147,12 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 		)
 
+	case http.MethodPost + "/api/convert/api/v1/alerts",
+		http.MethodDelete + "/api/convert/api/v1/alerts":
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+	case http.MethodGet + "/api/convert/api/v1/alerts":
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+
 	// Alert Instances and Silences
 
 	// Silences for Grafana paths.
@@ -229,9 +235,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/status":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
-	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/alerts":
-		// additional authorization is done in the request handler
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsWrite))
 	case http.MethodPost + "/api/alertmanager/grafana/config/history/{id}/_activate":
 		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsWrite))
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/receivers":
@@ -296,12 +299,9 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // organization scope
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
-		}
-		if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-			perms = append(perms,
-				ac.EvalPermission(ac.ActionAlertingReceiversRead),
-				ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-			)
+
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),        // organization scope
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets), // organization scope
 		}
 		eval = ac.EvalAny(perms...)
 

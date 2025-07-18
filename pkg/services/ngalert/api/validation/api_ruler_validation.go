@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	prommodels "github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -14,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	prommodels "github.com/prometheus/common/model"
 )
 
 type RuleLimits struct {
@@ -22,15 +23,12 @@ type RuleLimits struct {
 	DefaultRuleEvaluationInterval time.Duration
 	// All intervals must be an integer multiple of this duration.
 	BaseInterval time.Duration
-	// Whether recording rules are allowed.
-	RecordingRulesAllowed bool
 }
 
 func RuleLimitsFromConfig(cfg *setting.UnifiedAlertingSettings, toggles featuremgmt.FeatureToggles) RuleLimits {
 	return RuleLimits{
 		DefaultRuleEvaluationInterval: cfg.DefaultRuleEvaluationInterval,
 		BaseInterval:                  cfg.BaseInterval,
-		RecordingRulesAllowed:         toggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules),
 	}
 }
 
@@ -87,12 +85,12 @@ func ValidateRuleNode(
 	}
 
 	if ruleNode.ApiRuleNode != nil {
-		newAlertRule.Annotations = ruleNode.ApiRuleNode.Annotations
+		newAlertRule.Annotations = ruleNode.Annotations
 		err = validateLabels(ruleNode.Labels)
 		if err != nil {
 			return nil, err
 		}
-		newAlertRule.Labels = ruleNode.ApiRuleNode.Labels
+		newAlertRule.Labels = ruleNode.Labels
 
 		err = newAlertRule.SetDashboardAndPanelFromAnnotations()
 		if err != nil {
@@ -141,7 +139,7 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 	}
 
 	if in.GrafanaManagedAlert.NotificationSettings != nil {
-		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
+		newRule.NotificationSettings, err = ValidateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
 		if err != nil {
 			return ngmodels.AlertRule{}, err
 		}
@@ -175,10 +173,6 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 // validateRecordingRuleFields validates only the fields on a rule that are specific to Recording rules.
 // it will load fields that pass validation onto newRule and return the result.
 func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, limits RuleLimits, canPatch bool) (ngmodels.AlertRule, error) {
-	if !limits.RecordingRulesAllowed {
-		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
 	err := ValidateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
 	if err != nil {
 		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
@@ -272,30 +266,30 @@ func ValidateInterval(interval, baseInterval time.Duration) (int64, error) {
 
 // validateForInterval validates ApiRuleNode.For and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
 func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Duration, error) {
-	if ruleNode.ApiRuleNode == nil || ruleNode.ApiRuleNode.For == nil {
+	if ruleNode.ApiRuleNode == nil || ruleNode.For == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
 			return -1, nil // will be patched later with the real value of the current version of the rule
 		}
 		return 0, nil // if it's a new rule, use the 0 as the default
 	}
-	duration := time.Duration(*ruleNode.ApiRuleNode.For)
+	duration := time.Duration(*ruleNode.For)
 	if duration < 0 {
-		return 0, fmt.Errorf("field `for` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.ApiRuleNode.For)
+		return 0, fmt.Errorf("field `for` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.For)
 	}
 	return duration, nil
 }
 
 // validateKeepFiringForInterval validates ApiRuleNode.KeepFiringFor and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
 func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Duration, error) {
-	if ruleNode.ApiRuleNode == nil || ruleNode.ApiRuleNode.KeepFiringFor == nil {
+	if ruleNode.ApiRuleNode == nil || ruleNode.KeepFiringFor == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
 			return -1, nil // will be patched later with the real value of the current version of the rule
 		}
 		return 0, nil // if it's a new rule, use the 0 as the default
 	}
-	duration := time.Duration(*ruleNode.ApiRuleNode.KeepFiringFor)
+	duration := time.Duration(*ruleNode.KeepFiringFor)
 	if duration < 0 {
-		return 0, fmt.Errorf("field `keep_firing_for` cannot be negative [%v]. only 0 or any positive value is allowed", *ruleNode.ApiRuleNode.KeepFiringFor)
+		return 0, fmt.Errorf("field `keep_firing_for` cannot be negative [%v]. only 0 or any positive value is allowed", *ruleNode.KeepFiringFor)
 	}
 	return duration, nil
 }
@@ -390,14 +384,15 @@ func ValidateRuleGroup(
 	return result, nil
 }
 
-func validateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
+func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
 	s := ngmodels.NotificationSettings{
-		Receiver:          n.Receiver,
-		GroupBy:           n.GroupBy,
-		GroupWait:         n.GroupWait,
-		GroupInterval:     n.GroupInterval,
-		RepeatInterval:    n.RepeatInterval,
-		MuteTimeIntervals: n.MuteTimeIntervals,
+		Receiver:            n.Receiver,
+		GroupBy:             n.GroupBy,
+		GroupWait:           n.GroupWait,
+		GroupInterval:       n.GroupInterval,
+		RepeatInterval:      n.RepeatInterval,
+		MuteTimeIntervals:   n.MuteTimeIntervals,
+		ActiveTimeIntervals: n.ActiveTimeIntervals,
 	}
 
 	if err := s.Validate(); err != nil {

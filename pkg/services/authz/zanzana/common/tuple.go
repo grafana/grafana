@@ -6,7 +6,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -377,8 +377,8 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 		User:     req.TupleKey.User,
 		Relation: RelationSetView,
 		Object: NewGroupResourceIdent(
-			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
-			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+			dashboardV1.DashboardResourceInfo.GroupResource().Group,
+			dashboardV1.DashboardResourceInfo.GroupResource().Resource,
 			"",
 		),
 	})

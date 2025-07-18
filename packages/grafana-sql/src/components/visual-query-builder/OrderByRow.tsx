@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Input, RadioButtonGroup, Select, Space } from '@grafana/ui';
 
@@ -59,10 +60,10 @@ export function OrderByRow({ sql, onSqlChange, columns, showOffset }: OrderByRow
 
   return (
     <>
-      <EditorField label="Order by" width={25}>
+      <EditorField label={t('grafana-sql.components.order-by-row.label-order-by', 'Order by')} width={25}>
         <InputGroup>
           <Select
-            aria-label="Order by"
+            aria-label={t('grafana-sql.components.order-by-row.aria-label-order-by', 'Order by')}
             options={columns}
             value={sql.orderBy?.property.name ? toOption(sql.orderBy.property.name) : null}
             isClearable
@@ -80,11 +81,11 @@ export function OrderByRow({ sql, onSqlChange, columns, showOffset }: OrderByRow
           />
         </InputGroup>
       </EditorField>
-      <EditorField label="Limit" optional width={25}>
+      <EditorField label={t('grafana-sql.components.order-by-row.label-limit', 'Limit')} optional width={25}>
         <Input type="number" min={0} id={uniqueId('limit-')} value={sql.limit || ''} onChange={onLimitChange} />
       </EditorField>
       {showOffset && (
-        <EditorField label="Offset" optional width={25}>
+        <EditorField label={t('grafana-sql.components.order-by-row.label-offset', 'Offset')} optional width={25}>
           <Input type="number" id={uniqueId('offset-')} value={sql.offset || ''} onChange={onOffsetChange} />
         </EditorField>
       )}

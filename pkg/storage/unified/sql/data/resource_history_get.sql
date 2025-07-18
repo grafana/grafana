@@ -1,6 +1,9 @@
 SELECT
+  {{ .Ident "guid" }},
   {{ .Ident "resource_version" }},
   {{ .Ident "namespace" }},
+  {{ .Ident "group" }},
+  {{ .Ident "resource" }},
   {{ .Ident "name" }},
   {{ .Ident "folder" }},
   {{ .Ident "value" }}
@@ -11,9 +14,6 @@ WHERE 1 = 1
   AND {{ .Ident "resource" }}  = {{ .Arg .Key.Resource }}
   {{ if .Key.Name }}
   AND {{ .Ident "name" }}      = {{ .Arg .Key.Name }}
-  {{ end }}
-  {{ if .Trash }}
-  AND {{ .Ident "action" }} = 3
   {{ end }}
   {{ if (gt .StartRV 0) }}
   {{ if .SortAscending }}
@@ -29,7 +29,7 @@ WHERE 1 = 1
   AND {{ .Ident "resource_version" }} = {{ .Arg .ExactRV }}
   {{ end }}
 {{ if .SortAscending }}
-ORDER BY resource_version ASC
+ORDER BY {{ .Ident "resource_version" }} ASC
 {{ else }}
-ORDER BY resource_version DESC
+ORDER BY {{ .Ident "resource_version" }} DESC
 {{ end }}

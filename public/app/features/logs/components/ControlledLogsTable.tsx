@@ -32,6 +32,11 @@ export const ControlledLogsTable = ({
   const theme = useTheme2();
   const styles = getStyles(theme);
 
+  if (!splitOpen || !width || !updatePanelState) {
+    console.error('<ControlledLogsTable>: Missing required props.');
+    return;
+  }
+
   return (
     <div className={styles.logRowsContainer}>
       <LogListControls eventBus={eventBus} visualisationType={visualisationType} />

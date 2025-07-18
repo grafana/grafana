@@ -10,7 +10,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { defaultDashboard } from '@grafana/schema';
+import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
@@ -26,7 +26,11 @@ import {
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, DashboardDTO, FolderDTO, NotifiersState, ReceiversState, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { NotifiersState, ReceiversState } from 'app/types/alerting';
+import { DashboardDTO } from 'app/types/dashboard';
+import { FolderDTO } from 'app/types/folders';
+import { StoreState } from 'app/types/store';
 import {
   Alert,
   AlertingRule,
@@ -125,7 +129,7 @@ export const mockRulerGrafanaRule = (
           datasourceUid: '123',
           refId: 'A',
           queryType: 'huh',
-          model: {} as any,
+          model: {} as unknown as DataQuery,
         },
       ],
       ...partialDef,
@@ -231,6 +235,9 @@ export const mockGrafanaPromAlertingRule = (
     ...mockPromAlertingRule(),
     uid: 'mock-rule-uid-123',
     folderUid: 'NAMESPACE_UID',
+    isPaused: false,
+    totals: { alerting: 1 },
+    totalsFiltered: { alerting: 1 },
     ...partial,
   };
 };
@@ -813,3 +820,35 @@ export const mockThresholdExpression = (partial: Partial<ExpressionQuery> = {}):
     ...partial,
   },
 });
+
+class LocalStorageMock implements Storage {
+  [key: string]: any;
+
+  getItem(key: string) {
+    return this[key] ?? null;
+  }
+
+  setItem(key: string, value: string) {
+    this[key] = value;
+  }
+
+  clear() {
+    Object.keys(this).forEach((key) => delete this[key]);
+  }
+
+  removeItem(key: string) {
+    delete this[key];
+  }
+
+  key(index: number) {
+    return Object.keys(this)[index] ?? null;
+  }
+
+  get length() {
+    return Object.keys(this).length;
+  }
+}
+
+export function mockLocalStorage(): Storage {
+  return new LocalStorageMock();
+}

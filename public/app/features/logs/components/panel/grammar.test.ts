@@ -1,6 +1,6 @@
 import Prism, { Token } from 'prismjs';
 
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
 import { generateLogGrammar } from './grammar';
 

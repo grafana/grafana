@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { DataFrame, SplitOpen, TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { PanelChrome } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
-import { StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types/store';
 
 import { TraceView } from './TraceView';
 import { transformDataFrames } from './utils/transform';

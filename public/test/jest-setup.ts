@@ -23,7 +23,9 @@ const settings: Partial<GrafanaBootConfig> = {
 };
 global.grafanaBootData = {
   settings,
-  user: {},
+  user: {
+    locale: 'en-US',
+  },
   navTree: [],
 };
 

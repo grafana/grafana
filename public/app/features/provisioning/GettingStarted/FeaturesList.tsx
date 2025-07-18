@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Stack, Text, Box, LinkButton, useStyles2 } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
-import { Trans } from 'app/core/internationalization';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 
@@ -32,11 +32,6 @@ export const FeaturesList = ({ repos, hasRequiredFeatures, onSetupFeatures }: Fe
         <li>
           <Trans i18nKey="provisioning.features-list.store-dashboards-in-version-controlled-storage">
             Store dashboards in version-controlled storage for better organization and history tracking
-          </Trans>
-        </li>
-        <li>
-          <Trans i18nKey="provisioning.features-list.migrate-existing-dashboards-storage-provisioning">
-            Migrate existing dashboards to GitHub for provisioning
           </Trans>
         </li>
       </ul>

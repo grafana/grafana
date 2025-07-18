@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
@@ -8,7 +9,9 @@ import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 import { LogsEditorMode } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
+import { AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery, ResultFormat } from '../../types/query';
+import { AzureMonitorErrorish, AzureMonitorOption, EngineSchema } from '../../types/types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
@@ -59,12 +62,20 @@ const LogsQueryEditor = ({
   const from = templateSrv?.replace('$__from');
   const to = templateSrv?.replace('$__to');
   const templateVariableOptions = templateSrv.getVariables();
+  const isBasicLogsQuery = (basicLogsEnabled && query.azureLogAnalytics?.basicLogsQuery) ?? false;
+  const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
       return false;
     }
+
+    if (isBasicLogsQuery && selectedRows.length === 1) {
+      // Basic logs queries can only have one resource selected
+      return true;
+    }
+
     const rowResourceNS = parseResourceDetails(row.uri, row.location).metricNamespace?.toLowerCase();
     const selectedRowSampleNs = parseResourceDetails(
       selectedRows[0].uri,
@@ -76,12 +87,41 @@ const LogsQueryEditor = ({
   const [schema, setSchema] = useState<EngineSchema | undefined>();
 
   useEffect(() => {
-    if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length) {
-      datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resources[0]).then((schema) => {
-        setSchema(schema);
+    const resources = query.azureLogAnalytics?.resources;
+    if (resources) {
+      setIsLoadingSchema(true);
+      const fetchAllPlans = async (tables: AzureLogAnalyticsMetadataTable[]) => {
+        const promises = [];
+        for (const table of tables) {
+          promises.push({
+            ...table,
+            plan: await datasource.azureMonitorDatasource.getWorkspaceTablePlan(resources, table.name),
+          });
+        }
+
+        const tablesWithPlan = await Promise.all(promises);
+        return tablesWithPlan;
+      };
+      datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]).then((schema) => {
+        if (schema?.database?.tables && query.azureLogAnalytics?.mode === LogsEditorMode.Builder) {
+          fetchAllPlans(schema?.database?.tables).then(async (t) => {
+            if (schema.database?.tables) {
+              schema.database.tables = t;
+            }
+            setSchema(schema);
+          });
+        } else {
+          setSchema(schema);
+        }
+        setIsLoadingSchema(false);
       });
     }
-  }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
+  }, [
+    query.azureLogAnalytics?.resources,
+    datasource.azureLogAnalyticsDatasource,
+    datasource.azureMonitorDatasource,
+    query.azureLogAnalytics?.mode,
+  ]);
 
   useEffect(() => {
     if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {
@@ -146,7 +186,7 @@ const LogsQueryEditor = ({
                   href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
                   external
                 >
-                  Learn More
+                  <Trans i18nKey="components.logs-query-editor.learn-more">Learn More</Trans>
                 </TextLink>
               </Text>
             </>
@@ -174,7 +214,7 @@ const LogsQueryEditor = ({
             style={{ marginTop: '22px' }}
             href={querySeries.meta?.custom?.azurePortalLink}
           >
-            View query in Azure Portal
+            <Trans i18nKey="components.logs-query-editor.view-query">View query in Azure Portal</Trans>
           </LinkButton>
         </>
       );
@@ -210,7 +250,12 @@ const LogsQueryEditor = ({
                 // eslint-disable-next-line
                 <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
               )}
-              selectionNotice={() => 'You may only choose items of the same resource type.'}
+              selectionNotice={(selected) => {
+                if (selected.length === 1 && isBasicLogsQuery) {
+                  return 'When using Basic Logs, you may only select one resource at a time.';
+                }
+                return 'You may only choose items of the same resource type.';
+              }}
             />
             {showBasicLogsToggle && (
               <LogsManagement
@@ -242,6 +287,7 @@ const LogsQueryEditor = ({
             templateVariableOptions={templateVariableOptions}
             datasource={datasource}
             timeRange={timeRange}
+            isLoadingSchema={isLoadingSchema}
           />
         ) : (
           <QueryField

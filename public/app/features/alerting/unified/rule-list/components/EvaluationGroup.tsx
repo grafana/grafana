@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Dropdown, Icon, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { MetaText } from '../../components/MetaText';
 import MoreButton from '../../components/MoreButton';
@@ -26,6 +26,7 @@ export const EvaluationGroup = ({
   children,
 }: EvaluationGroupProps) => {
   const styles = useStyles2(getStyles);
+
   const isProvisioned = Boolean(provenance);
 
   return (

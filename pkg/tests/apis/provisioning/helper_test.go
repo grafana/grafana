@@ -2,10 +2,7 @@ package provisioning
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -13,7 +10,6 @@ import (
 	"text/template"
 	"time"
 
-	gh "github.com/google/go-github/v70/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,8 +19,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -46,8 +44,11 @@ type provisioningTestHelper struct {
 	Repositories *apis.K8sResourceClient
 	Jobs         *apis.K8sResourceClient
 	Folders      *apis.K8sResourceClient
-	Dashboards   *apis.K8sResourceClient
+	DashboardsV0 *apis.K8sResourceClient
+	DashboardsV1 *apis.K8sResourceClient
+	DashboardsV2 *apis.K8sResourceClient
 	AdminREST    *rest.RESTClient
+	EditorREST   *rest.RESTClient
 	ViewerREST   *rest.RESTClient
 }
 
@@ -196,6 +197,13 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
+func useAppPlatformSecrets(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles,
+		featuremgmt.FlagProvisioningSecretsService,
+		featuremgmt.FlagSecretsManagementAppPlatform,
+	)
+}
+
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
@@ -219,20 +227,8 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	}
 	helper := apis.NewK8sTestHelper(t, opts)
 
-	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatchHandler(ghmock.GetUser, ghAlwaysWrite(t, &gh.User{})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, ghAlwaysWrite(t, []*gh.Hook{})),
-		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, ghAlwaysWrite(t, &gh.Hook{})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposByOwnerByRepo, ghAlwaysWrite(t, &gh.Repository{})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposBranchesByOwnerByRepoByBranch, ghAlwaysWrite(t, &gh.Branch{})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, ghAlwaysWrite(t, &gh.Tree{})),
-		ghmock.WithRequestMatchHandler(
-			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			}),
-		),
-	)
+	// FIXME: keeping this line here to keep the dependency around until we have tests which use this again.
+	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient()
 
 	repositories := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -249,20 +245,27 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       folder.FolderResourceInfo.GroupVersionResource(),
 	})
-	dashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+	dashboardsV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR:       dashboard.DashboardResourceInfo.GroupVersionResource(),
+		GVR:       dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+	})
+	dashboardsV1 := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+	dashboardsV2 := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       dashboardV2.DashboardResourceInfo.GroupVersionResource(),
 	})
 
 	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
-	restClient := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
-		Group: "provisioning.grafana.app", Version: "v0alpha1",
-	})
-
-	viewerClient := helper.Org1.Viewer.RESTClient(t, &schema.GroupVersion{
-		Group: "provisioning.grafana.app", Version: "v0alpha1",
-	})
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+	adminClient := helper.Org1.Admin.RESTClient(t, gv)
+	editorClient := helper.Org1.Editor.RESTClient(t, gv)
+	viewerClient := helper.Org1.Viewer.RESTClient(t, gv)
 
 	deleteAll := func(client *apis.K8sResourceClient) error {
 		ctx := context.Background()
@@ -278,7 +281,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		return nil
 	}
 
-	require.NoError(t, deleteAll(dashboards), "deleting all dashboards")
+	require.NoError(t, deleteAll(dashboardsV1), "deleting all dashboards") // v0+v1+v2
 	require.NoError(t, deleteAll(folders), "deleting all folders")
 	require.NoError(t, deleteAll(repositories), "deleting all repositories")
 
@@ -287,39 +290,15 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		K8sTestHelper:    helper,
 
 		Repositories: repositories,
-		AdminREST:    restClient,
+		AdminREST:    adminClient,
+		EditorREST:   editorClient,
 		ViewerREST:   viewerClient,
 		Jobs:         jobs,
 		Folders:      folders,
-		Dashboards:   dashboards,
+		DashboardsV0: dashboardsV0,
+		DashboardsV1: dashboardsV1,
+		DashboardsV2: dashboardsV2,
 	}
-}
-
-func ghAlwaysWrite(t *testing.T, body any) http.HandlerFunc {
-	marshalled := ghmock.MustMarshal(body)
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, err := w.Write(marshalled)
-		require.NoError(t, err, "failed to write body in mock")
-	})
-}
-
-func ghHandleTree(t *testing.T, refs map[string][]*gh.TreeEntry) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sha := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
-		require.NotEmpty(t, sha, "sha path parameter was missing?")
-
-		entries := refs[sha]
-		require.NotNil(t, entries, "no entries for sha %s", sha)
-
-		tree := &gh.Tree{
-			SHA:       gh.Ptr(sha),
-			Truncated: gh.Ptr(false),
-			Entries:   entries,
-		}
-
-		_, err := w.Write(ghmock.MustMarshal(tree))
-		require.NoError(t, err, "failed to write body in mock")
-	})
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
@@ -335,15 +314,6 @@ func asJSON(obj any) []byte {
 	return jj
 }
 
-func treeEntryDir(dirName string, sha string) *gh.TreeEntry {
-	return &gh.TreeEntry{
-		SHA:  gh.Ptr(sha),
-		Path: gh.Ptr(dirName),
-		Type: gh.Ptr("tree"),
-		Mode: gh.Ptr("040000"),
-	}
-}
-
 func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *provisioning.Repository {
 	bytes, err := obj.MarshalJSON()
 	require.NoError(t, err)
@@ -353,34 +323,4 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return repo
-}
-
-func treeEntry(fpath string, content []byte) *gh.TreeEntry {
-	sha := sha256.Sum256(content)
-
-	return &gh.TreeEntry{
-		SHA:     gh.Ptr(hex.EncodeToString(sha[:])),
-		Path:    gh.Ptr(fpath),
-		Size:    gh.Ptr(len(content)),
-		Type:    gh.Ptr("blob"),
-		Mode:    gh.Ptr("100644"),
-		Content: gh.Ptr(string(content)),
-	}
-}
-
-func repoContent(fpath string, content []byte) *gh.RepositoryContent {
-	sha := sha256.Sum256(content)
-	typ := "blob"
-	if strings.HasSuffix(fpath, "/") {
-		typ = "tree"
-	}
-
-	return &gh.RepositoryContent{
-		SHA:     gh.Ptr(hex.EncodeToString(sha[:])),
-		Name:    gh.Ptr(path.Base(fpath)),
-		Path:    &fpath,
-		Size:    gh.Ptr(len(content)),
-		Type:    &typ,
-		Content: gh.Ptr(string(content)),
-	}
 }

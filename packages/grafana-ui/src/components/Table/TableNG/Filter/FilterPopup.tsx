@@ -2,11 +2,17 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { Button, ButtonSelect, ClickOutsideWrapper, FilterInput, Label, Stack } from '../../..';
-import { useStyles2, useTheme2 } from '../../../../themes';
-import { t, Trans } from '../../../../utils/i18n';
+import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { Button } from '../../../Button/Button';
+import { ClickOutsideWrapper } from '../../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
+import { FilterInput } from '../../../FilterInput/FilterInput';
+import { Label } from '../../../Forms/Label';
+import { Stack } from '../../../Layout/Stack/Stack';
 import { FilterType } from '../types';
+import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
@@ -105,7 +111,7 @@ export const FilterPopup = ({
       <div className={styles.filterContainer} onClick={stopPropagation}>
         <Stack direction="column">
           <Stack alignItems="center">
-            {field && <Label className={styles.label}>{field.config.displayName || field.name}</Label>}
+            {field && <Label className={styles.label}>{getDisplayName(field)}</Label>}
             <ButtonSelect
               variant="canvas"
               options={OPERATORS}

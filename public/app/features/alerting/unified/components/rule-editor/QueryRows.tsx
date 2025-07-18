@@ -10,11 +10,11 @@ import {
   getDataSourceRef,
   rangeUtil,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { Trans } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -290,7 +290,9 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
             </Trans>
           </Card.Heading>
           <Card.Description>
-            The datasource for this query was not found, it was either removed or is not installed correctly.
+            <Trans i18nKey="alerting.datasource-not-found.card-description">
+              The datasource for this query was not found, it was either removed or is not installed correctly.
+            </Trans>
           </Card.Description>
           <Card.Figure>
             <Icon name="question-circle" />

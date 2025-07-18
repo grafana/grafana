@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { GroupConditionCondition } from './types';
 
@@ -17,8 +17,8 @@ export const ConditionalRenderingGroupCondition = ({ value, onChange }: Props) =
 
   const options: Array<SelectableValue<GroupConditionCondition>> = useMemo(
     () => [
-      { label: t('dashboard.conditional-rendering.conditions.group.condition.all', 'Match all (AND)'), value: 'and' },
-      { label: t('dashboard.conditional-rendering.conditions.group.condition.any', 'Match any (OR)'), value: 'or' },
+      { label: t('dashboard.conditional-rendering.conditions.group.condition.all', 'Match all'), value: 'and' },
+      { label: t('dashboard.conditional-rendering.conditions.group.condition.any', 'Match any'), value: 'or' },
     ],
     []
   );

@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -47,7 +48,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestParseMetricRequest(t *testing.T) {
+func TestIntegrationParseMetricRequest(t *testing.T) {
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
 		tc := setup(t)
 		mr := metricRequestWithQueries(t, `{
@@ -268,7 +269,7 @@ func TestParseMetricRequest(t *testing.T) {
 	})
 }
 
-func TestQueryDataMultipleSources(t *testing.T) {
+func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t)
 		query1, err := simplejson.NewJson([]byte(`
@@ -483,8 +484,8 @@ func setup(t *testing.T) *testContext {
 		pluginSettings.ProvideService(sqlStore, secretsService), pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
-		featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
-	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider) // provider belonging to this package
+		featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest(), mtdsclient.NewNullMTDatasourceClientBuilder())
+	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider, mtdsclient.NewNullMTDatasourceClientBuilder()) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,
 		secretStore:            ss,

@@ -19,6 +19,7 @@ import { DataQuery } from './query';
 import { Scope } from './scopes';
 import { AdHocVariableFilter } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
+import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
 export interface DataSourcePluginOptionsEditorProps<
@@ -238,6 +239,11 @@ abstract class DataSourceApi<
    */
   interval?: string;
 
+  /**
+   * Initialized in datasource_srv.ts
+   */
+  userStorage?: UserStorage;
+
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -299,6 +305,11 @@ abstract class DataSourceApi<
    * Variable query action.
    */
   metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
+
+  /**
+   * Verify adhoc filters applicability based on queries and current filters
+   */
+  getApplicableFilters?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<string[]>;
 
   /**
    * Get tag keys for adhoc filters
@@ -568,6 +579,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
+  dashboardTitle?: string;
   headers?: Record<string, string>;
 
   /** Filters to dynamically apply to all queries */
@@ -636,6 +648,7 @@ export interface DataSourceJsonData {
   defaultRegion?: string;
   profile?: string;
   manageAlerts?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   alertmanagerUid?: string;
   disableGrafanaCache?: boolean;
 }

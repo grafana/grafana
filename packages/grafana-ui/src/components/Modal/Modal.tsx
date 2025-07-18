@@ -5,9 +5,10 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { PropsWithChildren, useRef } from 'react';
 import * as React from 'react';
 
-import { useStyles2 } from '../../themes';
-import { IconName } from '../../types';
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { IconName } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 

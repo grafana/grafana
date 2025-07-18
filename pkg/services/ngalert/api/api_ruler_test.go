@@ -81,6 +81,24 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("and group argument is empty", func(t *testing.T) {
+			t.Run("allow deleting without access to datasource", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+				provisioningStore := fakes.NewFakeProvisioningStore()
+
+				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
+
+				authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
+
+				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
+
+				permissions := createPermissionsForRulesWithoutDS(authorizedRulesInFolder, orgID)
+				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, "")
+
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore)
+			})
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(1, 5)...)
@@ -108,8 +126,6 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
-				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), folderGen.With(gen.WithGroupPrefix("unauthz")).GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...), orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -130,8 +146,6 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				require.NoError(t, err)
 
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
-				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -159,10 +173,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				authorizedRulesInGroup := groupGen.GenerateManyRef(1, 5)
 				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
-				// more rules in the same group but user is not authorized to access them
-				ruleStore.PutRule(context.Background(), groupGen.GenerateManyRef(1, 5)...)
 
-				permissions := createPermissionsForRules(authorizedRulesInGroup, orgID)
+				permissions := createPermissionsForRules([]*models.AlertRule{}, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
 				response := createService(ruleStore, nil).RouteDeleteAlertRules(requestCtx, folder.UID, authorizedRulesInGroup[0].RuleGroup)
@@ -204,7 +216,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()))
+			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder.ToFolderReference()), gen.WithUpdatedBy(util.Pointer(models.UserUID("test-user"))))
 			queryAccessRules := folderGen.GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), queryAccessRules...)
 			noQueryAccessRules := folderGen.GenerateManyRef(2, 6)
@@ -323,7 +335,10 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		expectedRules := make([]*models.AlertRule, 0)
+		for i := 0; i < 10; i++ {
+			expectedRules = append(expectedRules, gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(util.Pointer(models.UserUID(util.GenerateShortUID())))).GenerateManyRef(5, 10)...)
+		}
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -654,8 +669,10 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			group2Key := models.GenerateGroupKey(orgID)
 			group2Key.NamespaceUID = folder2.UID
 
-			group1 := gen.With(gen.WithGroupKey(group1Key)).GenerateManyRef(2, 6)
-			group2 := gen.With(gen.WithGroupKey(group2Key)).GenerateManyRef(2, 6)
+			ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+			group1 := gen.With(gen.WithGroupKey(group1Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
+			group2 := gen.With(gen.WithGroupKey(group2Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), append(group1, group2...)...)
 
 			t.Run("and do not return group if user does not have access to one of rules", func(t *testing.T) {
@@ -692,7 +709,9 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -741,7 +760,9 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -950,11 +971,11 @@ func createService(store *fakes.RuleStore, _userService *usertest.FakeUserServic
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
-		amConfigStore:  &fakeAMRefresher{},
-		amRefresher:    &fakeAMRefresher{},
-		featureManager: featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
-		userService:    userService,
+		authz:              accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+		amConfigStore:      &fakeAMRefresher{},
+		amRefresher:        &fakeAMRefresher{},
+		userService:        userService,
+		conditionValidator: &recordingConditionValidator{},
 	}
 }
 
@@ -1006,6 +1027,7 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
 			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
 			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
+			permissions[ac.ActionAlertingRuleUpdate] = append(permissions[ac.ActionAlertingRuleUpdate], scope)
 			ns[rule.NamespaceUID] = struct{}{}
 		}
 		for _, query := range rule.Data {
@@ -1013,4 +1035,226 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 		}
 	}
 	return map[int64]map[string][]string{orgID: permissions}
+}
+
+func createPermissionsForRulesWithoutDS(rules []*models.AlertRule, orgID int64) map[int64]map[string][]string {
+	ns := map[string]any{}
+	permissions := map[string][]string{}
+	for _, rule := range rules {
+		if _, ok := ns[rule.NamespaceUID]; !ok {
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
+			ns[rule.NamespaceUID] = struct{}{}
+		}
+	}
+	return map[int64]map[string][]string{orgID: permissions}
+}
+
+func TestRouteUpdateNamespaceRules(t *testing.T) {
+	orgID := rand.Int63()
+	folder := randFolder()
+	gen := models.RuleGen.With(
+		models.RuleGen.WithOrgID(orgID),
+		models.RuleGen.WithNamespaceUID(folder.UID),
+	)
+
+	initFakeRuleStore := func(t *testing.T) *fakes.RuleStore {
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		return ruleStore
+	}
+
+	getRecordedUpdatedRules := func(ruleStore *fakes.RuleStore) []models.UpdateRule {
+		raw := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			if u, ok := cmd.([]models.UpdateRule); ok {
+				return u, true
+			}
+			return nil, false
+		})
+
+		updates := []models.UpdateRule{}
+		for _, cmd := range raw {
+			updates = append(updates, cmd.([]models.UpdateRule)...)
+		}
+		return updates
+	}
+
+	t.Run("should pause all non-provisioned rules in namespace", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		// Create 3 types of rules: paused, provisioned paused, and unpaused
+		pausedRules := gen.With(gen.WithGroupPrefix("paused-"), gen.WithIsPaused(true)).GenerateManyRef(2)
+
+		unpausedRules := gen.With(gen.WithGroupPrefix("unpaused-"), gen.WithIsPaused(false)).GenerateManyRef(1)
+
+		provisionedRules := gen.With(
+			gen.WithGroupPrefix("provisioned-"),
+			gen.WithIsPaused(false),
+		).GenerateManyRef(3)
+		for _, r := range provisionedRules {
+			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			require.NoError(t, err)
+		}
+
+		ruleStore.PutRule(context.Background(), unpausedRules...)
+		ruleStore.PutRule(context.Background(), provisionedRules...)
+		ruleStore.PutRule(context.Background(), pausedRules...)
+
+		allRules := append(append(unpausedRules, provisionedRules...), pausedRules...)
+		permissions := createPermissionsForRules(allRules, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: util.Pointer(true),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, "rules updated successfully", result.Message)
+
+		updatedRules := getRecordedUpdatedRules(ruleStore)
+		require.Len(t, updatedRules, len(unpausedRules))
+
+		for _, update := range updatedRules {
+			require.True(t, update.New.IsPaused)
+		}
+	})
+
+	t.Run("should unpause all non-provisioned rules in namespace", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		// Create 3 types of rules: paused, provisioned paused, and unpaused
+		pausedRules := gen.With(gen.WithGroupPrefix("paused-"), gen.WithIsPaused(true)).GenerateManyRef(4)
+
+		unpausedRules := gen.With(gen.WithGroupPrefix("unpaused-"), gen.WithIsPaused(false)).GenerateManyRef(3)
+
+		provisionedRules := gen.With(
+			gen.WithGroupPrefix("provisioned-"),
+			gen.WithIsPaused(false),
+		).GenerateManyRef(2)
+		for _, r := range provisionedRules {
+			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			require.NoError(t, err)
+		}
+
+		ruleStore.PutRule(context.Background(), pausedRules...)
+		ruleStore.PutRule(context.Background(), provisionedRules...)
+		ruleStore.PutRule(context.Background(), unpausedRules...)
+
+		allRules := append(append(pausedRules, provisionedRules...), unpausedRules...)
+		permissions := createPermissionsForRules(allRules, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: util.Pointer(false),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, "rules updated successfully", result.Message)
+
+		updatedRules := getRecordedUpdatedRules(ruleStore)
+		require.Len(t, updatedRules, len(pausedRules))
+
+		// all rules are now unpaused
+		for _, update := range updatedRules {
+			require.False(t, update.New.IsPaused)
+		}
+	})
+
+	t.Run("returns 202 when no rules need updating", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		// Create already unpaused rules
+		rules := gen.With(gen.WithGroupPrefix("paused-"), gen.WithIsPaused(false)).GenerateManyRef(5)
+
+		ruleStore.PutRule(context.Background(), rules...)
+
+		permissions := createPermissionsForRules(rules, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		// Create request to unpause rules (they are already unpaused)
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: util.Pointer(false),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, "rules updated successfully", result.Message)
+
+		// Verify no rules were updated
+		updatedRules := getRecordedUpdatedRules(ruleStore)
+		require.Empty(t, updatedRules)
+	})
+
+	t.Run("should return 202 with 'no rules to update in namespace' when namespace is empty", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		requestCtx := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: util.Pointer(true),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, "no rules to update in namespace", result.Message)
+
+		updatedRules := getRecordedUpdatedRules(ruleStore)
+		require.Empty(t, updatedRules)
+	})
+
+	t.Run("should handle folder not found", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		requestCtx := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: util.Pointer(true),
+		}, "non-existent-folder-uid")
+
+		require.Equal(t, http.StatusNotFound, response.Status())
+
+		updatedRules := getRecordedUpdatedRules(ruleStore)
+		require.Empty(t, updatedRules)
+	})
+
+	t.Run("should return 202 with no updates when the user does not see any rules", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		rules := gen.GenerateManyRef(2)
+		ruleStore.PutRule(context.Background(), rules...)
+
+		permissions := map[int64]map[string][]string{orgID: {}}
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: util.Pointer(true),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, "no rules to update in namespace", result.Message)
+
+		updatedRules := getRecordedUpdatedRules(ruleStore)
+		require.Empty(t, updatedRules)
+	})
 }

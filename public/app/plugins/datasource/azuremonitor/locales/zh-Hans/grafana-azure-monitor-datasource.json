@@ -1,0 +1,304 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "高级"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "添加",
+      "aria-label-remove": "删除",
+      "button-add-resource": "添加资源",
+      "button-add-resource-uri": "添加资源 URI",
+      "label-namespace": "命名空间",
+      "label-region": "地区",
+      "label-resource-group": "资源组",
+      "label-resource-name": "资源名称",
+      "label-resource-number": "资源 {{resourceNum}}",
+      "label-resource-uri": "资源 URI ",
+      "label-subscription": "订阅",
+      "placeholder-resource-name": "姓名",
+      "tooltip-region": "资源的代码区域。对于一个资源来说是可选的，但在选择多个资源时则是必须的。",
+      "tooltip-resource-uri": "手动编辑<2>资源 uri</2>。支持使用多个模板变量（例如：/subscriptions/$subId/resourceGroups/$rg）"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "汇总功能",
+      "aria-label-column": "列",
+      "aria-label-remove": "删除",
+      "label-percentile": "OF"
+    },
+    "aggregate-section": {
+      "label-aggregate": "汇总",
+      "tooltip-aggregate": "跨数据行进行计算，如计数、总和、平均值、最小值、最大值、标准偏差或百分位数。"
+    },
+    "aggregation-field": {
+      "label-aggregation": "汇总"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "客户端 ID",
+      "aria-label-client-secret": "客户端密码",
+      "aria-label-symbol-client-secret": "客户端密码",
+      "aria-label-tenant-id": "租户 ID",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "应用程序（客户端）ID",
+      "label-client-secret": "客户端密码",
+      "label-symbol-client-secret": "客户端密码",
+      "label-tenant-id": "目录（租户）ID",
+      "placeholder-symbol-client-secret": "已配置",
+      "reset-symbol-client-secret": "重置"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "{{queryDisplayName}}原始查询",
+      "aria-label-use-query": "使用此查询按钮",
+      "button-use-query": "使用此查询",
+      "label-categories": "类别",
+      "label-query-results": "查询结果：{{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "所有类别",
+      "placeholder-search-logs": "在日志查询中搜索",
+      "text-loading": "加载中..."
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "启动您的查询模式",
+      "title-kick-start": "启动您的查询"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "选择 Azure 服务的身份验证类型",
+      "label-authentication": "身份验证",
+      "title-authentication": "身份验证"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "基本日志",
+      "description-basic-logs": "启用此功能后，在查询表配置为<2>基本日志</2>的数据面板上，Azure Monitor 会产生每次查询的费用。",
+      "label-enable-basic-logs": "启用基本日志"
+    },
+    "config-editor": {
+      "description-additional-settings": "附加设置是可选设置，可通过配置对数据源进行更多控制。其中包括安全 Socks 代理。",
+      "description-request-timeout": "以秒为单位设置请求超时。默认为 30 秒。",
+      "title-additional-settings": "附加设置",
+      "title-request-timeout": "请求超时"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "后备凭证已禁用。由于基于用户的身份验证本质上只支持用户范围内的请求，因此提醒、记录查询或报告等功能将无法按预期运行。请查看<2>文档</2>，了解更多详情。",
+      "body-service-credentials": "基于用户的身份验证本质上不支持 Grafana 功能，这些功能会在请求中不提供用户详情的情况下向数据源发出请求。提醒就是一个例子。如果您希望确保在请求上下文中没有用户的功能仍能正常运行，请在下面提供后备凭证。",
+      "description-authentication": "选择 Azure 服务的身份验证类型",
+      "description-service-credentials": "选择是否为该数据源启用或禁用后备服务凭证",
+      "label-authentication": "身份验证",
+      "label-service-credentials": "服务凭证",
+      "note-service-credentials": "注意：提醒等功能将仅限于后备凭证的访问级别，而不是用户。这可能会给用户带来困惑，应予以澄清。",
+      "title-fallback-credentials-disabled": "已禁用后备凭证",
+      "title-fallback-service-credentials": "后备服务凭证",
+      "title-service-credentials": "服务凭证"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "默认订阅",
+      "label-default-subscription": "默认订阅",
+      "load-subscriptions": "加载订阅"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "删除",
+      "label-dimensions": "维度",
+      "placeholder-field": "字段",
+      "placeholder-operation": "运算",
+      "placeholder-select-value": "选择值",
+      "placeholder-select-values": "选择值"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "{{type}} 在 Grafana 9 中已被弃用。有关如何迁移查询的更多信息，请参阅<3>弃用通知</3>。这是当前的查询定义：",
+      "title-unknown-query-type": "未知查询类型"
+    },
+    "filter": {
+      "aria-label-remove-filter": "移除筛选条件",
+      "placeholder-property": "属性",
+      "placeholder-value": "值"
+    },
+    "filter-item": {
+      "aria-label-column": "列",
+      "aria-label-column-value": "列值",
+      "aria-label-operator": "运算符",
+      "label-or": "或"
+    },
+    "filter-section": {
+      "label-add-group": "添加组",
+      "label-and": "和",
+      "label-filters": "筛选条件",
+      "tooltip-filters": "通过对特定列应用条件来缩小结果范围。"
+    },
+    "filters": {
+      "label-filters": "筛选条件"
+    },
+    "format-as-field": {
+      "label-format-as": "格式为"
+    },
+    "fuzzy-search": {
+      "aria-label-select-column": "选择列",
+      "label-fuzzy-search": "模糊搜索",
+      "placeholder-search-team": "输入搜索词",
+      "tooltip-fuzzy-search": "查找大致匹配的文本，并允许拼写变化。默认情况下，模糊搜索会扫描整个表中的所有列 (*)，而不仅仅是特定字段。"
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Grafana 模板变量函数",
+      "placeholder-grafana-template-variable": "输入一个 grafana 模板变量函数，例如 {{example}}"
+    },
+    "group-by-item": {
+      "aria-label-column": "列",
+      "aria-label-remove": "删除"
+    },
+    "group-by-section": {
+      "label-group-by": "分组依据",
+      "tooltip-group-by": "根据指定的列将结果整理成不同类别。可以单独使用“按组排列”列出所选列中的唯一值，也可以与汇总函数结合使用，生成每个组的汇总统计数据。单独使用时，它会返回指定列的不同组合。"
+    },
+    "kql-preview": {
+      "button-hide": "隐藏",
+      "button-show": "显示",
+      "label-query-preview": "查询预览"
+    },
+    "legend-format-field": {
+      "label-legend-format": "图例格式",
+      "placeholder-legend-format": "别名模式"
+    },
+    "limit-section": {
+      "label-limit": "限制",
+      "placeholder-limit": "输入上限",
+      "tooltip-limit": "限制返回的行数（默认为 1000）。"
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "基本日志查询根据扫描的数据量产生费用。",
+      "label-logs": "日志",
+      "title-basic-logs-queries": "基本日志查询",
+      "tooltip-logs": "指定运行基本日志还是分析日志查询。"
+    },
+    "logs-query-builder": {
+      "title-no-tables": "资源加载成功，但没有任何表格"
+    },
+    "logs-query-editor": {
+      "learn-more": "了解更多",
+      "view-query": "在 Azure 门户中查看查询"
+    },
+    "metric-name-field": {
+      "label-metric": "指标"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "指标命名空间"
+    },
+    "nested-row": {
+      "text-loading": "加载中..."
+    },
+    "order-by-section": {
+      "aria-label-order-by-column": "按列排序",
+      "aria-label-order-direction": "排序方向",
+      "label-by": "方式",
+      "label-order-by": "排序根据",
+      "tooltip-order-by": "根据一列或多列以升序或降序对结果进行排序。"
+    },
+    "query-editor": {
+      "alert-error-occurred": "从 Azure Monitor 请求元数据时发生错误"
+    },
+    "query-header": {
+      "aria-label-kick-start": "Azure 日志启动查询按钮",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "启动您的查询",
+      "button-run-query": "运行查询",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "服务",
+      "placeholder-service": "服务...",
+      "title-switch-mode": "切换编辑器模式？"
+    },
+    "raw-query": {
+      "aria-label-selector": "选择器"
+    },
+    "resource-field": {
+      "label-resource": "资源",
+      "title-select-resource": "选择资源"
+    },
+    "resource-label": {
+      "select-resource": "选择资源"
+    },
+    "resource-picker": {
+      "button-apply": "应用",
+      "button-cancel": "取消",
+      "header-location": "位置",
+      "header-scope": "范围",
+      "header-type": "类型",
+      "heading-selection": "选择",
+      "result-limit": "显示最初 {{numResults}} 个结果",
+      "text-loading": "加载中...",
+      "text-no-resources": "未找到资源",
+      "title-error-occurred": "从 Azure Monitor 请求资源时发生错误"
+    },
+    "scope-selector": {
+      "label": "范围"
+    },
+    "search": {
+      "aria-label-resource-search": "资源搜索",
+      "placeholder-resource-search": "搜索资源"
+    },
+    "subscription-field": {
+      "label-subscriptions": "订阅",
+      "validation-subscriptions": "必须至少选择一个订阅。"
+    },
+    "table-section": {
+      "aria-label-columns": "列",
+      "aria-label-table": "表格",
+      "label-columns": "列",
+      "label-table": "表格",
+      "placeholder-select-columns": "选择列",
+      "placeholder-select-table": "选择表格"
+    },
+    "time-grain-field": {
+      "label-time-grain": "时间颗粒"
+    },
+    "time-management": {
+      "label-time-column": "时间列",
+      "label-time-range": "时间范围",
+      "tooltip-time-column": "<0>指定用于筛选条件的时间列。默认为第一个表格 <1>timeSpan</1> 列、找到的第一个 <3>datetime</3> 列，或 <5>TimeGenerated</5> 列</0>。",
+      "tooltip-time-range": "<0>指定用于查询的时间范围。<1>查询</1>选项将只使用查询中指定的时间范围。<3>数据面板</3>只使用 Grafana 时间范围。在日志生成器模式下，只会使用数据面板时间。</0>。"
+    },
+    "top-field": {
+      "label-top": "热门"
+    },
+    "trace-type-field": {
+      "label-event-type": "活动类型",
+      "placeholder-event-type": "选择活动类型"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "操作 ID"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "使用此数据源需要通过 Azure Entra（以前称为 Azure Active Directory）进行身份验证。请查看<2>文档</2>，了解更多信息。",
+      "title-unsupported-auth": "不支持的身份验证提供程序"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "数据源后台功能（如提醒）需要服务凭证才能运行。该数据源在配置时没有服务凭证后备功能，或后备功能已禁用。请查看<2>文档</2>，了解更多信息。",
+      "title-no-fallback-credentials": "没有后备凭证"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "选择自定义命名空间",
+      "aria-label-select-namespace": "选择命名空间",
+      "aria-label-select-query-type": "选择查询类型",
+      "aria-label-select-region": "选择区域",
+      "aria-label-select-resource": "选择资源",
+      "aria-label-select-resource-group": "选择资源组",
+      "aria-label-select-subscription": "选择订阅",
+      "label-custom-namespace": "自定义命名空间",
+      "label-namespace": "命名空间",
+      "label-query-type": "查询类型",
+      "label-region": "地区",
+      "label-resource": "资源",
+      "label-resource-group": "资源组",
+      "label-resource-type": "资源类型",
+      "label-subscription": "订阅",
+      "placeholder-custom-namespace": "可选",
+      "placeholder-namespace": "可选",
+      "placeholder-region": "可选",
+      "placeholder-resource-group": "可选",
+      "title-error-occurred": "从 Azure Monitor 请求元数据时发生错误"
+    }
+  }
+}

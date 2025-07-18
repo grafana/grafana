@@ -3,9 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import '@testing-library/jest-dom';
 
-import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import { getMockTimeRange } from '../../test/mocks/datasource';
 import { PromOptions } from '../../types';
 
 import { MetricCombobox, MetricComboboxProps } from './MetricCombobox';
@@ -34,35 +37,12 @@ describe('MetricCombobox', () => {
     jsonData: { httpMethod: 'GET' },
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
-  const mockDatasource = new PrometheusDatasource(instanceSettings);
+  const mockLanguageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
+  const mockDatasource = new PrometheusDatasource(instanceSettings, undefined, mockLanguageProvider);
 
   // Options returned when user first opens the combobox - returned by onGetMetrics
   const initialMockValues = [{ label: 'top_metric_one' }, { label: 'top_metric_two' }, { label: 'top_metric_three' }];
   const mockOnGetMetrics = jest.fn(() => Promise.resolve(initialMockValues.map((v) => ({ value: v.label }))));
-
-  // Options returned when user searches for a metric
-  const mockValues = [{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }];
-  mockDatasource.metricFindQuery = jest.fn((query: string) => {
-    // return Promise.resolve([]);
-    // Use the label values regex to get the values inside the label_values function call
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
-    const queryValueArray = query.match(labelValuesRegex) as RegExpMatchArray;
-    const queryValueRaw = queryValueArray[1];
-
-    // Remove the wrapping regex
-    const queryValue = queryValueRaw.substring(queryValueRaw.indexOf('".*') + 3, queryValueRaw.indexOf('.*"'));
-
-    // Run the regex that we'd pass into prometheus API against the strings in the test
-    return Promise.resolve(
-      mockValues
-        .filter((value) => value.label.match(queryValue))
-        .map((result) => {
-          return {
-            text: result.label,
-          };
-        }) as MetricFindValue[]
-    );
-  });
 
   const mockOnChange = jest.fn();
 
@@ -78,6 +58,7 @@ describe('MetricCombobox', () => {
     datasource: mockDatasource,
     labelsFilters: [],
     variableEditor: false,
+    timeRange: getMockTimeRange(),
   };
 
   beforeEach(() => {
@@ -103,6 +84,9 @@ describe('MetricCombobox', () => {
   });
 
   it('fetches metrics for the users query', async () => {
+    // Mock the queryLabelValues to return the expected metric
+    mockDatasource.languageProvider.queryLabelValues = jest.fn().mockResolvedValue(['unique_metric']);
+
     render(<MetricCombobox {...defaultProps} />);
 
     const combobox = screen.getByPlaceholderText('Select metric');
@@ -113,8 +97,12 @@ describe('MetricCombobox', () => {
     expect(item).toBeInTheDocument();
 
     // This should be asserted by the above check, but double check anyway
-    // This is the actual argument, created by formatKeyValueStringsForLabelValuesQuery()
-    expect(mockDatasource.metricFindQuery).toHaveBeenCalledWith('label_values({__name__=~".*unique.*"},__name__)');
+    // This is the actual argument, created by formatKeyValueStrings()
+    expect(mockDatasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(
+      expect.anything(),
+      '__name__',
+      '{__name__=~".*unique.*"}'
+    );
   });
 
   it('calls onChange with the correct value when a metric is selected', async () => {
@@ -132,6 +120,24 @@ describe('MetricCombobox', () => {
   it('shows the metrics explorer button by default', () => {
     render(<MetricCombobox {...defaultProps} />);
     expect(screen.queryByRole('button', { name: /open metrics explorer/i })).toBeInTheDocument();
+  });
+
+  it('displays the default metric value from query prop', () => {
+    // Render with a query that has a default metric value
+    render(
+      <MetricCombobox
+        {...defaultProps}
+        query={{
+          metric: 'default_metric_value',
+          labels: [],
+          operations: [],
+        }}
+      />
+    );
+
+    // The Combobox should display the default metric value
+    const combobox = screen.getByPlaceholderText('Select metric');
+    expect(combobox).toHaveValue('default_metric_value');
   });
 
   it('opens the metrics explorer when the button is clicked', async () => {

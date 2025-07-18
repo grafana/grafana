@@ -4,17 +4,18 @@ import {
   LinkModel,
   PanelMenuItem,
   PanelPlugin,
+  PluginExtensionLink,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
   PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -27,9 +28,8 @@ import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/ge
 import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
@@ -54,6 +54,9 @@ function setupGetPluginExtensions() {
 
   return getPluginExtensions;
 }
+
+// Define the category for metrics drilldown links
+const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -292,10 +295,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (config.featureToggles.exploreMetrics) {
-      await addDataTrailPanelAction(dashboard, panel, items);
-    }
-
     if (exploreMenuItem) {
       items.push(exploreMenuItem);
     }
@@ -310,15 +309,41 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       limitPerPlugin: 3,
     });
 
-    const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
-
     if (extensions.length > 0 && !dashboard.state.isEditing) {
-      items.push({
-        text: 'Extensions',
-        iconClassName: 'plug',
-        type: 'submenu',
-        subMenu: createExtensionSubMenu(linkExtensions),
-      });
+      const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
+
+      // Separate metrics drilldown links from other links
+      const [metricsDrilldownLinks, otherLinks] = linkExtensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
+        ([metricsDrilldownLinks, otherLinks], link) => {
+          if (link.category === METRICS_DRILLDOWN_CATEGORY) {
+            metricsDrilldownLinks.push(link);
+          } else {
+            otherLinks.push(link);
+          }
+          return [metricsDrilldownLinks, otherLinks];
+        },
+        [[], []]
+      );
+
+      // Add specific "Metrics drilldown" menu
+      if (metricsDrilldownLinks.length > 0) {
+        items.push({
+          text: t('dashboard-scene.panel-menu-behavior.async-func.text.metrics-drilldown', 'Metrics drilldown'),
+          iconClassName: 'code-branch',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(metricsDrilldownLinks),
+        });
+      }
+
+      // Add generic "Extensions" menu for other links
+      if (otherLinks.length > 0) {
+        items.push({
+          text: t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions'),
+          iconClassName: 'plug',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(otherLinks),
+        });
+      }
     }
 
     if (moreSubMenu.length) {
@@ -519,8 +544,8 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
   appEvents.publish(
     new ShowConfirmModalEvent({
-      title: 'Remove panel',
-      text: 'Are you sure you want to remove this panel?',
+      title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
+      text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
       icon: 'trash-alt',
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
@@ -533,7 +558,7 @@ const onCreateAlert = async (panel: VizPanel) => {
     const formValues = await scenesPanelToRuleFormValues(panel);
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
     locationService.push(ruleFormUrl);
   } catch (err) {

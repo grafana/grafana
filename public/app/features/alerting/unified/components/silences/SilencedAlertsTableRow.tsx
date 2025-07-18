@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertLabels } from '../AlertLabels';
@@ -35,7 +36,9 @@ export const SilencedAlertsTableRow = ({ alert, className }: Props) => {
         <td>
           <AmAlertStateTag state={alert.status.state} />
         </td>
-        <td>for {duration}</td>
+        <td>
+          <Trans i18nKey="alerting.silenced-alerts-table-row.silenced-for">for {{ duration }}</Trans>
+        </td>
         <td>{alertName}</td>
       </tr>
       {!isCollapsed && (

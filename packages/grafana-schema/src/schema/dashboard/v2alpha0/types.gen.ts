@@ -70,6 +70,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Catch-all field for datasource-specific properties
+	options?: Record<string, any>;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
@@ -245,7 +247,7 @@ export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
 });
 
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
-// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+// It comes with in id ( to resolve implementation from registry) and a configuration that's specific to a particular matcher type.
 export interface MatcherConfig {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string;
@@ -607,7 +609,7 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface GridLayoutSpec {
-	items: (GridLayoutItemKind | GridLayoutRowKind)[];
+	items: GridLayoutItemKind[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
@@ -667,42 +669,6 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 // other repeat modes will be added in the future: label, frame
 export const RepeatMode = "variable";
 
-export interface GridLayoutRowKind {
-	kind: "GridLayoutRow";
-	spec: GridLayoutRowSpec;
-}
-
-export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
-	kind: "GridLayoutRow",
-	spec: defaultGridLayoutRowSpec(),
-});
-
-export interface GridLayoutRowSpec {
-	y: number;
-	collapsed: boolean;
-	title: string;
-	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	elements: GridLayoutItemKind[];
-	repeat?: RowRepeatOptions;
-}
-
-export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
-	y: 0,
-	collapsed: false,
-	title: "",
-	elements: [],
-});
-
-export interface RowRepeatOptions {
-	mode: "variable";
-	value: string;
-}
-
-export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
-	value: "",
-});
-
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
 	spec: RowsLayoutSpec;
@@ -743,6 +709,16 @@ export interface RowsLayoutRowSpec {
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 export interface ConditionalRenderingGroupKind {
@@ -914,11 +890,22 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 export interface TabsLayoutTabSpec {
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+	repeat?: TabRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface TabRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 // Links with references to other dashboards or external resources

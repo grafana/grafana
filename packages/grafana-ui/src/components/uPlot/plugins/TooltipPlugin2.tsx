@@ -7,7 +7,7 @@ import uPlot from 'uplot';
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -144,6 +144,8 @@ export const TooltipPlugin2 = ({
   getLinksRef.current = getDataLinks;
 
   useLayoutEffect(() => {
+    sizeRef.current?.observer.disconnect();
+
     sizeRef.current = {
       width: 0,
       height: 0,
@@ -228,8 +230,11 @@ export const TooltipPlugin2 = ({
 
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
+      // this tooltip is Portaled, but actions inside it create forms in Modals
+      const isModalOrPortaled = '[role="dialog"], #grafana-portal-container';
+
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if (!domRef.current!.contains(e.target as Node)) {
+      if ((e.target as HTMLElement).closest(isModalOrPortaled) == null) {
         dismiss();
       }
     };
@@ -643,6 +648,8 @@ export const TooltipPlugin2 = ({
     window.addEventListener('scroll', onscroll, true);
 
     return () => {
+      sizeRef.current?.observer.disconnect();
+
       window.removeEventListener('resize', updateWinSize);
       window.removeEventListener('scroll', onscroll, true);
 
@@ -656,6 +663,7 @@ export const TooltipPlugin2 = ({
     const size = sizeRef.current!;
 
     if (domRef.current != null) {
+      size.observer.disconnect();
       size.observer.observe(domRef.current);
 
       // since the above observer is attached after container is in DOM, we need to manually update sizeRef

@@ -2,10 +2,9 @@ import { cx } from '@emotion/css';
 import { FormEvent, memo } from 'react';
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Checkbox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-
-import { t } from '../../internationalization';
 
 import { getStyles } from './styles';
 

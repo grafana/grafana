@@ -167,6 +167,18 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
+  /**
+   * @internal
+   * Opens the extension sidebar with the registered component.
+   * @param componentTitle The title of the component to be opened in the sidebar.
+   * @param props The props to be passed to the component.
+   */
+  openSidebar: (componentTitle: string, props?: Record<string, unknown>) => void;
+  /**
+   * @internal
+   * Closes the extension sidebar.
+   */
+  closeSidebar: () => void;
 };
 
 // Extension Points & Contexts
@@ -181,10 +193,15 @@ export enum PluginExtensionPoints {
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
+  DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
+  TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
+  LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
+  AppChrome = 'grafana/app/chrome/v1',
+  ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
 }
 
 export type PluginExtensionPanelContext = {
@@ -202,7 +219,7 @@ export type PluginExtensionPanelContext = {
 export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
   /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
   contextHints?: string[];
-  query?: DataQuery;
+  query?: DataQuery & { expr?: string };
 };
 
 export type PluginExtensionDataSourceConfigContext<
@@ -228,6 +245,28 @@ export type PluginExtensionDataSourceConfigContext<
 };
 
 export type PluginExtensionCommandPaletteContext = {};
+
+export type PluginExtensionResourceAttributesContext = {
+  // Key-value pairs of resource attributes, attribute name is the key
+  attributes: Record<string, string[]>;
+  datasource: {
+    type: string;
+    uid: string;
+  };
+};
+
+export type DataSourceConfigErrorStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+  };
+  testingStatus: {
+    message?: string | null;
+    status?: string | null;
+    details?: Record<string, unknown>;
+  };
+};
 
 type Dashboard = {
   uid: string;

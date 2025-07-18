@@ -17,6 +17,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -35,32 +36,30 @@ import (
 var _ builder.APIGroupBuilder = (*QueryAPIBuilder)(nil)
 
 type QueryAPIBuilder struct {
-	log                    log.Logger
-	concurrentQueryLimit   int
-	userFacingDefaultError string
-	features               featuremgmt.FeatureToggles
+	log                  log.Logger
+	concurrentQueryLimit int
+	features             featuremgmt.FeatureToggles
 
 	authorizer authorizer.Authorizer
 
-	tracer     tracing.Tracer
-	metrics    *queryMetrics
-	parser     *queryParser
-	client     clientapi.DataSourceClientSupplier
-	registry   query.DataSourceApiServerRegistry
-	converter  *expr.ResultConverter
-	queryTypes *query.QueryTypeDefinitionList
+	tracer                 tracing.Tracer
+	metrics                *metrics.ExprMetrics
+	clientSupplier         clientapi.DataSourceClientSupplier
+	registry               query.DataSourceApiServerRegistry
+	converter              *expr.ResultConverter
+	queryTypes             *query.QueryTypeDefinitionList
+	legacyDatasourceLookup service.LegacyDataSourceLookup
 }
 
-func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
-	client clientapi.DataSourceClientSupplier,
+func NewQueryAPIBuilder(
+	features featuremgmt.FeatureToggles,
+	clientSupplier clientapi.DataSourceClientSupplier,
 	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
-	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
+	legacyDatasourceLookup service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
-	reader := expr.NewExpressionQueryReader(features)
-
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
 	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
@@ -79,11 +78,10 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
-		client:               client,
+		clientSupplier:       clientSupplier,
 		authorizer:           ar,
 		registry:             registry,
-		parser:               newQueryParser(reader, legacy, tracer, log.New("query_parser")),
-		metrics:              newQueryMetrics(registerer),
+		metrics:              metrics.NewQueryServiceExpressionsMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
@@ -91,6 +89,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 			Features: features,
 			Tracer:   tracer,
 		},
+		legacyDatasourceLookup: legacyDatasourceLookup,
 	}, nil
 }
 
@@ -103,7 +102,8 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	pCtxProvider *plugincontext.Provider,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
-	legacy service.LegacyDataSourceLookup,
+	legacyDatasourceLookup service.LegacyDataSourceLookup,
+	exprService *expr.Service,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -131,7 +131,9 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 		},
 		ar,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
-		legacy, registerer, tracer,
+		registerer,
+		tracer,
+		legacyDatasourceLookup,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -156,6 +158,10 @@ func (b *QueryAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	addKnownTypes(scheme, query.SchemeGroupVersion)
 	metav1.AddToGroupVersion(scheme, query.SchemeGroupVersion)
 	return scheme.SetVersionPriority(query.SchemeGroupVersion)
+}
+
+func (b *QueryAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
 }
 
 func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {

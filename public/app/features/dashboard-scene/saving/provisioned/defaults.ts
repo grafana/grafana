@@ -1,4 +1,5 @@
-import { RepositoryView } from 'app/api/clients/provisioning';
+import { t } from '@grafana/i18n';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: string) {
   if (loadedFromRef && loadedFromRef !== config?.branch) {
@@ -27,7 +28,10 @@ export function getWorkflowOptions(config?: RepositoryView, ref?: string) {
       case 'write':
         return { label: ref ? `Push to ${ref}` : 'Save', value };
       case 'branch':
-        return { label: 'Push to a new branch', value };
+        return {
+          label: t('dashboard-scene.get-workflow-options.label.push-to-a-new-branch', 'Push to a new branch'),
+          value,
+        };
     }
     return { label: value, value };
   });

@@ -1,11 +1,11 @@
 import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
-import usePrevious from 'react-use/lib/usePrevious';
+import { usePrevious } from 'react-use';
 
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
 
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
-import { guessFieldTypeForField } from '../dataframe/processDataFrame';
+import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { GrafanaTheme2 } from '../themes/types';
@@ -199,6 +199,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       if (field.type === FieldType.nestedFrames) {
         for (const nestedFrames of field.values) {
           for (let nfIndex = 0; nfIndex < nestedFrames.length; nfIndex++) {
+            // TODO: should we apply fieldOverrides to nested frames?
+
             for (const valueField of nestedFrames[nfIndex].fields) {
               // Get display processor for nested fields
               valueField.display = getDisplayProcessor({
@@ -231,6 +233,17 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
             }
           }
         }
+      }
+
+      if (field.type === FieldType.frame) {
+        field.values = applyFieldOverrides({
+          ...options,
+          // nested frames can be `undefined` in certain situations, like after `merge` transform due to padding the value array.
+          // let's replace them with empty frames to avoid errors applying overrides
+          data: field.values.map(
+            (nestedFrame: DataFrame | undefined): DataFrame => nestedFrame ?? createDataFrame({ fields: [] })
+          ),
+        });
       }
     }
 
@@ -485,7 +498,10 @@ export const getLinksSupplier =
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
         href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
-        href = locationUtil.processUrl(href);
+
+        if (href?.length > 0) {
+          href = locationUtil.processUrl(href);
+        }
       }
 
       if (link.onClick) {

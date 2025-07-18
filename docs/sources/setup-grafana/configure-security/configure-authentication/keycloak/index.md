@@ -93,9 +93,9 @@ profile
 roles
 ```
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 These scopes do not add group claims to the `id_token`. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
-{{% /admonition %}}
+{{< /admonition >}}
 
 3. For role mapping to work with the example configuration above,
    you need to create the following roles and assign them to users:
@@ -106,10 +106,10 @@ editor
 viewer
 ```
 
-## Teamsync
+## Team sync
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
 [Teamsync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
@@ -147,15 +147,15 @@ To enable Single Logout, you need to add the following option to the configurati
 
 ```ini
 [auth.generic_oauth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
+signout_redirect_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
 ```
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,
 `<REALM_NAME>` can be `grafana` and `<GRAFANA_DOMAIN>` can be `play.grafana.org`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana supports ID token hints for single logout. Grafana automatically adds the `id_token_hint` parameter to the logout request if it detects OAuth as the authentication method.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Allow assigning Grafana Admin
 

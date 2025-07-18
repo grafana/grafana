@@ -4,8 +4,8 @@ import { FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { AlertState, GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { StateHistoryItem, StateHistoryItemData } from 'app/types/unified-alerting';
 import { GrafanaAlertStateWithReason, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -42,17 +42,36 @@ const StateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (loading && !error) {
-    return <LoadingPlaceholder text={'Loading history...'} />;
+    return <LoadingPlaceholder text={t('alerting.state-history.text-loading-history', 'Loading history...')} />;
   }
 
   if (error && !loading) {
-    return <Alert title={'Failed to fetch alert state history'}>{error.message}</Alert>;
+    return (
+      <Alert
+        title={t(
+          'alerting.state-history.title-failed-to-fetch-alert-state-history',
+          'Failed to fetch alert state history'
+        )}
+      >
+        {error.message}
+      </Alert>
+    );
   }
 
   const columns: Array<DynamicTableColumnProps<StateHistoryRowItem>> = [
-    { id: 'state', label: 'State', size: 'max-content', renderCell: renderStateCell },
+    {
+      id: 'state',
+      label: t('alerting.state-history.columns.label.state', 'State'),
+      size: 'max-content',
+      renderCell: renderStateCell,
+    },
     { id: 'value', label: '', size: 'auto', renderCell: renderValueCell },
-    { id: 'timestamp', label: 'Time', size: 'max-content', renderCell: renderTimestampCell },
+    {
+      id: 'timestamp',
+      label: t('alerting.state-history.columns.label.time', 'Time'),
+      size: 'max-content',
+      renderCell: renderTimestampCell,
+    },
   ];
 
   // group the state history list by unique set of labels
@@ -91,8 +110,13 @@ const StateHistory = ({ ruleUID }: Props) => {
                 <Tooltip
                   content={
                     <div>
-                      Filter each state history group either by exact match or a regular expression, ex:{' '}
-                      <code>{`region=eu-west-1`}</code> or <code>{`/region=us-.+/`}</code>
+                      <Trans i18nKey="alerting.state-history.filter-group-tooltip">
+                        Filter each state history group either by exact match or a regular expression, for example:
+                      </Trans>
+                      <div>
+                        <code>{`region=eu-west-1`}</code>
+                        <code>{`/region=us-.+/`}</code>
+                      </div>
                     </div>
                   }
                 >

@@ -2,10 +2,10 @@ package writer
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -24,6 +23,11 @@ import (
 const backendType = "prometheus"
 
 const (
+	// Network error strings
+	networkErrDialTCP           = "dial tcp"
+	networkErrConnectionRefused = "connection refused"
+	networkErrNoSuchHost        = "no such host"
+
 	// NOTE: Mimir errors were copied from globalerror package:
 	// https://github.com/grafana/mimir/blob/1ff367ef58987cd1941de03a8d6923fde82dfdd3/pkg/util/globalerror/user.go
 	// Variable names have been standardized as Mimir+{globalerror.ID}+Error for consistency
@@ -101,14 +105,20 @@ const (
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
+
+	// returned in some cases when multiple org IDs are present in the request
+	MimirErrTooManyOrgIDs = "multiple org IDs present"
 )
 
 var (
 	// Unexpected, 500-like write errors.
 	ErrUnexpectedWriteFailure = errors.New("failed to write time series")
 	// Expected, user-level write errors like trying to write an invalid series.
-	ErrRejectedWrite = errors.New("series was rejected")
-	ErrBadFrame      = errors.New("failed to read dataframe")
+	ErrRejectedWrite          = errors.New("series was rejected")
+	ErrBadFrame               = errors.New("failed to read dataframe")
+	ErrDatasourceUnauthorized = errors.New("failed to authenticate in datasource")
+	ErrDatasourceForbidden    = errors.New("failed to authorize in datasource")
+	ErrConnectionFailure      = errors.New("failed to connect to remote write endpoint")
 
 	// IgnoredErrors don't cause the Write to fail, but are still logged.
 	IgnoredErrors = []string{
@@ -238,34 +248,6 @@ type PrometheusWriterConfig struct {
 	Timeout     time.Duration
 }
 
-func NewPrometheusWriterWithSettings(
-	settings setting.RecordingRuleSettings,
-	httpClientProvider HttpClientProvider,
-	clock clock.Clock,
-	l log.Logger,
-	metrics *metrics.RemoteWriter,
-) (*PrometheusWriter, error) {
-	if err := validateSettings(settings); err != nil {
-		return nil, err
-	}
-
-	headers := make(http.Header)
-	for k, v := range settings.CustomHeaders {
-		headers.Add(k, v)
-	}
-
-	cfg := PrometheusWriterConfig{
-		URL: settings.URL,
-		HTTPOptions: httpclient.Options{
-			BasicAuth: createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
-			Header:    headers,
-		},
-		Timeout: settings.Timeout,
-	}
-
-	return NewPrometheusWriter(cfg, httpClientProvider, clock, l, metrics)
-}
-
 func NewPrometheusWriter(
 	cfg PrometheusWriterConfig,
 	httpClientProvider HttpClientProvider,
@@ -296,34 +278,6 @@ func NewPrometheusWriter(
 		logger:  l,
 		metrics: metrics,
 	}, nil
-}
-
-func validateSettings(settings setting.RecordingRuleSettings) error {
-	if settings.BasicAuthUsername != "" && settings.BasicAuthPassword == "" {
-		return fmt.Errorf("basic auth password is required if username is set")
-	}
-
-	if _, err := url.Parse(settings.URL); err != nil {
-		return fmt.Errorf("invalid URL: %w", err)
-	}
-
-	if settings.Timeout <= 0 {
-		return fmt.Errorf("timeout must be greater than 0")
-	}
-
-	return nil
-}
-
-func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
-	// If username is empty, do not use basic auth and ignore password.
-	if username == "" {
-		return nil
-	}
-
-	return &httpclient.BasicAuthOptions{
-		User:     username,
-		Password: password,
-	}
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.
@@ -398,14 +352,27 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 		return nil, false
 	}
 
-	// All 500-range statuses are automatically unexpected and not the fault of the data.
+	// Network errors will be in the error string since we can't unwrap
+	errString := writeErr.Error()
+	if strings.Contains(errString, networkErrDialTCP) ||
+		strings.Contains(errString, networkErrConnectionRefused) ||
+		strings.Contains(errString, networkErrNoSuchHost) {
+		return fmt.Errorf("%w: %v", ErrConnectionFailure, errString), false
+	}
+
+	// Most 500-range statuses are automatically unexpected and not the fault of the data.
 	if writeErr.StatusCode()/100 == 5 {
+		// mimir does return some errors as 500s that should maybe not be considered as such?
+		// e.g. `multiple org IDs present`. Handle those separately though to make sure they're treated as exceptions
+		if strings.Contains(errString, MimirErrTooManyOrgIDs) {
+			return errors.Join(ErrRejectedWrite, writeErr), true
+		}
 		return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
 	}
 
 	// Special case for 400 status code. 400s may be ignorable in the event of HA writers, or the fault of the written data.
 	if writeErr.StatusCode() == 400 {
-		msg := writeErr.Error()
+		msg := errString
 		// HA may potentially write different values for the same timestamp, so we ignore this error
 		// TODO: this may not be needed, further testing needed
 		for _, e := range IgnoredErrors {
@@ -417,15 +384,75 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 		// Check for expected user errors.
 		for _, e := range ExpectedErrors {
 			if strings.Contains(msg, e) {
-				return errors.Join(ErrRejectedWrite, writeErr), false
+				actual := extractActualError(writeErr)
+				return fmt.Errorf("%w: %s", ErrRejectedWrite, actual), false
 			}
 		}
 
-		// For now, all 400s that are not previously known are considered unexpected.
-		// TODO: Consider blanket-converting all 400s to be known errors. This should only be done once we are confident this is not a problem with this client.
+		// return full error if we don't have a match.'
 		return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
+	}
+
+	if writeErr.StatusCode() == 401 {
+		actual := extractActualError(writeErr)
+		return fmt.Errorf("%w: %s", ErrDatasourceUnauthorized, actual), false
+	}
+	if writeErr.StatusCode() == 403 {
+		actual := extractActualError(writeErr)
+		return fmt.Errorf("%w: %s", ErrDatasourceForbidden, actual), false
 	}
 
 	// All other errors which do not fit into the above categories are also unexpected.
 	return errors.Join(ErrUnexpectedWriteFailure, writeErr), false
+}
+
+// extractActualError extracts the meaningful error message from a Prometheus remote client error.
+// The client includes downstream errors with "body=" prefixes.
+// This function parses the content after this prefix, handling both plain text
+// and JSON-formatted error messages.
+// https://github.com/m3dbx/prometheus_remote_client_golang/blob/master/promremote/client.go#L254-L265
+func extractActualError(err promremote.WriteError) string {
+	const (
+		bodyPrefix    = "body="
+		bodyPrefixLen = len(bodyPrefix)
+	)
+
+	// Handle nil error case
+	if err == nil {
+		return ""
+	}
+
+	errMsg := err.Error()
+
+	// Find the body content prefix
+	bodyIndex := strings.Index(errMsg, bodyPrefix)
+	if bodyIndex == -1 {
+		return errMsg // Return original if no body prefix found
+	}
+
+	// Extract content after "body=" prefix
+	bodyContent := strings.TrimSpace(errMsg[bodyIndex+bodyPrefixLen:])
+	if bodyContent == "" {
+		return errMsg // Return original if body is empty
+	}
+
+	// Check if content is possibly a JSON with error field
+	if !strings.HasPrefix(bodyContent, "{") || !strings.Contains(bodyContent, "\"error\"") {
+		return bodyContent
+	}
+
+	// Parse JSON content and extract error field if present
+	var errorData struct {
+		Error string `json:"error"`
+	}
+
+	if err := json.Unmarshal([]byte(bodyContent), &errorData); err != nil {
+		return bodyContent
+	}
+
+	if errorData.Error == "" {
+		return bodyContent
+	}
+
+	return errorData.Error
 }

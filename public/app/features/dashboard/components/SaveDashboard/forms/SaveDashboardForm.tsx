@@ -3,12 +3,12 @@ import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, Checkbox, TextArea, useStyles2, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';
 import { SaveDashboardData, SaveDashboardOptions } from '../types';
@@ -138,7 +138,9 @@ export const SaveDashboardForm = ({
             icon={saving ? 'spinner' : undefined}
             aria-label={selectors.pages.SaveDashboardModal.save}
           >
-            {isLoading ? 'Saving...' : 'Save'}
+            {isLoading
+              ? t('dashboard.save-dashboard-form.saving', 'Saving...')
+              : t('dashboard.save-dashboard-form.save', 'Save')}
           </Button>
           {!saveModel.hasChanges && (
             <div>

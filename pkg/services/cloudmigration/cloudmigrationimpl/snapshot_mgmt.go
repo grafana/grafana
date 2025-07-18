@@ -471,7 +471,7 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 		ac.EvalPermission(datasources.ActionCreate),
 		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
-	if !(userIsOrgAdmin || hasAccess) {
+	if !userIsOrgAdmin && !hasAccess {
 		s.log.Info("user is not allowed to list non-core plugins", "UID", signedInUser.UserUID)
 		return results, nil
 	}
@@ -498,7 +498,7 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 		}
 
 		pluginSettingCmd := pluginsettings.UpdatePluginSettingCmd{
-			Enabled:       plugin.JSONData.AutoEnabled,
+			Enabled:       plugin.AutoEnabled,
 			Pinned:        plugin.Pinned,
 			PluginVersion: plugin.Info.Version,
 			PluginId:      plugin.ID,
@@ -659,7 +659,8 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	// nolint:gosec
 	indexFile, err := os.Open(indexFilePath)
 	if err != nil {
-		return fmt.Errorf("opening index files: %w", err)
+		// TODO: Clean this notice once we've fixed the HA bug
+		return fmt.Errorf("opening index files: %w. If you are running Grafana in a highly-available setup, try scaling down to one replica to avoid a known bug: https://github.com/grafana/grafana/issues/107264", err)
 	}
 	defer func() {
 		if closeErr := indexFile.Close(); closeErr != nil {

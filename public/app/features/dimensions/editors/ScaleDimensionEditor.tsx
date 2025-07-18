@@ -2,24 +2,27 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ScaleDimensionConfig } from '@grafana/schema';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 import { validateScaleOptions, validateScaleConfig } from '../scale';
 import { ScaleDimensionOptions } from '../types';
-
-const fixedValueOption: SelectableValue<string> = {
-  label: 'Fixed value',
-  value: '_____fixed_____',
-};
 
 export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>) => {
   const { value, context, onChange, item } = props;
   const { settings } = item;
   const styles = useStyles2(getStyles);
+
+  const fixedValueOption: SelectableValue<string> = useMemo(
+    () => ({
+      label: t('dimensions.scale-dimension-editor.fixed-value-option.label.fixed-value', 'Fixed value'),
+      value: '_____fixed_____',
+    }),
+    []
+  );
 
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
@@ -53,7 +56,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
         });
       }
     },
-    [validateAndDoChange, value]
+    [validateAndDoChange, value, fixedValueOption.value]
   );
 
   const onMinChange = useCallback(
@@ -101,7 +104,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}
-          noOptionsMessage="No fields found"
+          noOptionsMessage={t('dimensions.scale-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
         />
       </div>
       <div className={styles.range}>

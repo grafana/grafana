@@ -11,10 +11,9 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DashboardVersionList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []DashboardVersionInfo `json:"items,omitempty"`
+	Items []DashboardVersionInfo `json:"items"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -69,10 +68,9 @@ type LibraryPanel struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type LibraryPanelList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []LibraryPanel `json:"items,omitempty"`
+	Items []LibraryPanel `json:"items"`
 }
 
 // +k8s:deepcopy-gen=true

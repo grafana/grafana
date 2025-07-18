@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, Input, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';
@@ -31,12 +31,23 @@ export const CloudEvaluationBehavior = () => {
     >
       <Field
         label={t('alerting.cloud-evaluation-behavior.label-pending-period', 'Pending period')}
-        description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+        description={t(
+          'alerting.cloud-evaluation-behavior.description-pending-period',
+          'Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+        )}
       >
         <div className={styles.flexRow}>
           <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
             <Input
-              {...register('forTime', { pattern: { value: /^\d+$/, message: 'Must be a positive integer.' } })}
+              {...register('forTime', {
+                pattern: {
+                  value: /^\d+$/,
+                  message: t(
+                    'alerting.cloud-evaluation-behavior.message.must-be-a-positive-integer',
+                    'Must be a positive integer.'
+                  ),
+                },
+              })}
               width={8}
             />
           </Field>

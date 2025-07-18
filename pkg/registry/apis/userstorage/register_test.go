@@ -43,7 +43,7 @@ func TestAuthorizer(t *testing.T) {
 			requesterID: "123",
 			objectName:  "",
 			verb:        "create",
-			decision:    authorizer.DecisionNoOpinion,
+			decision:    authorizer.DecisionAllow,
 		},
 		{
 			name:        "forbidden action",

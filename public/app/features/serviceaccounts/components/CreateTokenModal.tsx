@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Button,
@@ -14,7 +15,6 @@ import {
   RadioButtonGroup,
   useStyles2,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 const EXPIRATION_OPTIONS = [
   { label: 'No expiration', value: false },
@@ -136,7 +136,10 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
         <>
           <Field
             label={t('serviceaccounts.create-token-modal.label-token', 'Token')}
-            description="Copy the token now as you will not be able to see it again. Losing a token requires creating a new one."
+            description={t(
+              'serviceaccounts.create-token-modal.description-token',
+              'Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.'
+            )}
           >
             <div className={styles.modalTokenRow}>
               <Input name="tokenValue" value={token} readOnly />

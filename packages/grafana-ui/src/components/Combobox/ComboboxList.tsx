@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type { UseComboboxPropGetters } from 'downshift';
 import { useCallback } from 'react';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 

@@ -1,7 +1,7 @@
 import { unaryOperators, SelectableValue, UnaryOperationID } from '@grafana/data';
 import { UnaryOptions, CalculateFieldMode, CalculateFieldTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineLabel, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 

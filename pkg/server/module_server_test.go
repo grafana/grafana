@@ -37,11 +37,14 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 
 	errChan := make(chan error, 1)
 	go func() {
+		time.Sleep(1 * time.Second)
 		errChan <- ms.Run()
 	}()
 
 	require.Eventually(t, func() bool {
-		client := http.Client{}
+		client := http.Client{
+			Timeout: 1 * time.Second,
+		}
 		res, err := client.Get("http://localhost:3001/metrics")
 		if err != nil {
 			return false

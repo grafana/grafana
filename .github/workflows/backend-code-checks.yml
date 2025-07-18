@@ -1,5 +1,4 @@
 name: Backend Code Checks
-description: Validate go.mod and OpenAPI specifications
 
 on:
   pull_request:
@@ -25,7 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          persist-credentials: false
       - name: Setup Go
         uses: actions/setup-go@v5
         with:

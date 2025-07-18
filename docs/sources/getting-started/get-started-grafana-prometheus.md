@@ -16,12 +16,12 @@ weight: 300
 
 Prometheus is an open source monitoring system for which Grafana provides out-of-the-box support. This topic walks you through the steps to create a series of dashboards in Grafana to display system metrics for a server monitored by Prometheus.
 
-{{% admonition type="tip" %}}
+{{< admonition type="tip" >}}
 Check out our Prometheus **Learning Journeys**.
 
 - [Connect to a Prometheus data source in Grafana Cloud](https://www.grafana.com/docs/learning-journeys/prometheus/) to visualize your metrics directly from where they are stored.
 - [Send metrics to Grafana Cloud using Prometheus remote write](https://www.grafana.com/docs/learning-journeys/prom-remote-write/) to explore Grafana Cloud without making significant changes to your existing configuration.
-  {{% /admonition %}}
+  {{< /admonition >}}
 
 _Grafana and Prometheus_:
 

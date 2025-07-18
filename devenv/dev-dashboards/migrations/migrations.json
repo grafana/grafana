@@ -195,10 +195,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -291,10 +288,7 @@
       }
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 11,
         "w": 8,
@@ -329,10 +323,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -429,10 +420,7 @@
       }
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 11,
         "w": 8,
@@ -568,10 +556,7 @@
       }
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 11,
         "w": 8,
@@ -606,10 +591,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -704,10 +686,7 @@
       }
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 11,
         "w": 8,
@@ -739,10 +718,7 @@
     },
     {
       "columns": [],
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fontSize": "100%",
       "gridPos": {
         "h": 10,
@@ -816,10 +792,7 @@
       "type": "table-old"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 10,
         "w": 8,
@@ -857,10 +830,7 @@
         "rgba(237, 129, 40, 0.89)",
         "#d44a3a"
       ],
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "format": "areaF2",
       "gauge": {
         "maxValue": 100,
@@ -930,10 +900,7 @@
       "valueName": "avg"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -1002,10 +969,7 @@
       "type": "stat"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 8,
         "w": 8,
@@ -1036,10 +1000,7 @@
       "type": "text"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 10,
         "w": 16,
@@ -1089,10 +1050,7 @@
       "type": "grafana-piechart-panel"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 10,
         "w": 8,
@@ -1267,10 +1225,7 @@
       "valueName": "total"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 10,
         "w": 8,

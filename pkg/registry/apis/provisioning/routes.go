@@ -67,7 +67,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: withTimeoutFunc(b.handleStats, 30*time.Second),
+				Handler: WithTimeoutFunc(b.handleStats, 30*time.Second),
 			},
 			{
 				Path: "settings",
@@ -115,7 +115,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: withTimeoutFunc(b.handleSettings, 30*time.Second),
+				Handler: WithTimeoutFunc(b.handleSettings, 30*time.Second),
 			},
 		},
 	}
@@ -156,18 +156,25 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	availableTypes := []provisioning.RepositoryType{}
+	for t := range b.availableRepositoryTypes {
+		availableTypes = append(availableTypes, t)
+	}
+
 	settings := provisioning.RepositoryViewList{
 		Items: make([]provisioning.RepositoryView, len(all)),
 		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
-		LegacyStorage: dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
+		LegacyStorage:            dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
+		AvailableRepositoryTypes: availableTypes,
 	}
+
 	for i, val := range all {
 		branch := ""
 		if val.Spec.GitHub != nil {
 			branch = val.Spec.GitHub.Branch
 		}
 		settings.Items[i] = provisioning.RepositoryView{
-			Name:      val.ObjectMeta.Name,
+			Name:      val.Name,
 			Title:     val.Spec.Title,
 			Type:      val.Spec.Type,
 			Target:    val.Spec.Sync.Target,

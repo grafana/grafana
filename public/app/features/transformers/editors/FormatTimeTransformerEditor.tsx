@@ -10,10 +10,12 @@ import {
   PluginState,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/internal';
-import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from '@grafana/i18n';
+import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/formatTime.svg';
+import lightImage from '../images/light/formatTime.svg';
 import { getTimezoneOptions } from '../utils';
 
 export function FormatTimeTransfomerEditor({
@@ -80,7 +82,7 @@ export function FormatTimeTransfomerEditor({
             value={options.timeField}
             onChange={onSelectField}
             /* don't translate here as this references a field name */
-            /* eslint-disable-next-line @grafana/no-untranslated-strings */
+            /* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */
             placeholder="time"
             isClearable
           />
@@ -90,13 +92,13 @@ export function FormatTimeTransfomerEditor({
           label={t('transformers.format-time-transfomer-editor.label-format', 'Format')}
           labelWidth={10}
           tooltip={
-            <>
+            <Trans i18nKey="transformers.format-time-transfomer-editor.tooltip-format">
               The output format for the field specified as a{' '}
-              <a href="https://momentjs.com/docs/#/displaying/" target="_blank" rel="noopener noreferrer">
+              <TextLink href="https://momentjs.com/docs/#/displaying/" external>
                 Moment.js format string
-              </a>
+              </TextLink>
               .
-            </>
+            </Trans>
           }
           interactive={true}
         >
@@ -117,12 +119,18 @@ export function FormatTimeTransfomerEditor({
   );
 }
 
-export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTimeTransformerOptions> = {
-  id: DataTransformerID.formatTime,
-  editor: FormatTimeTransfomerEditor,
-  transformation: standardTransformers.formatTimeTransformer,
-  name: standardTransformers.formatTimeTransformer.name,
-  state: PluginState.alpha,
-  description: standardTransformers.formatTimeTransformer.description,
-  help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
-};
+export const getFormatTimeTransformerRegistryItem: () => TransformerRegistryItem<FormatTimeTransformerOptions> =
+  () => ({
+    id: DataTransformerID.formatTime,
+    editor: FormatTimeTransfomerEditor,
+    transformation: standardTransformers.formatTimeTransformer,
+    name: t('transformers.format-time-transformer-editor.name.format-time', 'Format time'),
+    state: PluginState.alpha,
+    description: t(
+      'transformers.format-time-transformer-editor.description.set-based-on-time',
+      'Set the output format of a time field'
+    ),
+    help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

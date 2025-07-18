@@ -9,6 +9,7 @@ import { NavLinkDTO } from './navModel';
 import { OrgRole } from './orgs';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
+import { TimeOption } from './time';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -73,6 +74,8 @@ export interface UnifiedAlertingConfig {
   // will be undefined if implementation is not "multiple"
   alertStateHistoryPrimary?: string;
   recordingRulesEnabled?: boolean;
+  // will be undefined if no default datasource is configured
+  defaultRecordingRulesTargetDatasourceUID?: string;
 }
 
 /** Supported OAuth services
@@ -126,7 +129,7 @@ export interface CurrentUserDTO {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  locale: string;
+  regionalFormat: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
@@ -227,6 +230,7 @@ export interface GrafanaConfig {
   rudderstackIntegrationsUrl: string | undefined;
   analyticsConsoleReporting: boolean;
   dashboardPerformanceMetrics: string[];
+  panelSeriesLimit: number;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
@@ -237,6 +241,7 @@ export interface GrafanaConfig {
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset?: string;
   exploreHideLogsDownload?: boolean;
+  quickRanges?: TimeOption[];
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
@@ -246,6 +251,7 @@ export interface GrafanaConfig {
    * Grafana's supported language.
    */
   language: string | undefined;
+  regionalFormat: string;
 }
 
 export interface SqlConnectionLimits {

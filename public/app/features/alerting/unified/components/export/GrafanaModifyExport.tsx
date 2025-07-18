@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { RuleIdentifier } from '../../../../../types/unified-alerting';
 import { useRuleWithLocation } from '../../hooks/useCombinedRule';
@@ -25,7 +25,9 @@ function GrafanaModifyExport() {
   if (!ruleIdentifier) {
     return (
       <Alert title={t('alerting.grafana-modify-export.title-invalid-rule-id', 'Invalid rule ID')} severity="error">
-        The rule UID in the page URL is invalid. Please check the URL and try again.
+        <Trans i18nKey="alerting.grafana-modify-export.body-invalid-rule-id">
+          The rule UID in the page URL is invalid. Please check the URL and try again.
+        </Trans>
       </Alert>
     );
   }
@@ -93,7 +95,7 @@ function GrafanaModifyExportPage() {
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
-        text: 'Modify export',
+        text: t('alerting.grafana-modify-export-page.text.modify-export', 'Modify export'),
         subTitle:
           'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
       }}

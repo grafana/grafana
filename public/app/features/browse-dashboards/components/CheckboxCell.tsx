@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Checkbox, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
-import { ManagerKind } from '../../apiserver/types';
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
 import { isSharedWithMe } from './utils';
@@ -42,7 +41,6 @@ export default function CheckboxCell({
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}
-      disabled={item.managedBy === ManagerKind.Repo}
     />
   );
 }

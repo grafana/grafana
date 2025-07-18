@@ -1,0 +1,304 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "Speciális"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "Hozzáadás",
+      "aria-label-remove": "Eltávolítás",
+      "button-add-resource": "Erőforrás hozzáadása",
+      "button-add-resource-uri": "Erőforrás-URI hozzáadása",
+      "label-namespace": "Névtér",
+      "label-region": "Régió",
+      "label-resource-group": "Erőforráscsoport",
+      "label-resource-name": "Erőforrásnév",
+      "label-resource-number": "Erőforrás {{resourceNum}}",
+      "label-resource-uri": "Erőforrás-URI-k ",
+      "label-subscription": "Előfizetés",
+      "placeholder-resource-name": "név",
+      "tooltip-region": "Az erőforrás kódterülete. Egy erőforrás esetén nem kötelező, de több erőforrás kiválasztásakor kötelező.",
+      "tooltip-resource-uri": "Az <2>erőforrás-uri</2> manuálisan szerkesztendő. Több sablonváltozó használatát támogatja (pl.: /subscriptions/$subId/resourceGroups/$rg)"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "Összesítési függvény",
+      "aria-label-column": "Oszlop",
+      "aria-label-remove": "Eltávolítás",
+      "label-percentile": "OF"
+    },
+    "aggregate-section": {
+      "label-aggregate": "Összesített",
+      "tooltip-aggregate": "Számítások végzése az adatsorokon, például számlálás, összegzés, átlag, minimum, maximum, szórás vagy percentilis."
+    },
+    "aggregation-field": {
+      "label-aggregation": "Összesítés"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "Kliensazonosító",
+      "aria-label-client-secret": "Klienstitok",
+      "aria-label-symbol-client-secret": "Klienstitok",
+      "aria-label-tenant-id": "Bérlőazonosító",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "Alkalmazás (kliens) azonosítója",
+      "label-client-secret": "Klienstitok",
+      "label-symbol-client-secret": "Klienstitok",
+      "label-tenant-id": "Címtár (bérlő) azonosítója",
+      "placeholder-symbol-client-secret": "konfigurált",
+      "reset-symbol-client-secret": "Visszaállítás"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "{{queryDisplayName}} nyers lekérdezés",
+      "aria-label-use-query": "Használja ezt a lekérdezési gombot",
+      "button-use-query": "Használja ezt a lekérdezést",
+      "label-categories": "Kategóriák",
+      "label-query-results": "Lekérdezés eredményei: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "Összes kategória",
+      "placeholder-search-logs": "Naplólekérdezések keresése",
+      "text-loading": "Betöltés…"
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "Előbeállításos lekérdezés modális ablak",
+      "title-kick-start": "Előbeállításos lekérdezés"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "Válassza ki az Azure-szolgáltatások hitelesítési típusát",
+      "label-authentication": "Hitelesítés",
+      "title-authentication": "Hitelesítés"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "Alapvető naplók",
+      "description-basic-logs": "A funkció engedélyezése esetén lekérdezésenkénti Azure Monitor-költségek merülnek fel azon irányítópult-paneleken, amelyek lekérdezik az <2>Alapvető naplókhoz</2> konfigurált táblákat.",
+      "label-enable-basic-logs": "Alapvető naplók engedélyezése"
+    },
+    "config-editor": {
+      "description-additional-settings": "A további beállítások olyan opcionális beállítások, amelyek konfigurálhatók az adatforrás nagyobb mértékű ellenőrzése érdekében. Ez magában foglalja a Secure Socks Proxyt.",
+      "description-request-timeout": "Állítsa be a kérelem időtúllépési időtartamát másodpercben. Az alapértelmezés a 30 másodperc.",
+      "title-additional-settings": "További beállítások",
+      "title-request-timeout": "Kérelem időtúllépése"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "Az alapértelmezett hitelesítő adatok le lettek tiltva. Mivel a felhasználóalapú hitelesítés eredendően csak a hatókörben felhasználót tartalmazó kéréseket támogatja, az olyan funkciók, mint a riasztás, a rögzített lekérdezések vagy a jelentéskészítés, nem fognak az elvárt módon működni. További részletekért tekintse át a <2>dokumentációt</2>.",
+      "body-service-credentials": "A felhasználóalapú hitelesítés nem támogatja eredendően azokat a Grafana-funkciókat, amelyek anélkül küldenek kéréseket az adatforrásnak, hogy a felhasználói adatok elérhetők lennének a kéréshez. Erre példa a riasztás. Ha biztosítani szeretné, hogy a kérés kontextusában felhasználó nélküli funkciók továbbra is működjenek, adja meg az alábbi alapértelmezett hitelesítő adatokat.",
+      "description-authentication": "Válassza ki az Azure-szolgáltatások hitelesítési típusát",
+      "description-service-credentials": "Válassza ki, hogy az alapértelmezett szolgáltatási hitelesítő adatok engedélyezettek vagy letiltottak legyenek ennél az adatforrásnál",
+      "label-authentication": "Hitelesítés",
+      "label-service-credentials": "Szolgáltatási hitelesítő adatok",
+      "note-service-credentials": "Megjegyzés: Az olyan funkciók, mint a riasztás a felhasználó helyett az alapértelmezett hitelesítő adatok hozzáférési szintjére lesznek korlátozva. Ez zavart kelthet a felhasználók körében, és tisztázni kell.",
+      "title-fallback-credentials-disabled": "Alapértelmezett hitelesítő adatok letiltva",
+      "title-fallback-service-credentials": "Alapértelmezett szolgáltatási hitelesítő adatok",
+      "title-service-credentials": "Szolgáltatási hitelesítő adatok"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "Alapértelmezett előfizetés",
+      "label-default-subscription": "Alapértelmezett előfizetés",
+      "load-subscriptions": "Előfizetések betöltése"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "Eltávolítás",
+      "label-dimensions": "Dimenziók",
+      "placeholder-field": "Mező",
+      "placeholder-operation": "Művelet",
+      "placeholder-select-value": "Érték kijelölése",
+      "placeholder-select-values": "Érték(ek) kiválasztása"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "A(z) {{type}} elavult a Grafana 9-ben. Tekintse meg az <3>elavulási értesítést</3>, ha további információt szeretne kapni a lekérdezések áttelepítéséről. Ez a lekérdezés jelenlegi definíciója:",
+      "title-unknown-query-type": "Ismeretlen lekérdezéstípus"
+    },
+    "filter": {
+      "aria-label-remove-filter": "Szűrő eltávolítása",
+      "placeholder-property": "Tulajdonság",
+      "placeholder-value": "Érték"
+    },
+    "filter-item": {
+      "aria-label-column": "Oszlop",
+      "aria-label-column-value": "Oszlopérték",
+      "aria-label-operator": "Műveleti jel",
+      "label-or": "VAGY"
+    },
+    "filter-section": {
+      "label-add-group": "Csoport hozzáadása",
+      "label-and": "ÉS",
+      "label-filters": "Szűrők",
+      "tooltip-filters": "Szűkítse az eredményeket bizonyos oszlopokra alkalmazott feltételekkel."
+    },
+    "filters": {
+      "label-filters": "Szűrők"
+    },
+    "format-as-field": {
+      "label-format-as": "Formázás mint"
+    },
+    "fuzzy-search": {
+      "aria-label-select-column": "Oszlop kiválasztása",
+      "label-fuzzy-search": "Hozzávetőleges keresés",
+      "placeholder-search-team": "Keresési kifejezés megadása",
+      "tooltip-fuzzy-search": "Keresse meg a hozzávetőleges szövegegyezéseket a helyesírási eltérések tolerálásával. Alapértelmezés szerint a hozzávetőleges keresés a teljes tábla összes oszlopát (*) átvizsgálja, nem csak bizonyos mezőket."
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Grafana sablonváltozós függvény",
+      "placeholder-grafana-template-variable": "Írjon be egy Grafana sablonváltozós függvényt (pl. {{example}})"
+    },
+    "group-by-item": {
+      "aria-label-column": "Oszlop",
+      "aria-label-remove": "Eltávolítás"
+    },
+    "group-by-section": {
+      "label-group-by": "Csoportosítási szempont",
+      "tooltip-group-by": "Rendezze az eredményeket kategóriákba a megadott oszlopok alapján. A Csoportosítási szempont használható önállóan a kiválasztott oszlopok egyedi értékeinek felsorolására, vagy kombinálható összesítési függvényekkel az egyes csoportok összesített statisztikáinak előállításához. Ha önmagában használják, a megadott oszlopok különböző kombinációit adja vissza."
+    },
+    "kql-preview": {
+      "button-hide": "Elrejtés",
+      "button-show": "Megjelenítés",
+      "label-query-preview": "Lekérdezés előnézete"
+    },
+    "legend-format-field": {
+      "label-legend-format": "Jelmagyarázat formátuma",
+      "placeholder-legend-format": "Aliasminták"
+    },
+    "limit-section": {
+      "label-limit": "Korlát",
+      "placeholder-limit": "Adja meg a korlátot",
+      "tooltip-limit": "A visszaadott sorok számának korlátozása (az alapértelmezett érték az 1000)."
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "Az Alapvető naplók lekérdezései a beolvasott adatok mennyiségétől függően költséget eredményeznek.",
+      "label-logs": "Naplók",
+      "title-basic-logs-queries": "Alapvető naplók lekérdezései",
+      "tooltip-logs": "Megadja, hogy Alapvető vagy Analitikai naplók lekérdezését kell-e futtatni."
+    },
+    "logs-query-builder": {
+      "title-no-tables": "Az erőforrás sikeresen betöltődött, de táblák nélkül"
+    },
+    "logs-query-editor": {
+      "learn-more": "További információ",
+      "view-query": "Lekérdezés megtekintése az Azure Portalon"
+    },
+    "metric-name-field": {
+      "label-metric": "Metrika"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "Metrika névtere"
+    },
+    "nested-row": {
+      "text-loading": "Betöltés…"
+    },
+    "order-by-section": {
+      "aria-label-order-by-column": "Rendezés oszlop szerint",
+      "aria-label-order-direction": "Rendezési irány",
+      "label-by": "SZEMPONT",
+      "label-order-by": "Rendezési szempont",
+      "tooltip-order-by": "Az eredmények rendezése egy vagy több oszlop alapján növekvő vagy csökkenő sorrendben."
+    },
+    "query-editor": {
+      "alert-error-occurred": "Hiba történt a metaadatok Azure Monitor szolgáltatásból történő lekérése során"
+    },
+    "query-header": {
+      "aria-label-kick-start": "Azure-naplók előbeállításos lekérdezése gomb",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "Előbeállításos lekérdezés",
+      "button-run-query": "Lekérdezés futtatása",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "Szolgáltatás",
+      "placeholder-service": "Szolgáltatás…",
+      "title-switch-mode": "Váltás szerkesztési módba?"
+    },
+    "raw-query": {
+      "aria-label-selector": "Választó"
+    },
+    "resource-field": {
+      "label-resource": "Erőforrás",
+      "title-select-resource": "Válasszon ki egy erőforrást"
+    },
+    "resource-label": {
+      "select-resource": "Válasszon ki egy erőforrást"
+    },
+    "resource-picker": {
+      "button-apply": "Alkalmaz",
+      "button-cancel": "Mégse",
+      "header-location": "Hely",
+      "header-scope": "Hatókör",
+      "header-type": "Típus",
+      "heading-selection": "Kiválasztás",
+      "result-limit": "Az első {{numResults}} találat megjelenítése",
+      "text-loading": "Betöltés…",
+      "text-no-resources": "Nem található erőforrás",
+      "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során"
+    },
+    "scope-selector": {
+      "label": "Hatókör"
+    },
+    "search": {
+      "aria-label-resource-search": "Erőforrás keresése",
+      "placeholder-resource-search": "Erőforrás keresése"
+    },
+    "subscription-field": {
+      "label-subscriptions": "Előfizetések",
+      "validation-subscriptions": "Legalább egy előfizetést ki kell választani."
+    },
+    "table-section": {
+      "aria-label-columns": "Oszlopok",
+      "aria-label-table": "Táblázat",
+      "label-columns": "Oszlopok",
+      "label-table": "Táblázat",
+      "placeholder-select-columns": "Oszlopok kiválasztása",
+      "placeholder-select-table": "Tábla kiválasztása"
+    },
+    "time-grain-field": {
+      "label-time-grain": "Időszemcse"
+    },
+    "time-management": {
+      "label-time-column": "Időoszlop",
+      "label-time-range": "Időtartomány",
+      "tooltip-time-column": "<0>Meghatározza a szűréshez használt időoszlopot. Alapértelmezés szerint az első táblák <1>timeSpan</1> oszlopa, az első megtalált <3>datetime</3> oszlop vagy a <5>TimeGenerated</5>.</0>",
+      "tooltip-time-range": "<0>Meghatározza a lekérdezéshez használt időtartományt. A <1>Lekérdezés</1> opció csak a lekérdezésben megadott időtartományokat használja. Az <3>Irányítópult</3> csak a Grafana-időtartományt használja. Naplólétrehozási módban csak az irányítópult ideje lesz felhasználva.</0>"
+    },
+    "top-field": {
+      "label-top": "Felső"
+    },
+    "trace-type-field": {
+      "label-event-type": "Esemény típusa",
+      "placeholder-event-type": "Válassza ki az eseménytípusokat"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "Műveletazonosító"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "Az adatforrás használatához hitelesítés szükséges az Azure Entrán (korábban Azure Active Directory) keresztül. További részletekért tekintse át a <2>dokumentációt</2>.",
+      "title-unsupported-auth": "Nem támogatott hitelesítési szolgáltató"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "Az adatforrás háttérfunkciói (például a riasztás) működéséhez szolgáltatási hitelesítő adatok szükségesek. Ez az adatforrás alapértelmezett szolgáltatási hitelesítő adatok nélkül van konfigurálva, vagy az alapértelmezett adatokat használó funkció le van tiltva. További részletekért tekintse át a <2>dokumentációt</2>.",
+      "title-no-fallback-credentials": "Nincs elérhető alapértelmezett hitelesítő adat"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "Egyedi névtér kiválasztása",
+      "aria-label-select-namespace": "Névtér kijelölése",
+      "aria-label-select-query-type": "Lekérdezéstípus kiválasztása",
+      "aria-label-select-region": "Régió kiválasztása",
+      "aria-label-select-resource": "Erőforrás kiválasztása",
+      "aria-label-select-resource-group": "Erőforráscsoport kiválasztása",
+      "aria-label-select-subscription": "Előfizetés kiválasztása",
+      "label-custom-namespace": "Egyedi névtér",
+      "label-namespace": "Névtér",
+      "label-query-type": "Lekérdezés típusa",
+      "label-region": "Régió",
+      "label-resource": "Erőforrás",
+      "label-resource-group": "Erőforráscsoport",
+      "label-resource-type": "Erőforrástípus",
+      "label-subscription": "Előfizetés",
+      "placeholder-custom-namespace": "Opcionális",
+      "placeholder-namespace": "Opcionális",
+      "placeholder-region": "Opcionális",
+      "placeholder-resource-group": "Opcionális",
+      "title-error-occurred": "Hiba történt a metaadatok Azure Monitor szolgáltatásból történő lekérése során"
+    }
+  }
+}

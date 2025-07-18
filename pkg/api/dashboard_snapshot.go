@@ -233,7 +233,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 			return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
 		}
 
-		if !canEdit && queryResult.UserID != c.SignedInUser.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+		if !canEdit && queryResult.UserID != c.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
 		}
 	}
@@ -273,7 +273,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 	searchQuery := dashboardsnapshots.GetDashboardSnapshotsQuery{
 		Name:         query,
 		Limit:        limit,
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		SignedInUser: c.SignedInUser,
 	}
 

@@ -3,6 +3,7 @@ import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { PanelPlugin, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Drawer,
@@ -17,13 +18,12 @@ import {
   Alert,
   Select,
   ClipboardButton,
-  Icon,
   Stack,
+  TextLink,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 
@@ -60,8 +60,8 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
   }
 
   const tabs = [
-    { label: 'Snapshot', value: SnapshotTab.Support },
-    { label: 'Data', value: SnapshotTab.Data },
+    { label: t('dashboard.help-wizard.tabs.label.snapshot', 'Snapshot'), value: SnapshotTab.Support },
+    { label: t('dashboard.help-wizard.tabs.label.data', 'Data'), value: SnapshotTab.Data },
   ];
 
   const hasSupportBundleAccess =
@@ -69,20 +69,15 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
 
   return (
     <Drawer
-      title={`Get help with this panel`}
+      title={t('dashboard.help-wizard.title-get-help-with-this-panel', 'Get help with this panel')}
       size="lg"
       onClose={onClose}
       subtitle={
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
-            <a
-              href="https://grafana.com/docs/grafana/latest/troubleshooting/"
-              target="blank"
-              className="external-link"
-              rel="noopener noreferrer"
-            >
-              Troubleshooting docs <Icon name="external-link-alt" />
-            </a>
+            <TextLink href="https://grafana.com/docs/grafana/latest/troubleshooting/" external>
+              <Trans i18nKey="dashboard.help-wizard.troubleshooting-docs">Troubleshooting docs</Trans>
+            </TextLink>
           </Stack>
           <span className="muted">
             <Trans i18nKey="help-wizard.troubleshooting-help">
@@ -129,7 +124,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
               </ClipboardButton>
             ) : (
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Download ({snapshotSize})
+                <Trans i18nKey="dashboard.help-wizard.download-snapshot">Download ({{ snapshotSize }})</Trans>
               </Button>
             )}
           </div>
@@ -153,7 +148,10 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
         <>
           <Field
             label={t('dashboard.help-wizard.label-obfuscate-data', 'Obfuscate data')}
-            description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+            description={t(
+              'dashboard.help-wizard.description-obfuscate-data',
+              'Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.'
+            )}
           >
             <Stack direction="row" gap={1}>
               <InlineSwitch
@@ -182,11 +180,13 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
 
           <Field
             label={t('dashboard.help-wizard.label-support-snapshot', 'Support snapshot')}
-            description={`Panel: ${panelTitle}`}
+            description={t('dashboard.help-wizard.description-support-snapshot', 'Panel: {{panelTitle}}', {
+              panelTitle,
+            })}
           >
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                <Trans i18nKey="help-wizard.download-snapshot">Download snapshot</Trans> ({snapshotSize})
+                <Trans i18nKey="help-wizard.download-snapshot">Download snapshot ({{ snapshotSize }})</Trans>
               </Button>
               <ClipboardButton
                 icon="github"

@@ -91,7 +91,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	ng, err := ngalert.ProvideService(
 		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), usertest.NewUserServiceFake(),
 	)
 	require.NoError(tb, err)
 
@@ -122,13 +122,15 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 		OrgRole:        org.RoleAdmin,
 		IsGrafanaAdmin: true,
 		Permissions: map[int64]map[string][]string{
-			orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
+			orgID: {
+				dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+			},
 		},
 	}
 
 	ctx = identity.WithRequester(ctx, user)
 	_, err := dbstore.FolderService.Create(ctx, &folder.CreateFolderCommand{OrgID: orgID, Title: "FOLDER-" + util.GenerateShortUID(), UID: folderUID, SignedInUser: user})
-	// var foldr *folder.Folder
 	if errors.Is(err, dashboards.ErrFolderWithSameUIDExists) || errors.Is(err, dashboards.ErrFolderVersionMismatch) {
 		_, err = dbstore.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &folderUID, SignedInUser: user})
 	}

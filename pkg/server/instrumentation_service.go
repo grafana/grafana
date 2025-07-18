@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,14 +23,14 @@ type instrumentationService struct {
 	promGatherer prometheus.Gatherer
 }
 
-func NewInstrumentationService(log log.Logger, cfg *setting.Cfg, promGatherer prometheus.Gatherer) (*instrumentationService, error) {
-	s := &instrumentationService{log: log, cfg: cfg, promGatherer: promGatherer}
+func (ms *ModuleServer) initInstrumentationServer() (*instrumentationService, error) {
+	s := &instrumentationService{log: ms.log, cfg: ms.cfg, promGatherer: ms.promGatherer}
+	s.httpServ, ms.httpServerRouter = s.newInstrumentationServer()
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
 }
 
 func (s *instrumentationService) start(ctx context.Context) error {
-	s.httpServ = s.newInstrumentationServer(ctx)
 	s.errChan = make(chan error)
 	go func() {
 		s.errChan <- s.httpServ.ListenAndServe()
@@ -56,17 +57,17 @@ func (s *instrumentationService) stop(failureReason error) error {
 	return nil
 }
 
-func (s *instrumentationService) newInstrumentationServer(ctx context.Context) *http.Server {
-	router := http.NewServeMux()
+func (s *instrumentationService) newInstrumentationServer() (*http.Server, *mux.Router) {
+	router := mux.NewRouter()
 	router.Handle("/metrics", promhttp.HandlerFor(s.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}))
 
+	addr := net.JoinHostPort(s.cfg.HTTPAddr, s.cfg.HTTPPort)
 	srv := &http.Server{
 		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
 		ReadHeaderTimeout: 5 * time.Second,
-		Addr:              ":" + s.cfg.HTTPPort,
+		Addr:              addr,
 		Handler:           router,
-		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
 
-	return srv
+	return srv, router
 }

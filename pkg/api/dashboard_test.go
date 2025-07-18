@@ -46,7 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	libraryelementsfake "github.com/grafana/grafana/pkg/services/libraryelements/fake"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -161,8 +160,6 @@ func TestHTTPServer_GetDashboard_AccessControl(t *testing.T) {
 			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			hs.starService = startest.NewStarServiceFake()
 			hs.dashboardProvisioningService = mockDashboardProvisioningService{}
-
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 		})
 	}
 
@@ -287,8 +284,6 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 			license := licensingtest.NewFakeLicensing()
 			license.On("FeatureEnabled", publicdashboardModels.FeaturePublicDashboardsEmailSharing).Return(false)
 			hs.PublicDashboardsApi = api.ProvideApi(nil, nil, hs.AccessControl, featuremgmt.WithFeatures(), middleware, hs.Cfg, license)
-
-			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService, hs.folderService, log.NewNopLogger())
 		})
 	}
 	deleteDashboard := func(server *webtest.Server, permissions []accesscontrol.Permission) (*http.Response, error) {
@@ -423,7 +418,7 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 	})
 }
 
-func TestDashboardAPIEndpoint(t *testing.T) {
+func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given two dashboards with the same title in different folders", func(t *testing.T) {
 		dashOne := dashboards.NewDashboard("dash")
 		dashOne.ID = 2
@@ -715,7 +710,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
 		mockSQLStore := dbtest.NewFakeDB()
 		dashboardStore := dashboards.NewFakeDashboardStore(t)
-		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{ExternalID: "/dashboard1.json"}, nil).Once()
+		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{ExternalID: "/dashboard1.json"}, nil).Once()
 
 		dashboardService := dashboards.NewFakeDashboardService(t)
 
@@ -946,7 +941,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions,
-			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+			ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 			dualwrite.ProvideTestService(), sort.ProvideService(),
 			serverlock.ProvideService(db, tracing.InitializeTracerForTest()), kvstore.NewFakeKVStore(),
 		)
@@ -956,7 +951,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, features, folderPermissions,
-		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
+		ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 		dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(db, tracing.InitializeTracerForTest()), kvstore.NewFakeKVStore(),
 	)

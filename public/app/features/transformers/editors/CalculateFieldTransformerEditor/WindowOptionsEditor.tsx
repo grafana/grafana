@@ -6,9 +6,9 @@ import {
   WindowOptions,
   WindowSizeMode,
 } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -21,12 +21,24 @@ export const WindowOptionsEditor = (props: {
   const { window } = options;
   const selectOptions = names.map((v) => ({ label: v, value: v }));
   const typeOptions = [
-    { label: 'Trailing', value: WindowAlignment.Trailing },
-    { label: 'Centered', value: WindowAlignment.Centered },
+    {
+      label: t('transformers.window-options-editor.type-options.label.trailing', 'Trailing'),
+      value: WindowAlignment.Trailing,
+    },
+    {
+      label: t('transformers.window-options-editor.type-options.label.centered', 'Centered'),
+      value: WindowAlignment.Centered,
+    },
   ];
   const windowSizeModeOptions = [
-    { label: 'Percentage', value: WindowSizeMode.Percentage },
-    { label: 'Fixed', value: WindowSizeMode.Fixed },
+    {
+      label: t('transformers.window-options-editor.window-size-mode-options.label.percentage', 'Percentage'),
+      value: WindowSizeMode.Percentage,
+    },
+    {
+      label: t('transformers.window-options-editor.window-size-mode-options.label.fixed', 'Fixed'),
+      value: WindowSizeMode.Fixed,
+    },
   ];
 
   const updateWindowOptions = (v: WindowOptions) => {
@@ -120,12 +132,19 @@ export const WindowOptionsEditor = (props: {
         ></RadioButtonGroup>
       </InlineField>
       <InlineField
-        label={window?.windowSizeMode === WindowSizeMode.Percentage ? 'Window size %' : 'Window size'}
+        label={
+          window?.windowSizeMode === WindowSizeMode.Percentage
+            ? t('transformers.window-options-editor.label-window-size-percent', 'Window size %')
+            : t('transformers.window-options-editor.label-window-size', 'Window size')
+        }
         labelWidth={LABEL_WIDTH}
         tooltip={
           window?.windowSizeMode === WindowSizeMode.Percentage
-            ? 'Set the window size as a percentage of the total data'
-            : 'Window size'
+            ? t(
+                'transformers.window-options-editor.tooltip-window-size-percent',
+                'Set the window size as a percentage of the total data'
+              )
+            : t('transformers.window-options-editor.tooltip-window-size', 'Window size')
         }
       >
         <NumberInput

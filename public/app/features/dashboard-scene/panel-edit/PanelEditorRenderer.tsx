@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';

@@ -1,53 +1,61 @@
-import { ChangeEvent, MouseEvent } from 'react';
+import { useMemo, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { BrowserLabel as PromLabel, Input, Label } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
-import { LIST_ITEM_SIZE, SelectableLabel } from './types';
+import { LIST_ITEM_SIZE } from '../../constants';
 
-interface MetricSelectorProps {
-  metrics: SelectableLabel | undefined;
-  metricSearchTerm: string;
-  seriesLimit: string;
-  onChangeMetricSearch: (event: ChangeEvent<HTMLInputElement>) => void;
-  onChangeSeriesLimit: (event: ChangeEvent<HTMLInputElement>) => void;
-  onClickMetric: (name: string, value: string | undefined, event: MouseEvent<HTMLElement>) => void;
-  styles: Record<string, string>;
-}
+import { useMetricsBrowser } from './MetricsBrowserContext';
+import { getStylesMetricSelector } from './styles';
 
-export function MetricSelector({
-  metrics,
-  metricSearchTerm,
-  seriesLimit,
-  onChangeMetricSearch,
-  onChangeSeriesLimit,
-  onClickMetric,
-  styles,
-}: MetricSelectorProps) {
-  const metricCount = metrics?.values?.length || 0;
+export function MetricSelector() {
+  const styles = useStyles2(getStylesMetricSelector);
+  const [metricSearchTerm, setMetricSearchTerm] = useState('');
+  const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
+
+  const filteredMetrics = useMemo(() => {
+    return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
+  }, [metrics, selectedMetric, metricSearchTerm]);
 
   return (
     <div>
       <div className={styles.section}>
-        <Label description="Once a metric is selected only possible labels are shown. Labels are limited by the series limit below.">
-          1. Select a metric
+        <Label
+          description={t(
+            'grafana-prometheus.components.metric-selector.label-select-metric',
+            'Once a metric is selected only possible labels are shown. Labels are limited by the series limit below.'
+          )}
+        >
+          <Trans i18nKey="grafana-prometheus.components.metric-selector.select-a-metric">1. Select a metric</Trans>
         </Label>
         <div>
           <Input
-            onChange={onChangeMetricSearch}
-            aria-label="Filter expression for metric"
+            onChange={(e) => setMetricSearchTerm(e.currentTarget.value)}
+            aria-label={t(
+              'grafana-prometheus.components.metric-selector.aria-label-filter-expression-for-metric',
+              'Filter expression for metric'
+            )}
             value={metricSearchTerm}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
           />
         </div>
-        <Label description="Set to 'none' to remove limit and show all labels for a selected metric. Removing the limit may cause performance issues.">
-          Series limit
+        <Label
+          description={t(
+            'grafana-prometheus.components.metric-selector.description-series-limit',
+            'The limit applies to all metrics, labels, and values. Leave the field empty to use the default limit. Set to 0 to disable the limit and fetch everything — this may cause performance issues.'
+          )}
+        >
+          <Trans i18nKey="grafana-prometheus.components.metric-selector.series-limit">Series limit</Trans>
         </Label>
         <div>
           <Input
-            onChange={onChangeSeriesLimit}
-            aria-label="Limit results from series endpoint"
+            onChange={(e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10))}
+            aria-label={t(
+              'grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint',
+              'Limit results from series endpoint'
+            )}
             value={seriesLimit}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit}
           />
@@ -58,26 +66,27 @@ export function MetricSelector({
           data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.metricList}
         >
           <FixedSizeList
-            height={Math.min(450, metricCount * LIST_ITEM_SIZE)}
-            itemCount={metricCount}
+            height={Math.min(450, filteredMetrics.length * LIST_ITEM_SIZE)}
+            itemCount={filteredMetrics.length}
             itemSize={LIST_ITEM_SIZE}
-            itemKey={(i) => metrics!.values![i].name}
+            itemKey={(i) => filteredMetrics[i].name}
             width={300}
             className={styles.valueList}
           >
             {({ index, style }) => {
-              const value = metrics?.values?.[index];
-              if (!value) {
-                return null;
-              }
+              const metric = filteredMetrics[index];
               return (
                 <div style={style}>
                   <PromLabel
-                    name={metrics!.name}
-                    value={value?.name}
-                    title={value.details}
-                    active={value?.selected}
-                    onClick={onClickMetric}
+                    name={metric.name}
+                    value={metric.name}
+                    title={metric.details}
+                    active={metric.name === selectedMetric}
+                    onClick={(name: string, value: string | undefined) => {
+                      // Resetting search to prevent empty results
+                      setMetricSearchTerm('');
+                      onMetricClick(name);
+                    }}
                     searchTerm={metricSearchTerm}
                   />
                 </div>

@@ -850,6 +850,22 @@ func TestDiff(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:                 "should detect changes in ActiveTimeIntervals",
+				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
+				diffs: []cmputil.Diff{
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[0]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[0]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[0] + "-modified"),
+					},
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[1]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[1]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[1] + "-modified"),
+					},
+				},
+			},
 		}
 
 		for _, tt := range testCases {
@@ -1052,45 +1068,143 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 }
 
 func TestValidateAlertRule(t *testing.T) {
-	testCases := []struct {
-		name          string
-		keepFiringFor time.Duration
-		expectedErr   error
-	}{
-		{
-			name:          "should accept zero keep firing for",
-			keepFiringFor: 0,
-			expectedErr:   nil,
-		},
-		{
-			name:          "should accept positive keep firing for",
-			keepFiringFor: 1 * time.Minute,
-			expectedErr:   nil,
-		},
-		{
-			name:          "should reject negative keep firing for",
-			keepFiringFor: -1 * time.Minute,
-			expectedErr:   fmt.Errorf("%w: field `keep_firing_for` cannot be negative", ErrAlertRuleFailedValidation),
-		},
-	}
+	t.Run("keepFiringFor", func(t *testing.T) {
+		testCases := []struct {
+			name          string
+			keepFiringFor time.Duration
+			expectedErr   error
+		}{
+			{
+				name:          "should accept zero keep firing for",
+				keepFiringFor: 0,
+				expectedErr:   nil,
+			},
+			{
+				name:          "should accept positive keep firing for",
+				keepFiringFor: 1 * time.Minute,
+				expectedErr:   nil,
+			},
+			{
+				name:          "should reject negative keep firing for",
+				keepFiringFor: -1 * time.Minute,
+				expectedErr:   fmt.Errorf("%w: field `keep_firing_for` cannot be negative", ErrAlertRuleFailedValidation),
+			},
+		}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			rule := RuleGen.With(
-				RuleGen.WithKeepFiringFor(tc.keepFiringFor),
-				RuleGen.WithIntervalSeconds(10),
-			).GenerateRef()
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				rule := RuleGen.With(
+					RuleGen.WithKeepFiringFor(tc.keepFiringFor),
+					RuleGen.WithIntervalSeconds(10),
+				).GenerateRef()
 
-			err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
+				err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
 
-			if tc.expectedErr == nil {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-				require.Equal(t, tc.expectedErr.Error(), err.Error())
-			}
-		})
-	}
+				if tc.expectedErr == nil {
+					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+					require.Equal(t, tc.expectedErr.Error(), err.Error())
+				}
+			})
+		}
+	})
+
+	t.Run("missingSeriesEvalsToResolve", func(t *testing.T) {
+		testCases := []struct {
+			name                        string
+			missingSeriesEvalsToResolve *int
+			expectedErrorContains       string
+		}{
+			{
+				name:                        "should allow nil value",
+				missingSeriesEvalsToResolve: nil,
+			},
+			{
+				name:                        "should reject negative value",
+				missingSeriesEvalsToResolve: util.Pointer(-1),
+				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
+			},
+			{
+				name:                        "should reject 0",
+				missingSeriesEvalsToResolve: util.Pointer(0),
+				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
+			},
+			{
+				name:                        "should accept positive value",
+				missingSeriesEvalsToResolve: util.Pointer(2),
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				baseIntervalSeconds := int64(10)
+				cfg := setting.UnifiedAlertingSettings{
+					BaseInterval: time.Duration(baseIntervalSeconds) * time.Second,
+				}
+
+				rule := RuleGen.With(
+					RuleMuts.WithIntervalSeconds(baseIntervalSeconds * 2),
+				).Generate()
+				rule.MissingSeriesEvalsToResolve = tc.missingSeriesEvalsToResolve
+
+				err := rule.ValidateAlertRule(cfg)
+
+				if tc.expectedErrorContains != "" {
+					require.Error(t, err)
+					require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+					require.Contains(t, err.Error(), tc.expectedErrorContains)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
+
+	t.Run("ExecErrState & NoDataState", func(t *testing.T) {
+		testCases := []struct {
+			name         string
+			execErrState string
+			noDataState  string
+			error        bool
+		}{
+			{
+				name:         "invalid error state",
+				execErrState: "invalid",
+				error:        true,
+			},
+			{
+				name:        "invalid no data state",
+				noDataState: "invalid",
+				error:       true,
+			},
+			{
+				name:  "valid states",
+				error: false,
+			},
+		}
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				rule := RuleGen.With(
+					RuleMuts.WithIntervalSeconds(10),
+				).Generate()
+				if tc.execErrState != "" {
+					rule.ExecErrState = ExecutionErrorState(tc.execErrState)
+				}
+				if tc.noDataState != "" {
+					rule.NoDataState = NoDataState(tc.noDataState)
+				}
+
+				err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
+				if tc.error {
+					require.Error(t, err)
+					require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
+	})
 }
 
 func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
@@ -1145,7 +1259,7 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := tt.rule.PrometheusRuleDefinition()
-			isPrometheusRule := tt.rule.ImportedFromPrometheus()
+			isPrometheusRule := tt.rule.HasPrometheusRuleDefinition()
 
 			if tt.expectedErrorMsg != "" {
 				require.Error(t, err)
@@ -1160,53 +1274,77 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 	}
 }
 
-func TestMissingSeriesEvalsToResolveValidation(t *testing.T) {
-	testCases := []struct {
-		name                        string
-		missingSeriesEvalsToResolve *int
-		expectedErrorContains       string
+func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
+	tests := []struct {
+		name     string
+		rule     AlertRule
+		expected bool
 	}{
 		{
-			name:                        "should allow nil value",
-			missingSeriesEvalsToResolve: nil,
+			name: "rule with prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "some rule definition",
+					},
+				},
+			},
+			expected: true,
 		},
 		{
-			name:                        "should reject negative value",
-			missingSeriesEvalsToResolve: util.Pointer(-1),
-			expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
+			name: "rule with converted prometheus rule label",
+			rule: AlertRule{
+				Labels: map[string]string{
+					ConvertedPrometheusRuleLabel: "true",
+				},
+			},
+			expected: true,
 		},
 		{
-			name:                        "should reject 0",
-			missingSeriesEvalsToResolve: util.Pointer(0),
-			expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
+			name: "rule with both prometheus definition and converted label",
+			rule: AlertRule{
+				Labels: map[string]string{
+					ConvertedPrometheusRuleLabel: "true",
+				},
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "some rule definition",
+					},
+				},
+			},
+			expected: true,
 		},
 		{
-			name:                        "should accept positive value",
-			missingSeriesEvalsToResolve: util.Pointer(2),
+			name: "rule with empty prometheus definition",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: &PrometheusStyleRule{
+						OriginalRuleDefinition: "",
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "rule with nil prometheus style rule",
+			rule: AlertRule{
+				Metadata: AlertRuleMetadata{
+					PrometheusStyleRule: nil,
+				},
+			},
+			expected: false,
+		},
+		{
+			name:     "rule with empty metadata",
+			rule:     AlertRule{},
+			expected: false,
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			baseIntervalSeconds := int64(10)
-			cfg := setting.UnifiedAlertingSettings{
-				BaseInterval: time.Duration(baseIntervalSeconds) * time.Second,
-			}
-
-			rule := RuleGen.With(
-				RuleMuts.WithIntervalSeconds(baseIntervalSeconds * 2),
-			).Generate()
-			rule.MissingSeriesEvalsToResolve = tc.missingSeriesEvalsToResolve
-
-			err := rule.ValidateAlertRule(cfg)
-
-			if tc.expectedErrorContains != "" {
-				require.Error(t, err)
-				require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
-				require.Contains(t, err.Error(), tc.expectedErrorContains)
-			} else {
-				require.NoError(t, err)
-			}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.rule.ImportedPrometheusRule()
+			require.Equal(t, tt.expected, result)
 		})
 	}
 }

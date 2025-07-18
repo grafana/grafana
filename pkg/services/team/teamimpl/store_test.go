@@ -243,7 +243,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to search for teams", func(t *testing.T) {
-				query := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "group", Page: 1, SignedInUser: testUser}
+				// Use mixed-case to test case-insensitive search.
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "GrOuP", Page: 1, SignedInUser: testUser}
 				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(queryResult.Teams), 2)

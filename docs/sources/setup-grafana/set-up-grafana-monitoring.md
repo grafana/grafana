@@ -73,11 +73,11 @@ These instructions assume you have already added Prometheus as a data source in 
    ```
    - job_name: 'grafana_metrics'
 
-      scrape_interval: 15s
-      scrape_timeout: 5s
+     scrape_interval: 15s
+     scrape_timeout: 5s
 
-      static_configs:
-        - targets: ['localhost:3000']
+     static_configs:
+       - targets: ['localhost:3000']
    ```
 
 1. Restart Prometheus. Your new job should appear on the Targets tab.
@@ -147,12 +147,12 @@ These instructions assume you have already added Prometheus as a data source in 
    ```
    - job_name: 'grafana_github_datasource'
 
-      scrape_interval: 15s
-      scrape_timeout: 5s
-      metrics_path: /metrics/plugins/grafana-test-datasource
+     scrape_interval: 15s
+     scrape_timeout: 5s
+     metrics_path: /metrics/plugins/grafana-test-datasource
 
-      static_configs:
-        - targets: ['localhost:3000']
+     static_configs:
+       - targets: ['localhost:3000']
    ```
 
 1. Restart Prometheus. Your new job should appear on the Targets tab.

@@ -11,12 +11,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -64,11 +66,12 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 			&datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{},
 			nil, pluginconfig.NewFakePluginRequestConfigProvider()),
 		tracer:  tracing.InitializeTracerForTest(),
-		metrics: newMetrics(nil),
+		metrics: metrics.NewSSEMetrics(nil),
 		converter: &ResultConverter{
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),
 		},
+		mtDatasourceClientBuilder: mtdsclient.NewNullMTDatasourceClientBuilder(),
 	}
 	queries := []Query{{
 		RefID: "A",

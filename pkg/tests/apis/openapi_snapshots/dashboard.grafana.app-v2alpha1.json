@@ -1087,6 +1087,9 @@
             "type": "string",
             "default": ""
           },
+          "origin": {
+            "type": "string"
+          },
           "value": {
             "type": "string",
             "default": ""
@@ -1138,9 +1141,14 @@
           "filters",
           "defaultKeys",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
+          },
           "baseFilters": {
             "type": "array",
             "items": {
@@ -1212,7 +1220,7 @@
             "type": "array",
             "items": {
               "type": "integer",
-              "format": "byte",
+              "format": "int64",
               "default": 0
             }
           }
@@ -1268,6 +1276,13 @@
           "iconColor": {
             "type": "string",
             "default": ""
+          },
+          "legacyOptions": {
+            "description": "Catch-all field for datasource-specific properties",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
           },
           "name": {
             "type": "string",
@@ -1695,11 +1710,16 @@
           "multi",
           "includeAll",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -1944,11 +1964,16 @@
           "multi",
           "includeAll",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -2205,17 +2230,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind": {
-        "type": "object",
-        "properties": {
-          "GridLayoutItemKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
-          },
-          "GridLayoutRowKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowKind"
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemSpec": {
         "type": "object",
         "required": [
@@ -2315,66 +2329,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowKind": {
-        "type": "object",
-        "required": [
-          "kind",
-          "spec"
-        ],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "default": ""
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowSpec"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowSpec": {
-        "type": "object",
-        "required": [
-          "y",
-          "collapsed",
-          "title",
-          "elements"
-        ],
-        "properties": {
-          "collapsed": {
-            "type": "boolean",
-            "default": false
-          },
-          "elements": {
-            "description": "Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
-                }
-              ]
-            }
-          },
-          "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions"
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          },
-          "y": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutSpec": {
         "type": "object",
         "required": [
@@ -2384,7 +2338,12 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind"
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
+                }
+              ]
             }
           }
         }
@@ -2433,6 +2392,9 @@
           },
           "datasource": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+          },
+          "defaultValue": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
           },
           "description": {
             "type": "string"
@@ -3012,11 +2974,16 @@
           "sort",
           "options",
           "multi",
-          "includeAll"
+          "includeAll",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -3091,6 +3058,20 @@
           "sort": {
             "type": "string",
             "default": ""
+          },
+          "staticOptions": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
+                }
+              ]
+            }
+          },
+          "staticOptionsOrder": {
+            "type": "string"
           }
         }
       },
@@ -3287,7 +3268,6 @@
         ],
         "properties": {
           "annotations": {
-            "description": "Title of dashboard.",
             "type": "array",
             "items": {
               "default": {},
@@ -3438,6 +3418,23 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabRepeatOptions": {
+        "type": "object",
+        "required": [
+          "mode",
+          "value"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "default": ""
+          },
+          "value": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabsLayoutKind": {
         "type": "object",
         "required": [
@@ -3510,6 +3507,9 @@
           },
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
+          },
+          "repeat": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTabRepeatOptions"
           },
           "title": {
             "type": "string"

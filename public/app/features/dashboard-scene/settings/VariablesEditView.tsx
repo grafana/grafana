@@ -244,7 +244,6 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
           navModel={navModel}
           dashboard={dashboard}
           onDelete={onDelete}
-          onValidateVariableName={model.onValidateVariableName}
         />
       );
     }
@@ -276,7 +275,6 @@ interface VariableEditorSettingsEditViewProps {
   onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
-  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
 
 function VariableEditorSettingsView({
@@ -287,7 +285,6 @@ function VariableEditorSettingsView({
   onTypeChange,
   onGoBack,
   onDelete,
-  onValidateVariableName,
 }: VariableEditorSettingsEditViewProps) {
   const { name } = variable.useState();
 
@@ -303,7 +300,6 @@ function VariableEditorSettingsView({
         onTypeChange={onTypeChange}
         onGoBack={onGoBack}
         onDelete={onDelete}
-        onValidateVariableName={onValidateVariableName}
         // force refresh when navigating using back/forward between variables
         key={variable.state.key}
       />

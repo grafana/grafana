@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   Drawer,
@@ -16,7 +17,6 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,
@@ -28,7 +28,7 @@ import {
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/types';
+import { NotificationChannelOption } from 'app/types/alerting';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
@@ -44,6 +44,7 @@ interface TemplatesPickerProps {
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
   const [showTemplates, setShowTemplates] = useState(false);
+
   const onClick = () => {
     setShowTemplates(true);
     trackEditInputWithTemplate();
@@ -54,16 +55,24 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
     <>
       <Button
         icon="edit"
-        tooltip={`Edit ${option.label.toLowerCase()} using existing notification templates.`}
+        tooltip={t('alerting.templates-picker.tooltip-edit', 'Edit {{name}} using existing notification templates.', {
+          name: option.label.toLowerCase(),
+        })}
         onClick={onClick}
         variant="secondary"
         size="sm"
       >
-        {`Edit ${option.label}`}
+        <Trans i18nKey="alerting.templates-picker.button-edit" values={{ name: option.label }}>
+          Edit {'{{name}}'}
+        </Trans>
       </Button>
 
       {showTemplates && (
-        <Drawer title={`Edit ${option.label}`} size="md" onClose={handleClose}>
+        <Drawer
+          title={t('alerting.templates-picker.title-drawer', 'Edit {{name}}', { name: option.label })}
+          size="md"
+          onClose={handleClose}
+        >
           <TemplateSelector onSelect={onSelect} onClose={handleClose} option={option} valueInForm={valueInForm} />
         </Drawer>
       )}
@@ -129,8 +138,14 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
-      label: 'Select notification template',
-      ariaLabel: 'Select notification template',
+      label: t(
+        'alerting.template-selector.template-options.label.select-notification-template',
+        'Select notification template'
+      ),
+      ariaLabel: t(
+        'alerting.template-selector.template-options.ariaLabel.select-notification-template',
+        'Select notification template'
+      ),
       value: 'Existing',
       description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
     },
@@ -219,10 +234,11 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
                 defaultValue={defaultTemplateValue}
               />
               <IconButton
-                tooltip="Copy selected notification template to clipboard. You can use it in the custom tab."
-                onClick={() =>
-                  copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
-                }
+                tooltip={t(
+                  'alerting.template-selector.tooltip-copy',
+                  'Copy selected notification template to clipboard. You can use it in the custom tab.'
+                )}
+                onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
                 name="copy"
               />
             </Stack>

@@ -3,9 +3,11 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"strconv"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -96,25 +98,6 @@ func Test_GetMigrationSessionByUID(t *testing.T) {
 	})
 }
 
-/** rewrite this test using the new functions
-func Test_DeleteMigrationSession(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("deletes a session from the db", func(t *testing.T) {
-		uid := "qwerty"
-		session, snapshots, err := s.DeleteMigrationSessionByUID(ctx, uid)
-		require.NoError(t, err)
-		require.Equal(t, uid, session.UID)
-		require.NotNil(t, snapshots)
-
-		// now we try to find it, should return an error
-		_, err = s.GetMigrationSessionByUID(ctx, uid)
-		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
-	})
-}
-*/
-
 func Test_SnapshotManagement(t *testing.T) {
 	t.Parallel()
 
@@ -181,6 +164,92 @@ func Test_SnapshotManagement(t *testing.T) {
 		})
 		require.ErrorIs(t, err, cloudmigration.ErrSnapshotNotFound)
 		require.Nil(t, snapshot)
+	})
+
+	t.Run("tests a snapshot with a large number of resources", func(t *testing.T) {
+		session, err := s.CreateMigrationSession(ctx, cloudmigration.CloudMigrationSession{
+			OrgID:     1,
+			AuthToken: encodeToken("token"),
+		})
+		require.NoError(t, err)
+
+		// create a snapshot
+		snapshotUid, err := s.CreateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+			SessionUID: session.UID,
+			Status:     cloudmigration.SnapshotStatusCreating,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, snapshotUid)
+
+		// Generate 50,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
+		const numResources = 50001
+		resources := make([]cloudmigration.CloudMigrationResource, numResources)
+
+		for i := 0; i < numResources; i++ {
+			resources[i] = cloudmigration.CloudMigrationResource{
+				Name:   fmt.Sprintf("Resource %d", i),
+				Type:   cloudmigration.DashboardDataType,
+				RefID:  fmt.Sprintf("refid-%d", i),
+				Status: cloudmigration.ItemStatusPending,
+			}
+		}
+
+		// Update the snapshot with the resources to create
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:                    snapshotUid,
+			Status:                 cloudmigration.SnapshotStatusPendingUpload,
+			SessionID:              session.UID,
+			LocalResourcesToCreate: resources,
+		})
+		require.NoError(t, err)
+
+		// Get the Snapshot and ensure it's in the right state
+		snapshot, err := s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: numResources,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusPendingUpload, snapshot.Status)
+		require.Len(t, snapshot.Resources, numResources)
+
+		for i, r := range snapshot.Resources {
+			assert.Equal(t, cloudmigration.ItemStatusPending, r.Status)
+
+			if i%2 == 0 {
+				snapshot.Resources[i].Status = cloudmigration.ItemStatusOK
+			} else {
+				snapshot.Resources[i].Status = cloudmigration.ItemStatusError
+			}
+		}
+
+		// Update the snapshot with the resources to update
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:                    snapshotUid,
+			Status:                 cloudmigration.SnapshotStatusFinished,
+			SessionID:              session.UID,
+			CloudResourcesToUpdate: snapshot.Resources,
+		})
+		require.NoError(t, err)
+
+		// Get the Snapshot and ensure it's in the right state
+		snapshot, err = s.GetSnapshotByUID(ctx, 1, session.UID, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+			ResultPage:  1,
+			ResultLimit: numResources,
+			SortColumn:  cloudmigration.SortColumnID,
+			SortOrder:   cloudmigration.SortOrderAsc,
+		})
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
+
+		for i, r := range snapshot.Resources {
+			if i%2 == 0 {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+			} else {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+			}
+		}
 	})
 }
 
@@ -357,6 +426,187 @@ func Test_SnapshotResources(t *testing.T) {
 			assert.Equal(t, "2", results[0].UID)
 		})
 	})
+
+	t.Run("test creating and updating a large number of resources", func(t *testing.T) {
+		// Generate 50,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
+		const numResources = 50001
+		resources := make([]cloudmigration.CloudMigrationResource, numResources)
+		snapshotUid := uuid.New().String()
+
+		t.Run("create the resources", func(t *testing.T) {
+			for i := 0; i < numResources; i++ {
+				resources[i] = cloudmigration.CloudMigrationResource{
+					Name:   fmt.Sprintf("Resource %d", i),
+					Type:   cloudmigration.DashboardDataType,
+					RefID:  fmt.Sprintf("refid-%d", i),
+					Status: cloudmigration.ItemStatusPending,
+				}
+			}
+
+			// Attempt to create all resources at once -- it should batch under the hood
+			err := s.CreateSnapshotResources(ctx, snapshotUid, resources)
+			require.NoError(t, err)
+
+			// Get the resources and ensure they're all there
+			resources, err := s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+		})
+
+		t.Run("update the resources", func(t *testing.T) {
+			// Initially, update with a mix of ok and error statuses
+			for i := 0; i < numResources; i++ {
+				if i%2 == 0 {
+					resources[i].Status = cloudmigration.ItemStatusOK
+				} else {
+					resources[i].Status = cloudmigration.ItemStatusError
+					resources[i].ErrorCode = "test-error"
+					resources[i].Error = "test-error-message"
+				}
+			}
+
+			err := s.UpdateSnapshotResources(ctx, snapshotUid, resources)
+			require.NoError(t, err)
+
+			resources, err := s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+			for i, r := range resources {
+				if i%2 == 0 {
+					assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+				} else {
+					assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+					assert.Equal(t, "test-error", string(r.ErrorCode))
+					assert.Equal(t, "test-error-message", r.Error)
+				}
+			}
+
+			// Now update with only error statuses
+			for i := 0; i < numResources; i++ {
+				resources[i].Status = cloudmigration.ItemStatusError
+				resources[i].ErrorCode = "test-error-2"
+				resources[i].Error = "test-error-message-2"
+			}
+
+			err = s.UpdateSnapshotResources(ctx, snapshotUid, resources)
+			require.NoError(t, err)
+
+			resources, err = s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+			for _, r := range resources {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+				assert.Equal(t, "test-error-2", string(r.ErrorCode))
+				assert.Equal(t, "test-error-message-2", r.Error)
+			}
+
+			// Finally, all okay
+			for i := 0; i < numResources; i++ {
+				resources[i].Status = cloudmigration.ItemStatusOK
+			}
+
+			err = s.UpdateSnapshotResources(ctx, snapshotUid, resources)
+			require.NoError(t, err)
+
+			resources, err = s.getSnapshotResources(ctx, snapshotUid, cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, resources, numResources)
+			for _, r := range resources {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+			}
+		})
+	})
+}
+
+func Test_SnapshotResourceCaseInsensitiveSorting(t *testing.T) {
+	t.Parallel()
+
+	_, s := setUpTest(t)
+	ctx := context.Background()
+
+	// Create test data with mixed case names
+	resources := []cloudmigration.CloudMigrationResource{
+		{UID: "1", SnapshotUID: "abc123", Name: "B", Type: cloudmigration.DashboardDataType, Status: cloudmigration.ItemStatusOK},
+		{UID: "2", SnapshotUID: "abc123", Name: "aa", Type: cloudmigration.AlertRuleType, Status: cloudmigration.ItemStatusOK},
+		{UID: "3", SnapshotUID: "abc123", Name: "ba", Type: cloudmigration.DashboardDataType, Status: cloudmigration.ItemStatusOK},
+		{UID: "4", SnapshotUID: "abc123", Name: "A", Type: cloudmigration.AlertRuleType, Status: cloudmigration.ItemStatusOK},
+	}
+
+	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Insert(resources)
+		return err
+	})
+	require.NoError(t, err)
+
+	// Test ascending sort
+	results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+		ResultPage:  1,
+		ResultLimit: 100,
+		SortColumn:  cloudmigration.SortColumnName,
+		SortOrder:   cloudmigration.SortOrderAsc,
+	})
+	require.NoError(t, err)
+	assert.True(t, testNameComesBefore(t, results, "A", "aa"))
+	assert.True(t, testNameComesBefore(t, results, "B", "ba"))
+	assert.True(t, testNameComesBefore(t, results, "A", "B"))
+	assert.True(t, testNameComesBefore(t, results, "aa", "B"))
+	assert.True(t, testNameComesBefore(t, results, "aa", "ba"))
+	assert.True(t, testNameComesBefore(t, results, "A", "ba"))
+	assert.True(t, testNameComesBefore(t, results, "A", "B"))
+
+	// Test descending sort
+	results, err = s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+		ResultPage:  1,
+		ResultLimit: 100,
+		SortColumn:  cloudmigration.SortColumnName,
+		SortOrder:   cloudmigration.SortOrderDesc,
+	})
+	require.NoError(t, err)
+	assert.True(t, testNameComesBefore(t, results, "ba", "B"))
+	assert.True(t, testNameComesBefore(t, results, "aa", "A"))
+	assert.True(t, testNameComesBefore(t, results, "ba", "B"))
+	assert.True(t, testNameComesBefore(t, results, "aa", "A"))
+	assert.True(t, testNameComesBefore(t, results, "ba", "B"))
+	assert.True(t, testNameComesBefore(t, results, "aa", "A"))
+}
+
+func testNameComesBefore(t *testing.T, input []cloudmigration.CloudMigrationResource, first string, second string) bool {
+	t.Helper()
+
+	foundFirst, foundSecond := false, false
+	for _, r := range input {
+		if r.Name == second {
+			foundSecond = true
+			continue
+		}
+		if r.Name == first {
+			if foundSecond {
+				return false
+			}
+			foundFirst = true
+		}
+	}
+	return foundFirst && foundSecond
 }
 
 func TestGetSnapshotList(t *testing.T) {
@@ -499,12 +749,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration test data
 	_, err := testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_session (id, uid, org_id, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
+			cloud_migration_session (uid, org_id, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
 		VALUES
-			(1,'qwerty', 1, ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(2,'asdfgh', 1, ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(3,'zxcvbn', 1, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-			(4,'zxcvbn_org2', 2, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
+			('qwerty', 1, ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('asdfgh', 1, ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('zxcvbn', 1, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			('zxcvbn_org2', 2, ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
  		`,
 		encodeToken("12345"),
 		encodeToken("6789"),
@@ -516,12 +766,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration run test data
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_snapshot (session_uid, uid, created, updated, finished, status)
+			cloud_migration_snapshot (session_uid, uid, created, updated, status)
 		VALUES
-			('qwerty', 'poiuy',  '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('zxcvbn_org2', 'mnbvvc_org2', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
+			('qwerty', 'poiuy',  '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished'),
+			('zxcvbn_org2', 'mnbvvc_org2', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', 'finished');
 		`,
 	)
 	require.NoError(t, err)

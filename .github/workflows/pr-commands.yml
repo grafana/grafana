@@ -5,47 +5,27 @@ on:
       - labeled
       - opened
       - synchronize
+permissions: {}
 concurrency:
   group: pr-commands-${{ github.event.number }}
 jobs:
-  config:
-    runs-on: "ubuntu-latest"
-    outputs:
-      has-secrets: ${{ steps.check.outputs.has-secrets }}
-    steps:
-      - name: "Check for secrets"
-        id: check
-        shell: bash
-        run: |
-          if [ -n "${{ (secrets.GRAFANA_PR_AUTOMATION_APP_ID != '' &&
-                        secrets.GRAFANA_PR_AUTOMATION_APP_PEM != '' &&
-                        secrets.GRAFANA_MISC_STATS_API_KEY != ''
-                        ) || '' }}" ]; then
-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
-          fi
-
   main:
-    needs: config
-    if: needs.config.outputs.has-secrets
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # v4.2.2
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
+          persist-credentials: false
       - name: Install Actions
         run: npm install --production --prefix ./actions
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
       - name: Run Commands
         uses: ./actions/commands
         with:
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           configPath: pr-commands

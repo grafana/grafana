@@ -4,6 +4,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Badge,
@@ -16,7 +17,6 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -94,11 +94,15 @@ const AlertmanagerConfigurationVersionManager = ({
   }
 
   if (isLoading) {
-    return 'Loading...';
+    return <Trans i18nKey="alerting.alertmanager-configuration-version-manager.loading">Loading...</Trans>;
   }
 
   if (!historicalConfigs.length) {
-    return 'No previous configurations';
+    return (
+      <Trans i18nKey="alerting.alertmanager-configuration-version-manager.no-previous-configurations">
+        No previous configurations
+      </Trans>
+    );
   }
 
   // with this function we'll compute the diff with the previous version; that way the user can get some idea of how many lines where changed in each update that was applied
@@ -237,9 +241,15 @@ const AlertmanagerConfigurationVersionManager = ({
       {/* TODO make this modal persist while restore is in progress */}
       <ConfirmModal
         isOpen={confirmRestore}
-        title={'Restore Version'}
-        body={'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'}
-        confirmText={'Yes, restore configuration'}
+        title={t('alerting.alertmanager-configuration-version-manager.title-restore-version', 'Restore version')}
+        body={t(
+          'alerting.alertmanager-configuration-version-manager.body-restore-configuration-version-unsaved-changes',
+          'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'
+        )}
+        confirmText={t(
+          'alerting.alertmanager-configuration-version-manager.confirmText-yes-restore-configuration',
+          'Yes, restore configuration'
+        )}
         onConfirm={() => {
           if (activeRestoreVersion) {
             restoreVersion(activeRestoreVersion);

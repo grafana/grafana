@@ -29,10 +29,25 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
   const styles = useStyles2(getStyles);
 
   if (state.hide === VariableHide.hideVariable) {
+    if (variable.UNSAFE_renderAsHidden) {
+      return <variable.Component model={variable} />;
+    }
+
     return null;
   }
 
   const onPointerDown = (evt: React.PointerEvent) => {
+    if (!isSelectable) {
+      return;
+    }
+
+    // Ignore click if it's inside the value control
+    if (evt.target instanceof Element && !evt.target.closest(`label`)) {
+      // Prevent clearing selection when clicking inside value
+      evt.stopPropagation();
+      return;
+    }
+
     if (isSelectable && onSelect) {
       evt.stopPropagation();
       onSelect(evt);
@@ -84,8 +99,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     // No border for second element (inputs) as label and input border is shared
     '> :nth-child(2)': css({
-      borderTopLeftRadius: 0,
-      borderBottomLeftRadius: 0,
+      borderTopLeftRadius: 'unset',
+      borderBottomLeftRadius: 'unset',
     }),
   }),
   labelWrapper: css({

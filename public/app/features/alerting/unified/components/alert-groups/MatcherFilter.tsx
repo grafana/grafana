@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
@@ -54,14 +54,18 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
             <Tooltip
               content={
                 <div>
-                  Filter alerts using label querying without spaces, ex:
+                  <Trans i18nKey="alerting.matcher-filter.filter-alerts-using-label-querying-without-spaces">
+                    Filter alerts using label querying without spaces, ex:
+                  </Trans>
                   <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
-                  Invalid use of spaces:
+                  <Trans i18nKey="alerting.matcher-filter.invalid-use-of-spaces">Invalid use of spaces:</Trans>
                   <pre>{`{severity= "critical"}`}</pre>
                   <pre>{`{severity ="critical"}`}</pre>
-                  Valid use of spaces:
+                  <Trans i18nKey="alerting.matcher-filter.valid-use-of-spaces">Valid use of spaces:</Trans>
                   <pre>{`{severity=" critical"}`}</pre>
-                  Filter alerts using label querying without braces, ex:
+                  <Trans i18nKey="alerting.matcher-filter.filter-alerts-using-label-querying-without-braces">
+                    Filter alerts using label querying without braces, ex:
+                  </Trans>
                   <pre>{`severity="critical", instance=~"cluster-us-.+"`}</pre>
                 </div>
               }

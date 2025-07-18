@@ -3,6 +3,7 @@ import { FC, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -96,7 +97,13 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 
   if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
     const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
-    return <div>Could not load query editor due to: {errorMessage}</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.recording-rule-editor.error-no-query-editor">
+          Could not load query editor due to: {{ errorMessage }}
+        </Trans>
+      </div>
+    );
   }
 
   const QueryEditor = dataSource.components.QueryEditor;

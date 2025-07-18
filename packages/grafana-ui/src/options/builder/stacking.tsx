@@ -5,14 +5,14 @@ import {
   identityOverrideProcessor,
   SelectableValue,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
 
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { IconButton } from '../../components/IconButton/IconButton';
 import { Input } from '../../components/Input/Input';
 import { Stack } from '../../components/Layout/Stack/Stack';
-import { graphFieldOptions } from '../../components/uPlot/config';
-import { t } from '../../utils/i18n';
+import { getGraphFieldOptions } from '../../components/uPlot/config';
 
 export const StackingEditor = ({
   value,
@@ -61,10 +61,11 @@ export function addStackingConfig(
   defaultConfig?: StackingConfig,
   category = ['Graph styles']
 ) {
+  const graphFieldOptions = getGraphFieldOptions();
   builder.addCustomEditor({
     id: 'stacking',
     path: 'stacking',
-    name: 'Stack series',
+    name: t('grafana-ui.builder.stacking.name-stack-series', 'Stack series'),
     category: category,
     defaultValue: defaultConfig,
     editor: StackingEditor,

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { config, FetchError, isFetchError } from '@grafana/runtime';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { getLibraryPanelByName } from '../../state/api';
@@ -60,7 +60,6 @@ export const AddLibraryPanelContents = ({
     }
   }, [debouncedPanelName, folderUid]);
 
-  console.log('isValidName:', isValidName);
   const invalidInput =
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 
@@ -85,11 +84,7 @@ export const AddLibraryPanelContents = ({
           'Library panel permissions are derived from the folder permissions'
         )}
       >
-        <FolderPicker
-          onChange={(uid) => setFolderUid(uid)}
-          value={folderUid}
-          inputId="share-panel-library-panel-folder-picker"
-        />
+        <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
       </Field>
       {config.featureToggles.newDashboardSharingComponent ? (
         <Stack gap={1} justifyContent={'start'}>

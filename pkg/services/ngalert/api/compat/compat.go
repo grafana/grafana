@@ -207,20 +207,19 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	}
 
 	result := definitions.AlertRuleExport{
-		UID:                         rule.UID,
-		Title:                       rule.Title,
-		For:                         model.Duration(rule.For),
-		KeepFiringFor:               model.Duration(rule.KeepFiringFor),
-		Condition:                   cPtr,
-		Data:                        data,
-		DashboardUID:                rule.DashboardUID,
-		PanelID:                     rule.PanelID,
-		NoDataState:                 ndsPtr,
-		ExecErrState:                eesPtr,
-		IsPaused:                    rule.IsPaused,
-		NotificationSettings:        AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
-		Record:                      AlertRuleRecordExportFromRecord(rule.Record),
-		MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
+		UID:                  rule.UID,
+		Title:                rule.Title,
+		For:                  model.Duration(rule.For),
+		KeepFiringFor:        model.Duration(rule.KeepFiringFor),
+		Condition:            cPtr,
+		Data:                 data,
+		DashboardUID:         rule.DashboardUID,
+		PanelID:              rule.PanelID,
+		NoDataState:          ndsPtr,
+		ExecErrState:         eesPtr,
+		IsPaused:             rule.IsPaused,
+		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
+		Record:               AlertRuleRecordExportFromRecord(rule.Record),
 	}
 	if rule.For.Seconds() > 0 {
 		result.ForString = util.Pointer(model.Duration(rule.For).String())
@@ -233,6 +232,9 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	}
 	if rule.Labels != nil {
 		result.Labels = &rule.Labels
+	}
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
+		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
 	}
 
 	return result, nil
@@ -365,6 +367,7 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 		ObjectMatchers:      route.ObjectMatchers,
 		ObjectMatchersSlice: matchers,
 		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(util.Pointer(route.ActiveTimeIntervals)),
 		Continue:            OmitDefault(util.Pointer(route.Continue)),
 		GroupWait:           toStringIfNotNil(route.GroupWait),
 		GroupInterval:       toStringIfNotNil(route.GroupInterval),
@@ -453,12 +456,13 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.Notificat
 	}
 	m := ns[0]
 	return &definitions.AlertRuleNotificationSettings{
-		Receiver:          m.Receiver,
-		GroupBy:           m.GroupBy,
-		GroupWait:         m.GroupWait,
-		GroupInterval:     m.GroupInterval,
-		RepeatInterval:    m.RepeatInterval,
-		MuteTimeIntervals: m.MuteTimeIntervals,
+		Receiver:            m.Receiver,
+		GroupBy:             m.GroupBy,
+		GroupWait:           m.GroupWait,
+		GroupInterval:       m.GroupInterval,
+		RepeatInterval:      m.RepeatInterval,
+		MuteTimeIntervals:   m.MuteTimeIntervals,
+		ActiveTimeIntervals: m.ActiveTimeIntervals,
 	}
 }
 
@@ -478,12 +482,13 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 	}
 
 	return &definitions.AlertRuleNotificationSettingsExport{
-		Receiver:          m.Receiver,
-		GroupBy:           m.GroupBy,
-		GroupWait:         toStringIfNotNil(m.GroupWait),
-		GroupInterval:     toStringIfNotNil(m.GroupInterval),
-		RepeatInterval:    toStringIfNotNil(m.RepeatInterval),
-		MuteTimeIntervals: m.MuteTimeIntervals,
+		Receiver:            m.Receiver,
+		GroupBy:             m.GroupBy,
+		GroupWait:           toStringIfNotNil(m.GroupWait),
+		GroupInterval:       toStringIfNotNil(m.GroupInterval),
+		RepeatInterval:      toStringIfNotNil(m.RepeatInterval),
+		MuteTimeIntervals:   m.MuteTimeIntervals,
+		ActiveTimeIntervals: m.ActiveTimeIntervals,
 	}
 }
 
@@ -494,12 +499,13 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 	}
 	return []models.NotificationSettings{
 		{
-			Receiver:          ns.Receiver,
-			GroupBy:           ns.GroupBy,
-			GroupWait:         ns.GroupWait,
-			GroupInterval:     ns.GroupInterval,
-			RepeatInterval:    ns.RepeatInterval,
-			MuteTimeIntervals: ns.MuteTimeIntervals,
+			Receiver:            ns.Receiver,
+			GroupBy:             ns.GroupBy,
+			GroupWait:           ns.GroupWait,
+			GroupInterval:       ns.GroupInterval,
+			RepeatInterval:      ns.RepeatInterval,
+			MuteTimeIntervals:   ns.MuteTimeIntervals,
+			ActiveTimeIntervals: ns.ActiveTimeIntervals,
 		},
 	}
 }

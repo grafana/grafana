@@ -4,6 +4,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import {
   useStyles2,
@@ -25,9 +26,9 @@ import {
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
-import { LdapPayload, MapKeyCertConfigured, StoreState } from 'app/types';
+import { LdapPayload, MapKeyCertConfigured } from 'app/types/ldap';
+import { StoreState } from 'app/types/store';
 
 import { LdapDrawerComponent } from './LdapDrawer';
 
@@ -136,7 +137,7 @@ export const LdapSettingsPage = () => {
       setIsLoading(false);
     }
     init();
-  }, [reset]);
+  }, [reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Display warning if the feature flag is disabled
