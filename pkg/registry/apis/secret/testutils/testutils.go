@@ -136,7 +136,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 }
 
 type Sut struct {
-	SecureValueService         *service.SecureValueService
+	SecureValueService         contracts.SecureValueService
 	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
 	DecryptStorage             contracts.DecryptStorage
 	DecryptService             service.DecryptService

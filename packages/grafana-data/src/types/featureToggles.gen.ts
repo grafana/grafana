@@ -1050,4 +1050,14 @@ export interface FeatureToggles {
   * Applies OTel formatting templates to displayed logs
   */
   otelLogsFormatting?: boolean;
+  /**
+  * Enables the notification history feature
+  * @default false
+  */
+  alertingNotificationHistory?: boolean;
+  /**
+  * Allows decoupled core plugins to load from the Grafana CDN
+  * @default false
+  */
+  pluginAssetProvider?: boolean;
 }
