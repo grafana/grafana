@@ -6,14 +6,14 @@ import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export function SignInLink() {
   const femt = Boolean(config.featureToggles.multiTenantFrontend);
   const location = useLocation();
   const styles = useStyles2(getStyles);
   let loginUrl = femt
-    ? '/login'
+    ? locationUtil.assureBaseUrl('/login')
     : textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
 
   // Fix for loginUrl starting with "//" which is a scheme relative URL
