@@ -418,6 +418,21 @@ WHERE
   $__unixEpochFilter(epoch_time)
 ```
 
+You may use one or more tags to show them as annotations in a common-separate string.
+
+**Example query using a `time` column with epoch values for a single tag:**
+
+```sql
+SELECT
+  epoch_time as time,
+  metric1 as text,
+  tag1 as tag
+FROM
+  test_data
+WHERE
+  $__unixEpochFilter(epoch_time)
+```
+
 **Example region query using `time` and `timeend` columns with epoch values:**
 
 ```sql
