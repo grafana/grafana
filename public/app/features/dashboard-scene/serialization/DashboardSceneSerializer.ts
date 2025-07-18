@@ -409,7 +409,7 @@ export class V2DashboardSerializer
       'elements' in this.initialSaveModel
         ? Object.values(this.initialSaveModel.elements)
             .filter((e) => e.kind === 'Panel')
-            .map((p) => p.spec.vizConfig.kind)
+            .map((p) => p.spec.vizConfig.group)
         : [];
     const panels = getPanelPluginCounts(panelPluginIds);
     const variables =

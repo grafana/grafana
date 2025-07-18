@@ -287,14 +287,17 @@ func NewDashboardQueryOptionsSpec() *DashboardQueryOptionsSpec {
 
 // +k8s:openapi-gen=true
 type DashboardVizConfigKind struct {
-	// The kind of a VizConfigKind is the plugin ID
-	Kind string                 `json:"kind"`
-	Spec DashboardVizConfigSpec `json:"spec"`
+	Kind string `json:"kind"`
+	// The group is the plugin ID
+	Group   string                 `json:"group"`
+	Version string                 `json:"version"`
+	Spec    DashboardVizConfigSpec `json:"spec"`
 }
 
 // NewDashboardVizConfigKind creates a new DashboardVizConfigKind object.
 func NewDashboardVizConfigKind() *DashboardVizConfigKind {
 	return &DashboardVizConfigKind{
+		Kind: "VizConfig",
 		Spec: *NewDashboardVizConfigSpec(),
 	}
 }
@@ -302,9 +305,8 @@ func NewDashboardVizConfigKind() *DashboardVizConfigKind {
 // --- Kinds ---
 // +k8s:openapi-gen=true
 type DashboardVizConfigSpec struct {
-	PluginVersion string                     `json:"pluginVersion"`
-	Options       map[string]interface{}     `json:"options"`
-	FieldConfig   DashboardFieldConfigSource `json:"fieldConfig"`
+	Options     map[string]interface{}     `json:"options"`
+	FieldConfig DashboardFieldConfigSource `json:"fieldConfig"`
 }
 
 // NewDashboardVizConfigSpec creates a new DashboardVizConfigSpec object.

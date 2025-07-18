@@ -234,9 +234,10 @@
             }
           },
           "vizConfig": {
-            "kind": "timeseries",
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "12.1.0-pre",
             "spec": {
-              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -341,9 +342,10 @@
             }
           },
           "vizConfig": {
-            "kind": "stat",
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "12.1.0-pre",
             "spec": {
-              "pluginVersion": "12.1.0-pre",
               "options": {
                 "colorMode": "value",
                 "graphMode": "area",
@@ -426,9 +428,10 @@
             }
           },
           "vizConfig": {
-            "kind": "timeseries",
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "12.1.0-pre",
             "spec": {
-              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -543,9 +546,10 @@
             }
           },
           "vizConfig": {
-            "kind": "timeseries",
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "12.1.0-pre",
             "spec": {
-              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -675,9 +679,10 @@
             }
           },
           "vizConfig": {
-            "kind": "timeseries",
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "12.1.0-pre",
             "spec": {
-              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],
@@ -801,9 +806,10 @@
             }
           },
           "vizConfig": {
-            "kind": "timeseries",
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "12.1.0-pre",
             "spec": {
-              "pluginVersion": "12.1.0-pre",
               "options": {
                 "legend": {
                   "calcs": [],

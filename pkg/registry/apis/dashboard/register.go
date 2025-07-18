@@ -159,6 +159,7 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
 		// If dashboards v2 is enabled, we want to use v2alpha1 as the default API version.
 		return []schema.GroupVersion{
+			dashv2alpha2.DashboardResourceInfo.GroupVersion(),
 			dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			dashv0.DashboardResourceInfo.GroupVersion(),
 			dashv1.DashboardResourceInfo.GroupVersion(),
@@ -169,8 +170,8 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	return []schema.GroupVersion{
 		dashv1.DashboardResourceInfo.GroupVersion(),
 		dashv0.DashboardResourceInfo.GroupVersion(),
-		dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 		dashv2alpha2.DashboardResourceInfo.GroupVersion(),
+		dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 	}
 }
 

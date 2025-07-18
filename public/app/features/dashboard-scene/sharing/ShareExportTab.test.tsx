@@ -394,7 +394,9 @@ describe('ShareExportTab', () => {
                 links: [],
                 data: defaultQueryGroupKind(),
                 vizConfig: {
-                  kind: 'stat',
+                  kind: 'VizConfig',
+                  group: '',
+                  version: '1.0.0',
                   spec: defaultVizConfigSpec(),
                 },
               },

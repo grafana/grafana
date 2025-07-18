@@ -184,14 +184,15 @@ export const handyTestingSchema: Spec = {
         title: 'Test Panel',
         id: 1,
         vizConfig: {
-          kind: 'timeseries',
+          kind: 'VizConfig',
+          group: 'timeseries',
+          version: '7.0.0',
           spec: {
             fieldConfig: {
               defaults: {},
               overrides: [],
             },
             options: {},
-            pluginVersion: '7.0.0',
           },
         },
       },

@@ -177,8 +177,8 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
-				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha2.DashboardResourceInfo.GroupVersion(),
+				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
@@ -189,8 +189,8 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
-				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha2.DashboardResourceInfo.GroupVersion(),
+				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
@@ -199,10 +199,10 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 				featuremgmt.FlagDashboardNewLayouts,
 			},
 			expected: []schema.GroupVersion{
+				dashv2alpha2.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
 				dashv1.DashboardResourceInfo.GroupVersion(),
-				dashv2alpha2.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 	}

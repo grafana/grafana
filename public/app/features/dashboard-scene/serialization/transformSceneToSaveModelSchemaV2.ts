@@ -232,9 +232,10 @@ export function vizPanelToSchemaV2(
         },
       },
       vizConfig: {
-        kind: vizPanel.state.pluginId,
+        kind: 'VizConfig',
+        group: vizPanel.state.pluginId,
+        version: vizPanel.state.pluginVersion ?? '',
         spec: {
-          pluginVersion: vizPanel.state.pluginVersion ?? '',
           options: vizPanel.state.options,
           fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
         },
