@@ -64,10 +64,13 @@ export const QueryHeader = ({
         ...query,
         azureLogAnalytics: {
           ...query.azureLogAnalytics,
+          // Builder mode is default unless there is an existing Log Analytics query
+          // that was not created with the builder
           mode:
-            config.featureToggles.azureMonitorLogsBuilderEditor && query.azureLogAnalytics.query !== undefined
-              ? LogsEditorMode.Builder
-              : LogsEditorMode.Raw,
+            (query.azureLogAnalytics?.builderQuery === undefined && query.azureLogAnalytics?.query !== undefined) ||
+            !config.featureToggles.azureMonitorLogsBuilderEditor
+              ? LogsEditorMode.Raw
+              : LogsEditorMode.Builder,
           dashboardTime: true,
         },
       };
