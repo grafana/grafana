@@ -162,6 +162,15 @@ String to interpolate: '${servers:customqueryparam:v-servers:x-}'
 Interpolation result: "v-servers=x-test1&v-servers=x-test2"
 ```
 
+Variable values are always synced to the URL using the query parameter syntax.
+For example:
+
+``` text
+https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&from=now-6h&to=now&timezone=utc&var-Server=CCC&var-MyCustomDashboardVariable=Hello%20World%21
+```
+
+The preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.
+
 ### Raw
 
 Doesn't apply any data source-specific formatting to the variable.
