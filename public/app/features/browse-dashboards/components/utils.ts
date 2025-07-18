@@ -1,5 +1,7 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { DashboardViewItemWithUIItems } from '../types';
 
@@ -56,4 +58,30 @@ export function formatFolderName(folderName?: string): string {
   }
 
   return result;
+}
+
+export async function fetchProvisionedDashboardPath(uid: string): Promise<string | undefined> {
+  try {
+    const dto = await getDashboardAPI().getDashboardDTO(uid);
+    const sourcePath =
+      'meta' in dto
+        ? dto.meta.k8s?.annotations?.[AnnoKeySourcePath] || dto.meta.provisionedExternalId
+        : dto.metadata?.annotations?.[AnnoKeySourcePath];
+    return `${sourcePath}`;
+  } catch (error) {
+    console.error('Error fetching provisioned dashboard path:', error);
+    return undefined;
+  }
+}
+
+export function extractErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    if ('data' in error && error.data && typeof error.data === 'object' && 'message' in error.data) {
+      return String(error.data.message);
+    }
+    if ('message' in error) {
+      return String(error.message);
+    }
+  }
+  return String(error);
 }

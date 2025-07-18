@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -22,6 +24,9 @@ import { findItem } from '../state/utils';
 import { DashboardTreeSelection } from '../types';
 
 import { DescendantCount } from './BrowseActions/DescendantCount';
+import { BulkActionFailureBanner, MoveResultFailed } from './BulkActionFailureBanner';
+import { BulkActionProgress, ProgressState } from './BulkActionProgress';
+import { extractErrorMessage, fetchProvisionedDashboardPath } from './utils';
 
 interface BulkDeleteFormData {
   comment: string;
@@ -48,7 +53,19 @@ type BulkSuccessResponse = Array<{
   item: DeleteRepositoryFilesWithPathApiArg;
   data: DeleteRepositoryFilesWithPathApiResponse;
 }>;
-type BulkFailureResponse = Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; error: unknown }>;
+
+function updateProgress(
+  index: number,
+  total: number,
+  title: string | undefined,
+  setProgress: React.Dispatch<React.SetStateAction<ProgressState | null>>
+) {
+  setProgress({
+    current: index,
+    total,
+    item: title || 'Unknown',
+  });
+}
 
 function FormContent({
   initialValues,
@@ -60,26 +77,21 @@ function FormContent({
   onDismiss,
 }: FormProps) {
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
+  const [progress, setProgress] = useState<ProgressState | null>(null);
+  const [failureResults, setFailureResults] = useState<MoveResultFailed[] | undefined>();
 
   const methods = useForm<BulkDeleteFormData>({ defaultValues: initialValues });
   const childrenByParentUID = useChildrenByParentUIDState();
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
+  const navigate = useNavigate();
 
-  const getPath = (uid: string, isFolder: boolean): string => {
-    // Find the dashboard item by UID
+  const getResourcePath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
     const item = findItem([], childrenByParentUID, uid);
-
     if (!item) {
-      return '';
+      return undefined;
     }
-
-    if (isFolder) {
-      return `${folderPath}/${item.title}/`;
-    } else {
-      const dashboardTitle = item.title;
-      return `${folderPath}/${dashboardTitle}.json`;
-    }
+    return isFolder ? `${folderPath}/${item.title}/` : fetchProvisionedDashboardPath(uid);
   };
 
   const handleSuccess = (successes: BulkSuccessResponse) => {
@@ -91,69 +103,77 @@ function FormContent({
     });
 
     if (workflow === 'branch') {
-      // when push to new branch, we reload page with repo_url
-      const url = new URL(window.location.href);
-      const repoUrl = successes[0].data.urls?.repositoryURL;
-      if (repoUrl) {
-        url.searchParams.set('repo_url', repoUrl);
-        window.location.href = url.toString();
-      }
       onDismiss?.();
+      const prUrl = successes[0].data.urls?.newPullRequestURL;
+      if (prUrl) {
+        navigate({ search: `?new_pull_request_url=${encodeURIComponent(prUrl)}` });
+        return;
+      }
       window.location.reload();
     } else {
-      // if workflow is 'write'
       onDismiss?.();
       window.location.reload();
     }
   };
 
   const handleSubmitForm = async (data: BulkDeleteFormData) => {
-    const buildDeleteParams = (
-      items: Record<string, boolean | undefined>,
-      isFolder: boolean
-    ): DeleteRepositoryFilesWithPathApiArg[] => {
-      return Object.keys(items).map((key) => {
-        const path = getPath(key, isFolder);
-        return {
+    setFailureResults(undefined);
+
+    const targets = collectSelectedItems(selectedItems, childrenByParentUID);
+
+    if (targets.length > 0) {
+      updateProgress(0, targets.length, targets[0].displayName, setProgress);
+    }
+
+    const successes: BulkSuccessResponse = [];
+    const failures: MoveResultFailed[] = [];
+
+    // Iterate through each selected item and delete it
+    // We want sequential processing to avoid overwhelming the API
+    for (let i = 0; i < targets.length; i++) {
+      const { uid, isFolder, displayName } = targets[i];
+      updateProgress(i, targets.length, displayName, setProgress);
+
+      try {
+        // get path in repository
+        const path = await getResourcePath(uid, isFolder);
+        if (!path) {
+          failures.push({
+            status: 'failed',
+            title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
+            errorMessage: 'Path not found - item may not be provisioned',
+          });
+          continue;
+        }
+
+        // build params
+        const deleteParams: DeleteRepositoryFilesWithPathApiArg = {
           name: repository.name,
           path,
           ref: workflow === 'write' ? undefined : data.ref,
-          message: data.comment || `Delete resources ${path}`,
+          message: data.comment || `Delete resource ${path}`,
         };
-      });
-    };
 
-    const deleteRequests = [
-      ...buildDeleteParams(selectedItems.folder, true),
-      ...buildDeleteParams(selectedItems.dashboard, false),
-    ];
-
-    const results = await Promise.allSettled(deleteRequests.map((params) => deleteRepoFile(params).unwrap()));
-
-    const successes: BulkSuccessResponse = [];
-    const failures: BulkFailureResponse = [];
-
-    results.forEach((result, index) => {
-      const item = deleteRequests[index];
-      if (result.status === 'fulfilled') {
-        successes.push({ index, item, data: result.value });
-      } else {
-        failures.push({ index, item, error: result.reason });
+        // perform delete operation
+        const response = await deleteRepoFile(deleteParams).unwrap();
+        successes.push({ index: i, item: deleteParams, data: response });
+      } catch (error: unknown) {
+        failures.push({
+          status: 'failed',
+          title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
+          errorMessage: extractErrorMessage(error),
+        });
       }
-    });
 
-    if (successes.length > 0) {
-      handleSuccess(successes);
+      updateProgress(i + 1, targets.length, targets[i + 1]?.displayName, setProgress);
     }
 
-    if (failures.length > 0) {
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('browse-dashboard.bulk-delete-resources-form.api-error', `Failed to delete ${failures.length} items`),
-          failures.map((f) => `${f.item.path}`).join('\n'),
-        ],
-      });
+    setProgress(null);
+
+    if (successes.length > 0 && failures.length === 0) {
+      handleSuccess(successes);
+    } else if (failures.length > 0) {
+      setFailureResults(failures);
     }
   };
 
@@ -168,6 +188,12 @@ function FormContent({
             <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
           </Box>
 
+          {failureResults && (
+            <BulkActionFailureBanner result={failureResults} onDismiss={() => setFailureResults(undefined)} />
+          )}
+
+          {progress && <BulkActionProgress progress={progress} />}
+
           <ResourceEditFormSharedFields
             resourceType="folder"
             isNew={false}
@@ -177,9 +203,8 @@ function FormContent({
             hidePath
           />
 
-          {/* Delete / Cancel button */}
           <Stack gap={2}>
-            <Button type="submit" disabled={request.isLoading} variant="destructive">
+            <Button type="submit" disabled={request.isLoading || !!failureResults} variant="destructive">
               {request.isLoading
                 ? t('browse-dashboards.bulk-delete-resources-form.button-deleting', 'Deleting...')
                 : t('browse-dashboards.bulk-delete-resources-form.button-delete', 'Delete')}
@@ -227,4 +252,31 @@ export function BulkDeleteProvisionedResource({
       folderPath={folderPath}
     />
   );
+}
+
+// Collect selected dashboard and folder from the DashboardTreeSelection
+// This is used to prepare the items for bulk delete operation.
+function collectSelectedItems(
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
+  childrenByParentUID: ReturnType<typeof useChildrenByParentUIDState>
+) {
+  const targets: Array<{ uid: string; isFolder: boolean; displayName: string }> = [];
+
+  // folders
+  for (const [uid, selected] of Object.entries(selectedItems.folder)) {
+    if (selected) {
+      const item = findItem([], childrenByParentUID, uid);
+      targets.push({ uid, isFolder: true, displayName: item?.title || uid });
+    }
+  }
+
+  // dashboards
+  for (const [uid, selected] of Object.entries(selectedItems.dashboard)) {
+    if (selected) {
+      const item = findItem([], childrenByParentUID, uid);
+      targets.push({ uid, isFolder: false, displayName: item?.title || uid });
+    }
+  }
+
+  return targets;
 }

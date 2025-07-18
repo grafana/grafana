@@ -43,7 +43,7 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
         )}
         onRemove={repoUrl ? () => window.open(textUtil.sanitizeUrl(repoUrl), '_blank') : undefined}
       >
-        <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-saved">
+        <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.new-branch">
           View it in GitHub to see the latest changes.
         </Trans>
       </Alert>

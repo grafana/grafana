@@ -3478,7 +3478,6 @@
   },
   "browse-dashboard": {
     "bulk-delete-resources-form": {
-      "api-error": "",
       "api-success": ""
     }
   },
@@ -3517,11 +3516,18 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "{{count}} {{item}} failed",
+      "failed-alert_other": "{{count}} {{item}} failed"
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:"
+    },
+    "bulk-move-resources-form": {
+      "progress": "Progress: {{current}} of {{total}}"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
@@ -10528,7 +10534,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "This resource is behind the branch in GitHub.",
+      "new-branch": "View it in GitHub to see the latest changes.",
       "not-saved": "The value is not yet saved in the Grafana database",
+      "open-git-hub": "Open in Github",
       "open-pull-request-in-git-hub": "Open pull request in GitHub",
       "view-pull-request-in-git-hub": "View pull request in GitHub"
     },
