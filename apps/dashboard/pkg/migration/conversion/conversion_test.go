@@ -207,14 +207,14 @@ func testConversion(t *testing.T, convertedDash v1.Object, filename, outputDir s
 	require.NoError(t, err, "failed to marshal converted dashboard")
 
 	if _, err := os.Stat(outPath); os.IsNotExist(err) {
-		// ignore gosec G304 as this function is only used in the test process
-		//nolint:gosec
 		err = os.WriteFile(outPath, outBytes, 0644)
 		require.NoError(t, err, "failed to write new output file %s", outPath)
 		t.Logf("✓ Created new output file: %s", filename)
 		return
 	}
 
+	// ignore gosec G304 as this function is only used in the test process
+	//nolint:gosec
 	existingBytes, err := os.ReadFile(outPath)
 	require.NoError(t, err, "failed to read existing output file")
 	require.JSONEq(t, string(existingBytes), string(outBytes), "%s did not match", outPath)
