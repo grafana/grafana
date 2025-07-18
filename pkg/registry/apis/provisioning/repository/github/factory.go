@@ -29,7 +29,7 @@ func (r *Factory) New(ctx context.Context, ghToken string) Client {
 		&oauth2.Token{AccessToken: ghToken},
 	)
 
-	if len(ghToken) >= 0 {
+	if len(ghToken) > 0 {
 		tokenClient := oauth2.NewClient(ctx, tokenSrc)
 		return NewClient(github.NewClient(tokenClient))
 	}
