@@ -17,6 +17,15 @@ export type Props = {
   dataSource: DataSourceSettingsType;
 };
 
+// Allowed plugins for the DataSourceConfigStatus extension point
+const allowedPlugins = [
+  'grafana-lokiexplore-app',
+  'grafana-exploretraces-app',
+  'grafana-metricsdrilldown-app',
+  'grafana-pyroscope-app',
+  'grafana-monitoring-app',
+  'grafana-troubleshooting-app'
+];
 interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   title: string;
   severity?: AlertVariant;
@@ -148,7 +157,24 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
     });
   };
   const styles = useStyles2(getTestingStatusStyles);
-  const { links } = usePluginLinks({
+
+  const { links: allStatusLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigStatus,
+    context: {
+      dataSource: {
+        type: dataSource.type,
+        uid: dataSource.uid,
+        name: dataSource.name,
+        typeName: dataSource.typeName,
+      },
+      testingStatus,
+      severity,
+    },
+    limitPerPlugin: 1,
+  });
+
+  // Existing error-specific extensions (backward compatibility)
+  const { links: allErrorLinks } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.DataSourceConfigErrorStatus,
     context: {
       dataSource: {
@@ -160,6 +186,15 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
     },
     limitPerPlugin: 3,
   });
+
+  // Filter to only allow grafana-owned plugins
+  const statusLinks = allStatusLinks.filter(link => allowedPlugins.includes(link.pluginId));
+  const errorLinks = allErrorLinks.filter(link => allowedPlugins.includes(link.pluginId));
+
+  // Combine links: show error-specific only for errors, status-general for all
+  const extensionLinks = severity === 'error'
+    ? [...statusLinks, ...errorLinks]
+    : statusLinks;
 
   if (message) {
     return (
@@ -182,15 +217,16 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
               ) : null}
             </>
           )}
-          {severity === 'error' && links.length > 0 && (
+          {extensionLinks.length > 0 && (
             <div className={styles.linksContainer}>
-              {links.map((link) => {
+              {extensionLinks.map((link) => {
                 return (
                   <a
                     key={link.id}
                     href={link.path ? sanitizeUrl(link.path) : undefined}
                     onClick={link.onClick}
                     className={styles.pluginLink}
+                    title={link.description}
                   >
                     {link.title}
                   </a>
