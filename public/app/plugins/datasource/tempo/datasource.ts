@@ -181,10 +181,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     switch (query.type) {
       case TempoVariableQueryType.LabelNames: {
-        return await this.labelNamesQuery(this.timeRangeForTags, range);
+        return await this.labelNamesQuery(range);
       }
       case TempoVariableQueryType.LabelValues: {
-        return this.labelValuesQuery(query.label, this.timeRangeForTags, range);
+        return this.labelValuesQuery(query.label, range);
       }
       default: {
         throw Error('Invalid query type: ' + query.type);
@@ -192,22 +192,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   }
 
-  async labelNamesQuery(timeRangeForTags?: number, range?: TimeRange): Promise<Array<{ text: string }>> {
-    await this.languageProvider.start(range, timeRangeForTags);
+  async labelNamesQuery(range?: TimeRange): Promise<Array<{ text: string }>> {
+    await this.languageProvider.start(range, this.timeRangeForTags);
     const tags = this.languageProvider.getAutocompleteTags();
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
   async labelValuesQuery(
     labelName?: string,
-    timeRangeForTags?: number,
     range?: TimeRange
   ): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
 
-    await this.languageProvider.start(range, timeRangeForTags);
+    await this.languageProvider.start(range, this.timeRangeForTags);
 
     let options;
     try {
@@ -228,7 +227,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
       options = await this.languageProvider.getOptionsV2({
         tag: scopeAndTag,
-        timeRangeForTags,
+        timeRangeForTags: this.timeRangeForTags,
         range,
       });
     } catch {
@@ -256,13 +255,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
     const query = this.languageProvider.generateQueryFromFilters({ adhocFilters: options.filters });
-    return this.tagValuesQuery(options.key, query, this.timeRangeForTags, options.timeRange);
+    return this.tagValuesQuery(options.key, query, options.timeRange);
   }
 
   async tagValuesQuery(
     tag: string,
     query: string,
-    timeRangeForTags?: number,
     range?: TimeRange
   ): Promise<Array<{ text: string }>> {
     let options;
@@ -272,7 +270,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       options = await this.languageProvider.getOptionsV2({
         tag,
         query,
-        timeRangeForTags,
+        timeRangeForTags: this.timeRangeForTags,
         range,
       });
     } catch {
