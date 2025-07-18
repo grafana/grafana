@@ -48,9 +48,9 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 export function useResourceStats(repoName: string, isLegacyStorage?: boolean) {
   const resourceStatsQuery = useGetResourceStatsQuery();
   const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
-  
+
   const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
-  
+
   const { resourceCount, resourceCountString, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),
     [filesQuery.data, resourceStatsQuery.data]
@@ -60,10 +60,12 @@ export function useResourceStats(repoName: string, isLegacyStorage?: boolean) {
   const shouldSkipSync = !requiresMigration && resourceCount === 0 && fileCount === 0;
 
   // Format display strings
-  const resourceCountDisplay = resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty');
-  const fileCountDisplay = fileCount > 0 
-    ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: fileCount })
-    : t('provisioning.bootstrap-step.empty', 'Empty');
+  const resourceCountDisplay =
+    resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty');
+  const fileCountDisplay =
+    fileCount > 0
+      ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: fileCount })
+      : t('provisioning.bootstrap-step.empty', 'Empty');
 
   return {
     resourceCount,
