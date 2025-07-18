@@ -59,7 +59,7 @@ export const changePanelsStateAction = createAction<ChangePanelsState>('explore/
 export function changePanelState(
   exploreId: string,
   panel: PreferredVisualisationType,
-  panelState: ExplorePanelsState[PreferredVisualisationType],
+  panelState: ExplorePanelsState[PreferredVisualisationType]
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreItem = getState().explore.panes[exploreId];
@@ -74,7 +74,7 @@ export function changePanelState(
           ...panelsState,
           [panel]: panelState,
         },
-      }),
+      })
     );
   };
 }
@@ -88,7 +88,7 @@ interface ChangeCorrelationHelperData {
 }
 
 export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
-  'explore/changeCorrelationHelperData',
+  'explore/changeCorrelationHelperData'
 );
 
 /**
@@ -158,7 +158,7 @@ export const initializeExplore = createAsyncThunk(
       correlationHelperData,
       eventBridge,
     }: InitializeExploreOptions,
-    { dispatch, getState, fulfillWithValue },
+    { dispatch, getState, fulfillWithValue }
   ) => {
     let instance = undefined;
     let history: HistoryItem[] = [];
@@ -178,7 +178,7 @@ export const initializeExplore = createAsyncThunk(
         datasourceInstance: instance,
         history,
         eventBridge,
-      }),
+      })
     );
     if (panelsState !== undefined) {
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
@@ -200,12 +200,12 @@ export const initializeExplore = createAsyncThunk(
         changeCorrelationHelperData({
           exploreId,
           correlationEditorHelperData: correlationHelperData,
-        }),
+        })
       );
     }
 
     return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
-  },
+  }
 );
 
 /**
