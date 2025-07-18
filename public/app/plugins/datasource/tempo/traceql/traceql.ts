@@ -179,11 +179,15 @@ const language: languages.IMonarchLanguage = {
 
     withClause: [
       [/\s+/, ''], // whitespace
-      [/\w+/, { // parameter names
+      [
+        /\w+/,
+        {
+          // parameter names
           cases: {
-            '@withParameters': 'variable'
-          }
-        }],
+            '@withParameters': 'variable',
+          },
+        },
+      ],
       [/=/, 'delimiter'], // operator
       [/\b(true|false)\b/, 'type'], // values
       [/\)/, { token: 'delimiter.bracket', next: '@pop' }], // closing parenthesis - return to previous state

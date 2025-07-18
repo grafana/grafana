@@ -154,7 +154,7 @@ describe('TraceQL grammar', () => {
         name: 'basic span query with regex mismatch',
         query: '{ span.name!~"test" }',
         shouldMatch: true,
-      },      
+      },
       {
         name: 'basic span query with number equality',
         query: '{span.duration=10}',
@@ -252,7 +252,7 @@ describe('TraceQL grammar', () => {
         name: 'negated structural operator sibling query',
         query: '{span.name="parent"} !~ {span.name="child"}',
         shouldMatch: true,
-      },      // Comments
+      }, // Comments
       {
         name: 'query with comment',
         query: '// Find slow requests\n{duration>1s}',
@@ -345,24 +345,24 @@ describe('TraceQL grammar', () => {
 
     testCases.forEach(({ name, query, shouldMatch }) => {
       it(`should ${shouldMatch ? 'match' : 'not match'} ${name}`, () => {
-         const grammar = traceqlGrammar as any;
-         const spanSetPattern = grammar['span-set']?.pattern as RegExp;
-         const withClausePattern = grammar['with-clause']?.pattern as RegExp;
-         const commentPattern = grammar.comment?.pattern as RegExp;
-         
-         const spanSetMatches = spanSetPattern ? (query.match(spanSetPattern) || []).length > 0 : false;
-         const withClauseMatches = withClausePattern ? (query.match(withClausePattern) || []).length > 0 : false;
-         const commentMatches = commentPattern ? (query.match(commentPattern) || []).length > 0 : false;
-         
-         const hasAnyMatch = spanSetMatches || withClauseMatches || commentMatches;
-         
-         if (shouldMatch) {
-           expect(hasAnyMatch).toBe(true);
-         } else {
-           expect(hasAnyMatch).toBe(false);
-         }
-       });
-     });
+        const grammar = traceqlGrammar as any;
+        const spanSetPattern = grammar['span-set']?.pattern as RegExp;
+        const withClausePattern = grammar['with-clause']?.pattern as RegExp;
+        const commentPattern = grammar.comment?.pattern as RegExp;
+
+        const spanSetMatches = spanSetPattern ? (query.match(spanSetPattern) || []).length > 0 : false;
+        const withClauseMatches = withClausePattern ? (query.match(withClausePattern) || []).length > 0 : false;
+        const commentMatches = commentPattern ? (query.match(commentPattern) || []).length > 0 : false;
+
+        const hasAnyMatch = spanSetMatches || withClauseMatches || commentMatches;
+
+        if (shouldMatch) {
+          expect(hasAnyMatch).toBe(true);
+        } else {
+          expect(hasAnyMatch).toBe(false);
+        }
+      });
+    });
   });
 
   describe('With clause validation', () => {
@@ -371,11 +371,11 @@ describe('TraceQL grammar', () => {
       const withClause = grammar['with-clause'];
       expect(withClause).toBeDefined();
       expect(withClause.inside).toBeDefined();
-      
+
       const parameterNameRule = withClause.inside['parameter-name'];
       expect(parameterNameRule).toBeDefined();
       const parameterNamePattern = parameterNameRule.pattern as RegExp;
-      
+
       expect(parameterNamePattern.test('most_recent=')).toBe(true);
       expect(parameterNamePattern.test('invalid_param=')).toBe(true);
       expect(parameterNamePattern.test('123invalid=')).toBe(false);
@@ -386,11 +386,11 @@ describe('TraceQL grammar', () => {
       const withClause = grammar['with-clause'];
       expect(withClause).toBeDefined();
       expect(withClause.inside).toBeDefined();
-      
+
       const parameterValueRule = withClause.inside['parameter-value'];
       expect(parameterValueRule).toBeDefined();
       const parameterValuePattern = parameterValueRule.pattern as RegExp;
-      
+
       expect(parameterValuePattern.test('true')).toBe(true);
       expect(parameterValuePattern.test('false')).toBe(true);
       expect(parameterValuePattern.test('"string_value"')).toBe(true);
@@ -404,11 +404,11 @@ describe('TraceQL grammar', () => {
       const withClause = grammar['with-clause'];
       expect(withClause).toBeDefined();
       expect(withClause.inside).toBeDefined();
-      
+
       const keywordRule = withClause.inside['with-keyword'];
       expect(keywordRule).toBeDefined();
       const keywordPattern = keywordRule.pattern as RegExp;
-      
+
       expect(keywordPattern.test('with')).toBe(true);
       expect(keywordPattern.test('WITH')).toBe(false); // Case sensitive
       expect(keywordPattern.test('width')).toBe(false);
@@ -420,7 +420,7 @@ describe('TraceQL grammar', () => {
       const query = '{span.name="test"} with (most_recent=true) with (other=false)';
       const grammar = traceqlGrammar as any;
       const withClausePattern = grammar['with-clause']?.pattern as RegExp;
-      
+
       if (withClausePattern) {
         // Use global flag to match all occurrences
         const globalPattern = new RegExp(withClausePattern.source, 'g');
@@ -434,7 +434,7 @@ describe('TraceQL grammar', () => {
       const query = '{span.name="test"} with ()';
       const grammar = traceqlGrammar as any;
       const withClausePattern = grammar['with-clause']?.pattern as RegExp;
-      
+
       if (withClausePattern) {
         const matches = query.match(withClausePattern);
         expect(matches).not.toBeNull();
