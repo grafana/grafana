@@ -22,6 +22,7 @@ import { FinishStep } from './FinishStep';
 import { useStepStatus } from './StepStatusContext';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
+import { useResourceStats } from './hooks/useResourceStats';
 import { RepoType, WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
@@ -58,7 +59,6 @@ const getSteps = (): Array<Step<WizardStep>> => {
 export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
-  const [requiresMigration, setRequiresMigration] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -94,6 +94,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const repoName = watch('repositoryName');
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
+  const { shouldSkipSync } = useResourceStats(repoName || '', settingsQuery.data?.legacyStorage);
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
@@ -144,9 +145,18 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         return t('provisioning.wizard.button-next', 'Finish');
       }
 
+      // If on bootstrap step and should skip sync, show finish step name
+      if (currentStep === 'bootstrap' && shouldSkipSync) {
+        const finishStepIndex = stepIndex + 2;
+        if (finishStepIndex < steps.length) {
+          return steps[finishStepIndex].name;
+        }
+        return t('provisioning.wizard.button-next', 'Finish');
+      }
+
       return steps[stepIndex + 1].name;
     },
-    [steps]
+    [steps, shouldSkipSync]
   );
 
   const handleNext = async () => {
@@ -156,7 +166,20 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     if (isLastStep) {
       navigate(PROVISIONING_URL);
     } else {
-      setActiveStep(steps[currentStepIndex + 1].id);
+      let nextStepIndex = currentStepIndex + 1;
+      
+      // Skip synchronize step if no sync is needed
+      if (activeStep === 'bootstrap' && shouldSkipSync) {
+        nextStepIndex = currentStepIndex + 2; // Skip to finish step
+      }
+      
+      // Ensure we don't go beyond the last step
+      if (nextStepIndex >= steps.length) {
+        navigate(PROVISIONING_URL);
+        return;
+      }
+      
+      setActiveStep(steps[nextStepIndex].id);
       setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
       setStepStatusInfo({ status: 'idle' });
     }
@@ -249,14 +272,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && (
                 <BootstrapStep
-                  onOptionSelect={setRequiresMigration}
+                  onOptionSelect={() => {}} // No longer needed
                   settingsData={settingsQuery.data}
                   repoName={repoName ?? ''}
                 />
               )}
               {activeStep === 'synchronize' && (
                 <SynchronizeStep
-                  requiresMigration={requiresMigration}
                   isLegacyStorage={Boolean(settingsQuery.data?.legacyStorage)}
                 />
               )}

@@ -1,0 +1,77 @@
+import { useMemo } from 'react';
+
+import { t } from '@grafana/i18n';
+import {
+  GetRepositoryFilesApiResponse,
+  GetResourceStatsApiResponse,
+  useGetRepositoryFilesQuery,
+  useGetResourceStatsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
+
+/**
+ * Calculates resource statistics from API responses
+ */
+function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetResourceStatsApiResponse) {
+  const fileCount =
+    files?.items?.reduce((count, file) => {
+      const path = file.path ?? '';
+      return path.endsWith('.json') || path.endsWith('.yaml') ? count + 1 : count;
+    }, 0) ?? 0;
+
+  let counts: string[] = [];
+  let resourceCount = 0;
+
+  stats?.instance?.forEach((stat) => {
+    switch (stat.group) {
+      case 'folders':
+      case 'folder.grafana.app':
+        resourceCount += stat.count;
+        counts.push(`${stat.count} ${stat.count > 1 ? 'folders' : 'folder'}`);
+        break;
+      case 'dashboard.grafana.app':
+        resourceCount += stat.count;
+        counts.push(`${stat.count} ${stat.count > 1 ? 'dashboards' : 'dashboard'}`);
+        break;
+    }
+  });
+
+  return {
+    fileCount,
+    resourceCount,
+    resourceCountString: counts.join(',\n'),
+  };
+}
+
+/**
+ * Hook that provides resource statistics and sync logic
+ */
+export function useResourceStats(repoName: string, isLegacyStorage?: boolean) {
+  const resourceStatsQuery = useGetResourceStatsQuery();
+  const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
+  
+  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
+  
+  const { resourceCount, resourceCountString, fileCount } = useMemo(
+    () => getResourceStats(filesQuery.data, resourceStatsQuery.data),
+    [filesQuery.data, resourceStatsQuery.data]
+  );
+
+  const requiresMigration = Boolean(isLegacyStorage) || resourceCount > 0;
+  const shouldSkipSync = !requiresMigration && resourceCount === 0 && fileCount === 0;
+
+  // Format display strings
+  const resourceCountDisplay = resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty');
+  const fileCountDisplay = fileCount > 0 
+    ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: fileCount })
+    : t('provisioning.bootstrap-step.empty', 'Empty');
+
+  return {
+    resourceCount,
+    resourceCountString: resourceCountDisplay,
+    fileCount,
+    fileCountString: fileCountDisplay,
+    isLoading,
+    requiresMigration,
+    shouldSkipSync,
+  };
+}

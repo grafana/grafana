@@ -1,16 +1,13 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import {
-  RepositoryViewList,
-  useGetRepositoryFilesQuery,
-  useGetResourceStatsQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useStepStatus } from './StepStatusContext';
-import { getResourceStats, useModeOptions } from './actions';
+import { useModeOptions } from './hooks/useModeOptions';
+import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
 export interface Props {
@@ -30,17 +27,13 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const resourceStats = useGetResourceStatsQuery();
-  const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
   const selectedTarget = watch('repository.sync.target');
   const options = useModeOptions(repoName, settingsData);
   const { target } = options[0];
-  const { resourceCount, resourceCountString, fileCount } = useMemo(
-    () => getResourceStats(filesQuery.data, resourceStats.data),
-    [filesQuery.data, resourceStats.data]
+  const { resourceCountString, fileCountString, isLoading, requiresMigration } = useResourceStats(
+    repoName,
+    settingsData?.legacyStorage
   );
-  const requiresMigration = settingsData?.legacyStorage || resourceCount > 0;
-  const isLoading = resourceStats.isLoading || filesQuery.isLoading;
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -85,20 +78,14 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 <Trans i18nKey="provisioning.bootstrap-step.grafana">Grafana instance</Trans>
               </Text>
               <Stack direction="row" gap={2}>
-                <Text variant="h4">
-                  {resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty')}
-                </Text>
+                <Text variant="h4">{resourceCountString}</Text>
               </Stack>
             </Stack>
             <Stack direction="column" gap={1} alignItems="center">
               <Text color="secondary">
                 <Trans i18nKey="provisioning.bootstrap-step.ext-storage">External storage</Trans>
               </Text>
-              <Text variant="h4">
-                {fileCount > 0
-                  ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: fileCount })
-                  : t('provisioning.bootstrap-step.empty', 'Empty')}
-              </Text>
+              <Text variant="h4">{fileCountString}</Text>
             </Stack>
           </Stack>
         </Box>

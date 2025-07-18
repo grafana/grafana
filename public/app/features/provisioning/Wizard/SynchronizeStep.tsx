@@ -8,18 +8,20 @@ import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioni
 import { JobStatus } from '../Job/JobStatus';
 
 import { useStepStatus } from './StepStatusContext';
+import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
-  requiresMigration: boolean;
   isLegacyStorage?: boolean;
 }
 
-export function SynchronizeStep({ requiresMigration, isLegacyStorage }: SynchronizeStepProps) {
+export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
   const { setStepStatusInfo } = useStepStatus();
   const [createJob] = useCreateRepositoryJobsMutation();
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const repoType = watch('repository.type');
+  const repoName = watch('repositoryName') || '';
+  const { requiresMigration } = useResourceStats(repoName, isLegacyStorage);
   const supportsHistory = repoType === 'github' && isLegacyStorage;
   const [job, setJob] = useState<Job>();
 
