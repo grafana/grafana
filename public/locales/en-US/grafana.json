@@ -4098,6 +4098,9 @@
       "request-data-source": "Request a new data source",
       "roadmap": "View roadmap"
     },
+    "connections-home-page": {
+      "welcome-to-connections": "Welcome to Connections"
+    },
     "connections-redirect-notice": {
       "aria-label-link-to-connections": "Link to Connections",
       "body": "Data sources have a new home! You can discover new data sources or manage existing ones in the Connections page, accessible from the main menu.",
