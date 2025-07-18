@@ -32,22 +32,46 @@ func (m *MockDualWriter) ReadFromUnified(ctx context.Context, gr schema.GroupRes
 	return args.Bool(0), args.Error(1)
 }
 
-// Mock ResourceIndexClient
+// Mock ResourceIndexClient with enhanced timeout testing capabilities
 type MockResourceIndexClient struct {
 	mock.Mock
-	searchCalled chan struct{}
-	statsCalled  chan struct{}
+	searchCalled    chan struct{}
+	statsCalled     chan struct{}
+	searchDelay     time.Duration
+	statsDelay      time.Duration
+	contextCanceled chan context.Context
 }
 
 func NewMockResourceIndexClient() *MockResourceIndexClient {
 	return &MockResourceIndexClient{
-		searchCalled: make(chan struct{}, 1),
-		statsCalled:  make(chan struct{}, 1),
+		searchCalled:    make(chan struct{}, 1),
+		statsCalled:     make(chan struct{}, 1),
+		contextCanceled: make(chan context.Context, 10), // Buffer for multiple calls
 	}
+}
+
+func (m *MockResourceIndexClient) SetSearchDelay(delay time.Duration) {
+	m.searchDelay = delay
+}
+
+func (m *MockResourceIndexClient) SetStatsDelay(delay time.Duration) {
+	m.statsDelay = delay
 }
 
 func (m *MockResourceIndexClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	args := m.Called(ctx, in, opts)
+
+	// Simulate delay if configured
+	if m.searchDelay > 0 {
+		select {
+		case <-time.After(m.searchDelay):
+			// Delay completed normally
+		case <-ctx.Done():
+			// Context was canceled during delay
+			m.contextCanceled <- ctx
+			return nil, ctx.Err()
+		}
+	}
 
 	// Signal that Search was called
 	select {
@@ -60,6 +84,18 @@ func (m *MockResourceIndexClient) Search(ctx context.Context, in *resourcepb.Res
 
 func (m *MockResourceIndexClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	args := m.Called(ctx, in, opts)
+
+	// Simulate delay if configured
+	if m.statsDelay > 0 {
+		select {
+		case <-time.After(m.statsDelay):
+			// Delay completed normally
+		case <-ctx.Done():
+			// Context was canceled during delay
+			m.contextCanceled <- ctx
+			return nil, ctx.Err()
+		}
+	}
 
 	// Signal that GetStats was called
 	select {
@@ -239,6 +275,79 @@ func TestSearchWrapper_Search(t *testing.T) {
 		legacyClient.AssertExpectations(t)
 		unifiedClient.AssertExpectations(t)
 	})
+
+	t.Run("background request times out after 500ms", func(t *testing.T) {
+		ctx := testutil.NewDefaultTestContext(t)
+		dual := &MockDualWriter{}
+		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
+
+		dual.On("ReadFromUnified", mock.Anything, gr).Return(false, nil)
+		legacyClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+
+		// Configure unified client to take longer than the 500ms timeout
+		unifiedClient.SetSearchDelay(600 * time.Millisecond) // Longer than 500ms timeout
+		unifiedClient.On("Search", mock.Anything, req, mock.Anything).Return((*resourcepb.ResourceSearchResponse)(nil), context.DeadlineExceeded)
+
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+
+		start := time.Now()
+		resp, err := wrapper.Search(ctx, req)
+		mainRequestDuration := time.Since(start)
+
+		// Main request should succeed quickly despite background timeout
+		require.NoError(t, err)
+		assert.Equal(t, expectedResponse, resp)
+		assert.Less(t, mainRequestDuration, 50*time.Millisecond, "Main request should not be blocked by background timeout")
+
+		// Wait for background context to be canceled
+		select {
+		case canceledCtx := <-unifiedClient.contextCanceled:
+			assert.Error(t, canceledCtx.Err(), "Background context should be canceled")
+			assert.Equal(t, context.DeadlineExceeded, canceledCtx.Err())
+		case <-time.After(700 * time.Millisecond):
+			t.Fatal("Background request should have been canceled due to timeout")
+		}
+
+		dual.AssertExpectations(t)
+		legacyClient.AssertExpectations(t)
+		unifiedClient.AssertExpectations(t)
+	})
+
+	t.Run("background request completes successfully when within timeout", func(t *testing.T) {
+		ctx := testutil.NewDefaultTestContext(t)
+		dual := &MockDualWriter{}
+		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
+
+		dual.On("ReadFromUnified", mock.Anything, gr).Return(false, nil)
+		legacyClient.On("Search", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+
+		// Configure unified client to respond within the 500ms timeout
+		unifiedClient.SetSearchDelay(100 * time.Millisecond) // Well within 500ms timeout
+		unifiedClient.On("Search", mock.Anything, req, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil)
+
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+
+		start := time.Now()
+		resp, err := wrapper.Search(ctx, req)
+		mainRequestDuration := time.Since(start)
+
+		// Main request should succeed quickly
+		require.NoError(t, err)
+		assert.Equal(t, expectedResponse, resp)
+		assert.Less(t, mainRequestDuration, 50*time.Millisecond, "Main request should not be blocked")
+
+		// Wait for successful background call
+		select {
+		case <-unifiedClient.searchCalled:
+			// Background call completed successfully
+		case <-time.After(200 * time.Millisecond):
+			t.Fatal("Expected successful background call")
+		}
+
+		dual.AssertExpectations(t)
+		legacyClient.AssertExpectations(t)
+		unifiedClient.AssertExpectations(t)
+	})
 }
 
 func TestSearchWrapper_GetStats(t *testing.T) {
@@ -290,6 +399,43 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 			// Background call was made
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("Background unified client GetStats call was not made within timeout")
+		}
+
+		dual.AssertExpectations(t)
+		legacyClient.AssertExpectations(t)
+		unifiedClient.AssertExpectations(t)
+	})
+
+	t.Run("background GetStats request times out after 500ms", func(t *testing.T) {
+		ctx := testutil.NewDefaultTestContext(t)
+		dual := &MockDualWriter{}
+		featuresWithFlag := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled)
+
+		dual.On("ReadFromUnified", mock.Anything, gr).Return(false, nil)
+		legacyClient.On("GetStats", mock.Anything, req, mock.Anything).Return(expectedResponse, nil)
+
+		// Configure unified client to take longer than the 500ms timeout
+		unifiedClient.SetStatsDelay(600 * time.Millisecond) // Longer than 500ms timeout
+		unifiedClient.On("GetStats", mock.Anything, req, mock.Anything).Return((*resourcepb.ResourceStatsResponse)(nil), context.DeadlineExceeded)
+
+		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, featuresWithFlag, gr)
+
+		start := time.Now()
+		resp, err := wrapper.GetStats(ctx, req)
+		mainRequestDuration := time.Since(start)
+
+		// Main request should succeed quickly despite background timeout
+		require.NoError(t, err)
+		assert.Equal(t, expectedResponse, resp)
+		assert.Less(t, mainRequestDuration, 50*time.Millisecond, "Main request should not be blocked by background timeout")
+
+		// Wait for background context to be canceled
+		select {
+		case canceledCtx := <-unifiedClient.contextCanceled:
+			assert.Error(t, canceledCtx.Err(), "Background context should be canceled")
+			assert.Equal(t, context.DeadlineExceeded, canceledCtx.Err())
+		case <-time.After(700 * time.Millisecond):
+			t.Fatal("Background request should have been canceled due to timeout")
 		}
 
 		dual.AssertExpectations(t)

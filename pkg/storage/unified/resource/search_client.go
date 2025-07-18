@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"time"
 
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -9,6 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
+
+const (
+	// backgroundRequestTimeout is the timeout for background shadow traffic requests
+	backgroundRequestTimeout = 500 * time.Millisecond
 )
 
 type DualWriter interface {
@@ -59,16 +65,18 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 	// If dual reader feature flag is enabled, and legacy is the main storage,
 	// make a background call to unified
 	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) && !unified {
-		// ignore parent cancelation
+		// Create background context with timeout but ignore parent cancelation
 		ctxBg := context.WithoutCancel(ctx)
+		ctxBgWithTimeout, cancel := context.WithTimeout(ctxBg, backgroundRequestTimeout)
 
 		// Make background call without blocking the main request
 		go func() {
-			_, bgErr := s.unifiedClient.GetStats(ctxBg, in, opts...)
+			defer cancel() // Ensure we clean up the context
+			_, bgErr := s.unifiedClient.GetStats(ctxBgWithTimeout, in, opts...)
 			if bgErr != nil {
-				s.logger.Error("Background GetStats call to unified failed", "error", bgErr)
+				s.logger.Error("Background GetStats call to unified failed", "error", bgErr, "timeout", backgroundRequestTimeout)
 			} else {
-				s.logger.Debug("Background GetStats call to unified succeeded")
+				s.logger.Debug("Background GetStats call to unified succeeded", "timeout", backgroundRequestTimeout)
 			}
 		}()
 	}
@@ -90,16 +98,18 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 	// If dual reader feature flag is enabled, and legacy is the main storage,
 	// make a background call to unified
 	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) && !unified {
-		// ignore parent cancelation
+		// Create background context with timeout but ignore parent cancelation
 		ctxBg := context.WithoutCancel(ctx)
+		ctxBgWithTimeout, cancel := context.WithTimeout(ctxBg, backgroundRequestTimeout)
 
 		// Make background call without blocking the main request
 		go func() {
-			_, bgErr := s.unifiedClient.Search(ctxBg, in, opts...)
+			defer cancel() // Ensure we clean up the context
+			_, bgErr := s.unifiedClient.Search(ctxBgWithTimeout, in, opts...)
 			if bgErr != nil {
-				s.logger.Error("Background Search call to unified failed", "error", bgErr)
+				s.logger.Error("Background Search call to unified failed", "error", bgErr, "timeout", backgroundRequestTimeout)
 			} else {
-				s.logger.Debug("Background Search call to unified succeeded")
+				s.logger.Debug("Background Search call to unified succeeded", "timeout", backgroundRequestTimeout)
 			}
 		}()
 	}
