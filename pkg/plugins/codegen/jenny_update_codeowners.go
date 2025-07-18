@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
 )
 
-const generatedSchemas = "packages/grafana-schema/src/**/*%s*"
+const generatedSchemas = "packages/grafana-schema/src/**/%s"
 const ownerRegex = `^\/(.+?) ((?:@\S+\s*)+)$`
 
 type UpdateCodeOwners struct {
