@@ -15,6 +15,6 @@ fi
 if [ "$BASE_URL" != "" ]; then
     echo -e "BASE_URL set, skipping starting server"
 else
-  ./scripts/grafana-server/start-server $LICENSE_PATH 2>&1 > scripts/grafana-server/server.log
+  ./scripts/grafana-server/start-server $LICENSE_PATH > scripts/grafana-server/server.log
 fi
 
