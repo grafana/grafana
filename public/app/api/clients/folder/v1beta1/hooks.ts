@@ -159,8 +159,8 @@ function combinedState(
   needsUserData: boolean
 ) {
   const results = needsUserData
-    ? [result, resultParents, resultAccess]
-    : [result, resultParents, resultAccess, resultUserDisplay];
+    ? [result, resultParents, resultAccess, resultUserDisplay]
+    : [result, resultParents, resultAccess];
   return {
     isLoading: results.some((r) => r.isLoading),
     isFetching: results.some((r) => r.isFetching),
