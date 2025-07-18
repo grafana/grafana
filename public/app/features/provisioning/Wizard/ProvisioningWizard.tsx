@@ -66,7 +66,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError } = useStepStatus();
 
-  const settingsQuery = useGetFrontendSettingsQuery();
+  const { data } = useGetFrontendSettingsQuery();
+  const isLegacyStorage = Boolean(data?.legacyStorage);
   const navigate = useNavigate();
 
   const steps = getSteps();
@@ -92,14 +93,15 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     handleSubmit,
   } = methods;
 
-  const [repoName, repoType] = watch(['repositoryName', 'repository.type']);
+  const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
-  const { shouldSkipSync } = useResourceStats(repoName || '', settingsQuery.data?.legacyStorage);
+  const { shouldSkipSync, requiresMigration } = useResourceStats(repoName, isLegacyStorage);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
-    repoName: repoName || '',
-    isLegacyStorage: settingsQuery.data?.legacyStorage,
+    repoName: repoName,
+    requiresMigration,
     repoType,
+    isLegacyStorage,
     setStepStatusInfo,
   });
 
@@ -108,7 +110,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   // A different repository is marked with instance target -- nothing will succeed
   useEffect(() => {
-    if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
+    if (data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [
@@ -118,7 +120,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       navigate(PROVISIONING_URL);
     }
-  }, [navigate, repoName, settingsQuery.data?.items]);
+  }, [navigate, repoName, data?.items]);
 
   const handleRepositoryDeletion = async (name: string) => {
     try {
@@ -188,7 +190,6 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         }
       }
 
-      // Ensure we don't go beyond the last step
       if (nextStepIndex >= steps.length) {
         navigate(PROVISIONING_URL);
         return;
@@ -285,12 +286,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
-              {activeStep === 'bootstrap' && (
-                <BootstrapStep settingsData={settingsQuery.data} repoName={repoName ?? ''} />
-              )}
-              {activeStep === 'synchronize' && (
-                <SynchronizeStep isLegacyStorage={Boolean(settingsQuery.data?.legacyStorage)} />
-              )}
+              {activeStep === 'bootstrap' && <BootstrapStep settingsData={data} repoName={repoName} />}
+              {activeStep === 'synchronize' && <SynchronizeStep isLegacyStorage={isLegacyStorage} />}
               {activeStep === 'finish' && <FinishStep />}
             </div>
 

@@ -9,6 +9,7 @@ import { JobStatus } from '../Job/JobStatus';
 
 import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
+import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
@@ -19,10 +20,12 @@ export function SynchronizeStep({ isLegacyStorage }: SynchronizeStepProps) {
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
   const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
+  const { requiresMigration } = useResourceStats(repoName, isLegacyStorage);
   const { createSyncJob, supportsHistory } = useCreateSyncJob({
     repoName,
-    isLegacyStorage,
+    requiresMigration,
     repoType,
+    isLegacyStorage,
     setStepStatusInfo,
   });
   const [job, setJob] = useState<Job>();

@@ -3,18 +3,22 @@ import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0
 
 import { StepStatusInfo } from '../types';
 
-import { useResourceStats } from './useResourceStats';
-
 export interface UseCreateSyncJobParams {
   repoName: string;
-  isLegacyStorage?: boolean;
+  requiresMigration: boolean;
   repoType?: string;
+  isLegacyStorage?: boolean;
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
-export function useCreateSyncJob({ repoName, isLegacyStorage, repoType, setStepStatusInfo }: UseCreateSyncJobParams) {
+export function useCreateSyncJob({
+  repoName,
+  requiresMigration,
+  repoType,
+  isLegacyStorage,
+  setStepStatusInfo,
+}: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
-  const { requiresMigration } = useResourceStats(repoName, isLegacyStorage);
   const supportsHistory = repoType === 'github' && isLegacyStorage;
 
   const createSyncJob = async (options?: { history?: boolean }) => {

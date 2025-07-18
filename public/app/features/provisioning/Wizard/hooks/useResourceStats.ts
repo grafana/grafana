@@ -26,11 +26,11 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
       case 'folders':
       case 'folder.grafana.app':
         resourceCount += stat.count;
-        counts.push(`${stat.count} ${stat.count > 1 ? 'folders' : 'folder'}`);
+        counts.push(t('provisioning.bootstrap-step.folders-count', '{{count}} folder', { count: stat.count }));
         break;
       case 'dashboard.grafana.app':
         resourceCount += stat.count;
-        counts.push(`${stat.count} ${stat.count > 1 ? 'dashboards' : 'dashboard'}`);
+        counts.push(t('provisioning.bootstrap-step.dashboards-count', '{{count}} dashboard', { count: stat.count }));
         break;
     }
   });
@@ -56,7 +56,7 @@ export function useResourceStats(repoName: string, isLegacyStorage?: boolean) {
     [filesQuery.data, resourceStatsQuery.data]
   );
 
-  const requiresMigration = Boolean(isLegacyStorage) || resourceCount > 0;
+  const requiresMigration = isLegacyStorage || resourceCount > 0;
   const shouldSkipSync = !requiresMigration && resourceCount === 0 && fileCount === 0;
 
   // Format display strings
