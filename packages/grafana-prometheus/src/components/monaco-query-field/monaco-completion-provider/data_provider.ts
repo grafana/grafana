@@ -1,6 +1,7 @@
 import { HistoryItem } from '@grafana/data';
 import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
+import { DEFAULT_COMPLETION_LIMIT } from '../../../constants';
 import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { PromQuery } from '../../../types';
 import { isValidLegacyName } from '../../../utf8_support';
@@ -42,7 +43,10 @@ export class DataProvider {
   readonly getSeriesValues: typeof this.languageProvider.queryLabelValues;
   readonly getAllLabelNames: typeof this.languageProvider.retrieveLabelKeys;
   readonly getLabelValues: typeof this.languageProvider.queryLabelValues;
-  readonly metricNamesSuggestionLimit: number;
+
+  readonly metricNamesSuggestionLimit: number = DEFAULT_COMPLETION_LIMIT;
+  readonly queryLabelKeys: typeof this.languageProvider.queryLabelKeys;
+  readonly queryLabelValues: typeof this.languageProvider.queryLabelValues;
   /**
    * The text that's been typed so far within the current {@link Monaco.Range | Range}.
    *
@@ -56,12 +60,14 @@ export class DataProvider {
     this.languageProvider = params.languageProvider;
     this.historyProvider = params.historyProvider;
     this.inputInRange = '';
-    this.metricNamesSuggestionLimit = this.languageProvider.datasource.metricNamesAutocompleteSuggestionLimit;
     this.suggestionsIncomplete = false;
     this.getSeriesLabels = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.getSeriesValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
     this.getAllLabelNames = this.languageProvider.retrieveLabelKeys.bind(this.languageProvider);
     this.getLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
+
+    this.queryLabelKeys = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
+    this.queryLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
   }
 
   getHistory(): string[] {
