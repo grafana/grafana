@@ -47,7 +47,7 @@ You can use variables in:
 To see variable settings, navigate to **Dashboard Settings > Variables**.
 Click a variable in the list to see its settings.
 
-{{< docs/play title="Templating - Global variables and interpolation" url="https://play.grafana.org/d/HYaGDGIMk/" >}}
+{{< docs/play title="Templating - Interactive dashboard" url="https://play.grafana.org/d/000000056/" >}}
 
 ## Template variables {#templates}
 
@@ -69,9 +69,9 @@ In our documentation and in the application, we typically simply refer to a _tem
 
 The following dashboards in Grafana Play provide examples of template variables:
 
-- [Templating, repeated panels](https://play.grafana.org/d/000000025/) - Using query variables to control how many panels appear.
-- [Templated Dynamic Dashboard](https://play.grafana.org/d/000000056/) - Uses query variables, chained query variables, an interval variable, and a repeated panel.
-- [Templating - Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/)
+- [Templating -  Repeated panels](https://play.grafana.org/d/000000025/) - Using query variables to control how many panels appear in a dashboard.
+- [Templating - Nested variables drill-down](https://play.grafana.org/d/testdata-nested-variables-drilldown/) - Demonstrates how changing one variable value can change the values available in a nested variable.
+- [Templating - Global variables and interpolation](https://play.grafana.org/d/HYaGDGIMk/) - Shows you how the syntax for Grafana variables works.
 
 ## Variable best practices
 
