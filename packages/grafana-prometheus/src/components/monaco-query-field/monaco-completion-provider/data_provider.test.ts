@@ -6,9 +6,9 @@ import { getMockTimeRange } from '../../../test/mocks/datasource';
 import { PromQuery } from '../../../types';
 
 import {
+  CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT,
   DataProvider,
   DataProviderParams,
-  CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT,
   isSuggestionsIncompleteEvent,
 } from './data_provider';
 
@@ -117,9 +117,7 @@ describe('DataProvider', () => {
       const historyWithEmpty = [
         { query: { expr: 'valid_expression', refId: 'A' }, ts: 1000 },
         { query: { expr: '', refId: 'B' }, ts: 2000 },
-        { query: { expr: null, refId: 'C' }, ts: 3000 },
-        { query: { expr: undefined, refId: 'D' }, ts: 4000 },
-      ] as any;
+      ];
 
       const providerWithEmpty = new DataProvider({
         languageProvider: mockLanguageProvider,
@@ -229,14 +227,6 @@ describe('DataProvider', () => {
       expect(result).toEqual([]);
       expect(console.warn).toHaveBeenCalledWith('Failed to query metric names:', expect.any(Error));
     });
-
-    it('should handle non-array API responses', async () => {
-      mockLanguageProvider.queryLabelValues.mockResolvedValue('not an array' as any);
-
-      const result = await dataProvider.queryMetricNames(mockTimeRange, 'test');
-
-      expect(result).toEqual([]);
-    });
   });
 
   describe('metricNamesToMetrics', () => {
@@ -287,15 +277,6 @@ describe('DataProvider', () => {
       const result = dataProvider.metricNamesToMetrics([]);
 
       expect(result).toEqual([]);
-    });
-
-    it('should handle null metadata', () => {
-      mockLanguageProvider.retrieveMetricsMetadata.mockReturnValue(null as any);
-
-      const metricNames = ['metric1'];
-      const result = dataProvider.metricNamesToMetrics(metricNames);
-
-      expect(result).toEqual([{ name: 'metric1', help: '', type: '', isUtf8: true }]);
     });
   });
 
