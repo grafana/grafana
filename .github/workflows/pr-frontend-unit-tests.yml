@@ -90,6 +90,23 @@ jobs:
         TEST_SHARD: ${{ matrix.chunk }}
         TEST_SHARD_TOTAL: 8
 
+  frontend-decoupled-plugin-tests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-latest-8-cores
+    name: "Decoupled plugin tests"
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - run: yarn run plugin:test:ci
+
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.
   # However, if one is skipped, GitHub won't flat-map the shards,
@@ -98,6 +115,7 @@ jobs:
     needs:
       - frontend-unit-tests
       - frontend-unit-tests-enterprise
+      - frontend-decoupled-plugin-tests
     # always() is the best function here.
     # success() || failure() will skip this function if any need is also skipped.
     # That means conditional test suites will fail the entire requirement check.

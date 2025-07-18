@@ -89,6 +89,7 @@
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/bus/ @grafana/grafana-search-and-storage
+/pkg/clientauth/ @grafana/grafana-app-platform-squad
 /pkg/cmd/ @grafana/grafana-backend-group
 /pkg/cmd/grafana-cli/commands/install_command.go @grafana/plugins-platform-backend
 /pkg/cmd/grafana-cli/commands/install_command_test.go @grafana/plugins-platform-backend
@@ -149,6 +150,7 @@
 /pkg/services/hooks/ @grafana/grafana-backend-group
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
+/pkg/services/mtdsclient/ @grafana/grafana-datasources-core-services
 /pkg/services/navtree/ @grafana/grafana-backend-group
 /pkg/services/notifications/ @grafana/grafana-backend-group
 /pkg/services/org/ @grafana/grafana-backend-group
@@ -177,7 +179,6 @@
 /pkg/setting/ @grafana/grafana-backend-services-squad
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
-/pkg/tests/apis/query @grafana/grafana-datasources-core-services
 /pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
@@ -305,6 +306,7 @@
 /devenv/jsonnet/ @grafana/dataviz-squad
 /devenv/local_cdn/ @grafana/frontend-ops
 /devenv/local-npm/ @grafana/frontend-ops
+/devenv/frontend-service/ @grafana/grafana-frontend-platform
 /devenv/setup.sh @grafana/grafana-backend-services-squad
 /devenv/plugins.yaml @grafana/plugins-platform-frontend
 
@@ -626,6 +628,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/cli/ @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
+/scripts/check-frontend-dev.sh @grafana/grafana-frontend-platform
 /scripts/helpers/ @grafana/grafana-developer-enablement-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
@@ -801,6 +804,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/community-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
+/.github/workflows/detect-plugin-extension-changes.yml @grafana/plugins-platform-frontend
 /.github/workflows/documentation-ci.yml @grafana/docs-tooling
 /.github/workflows/deploy-pr-preview.yml @grafana/docs-tooling
 /.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling

@@ -1,5 +1,5 @@
 import Feature from 'ol/Feature';
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
@@ -25,9 +25,11 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
 
   /**
    * Function that configures transformation and returns a transformer
+   * @param map
    * @param options
+   * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<LastPointConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<LastPointConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const point = new Feature({});
     const config = { ...defaultOptions, ...options.config };
 

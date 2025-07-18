@@ -8,21 +8,14 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 )
 
-func newGcmService(t *testing.T) *Service {
+func newGcmService(t *testing.T) cipher.Cipher {
 	t.Helper()
 
 	usageStats := &usagestats.UsageStatsMock{}
-	settings := &setting.Cfg{
-		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          "SdlklWklckeLS",
-			EncryptionProvider: "secretKey.v1",
-		},
-	}
-
-	svc, err := NewEncryptionService(noop.NewTracerProvider().Tracer("test"), usageStats, settings)
+	svc, err := ProvideAESGCMCipherService(noop.NewTracerProvider().Tracer("test"), usageStats)
 	require.NoError(t, err, "failed to set up encryption service")
 	return svc
 }

@@ -18,7 +18,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, TraceLog } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { formatDuration } from '../utils';
@@ -31,24 +31,22 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     AccordianLogs: css({
       label: 'AccordianLogs',
-      border: `1px solid ${autoColor(theme, '#d8d8d8')}`,
       position: 'relative',
       marginBottom: '0.25rem',
     }),
     AccordianLogsHeader: css({
       label: 'AccordianLogsHeader',
-      background: autoColor(theme, '#e4e4e4'),
       color: 'inherit',
-      display: 'block',
-      padding: '0.25rem 0.5rem',
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0.25rem 0.1em',
       '&:hover': {
-        background: autoColor(theme, '#dadada'),
+        background: autoColor(theme, '#e8e8e8'),
       },
     }),
     AccordianLogsContent: css({
       label: 'AccordianLogsContent',
       background: autoColor(theme, '#f0f0f0'),
-      borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
       padding: '0.5rem 0.5rem 0.25rem 0.5rem',
     }),
     AccordianLogsFooter: css({
@@ -90,7 +88,7 @@ export default function AccordianLogs({
     arrow = isOpen ? (
       <Icon name={'angle-down'} className={alignIcon} />
     ) : (
-      <Icon name={'angle-right'} className="u-align-icon" />
+      <Icon name={'angle-right'} className="u-align-icon" style={{ margin: '0 0.25rem 0 0' }} />
     );
     HeaderComponent = 'a';
     headerProps = {
@@ -108,7 +106,7 @@ export default function AccordianLogs({
         <strong>
           <Trans i18nKey="explore.accordian-logs.events">Events</Trans>
         </strong>{' '}
-        ({logs.length})
+        <Counter value={logs.length} variant="secondary" />
       </HeaderComponent>
       {isOpen && (
         <div className={styles.AccordianLogsContent}>

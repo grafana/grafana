@@ -1,5 +1,5 @@
 import { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
@@ -73,7 +73,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     // Interpolate variables in the URL

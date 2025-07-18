@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Lägg till fler"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Varningstillstånd",
       "annotations": "Kommentarer",
@@ -3228,6 +3237,9 @@
       "define-allowed-teams-ids-label": "Definiera tillåtna team-ID",
       "display-name-description": "Kommer att visas på inloggningssidan som ”Logga in med …” Användbart om du använder fler än en identitetsleverantör eller SSO-protokoll.",
       "display-name-label": "Visningsnamn",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Namn på nyckeln som ska användas för användarens e-postsökning inom attributkartan för OAuth2 ID-token.",
       "email-attribute-name-label": "E-postattributnamn",
       "email-attribute-path-description": "JMESPath-uttryck som ska användas för användarens e-postsökning från användarinformationen.",
@@ -3244,6 +3256,11 @@
       "id-token-attribute-name-label": "ID-tokenattributnamn",
       "login-attribute-path-description": "JMESPath-uttryck som ska användas för användarens inloggningssökning från användar-ID-token.",
       "login-attribute-path-label": "Sökväg för inloggningsattribut",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "Klient-ID för den hanterade identiteten för din OAuth2-apps federerade identitetsuppgift.",
       "managed-identity-client-id-label": "FIC klient-ID för hanterad identitet",
       "name-attribute-path-description": "JMESPath-uttryck som ska användas för användarnamnsökning från användar-ID-token.Det här namnet kommer att användas som användarens visningsnamn.",
@@ -3458,6 +3475,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Avbryt",
       "cannot-move-folders": "Mapparna kan inte flyttas",
       "confirmation-text": "Ta bort",
@@ -3476,7 +3495,9 @@
       "move-modal-text": "Denna åtgärd flyttar följande innehåll:",
       "move-modal-title": "Flytta",
       "moving": "Flyttar ...",
-      "new-folder-name-required-phrase": "Mappnamn krävs."
+      "new-folder-name-required-phrase": "Mappnamn krävs.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Nyligen raderat"
@@ -4613,6 +4634,14 @@
     },
     "errors": {
       "failed-to-load": "Det gick inte att ladda instrumentpanelen"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -8638,9 +8667,7 @@
     "share-panel": {
       "config-description": "Skapa en personlig direktlänk för att dela din panel inom din organisation, med följande anpassningsinställningar:",
       "download-image": "Ladda ner bild",
-      "render-image": "Generera bild",
-      "render-image-error": "Det gick inte att rendera panelbild",
-      "render-image-error-description": "Ett fel uppstod vid generering av bilden"
+      "render-image": "Generera bild"
     }
   },
   "live": {
@@ -8808,6 +8835,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11401,6 +11430,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exportera som JSON",
       "share-externally-title": "Dela externt",
       "share-internally-title": "Dela internt",
@@ -11436,6 +11466,19 @@
       "view-button": "Visa JSON",
       "view-button-yaml": "Visa YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Skapa bibliotekspanel."
     },
@@ -11444,7 +11487,7 @@
       "info-text": "Skapa en direktlänk till denna instrumentpanel eller panel, anpassad med alternativen nedan.",
       "link-url": "Länkens webbadress",
       "render-alert": "Tilläggsprogram för bildrendering inte installerat",
-      "render-instructions": "För att rendera en panelbild måste du installera <2>Grafanas bildrenderingstillägg</2>. Kontakta din Grafana-administratör för installation av tillägget.",
+      "render-instructions": "",
       "rendered-image": "Direktlänk till renderad bild",
       "save-alert": "Instrumentpanelen sparades inte",
       "save-dashboard": "För att rendera en panelbild måste du spara instrumentpanelen först.",
@@ -11512,6 +11555,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Panelförhandsgranskning"
     },
