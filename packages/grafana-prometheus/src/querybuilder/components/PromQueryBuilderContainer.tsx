@@ -47,6 +47,10 @@ export function PromQueryBuilderContainer(props: PromQueryBuilderContainerProps)
     );
   }, [query]);
 
+  useEffect(() => {
+    datasource.languageProvider.start(data?.timeRange);
+  }, [data?.timeRange, datasource.languageProvider]);
+
   const onVisQueryChange = (visQuery: PromVisualQuery) => {
     const expr = promQueryModeller.renderQuery(visQuery);
     dispatch(visualQueryChange({ visQuery, expr }));

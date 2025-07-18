@@ -5,7 +5,6 @@ import '@testing-library/jest-dom';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 
-import { DEFAULT_SUGGESTIONS_LIMIT } from '../../constants';
 import { PrometheusDatasource } from '../../datasource';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
@@ -102,8 +101,7 @@ describe('MetricCombobox', () => {
     expect(mockDatasource.languageProvider.queryLabelValues).toHaveBeenCalledWith(
       expect.anything(),
       '__name__',
-      '{__name__=~".*unique.*"}',
-      DEFAULT_SUGGESTIONS_LIMIT
+      '{__name__=~".*unique.*"}'
     );
   });
 
