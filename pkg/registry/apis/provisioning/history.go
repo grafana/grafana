@@ -87,7 +87,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		// TODO: Add history pagination
 		commits, err := versioned.History(ctx, filePath, ref)
 		if err != nil {
-			logger.Debug("failed to get history", "error", err)
+			logger.Error("failed to get history", "error", err)
 			responder.Error(err)
 			return
 		}

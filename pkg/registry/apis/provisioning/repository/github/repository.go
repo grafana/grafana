@@ -60,6 +60,8 @@ func NewGitHub(
 	if err != nil {
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
 	}
+	logger := logging.FromContext(ctx)
+	logger.Debug("initializing GitHub repository", "owner", owner, "repo", repo, "url", config.Spec.GitHub.URL, "branch", config.Spec.GitHub.Branch, "token", token)
 
 	return &githubRepository{
 		config:  config,
@@ -168,11 +170,26 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
+	logger := logging.FromContext(ctx)
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, ErrResourceNotFound) {
+			logger.Debug(
+				"file not found in GitHub repository",
+				"path",
+				finalPath,
+				"ref",
+				ref,
+				"owner",
+				r.owner,
+				"repo",
+				r.repo,
+				"config",
+				r.config.Spec.GitHub,
+			)
+
 			return nil, repository.ErrFileNotFound
 		}
 
