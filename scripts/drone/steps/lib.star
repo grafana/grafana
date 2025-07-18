@@ -834,7 +834,7 @@ def playwright_e2e_tests_step():
         "commands": [
             "npx wait-on@7.0.1 http://$HOST:$PORT",
             "yarn playwright install --with-deps chromium",
-            "yarn e2e:playwright --grep @plugins",
+            "GRAFANA_URL=http://$HOST:$PORT yarn e2e:playwright --grep @plugins",
         ],
     }
 
