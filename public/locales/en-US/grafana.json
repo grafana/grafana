@@ -10793,6 +10793,11 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "sync-job": {
+      "error-no-job-id": "Failed to start job",
+      "error-no-repository-name": "No repository name provided",
+      "error-starting-job": "Error starting job"
+    },
     "sync-repository": {
       "body-edit-configuration": "Edit the configuration",
       "button-edit": "Edit",
@@ -10803,9 +10808,6 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
-      "error-no-job-id": "Failed to start job",
-      "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
     },
