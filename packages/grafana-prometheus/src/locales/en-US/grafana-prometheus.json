@@ -334,10 +334,6 @@
         "title-options": "Options",
         "tooltip-min-step": "An additional lower limit for the step parameter of the Prometheus query and for the <2>{{interval}}</2> and <4>{{rateInterval}}</4> variables."
       },
-      "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "Autocomplete suggestions limited",
-        "tooltip-autocomplete-suggestions-limited": "The number of metric names exceeds the autocomplete limit. Only the {{autocompleteLimit}}-most relevant metrics are displayed. You can adjust the threshold in the data source settings."
-      },
       "prom-query-editor-selector": {
         "body-syntax-error": "There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost.",
         "confirmText-continue": "Continue",
