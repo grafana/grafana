@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
 
 import {
   CoreApp,

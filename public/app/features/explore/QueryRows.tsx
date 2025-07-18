@@ -89,7 +89,9 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
-  const onQueryOpenChanged = (queryStatus?: boolean) => {
+  const onQueryOpenChanged = () => {
+    // Disables compact mode when query is opened.
+    // Compact mode can also be disabled by opening Content Outline.
     changeCompactMode(false);
   };
 
