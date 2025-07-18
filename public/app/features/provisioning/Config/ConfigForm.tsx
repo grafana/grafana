@@ -136,6 +136,23 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 }}
               />
             </Field>
+            {gitFields.tokenUserConfig && (
+              <Field
+                noMargin
+                label={gitFields.tokenUserConfig.label}
+                required={gitFields.tokenUserConfig.required}
+                error={errors?.tokenUser?.message}
+                invalid={!!errors?.tokenUser}
+                description={gitFields.tokenUserConfig.description}
+              >
+                <Input
+                  {...register('tokenUser', {
+                    required: gitFields.tokenUserConfig.validation?.required,
+                  })}
+                  placeholder={gitFields.tokenUserConfig.placeholder}
+                />
+              </Field>
+            )}
             {type === 'github' && <TokenPermissionsInfo />}
             <Field
               noMargin

@@ -66,9 +66,10 @@ async function typeIntoTokenField(user: UserEvent, placeholder: string, value: s
 
 async function fillConnectionForm(
   user: UserEvent,
-  type: 'github' | 'gitlab' | 'bitbucket' | 'local',
+  type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git',
   data: {
     token?: string;
+    tokenUser?: string;
     url?: string;
     branch?: string;
     path?: string;
@@ -79,8 +80,13 @@ async function fillConnectionForm(
       github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
       gitlab: 'glpat-xxxxxxxxxxxxxxxxxxxx',
       bitbucket: 'ATBBxxxxxxxxxxxxxxxx',
+      git: 'token or password',
     };
     await typeIntoTokenField(user, tokenPlaceholders[type], data.token);
+  }
+
+  if ((type === 'bitbucket' || type === 'git') && data.tokenUser) {
+    await user.type(screen.getByPlaceholderText('username'), data.tokenUser);
   }
 
   if (type !== 'local' && data.url) {
@@ -104,7 +110,7 @@ describe('ProvisioningWizard', () => {
       data: {
         items: [],
         legacyStorage: false,
-        availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'local'],
+        availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
       },
       isLoading: false,
       error: null,
@@ -451,6 +457,17 @@ describe('ProvisioningWizard', () => {
       setup(<ProvisioningWizard type="bitbucket" />);
 
       expect(screen.getByText('App Password *')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Branch/i })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
+    });
+
+    it('should render Git-specific fields', async () => {
+      setup(<ProvisioningWizard type="git" />);
+
+      expect(screen.getByText('Access Token *')).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /Username/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Branch/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Path/i })).toBeInTheDocument();
@@ -465,6 +482,34 @@ describe('ProvisioningWizard', () => {
       expect(screen.queryByPlaceholderText('ATBBxxxxxxxxxxxxxxxx')).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /Repository URL/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /Branch/i })).not.toBeInTheDocument();
+    });
+
+    it('should accept tokenUser input for Bitbucket provider', async () => {
+      const { user } = setup(<ProvisioningWizard type="bitbucket" />);
+
+      await fillConnectionForm(user, 'bitbucket', {
+        token: 'test-token',
+        tokenUser: 'test-user',
+        url: 'https://bitbucket.org/test/repo',
+        branch: 'main',
+        path: '/',
+      });
+
+      expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
+    });
+
+    it('should accept tokenUser input for Git provider', async () => {
+      const { user } = setup(<ProvisioningWizard type="git" />);
+
+      await fillConnectionForm(user, 'git', {
+        token: 'test-token',
+        tokenUser: 'test-user',
+        url: 'https://git.example.com/test/repo.git',
+        branch: 'main',
+        path: '/',
+      });
+
+      expect(screen.getByDisplayValue('test-user')).toBeInTheDocument();
     });
   });
 });

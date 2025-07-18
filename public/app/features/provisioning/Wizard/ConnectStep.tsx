@@ -61,6 +61,23 @@ export function ConnectStep() {
             />
           </Field>
 
+          {gitFields.tokenUserConfig && (
+            <Field
+              noMargin
+              label={gitFields.tokenUserConfig.label}
+              required={gitFields.tokenUserConfig.required}
+              description={gitFields.tokenUserConfig.description}
+              error={errors?.repository?.tokenUser?.message}
+              invalid={!!errors?.repository?.tokenUser?.message}
+            >
+              <Input
+                {...register('repository.tokenUser', gitFields.tokenUserConfig.validation)}
+                id="tokenUser"
+                placeholder={gitFields.tokenUserConfig.placeholder}
+              />
+            </Field>
+          )}
+
           <Field
             noMargin
             label={gitFields.urlConfig.label}

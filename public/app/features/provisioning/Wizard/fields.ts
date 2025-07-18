@@ -137,6 +137,19 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         required: t('provisioning.bitbucket.token-required', 'Bitbucket token is required'),
       },
     },
+    tokenUser: {
+      label: t('provisioning.bitbucket.token-user-label', 'Username'),
+      description: t(
+        'provisioning.bitbucket.token-user-description',
+        'The username that will be used to access the repository with the app password'
+      ),
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      placeholder: 'username',
+      required: true,
+      validation: {
+        required: t('provisioning.bitbucket.token-user-required', 'Username is required'),
+      },
+    },
     url: {
       label: t('provisioning.bitbucket.url-label', 'Repository URL'),
       description: t('provisioning.bitbucket.url-description', 'The Bitbucket repository URL'),
@@ -186,6 +199,19 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       required: true,
       validation: {
         required: t('provisioning.git.token-required', 'Git token is required'),
+      },
+    },
+    tokenUser: {
+      label: t('provisioning.git.token-user-label', 'Username'),
+      description: t(
+        'provisioning.git.token-user-description',
+        'The username that will be used to access the repository with the access token'
+      ),
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      placeholder: 'username',
+      required: true,
+      validation: {
+        required: t('provisioning.git.token-user-required', 'Username is required'),
       },
     },
     url: {
@@ -251,6 +277,7 @@ export const getGitProviderFields = (
 ):
   | {
       tokenConfig: FieldConfig;
+      tokenUserConfig?: FieldConfig;
       urlConfig: FieldConfig;
       branchConfig: FieldConfig;
       pathConfig: FieldConfig;
@@ -264,6 +291,7 @@ export const getGitProviderFields = (
 
   // For git providers, these fields are guaranteed to exist
   const tokenConfig = configs.token;
+  const tokenUserConfig = configs.tokenUser; // Optional field, only for some providers
   const urlConfig = configs.url;
   const branchConfig = configs.branch;
   const pathConfig = configs.path;
@@ -275,6 +303,7 @@ export const getGitProviderFields = (
 
   return {
     tokenConfig,
+    tokenUserConfig,
     urlConfig,
     branchConfig,
     pathConfig,
