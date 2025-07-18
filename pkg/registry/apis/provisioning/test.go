@@ -92,7 +92,6 @@ func (s *testConnector) Connect(ctx context.Context, name string, opts runtime.O
 				}
 				repo = tmp
 			}
-
 		}
 
 		if repo == nil {
