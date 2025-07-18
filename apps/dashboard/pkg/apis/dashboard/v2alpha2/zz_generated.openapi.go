@@ -109,6 +109,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardTimeRangeOption":                                                                                                                                                     schema_pkg_apis_dashboard_v2alpha2_DashboardTimeRangeOption(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardTimeSettingsSpec":                                                                                                                                                    schema_pkg_apis_dashboard_v2alpha2_DashboardTimeSettingsSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardTransformationKind":                                                                                                                                                  schema_pkg_apis_dashboard_v2alpha2_DashboardTransformationKind(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardV2alpha2DataQueryKindDatasource":                                                                                                                                     schema_pkg_apis_dashboard_v2alpha2_DashboardV2alpha2DataQueryKindDatasource(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardV2alpha2FieldConfigSourceOverrides":                                                                                                                                  schema_pkg_apis_dashboard_v2alpha2_DashboardV2alpha2FieldConfigSourceOverrides(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardV2alpha2RangeMapOptions":                                                                                                                                             schema_pkg_apis_dashboard_v2alpha2_DashboardV2alpha2RangeMapOptions(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardV2alpha2RegexMapOptions":                                                                                                                                             schema_pkg_apis_dashboard_v2alpha2_DashboardV2alpha2RegexMapOptions(ref),
@@ -595,14 +596,10 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardAnnotationQuerySpec(ref common.
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"datasource": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataSourceRef"),
-						},
-					},
 					"query": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind"),
 						},
 					},
 					"enable": {
@@ -646,7 +643,7 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardAnnotationQuerySpec(ref common.
 					},
 					"legacyOptions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Catch-all field for datasource-specific properties",
+							Description: "Catch-all field for datasource-specific properties. Should not be available in as code tooling.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
@@ -660,11 +657,11 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardAnnotationQuerySpec(ref common.
 						},
 					},
 				},
-				Required: []string{"enable", "hide", "iconColor", "name"},
+				Required: []string{"query", "enable", "hide", "iconColor", "name"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardAnnotationPanelFilter", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataSourceRef"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardAnnotationPanelFilter", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind"},
 	}
 }
 
@@ -1505,10 +1502,29 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardDataQueryKind(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The kind of a DataQueryKind is the datasource type",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.",
+							Ref:         ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardV2alpha2DataQueryKindDatasource"),
 						},
 					},
 					"spec": {
@@ -1526,9 +1542,11 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardDataQueryKind(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"kind", "spec"},
+				Required: []string{"kind", "group", "version", "spec"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardV2alpha2DataQueryKindDatasource"},
 	}
 }
 
@@ -1536,7 +1554,8 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardDataSourceRef(ref common.Refere
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec This type is widely used in the codebase and changing it will have a big impact",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
@@ -2890,11 +2909,6 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardPanelQuerySpec(ref common.Refer
 							Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind"),
 						},
 					},
-					"datasource": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataSourceRef"),
-						},
-					},
 					"refId": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -2914,7 +2928,7 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardPanelQuerySpec(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataSourceRef"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind"},
 	}
 }
 
@@ -3250,11 +3264,6 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardQueryVariableSpec(ref common.Re
 							Format: "",
 						},
 					},
-					"datasource": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataSourceRef"),
-						},
-					},
 					"query": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
@@ -3351,7 +3360,7 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardQueryVariableSpec(ref common.Re
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataSourceRef", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardVariableOption"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataQueryKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardVariableOption"},
 	}
 }
 
@@ -4336,6 +4345,24 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardTransformationKind(ref common.R
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2.DashboardDataTransformerConfig"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2alpha2_DashboardV2alpha2DataQueryKindDatasource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

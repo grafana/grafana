@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Dodaj więcej"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Stan alertu",
       "annotations": "Komentarze",
@@ -3273,6 +3282,11 @@
       "id-token-attribute-name-label": "Nazwa atrybutu tokena identyfikatora",
       "login-attribute-path-description": "Wyrażenie JMESPath używane do wyszukiwania loginu na podstawie tokena identyfikatora użytkownika.",
       "login-attribute-path-label": "Ścieżka atrybutu loginu",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "Identyfikator klienta tożsamości zarządzanej w poświadczeniach tożsamości federacyjnej Twojej aplikacji OAuth2.",
       "managed-identity-client-id-label": "Identyfikator klienta tożsamości zarządzanej FIC",
       "name-attribute-path-description": "Wyrażenie JMESPath używane do wyszukiwania nazwy użytkownika na podstawie tokena identyfikatora użytkownika. \nTa nazwa będzie używana jako nazwa wyświetlana użytkownika.",
@@ -3487,6 +3501,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Anuluj",
       "cannot-move-folders": "Nie można przenosić folderów",
       "confirmation-text": "Usuń",
@@ -3505,7 +3521,9 @@
       "move-modal-text": "To działanie spowoduje przeniesienie następującej zawartości:",
       "move-modal-title": "Przenieś",
       "moving": "Przenoszenie…",
-      "new-folder-name-required-phrase": "Wymagana jest nazwa folderu."
+      "new-folder-name-required-phrase": "Wymagana jest nazwa folderu.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Ostatnio usunięte"

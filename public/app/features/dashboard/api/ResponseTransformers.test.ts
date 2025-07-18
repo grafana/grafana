@@ -1,5 +1,4 @@
 import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   Spec as DashboardV2Spec,
   defaultDataQueryKind,
@@ -9,7 +8,8 @@ import {
   RowsLayoutKind,
   RowsLayoutRowKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,

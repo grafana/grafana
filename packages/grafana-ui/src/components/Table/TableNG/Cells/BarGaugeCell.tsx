@@ -2,8 +2,7 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-import { renderSingleLink } from '../../DataLinksActionsTooltip';
-import { useSingleLink } from '../hooks';
+import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
 import { BarGaugeCellProps } from '../types';
 import { extractPixelValue, getCellOptions, getAlignmentFactor } from '../utils';
 
@@ -47,25 +46,23 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
 
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
 
-  const barGaugeComponent = (
-    <BarGauge
-      width={width}
-      height={height - heightOffset}
-      field={config}
-      display={field.display}
-      text={{ valueSize: 14 }}
-      value={displayValue}
-      orientation={VizOrientation.Horizontal}
-      theme={theme}
-      alignmentFactors={alignmentFactors}
-      itemSpacing={1}
-      lcdCellWidth={8}
-      displayMode={barGaugeMode}
-      valueDisplayMode={valueDisplayMode}
-    />
+  return (
+    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+      <BarGauge
+        width={width}
+        height={height - heightOffset}
+        field={config}
+        display={field.display}
+        text={{ valueSize: 14 }}
+        value={displayValue}
+        orientation={VizOrientation.Horizontal}
+        theme={theme}
+        alignmentFactors={alignmentFactors}
+        itemSpacing={1}
+        lcdCellWidth={8}
+        displayMode={barGaugeMode}
+        valueDisplayMode={valueDisplayMode}
+      />
+    </MaybeWrapWithLink>
   );
-
-  const link = useSingleLink(field, rowIdx);
-
-  return link == null ? barGaugeComponent : renderSingleLink(link, barGaugeComponent);
 };

@@ -41,7 +41,7 @@ import {
   defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
@@ -425,53 +425,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
     return [panelKind, element_identifier];
   } else {
     // PanelKind
-
-    const queries = getPanelQueries(
-      (p.targets as unknown as DataQuery[]) || [],
-      p.datasource || getDefaultDatasource()
-    );
-
-    const transformations = getPanelTransformations(p.transformations || []);
-
-    const panelKind: PanelKind = {
-      kind: 'Panel',
-      spec: {
-        title: p.title || '',
-        description: p.description || '',
-        vizConfig: {
-          kind: 'VizConfig',
-          group: p.type,
-          version: p.pluginVersion!,
-          spec: {
-            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
-            options: p.options as any,
-          },
-        },
-        links:
-          p.links?.map<DataLink>((l) => ({
-            title: l.title,
-            url: l.url || '',
-            targetBlank: l.targetBlank,
-          })) || [],
-        id: p.id!,
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries,
-            transformations,
-            queryOptions: {
-              cacheTimeout: p.cacheTimeout,
-              maxDataPoints: p.maxDataPoints,
-              interval: p.interval,
-              hideTimeOverride: p.hideTimeOverride,
-              queryCachingTTL: p.queryCachingTTL,
-              timeFrom: p.timeFrom,
-              timeShift: p.timeShift,
-            },
-          },
-        },
-      },
-    };
+    const panelKind = buildPanelKind(p);
     return [panelKind, element_identifier];
   }
 }
@@ -520,6 +474,53 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
     };
     return q;
   });
+}
+
+export function buildPanelKind(p: Panel): PanelKind {
+  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource || getDefaultDatasource());
+
+  const transformations = getPanelTransformations(p.transformations || []);
+
+  const panelKind: PanelKind = {
+    kind: 'Panel',
+    spec: {
+      title: p.title || '',
+      description: p.description || '',
+      vizConfig: {
+        kind: 'VizConfig',
+        group: p.type,
+        version: p.pluginVersion!,
+        spec: {
+          fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+          options: p.options as any,
+        },
+      },
+      links:
+        p.links?.map<DataLink>((l) => ({
+          title: l.title,
+          url: l.url || '',
+          targetBlank: l.targetBlank,
+        })) || [],
+      id: p.id!,
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries,
+          transformations,
+          queryOptions: {
+            cacheTimeout: p.cacheTimeout,
+            maxDataPoints: p.maxDataPoints,
+            interval: p.interval,
+            hideTimeOverride: p.hideTimeOverride,
+            queryCachingTTL: p.queryCachingTTL,
+            timeFrom: p.timeFrom,
+            timeShift: p.timeShift,
+          },
+        },
+      },
+    },
+  };
+  return panelKind;
 }
 
 function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {

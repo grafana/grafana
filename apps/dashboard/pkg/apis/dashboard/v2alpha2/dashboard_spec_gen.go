@@ -23,7 +23,7 @@ func NewDashboardAnnotationQueryKind() *DashboardAnnotationQueryKind {
 
 // +k8s:openapi-gen=true
 type DashboardAnnotationQuerySpec struct {
-	Query     *DashboardDataQueryKind         `json:"query,omitempty"`
+	Query     DashboardDataQueryKind          `json:"query"`
 	Enable    bool                            `json:"enable"`
 	Hide      bool                            `json:"hide"`
 	IconColor string                          `json:"iconColor"`
@@ -37,6 +37,7 @@ type DashboardAnnotationQuerySpec struct {
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.
 func NewDashboardAnnotationQuerySpec() *DashboardAnnotationQuerySpec {
 	return &DashboardAnnotationQuerySpec{
+		Query:   *NewDashboardDataQueryKind(),
 		BuiltIn: (func(input bool) *bool { return &input })(false),
 	}
 }
