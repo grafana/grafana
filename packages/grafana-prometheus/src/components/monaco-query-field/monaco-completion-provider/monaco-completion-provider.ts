@@ -51,11 +51,52 @@ export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider,
   timeRange: TimeRange
-): monacoTypes.languages.CompletionItemProvider {
+): { provider: monacoTypes.languages.CompletionItemProvider; state: { isManualTriggerRequested: boolean } } {
+  // Debounce mechanism to delay completions after user stops typing
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const DEBOUNCE_DELAY = 300; // 300ms delay after typing stops
+
+  // Simple local state
+  const state = {
+    isManualTriggerRequested: false,
+    lastTriggeredWordLength: 0,
+    lastTriggeredWord: '',
+  };
+
+  // Track deletion events to reset completion state
+  const setupDeletionTracking = (model: monacoTypes.editor.ITextModel) => {
+    // Listen for content changes to detect deletions
+    model.onDidChangeContent((e) => {
+      // Check if any change was a deletion
+      const hasDeletion = e.changes.some((change) => change.text === '' && change.rangeLength > 0);
+
+      if (hasDeletion) {
+        // Reset completion tracking on deletion
+        state.lastTriggeredWordLength = 0;
+        state.lastTriggeredWord = '';
+
+        // Clear any pending completion timers
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+          debounceTimer = null;
+        }
+      }
+    });
+  };
+
+  let isTrackingSetup = false;
+
   const provideCompletionItems = (
     model: monacoTypes.editor.ITextModel,
-    position: monacoTypes.Position
+    position: monacoTypes.Position,
+    context: monacoTypes.languages.CompletionContext
   ): monacoTypes.languages.ProviderResult<monacoTypes.languages.CompletionList> => {
+    // Set up deletion tracking once per model
+    if (!isTrackingSetup) {
+      setupDeletionTracking(model);
+      isTrackingSetup = true;
+    }
+
     const word = model.getWordAtPosition(position);
     const range =
       word != null
@@ -66,13 +107,81 @@ export function getCompletionProvider(
             endColumn: word.endColumn,
           })
         : monaco.Range.fromPositions(position);
+
+    // Check if we have at least 3 characters typed for word completion
+    // Allow completions for trigger characters (like {, [, etc.) regardless of length
+    const triggerChars = ['{', ',', '[', '(', '=', '~', ' ', '"'];
+    const isTriggeredByChar = triggerChars.some(
+      (char) =>
+        model.getValueInRange({
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: Math.max(1, position.column - 1),
+          endColumn: position.column,
+        }) === char
+    );
+
+    // Check if this is a manual trigger (Ctrl+Space) using our custom flag
+    if (state.isManualTriggerRequested) {
+      state.isManualTriggerRequested = false;
+      return executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word);
+    }
+
+    // For trigger characters, execute immediately without debouncing
+    if (isTriggeredByChar) {
+      return executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word);
+    }
+
+    // For word completions, check if we should trigger based on 3-character increments
+    if (word && word.word.length >= 3) {
+      const currentWord = word.word;
+      const currentWordLength = currentWord.length;
+
+      // Reset tracking if word changed (user moved cursor or started typing a different word)
+      if (state.lastTriggeredWord && !currentWord.startsWith(state.lastTriggeredWord)) {
+        state.lastTriggeredWordLength = 0;
+        state.lastTriggeredWord = '';
+      }
+
+      // Check if we should trigger completion based on 3-character increments
+      const shouldTrigger =
+        (state.lastTriggeredWordLength === 0 && currentWordLength >= 3) || // First 3 characters
+        (state.lastTriggeredWordLength > 0 && currentWordLength >= state.lastTriggeredWordLength + 3); // Next 3 characters
+
+      if (shouldTrigger) {
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+        return new Promise((resolve) => {
+          debounceTimer = setTimeout(() => {
+            state.lastTriggeredWordLength = currentWordLength;
+            state.lastTriggeredWord = currentWord;
+            executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word).then(resolve);
+          }, DEBOUNCE_DELAY);
+        });
+      }
+    }
+
+    // If we don't meet the criteria, return empty suggestions
+    return { suggestions: [], incomplete: false };
+  };
+
+  const executeCompletionLogic = async (
+    model: monacoTypes.editor.ITextModel,
+    position: monacoTypes.Position,
+    range: monacoTypes.Range,
+    dataProvider: DataProvider,
+    timeRange: TimeRange,
+    wordText?: string
+  ): Promise<monacoTypes.languages.CompletionList> => {
     // documentation says `position` will be "adjusted" in `getOffsetAt`
     // i don't know what that means, to be sure i clone it
-
     const positionClone = {
       column: position.column,
       lineNumber: position.lineNumber,
     };
+
     dataProvider.monacoSettings.setInputInRange(model.getValueInRange(range));
 
     // Check to see if the browser supports window.getSelection()
@@ -87,7 +196,7 @@ export function getCompletionProvider(
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
     const completionsPromise =
-      situation != null ? getCompletions(situation, dataProvider, timeRange) : Promise.resolve([]);
+      situation != null ? getCompletions(situation, dataProvider, timeRange, wordText) : Promise.resolve([]);
 
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
@@ -95,27 +204,29 @@ export function getCompletionProvider(
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
       const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
-        kind: getMonacoCompletionItemKind(item.type, monaco),
-        label: item.label,
-        insertText: item.insertText,
-        insertTextRules: item.insertTextRules,
-        detail: item.detail,
-        documentation: item.documentation,
-        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
         range,
-        command: item.triggerOnInsert
-          ? {
-              id: 'editor.action.triggerSuggest',
-              title: '',
-            }
-          : undefined,
+        label: item.label,
+        detail: item.detail,
+        insertText: item.insertText,
+        documentation: item.documentation,
+        insertTextRules: item.insertTextRules,
+        kind: getMonacoCompletionItemKind(item.type, monaco),
+        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+        command: item.triggerOnInsert ? { id: 'editor.action.triggerSuggest', title: '' } : undefined,
       }));
-      return { suggestions, incomplete: dataProvider.monacoSettings.suggestionsIncomplete };
+
+      return {
+        suggestions,
+        incomplete: dataProvider.monacoSettings.suggestionsIncomplete,
+      };
     });
   };
 
   return {
-    triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"'],
-    provideCompletionItems,
+    provider: {
+      triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"'],
+      provideCompletionItems,
+    },
+    state,
   };
 }

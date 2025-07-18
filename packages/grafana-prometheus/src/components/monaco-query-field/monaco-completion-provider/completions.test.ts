@@ -186,7 +186,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
   const timeRange = getMockTimeRange();
 
   it('should return completions for all metric names when the number of metric names is at or below the limit', async () => {
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(metrics.atLimit);
     const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.atLimit.length);
     const situation: Situation = {
       type: situationType,
@@ -233,7 +233,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
 
     // Cross the metric names threshold, without text input
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(metrics.beyondLimit);
     dataProvider.monacoSettings.setInputInRange('');
     await getCompletions(situation, dataProvider, timeRange);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
@@ -251,7 +251,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     };
 
     const testMetrics = ['metric_name_1', 'metric_name_2', 'metric_name_1_with_extra_terms', 'unrelated_metric'];
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(testMetrics);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(testMetrics);
 
     // Test with a complex query (> 4 terms)
     dataProvider.monacoSettings.setInputInRange('metric name 1 with extra terms more');

@@ -1,9 +1,10 @@
-import { HistoryItem } from '@grafana/data';
+import { HistoryItem, TimeRange } from '@grafana/data';
 
-import { DEFAULT_COMPLETION_LIMIT } from '../../../constants';
+import { DEFAULT_COMPLETION_LIMIT, METRIC_LABEL } from '../../../constants';
 import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { removeQuotesIfExist } from '../../../language_utils';
 import { PromQuery } from '../../../types';
-import { isValidLegacyName } from '../../../utf8_support';
+import { escapeForUtf8Support, isValidLegacyName } from '../../../utf8_support';
 
 export const CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT = 'codeModeSuggestionsIncomplete';
 
@@ -60,6 +61,32 @@ export class DataProvider {
     this.queryLabelKeys = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.queryLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
   }
+
+  /**
+   * Queries metric names with optional filtering.
+   * Safely constructs regex patterns and handles errors.
+   */
+  queryMetricNames = async (timeRange: TimeRange, word: string | undefined): Promise<string[]> => {
+    try {
+      let match: string | undefined;
+      if (word) {
+        const escapedWord = escapeForUtf8Support(removeQuotesIfExist(word));
+        match = `{__name__=~".*${escapedWord}.*"}`;
+      }
+
+      const result = await this.languageProvider.queryLabelValues(
+        timeRange,
+        METRIC_LABEL,
+        match,
+        DEFAULT_COMPLETION_LIMIT
+      );
+
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      console.warn('Failed to query metric names:', error);
+      return [];
+    }
+  };
 
   getHistory(): string[] {
     return this.historyProvider.map((h) => h.query.expr).filter(Boolean);
