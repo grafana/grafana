@@ -204,14 +204,3 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:queryparam}'
 Interpolation result: "var-servers=test1&var-servers=test2"
 ```
-
-<!-- seems like this kinda goes with query params
-
-Variable values are always synced to the URL using the syntax `var-<varname>=value`.
-For example:
-
-```
-https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&from=now-6h&to=now&timezone=utc&var-Server=CCC&var-MyCustomDashboardVariable=Hello%20World%21
-```
-
-In the preceding example, the includes variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.-->
