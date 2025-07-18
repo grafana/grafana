@@ -1037,7 +1037,6 @@ export interface FeatureToggles {
   */
   foldersAppPlatformAPI?: boolean;
   /**
-<<<<<<< HEAD
   * Set this to true to use the new PluginImporter functionality
   * @default false
   */

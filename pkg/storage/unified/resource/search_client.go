@@ -56,22 +56,19 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 		client = s.unifiedClient
 	}
 
-	// If dual reader feature flag is enabled, make a background call to the other client
-	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) {
-		var backgroundClient resourcepb.ResourceIndexClient
-		if unified {
-			backgroundClient = s.legacyClient
-		} else {
-			backgroundClient = s.unifiedClient
-		}
+	// If dual reader feature flag is enabled, and legacy is the main storage,
+	// make a background call to unified
+	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) && !unified {
+		// ignore parent cancelation
+		ctxBg := context.WithoutCancel(ctx)
 
 		// Make background call without blocking the main request
 		go func() {
-			_, bgErr := backgroundClient.GetStats(context.Background(), in, opts...)
+			_, bgErr := s.unifiedClient.GetStats(ctxBg, in, opts...)
 			if bgErr != nil {
-				s.logger.Error("Background GetStats call failed", "unified", !unified, "error", bgErr)
+				s.logger.Error("Background GetStats call to unified failed", "error", bgErr)
 			} else {
-				s.logger.Debug("Background GetStats call succeeded", "unified", !unified)
+				s.logger.Debug("Background GetStats call to unified succeeded")
 			}
 		}()
 	}
@@ -90,22 +87,19 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 		client = s.unifiedClient
 	}
 
-	// If dual reader feature flag is enabled, make a background call to the other client
-	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) {
-		var backgroundClient resourcepb.ResourceIndexClient
-		if unified {
-			backgroundClient = s.legacyClient
-		} else {
-			backgroundClient = s.unifiedClient
-		}
+	// If dual reader feature flag is enabled, and legacy is the main storage,
+	// make a background call to unified
+	if s.features != nil && s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchDualReaderEnabled) && !unified {
+		// ignore parent cancelation
+		ctxBg := context.WithoutCancel(ctx)
 
 		// Make background call without blocking the main request
 		go func() {
-			_, bgErr := backgroundClient.Search(context.Background(), in, opts...)
+			_, bgErr := s.unifiedClient.Search(ctxBg, in, opts...)
 			if bgErr != nil {
-				s.logger.Error("Background Search call failed", "unified", !unified, "error", bgErr)
+				s.logger.Error("Background Search call to unified failed", "error", bgErr)
 			} else {
-				s.logger.Debug("Background Search call succeeded", "unified", !unified)
+				s.logger.Debug("Background Search call to unified succeeded")
 			}
 		}()
 	}
