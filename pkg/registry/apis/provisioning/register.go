@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -598,7 +599,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.repositoryLister = repoInformer.Lister()
-			b.usageStats.RegisterMetricsFunc(b.collectProvisioningStats)
+
+			// Create the repository resources factory
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.repositoryLister, b.unified)
+			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
