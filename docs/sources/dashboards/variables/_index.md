@@ -65,6 +65,17 @@ wmi_system_threads{instance=~"$server"}
 In our documentation and in the application, we typically simply refer to a _template query_ as a _query_, but we often use the terms _variable_ and _template variable_ interchangeably.
 {{< /admonition >}}
 
+### Variables in URLs
+
+Variable values are always synced to the URL using [query parameter syntax](https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#query-parameters), `var-<varname>=value`.
+For example:
+
+``` text
+https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&from=now-6h&to=now&timezone=utc&var-Server=CCC&var-MyCustomDashboardVariable=Hello%20World%21
+```
+
+In the preceding example, the variables and values are `var-Server=CCC` and `var-MyCustomDashboardVariable=Hello%20World%21`.
+
 ## Additional examples
 
 The following dashboards in Grafana Play provide examples of template variables:
