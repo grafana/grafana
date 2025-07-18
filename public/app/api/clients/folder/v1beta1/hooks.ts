@@ -1,4 +1,4 @@
-import { skipToken } from '@reduxjs/toolkit/query';
+import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
 import { FolderDTO } from 'app/types/folders';
@@ -39,26 +39,15 @@ function getFolderUrl(uid: string, title: string): string {
 export function useGetFolderQueryFacade(uid?: string) {
   if (config.featureToggles.foldersAppPlatformAPI) {
     const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
-    const params = isVirtualFolder || !uid ? skipToken : { name: uid };
+    const params = !uid ? skipToken : { name: uid };
 
-    let result = useGetFolderQuery(params);
+    let resultFolder = useGetFolderQuery(isVirtualFolder ? skipToken : params);
 
-    const resultParents = useGetFolderParentsQuery(params);
-    const resultAccess = useGetFolderAccessQuery(params);
-
-    const keys: string[] = result.data
-      ? [
-          result.data.metadata.annotations?.[AnnoKeyUpdatedBy],
-          result.data.metadata.annotations?.[AnnoKeyCreatedBy],
-        ].filter((v) => v !== undefined)
-      : [];
-
-    const needsUserData = !isVirtualFolder && Boolean(keys.length);
-    const resultUserDisplay = useGetDisplayMappingQuery(needsUserData ? { key: keys } : skipToken);
-
+    // For virtual folders we simulate the response with hardcoded data.
     if (isVirtualFolder) {
-      return {
-        ...result,
+      resultFolder = {
+        ...resultFolder,
+        status: QueryStatus.fulfilled,
         fulfilledTimeStamp: Date.now(),
         isUninitialized: false,
         error: undefined,
@@ -71,10 +60,27 @@ export function useGetFolderQueryFacade(uid?: string) {
       };
     }
 
+    // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
+    // stitch the responses this way and access can actually return different response based on the grafana setup.
+    const resultParents = useGetFolderParentsQuery(params);
+    const resultAccess = useGetFolderAccessQuery(params);
+
+    // Load users info if needed.
+    const userKeys = getUserKeys(resultFolder);
+    const needsUserData = !isVirtualFolder && Boolean(userKeys.length);
+    const resultUserDisplay = useGetDisplayMappingQuery(needsUserData ? { key: userKeys } : skipToken);
+
+    // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
+    // api client.
     let newData: FolderDTO | undefined = undefined;
-    if (result.data && resultParents.data && resultAccess.data && (needsUserData ? resultUserDisplay.data : true)) {
-      const updatedBy = result.data.metadata.annotations?.[AnnoKeyUpdatedBy];
-      const createdBy = result.data.metadata.annotations?.[AnnoKeyCreatedBy];
+    if (
+      resultFolder.data &&
+      resultParents.data &&
+      resultAccess.data &&
+      (needsUserData ? resultUserDisplay.data : true)
+    ) {
+      const updatedBy = resultFolder.data.metadata.annotations?.[AnnoKeyUpdatedBy];
+      const createdBy = resultFolder.data.metadata.annotations?.[AnnoKeyCreatedBy];
 
       newData = {
         canAdmin: resultAccess.data.canAdmin,
@@ -82,20 +88,20 @@ export function useGetFolderQueryFacade(uid?: string) {
         canEdit: resultAccess.data.canEdit,
         canSave: resultAccess.data.canSave,
         accessControl: resultAccess.data.accessControl,
-        created: result.data.metadata.creationTimestamp || '0001-01-01T00:00:00Z',
+        created: resultFolder.data.metadata.creationTimestamp || '0001-01-01T00:00:00Z',
         createdBy:
           (createdBy &&
             resultUserDisplay.data?.display[resultUserDisplay.data?.keys.indexOf(createdBy)]?.displayName) ||
           'Anonymous',
         // Does not seem like this is set to true in the legacy API
         hasAcl: false,
-        id: parseInt(result.data.metadata.labels?.[DeprecatedInternalId] || '0', 10) || 0,
-        parentUid: result.data.metadata.annotations?.[AnnoKeyFolder],
-        managedBy: result.data.metadata.annotations?.[AnnoKeyManagerKind] as ManagerKind,
+        id: parseInt(resultFolder.data.metadata.labels?.[DeprecatedInternalId] || '0', 10) || 0,
+        parentUid: resultFolder.data.metadata.annotations?.[AnnoKeyFolder],
+        managedBy: resultFolder.data.metadata.annotations?.[AnnoKeyManagerKind] as ManagerKind,
 
-        title: result.data.spec.title,
-        uid: result.data.metadata.name!,
-        updated: result.data.metadata.annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
+        title: resultFolder.data.spec.title,
+        uid: resultFolder.data.metadata.name!,
+        updated: resultFolder.data.metadata.annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
         updatedBy:
           (updatedBy &&
             resultUserDisplay.data?.display[resultUserDisplay.data?.keys.indexOf(updatedBy)]?.displayName) ||
@@ -104,13 +110,16 @@ export function useGetFolderQueryFacade(uid?: string) {
         // url: result.data.metadata.annotations?.[AnnoKeyFolderUrl] || '',
         // general folder does not come with url
         // see https://github.com/grafana/grafana/blob/8a05378ef3ae5545c6f7429eae5c174d3c0edbfe/pkg/services/folder/folderimpl/folder_unifiedstorage.go#L88
-        url: uid === GENERAL_FOLDER_UID ? '' : getFolderUrl(result.data.metadata.name!, result.data.spec.title!),
-        version: result.data.metadata.generation || 1,
+        url:
+          uid === GENERAL_FOLDER_UID
+            ? ''
+            : getFolderUrl(resultFolder.data.metadata.name!, resultFolder.data.spec.title!),
+        version: resultFolder.data.metadata.generation || 1,
       };
 
       if (resultParents.data.items?.length) {
         newData.parents = resultParents.data.items
-          .filter((i) => i.name !== result.data!.metadata.name)
+          .filter((i) => i.name !== resultFolder.data!.metadata.name)
           .map((i) => ({
             title: i.title,
             uid: i.name,
@@ -121,12 +130,13 @@ export function useGetFolderQueryFacade(uid?: string) {
       }
     }
 
+    // Wrap the stitched data into single RTK query response type object so this looks like a single API call
     return {
-      ...result,
-      ...combinedState(result, resultParents, resultAccess, resultUserDisplay, needsUserData),
+      ...resultFolder,
+      ...combinedState(resultFolder, resultParents, resultAccess, resultUserDisplay, needsUserData),
       refetch: async () => {
         return Promise.all([
-          result.refetch(),
+          resultFolder.refetch(),
           resultParents.refetch(),
           resultAccess.refetch(),
           // TODO: Not sure about this, if we refetch this but the response from result change and this is dependant on
@@ -159,4 +169,13 @@ function combinedState(
     // Only one error will be shown. TODO: somehow create a single error out of them?
     error: results.find((r) => r.error),
   };
+}
+
+function getUserKeys(resultFolder: ReturnType<typeof useGetFolderQuery>): string[] {
+  return resultFolder.data
+    ? [
+        resultFolder.data.metadata.annotations?.[AnnoKeyUpdatedBy],
+        resultFolder.data.metadata.annotations?.[AnnoKeyCreatedBy],
+      ].filter((v) => v !== undefined)
+    : [];
 }

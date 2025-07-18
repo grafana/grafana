@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 
@@ -52,17 +53,7 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, err
 	}
 
-	obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	folderObj, ok := obj.(*folders.Folder)
-	if !ok {
-		return nil, fmt.Errorf("got something else than folders.Folder")
-	}
-
-	folderUID := folderObj.ObjectMeta.Name
+	folderUID := name
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		access := &folders.FolderAccessInfo{}
@@ -78,7 +69,11 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 		access.CanDelete, _ = r.ac.Evaluate(ctx, user, canDeleteEvaluator)
 
 		// Cargo culted from pkg/api/folder.go#getFolderACMetadata
-		allMetadata := getFolderAccessControl(ctx, r.getter, user, folderObj)
+		allMetadata, err := getFolderAccessControl(ctx, r.getter, user, name)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
 		metadata := map[string]bool{}
 		// Flatten metadata - if any parent has a permission, the child folder inherits it
 		for _, md := range allMetadata {
@@ -88,17 +83,27 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 		}
 
 		access.AccessControl = metadata
-
 		responder.Object(http.StatusOK, access)
 	}), nil
 }
 
-func getFolderAccessControl(ctx context.Context, folderGetter rest.Getter, user identity.Requester, f *folders.Folder) map[string]accesscontrol.Metadata {
-	parents := getFolderParents(ctx, folderGetter, f)
-	folderIDs := map[string]bool{f.ObjectMeta.Name: true}
+func getFolderAccessControl(ctx context.Context, folderGetter rest.Getter, user identity.Requester, name string) (map[string]accesscontrol.Metadata, error) {
+	folderIDs := map[string]bool{name: true}
 
-	for _, p := range parents.Items {
-		folderIDs[p.Name] = true
+	if name != folder.GeneralFolderUID && name != folder.SharedWithMeFolderUID {
+		obj, err := folderGetter.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		folderObj, ok := obj.(*folders.Folder)
+		if !ok {
+			return nil, fmt.Errorf("expecting folder, found: %T", folderObj)
+		}
+		parents := getFolderParents(ctx, folderGetter, folderObj)
+		for _, p := range parents.Items {
+			folderIDs[p.Name] = true
+		}
 	}
-	return accesscontrol.GetResourcesMetadata(ctx, user.GetPermissions(), dashboards.ScopeFoldersPrefix, folderIDs)
+
+	return accesscontrol.GetResourcesMetadata(ctx, user.GetPermissions(), dashboards.ScopeFoldersPrefix, folderIDs), nil
 }
