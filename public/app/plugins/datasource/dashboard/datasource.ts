@@ -267,7 +267,12 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
    */
   private reconstructDataFrame(frame: DataFrame, matchingRows: Set<number>): DataFrame {
     const fields: Field[] = frame.fields.map((field) => {
-      const newValues = Array.from(matchingRows, (rowIndex) => field.values[rowIndex]);
+      // Pre-allocate array and use direct assignment for better performance with large datasets
+      const newValues = new Array(matchingRows.size);
+      let i = 0;
+      for (const rowIndex of matchingRows) {
+        newValues[i++] = field.values[rowIndex];
+      }
 
       return {
         ...field,
