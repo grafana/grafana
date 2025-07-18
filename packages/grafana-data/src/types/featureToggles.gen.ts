@@ -1057,7 +1057,6 @@ export interface FeatureToggles {
   pluginAssetProvider?: boolean;
   /**
   * Enable dual reader for unified storage search
-  * @default false
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
 }
