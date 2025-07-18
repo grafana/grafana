@@ -745,3 +745,11 @@ enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 {{< admonition type="note" >}}
 Only `text` and `value` capture group names are supported.
 {{< /admonition >}}
+
+## Variable best practices
+
+- Variable drop-down lists are displayed in the order they are listed in the variable list in dashboard settings.
+- Put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- By default, variables don't have a default value. This means that the topmost value in the drop-down is always preselected. If you want to pre-populate a variable with an empty value, you can use the following workaround in the variable settings:
+  1. Select the **Include All Option** checkbox.
+  2. In the **Custom all value** field, enter a value like `+`.
