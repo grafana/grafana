@@ -118,7 +118,7 @@ export function ConnectStep() {
           >
             <Input
               {...register('repository.path', gitFields.pathConfig.validation)}
-              id="path"
+              id="git-path"
               placeholder={gitFields.pathConfig.placeholder}
             />
           </Field>
@@ -136,7 +136,7 @@ export function ConnectStep() {
         >
           <Input
             {...register('repository.path', localFields.pathConfig.validation)}
-            id="path"
+            id="local-path"
             placeholder={localFields.pathConfig.placeholder}
           />
         </Field>

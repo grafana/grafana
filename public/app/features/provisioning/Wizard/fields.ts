@@ -17,6 +17,7 @@ export interface FieldConfig {
 }
 
 // Provider-specific field configurations for all providers
+// This needs to be a function for translations to work
 const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => ({
   github: {
     token: {
@@ -71,7 +72,6 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       ),
     },
   },
-
   gitlab: {
     token: {
       label: t('provisioning.gitlab.token-label', 'Project Access Token'),
@@ -125,7 +125,6 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       ),
     },
   },
-
   bitbucket: {
     token: {
       label: t('provisioning.bitbucket.token-label', 'App Password'),
@@ -189,7 +188,6 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       ),
     },
   },
-
   git: {
     token: {
       label: t('provisioning.git.token-label', 'Access Token'),
@@ -253,7 +251,6 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       ),
     },
   },
-
   local: {
     path: {
       label: t('provisioning.local.path-label', 'Repository Path'),
@@ -286,7 +283,7 @@ export const getGitProviderFields = (
   | undefined => {
   const configs = getProviderConfigs()[type];
   if (!configs) {
-    return undefined;
+    throw new Error(`No configuration found for repository type: ${type}`);
   }
 
   // For git providers, these fields are guaranteed to exist
@@ -298,7 +295,7 @@ export const getGitProviderFields = (
   const prWorkflowConfig = configs.prWorkflow;
 
   if (!tokenConfig || !urlConfig || !branchConfig || !pathConfig || !prWorkflowConfig) {
-    return undefined;
+    throw new Error(`Missing required field configurations for ${type}`);
   }
 
   return {
@@ -324,14 +321,14 @@ export const getLocalProviderFields = (
   | undefined => {
   const configs = getProviderConfigs()[type];
   if (!configs) {
-    return undefined;
+    throw new Error(`No configuration found for repository type: ${type}`);
   }
 
   // For local providers, the path field is guaranteed to exist
   const pathConfig = configs.path;
 
   if (!pathConfig) {
-    return undefined;
+    throw new Error(`Missing required field configuration for ${type}: path`);
   }
 
   return {

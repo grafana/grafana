@@ -5,7 +5,7 @@ import { Alert, Button, Dropdown, Icon, Menu, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
 
-import { CONNECT_URL } from '../constants';
+import { CONNECT_URL, DEFAULT_REPOSITORY_TYPES } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
@@ -35,7 +35,7 @@ export function ConnectRepositoryButton({ items }: Props) {
     );
   }
 
-  const availableTypes = frontendSettings?.availableRepositoryTypes || ['github', 'local'];
+  const availableTypes = frontendSettings?.availableRepositoryTypes || DEFAULT_REPOSITORY_TYPES;
   const { orderedConfigs } = getOrderedRepositoryConfigs(availableTypes);
 
   return (

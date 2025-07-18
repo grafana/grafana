@@ -4,14 +4,14 @@ import { Trans } from '@grafana/i18n';
 import { Card, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1/endpoints.gen';
 
-import { CONNECT_URL } from '../constants';
+import { CONNECT_URL, DEFAULT_REPOSITORY_TYPES } from '../constants';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
 export function RepositoryTypeCards() {
   const styles = useStyles2(getStyles);
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
 
-  const availableTypes = frontendSettings?.availableRepositoryTypes || ['github', 'local'];
+  const availableTypes = frontendSettings?.availableRepositoryTypes || DEFAULT_REPOSITORY_TYPES;
   const { gitProviders, otherProviders } = getOrderedRepositoryConfigs(availableTypes);
 
   return (
