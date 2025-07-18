@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -74,7 +75,8 @@ var (
 )
 
 type APIBuilder struct {
-	features featuremgmt.FeatureToggles
+	features   featuremgmt.FeatureToggles
+	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
 	getter              rest.Getter
@@ -117,6 +119,7 @@ func NewAPIBuilder(
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
+	usageStats usagestats.Service,
 	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
@@ -134,6 +137,7 @@ func NewAPIBuilder(
 	b := &APIBuilder{
 		mutators:            mutators,
 		tracer:              tracer,
+		usageStats:          usageStats,
 		localFileResolver:   local,
 		features:            features,
 		ghFactory:           ghFactory,
@@ -184,7 +188,7 @@ func RegisterAPIService(
 	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
-	usageStatsService usagestats.Service,
+	usageStats usagestats.Service,
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -202,13 +206,13 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
+		usageStats,
 		repositorySecrets,
 		access,
 		tracer,
 		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
-	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
 	return builder, nil
 }
 
@@ -434,41 +438,6 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Sync.IntervalSeconds = 60
 	}
 
-	// TODO: move this logic into github repository concrete implementation.
-	if r.Spec.Type == provisioning.GitHubRepositoryType {
-		if r.Spec.GitHub == nil {
-			return fmt.Errorf("github configuration is required")
-		}
-
-		// Trim trailing slash or .git
-		if len(r.Spec.GitHub.URL) > 5 {
-			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
-			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
-		}
-	}
-	if r.Spec.Type == provisioning.GitRepositoryType {
-		if r.Spec.Git == nil {
-			return fmt.Errorf("git configuration is required")
-		}
-
-		if r.Spec.GitHub != nil {
-			return fmt.Errorf("git and github cannot be used together")
-		}
-
-		if r.Spec.Local != nil {
-			return fmt.Errorf("git and local cannot be used together")
-		}
-
-		// Trim trailing slash and ensure .git is present
-		if len(r.Spec.Git.URL) > 5 {
-			r.Spec.Git.URL = strings.TrimSuffix(r.Spec.Git.URL, "/")
-
-			if !strings.HasSuffix(r.Spec.Git.URL, ".git") {
-				r.Spec.Git.URL = r.Spec.Git.URL + ".git"
-			}
-		}
-	}
-
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
@@ -595,6 +564,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.repositoryLister = repoInformer.Lister()
+
+			// Create the repository resources factory
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.repositoryLister, b.unified)
+			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
@@ -1196,6 +1169,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
 			Path:           r.Spec.Git.Path,
+			TokenUser:      r.Spec.Git.TokenUser,
 			Token:          token,
 			EncryptedToken: r.Spec.Git.EncryptedToken,
 		}

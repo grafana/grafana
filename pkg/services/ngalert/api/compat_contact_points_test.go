@@ -79,11 +79,26 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			diff := cmp.Diff(expected, actual, cmp.FilterPath(func(path cmp.Path) bool {
-				return strings.Contains(path.String(), "Metadata.UID") ||
-					strings.Contains(path.String(), "Metadata.Name") ||
-					strings.Contains(path.String(), "WecomConfigs.Settings.EndpointURL") // This field is not exposed to user
-			}, cmp.Ignore()))
+			pathFilters := []string{
+				"Metadata.UID",
+				"Metadata.Name",
+				"WecomConfigs.Settings.EndpointURL", // This field is not exposed to user
+			}
+			if integrationType != "webhook" {
+				// Many notifiers now support HTTPClientConfig but only Webhook currently has it enabled in schema.
+				//TODO: Remove this once HTTPClientConfig is added to other schemas.
+				pathFilters = append(pathFilters, "HTTPClientConfig")
+			}
+			pathFilter := cmp.FilterPath(func(path cmp.Path) bool {
+				for _, filter := range pathFilters {
+					if strings.Contains(path.String(), filter) {
+						return true
+					}
+				}
+				return false
+			}, cmp.Ignore())
+
+			diff := cmp.Diff(expected, actual, pathFilter)
 			if len(diff) != 0 {
 				require.Failf(t, "The re-marshalled configuration does not match the expected one", diff)
 			}

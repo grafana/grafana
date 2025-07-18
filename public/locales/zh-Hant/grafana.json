@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "新增更多"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "警報狀態",
       "annotations": "註釋",
@@ -3234,6 +3243,11 @@
       "id-token-attribute-name-label": "ID 權杖屬性名稱",
       "login-attribute-path-description": "用於從使用者 ID 權杖中查找使用者登入的 JMESPath 表達式。",
       "login-attribute-path-label": "登入屬性路徑",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "OAuth2 應用程式中聯合身分憑證的受控身分用戶端 ID。",
       "managed-identity-client-id-label": "FIC 受控身分用戶端 ID",
       "name-attribute-path-description": "用於從使用者 ID 權杖中查找使用者名稱的 JMESPath 表達式。\n此名稱將用作使用者的顯示名稱。",
@@ -3448,6 +3462,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "取消",
       "cannot-move-folders": "資料夾無法移動",
       "confirmation-text": "刪除",
@@ -3466,7 +3482,9 @@
       "move-modal-text": "此動作將移動以下內容：",
       "move-modal-title": "移動",
       "moving": "正在移動…",
-      "new-folder-name-required-phrase": "必須要有資料夾名稱。"
+      "new-folder-name-required-phrase": "必須要有資料夾名稱。",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "最近刪除"
