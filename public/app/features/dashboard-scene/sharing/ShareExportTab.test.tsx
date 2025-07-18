@@ -1,10 +1,10 @@
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { 
-    Spec as DashboardV2Spec,
-    defaultQueryGroupKind,
-    defaultVizConfigSpec
+import {
+  Spec as DashboardV2Spec,
+  defaultQueryGroupKind,
+  defaultVizConfigSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';

@@ -220,7 +220,7 @@ describe('v2 dashboard API', () => {
       });
       expect(mockPut).toHaveBeenCalledTimes(1);
       expect(mockPut).toHaveBeenCalledWith(
-        '/apis/dashboard.grafana.app/v2alpha1/namespaces/default/dashboards/existing-dash',
+        '/apis/dashboard.grafana.app/v2alpha2/namespaces/default/dashboards/existing-dash',
         {
           metadata: {
             name: 'existing-dash',
@@ -329,7 +329,7 @@ describe('v2 dashboard API', () => {
           conversion: {
             failed: true,
             error: 'other-error',
-            storedVersion: 'v2alpha1',
+            storedVersion: 'v2alpha2',
           },
         },
       };
@@ -381,7 +381,7 @@ describe('v2 dashboard API', () => {
 
       expect(dashboardToRestore.metadata.resourceVersion).toBe('');
       expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining('/apis/dashboard.grafana.app/v2alpha1/'),
+        expect.stringContaining('/apis/dashboard.grafana.app/v2alpha2/'),
         expect.objectContaining({
           metadata: expect.objectContaining({
             resourceVersion: '',
