@@ -7,7 +7,7 @@ import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
 import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { getDefaultValues } from '../Config/defaults';
@@ -22,6 +22,7 @@ import { FinishStep } from './FinishStep';
 import { useStepStatus } from './StepStatusContext';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
+import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useResourceStats } from './hooks/useResourceStats';
 import { RepoType, WizardFormData, WizardStep } from './types';
 
@@ -91,11 +92,16 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     handleSubmit,
   } = methods;
 
-  const repoName = watch('repositoryName');
+  const [repoName, repoType] = watch(['repositoryName', 'repository.type']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
-  const [createJob, { isLoading: isCreatingSkipJob }] = useCreateRepositoryJobsMutation();
   const { shouldSkipSync } = useResourceStats(repoName || '', settingsQuery.data?.legacyStorage);
+  const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
+    repoName: repoName || '',
+    isLegacyStorage: settingsQuery.data?.legacyStorage,
+    repoType,
+    setStepStatusInfo,
+  });
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
@@ -172,27 +178,11 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       // Skip synchronize step if no sync is needed
       if (activeStep === 'bootstrap' && shouldSkipSync) {
         nextStepIndex = currentStepIndex + 2; // Skip to finish step
-        
+
         // Create a pull job to initialize the repository
         if (repoName) {
-          try {
-            setStepStatusInfo({ status: 'running' });
-            
-            await createJob({
-              name: repoName,
-              jobSpec: {
-                pull: {
-                  incremental: false,
-                },
-              },
-            }).unwrap();
-            
-            setStepStatusInfo({ status: 'success' });
-          } catch (error) {
-            setStepStatusInfo({
-              status: 'error',
-              error: t('provisioning.wizard.error-creating-pull-job', 'Failed to initialize repository'),
-            });
+          const job = await createSyncJob();
+          if (!job) {
             return; // Don't proceed if job creation fails
           }
         }
