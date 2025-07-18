@@ -76,7 +76,7 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 			if bgErr != nil {
 				s.logger.Error("Background GetStats call to unified failed", "error", bgErr, "timeout", backgroundRequestTimeout)
 			} else {
-				s.logger.Debug("Background GetStats call to unified succeeded", "timeout", backgroundRequestTimeout)
+				s.logger.Debug("Background GetStats call to unified succeeded")
 			}
 		}()
 	}
@@ -109,7 +109,7 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 			if bgErr != nil {
 				s.logger.Error("Background Search call to unified failed", "error", bgErr, "timeout", backgroundRequestTimeout)
 			} else {
-				s.logger.Debug("Background Search call to unified succeeded", "timeout", backgroundRequestTimeout)
+				s.logger.Debug("Background Search call to unified succeeded")
 			}
 		}()
 	}
