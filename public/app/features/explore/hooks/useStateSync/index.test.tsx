@@ -12,6 +12,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { configureStore } from 'app/store/configureStore';
 
 import { makeDatasourceSetup } from '../../spec/helper/setup';
+import { updateQueryRefAction } from '../../state/explorePane';
 import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
@@ -582,6 +583,82 @@ describe('useStateSync', () => {
     await waitFor(() => {
       expect(store.getState().explore.panes['one']?.queries.length).toBe(1);
       expect(store.getState().explore.panes['one']?.queries[0]).toMatchObject({ expr: 'b', refId: 'B' });
+    });
+  });
+
+  it('should sync queryRef from URL to state', async () => {
+    const { store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'test', refId: 'A' }],
+            queryRef: 'library-query-123',
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']?.queryRef).toBe('library-query-123');
+    });
+  });
+
+  it('should sync queryRef from state to URL', async () => {
+    const { store, location } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'test', refId: 'A' }],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']).toBeDefined();
+    });
+
+    act(() => {
+      store.dispatch(updateQueryRefAction({ exploreId: 'one', queryRef: 'library-query-456' }));
+    });
+
+    await waitFor(() => {
+      const search = location.getSearchObject();
+      const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
+      expect(panes.one?.queryRef).toBe('library-query-456');
+    });
+  });
+
+  it('should handle queryRef cleanup in URL when queryRef is undefined', async () => {
+    const { store, location } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'test', refId: 'A' }],
+            queryRef: 'library-query-123',
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']?.queryRef).toBe('library-query-123');
+    });
+
+    act(() => {
+      store.dispatch(updateQueryRefAction({ exploreId: 'one', queryRef: undefined }));
+    });
+
+    await waitFor(() => {
+      const search = location.getSearchObject();
+      const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
+      expect(panes.one?.queryRef).toBeUndefined();
     });
   });
 });

@@ -489,7 +489,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 }
 
-function QueryLibraryBadgeWrapper(props: { queryRef?: string }) {
+export function QueryLibraryBadgeWrapper(props: { queryRef?: string }) {
   const { queryLibraryEnabled } = useQueryLibraryContext();
   const { queryRef } = props;
 
