@@ -251,17 +251,19 @@ Each version of Playwright needs specific versions of browser binaries to operat
 yarn playwright install chromium
 ```
 
-To run all tests in a headless Chromium browser and display results in the terminal. This assumes you have Grafana running on port 3000.
+The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in CI) on port 3001 and runs all the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
 
 ```
 yarn e2e:playwright
 ```
 
-The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in Drone CI) on port 3001 and runs the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
+You can run against an arbitrary instance by setting the `GRAFANA_URL` environment variable:
 
 ```
-yarn e2e:playwright:server
+GRAFANA_URL=http://localhost:3000 yarn e2e:playwright
 ```
+
+Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
 
 ## Configure Grafana for development
 

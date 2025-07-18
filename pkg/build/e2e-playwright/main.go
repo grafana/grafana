@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	grafanaHost = "grafana"
 	grafanaPort = 3001
 )
 

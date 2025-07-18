@@ -408,7 +408,12 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		}
 	} else {
 		// transform request from backend.QueryDataRequest to k8s request
-		k8sReq := &data.QueryDataRequest{}
+		k8sReq := &data.QueryDataRequest{
+			TimeRange: data.TimeRange{
+				From: req.Queries[0].TimeRange.From.Format(time.RFC3339),
+				To:   req.Queries[0].TimeRange.To.Format(time.RFC3339),
+			},
+		}
 		for _, q := range req.Queries {
 			var dataQuery data.DataQuery
 			err := json.Unmarshal(q.JSON, &dataQuery)
