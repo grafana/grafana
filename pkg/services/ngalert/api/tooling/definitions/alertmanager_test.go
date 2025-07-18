@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -383,21 +383,21 @@ func TestPostableUserConfig_GetMergedTemplateDefinitions(t *testing.T) {
 			require.Len(t, result, tc.expectedTemplates)
 
 			templateMap := make(map[string]string)
-			kindMap := make(map[string]alertingTemplates.Kind)
+			kindMap := make(map[string]definition.TemplateKind)
 			for _, tmpl := range result {
-				templateMap[tmpl.Name] = tmpl.Template
+				templateMap[tmpl.Name] = tmpl.Content
 				kindMap[tmpl.Name] = tmpl.Kind
 			}
 
 			for name, content := range tc.config.TemplateFiles {
 				require.Equal(t, content, templateMap[name])
-				require.Equal(t, alertingTemplates.GrafanaKind, kindMap[name])
+				require.Equal(t, definition.GrafanaTemplateKind, kindMap[name])
 			}
 
 			if len(tc.config.ExtraConfigs) > 0 {
 				for name, content := range tc.config.ExtraConfigs[0].TemplateFiles {
 					require.Equal(t, content, templateMap[name])
-					require.Equal(t, alertingTemplates.MimirKind, kindMap[name])
+					require.Equal(t, definition.MimirTemplateKind, kindMap[name])
 				}
 			}
 		})
