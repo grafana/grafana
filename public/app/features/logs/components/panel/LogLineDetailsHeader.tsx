@@ -3,6 +3,7 @@ import { useCallback, useMemo, MouseEvent, useRef, ChangeEvent } from 'react';
 
 import { colorManipulator, GrafanaTheme2, LogRowModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
@@ -26,6 +27,7 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     getRowContextQuery,
     logOptionsStorageKey,
     logSupportsContext,
+    noInteractions,
     setDetailsMode,
     onClickHideField,
     onClickShowField,
@@ -39,14 +41,27 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const searchUsedRef = useRef(false);
+
+  const reportInteractionWrapper = useCallback(
+    (interactionName: string, properties?: Record<string, unknown>) => {
+      if (noInteractions) {
+        return;
+      }
+      reportInteraction(interactionName, properties);
+    },
+    [noInteractions]
+  );
 
   const copyLogLine = useCallback(() => {
     copyText(log.entry, containerRef);
-  }, [log.entry]);
+    reportInteractionWrapper('logs_log_line_details_header_copy_clicked');
+  }, [log.entry, reportInteractionWrapper]);
 
   const copyLinkToLogLine = useCallback(() => {
     onPermalinkClick?.(log);
-  }, [log, onPermalinkClick]);
+    reportInteractionWrapper('logs_log_line_details_header_permalink_clicked');
+  }, [log, onPermalinkClick, reportInteractionWrapper]);
 
   const togglePinning = useCallback(() => {
     if (pinned) {
@@ -54,7 +69,8 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     } else {
       onPinLine?.(log);
     }
-  }, [log, onPinLine, onUnpinLine, pinned]);
+    reportInteractionWrapper('logs_log_line_details_header_pinning_clicked');
+  }, [log, onPinLine, onUnpinLine, pinned, reportInteractionWrapper]);
 
   const shouldlogSupportsContext = useMemo(
     () => (logSupportsContext ? logSupportsContext(log) : false),
@@ -64,8 +80,9 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
   const showContext = useCallback(
     async (event: MouseEvent<HTMLElement>) => {
       handleOpenLogsContextClick(event, log, getRowContextQuery, (log: LogRowModel) => onOpenContext?.(log, () => {}));
+      reportInteractionWrapper('logs_log_line_details_header_context_clicked');
     },
-    [onOpenContext, getRowContextQuery, log]
+    [log, getRowContextQuery, reportInteractionWrapper, onOpenContext]
   );
 
   const showLogLineToggle = onClickHideField && onClickShowField && displayedFields.length > 0;
@@ -86,7 +103,8 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     } else {
       onClickShowField?.(LOG_LINE_BODY_FIELD_NAME);
     }
-  }, [logLineDisplayed, onClickHideField, onClickShowField]);
+    reportInteractionWrapper('logs_log_line_details_header_show_logline_clicked');
+  }, [logLineDisplayed, onClickHideField, onClickShowField, reportInteractionWrapper]);
 
   const clearSearch = useMemo(
     () => (
@@ -95,6 +113,7 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
         size="sm"
         onClick={() => {
           onSearch('');
+          reportInteractionWrapper('logs_log_line_details_header_search_cleared');
           if (inputRef.current) {
             inputRef.current.value = '';
           }
@@ -102,14 +121,18 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
         tooltip={t('logs.log-line-details.clear-search', 'Clear')}
       />
     ),
-    [onSearch]
+    [onSearch, reportInteractionWrapper]
   );
 
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       onSearch(e.target.value);
+      if (!searchUsedRef.current) {
+        reportInteractionWrapper('logs_log_line_details_header_search_used');
+        searchUsedRef.current = true;
+      }
     },
-    [onSearch]
+    [onSearch, reportInteractionWrapper]
   );
 
   return (

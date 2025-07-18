@@ -91,6 +91,14 @@ var appManifestData = app.ManifestData{
 			Versions: []app.ManifestKindVersion{
 				{
 					Name: "v0alpha1",
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
 				},
 			},
 		},

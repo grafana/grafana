@@ -2597,6 +2597,10 @@
             "description": "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
             "type": "string"
           },
+          "tokenUser": {
+            "description": "TokenUser is the user that will be used to access the repository if it's a personal access token.",
+            "type": "string"
+          },
           "url": {
             "description": "The repository URL (e.g. `https://bitbucket.org/example/test`).",
             "type": "string"
@@ -2780,6 +2784,10 @@
           },
           "token": {
             "description": "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
+            "type": "string"
+          },
+          "tokenUser": {
+            "description": "TokenUser is the user that will be used to access the repository if it's a personal access token.",
             "type": "string"
           },
           "url": {

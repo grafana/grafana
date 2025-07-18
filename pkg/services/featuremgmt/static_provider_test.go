@@ -51,6 +51,7 @@ func setup(t *testing.T, conf []byte) {
 	t.Helper()
 	cfg, err := setting.NewCfgFromBytes(conf)
 	require.NoError(t, err)
+
 	err = InitOpenFeatureWithCfg(cfg)
 	require.NoError(t, err)
 }
@@ -80,7 +81,7 @@ ABCD = true
 
 	openFeatureEnabledFlags := map[string]bool{}
 	for _, flag := range allFlags.Flags {
-		if flag.Value {
+		if v, ok := flag.Value.(bool); ok && v {
 			openFeatureEnabledFlags[flag.Key] = true
 		}
 	}

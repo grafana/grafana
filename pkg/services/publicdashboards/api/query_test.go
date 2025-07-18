@@ -196,7 +196,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
     }
 }`
 
-	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
+	setup := func(_ bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
 		testServer := setupTestServer(t, nil, service, anonymousUser)
 

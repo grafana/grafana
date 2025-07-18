@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
@@ -16,11 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -38,9 +37,7 @@ type WebhookExtraBuilder struct {
 func ProvideWebhooks(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	legacySecretsSvc grafanasecrets.Service,
-	secretsSvc *service.SecureValueService,
-	decryptSvc service.DecryptService,
+	repositorySecrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
@@ -67,7 +64,6 @@ func ProvideWebhooks(
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
 			commenter := pullrequest.NewCommenter()
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
-			repositorySecrets := secrets.NewRepositorySecrets(features, secrets.NewSecretsService(secretsSvc, decryptSvc), secrets.NewSingleTenant(legacySecretsSvc))
 
 			return NewWebhookExtra(
 				render,
@@ -128,21 +124,11 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 	return e.render.Authorize(ctx, a)
 }
 
-// Mutate delegates mutation to the webhook connector
-func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) error {
-	// Encrypt webhook secret if present
-	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
-		secretName := r.GetName() + "-webhook-secret"
-		nameOrValue, err := e.secrets.Encrypt(ctx, r, secretName, r.Status.Webhook.Secret)
-		if err != nil {
-			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
-		}
-
-		r.Status.Webhook.EncryptedSecret = nameOrValue
-		r.Status.Webhook.Secret = ""
+// Mutators returns the mutators for the webhook extra
+func (e *WebhookExtra) Mutators() []controller.Mutator {
+	return []controller.Mutator{
+		Mutator(e.secrets),
 	}
-
-	return nil
 }
 
 // UpdateStorage updates the storage with both render and webhook connectors
@@ -206,12 +192,12 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, e.secrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken)
+		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken, e.secrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}

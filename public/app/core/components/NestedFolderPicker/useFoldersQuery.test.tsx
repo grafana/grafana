@@ -7,7 +7,7 @@ import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from '../../../features/search/types';
 
 import { useFoldersQuery } from './useFoldersQuery';
-import { ROOT_FOLDER_ITEM } from './utils';
+import { getRootFolderItem } from './utils';
 
 const PAGE_SIZE = 10;
 
@@ -105,7 +105,7 @@ describe('useFoldersQuery', () => {
 function testFn() {
   const { result } = renderHook(() => useFoldersQuery(true, {}));
 
-  expect(result.current.items).toEqual([ROOT_FOLDER_ITEM]);
+  expect(result.current.items).toEqual([getRootFolderItem()]);
   expect(result.current.isLoading).toBe(false);
   act(() => {
     result.current.requestNextPage(undefined);

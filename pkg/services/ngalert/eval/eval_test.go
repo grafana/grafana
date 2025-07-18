@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -591,7 +592,15 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			expressions := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
+			expressions := expr.ProvideService(
+				&setting.Cfg{ExpressionsEnabled: true},
+				nil,
+				nil,
+				featuremgmt.WithFeatures(),
+				nil,
+				tracing.InitializeTracerForTest(),
+				mtdsclient.NewNullMTDatasourceClientBuilder(),
+			)
 			validator := NewConditionValidator(cacheService, expressions, store)
 			evalCtx := NewContext(context.Background(), u)
 
@@ -710,7 +719,19 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				cache:        cacheService,
 				pluginsStore: store,
 			})
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
+			evaluator := NewEvaluatorFactory(
+				setting.UnifiedAlertingSettings{},
+				cacheService,
+				expr.ProvideService(
+					&setting.Cfg{ExpressionsEnabled: true},
+					nil,
+					nil,
+					featuremgmt.WithFeatures(),
+					nil,
+					tracing.InitializeTracerForTest(),
+					mtdsclient.NewNullMTDatasourceClientBuilder(),
+				),
+			)
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)

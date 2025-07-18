@@ -45,7 +45,7 @@ export {
 } from '../components/MatchersUI/utils';
 export type { FieldMatcherUIRegistryItem } from '../components/MatchersUI/types';
 export { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '../components/MatchersUI/FieldsByFrameRefIdMatcher';
-export { allFieldTypeIconOptions } from '../components/MatchersUI/FieldTypeMatcherEditor';
+export { getAllFieldTypeIconOptions } from '../components/MatchersUI/FieldTypeMatcherEditor';
 
 export { getStyles as getSliderStyles } from '../components/Slider/styles';
 export { getSelectStyles } from '../components/Select/getSelectStyles';

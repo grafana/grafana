@@ -11,6 +11,8 @@ import (
 )
 
 func TestValidateKeeper(t *testing.T) {
+	validator := ProvideKeeperValidator()
+
 	t.Run("when creating a new keeper", func(t *testing.T) {
 		t.Run("the `description` must be present", func(t *testing.T) {
 			keeper := &secretv1beta1.Keeper{
@@ -23,7 +25,6 @@ func TestValidateKeeper(t *testing.T) {
 				},
 			}
 
-			validator := ProvideKeeperValidator()
 			errs := validator.Validate(keeper, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.description", errs[0].Field)
@@ -41,7 +42,6 @@ func TestValidateKeeper(t *testing.T) {
 			},
 		}
 
-		validator := ProvideKeeperValidator()
 		errs := validator.Validate(keeper, nil, admission.Create)
 		require.Len(t, errs, 1)
 		require.Equal(t, "spec", errs[0].Field)
@@ -54,7 +54,6 @@ func TestValidateKeeper(t *testing.T) {
 			},
 		}
 
-		validator := ProvideKeeperValidator()
 		errs := validator.Validate(keeper, nil, admission.Create)
 		require.Len(t, errs, 1)
 		require.Equal(t, "spec", errs[0].Field)
@@ -81,7 +80,6 @@ func TestValidateKeeper(t *testing.T) {
 				keeper := validKeeperAWS.DeepCopy()
 				keeper.Spec.Aws.AccessKeyID = secretv1beta1.KeeperCredentialValue{}
 
-				validator := ProvideKeeperValidator()
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.aws.accessKeyID", errs[0].Field)
@@ -95,7 +93,6 @@ func TestValidateKeeper(t *testing.T) {
 					ValueFromConfig: "c",
 				}
 
-				validator := ProvideKeeperValidator()
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.aws.accessKeyID", errs[0].Field)
@@ -107,7 +104,6 @@ func TestValidateKeeper(t *testing.T) {
 				keeper := validKeeperAWS.DeepCopy()
 				keeper.Spec.Aws.SecretAccessKey = secretv1beta1.KeeperCredentialValue{}
 
-				validator := ProvideKeeperValidator()
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.aws.secretAccessKey", errs[0].Field)
@@ -121,7 +117,6 @@ func TestValidateKeeper(t *testing.T) {
 					ValueFromConfig: "c",
 				}
 
-				validator := ProvideKeeperValidator()
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.aws.secretAccessKey", errs[0].Field)
@@ -148,7 +143,6 @@ func TestValidateKeeper(t *testing.T) {
 			keeper := validKeeperAzure.DeepCopy()
 			keeper.Spec.Azure.KeyVaultName = ""
 
-			validator := ProvideKeeperValidator()
 			errs := validator.Validate(keeper, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.azure.keyVaultName", errs[0].Field)
@@ -158,7 +152,6 @@ func TestValidateKeeper(t *testing.T) {
 			keeper := validKeeperAzure.DeepCopy()
 			keeper.Spec.Azure.TenantID = ""
 
-			validator := ProvideKeeperValidator()
 			errs := validator.Validate(keeper, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.azure.tenantID", errs[0].Field)
@@ -168,7 +161,6 @@ func TestValidateKeeper(t *testing.T) {
 			keeper := validKeeperAzure.DeepCopy()
 			keeper.Spec.Azure.ClientID = ""
 
-			validator := ProvideKeeperValidator()
 			errs := validator.Validate(keeper, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.azure.clientID", errs[0].Field)
@@ -179,7 +171,6 @@ func TestValidateKeeper(t *testing.T) {
 				keeper := validKeeperAzure.DeepCopy()
 				keeper.Spec.Azure.ClientSecret = secretv1beta1.KeeperCredentialValue{}
 
-				validator := ProvideKeeperValidator()
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.azure.clientSecret", errs[0].Field)
@@ -193,7 +184,6 @@ func TestValidateKeeper(t *testing.T) {
 					ValueFromConfig: "c",
 				}
 
-				validator := ProvideKeeperValidator()
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.azure.clientSecret", errs[0].Field)
@@ -216,7 +206,6 @@ func TestValidateKeeper(t *testing.T) {
 			keeper := validKeeperGCP.DeepCopy()
 			keeper.Spec.Gcp.ProjectID = ""
 
-			validator := ProvideKeeperValidator()
 			errs := validator.Validate(keeper, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.gcp.projectID", errs[0].Field)
@@ -226,7 +215,6 @@ func TestValidateKeeper(t *testing.T) {
 			keeper := validKeeperGCP.DeepCopy()
 			keeper.Spec.Gcp.CredentialsFile = ""
 
-			validator := ProvideKeeperValidator()
 			errs := validator.Validate(keeper, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.gcp.credentialsFile", errs[0].Field)
@@ -250,7 +238,6 @@ func TestValidateKeeper(t *testing.T) {
 			keeper := validKeeperHashiCorp.DeepCopy()
 			keeper.Spec.HashiCorpVault.Address = ""
 
-			validator := ProvideKeeperValidator()
 			errs := validator.Validate(keeper, nil, admission.Create)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.hashiCorpVault.address", errs[0].Field)
@@ -261,7 +248,6 @@ func TestValidateKeeper(t *testing.T) {
 				keeper := validKeeperHashiCorp.DeepCopy()
 				keeper.Spec.HashiCorpVault.Token = secretv1beta1.KeeperCredentialValue{}
 
-				validator := ProvideKeeperValidator()
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.hashiCorpVault.token", errs[0].Field)
@@ -275,7 +261,6 @@ func TestValidateKeeper(t *testing.T) {
 					ValueFromConfig: "c",
 				}
 
-				validator := ProvideKeeperValidator()
 				errs := validator.Validate(keeper, nil, admission.Create)
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.hashiCorpVault.token", errs[0].Field)

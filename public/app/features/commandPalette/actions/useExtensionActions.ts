@@ -13,7 +13,7 @@ export default function useExtensionActions(): CommandPaletteAction[] {
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.CommandPalette,
     context,
-    limitPerPlugin: 3,
+    limitPerPlugin: 40,
   });
 
   return useMemo(() => {
@@ -22,8 +22,8 @@ export default function useExtensionActions(): CommandPaletteAction[] {
       priority: EXTENSIONS_PRIORITY,
       id: link.id,
       name: link.title,
-      target: link.path,
       perform: () => link.onClick && link.onClick(),
+      url: link.path,
     }));
   }, [links]);
 }

@@ -24,6 +24,10 @@ Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/g
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{< /admonition >}}
 
+{{< admonition type="warning" >}}
+**Public Preview:** SCIM provisioning is currently in Public Preview. While functional, the feature is actively being refined and may undergo changes. We recommend thorough testing in non-production environments before deploying to production systems.
+{{< /admonition >}}
+
 {{< admonition type="note" >}}
 This feature is behind the `enableSCIM` feature toggle.
 You can enable feature toggles through configuration file or environment variables.

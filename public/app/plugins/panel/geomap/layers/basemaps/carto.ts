@@ -1,4 +1,4 @@
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
@@ -33,7 +33,12 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<CartoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => ({
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<CartoConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => ({
     init: () => {
       const cfg = { ...defaultCartoConfig, ...options.config };
       let style: string | undefined = cfg.theme;

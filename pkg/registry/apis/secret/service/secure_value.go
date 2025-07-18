@@ -24,8 +24,6 @@ type SecureValueService struct {
 	keeperService              contracts.KeeperService
 }
 
-var _ contracts.SecureValueService = &SecureValueService{}
-
 func ProvideSecureValueService(
 	tracer trace.Tracer,
 	accessClient claims.AccessClient,
@@ -33,7 +31,7 @@ func ProvideSecureValueService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService contracts.KeeperService,
-) *SecureValueService {
+) contracts.SecureValueService {
 	return &SecureValueService{
 		tracer:                     tracer,
 		accessClient:               accessClient,

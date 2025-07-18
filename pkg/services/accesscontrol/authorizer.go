@@ -125,8 +125,9 @@ func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req 
 		} else {
 			eval = EvalPermission(action, fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, req.Name))
 		}
-	} else if req.Verb == utils.VerbList {
+	} else if req.Verb == utils.VerbList || req.Verb == utils.VerbCreate {
 		// For list request we need to filter out in storage layer.
+		// For create requests we don't have a name yet, so we can only check if the action is allowed.
 		eval = EvalPermission(action)
 	} else {
 		// Assuming that all non list request should have a valid name

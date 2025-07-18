@@ -233,7 +233,7 @@
       "title-error-occurred": "Bei der Anforderung von Ressourcen von Azure Monitor ist ein Fehler aufgetreten"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Bereich"
     },
     "search": {
       "aria-label-resource-search": "Ressourcensuche",

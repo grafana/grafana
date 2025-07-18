@@ -1745,3 +1745,61 @@ func TestUserSync_NamespaceMappingLogic(t *testing.T) {
 		})
 	}
 }
+
+func TestUserSync_GetUsageStats(t *testing.T) {
+	userSync := initUserSyncService()
+
+	// Test that GetUsageStats returns zero initially
+	stats := userSync.GetUsageStats(context.Background())
+
+	require.NotNil(t, stats)
+	require.Contains(t, stats, "stats.features.scim.has_successful_login.count")
+	require.Equal(t, int(0), stats["stats.features.scim.has_successful_login.count"])
+
+	userSync.scimSuccessfulLogin.Store(true)
+
+	// Test that GetUsageStats returns the updated value
+	stats = userSync.GetUsageStats(context.Background())
+	require.Equal(t, int(1), stats["stats.features.scim.has_successful_login.count"])
+}
+
+func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
+	userSync := initUserSyncService()
+	userSync.allowNonProvisionedUsers = false
+	userSync.isUserProvisioningEnabled = true
+	userSync.userService = &usertest.FakeUserService{
+		ExpectedUser: &user.User{
+			ID:            1,
+			IsProvisioned: true,
+		},
+	}
+	userSync.authInfoService = &authinfotest.FakeService{
+		ExpectedUserAuth: &login.UserAuth{
+			UserId:      1,
+			AuthModule:  login.SAMLAuthModule,
+			AuthId:      "1",
+			ExternalUID: "test123",
+		},
+	}
+
+	// Check initial counter value
+	initialStats := userSync.GetUsageStats(context.Background())
+	require.Equal(t, int(0), initialStats["stats.features.scim.has_successful_login.count"])
+
+	// Create identity for validation with matching ExternalUID
+	identity := &authn.Identity{
+		AuthID:          "1",
+		AuthenticatedBy: login.SAMLAuthModule,
+		ExternalUID:     "test123",
+		ClientParams:    authn.ClientParams{SyncUser: true},
+	}
+
+	// Call ValidateUserProvisioningHook - this should set the flag to true
+	err := userSync.ValidateUserProvisioningHook(context.Background(), identity, nil)
+	require.NoError(t, err)
+
+	// Check that flag was set to true (count should be 1)
+	finalStats := userSync.GetUsageStats(context.Background())
+	finalCount := finalStats["stats.features.scim.has_successful_login.count"].(int)
+	require.Equal(t, int(1), finalCount)
+}

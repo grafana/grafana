@@ -5,7 +5,7 @@ import { usePrevious } from 'react-use';
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
 
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
-import { guessFieldTypeForField } from '../dataframe/processDataFrame';
+import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { GrafanaTheme2 } from '../themes/types';
@@ -238,7 +238,11 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       if (field.type === FieldType.frame) {
         field.values = applyFieldOverrides({
           ...options,
-          data: field.values,
+          // nested frames can be `undefined` in certain situations, like after `merge` transform due to padding the value array.
+          // let's replace them with empty frames to avoid errors applying overrides
+          data: field.values.map(
+            (nestedFrame: DataFrame | undefined): DataFrame => nestedFrame ?? createDataFrame({ fields: [] })
+          ),
         });
       }
     }

@@ -1,6 +1,5 @@
 import { isValidLegacyName } from '../../../utf8_support';
-import { PromLokiVisualQuery, VisualQueryBinary } from '../LokiAndPromQueryModellerBase';
-import { QueryBuilderOperationDef } from '../types';
+import { PrometheusVisualQuery, QueryBuilderOperationDef, VisualQueryBinary } from '../types';
 
 import { renderLabels } from './labels';
 import { hasBinaryOp, renderOperations } from './operations';
@@ -10,7 +9,7 @@ import { hasBinaryOp, renderOperations } from './operations';
  */
 export function renderBinaryQueries(
   queryString: string,
-  binaryQueries?: Array<VisualQueryBinary<PromLokiVisualQuery>>
+  binaryQueries?: Array<VisualQueryBinary<PrometheusVisualQuery>>
 ): string {
   if (binaryQueries) {
     for (const binQuery of binaryQueries) {
@@ -23,7 +22,7 @@ export function renderBinaryQueries(
 /**
  * Renders a binary query
  */
-function renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryBinary<PromLokiVisualQuery>): string {
+function renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryBinary<PrometheusVisualQuery>): string {
   let result = leftOperand + ` ${binaryQuery.operator} `;
 
   if (binaryQuery.vectorMatches) {
@@ -37,7 +36,7 @@ function renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryBinary<P
  * Renders a full query
  */
 export function renderQuery(
-  query: PromLokiVisualQuery,
+  query: PrometheusVisualQuery,
   nested?: boolean,
   operationsRegistry?: Map<string, QueryBuilderOperationDef>
 ): string {
@@ -118,7 +117,7 @@ export function renderQuery(
  * This ensures we only add parentheses when needed
  */
 function renderNestedPart(
-  query: PromLokiVisualQuery,
+  query: PrometheusVisualQuery,
   operationsRegistry?: Map<string, QueryBuilderOperationDef>
 ): string {
   // First render the query itself

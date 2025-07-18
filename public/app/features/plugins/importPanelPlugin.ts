@@ -3,7 +3,8 @@ import config from 'app/core/config';
 
 import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
 
-import { importPluginModule } from './pluginLoader';
+import { importPluginModule } from './importer/importPluginModule';
+import { pluginImporter } from './importer/pluginImporter';
 
 const promiseCache: Record<string, Promise<PanelPlugin>> = {};
 const panelPluginCache: Record<string, PanelPlugin> = {};
@@ -50,10 +51,18 @@ export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelP
 }
 
 export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
+  if (config.featureToggles.enablePluginImporter) {
+    return pluginImporter.getPanel(id);
+  }
+
   return panelPluginCache[id];
 }
 
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
+  if (config.featureToggles.enablePluginImporter) {
+    return pluginImporter.importPanel(meta);
+  }
+
   throwIfAngular(meta);
 
   const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;

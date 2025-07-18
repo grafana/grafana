@@ -28,7 +28,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { WeekStart } from './WeekStartPicker';
-import { quickOptions } from './options';
+import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
@@ -189,7 +189,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 fiscalYearStartMonth={fiscalYearStartMonth}
                 value={value}
                 onChange={onChange}
-                quickOptions={quickRanges || quickOptions}
+                quickOptions={quickRanges || getQuickOptions()}
                 history={history}
                 showHistory
                 widthOverride={widthOverride}

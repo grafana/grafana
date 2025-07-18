@@ -1,0 +1,31 @@
+export const nodeModulesToTransform = (moduleNames) => `.*\/node_modules\/(?!.*(${moduleNames.join('|')})\/.*)`;
+
+// Array of known nested grafana package dependencies that only bundle an ESM version
+export const grafanaESModules = [
+  '@glideapps/glide-data-grid',
+  '@wojtekmaj/date-utils',
+  'ol',
+  'd3',
+  'd3-color',
+  'd3-interpolate',
+  'delaunator',
+  'get-user-locale',
+  'internmap',
+  'robust-predicates',
+  'leven',
+  'nanoid',
+  'marked',
+  'memoize',
+  'mimic-function',
+  'monaco-promql',
+  'react-calendar',
+  '@kusto/monaco-kusto',
+  'monaco-editor',
+  '@msagl',
+  'lodash-es',
+  'vscode-languageserver-types',
+  '@bsull/augurs',
+  'react-data-grid',
+  '@grafana/llm',
+  'pkce-challenge',
+];

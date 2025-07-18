@@ -22,7 +22,7 @@ import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
-import { ROOT_FOLDER_ITEM } from './utils';
+import { getRootFolderItem } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -222,7 +222,7 @@ export function NestedFolderPicker({
     // these options are used infrequently that its not a big deal
     if (!showRootFolder || excludeUIDs?.length) {
       flatTree = flatTree.filter((item) => {
-        if (!showRootFolder && item === ROOT_FOLDER_ITEM) {
+        if (!showRootFolder && item.item.uid === getRootFolderItem().item.uid) {
           return false;
         }
 
@@ -266,7 +266,7 @@ export function NestedFolderPicker({
 
   let label = selectedFolder.data?.title;
   if (value === '') {
-    label = 'Dashboards';
+    label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
 
   // Display the folder name and provisioning status when the picker is closed

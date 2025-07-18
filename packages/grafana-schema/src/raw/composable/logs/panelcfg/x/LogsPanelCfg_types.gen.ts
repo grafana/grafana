@@ -24,6 +24,7 @@ export interface Options {
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
+  noInteractions?: boolean;
   /**
    * TODO: figure out how to define callbacks
    */
@@ -36,6 +37,7 @@ export interface Options {
   onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
+  setDisplayedFields?: unknown;
   showCommonLabels: boolean;
   showControls?: boolean;
   showLabels: boolean;

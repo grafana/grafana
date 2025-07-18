@@ -31,8 +31,8 @@ The table below describes all SAML configuration options. Continue reading below
 | `metadata_valid_duration`                                  | No       | Duration for which the SP metadata remains valid.                                                                                                                                                            | `48h`                                                 |
 | `relay_state`                                              | No       | Relay state for IdP-initiated login. This should match the relay state configured in the IdP.                                                                                                                |                                                       |
 | `assertion_attribute_name`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user name. Alternatively, this can be a template with variables that match the names of attributes within the SAML assertion. | `displayName`                                         |
-| `assertion_attribute_login`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user login handle.                                                                                                            | `login`                                               |
-| `assertion_attribute_email`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user email.                                                                                                                   | `email`                                               |
+| `assertion_attribute_login`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user login handle.                                                                                                            | `mail`                                                |
+| `assertion_attribute_email`                                | No       | Friendly name or name of the attribute within the SAML assertion to use as the user email.                                                                                                                   | `mail`                                                |
 | `assertion_attribute_groups`                               | No       | Friendly name or name of the attribute within the SAML assertion to use as the user groups.                                                                                                                  |                                                       |
 | `assertion_attribute_role`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user roles.                                                                                                                   |                                                       |
 | `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                                                                                                             |                                                       |
@@ -78,10 +78,6 @@ allowed_organizations = Engineering, Sales
 ```
 
 ## Example SAML configuration in Terraform
-
-{{< admonition type="note" >}}
-Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
-{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "saml_sso_settings" {

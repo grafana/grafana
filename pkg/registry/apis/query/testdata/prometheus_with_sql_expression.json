@@ -1,0 +1,32 @@
+{
+  "results": {
+    "B": {
+      "status": 200,
+      "frames": [
+        {
+         "schema": {
+            "name": "B",
+            "refId": "B",
+            "fields": [
+              {
+                "name": "Value + 10",
+                "type": "number",
+                "typeInfo": {
+                  "frame": "float64",
+                  "nullable": false
+                }
+              }
+            ]
+          },
+          "data": {
+            "values": [
+              [
+                17
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

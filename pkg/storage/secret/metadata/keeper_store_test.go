@@ -4,17 +4,17 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/utils/ptr"
+
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
-	"k8s.io/utils/ptr"
 )
 
 func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
@@ -333,10 +333,9 @@ func initStorage(t *testing.T) contracts.KeeperMetadataStorage {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
 	db := database.ProvideDatabase(testDB, tracer)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the keeper storage
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, features, nil)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, nil)
 	require.NoError(t, err)
 	return keeperMetadataStorage
 }

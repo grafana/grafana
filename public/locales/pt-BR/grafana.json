@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Adicionar mais"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Estado de alerta",
       "annotations": "Anotações",
@@ -3228,6 +3237,9 @@
       "define-allowed-teams-ids-label": "Definir IDs das equipes permitidas",
       "display-name-description": "Será exibido na página de login como \"Entrar com...\". É uma opção conveniente caso você use mais de um provedor de identidade ou protocolos SSO.",
       "display-name-label": "Nome de exibição",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Nome da chave a ser usada para a consulta de e-mail do usuário no mapa de atributos do token de ID OAuth2.",
       "email-attribute-name-label": "Nome do atributo de e-mail",
       "email-attribute-path-description": "Expressão JMESPath a ser usada para a consulta de e-mail do usuário a partir das informações do usuário.",
@@ -3244,6 +3256,11 @@
       "id-token-attribute-name-label": "Nome do atributo do token de ID",
       "login-attribute-path-description": "Expressão JMESPath a ser usada para a consulta de login do usuário a partir do token de ID do usuário.",
       "login-attribute-path-label": "Caminho do atributo de login",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "O ID do cliente de identidade gerenciada da credencial de identidade federada (FIC) do seu aplicativo OAuth2.",
       "managed-identity-client-id-label": "ID do cliente de identidade gerenciada da FIC",
       "name-attribute-path-description": "Expressão JMESPath a ser usada para a consulta de nome de usuário a partir do token de ID do usuário. \nEste nome será usado como o nome de exibição do usuário.",
@@ -3458,6 +3475,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Cancelar",
       "cannot-move-folders": "As pastas não podem ser movidas",
       "confirmation-text": "Excluir",
@@ -3476,7 +3495,9 @@
       "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
       "move-modal-title": "Mover",
       "moving": "Movendo...",
-      "new-folder-name-required-phrase": "O nome da pasta é obrigatório."
+      "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Excluídos recentemente"
@@ -4613,6 +4634,14 @@
     },
     "errors": {
       "failed-to-load": "Falha ao carregar o painel de controle"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -8638,9 +8667,7 @@
     "share-panel": {
       "config-description": "Crie um link direto e personalizado para compartilhar seu painel dentro da sua organização com as seguintes configurações de personalização:",
       "download-image": "Baixar imagem",
-      "render-image": "Gerar imagem",
-      "render-image-error": "Falha ao renderizar a imagem do painel",
-      "render-image-error-description": "Ocorreu um erro ao gerar a imagem"
+      "render-image": "Gerar imagem"
     }
   },
   "live": {
@@ -8808,6 +8835,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -11401,6 +11430,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exportar como JSON",
       "share-externally-title": "Compartilhar externamente",
       "share-internally-title": "Compartilhar internamente",
@@ -11436,6 +11466,19 @@
       "view-button": "Visualizar JSON",
       "view-button-yaml": "Visualizar YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Criar painel de biblioteca."
     },
@@ -11444,7 +11487,7 @@
       "info-text": "Crie um link direto para este painel de controle ou painel, personalizado com as opções abaixo.",
       "link-url": "URL do link",
       "render-alert": "Plug-in renderizador de imagem não instalado",
-      "render-instructions": "Para renderizar uma imagem de painel, você precisa instalar o <2>plug-in renderizador de imagens do Grafana</2>. Entre em contato com o administrador da Grafana para instalar o plug-in.",
+      "render-instructions": "",
       "rendered-image": "Link direto de imagem renderizada",
       "save-alert": "O painel de controle não está salvo",
       "save-dashboard": "Para renderizar uma imagem do painel, você deve salvar o painel de controle primeiro.",
@@ -11512,6 +11555,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Visualização do painel"
     },

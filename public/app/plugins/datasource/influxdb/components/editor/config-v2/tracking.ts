@@ -70,6 +70,14 @@ export const trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked = (
   reportInteraction('influxdb-config-v2-advanceddb-settings-min-time-clicked');
 };
 
+export const trackInfluxDBConfigV2AdvancedDbConnectionSettingsAutocompleteClicked = () => {
+  reportInteraction('influxdb-config-v2-advanceddb-settings-autocomplete-range-clicked');
+};
+
+export const trackInfluxDBConfigV2AdvancedDbConnectionSettingsMaxSeriesClicked = () => {
+  reportInteraction('influxdb-config-v2-advanceddb-settings-max-series-clicked');
+};
+
 // Advanced HTTP Settings
 export const trackInfluxDBConfigV2AdvancedHTTPSettingsToggleClicked = () => {
   reportInteraction('influxdb-config-v2-advanced-http-settings-toggle-clicked');

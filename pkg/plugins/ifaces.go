@@ -117,12 +117,10 @@ type PluginLoaderAuthorizer interface {
 
 type Licensing interface {
 	Environment() []string
-
 	Edition() string
-
 	Path() string
-
 	AppURL() string
+	ContentDeliveryPrefix() string
 }
 
 type SignatureCalculator interface {

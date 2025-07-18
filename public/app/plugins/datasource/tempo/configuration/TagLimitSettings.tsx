@@ -48,7 +48,7 @@ export const TagLimitSection = ({ options, onOptionsChange }: DataSourcePluginOp
       description={
         <ConfigDescriptionLink
           description="Specify the limit for tags and tag values."
-          suffix={'/#tag-limit'}
+          suffix={'tempo/configure-tempo-data-source/#tag-limit'}
           feature="the tag limit"
         />
       }

@@ -3,8 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
-import { renderSingleLink } from '../../DataLinksActionsTooltip';
-import { useSingleLink } from '../hooks';
+import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
 import { JSONCellProps } from '../types';
 
 export const JSONCell = ({ value, field, rowIdx }: JSONCellProps) => {
@@ -30,9 +29,13 @@ export const JSONCell = ({ value, field, rowIdx }: JSONCellProps) => {
     }
   }
 
-  const link = useSingleLink(field, rowIdx);
-
-  return <span className={styles.jsonText}>{link == null ? displayValue : renderSingleLink(link, displayValue)}</span>;
+  return (
+    <span className={styles.jsonText}>
+      <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+        {displayValue}
+      </MaybeWrapWithLink>
+    </span>
+  );
 };
 
 const getStyles = (_theme: GrafanaTheme2) => ({

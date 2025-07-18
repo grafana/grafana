@@ -233,7 +233,7 @@
       "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Hatókör"
     },
     "search": {
       "aria-label-resource-search": "Erőforrás keresése",

@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -199,39 +198,6 @@ func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, er
 		Ref:         toNullString(sv.Spec.Ref),
 		ExternalID:  externalID,
 	}, nil
-}
-
-// DTO for `secureValueForDecrypt` query result, only what we need.
-type secureValueForDecrypt struct {
-	Keeper     sql.NullString
-	Decrypters sql.NullString
-	Ref        sql.NullString
-	Active     bool
-	ExternalID string
-}
-
-// to Decrypt maps a DB row into a DecryptSecureValue object needed for decryption.
-func (sv *secureValueForDecrypt) toDecrypt() (*contracts.DecryptSecureValue, error) {
-	decrypters := make([]string, 0)
-	if sv.Decrypters.Valid && sv.Decrypters.String != "" {
-		if err := json.Unmarshal([]byte(sv.Decrypters.String), &decrypters); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
-		}
-	}
-
-	decryptSecureValue := &contracts.DecryptSecureValue{
-		Decrypters: decrypters,
-		ExternalID: sv.ExternalID,
-	}
-
-	if sv.Keeper.Valid && sv.Keeper.String != "" {
-		decryptSecureValue.Keeper = &sv.Keeper.String
-	}
-	if sv.Ref.Valid && sv.Ref.String != "" {
-		decryptSecureValue.Ref = sv.Ref.String
-	}
-
-	return decryptSecureValue, nil
 }
 
 // toNullString returns a sql.NullString struct given a *string
