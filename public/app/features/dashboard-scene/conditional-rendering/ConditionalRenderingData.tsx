@@ -2,11 +2,12 @@ import { useMemo } from 'react';
 
 import { PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { CancelActivationHandler, SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { activateSceneObjectAndParentTree } from '../utils/utils';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingSerializerRegistryItem, DataConditionValue, ItemsWithConditionalRendering } from './types';
@@ -47,6 +48,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
       return;
     }
 
+    let cleanUp: CancelActivationHandler | undefined;
     const item = this.getItem();
 
     if (item instanceof AutoGridItem) {
@@ -56,8 +58,16 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
         return;
       }
 
+      if (!dataProvider.isActive) {
+        cleanUp = activateSceneObjectAndParentTree(dataProvider);
+      }
+
       this._subs.add(dataProvider.subscribeToState(() => this.notifyChange()));
     }
+
+    return () => {
+      cleanUp?.();
+    };
   }
 
   public evaluate(): boolean {
@@ -66,6 +76,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     }
 
     const hasData = this._hasData();
+
     return (this.state.value && hasData) || (!this.state.value && !hasData);
   }
 
@@ -87,6 +98,10 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     }
 
     const series = data?.series ?? [];
+
+    // if (this.parent?.parent?.parent?.state.body.state.title === 'panel') {
+    //   console.log('data', data);
+    // }
 
     for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
       if (series[seriesIdx].length > 0) {
