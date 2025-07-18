@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -43,7 +43,7 @@ export default function ConnectionsHomePage() {
                   key={index}
                   title={child.text}
                   description={child.subTitle}
-                  icon={child.icon as IconName}
+                  icon={child.icon}
                   url={child.url}
                   index={index}
                 />

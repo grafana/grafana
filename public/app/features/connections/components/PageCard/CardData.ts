@@ -1,4 +1,13 @@
-export const cloudCardData = [
+import type { IconName } from '@grafana/data';
+
+type CardData = {
+  text: string;
+  subTitle: string;
+  url: string;
+  icon: IconName;
+};
+
+export const cloudCardData: CardData[] = [
   {
     text: 'Add new connection',
     subTitle: 'Connect data to Grafana through data sources, integrations and apps',
@@ -31,7 +40,7 @@ export const cloudCardData = [
   },
 ];
 
-export const ossCardData = [
+export const ossCardData: CardData[] = [
   {
     text: 'Add new connection',
     subTitle: 'Connect to a new data source',
