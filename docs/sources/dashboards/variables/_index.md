@@ -61,11 +61,11 @@ Or you could create one dashboard and use panels with template queries like this
 wmi_system_threads{instance=~"$server"}
 ```
 
-<!-- add a screenshot for the example -->
+{{< admonition type="note">}}
+In our documentation and in the application, we typically simply refer to a _template query_ as a _query_, but we often use the terms _variable_ and _template variable_ interchangeably.
+{{< /admonition >}}
 
-In our documentation and in the application, we generally just refer to a _template query_ as a _query_, but we often use the terms _variable_ and _template variable_ interchangeably.
-
-## Additional Examples
+## Additional examples
 
 The following dashboards in Grafana Play provide examples of template variables:
 
