@@ -31,8 +31,8 @@ export function TemplatePreview({
   payloadFormatError: string | null;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
   className?: string;
-  aiGeneratedTemplate: boolean;
-  setAiGeneratedTemplate: (aiGeneratedTemplate: boolean) => void;
+  aiGeneratedTemplate?: boolean;
+  setAiGeneratedTemplate?: (aiGeneratedTemplate: boolean) => void;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -56,7 +56,7 @@ export function TemplatePreview({
             aria-label={t('alerting.template-preview.aria-label-refresh-preview', 'Refresh preview')}
             onClick={() => {
               onPreview();
-              setAiGeneratedTemplate(false);
+              setAiGeneratedTemplate?.(false);
             }}
             size="sm"
             variant="secondary"
@@ -68,7 +68,7 @@ export function TemplatePreview({
       <div className={styles.viewer.feedbackContainer}>
         <AIFeedbackButtonComponent
           origin="template"
-          featureEnabled={config.featureToggles.alertingAIGenTemplates === true && aiGeneratedTemplate}
+          featureEnabled={config.featureToggles.alertingAIGenTemplates === true && Boolean(aiGeneratedTemplate)}
           showComment={true}
           useRouteDetection={false}
         />
