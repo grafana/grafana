@@ -61,6 +61,7 @@ export type SSOProviderSettingsBase = {
   // For Azure AD
   forceUseGraphApi?: boolean;
   domainHint?: string;
+  loginPrompt?: string;
   // For Google
   validateHd?: boolean;
 };
