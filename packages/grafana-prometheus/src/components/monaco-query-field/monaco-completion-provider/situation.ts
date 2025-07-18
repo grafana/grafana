@@ -187,6 +187,11 @@ const RESOLVERS: Resolver[] = [
     fun: resolveTopLevel,
   },
   {
+    // Partially written metric name
+    path: [Identifier, VectorSelector, PromQL],
+    fun: resolveTopLevel,
+  },
+  {
     path: [FunctionCallBody],
     fun: resolveInFunction,
   },
