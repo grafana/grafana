@@ -103,14 +103,15 @@ func (s *store) SetUserResourcePermission(
 	var err error
 	var permission *accesscontrol.ResourcePermission
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		permission, err = s.setUserResourcePermission(sess, orgID, usr, cmd, hook)
+		permission, err = s.setUserResourcePermission(ctx, sess, orgID, usr, cmd, hook)
 		return err
 	})
 
 	return permission, err
 }
 func (s *store) setUserResourcePermission(
-	sess *db.Session, orgID int64, user accesscontrol.User,
+	ctx context.Context, sess *db.Session,
+	orgID int64, user accesscontrol.User,
 	cmd SetResourcePermissionCommand,
 	hook UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
@@ -120,7 +121,7 @@ func (s *store) setUserResourcePermission(
 	}
 
 	if hook != nil {
-		if err := hook(sess, orgID, user, cmd.ResourceID, cmd.Permission); err != nil {
+		if err := hook(ctx, sess, orgID, user, cmd.ResourceID, cmd.Permission); err != nil {
 			return nil, err
 		}
 	}
@@ -231,7 +232,7 @@ func (s *store) SetResourcePermissions(
 		for _, cmd := range commands {
 			var p *accesscontrol.ResourcePermission
 			if cmd.User.ID != 0 {
-				p, err = s.setUserResourcePermission(sess, orgID, cmd.User, cmd.SetResourcePermissionCommand, hooks.User)
+				p, err = s.setUserResourcePermission(ctx, sess, orgID, cmd.User, cmd.SetResourcePermissionCommand, hooks.User)
 			} else if cmd.TeamID != 0 {
 				p, err = s.setTeamResourcePermission(sess, orgID, cmd.TeamID, cmd.SetResourcePermissionCommand, hooks.Team)
 			} else if org.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {

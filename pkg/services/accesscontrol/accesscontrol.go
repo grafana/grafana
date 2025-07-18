@@ -164,6 +164,7 @@ type PermissionsService interface {
 
 type User struct {
 	ID         int64
+	UID        string
 	IsExternal bool
 }
 

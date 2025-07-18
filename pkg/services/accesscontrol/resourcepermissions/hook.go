@@ -1,6 +1,8 @@
 package resourcepermissions
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -11,7 +13,7 @@ type ResourceHooks struct {
 	BuiltInRole BuiltinResourceHookFunc
 }
 
-type UserResourceHookFunc func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error
+type UserResourceHookFunc func(ctx context.Context, session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error
 type TeamResourceHookFunc func(session *db.Session, orgID, teamID int64, resourceID, permission string) error
 type BuiltinResourceHookFunc func(session *db.Session, orgID int64, builtInRole, resourceID, permission string) error
 
