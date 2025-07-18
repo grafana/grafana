@@ -124,10 +124,10 @@ The table below illustrates the details needed for each query language:
 
 | **Setting** | **Flux** | **InfluxQL** | **SQL**      |
 | ---------- | ----------- | ----------- | ----------- |
-| Bucket or Database       | &#x2713;    | &#x2713;    | &#x2713;   |
-| Organization             | &#x2713;    |             |            |
-| Password or Token        | &#x2713;    | &#x2713;    | &#x2713;   |
-| User                     |             | &#x2713;    |            |
+| **Bucket** or **Database**   | &#x2713;    | &#x2713;    | &#x2713;   |
+| **Organization**             | &#x2713;    |             |            |
+| **Password** or **Token**    | &#x2713;    | &#x2713;    | &#x2713;   |
+| **User**                     |             | &#x2713;    |            |
 
 
 - **Bucket** or **Database** - Sets the ID of the bucket to query. Refer to [View buckets](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) in InfluxData's documentation on how to locate the list of available buckets and their corresponding IDs.
@@ -152,7 +152,7 @@ Advanced Database Settings are optional settings that give you more control over
 ##### For SQL
 - **Insecure Connection** - Toggle to disable gRPC TLS security.
 
-**Private Data Source Connect**
+### Private Data Source Connect
 
 _For Grafana Cloud only._ Private data source connect (PDC) allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
