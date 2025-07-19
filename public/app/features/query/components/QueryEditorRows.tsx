@@ -37,9 +37,11 @@ export interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onQueryOpenChanged?: (status?: boolean | undefined) => void;
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
+  isOpen?: boolean;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -173,8 +175,10 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryCopied,
       onQueryRemoved,
       onQueryToggled,
+      onQueryOpenChanged,
       onQueryReplacedFromLibrary,
       queryRowWrapper,
+      isOpen,
     } = this.props;
 
     return (
@@ -206,12 +210,14 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onQueryCopied={onQueryCopied}
                       onQueryRemoved={onQueryRemoved}
                       onQueryToggled={onQueryToggled}
+                      onQueryOpenChanged={onQueryOpenChanged}
                       onQueryReplacedFromLibrary={onQueryReplacedFromLibrary}
                       queries={queries}
                       app={app}
                       range={getTimeSrv().timeRange()}
                       history={history}
                       eventBus={eventBus}
+                      isOpen={isOpen}
                     />
                   );
 
