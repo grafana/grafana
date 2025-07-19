@@ -1279,6 +1279,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingAIFeedback",
+			Description:       "Enable AI-generated feedback from the Grafana UI.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingAIImproveAlertRules",
 			Description:       "Enable AI-improve alert rules labels and annotations.",
 			Stage:             FeatureStageExperimental,
