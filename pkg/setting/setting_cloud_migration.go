@@ -34,6 +34,7 @@ type CloudMigrationSettings struct {
 	TokenExpiresAfter           time.Duration
 	FrontendPollInterval        time.Duration
 	AlertRulesState             string
+	StoreSnapshotInDB           bool
 
 	IsDeveloperMode bool
 }
@@ -60,6 +61,7 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.TokenExpiresAfter = cloudMigration.Key("token_expires_after").MustDuration(7 * 24 * time.Hour)
 	cfg.CloudMigration.IsDeveloperMode = cloudMigration.Key("developer_mode").MustBool(false)
 	cfg.CloudMigration.FrontendPollInterval = cloudMigration.Key("frontend_poll_interval").MustDuration(2 * time.Second)
+	cfg.CloudMigration.StoreSnapshotInDB = cloudMigration.Key("store_snapshot_in_db").MustBool(true)
 	cfg.CloudMigration.AlertRulesState = cloudMigration.Key("alert_rules_state").In(GMSAlertRulesPaused, []string{GMSAlertRulesPaused, GMSAlertRulesUnchanged})
 
 	if cfg.CloudMigration.SnapshotFolder == "" {
