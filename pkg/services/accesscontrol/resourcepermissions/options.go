@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -36,7 +35,7 @@ type Options struct {
 	// RoleGroup is the group name for the generated fixed roles
 	RoleGroup string
 	// OnSetUser if configured will be called each time a permission is set for a user
-	OnSetUser func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error
+	OnSetUser UserResourceHookFunc
 	// OnSetTeam if configured will be called each time a permission is set for a team
 	OnSetTeam func(session *db.Session, orgID, teamID int64, resourceID, permission string) error
 	// OnSetBuiltInRole if configured will be called each time a permission is set for a built-in role

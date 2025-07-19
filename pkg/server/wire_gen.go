@@ -801,7 +801,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
-	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
+	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService, client)
 	if err != nil {
 		return nil, err
 	}
@@ -1354,7 +1354,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
-	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
+	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService, client)
 	if err != nil {
 		return nil, err
 	}
