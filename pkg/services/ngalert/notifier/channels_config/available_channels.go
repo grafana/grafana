@@ -315,6 +315,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -402,6 +403,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "details",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -532,6 +534,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  alertingPagerduty.DefaultURL,
 					PropertyName: "url",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -579,6 +582,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "description",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -660,6 +664,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "message",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -746,6 +751,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -932,6 +938,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -969,6 +976,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -1051,6 +1059,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeCheckbox,
 					PropertyName: "disable_notification",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -1295,6 +1304,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "@all",
 					PropertyName: "touser",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -1369,6 +1379,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeCheckbox,
 					PropertyName: "use_discord_username",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -1400,6 +1411,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -1433,6 +1445,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "description",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -1488,6 +1501,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "description",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -1743,6 +1757,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 						},
 					},
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{
@@ -1787,6 +1802,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 		{ // Since Grafana 11.1
@@ -2047,6 +2063,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "",
 					PropertyName: "fields",
 				},
+				commonHttpClientOption(), // New in 12.2.
 			},
 		},
 	}

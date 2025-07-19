@@ -1,24 +1,32 @@
 package channels_config
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetSecretKeysForContactPointType(t *testing.T) {
+	commonHttpClientOptionSecrets := []string{
+		"http_config.oauth2.client_secret",
+		"http_config.oauth2.tls_config.caCertificate",
+		"http_config.oauth2.tls_config.clientCertificate",
+		"http_config.oauth2.tls_config.clientKey",
+	}
 	testCases := []struct {
 		receiverType         string
 		expectedSecretFields []string
+		skipCommonSecrets    bool
 	}{
 		{receiverType: "dingding", expectedSecretFields: []string{"url"}},
 		{receiverType: "kafka", expectedSecretFields: []string{"password"}},
-		{receiverType: "email", expectedSecretFields: []string{}},
+		{receiverType: "email", expectedSecretFields: []string{}, skipCommonSecrets: true},
 		{receiverType: "pagerduty", expectedSecretFields: []string{"integrationKey"}},
 		{receiverType: "victorops", expectedSecretFields: []string{"url"}},
 		{receiverType: "oncall", expectedSecretFields: []string{"password", "authorization_credentials"}},
 		{receiverType: "pushover", expectedSecretFields: []string{"apiToken", "userKey"}},
-		{receiverType: "slack", expectedSecretFields: []string{"token", "url"}},
+		{receiverType: "slack", expectedSecretFields: []string{"token", "url"}, skipCommonSecrets: true},
 		{receiverType: "sensugo", expectedSecretFields: []string{"apikey"}},
 		{receiverType: "teams", expectedSecretFields: []string{}},
 		{receiverType: "telegram", expectedSecretFields: []string{"bottoken"}},
@@ -29,21 +37,17 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 			"tlsConfig.clientCertificate",
 			"tlsConfig.clientKey",
 			"hmacConfig.secret",
-			"http_config.oauth2.client_secret",
-			"http_config.oauth2.tls_config.caCertificate",
-			"http_config.oauth2.tls_config.clientCertificate",
-			"http_config.oauth2.tls_config.clientKey",
 		}},
 		{receiverType: "wecom", expectedSecretFields: []string{"url", "secret"}},
-		{receiverType: "prometheus-alertmanager", expectedSecretFields: []string{"basicAuthPassword"}},
+		{receiverType: "prometheus-alertmanager", expectedSecretFields: []string{"basicAuthPassword"}, skipCommonSecrets: true},
 		{receiverType: "discord", expectedSecretFields: []string{"url"}},
 		{receiverType: "googlechat", expectedSecretFields: []string{"url"}},
 		{receiverType: "LINE", expectedSecretFields: []string{"token"}},
 		{receiverType: "threema", expectedSecretFields: []string{"api_secret"}},
 		{receiverType: "opsgenie", expectedSecretFields: []string{"apiKey"}},
 		{receiverType: "webex", expectedSecretFields: []string{"bot_token"}},
-		{receiverType: "sns", expectedSecretFields: []string{"sigv4.access_key", "sigv4.secret_key"}},
-		{receiverType: "mqtt", expectedSecretFields: []string{"password", "tlsConfig.caCertificate", "tlsConfig.clientCertificate", "tlsConfig.clientKey"}},
+		{receiverType: "sns", expectedSecretFields: []string{"sigv4.access_key", "sigv4.secret_key"}, skipCommonSecrets: true},
+		{receiverType: "mqtt", expectedSecretFields: []string{"password", "tlsConfig.caCertificate", "tlsConfig.clientCertificate", "tlsConfig.clientKey"}, skipCommonSecrets: true},
 		{receiverType: "jira", expectedSecretFields: []string{"user", "password", "api_token"}},
 	}
 	n := GetAvailableNotifiers()
@@ -57,7 +61,11 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		t.Run(testCase.receiverType, func(t *testing.T) {
 			got, err := GetSecretKeysForContactPointType(testCase.receiverType)
 			require.NoError(t, err)
-			require.ElementsMatch(t, testCase.expectedSecretFields, got)
+			expectedSecretFields := testCase.expectedSecretFields
+			if !testCase.skipCommonSecrets {
+				expectedSecretFields = slices.Concat(testCase.expectedSecretFields, commonHttpClientOptionSecrets)
+			}
+			require.ElementsMatch(t, expectedSecretFields, got)
 		})
 	}
 
