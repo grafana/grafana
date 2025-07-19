@@ -118,7 +118,9 @@ export function ExpressionQueryEditor(props: Props) {
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
 
       case ExpressionQueryType.sql:
-        return <SqlExpr onChange={onChange} query={query} refIds={refIds} />;
+        return (
+          <SqlExpr onChange={onChange} query={query} refIds={refIds} panelId={props.data?.request?.panelPluginId} />
+        );
     }
   };
 
