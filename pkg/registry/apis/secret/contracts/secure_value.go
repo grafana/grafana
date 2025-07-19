@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"k8s.io/client-go/dynamic"
-
+	"github.com/grafana/grafana-app-sdk/resource"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -48,6 +47,16 @@ type SecureValueService interface {
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
 }
 
+type SecureValueClientProvider interface {
+	Client(ctx context.Context, namespace string) (SecureValueClient, error)
+}
+
 type SecureValueClient interface {
-	Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error)
+	List(ctx context.Context, opts resource.ListOptions) (*secretv1beta1.SecureValueList, error)
+	Watch(ctx context.Context, opts resource.WatchOptions) (resource.WatchResponse, error)
+	Get(ctx context.Context, uid string) (*secretv1beta1.SecureValue, error)
+	Create(ctx context.Context, obj *secretv1beta1.SecureValue, opts resource.CreateOptions) (*secretv1beta1.SecureValue, error)
+	Update(ctx context.Context, obj *secretv1beta1.SecureValue, opts resource.UpdateOptions) (*secretv1beta1.SecureValue, error)
+	Patch(ctx context.Context, uid string, req resource.PatchRequest, opts resource.PatchOptions) (*secretv1beta1.SecureValue, error)
+	Delete(ctx context.Context, uid string, opts resource.DeleteOptions) error
 }

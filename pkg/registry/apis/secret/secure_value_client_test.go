@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
@@ -18,7 +19,7 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 
 	validator := validator.ProvideSecureValueValidator()
 
-	client := ProvideSecureValueClient(
+	client := ProvideSecureValueClientProvider(
 		setup.SecureValueService,
 		validator,
 	)
@@ -43,14 +44,9 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 		},
 	}
 
-	unstructured, err := toUnstructured(sv)
-	require.NoError(t, err)
-
 	// Create
-	created, err := nsClient.Create(ctx, unstructured, metav1.CreateOptions{})
-	require.NoError(t, err)
 
-	createdSv, err := fromUnstructured(created)
+	createdSv, err := nsClient.Create(ctx, sv, resource.CreateOptions{})
 	require.NoError(t, err)
 
 	require.NotEmpty(t, createdSv.UID)
@@ -59,10 +55,7 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 	require.Equal(t, sv.Namespace, createdSv.Namespace)
 
 	// Read
-	read, err := nsClient.Get(ctx, createdSv.Name, metav1.GetOptions{})
-	require.NoError(t, err)
-
-	readSv, err := fromUnstructured(read)
+	readSv, err := nsClient.Get(ctx, sv.Name)
 	require.NoError(t, err)
 	require.EqualValues(t, createdSv, readSv)
 
@@ -78,32 +71,28 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 		},
 	}
 
-	unstructured, err = toUnstructured(updatedSv)
+	_, err = nsClient.Update(ctx, updatedSv, resource.UpdateOptions{})
 	require.NoError(t, err)
 
-	_, err = nsClient.Update(ctx, unstructured, metav1.UpdateOptions{})
+	readSv, err = nsClient.Get(ctx, sv.Name)
 	require.NoError(t, err)
 
-	read, err = nsClient.Get(ctx, createdSv.Name, metav1.GetOptions{})
-	require.NoError(t, err)
-	readSv, err = fromUnstructured(read)
-	require.NoError(t, err)
 	require.Equal(t, updatedSv.Spec.Description, readSv.Spec.Description)
 	require.Equal(t, updatedSv.Name, readSv.Name)
 	require.Equal(t, updatedSv.Namespace, readSv.Namespace)
 
 	// List
-	list, err := nsClient.List(ctx, metav1.ListOptions{})
+	listSv, err := nsClient.List(ctx, resource.ListOptions{})
 	require.NoError(t, err)
-	require.Len(t, list.Items, 1)
-	require.Equal(t, createdSv.Name, list.Items[0].GetName())
-	require.Equal(t, createdSv.Namespace, list.Items[0].GetNamespace())
+	require.Len(t, listSv.Items, 1)
+	require.Equal(t, createdSv.Name, listSv.Items[0].GetName())
+	require.Equal(t, createdSv.Namespace, listSv.Items[0].GetNamespace())
 
 	// Delete
-	err = nsClient.Delete(ctx, createdSv.Name, metav1.DeleteOptions{})
+	err = nsClient.Delete(ctx, sv.Name, resource.DeleteOptions{})
 	require.NoError(t, err)
 
-	read, err = nsClient.Get(ctx, createdSv.Name, metav1.GetOptions{})
+	readSv, err = nsClient.Get(ctx, sv.Name)
 	require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
-	require.Nil(t, read)
+	require.Nil(t, readSv)
 }
