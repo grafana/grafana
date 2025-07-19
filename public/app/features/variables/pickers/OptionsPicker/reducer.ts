@@ -255,7 +255,9 @@ const optionsPickerSlice = createSlice({
       if (needle === '') {
         opts = action.payload;
       } else if (REGEXP_NON_ASCII.test(needle)) {
-        opts = action.payload.filter((o) => o.text.includes(needle));
+        opts = action.payload.filter((o) =>
+          String(o.text).toLocaleLowerCase().includes(needle.toLocaleLowerCase())
+        );
       } else {
         // with current API, not seeing a way to cache this on state using action.payload's uniqueness
         // since it's recreated and includes selected state on each item :(
