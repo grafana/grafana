@@ -388,6 +388,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     // LOGIN / SIGNUP
     {
       path: '/login',
+      allowAnonymous: true,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LoginPage" */ 'app/core/components/Login/LoginPage')
       ),
@@ -413,6 +414,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/signup',
+      allowAnonymous: true,
       component: config.disableUserSignUp
         ? () => <Navigate replace to="/login" />
         : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
@@ -421,6 +423,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/user/password/send-reset-email',
+      allowAnonymous: true,
       chromeless: true,
       component: SafeDynamicImport(
         () =>
@@ -429,6 +432,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/user/password/reset',
+      allowAnonymous: true,
       component: SafeDynamicImport(
         () =>
           import(
@@ -477,6 +481,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/sandbox/test',
+      allowAnonymous: true, // purposefully to allow testing
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "TestStuffPage"*/ 'app/features/sandbox/TestStuffPage')
       ),

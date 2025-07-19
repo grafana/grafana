@@ -213,15 +213,16 @@ export class GrafanaApp {
         getPanelPluginFromCache: syncGetPanelPlugin,
       });
 
-      if (config.featureToggles.useSessionStorageForRedirection) {
-        handleRedirectTo();
-      }
-
+      // Login redirect requires locationUtil to be initialized
       locationUtil.initialize({
         config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });
+
+      if (config.featureToggles.useSessionStorageForRedirection) {
+        handleRedirectTo();
+      }
 
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
@@ -464,7 +465,8 @@ function handleRedirectTo(): void {
     // In this case there should be a request to the backend
     window.location.replace(decodedRedirectTo);
   } else {
-    locationService.replace(decodedRedirectTo);
+    const stripped = locationUtil.stripBaseFromUrl(decodedRedirectTo);
+    locationService.replace(stripped);
   }
 }
 
