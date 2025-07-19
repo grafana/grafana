@@ -466,9 +466,7 @@ export const LogListContextProvider = ({
   );
 
   const closeDetails = useCallback(() => {
-    if (showDetails.length) {
-      removeDetailsScrollPosition(showDetails[0]);
-    }
+    showDetails.forEach((log) => removeDetailsScrollPosition(log));
     setShowDetails([]);
   }, [showDetails]);
 
@@ -477,12 +475,13 @@ export const LogListContextProvider = ({
       if (!enableLogDetails) {
         return;
       }
-      const found = showDetails.findIndex((stateLog) => stateLog === log || stateLog.uid === log.uid);
-      if (found >= 0) {
+      const found = showDetails.find((stateLog) => stateLog === log || stateLog.uid === log.uid);
+      if (found) {
+        removeDetailsScrollPosition(found);
         setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
       } else {
         // Supporting one displayed details for now
-        setShowDetails([log]);
+        setShowDetails([...showDetails, log]);
       }
     },
     [enableLogDetails, showDetails]

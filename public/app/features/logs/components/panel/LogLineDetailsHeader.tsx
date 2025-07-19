@@ -14,12 +14,13 @@ import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface Props {
+  focusLogLine?: (log: LogListModel) => void;
   log: LogListModel;
   search: string;
   onSearch(newSearch: string): void;
 }
 
-export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
+export const LogLineDetailsHeader = ({ focusLogLine, log, search, onSearch }: Props) => {
   const {
     closeDetails,
     detailsMode,
@@ -52,6 +53,10 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     },
     [noInteractions]
   );
+
+  const scrollToLogLine = useCallback(() => {
+    focusLogLine?.(log);
+  }, [focusLogLine, log]);
 
   const copyLogLine = useCallback(() => {
     copyText(log.entry, containerRef);
@@ -143,22 +148,32 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
         ref={inputRef}
         suffix={search !== '' ? clearSearch : undefined}
       />
-      {showLogLineToggle && (
-        <IconButton
-          tooltip={
-            logLineDisplayed
-              ? t('logs.log-line-details.hide-log-line', 'Hide log line')
-              : t('logs.log-line-details.show-log-line', 'Show log line')
-          }
-          tooltipPlacement="top"
-          size="md"
-          name="eye"
-          onClick={toggleLogLine}
-          tabIndex={0}
-          variant={logLineDisplayed ? 'primary' : undefined}
-        />
-      )}
       <div className={styles.icons}>
+        {focusLogLine && (
+          <IconButton
+            tooltip={t('logs.log-line-details.scroll-to-logline', 'Scroll to log line')}
+            tooltipPlacement="top"
+            size="md"
+            name="arrows-v"
+            onClick={scrollToLogLine}
+            tabIndex={0}
+          />
+        )}
+        {showLogLineToggle && (
+          <IconButton
+            tooltip={
+              logLineDisplayed
+                ? t('logs.log-line-details.hide-log-line', 'Hide log line')
+                : t('logs.log-line-details.show-log-line', 'Show log line')
+            }
+            tooltipPlacement="top"
+            size="md"
+            name="eye"
+            onClick={toggleLogLine}
+            tabIndex={0}
+            variant={logLineDisplayed ? 'primary' : undefined}
+          />
+        )}
         <IconButton
           tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
           tooltipPlacement="top"

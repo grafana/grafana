@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { getDragStyles, useStyles2 } from '@grafana/ui';
+import { getDragStyles, Icon, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
 import { getDetailsScrollPosition, saveDetailsScrollPosition, useLogListContext } from './LogListContext';
@@ -21,21 +23,38 @@ export interface Props {
 export type LogLineDetailsMode = 'inline' | 'sidebar';
 
 export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize }: Props) => {
-  const { detailsWidth, noInteractions, setDetailsWidth, showDetails } = useLogListContext();
+  const { closeDetails, detailsWidth, noInteractions, setDetailsWidth, showDetails, toggleDetails } =
+    useLogListContext();
   const styles = useStyles2(getStyles, 'sidebar');
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [currentLog, setCurrentLog] = useState(showDetails[0]);
+  const previousShowDetails = usePrevious(showDetails);
 
   useEffect(() => {
-    focusLogLine(showDetails[0]);
+    focusLogLine(currentLog);
     if (!noInteractions) {
       reportInteraction('logs_log_line_details_displayed', {
         mode: 'sidebar',
       });
     }
-    // Just once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!showDetails.length) {
+      closeDetails();
+      return;
+    }
+    // Focus on the recently open
+    if (!previousShowDetails || showDetails.length > previousShowDetails.length) {
+      setCurrentLog(showDetails[showDetails.length - 1]);
+      return;
+    } else if (!showDetails.find((log) => log.uid === currentLog.uid)) {
+      setCurrentLog(showDetails[showDetails.length - 1]);
+    }
+  }, [closeDetails, currentLog.uid, previousShowDetails, showDetails]);
 
   const handleResize = useCallback(() => {
     if (containerRef.current) {
@@ -70,8 +89,32 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize 
       maxWidth={maxWidth}
     >
       <div className={styles.container} ref={containerRef}>
+        {showDetails.length > 1 && (
+          <TabsBar>
+            {showDetails.map((log) => {
+              return (
+                <Tab
+                  key={log.uid}
+                  truncate
+                  label={log.entry.substring(0, 25)}
+                  active={currentLog.uid === log.uid}
+                  onChangeTab={() => setCurrentLog(log)}
+                  suffix={() => (
+                    <span>
+                      <Icon
+                        name="times"
+                        aria-label={t('logs.log-line-details.remove-log', 'Remove log')}
+                        onClick={() => toggleDetails(log)}
+                      />
+                    </span>
+                  )}
+                />
+              );
+            })}
+          </TabsBar>
+        )}
         <div className={styles.scrollContainer}>
-          <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
+          <LogLineDetailsComponent focusLogLine={focusLogLine} log={currentLog} logs={logs} />
         </div>
       </div>
     </Resizable>
@@ -79,11 +122,12 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize 
 };
 
 export interface InlineLogLineDetailsProps {
+  log: LogListModel;
   logs: LogListModel[];
 }
 
-export const InlineLogLineDetails = memo(({ logs }: InlineLogLineDetailsProps) => {
-  const { noInteractions, showDetails } = useLogListContext();
+export const InlineLogLineDetails = memo(({ logs, log }: InlineLogLineDetailsProps) => {
+  const { noInteractions } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -96,25 +140,21 @@ export const InlineLogLineDetails = memo(({ logs }: InlineLogLineDetailsProps) =
   }, [noInteractions]);
 
   const saveScroll = useCallback(() => {
-    saveDetailsScrollPosition(showDetails[0], scrollRef.current?.scrollTop ?? 0);
-  }, [showDetails]);
+    saveDetailsScrollPosition(log, scrollRef.current?.scrollTop ?? 0);
+  }, [log]);
 
   useEffect(() => {
     if (!scrollRef.current) {
       return;
     }
-    scrollRef.current.scrollTop = getDetailsScrollPosition(showDetails[0]);
-  }, [showDetails]);
-
-  if (!showDetails.length) {
-    return null;
-  }
+    scrollRef.current.scrollTop = getDetailsScrollPosition(log);
+  }, [log]);
 
   return (
     <div className={`${styles.inlineWrapper} log-line-inline-details`}>
       <div className={styles.container}>
         <div className={styles.scrollContainer} ref={scrollRef} onScroll={saveScroll}>
-          <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
+          <LogLineDetailsComponent log={log} logs={logs} />
         </div>
       </div>
     </div>
