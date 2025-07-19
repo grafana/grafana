@@ -72,6 +72,7 @@ import {
   isCellInspectEnabled,
   getCellLinks,
   withDataLinksActionsTooltip,
+  getJustifyContent,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -185,7 +186,6 @@ export function TableNG(props: TableNGProps) {
     fields: visibleFields,
     hasNestedFrames,
     defaultHeight: defaultRowHeight,
-    headerHeight,
     expandedRows,
     typographyCtx,
   });
@@ -307,7 +307,8 @@ export function TableNG(props: TableNGProps) {
           field.display = getDisplayProcessor({ field, theme });
         }
 
-        const justifyContent = getTextAlign(field);
+        const textAlign = getTextAlign(field);
+        const justifyContent = getJustifyContent(field);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent);
@@ -344,7 +345,8 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.ColorBackground:
           case TableCellDisplayMode.ColorText:
           case TableCellDisplayMode.DataLinks:
-            cellClass = getCellStyles(theme, justifyContent, shouldWrap, shouldOverflow, withTooltip, canBeColorized);
+          case TableCellDisplayMode.JSONView:
+            cellClass = getCellStyles(theme, textAlign, justifyContent, shouldWrap, shouldOverflow, canBeColorized);
             break;
         }
 
@@ -786,6 +788,20 @@ const getGridStyles = (
 
     border: 'none',
 
+    // add a box shadow on hover and selection for all body cells
+    '& :not(.rdg-summary-row, .rdg-header-row) .rdg-cell': {
+      '&:hover, &[aria-selected=true]': {
+        boxShadow: theme.shadows.z2,
+      },
+      // selected cells should appear below hovered cells.
+      '&:hover': {
+        zIndex: theme.zIndex.tooltip - 1,
+      },
+      '&[aria-selected=true]': {
+        zIndex: theme.zIndex.tooltip - 2,
+      },
+    },
+
     '.rdg-summary-row': {
       '.rdg-cell': {
         zIndex: theme.zIndex.tooltip - 1,
@@ -887,15 +903,16 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
+  textAlign: Property.TextAlign,
   justifyContent: Property.JustifyContent,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  hasTooltip: boolean,
   isColorized: boolean
 ) =>
   css({
     display: 'flex',
     alignItems: 'center',
+    textAlign,
     justifyContent,
     paddingInline: TABLE.CELL_PADDING,
     minHeight: '100%',
@@ -907,12 +924,11 @@ const getCellStyles = (
     },
 
     // should omit if no cell actions, and no shouldOverflow
-    '&:hover': {
+    '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': {
         display: 'flex',
       },
       ...(shouldOverflow && {
-        zIndex: theme.zIndex.tooltip - 2,
         whiteSpace: 'pre-line',
         height: 'fit-content',
         minWidth: 'fit-content',

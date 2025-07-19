@@ -1,42 +1,56 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksCellProps } from '../types';
-import { getCellLinks } from '../utils';
+import { getCellLinks /*, shouldTextWrap */ } from '../utils';
 
 export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
-  const styles = useStyles2(getStyles);
+  // const textWrap = shouldTextWrap(field);
+  const styles = useStyles2(getStyles /*, textWrap */);
+  const links = useMemo(() => getCellLinks(field, rowIdx!), [field, rowIdx]);
 
-  const links = getCellLinks(field, rowIdx!);
+  if (!links || links.length === 0) {
+    return null;
+  }
 
   return (
-    <div>
-      {links &&
-        links.map((link, idx) => {
-          return !link.href && link.onClick == null ? (
-            <span key={idx} className={styles.linkCell}>
-              {link.title}
-            </span>
-          ) : (
-            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-            <span key={idx} className={styles.linkCell} onClick={link.onClick}>
-              <a href={link.href} target={link.target}>
-                {link.title}
-              </a>
-            </span>
-          );
-        })}
-    </div>
+    // the container span is needed to make the first-child and last-child CSS selectors work
+    // without interacting with other elements, like the TableCellActions.
+    <span>
+      {links.map((link, idx) =>
+        !link.href && link.onClick == null ? (
+          <span key={idx} className={styles.linkCell}>
+            {link.title}
+          </span>
+        ) : (
+          <a key={idx} className={styles.linkCell} onClick={link.onClick} href={link.href} target={link.target}>
+            {link.title}
+          </a>
+        )
+      )}
+    </span>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2 /*, textWrap?: boolean*/) => ({
   linkCell: css({
+    display: 'inline', // textWrap ? 'block' : 'inline',
     userSelect: 'text',
-    whiteSpace: 'nowrap',
     fontWeight: theme.typography.fontWeightMedium,
-    paddingRight: theme.spacing(1.5),
+    whiteSpace: 'nowrap',
+    // ...(!textWrap && {
+    paddingInline: theme.spacing(1),
+    borderRight: `2px solid ${theme.colors.border.medium}`,
+    '&:first-child': {
+      paddingInlineStart: 0,
+    },
+    '&:last-child': {
+      borderRight: 'none',
+      paddingInlineEnd: 0,
+    },
+    // }),
   }),
 });

@@ -1,14 +1,11 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
-
-import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
 import { JSONCellProps } from '../types';
 
-export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps) => {
-  const styles = useStyles2(getStyles, justifyContent);
+export const JSONCell = ({ value, field, rowIdx }: JSONCellProps) => {
+  const styles = useStyles2(getStyles);
 
   let displayValue = value;
 
@@ -31,19 +28,17 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps
   }
 
   return (
-    <div className={styles.jsonText}>
+    <span className={styles.jsonText}>
       <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
         {displayValue}
       </MaybeWrapWithLink>
-    </div>
+    </span>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
+const getStyles = () => ({
   jsonText: css({
-    display: 'flex',
     cursor: 'pointer',
     fontFamily: 'monospace',
-    justifyContent: justifyContent,
   }),
 });

@@ -45,7 +45,7 @@ const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
 );
 
 const JSON_RENDERER: TableCellRenderer = (props) => (
-  <JSONCell justifyContent={props.justifyContent} value={props.value} field={props.field} rowIdx={props.rowIdx} />
+  <JSONCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
 const GEO_RENDERER: TableCellRenderer = (props) => (
