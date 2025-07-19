@@ -3346,6 +3346,9 @@
       "text-badge-enabled": "有効化",
       "text-badge-not-enabled": "有効になっていません"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "IdPの.well-known/openid-configurationエンドポイント",
       "title-open-id-connect-discovery-url": "OpenID Connect Discovery URL"
@@ -3541,6 +3544,7 @@
       "empty-message": "フォルダが見つかりません",
       "error-title": "フォルダの読み込み中にエラーが発生しました",
       "non-folder-item": "非フォルダ {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "フォルダを検索",
       "unknown-error": "不明なエラー"
     },
@@ -5911,8 +5915,8 @@
         "title-someone-else-has-updated-this-dashboard": "他のユーザーがこのダッシュボードを更新しました",
         "would-still-dashboard": "このダッシュボードの保存を続行しますか？"
       },
-      "schema-v2-library-panels-export": "動的ダッシュボード機能は実験的なもので、現在のダッシュボード動作と完全な機能互換性はありません。この機能は、ライブラリパネルをサポートしていない新しいスキーマ形式に基づいています。そのため、別のインスタンスで使用する目的でダッシュボードをエクスポートした場合、ライブラリパネルは含まれません。機能の<2>ライフサイクル</2>が進むにつれ、これらをサポートする予定です。",
-      "schema-v2-library-panels-export-title": "現在ダッシュボードスキーマV2では、別のインスタンスでの使用目的でのライブラリパネルのエクスポートをサポートしていません",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "ダッシュボードが不可逆的に変更されました"
     },
     "save-dashboard-form-common-options": {
@@ -7933,6 +7937,60 @@
       "previous-label": "前月",
       "select-placeholder": "日付と時間の選択"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "閉じる"
     },
@@ -7979,6 +8037,20 @@
       "description-fields-with-value": "リデューサー条件付きフィールドのプロパティを設定",
       "field-name-picker": {
         "placeholder": "フィールドを選択"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "名前が正規表現と一致するフィールド",
       "name-fields-by-query": "クエリによって返されるフィールド",
@@ -11842,7 +11914,6 @@
       },
       "label-apply-to-entire-row": "行全体に適用",
       "label-background-display-mode": "背景表示モード",
-      "label-wrap-text": "テキストを折り返す",
       "wrap-text": "テキストを折り返す"
     },
     "column-alignment-options": {

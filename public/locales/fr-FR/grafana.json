@@ -3359,6 +3359,9 @@
       "text-badge-enabled": "Activé",
       "text-badge-not-enabled": "Non activé"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Le point de terminaison .well-known/openid-configuration pour votre IdP",
       "title-open-id-connect-discovery-url": "URL de découverte de connexion OpenID"
@@ -3559,6 +3562,7 @@
       "empty-message": "Aucun dossier trouvé",
       "error-title": "Impossible de charger les dossiers",
       "non-folder-item": "Non-dossier {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Rechercher dans les dossiers",
       "unknown-error": "Erreur inconnue"
     },
@@ -5931,8 +5935,8 @@
         "title-someone-else-has-updated-this-dashboard": "Quelqu’un d’autre a mis à jour ce tableau de bord",
         "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
       },
-      "schema-v2-library-panels-export": "La fonctionnalité de tableau de bord dynamique est expérimentale et n’a pas une parité complète de fonctionnalités avec le comportement actuel des tableaux de bord. Elle est basée sur un nouveau format de schéma, qui ne prend pas en charge les panneaux de bibliothèque. Cela signifie que lors de l’exportation du tableau de bord pour l’utiliser dans une autre instance, nous n’inclurons pas les panneaux de la bibliothèque. Nous avons l’intention de les prendre en charge au fur et à mesure de notre progression dans le <2>cycle de vie</2> de la fonctionnalité.",
-      "schema-v2-library-panels-export-title": "Le schéma de tableau de bord V2 ne prend pas encore en charge l’exportation de panneaux de bibliothèque à utiliser dans une autre instance",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Le tableau de bord a été modifié de manière irréversible"
     },
     "save-dashboard-form-common-options": {
@@ -7954,6 +7958,60 @@
       "previous-label": "Mois précédent",
       "select-placeholder": "Sélectionner la date/l'heure"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Fermer"
     },
@@ -8000,6 +8058,20 @@
       "description-fields-with-value": "Définir les propriétés pour les champs selon une condition de réduction",
       "field-name-picker": {
         "placeholder": "Sélectionner un champ"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "Champs dont le nom correspond à une expression régulière",
       "name-fields-by-query": "Champs retournés par la requête",
@@ -11881,7 +11953,6 @@
       },
       "label-apply-to-entire-row": "Appliquer à toute la ligne",
       "label-background-display-mode": "Mode d’affichage de l’arrière-plan",
-      "label-wrap-text": "Renvoyer à la ligne automatiquement",
       "wrap-text": "Renvoyer à la ligne automatiquement"
     },
     "column-alignment-options": {
