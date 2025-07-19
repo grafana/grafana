@@ -321,6 +321,25 @@ You can configure this setting as follows:
 | **Time shift start**  | Time shift for start of search. Default: `30m`.             |
 | **Time shift end**    | Time shift for end of search. Default: `30m`.               |
 
+### Tags time range
+
+The **Tags time range** feature controls how tag and tag-value queries are executed by specifying the time window applied to these requests. You can select one of the following options to constrain your queries:
+Specifies the time range to use for tags and tag value requests.
+
+You can configure this setting as follows:
+
+| Name                | Description                        |
+| ------------------- | ---------------------------------- |
+| **Last 30 minutes** | Last 30 minutes of selected range. |
+| **Last 3 hours**    | Last 3 hours of selected range.    |
+| **Last 24 hours**   | Last 24 hours of selected range.   |
+| **Last 3 days**     | Last 3 days of selected range.     |
+| **Last 7 days**     | Last 7 days of selected range.     |
+
+### Tag limit
+
+The **Tag limit** setting modifies the max number of tags and tag values to retrieve from Tempo. Default: 5000
+
 ### Span bar
 
 The **Span bar** setting helps you display additional information in the span bar row.
@@ -332,10 +351,6 @@ You can choose one of three options:
 | **None**     | Adds nothing to the span bar row.                                                                                                |
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
 | **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `component`. |
-
-### Tag limit
-
-The **Tag limit** setting modifies the max number of tags and tag values to retrieve from Tempo. Default: 5000
 
 ### Private data source connect
 
