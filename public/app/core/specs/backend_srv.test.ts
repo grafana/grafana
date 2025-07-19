@@ -1,4 +1,4 @@
-import { Observable, of, lastValueFrom } from 'rxjs';
+import { Observable, of, lastValueFrom, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
@@ -782,22 +782,19 @@ describe('backendSrv', () => {
         await expect(promise).rejects.toThrow(PathValidationError);
       });
 
-      it('should sanitise paths when calling .fetch', (done) => {
+      it('should sanitise paths when calling .fetch', async () => {
         const { backendSrv } = getTestContext();
         const maliciousUrl = '/api/users/%2e%2e/admin';
 
-        const observable = backendSrv.fetch({ url: maliciousUrl, method: 'GET', validatePath: true });
+        await expect(backendSrv.fetch({ url: maliciousUrl, method: 'GET', validatePath: true })).toEmitValuesWith(
+          (received) => {
+            expect(received.length).toEqual(1);
 
-        observable.subscribe({
-          next: () => {
-            throw new Error('Should not succeed');
-          },
-          error: (err) => {
-            expect(err).toBeInstanceOf(PathValidationError);
-            expect(err.message).toBe('Invalid request path');
-            done();
-          },
-        });
+            const processed: FetchError = received[0];
+            expect(processed).toBeInstanceOf(PathValidationError);
+            expect(processed.message).toBe('Invalid request path');
+          }
+        );
       });
     });
 
@@ -880,6 +877,257 @@ describe('backendSrv', () => {
             showSuccessAlert: true,
           })
         );
+      });
+    });
+  });
+
+  describe('chunked', () => {
+    beforeEach(() => {
+      // we do a bunch of console.log in the chunked function
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+
+    describe('when making a successful chunked request', () => {
+      it('then it should return chunks of data', async () => {
+        const url = '/api/chunked-data';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+
+        // Mock a ReadableStream with chunks
+        const chunks = [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6]), new Uint8Array([7, 8, 9])];
+
+        let chunkIndex = 0;
+        const mockReader = {
+          read: jest.fn().mockImplementation(() => {
+            if (chunkIndex < chunks.length) {
+              return Promise.resolve({
+                done: false,
+                value: chunks[chunkIndex++],
+              });
+            }
+            return Promise.resolve({ done: true, value: undefined });
+          }),
+          cancel: jest.fn(),
+        };
+
+        const mockBody = {
+          getReader: jest.fn().mockReturnValue(mockReader),
+        };
+
+        const mockResponse = {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: [],
+          body: mockBody,
+          url,
+          type: 'basic',
+          redirected: false,
+        };
+
+        fromFetchMock.mockReturnValue(of(mockResponse));
+
+        const options = { url, method: 'GET' };
+
+        await expect(backendSrv.chunked(options)).toEmitValuesWith((received) => {
+          const { body, ...rest } = mockResponse;
+          const config = { ...options };
+          const expected = { ...rest, config };
+          expect(received).toHaveLength(4); // 3 chunks + 1 final response
+          expect(received[0]).toEqual({ ...expected, data: new Uint8Array([1, 2, 3]) });
+          expect(received[1]).toEqual({ ...expected, data: new Uint8Array([4, 5, 6]) });
+          expect(received[2]).toEqual({ ...expected, data: new Uint8Array([7, 8, 9]) });
+          expect(received[3]).toEqual({ ...expected, data: undefined });
+          expect(mockReader.read).toHaveBeenCalledTimes(4);
+        });
+      });
+    });
+
+    describe('when request is cancelled', () => {
+      it('then it should abort the request and cancel the reader', async () => {
+        jest.useFakeTimers();
+        const url = '/api/chunked-data';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+
+        const mockReader = {
+          read: jest.fn().mockImplementation(() => {
+            return new Promise(() => {}); // Never resolves
+          }),
+          cancel: jest.fn(),
+        };
+
+        const mockBody = {
+          getReader: jest.fn().mockReturnValue(mockReader),
+        };
+
+        const mockResponse = {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: [],
+          body: mockBody,
+          url,
+          type: 'basic',
+          redirected: false,
+        };
+
+        fromFetchMock.mockReturnValue(of(mockResponse));
+
+        const options = { url, method: 'GET' };
+
+        const subscription = backendSrv.chunked(options).subscribe();
+
+        // Cancel the request
+        subscription.unsubscribe();
+
+        // Fast-forward until all timers have been executed
+        jest.advanceTimersByTime(100);
+
+        expect(mockReader.cancel).toHaveBeenCalled();
+      });
+    });
+
+    describe('when request throws an error', () => {
+      it('then it should complete immediately', async () => {
+        const url = '/api/chunked-data';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+
+        fromFetchMock.mockReturnValue(throwError(() => new Error('Server error')));
+
+        const options = { url, method: 'GET' };
+
+        await expect(backendSrv.chunked(options)).toEmitValuesWith((received) => {
+          expect(received).toHaveLength(1);
+
+          const error: FetchError = received[0];
+
+          expect(error).toBeInstanceOf(Error);
+          expect(error.message).toEqual('Server error');
+        });
+      });
+    });
+
+    describe('when response has no body', () => {
+      it('then it should complete immediately', async () => {
+        const url = '/api/chunked-data';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+
+        const mockResponse = {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: [],
+          body: null,
+          url,
+          type: 'basic',
+          redirected: false,
+        };
+
+        fromFetchMock.mockReturnValue(of(mockResponse));
+
+        const options = { url, method: 'GET' };
+
+        await expect(backendSrv.chunked(options)).toEmitValuesWith((received) => {
+          const { body, ...rest } = mockResponse;
+          const config = { ...options };
+          const expected = { ...rest, config };
+          expect(received).toHaveLength(1);
+          expect(received[0]).toEqual({ ...expected, data: undefined });
+        });
+      });
+    });
+
+    describe('when validatePath is true and url is malicious', () => {
+      it('then it should throw an PathValidationError', async () => {
+        const url = '/api/users/%2e%2e/admin';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+
+        const mockResponse = {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: [],
+          body: null,
+          url,
+          type: 'basic',
+          redirected: false,
+        };
+
+        fromFetchMock.mockReturnValue(of(mockResponse));
+
+        const options = { url, method: 'GET', validatePath: true };
+
+        await expect(backendSrv.chunked(options)).toEmitValuesWith((received) => {
+          expect(received).toHaveLength(1);
+
+          const error: FetchError = received[0];
+
+          expect(error).toBeInstanceOf(PathValidationError);
+          expect(error.message).toEqual('Invalid request path');
+        });
+      });
+    });
+
+    describe('when validatePath is true and url is not malicious', () => {
+      it('then it should return correct chunks', async () => {
+        const url = '/api/chunked-data';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+
+        const mockResponse = {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: [],
+          body: null,
+          url,
+          type: 'basic',
+          redirected: false,
+        };
+
+        fromFetchMock.mockReturnValue(of(mockResponse));
+
+        const options = { url, method: 'GET', validatePath: true };
+
+        await expect(backendSrv.chunked(options)).toEmitValuesWith((received) => {
+          const { body, ...rest } = mockResponse;
+          const config = { ...options };
+          const expected = { ...rest, config };
+          expect(received).toHaveLength(1);
+          expect(received[0]).toEqual({ ...expected, data: undefined });
+        });
+      });
+    });
+
+    describe('when validatePath is false and url is malicious', () => {
+      it('then it should return correct chunks', async () => {
+        const url = '/api/users/%2e%2e/admin';
+        const { backendSrv, fromFetchMock } = getTestContext({ url });
+
+        const mockResponse = {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: [],
+          body: null,
+          url,
+          type: 'basic',
+          redirected: false,
+        };
+
+        fromFetchMock.mockReturnValue(of(mockResponse));
+
+        const options = { url, method: 'GET', validatePath: false };
+
+        await expect(backendSrv.chunked(options)).toEmitValuesWith((received) => {
+          const { body, ...rest } = mockResponse;
+          const config = { ...options };
+          const expected = { ...rest, config };
+          expect(received).toHaveLength(1);
+          expect(received[0]).toEqual({ ...expected, data: undefined });
+        });
       });
     });
   });
