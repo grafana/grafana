@@ -328,12 +328,14 @@ func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactP
 }
 
 // AlertingFileExportFromRoute creates a definitions.AlertingFileExport DTO from definitions.Route.
-func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definitions.AlertingFileExport, error) {
+func AlertingFileExportFromRoute(orgID int64, name string, route definitions.Route) (definitions.AlertingFileExport, error) {
+	export := RouteExportFromRoute(&route)
+	export.Name = OmitDefault(util.Pointer(name))
 	f := definitions.AlertingFileExport{
 		APIVersion: 1,
 		Policies: []definitions.NotificationPolicyExport{{
 			OrgID:       orgID,
-			RouteExport: RouteExportFromRoute(&route),
+			RouteExport: export,
 		}},
 	}
 	return f, nil
@@ -359,7 +361,6 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 	}
 
 	export := definitions.RouteExport{
-		Name:                route.Name,
 		Receiver:            route.Receiver,
 		GroupByStr:          NilIfEmpty(util.Pointer(route.GroupByStr)),
 		Match:               route.Match,

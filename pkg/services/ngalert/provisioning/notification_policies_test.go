@@ -30,7 +30,7 @@ func TestGetPolicyTree(t *testing.T) {
 	rev := getDefaultConfigRevision()
 	expectedRoute := *rev.Config.AlertmanagerConfig.Route
 	expectedRoute.Provenance = definitions.Provenance(models.ProvenanceAPI)
-	expectedVersion := calculateRouteFingerprint(expectedRoute)
+	expectedVersion := legacy_storage.CalculateRouteFingerprint(expectedRoute)
 
 	sut, store, prov := createNotificationPolicyServiceSut()
 	store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
@@ -53,7 +53,7 @@ func TestGetPolicyTree(t *testing.T) {
 
 	assert.Len(t, prov.Calls, 1)
 	assert.Equal(t, "GetProvenance", prov.Calls[0].MethodName)
-	assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
+	assert.Equal(t, (&definitions.Route{}).ResourceType(), prov.Calls[0].Arguments[1].(models.Provisionable).ResourceType())
 	assert.Equal(t, orgID, prov.Calls[0].Arguments[2])
 }
 
@@ -61,7 +61,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 	orgID := int64(1)
 	rev := getDefaultConfigRevision()
 
-	defaultVersion := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
+	defaultVersion := legacy_storage.CalculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
 
 	newRoute := definitions.Route{
 		Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
@@ -186,7 +186,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 
 		assert.Len(t, prov.Calls, 1)
 		assert.Equal(t, "GetProvenance", prov.Calls[0].MethodName)
-		assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
+		assert.Equal(t, (&definitions.Route{}).ResourceType(), prov.Calls[0].Arguments[1].(models.Provisionable).ResourceType())
 		assert.Equal(t, orgID, prov.Calls[0].Arguments[2].(int64))
 	})
 
@@ -203,7 +203,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, defaultVersion)
 		require.NoError(t, err)
 		assert.Equal(t, newRoute, result)
-		assert.Equal(t, calculateRouteFingerprint(newRoute), version)
+		assert.Equal(t, legacy_storage.CalculateRouteFingerprint(newRoute), version)
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
@@ -212,12 +212,12 @@ func TestUpdatePolicyTree(t *testing.T) {
 
 		c := prov.Calls[0]
 		assert.Equal(t, "GetProvenance", c.MethodName)
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.Equal(t, (&definitions.Route{}).ResourceType(), c.Arguments[1].(models.Provisionable).ResourceType())
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		c = prov.Calls[1]
 		assert.Equal(t, "SetProvenance", c.MethodName)
 		assertInTransaction(t, c.Arguments[0].(context.Context))
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.Equal(t, (&definitions.Route{}).ResourceType(), c.Arguments[1].(models.Provisionable).ResourceType())
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		assert.Equal(t, models.ProvenanceAPI, c.Arguments[3].(models.Provenance))
 	})
@@ -235,7 +235,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, "")
 		require.NoError(t, err)
 		assert.Equal(t, newRoute, result)
-		assert.Equal(t, calculateRouteFingerprint(newRoute), version)
+		assert.Equal(t, legacy_storage.CalculateRouteFingerprint(newRoute), version)
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
@@ -246,7 +246,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		c := prov.Calls[1]
 		assert.Equal(t, "SetProvenance", c.MethodName)
 		assertInTransaction(t, c.Arguments[0].(context.Context))
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.Equal(t, (&definitions.Route{}).ResourceType(), c.Arguments[1].(models.Provisionable).ResourceType())
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		assert.Equal(t, models.ProvenanceAPI, c.Arguments[3].(models.Provenance))
 	})
@@ -344,12 +344,12 @@ func TestResetPolicyTree(t *testing.T) {
 		assert.Len(t, prov.Calls, 2)
 		c := prov.Calls[0]
 		assert.Equal(t, "GetProvenance", c.MethodName)
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.Equal(t, (&definitions.Route{}).ResourceType(), c.Arguments[1].(models.Provisionable).ResourceType())
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		c = prov.Calls[1]
 		assert.Equal(t, "DeleteProvenance", c.MethodName)
 		assertInTransaction(t, c.Arguments[0].(context.Context))
-		assert.IsType(t, &definitions.Route{}, c.Arguments[1])
+		assert.Equal(t, (&definitions.Route{}).ResourceType(), c.Arguments[1].(models.Provisionable).ResourceType())
 		assert.Equal(t, orgID, c.Arguments[2])
 	})
 }
@@ -368,7 +368,6 @@ func TestRoute_Fingerprint(t *testing.T) {
 	}
 	baseRouteGen := func() definitions.Route {
 		return definitions.Route{
-			Name:       "BaseRoute",
 			Receiver:   "Receiver",
 			GroupByStr: []string{"GroupByStr1", "GroupByStr2"},
 			GroupBy: []model.LabelName{
@@ -400,7 +399,6 @@ func TestRoute_Fingerprint(t *testing.T) {
 	}
 
 	completelyDifferentRoute := definitions.Route{
-		Name:       "CompletelyDifferentRoute",
 		Receiver:   "Receiver_2",
 		GroupByStr: []string{"GroupByStr1_2", "GroupByStr2_2"},
 		GroupBy: []model.LabelName{
@@ -431,13 +429,14 @@ func TestRoute_Fingerprint(t *testing.T) {
 	}
 
 	t.Run("stable across code changes", func(t *testing.T) {
-		expectedFingerprint := "7ecd0e4867d126c7" // If this is a valid fingerprint generation change, update the expected value.
-		assert.Equal(t, expectedFingerprint, calculateRouteFingerprint(baseRouteGen()))
+		expectedFingerprint := "450c06a7f4a66675" // If this is a valid fingerprint generation change, update the expected value.
+		assert.Equal(t, expectedFingerprint, legacy_storage.CalculateRouteFingerprint(baseRouteGen()))
 	})
 	t.Run("unstable across field modification", func(t *testing.T) {
-		fingerprint := calculateRouteFingerprint(baseRouteGen())
+		fingerprint := legacy_storage.CalculateRouteFingerprint(baseRouteGen())
 		excludedFields := map[string]struct{}{
-			"Routes": {},
+			"Routes":     {},
+			"Provenance": {},
 		}
 
 		reflectVal := reflect.ValueOf(&completelyDifferentRoute).Elem()
@@ -463,7 +462,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 			// Set the field to the value of the completelyDifferentRoute.
 			vf.Set(otherField)
 
-			f2 := calculateRouteFingerprint(cp)
+			f2 := legacy_storage.CalculateRouteFingerprint(cp)
 			assert.NotEqualf(t, fingerprint, f2, "Route field %s does not seem to be used in fingerprint", field)
 		}
 	})

@@ -291,7 +291,6 @@ export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefa
   group_by?: string[];
   group_interval?: string;
   group_wait?: string;
-  name: string;
   receiver: string;
   repeat_interval?: string;
 };

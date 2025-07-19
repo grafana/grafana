@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
@@ -814,11 +815,13 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Verify the default.
 	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
-	checkInUse(t, receiverListed, receiverGet, 2, 1)
+	checkInUse(t, receiverListed, receiverGet, 1, 1)
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
-	v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	managedRoute := legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, amConfig.AlertmanagerConfig.Route)
+	managedRoute.Version = "" // Avoid version conflict.
+	v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, managedRoute, func(int64) string { return "default" })
 	require.NoError(t, err)
 	routeAdminClient := test_common.NewRoutingTreeClient(t, helper.Org1.Admin)
 	_, err = routeAdminClient.Update(ctx, v1Route, v1.UpdateOptions{})
@@ -836,11 +839,13 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	checkInUse(t, receiverListed, receiverGet, 1, 1)
 
 	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
-	checkInUse(t, receiverListed, receiverGet, 2, 0)
+	checkInUse(t, receiverListed, receiverGet, 1, 0)
 
 	// Remove the remaining routes.
 	amConfig.AlertmanagerConfig.Route.Routes = nil
-	v1route, err := routingtree.ConvertToK8sResource(1, *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
+	managedRoute = legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, amConfig.AlertmanagerConfig.Route)
+	managedRoute.Version = "" // Avoid version conflict.
+	v1route, err := routingtree.ConvertToK8sResource(1, managedRoute, func(int64) string { return "default" })
 	require.NoError(t, err)
 	_, err = routeAdminClient.Update(ctx, v1route, v1.UpdateOptions{})
 	require.NoError(t, err)
@@ -854,7 +859,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	checkInUse(t, receiverListed, receiverGet, 0, 0)
 
 	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
-	checkInUse(t, receiverListed, receiverGet, 2, 0)
+	checkInUse(t, receiverListed, receiverGet, 1, 0)
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
@@ -1519,8 +1524,9 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 	nsMapper := func(_ int64) string { return "default" }
 
 	routeClient := test_common.NewRoutingTreeClient(t, helper.Org1.Admin)
-	amConfig.AlertmanagerConfig.Route.Name = v0alpha1.UserDefinedRoutingTreeName
-	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", nsMapper)
+	managedRoute := legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, amConfig.AlertmanagerConfig.Route)
+	managedRoute.Version = "" // Avoid version conflict.
+	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, managedRoute, nsMapper)
 	require.NoError(t, err)
 	_, err = routeClient.Update(ctx, v1route, v1.UpdateOptions{})
 	require.NoError(t, err)

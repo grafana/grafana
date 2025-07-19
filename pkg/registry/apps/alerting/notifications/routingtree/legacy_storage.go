@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 var (
@@ -22,11 +23,11 @@ var (
 )
 
 type RouteService interface {
-	GetPolicySubTrees(ctx context.Context, orgID int64) ([]*definitions.Route, map[string]string, error)
-	GetPolicySubTree(ctx context.Context, orgID int64, name string) (definitions.Route, string, error)
-	DeletePolicySubTree(ctx context.Context, orgID int64, name string, p alerting_models.Provenance, version string) error
-	CreatePolicySubTree(ctx context.Context, orgID int64, subtree definitions.Route, p alerting_models.Provenance) (definitions.Route, string, error)
-	UpdatePolicySubTree(ctx context.Context, orgID int64, subtree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
+	GetManagedRoutes(ctx context.Context, orgID int64) (legacy_storage.ManagedRoutes, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error)
+	DeleteManagedRoute(ctx context.Context, orgID int64, name string, p alerting_models.Provenance, version string) error
+	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p alerting_models.Provenance) (*legacy_storage.ManagedRoute, error)
+	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p alerting_models.Provenance, version string) (*legacy_storage.ManagedRoute, error)
 }
 
 type legacyStorage struct {
@@ -63,11 +64,11 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 		return nil, err
 	}
 
-	subtrees, versions, err := s.service.GetPolicySubTrees(ctx, orgId)
+	managedRoutes, err := s.service.GetManagedRoutes(ctx, orgId)
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResources(orgId, subtrees, versions, s.namespacer)
+	return ConvertToK8sResources(orgId, managedRoutes, s.namespacer)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -75,11 +76,11 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	if err != nil {
 		return nil, err
 	}
-	subtree, version, err := s.service.GetPolicySubTree(ctx, info.OrgID, name)
+	managedRoute, err := s.service.GetManagedRoute(ctx, info.OrgID, name)
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResource(info.OrgID, subtree, version, s.namespacer)
+	return ConvertToK8sResource(info.OrgID, &managedRoute, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -104,12 +105,12 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	created, version, err := s.service.CreatePolicySubTree(ctx, info.OrgID, domainModel, alerting_models.ProvenanceNone)
+	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, alerting_models.ProvenanceNone)
 	if err != nil {
 		return nil, err
 	}
 
-	return ConvertToK8sResource(info.OrgID, created, version, s.namespacer)
+	return ConvertToK8sResource(info.OrgID, created, s.namespacer)
 }
 
 func (s *legacyStorage) Update(
@@ -148,12 +149,12 @@ func (s *legacyStorage) Update(
 	if err != nil {
 		return nil, false, err
 	}
-	updated, updatedVersion, err := s.service.UpdatePolicySubTree(ctx, info.OrgID, domainModel, alerting_models.ProvenanceNone, version)
+	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, alerting_models.ProvenanceNone, version)
 	if err != nil {
 		return nil, false, err
 	}
 
-	obj, err = ConvertToK8sResource(info.OrgID, updated, updatedVersion, s.namespacer)
+	obj, err = ConvertToK8sResource(info.OrgID, updated, s.namespacer)
 	return obj, false, err
 }
 
@@ -183,7 +184,7 @@ func (s *legacyStorage) Delete(
 	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
 		version = *options.Preconditions.ResourceVersion
 	}
-	err = s.service.DeletePolicySubTree(ctx, info.OrgID, name, alerting_models.ProvenanceNone, version) // TODO add support for dry-run option
+	err = s.service.DeleteManagedRoute(ctx, info.OrgID, name, alerting_models.ProvenanceNone, version) // TODO add support for dry-run option
 	return old, false, err
 }
 

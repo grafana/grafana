@@ -301,7 +301,8 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
   return routes?.map((route) => {
     return {
       ...route.spec.defaults,
-      routes: route.spec.routes?.map((subroute) => (k8sSubRouteToRoute(subroute, route.spec.defaults.name))),
+      name: route.metadata.name,
+      routes: route.spec.routes?.map((subroute) => (k8sSubRouteToRoute(subroute, route.metadata.name))),
       [ROUTES_META_SYMBOL]: {
         provisioned: isK8sEntityProvisioned(route),
         resourceVersion: route.metadata.resourceVersion,
@@ -361,7 +362,6 @@ export function createKubernetesRoutingTreeSpec(
     ...inheritableDefaultProperties,
     // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
     receiver: rootRoute.receiver ?? '',
-    name: name,
   };
 
   const routes = rootRoute.routes?.map(routeToK8sSubRoute) ?? [];

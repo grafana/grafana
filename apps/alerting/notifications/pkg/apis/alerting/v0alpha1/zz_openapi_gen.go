@@ -578,13 +578,6 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRouteDefaults(ref common.Refer
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 					"receiver": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -625,7 +618,7 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRouteDefaults(ref common.Refer
 						},
 					},
 				},
-				Required: []string{"name", "receiver"},
+				Required: []string{"receiver"},
 			},
 		},
 	}

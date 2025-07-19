@@ -32,9 +32,9 @@ func (c *defaultNotificationPolicyProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, np := range file.Policies {
-			if _, _, err := c.notificationPolicyService.GetPolicySubTree(ctx, np.OrgID, np.Policy.Name); err != nil {
+			if _, err := c.notificationPolicyService.GetManagedRoute(ctx, np.OrgID, np.Name); err != nil {
 				if errors.Is(err, provisioning.ErrRouteNotFound) {
-					_, _, err := c.notificationPolicyService.CreatePolicySubTree(ctx, np.OrgID,
+					_, err := c.notificationPolicyService.CreateManagedRoute(ctx, np.OrgID, np.Name,
 						np.Policy, models.ProvenanceFile)
 					if err != nil {
 						return fmt.Errorf("%s: %w", file.Filename, err)
@@ -43,7 +43,7 @@ func (c *defaultNotificationPolicyProvisioner) Provision(ctx context.Context,
 				}
 				return err
 			}
-			_, _, err := c.notificationPolicyService.UpdatePolicySubTree(ctx, np.OrgID,
+			_, err := c.notificationPolicyService.UpdateManagedRoute(ctx, np.OrgID, np.Name,
 				np.Policy, models.ProvenanceFile, "")
 			if err != nil {
 				return fmt.Errorf("%s: %w", file.Filename, err)
@@ -57,7 +57,7 @@ func (c *defaultNotificationPolicyProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, deletePolicy := range file.DeletePolicies {
-			err := c.notificationPolicyService.DeletePolicySubTree(ctx, deletePolicy.OrgID, deletePolicy.Name, models.ProvenanceFile, "")
+			err := c.notificationPolicyService.DeleteManagedRoute(ctx, deletePolicy.OrgID, deletePolicy.Name, models.ProvenanceFile, "")
 			if err != nil {
 				return fmt.Errorf("%s: %w", file.Filename, err)
 			}

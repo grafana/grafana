@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
@@ -752,10 +753,11 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 
 // swagger:model
 type PostableUserConfig struct {
-	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
+	TemplateFiles      map[string]string            `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig PostableApiAlertingConfig    `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs       []ExtraConfiguration         `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	ManagedRoutes      map[string]*definition.Route `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"` // TODO: Move to ConfigRevision?
+	amSimple           map[string]interface{}       `yaml:"-" json:"-"`
 }
 
 func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {

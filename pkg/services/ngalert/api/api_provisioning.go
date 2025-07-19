@@ -57,9 +57,10 @@ type TemplateService interface {
 
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
-	GetPolicySubTree(ctx context.Context, orgID int64, name string) (definitions.Route, string, error)
-	DeletePolicySubTree(ctx context.Context, orgID int64, name string, p alerting_models.Provenance, version string) error
-	UpdatePolicySubTree(ctx context.Context, orgID int64, subtree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
+	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
+	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
+
+	GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error)
 }
 
 type MuteTimingService interface {
@@ -99,18 +100,26 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
 	routeName := c.Query("routeName")
+
+	var policy definitions.Route
 	if routeName == "" {
-		routeName = legacy_storage.UserDefinedRoutingTreeName
-	}
-	policies, _, err := srv.policies.GetPolicySubTree(c.Req.Context(), c.GetOrgID(), routeName)
-	if err != nil {
-		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			return ErrResp(http.StatusNotFound, err, "")
+		var err error
+		policy, _, err = srv.policies.GetPolicyTree(c.Req.Context(), c.GetOrgID())
+		if err != nil {
+			if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+				return ErrResp(http.StatusNotFound, err, "")
+			}
+			return ErrResp(http.StatusInternalServerError, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+	} else {
+		managedRoute, err := srv.policies.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName)
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
+		}
+		policy = managedRoute.AsAMRoute()
 	}
 
-	e, err := AlertingFileExportFromRoute(c.GetOrgID(), policies)
+	e, err := AlertingFileExportFromRoute(c.GetOrgID(), routeName, policy)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -121,11 +130,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
 	provenance := determineProvenance(c)
 
-	if tree.Name == "" {
-		tree.Name = legacy_storage.UserDefinedRoutingTreeName
-	}
-
-	_, _, err := srv.policies.UpdatePolicySubTree(c.Req.Context(), c.GetOrgID(), tree, alerting_models.Provenance(provenance), "")
+	_, _, err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.GetOrgID(), tree, alerting_models.Provenance(provenance), "")
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -142,11 +147,11 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 func (srv *ProvisioningSrv) RouteResetPolicyTree(c *contextmodel.ReqContext) response.Response {
 	provenance := determineProvenance(c)
 
-	err := srv.policies.DeletePolicySubTree(c.Req.Context(), c.GetOrgID(), legacy_storage.UserDefinedRoutingTreeName, alerting_models.Provenance(provenance), "")
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.GetOrgID(), alerting_models.Provenance(provenance))
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to reset notification policy tree", err)
 	}
-	return response.JSON(http.StatusAccepted, nil)
+	return response.JSON(http.StatusAccepted, tree)
 }
 
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) response.Response {
@@ -605,7 +610,9 @@ func escapeAlertingFileExport(body definitions.AlertingFileExport) definitions.A
 }
 
 func escapeRouteExport(r *definitions.RouteExport) {
-	r.Name = addEscapeCharactersToString(r.Name)
+	if r.Name != nil {
+		r.Name = util.Pointer(addEscapeCharactersToString(*r.Name))
+	}
 	r.Receiver = addEscapeCharactersToString(r.Receiver)
 	if r.GroupByStr != nil {
 		groupByStr := make([]string, len(*r.GroupByStr))

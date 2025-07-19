@@ -2,15 +2,7 @@ package provisioning
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
-	"hash"
-	"hash/fnv"
-	"slices"
-	"unsafe"
-
-	"github.com/prometheus/common/model"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -50,83 +42,71 @@ func NewNotificationPolicyService(
 	}
 }
 
-const UserDefinedRoutingTreeName = legacy_storage.UserDefinedRoutingTreeName
-
-func (nps *NotificationPolicyService) GetDefaultSubTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
-	return nps.GetPolicySubTree(ctx, orgID, UserDefinedRoutingTreeName)
-}
-
-func (nps *NotificationPolicyService) GetPolicySubTree(ctx context.Context, orgID int64, name string) (definitions.Route, string, error) {
-	rev, err := nps.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-
+func (nps *NotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error) {
+	// TODO: Keep this?
 	if name == "" {
-		name = UserDefinedRoutingTreeName
+		name = legacy_storage.UserDefinedRoutingTreeName
 	}
 
-	subtree, err := rev.GetNamedRoute(name, nps.log)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, subtree, orgID)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-	subtree.Provenance = definitions.Provenance(provenance)
-
-	return *subtree, calculateRouteFingerprint(*subtree), nil
-}
-
-func (nps *NotificationPolicyService) GetPolicySubTrees(ctx context.Context, orgID int64) ([]*definitions.Route, map[string]string, error) {
 	rev, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
-		return nil, nil, err
+		return legacy_storage.ManagedRoute{}, err
 	}
 
-	namedRoutes, err := rev.GetNamedRoutes(nps.log)
+	route := rev.GetManagedRoute(name)
+	if route == nil {
+		return legacy_storage.ManagedRoute{}, ErrRouteNotFound.Errorf("route %q not found", name)
+	}
+
+	provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to split policy tree: %w", err)
+		return legacy_storage.ManagedRoute{}, err
 	}
+	route.Provenance = provenance
 
-	provenances, err := nps.provenanceStore.GetProvenances(ctx, orgID, (&definitions.Route{}).ResourceType())
+	return *route, nil
+}
+
+func (nps *NotificationPolicyService) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_storage.ManagedRoutes, error) {
+	rev, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	versions := make(map[string]string, len(namedRoutes))
-	for _, subTree := range namedRoutes {
-		versions[subTree.Name] = calculateRouteFingerprint(*subTree)
-		provenance, ok := provenances[subTree.ResourceID()]
+	provenances, err := nps.provenanceStore.GetProvenances(ctx, orgID, (&legacy_storage.ManagedRoute{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
+
+	managedRoutes := rev.GetManagedRoutes()
+	for _, mr := range managedRoutes {
+		provenance, ok := provenances[mr.ResourceID()]
 		if !ok {
 			provenance = models.ProvenanceNone
 		}
-		subTree.Provenance = definitions.Provenance(provenance)
+		mr.Provenance = provenance
 	}
-	return namedRoutes, versions, nil
+	managedRoutes.Sort()
+	return managedRoutes, nil
 }
 
-func (nps *NotificationPolicyService) DeletePolicySubTree(ctx context.Context, orgID int64, name string, p models.Provenance, version string) error {
+func (nps *NotificationPolicyService) DeleteManagedRoute(ctx context.Context, orgID int64, name string, p models.Provenance, version string) error {
+	// TODO: Keep this?
+	if name == "" {
+		name = legacy_storage.UserDefinedRoutingTreeName
+	}
+
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	if name == "" {
-		name = UserDefinedRoutingTreeName
-	}
-
-	existing, err := revision.GetNamedRoute(name, nps.log)
-	if err != nil {
-		return err
-	}
+	existing := revision.GetManagedRoute(name)
 	if existing == nil {
 		return ErrRouteNotFound.Errorf("")
 	}
 
-	err = nps.checkOptimisticConcurrency(*existing, p, version, "delete")
+	err = nps.checkOptimisticConcurrency(existing, p, version, "delete")
 	if err != nil {
 		return err
 	}
@@ -139,23 +119,19 @@ func (nps *NotificationPolicyService) DeletePolicySubTree(ctx context.Context, o
 		return err
 	}
 
-	if name == UserDefinedRoutingTreeName {
+	if name == legacy_storage.UserDefinedRoutingTreeName {
 		defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 		if err != nil {
 			nps.log.Error("Failed to parse default alertmanager config: %w", err)
 			return fmt.Errorf("failed to parse default alertmanager config: %w", err)
 		}
 
-		defaultCfg.AlertmanagerConfig.Route.Name = UserDefinedRoutingTreeName
-		_, err = revision.UpdateNamedRoute(*defaultCfg.AlertmanagerConfig.Route, nps.log)
+		_, err = revision.UpdateNamedRoute(legacy_storage.UserDefinedRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = revision.DeleteNamedRoute(name)
-		if err != nil {
-			return fmt.Errorf("failed to delete named route %q: %w", name, err)
-		}
+		revision.DeleteManagedRoute(name)
 	}
 
 	_, err = revision.Config.GetMergedAlertmanagerConfig()
@@ -171,109 +147,118 @@ func (nps *NotificationPolicyService) DeletePolicySubTree(ctx context.Context, o
 	})
 }
 
-func (nps *NotificationPolicyService) CreatePolicySubTree(ctx context.Context, orgID int64, subtree definitions.Route, p models.Provenance) (definitions.Route, string, error) {
+func (nps *NotificationPolicyService) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance) (*legacy_storage.ManagedRoute, error) {
 	err := subtree.Validate()
 	if err != nil {
-		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
+		return nil, MakeErrRouteInvalidFormat(err)
 	}
 
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
 
-	created, err := revision.CreateNamedRoute(subtree)
+	created, err := revision.CreateManagedRoute(name, subtree)
 	if err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
 
 	_, err = revision.Config.GetMergedAlertmanagerConfig()
 	if err != nil {
-		return definitions.Route{}, "", fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
+		return nil, fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
 	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return nps.provenanceStore.SetProvenance(ctx, &created, orgID, p)
+		return nps.provenanceStore.SetProvenance(ctx, created, orgID, p)
 	})
 	if err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
-	return created, calculateRouteFingerprint(created), nil
+	return created, nil
 }
 
-func (nps *NotificationPolicyService) UpdatePolicySubTree(ctx context.Context, orgID int64, subtree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
+func (nps *NotificationPolicyService) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, version string) (*legacy_storage.ManagedRoute, error) {
+	// TODO: Keep this?
+	if name == "" {
+		name = legacy_storage.UserDefinedRoutingTreeName
+	}
+
 	err := subtree.Validate()
 	if err != nil {
-		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
+		return nil, MakeErrRouteInvalidFormat(err)
 	}
 
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
 
-	if subtree.Name == "" {
-		subtree.Name = UserDefinedRoutingTreeName
+	existing := revision.GetManagedRoute(name)
+	if existing == nil {
+		return nil, fmt.Errorf("failed to get existing named route %q: %w", name, err)
 	}
 
-	existing, err := revision.GetNamedRoute(subtree.Name, nps.log)
+	err = nps.checkOptimisticConcurrency(existing, p, version, "update")
 	if err != nil {
-		return definitions.Route{}, "", fmt.Errorf("failed to get existing named route %q: %w", subtree.Name, err)
-	}
-
-	err = nps.checkOptimisticConcurrency(*existing, p, version, "update")
-	if err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
 
 	// check that provenance is not changed in an invalid way
-	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &subtree, orgID)
+	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, existing, orgID)
 	if err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
 	if err := nps.validator(storedProvenance, p); err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
 
-	updated, err := revision.UpdateNamedRoute(subtree, nps.log)
+	updated, err := revision.UpdateNamedRoute(name, subtree)
 	if err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
+	updated.Provenance = storedProvenance
 
 	_, err = revision.Config.GetMergedAlertmanagerConfig()
 	if err != nil {
-		return definitions.Route{}, "", fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
+		return nil, fmt.Errorf("new routing tree is not compatible with extra configuration: %w", err)
 	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return nps.provenanceStore.SetProvenance(ctx, &updated, orgID, p)
+		return nps.provenanceStore.SetProvenance(ctx, updated, orgID, p)
 	})
 	if err != nil {
-		return definitions.Route{}, "", err
+		return nil, err
 	}
-	return updated, calculateRouteFingerprint(updated), nil
+	return updated, nil
 }
 
 // TODO: Remove this method once the all callers support named routes.
 func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
-	return nps.GetPolicySubTree(ctx, orgID, legacy_storage.UserDefinedRoutingTreeName)
+	r, err := nps.GetManagedRoute(ctx, orgID, legacy_storage.UserDefinedRoutingTreeName)
+	if err != nil {
+		return definitions.Route{}, "", err
+	}
+	return r.AsAMRoute(), r.Version, nil
 }
 
 // TODO: Remove this method once the all callers support named routes.
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
-	tree.Name = legacy_storage.UserDefinedRoutingTreeName
-	return nps.UpdatePolicySubTree(ctx, orgID, tree, p, version)
+	r, err := nps.UpdateManagedRoute(ctx, orgID, legacy_storage.UserDefinedRoutingTreeName, tree, p, version)
+	if err != nil {
+		return definitions.Route{}, "", err
+	}
+	return r.AsAMRoute(), r.Version, nil
 }
 
 // TODO: Remove this method once the all callers support named routes.
 func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
-	err := nps.DeletePolicySubTree(ctx, orgID, legacy_storage.UserDefinedRoutingTreeName, provenance, "")
+	err := nps.DeleteManagedRoute(ctx, orgID, legacy_storage.UserDefinedRoutingTreeName, provenance, "")
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -288,103 +273,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	return *route, nil
 }
 
-func calculateRouteFingerprint(route definitions.Route) string {
-	sum := fnv.New64a()
-	writeToHash(sum, &route)
-	return fmt.Sprintf("%016x", sum.Sum64())
-}
-
-func writeToHash(sum hash.Hash, r *definitions.Route) {
-	writeBytes := func(b []byte) {
-		_, _ = sum.Write(b)
-		// add a byte sequence that cannot happen in UTF-8 strings.
-		_, _ = sum.Write([]byte{255})
-	}
-	writeString := func(s string) {
-		if len(s) == 0 {
-			writeBytes(nil)
-			return
-		}
-		// #nosec G103
-		// avoid allocation when converting string to byte slice
-		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
-	}
-
-	// this temp slice is used to convert ints to bytes.
-	tmp := make([]byte, 8)
-	writeInt := func(u int64) {
-		binary.LittleEndian.PutUint64(tmp, uint64(u))
-		writeBytes(tmp)
-	}
-	writeBool := func(b bool) {
-		if b {
-			writeInt(1)
-		} else {
-			writeInt(0)
-		}
-	}
-	writeDuration := func(d *model.Duration) {
-		if d == nil {
-			_, _ = sum.Write([]byte{255})
-		} else {
-			binary.LittleEndian.PutUint64(tmp, uint64(*d))
-			_, _ = sum.Write(tmp)
-			_, _ = sum.Write([]byte{255})
-		}
-	}
-
-	writeString(r.Name)
-	writeString(r.Receiver)
-	for _, s := range r.GroupByStr {
-		writeString(s)
-	}
-	for _, labelName := range r.GroupBy {
-		writeString(string(labelName))
-	}
-	writeBool(r.GroupByAll)
-	if len(r.Match) > 0 {
-		keys := maps.Keys(r.Match)
-		slices.Sort(keys)
-		for _, key := range keys {
-			writeString(key)
-			writeString(r.Match[key])
-		}
-	}
-	if len(r.MatchRE) > 0 {
-		keys := maps.Keys(r.MatchRE)
-		slices.Sort(keys)
-		for _, key := range keys {
-			writeString(key)
-			str, err := r.MatchRE[key].MarshalJSON()
-			if err != nil {
-				writeString(fmt.Sprintf("%+v", r.MatchRE))
-			}
-			writeBytes(str)
-		}
-	}
-	for _, matcher := range r.Matchers {
-		writeString(matcher.String())
-	}
-	for _, matcher := range r.ObjectMatchers {
-		writeString(matcher.String())
-	}
-	for _, timeInterval := range r.MuteTimeIntervals {
-		writeString(timeInterval)
-	}
-	for _, timeInterval := range r.ActiveTimeIntervals {
-		writeString(timeInterval)
-	}
-	writeBool(r.Continue)
-	writeDuration(r.GroupWait)
-	writeDuration(r.GroupInterval)
-	writeDuration(r.RepeatInterval)
-	writeString(string(r.Provenance))
-	for _, route := range r.Routes {
-		writeToHash(sum, route)
-	}
-}
-
-func (nps *NotificationPolicyService) checkOptimisticConcurrency(current definitions.Route, provenance models.Provenance, desiredVersion string, action string) error {
+func (nps *NotificationPolicyService) checkOptimisticConcurrency(current *legacy_storage.ManagedRoute, provenance models.Provenance, desiredVersion string, action string) error {
 	if desiredVersion == "" {
 		if provenance != models.ProvenanceFile {
 			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
@@ -392,9 +281,8 @@ func (nps *NotificationPolicyService) checkOptimisticConcurrency(current definit
 		}
 		return nil
 	}
-	currentVersion := calculateRouteFingerprint(current)
-	if currentVersion != desiredVersion {
-		return ErrVersionConflict.Errorf("provided version %s of routing tree does not match current version %s", desiredVersion, currentVersion)
+	if current.Version != desiredVersion {
+		return ErrVersionConflict.Errorf("provided version %s of routing tree does not match current version %s", desiredVersion, current.Version)
 	}
 	return nil
 }

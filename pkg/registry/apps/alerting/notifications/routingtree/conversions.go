@@ -16,19 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func ConvertToK8sResources(orgID int64, routes []*definitions.Route, versions map[string]string, namespacer request.NamespaceMapper) (*model.RoutingTreeList, error) {
+func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, namespacer request.NamespaceMapper) (*model.RoutingTreeList, error) {
 	result := &model.RoutingTreeList{
 		Items: make([]model.RoutingTree, 0, len(routes)),
 	}
 	for _, r := range routes {
-		version, ok := versions[r.Name]
-		if !ok {
-			return nil, fmt.Errorf("version for route %q not found", r.Name)
-		}
-		k8sResource, err := ConvertToK8sResource(orgID, *r, version, namespacer)
+		k8sResource, err := ConvertToK8sResource(orgID, r, namespacer)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert route %q to k8s resource: %w", r.Name, err)
 		}
@@ -37,15 +34,14 @@ func ConvertToK8sResources(orgID int64, routes []*definitions.Route, versions ma
 	return result, nil
 }
 
-func ConvertToK8sResource(orgID int64, r definitions.Route, version string, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
+func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
 	spec := model.RoutingTreeSpec{
 		Defaults: model.RoutingTreeRouteDefaults{
-			GroupBy:        r.GroupByStr,
+			GroupBy:        r.GroupBy,
 			GroupWait:      optionalPrometheusDurationToString(r.GroupWait),
 			GroupInterval:  optionalPrometheusDurationToString(r.GroupInterval),
 			RepeatInterval: optionalPrometheusDurationToString(r.RepeatInterval),
 			Receiver:       r.Receiver,
-			Name:           r.Name,
 		},
 	}
 	for _, route := range r.Routes {
@@ -59,7 +55,7 @@ func ConvertToK8sResource(orgID int64, r definitions.Route, version string, name
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            r.Name,
 			Namespace:       namespacer(orgID),
-			ResourceVersion: version,
+			ResourceVersion: r.Version,
 		},
 		Spec: spec,
 	}
@@ -166,7 +162,6 @@ func convertToDomainModel(obj *model.RoutingTree) (definitions.Route, string, er
 	if len(errs) > 0 {
 		return definitions.Route{}, "", errors.Join(errs...)
 	}
-	result.Name = obj.Spec.Defaults.Name
 	result.Provenance = ""
 	return result, obj.ResourceVersion, nil
 }
