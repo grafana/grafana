@@ -5,6 +5,7 @@ import { languages } from 'monaco-editor';
 import { TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { DEFAULT_COMPLETION_LIMIT } from '../../../constants';
 import { escapeLabelValueInExactSelector, prometheusRegularEscape } from '../../../escaping';
 import { FUNCTIONS } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
@@ -63,8 +64,12 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
 }
 
 // we order items like: history, functions, metrics
-function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] {
-  let metricNames = dataProvider.getAllMetricNames();
+async function getAllMetricNamesCompletions(
+  word: string | undefined,
+  dataProvider: DataProvider,
+  timeRange: TimeRange
+): Promise<Completion[]> {
+  let metricNames = await dataProvider.queryMetricNames(timeRange, word);
 
   if (
     config.featureToggles.prometheusCodeModeMetricNamesSearch &&
@@ -108,8 +113,12 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   documentation: f.documentation,
 }));
 
-async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  const metricNames = getAllMetricNamesCompletions(dataProvider);
+async function getAllFunctionsAndMetricNamesCompletions(
+  word: string | undefined,
+  dataProvider: DataProvider,
+  timeRange: TimeRange
+): Promise<Completion[]> {
+  const metricNames = await getAllMetricNamesCompletions(word, dataProvider, timeRange);
 
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
@@ -165,10 +174,10 @@ async function getLabelNames(
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
-    return Promise.resolve(dataProvider.getAllLabelNames());
+    return Promise.resolve(dataProvider.queryLabelKeys(timeRange, undefined, DEFAULT_COMPLETION_LIMIT));
   } else {
     const selector = makeSelector(metric, otherLabels);
-    const labelNames = await dataProvider.getSeriesLabels(timeRange, selector);
+    const labelNames = await dataProvider.queryLabelKeys(timeRange, selector);
 
     // Exclude __name__ from output
     otherLabels.push({ name: '__name__', value: '', op: '!=' });
@@ -232,10 +241,10 @@ async function getLabelValues(
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
-    return dataProvider.getLabelValues(timeRange, labelName);
+    return dataProvider.queryLabelValues(timeRange, labelName);
   } else {
     const selector = makeSelector(metric, otherLabels);
-    return await dataProvider.getSeriesValues(timeRange, labelName, selector);
+    return await dataProvider.queryLabelValues(timeRange, labelName, selector);
   }
 }
 
@@ -260,21 +269,22 @@ function formatLabelValueForCompletion(value: string, betweenQuotes: boolean): s
   return betweenQuotes ? text : `"${text}"`;
 }
 
-export function getCompletions(
+export async function getCompletions(
   situation: Situation,
   dataProvider: DataProvider,
-  timeRange: TimeRange
+  timeRange: TimeRange,
+  word?: string
 ): Promise<Completion[]> {
   switch (situation.type) {
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
+      return getAllFunctionsAndMetricNamesCompletions(word, dataProvider, timeRange);
     case 'AT_ROOT': {
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
+      return getAllFunctionsAndMetricNamesCompletions(word, dataProvider, timeRange);
     }
     case 'EMPTY': {
-      const metricNames = getAllMetricNamesCompletions(dataProvider);
+      const metricNames = await getAllMetricNamesCompletions(word, dataProvider, timeRange);
       const historyCompletions = getAllHistoryCompletions(dataProvider);
       return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);
     }
