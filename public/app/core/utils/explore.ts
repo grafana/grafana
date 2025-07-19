@@ -49,6 +49,7 @@ export interface GetExploreUrlArguments {
   timeRange: TimeRange;
   scopedVars: ScopedVars | undefined;
   adhocFilters?: AdHocVariableFilter[];
+  queryRef?: string;
 }
 
 export function generateExploreId() {
@@ -65,7 +66,7 @@ export function generateExploreId() {
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { queries, dsRef, timeRange, scopedVars, adhocFilters } = args;
+  const { queries, dsRef, timeRange, scopedVars, adhocFilters, queryRef } = args;
   const interpolatedQueries = (
     await Promise.allSettled(
       queries
@@ -93,7 +94,12 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     .map((q) => q.value);
 
   const exploreState = JSON.stringify({
-    [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
+    [generateExploreId()]: {
+      range: toURLRange(timeRange.raw),
+      queries: interpolatedQueries,
+      datasource: dsRef?.uid,
+      queryRef: queryRef,
+    },
   });
   return locationUtil.assureBaseUrl(urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 }));
 }
