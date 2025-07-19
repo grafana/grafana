@@ -1,6 +1,7 @@
 import { createDataFrame, FieldType, PanelModel } from '@grafana/data';
+import { TableFooterCalc } from '@grafana/ui';
 
-import { migrateFromParentRowIndexToNestedFrames, tablePanelChangedHandler } from './migrations';
+import { migrateFooterOptions, migrateFromParentRowIndexToNestedFrames, tablePanelChangedHandler } from './migrations';
 
 describe('Table Migrations', () => {
   it('migrates transform out to core transforms', () => {
@@ -360,5 +361,72 @@ describe('Table Migrations', () => {
     expect(newFormat[1].fields[1].values[1][0].fields[0].name).toBe('field_1');
     expect(newFormat[1].fields[1].values[0][0].fields[0].values[0]).toBe('0_subA');
     expect(newFormat[1].fields[1].values[1][0].fields[0].values[0]).toBe('1_subA');
+  });
+
+  it('migrates footer options to use the display name instead of the field name', () => {
+    const frames = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'field1', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'field2', type: FieldType.string, values: ['a', 'b', 'c'] },
+        ],
+      }),
+    ];
+
+    frames[0].fields[0].state = { displayName: 'Field 1' };
+
+    const footerOptions: TableFooterCalc = {
+      fields: ['field1', 'field2'],
+      show: true,
+      reducer: [],
+    };
+
+    const migratedFooter = migrateFooterOptions(footerOptions, frames);
+    expect(migratedFooter).toEqual({
+      fields: ['Field 1', 'field2'],
+      show: true,
+      reducer: [],
+    });
+  });
+
+  it('passes through footer options if no fields are specified', () => {
+    const frames = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'field1', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'field2', type: FieldType.string, values: ['a', 'b', 'c'] },
+        ],
+      }),
+    ];
+
+    const footerOptions: TableFooterCalc = {
+      enablePagination: true,
+      show: true,
+      reducer: [],
+    };
+
+    const migratedFooter = migrateFooterOptions(footerOptions, frames);
+    expect(migratedFooter).toEqual({
+      enablePagination: true,
+      show: true,
+      reducer: [],
+    });
+  });
+
+  it('passes through footer options if footerOptions is undefined', () => {
+    const frames = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'field1', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'field2', type: FieldType.string, values: ['a', 'b', 'c'] },
+        ],
+      }),
+    ];
+
+    const migratedFooter = migrateFooterOptions(undefined, frames);
+    expect(migratedFooter).toBeUndefined();
   });
 });

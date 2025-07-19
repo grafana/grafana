@@ -11,6 +11,7 @@ import {
   FieldType,
 } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/internal';
+import { TableFooterCalc } from '@grafana/ui';
 
 import { Options } from './panelcfg.gen';
 
@@ -296,4 +297,53 @@ export const migrateFromParentRowIndexToNestedFrames = (frames: DataFrame[] | nu
 
 export const hasDeprecatedParentRowIndex = (frames: DataFrame[] | null) => {
   return frames?.some((df) => df.meta?.custom?.parentRowIndex !== undefined);
+};
+
+// footer now uses displayName instead of field name to store whether the footer calc should be applied.
+// technically, your display name could be another field's name, so we just have to make our best effort
+// at migrating this based on your configuration. The best-effort approach will be to only migrate your
+// footer options based on 3 conditions, outlined below.
+export const migrateFooterOptions = (
+  footerOptions: TableFooterCalc | undefined,
+  frames: DataFrame[]
+): TableFooterCalc | undefined => {
+  // condition 1: the footer fields array is empty, nothing to migrate.
+  const footerOptionsFields = footerOptions?.fields;
+  if (!footerOptions || !footerOptionsFields || footerOptionsFields.length === 0) {
+    return footerOptions;
+  }
+
+  // prepare a map of field names to display names to do the migration, and also
+  // the set of display names to check conditions 2 and 3.
+  const displayNames = new Set<string>();
+  const fieldNamesToDisplayNames: Record<string, string> = {};
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.state?.displayName && field.state?.displayName !== field.name) {
+        displayNames.add(field.state.displayName);
+      }
+
+      // in the case of duplicate field names, use the last one.
+      fieldNamesToDisplayNames[field.name] = field.state?.displayName ?? field.name;
+    }
+  }
+
+  // condition 2: there is at least one display name that is set on the table, otherwise there is nothing to migrate.
+  if (displayNames.size === 0) {
+    return footerOptions;
+  }
+
+  // condition 3: the footerOptions fields array contains no explicit display names (e.g. from the state).
+  // if any are set, we have to assume that the footer calc has been authored by TableNG and we should not migrate it.
+  if (footerOptionsFields.some((footerFieldName) => displayNames.has(footerFieldName))) {
+    return footerOptions;
+  }
+
+  // perform the migration: if a display name is set and and a name is encountered, map it over.
+  const updatedFields = footerOptionsFields.map((footerFieldName) => {
+    // if this field name is mapped to a display name, use that instead.
+    return fieldNamesToDisplayNames[footerFieldName] ?? footerFieldName;
+  });
+
+  return { ...footerOptions, fields: updatedFields };
 };
