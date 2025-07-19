@@ -74,6 +74,7 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Auto,
+  showValues: false,
 };
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
@@ -529,6 +530,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       softMax: customConfig.axisSoftMax,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
+      showValues: customConfig.showValues,
     });
 
     // Render thresholds in graph
@@ -552,6 +554,64 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   let stackingGroups = getStackingGroups(frame);
 
   builder.setStackingGroups(stackingGroups);
+
+  const shouldShowValues = frame.fields.some((field, i) => {
+    if (i === 0) {
+      return false;
+    }
+
+    const customConfig = field.config.custom;
+    const showPoints =
+      customConfig.drawStyle === GraphDrawStyle.Points ? VisibilityMode.Always : customConfig.showPoints;
+
+    return showPoints !== VisibilityMode.Never && customConfig.showValues;
+  });
+
+  if (shouldShowValues) {
+    builder.addHook('draw', (u: uPlot) => {
+      const baseFontSize = 12;
+      const font = `${baseFontSize * devicePixelRatio}px ${theme.typography.fontFamily}`;
+
+      const { ctx } = u;
+      ctx.save();
+      ctx.fillStyle = theme.colors.text.primary;
+      ctx.font = font;
+      ctx.textAlign = 'center';
+
+      for (let seriesIdx = 1; seriesIdx < u.data.length; seriesIdx++) {
+        const field = frame.fields[seriesIdx];
+
+        if (!field.config.custom.showValues) {
+          continue;
+        }
+
+        const seriesData = u.data[seriesIdx];
+        const xData = u.data[0];
+
+        for (let dataIdx = 0; dataIdx < seriesData.length; dataIdx++) {
+          const value = seriesData[dataIdx];
+          const xValue = xData[dataIdx];
+
+          if (value != null && xValue != null) {
+            const x = u.valToPos(xValue, 'x', true);
+            const y = u.valToPos(value, u.series[seriesIdx].scale!, true);
+
+            const displayValue = field.display?.(value);
+            const text = displayValue?.text ?? String(value);
+
+            const isNegative = value < 0;
+            const textOffset = isNegative ? 15 : -5;
+            const textBaseline = isNegative ? 'top' : 'bottom';
+
+            ctx.textBaseline = textBaseline;
+            ctx.fillText(text, x, y + textOffset);
+          }
+        }
+      }
+
+      ctx.restore();
+    });
+  }
 
   // hook up custom/composite renderers
   renderers?.forEach((r) => {
