@@ -12,6 +12,7 @@ import {
   ActionModel,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { TooltipDisplayMode } from '@grafana/schema';
 import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
@@ -608,7 +609,7 @@ export class ElementState implements LayerElement {
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
 
-    const shouldHandleTooltip = !scene?.isEditingEnabled && !scene?.tooltip?.isOpen;
+    const shouldHandleTooltip = !scene?.isEditingEnabled && !scene?.tooltipPayload?.isOpen;
     if (shouldHandleTooltip) {
       this.handleTooltip(event);
     } else if (!isSelected) {
@@ -675,7 +676,7 @@ export class ElementState implements LayerElement {
 
   handleTooltip = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback) {
+    if (scene?.tooltipCallback && scene.tooltipMode !== TooltipDisplayMode.None) {
       const rect = this.div?.getBoundingClientRect();
       scene.tooltipCallback({
         anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },
@@ -687,7 +688,7 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+    if (scene?.tooltipCallback && !scene?.tooltipPayload?.isOpen) {
       scene.tooltipCallback(undefined);
     }
 
@@ -725,9 +726,9 @@ export class ElementState implements LayerElement {
 
   onTooltipCallback = () => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
+    if (scene?.tooltipCallback && scene.tooltipPayload?.anchorPoint) {
       scene.tooltipCallback({
-        anchorPoint: { x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y },
+        anchorPoint: { x: scene.tooltipPayload.anchorPoint.x, y: scene.tooltipPayload.anchorPoint.y },
         element: this,
         isOpen: true,
       });
