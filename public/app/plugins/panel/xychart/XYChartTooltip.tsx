@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { colorManipulator, DataFrame, InterpolateFunction, LinkModel } from '@grafana/data';
+import { colorManipulator, DataFrame, Field, InterpolateFunction, LinkModel } from '@grafana/data';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -32,6 +32,10 @@ function stripSeriesName(fieldName: string, seriesName: string) {
   }
 
   return fieldName;
+}
+
+function hideFromTooltip(field: Field) {
+  return field.config.custom.hideFrom?.tooltip ?? false;
 }
 
 export const XYChartTooltip = ({
@@ -70,26 +74,31 @@ export const XYChartTooltip = ({
     colorIndicator: ColorIndicator.marker_md,
   };
 
-  const contentItems: VizTooltipItem[] = [
-    {
+  const contentItems: VizTooltipItem[] = [];
+
+  if (!hideFromTooltip(xField)) {
+    contentItems.push({
       label: stripSeriesName(xField.state?.displayName ?? xField.name, label),
       value: fmt(xField, xField.values[rowIndex]),
-    },
-    {
+    });
+  }
+
+  if (!hideFromTooltip(yField)) {
+    contentItems.push({
       label: stripSeriesName(yField.state?.displayName ?? yField.name, label),
       value: fmt(yField, yField.values[rowIndex]),
-    },
-  ];
+    });
+  }
 
   // mapped fields for size/color
-  if (sizeField != null && sizeField !== yField) {
+  if (sizeField != null && sizeField !== yField && !hideFromTooltip(sizeField)) {
     contentItems.push({
       label: stripSeriesName(sizeField.state?.displayName ?? sizeField.name, label),
       value: fmt(sizeField, sizeField.values[rowIndex]),
     });
   }
 
-  if (colorField != null && colorField !== yField) {
+  if (colorField != null && colorField !== yField && !hideFromTooltip(colorField)) {
     contentItems.push({
       label: stripSeriesName(colorField.state?.displayName ?? colorField.name, label),
       value: fmt(colorField, colorField.values[rowIndex]),
@@ -97,10 +106,12 @@ export const XYChartTooltip = ({
   }
 
   series._rest.forEach((field) => {
-    contentItems.push({
-      label: stripSeriesName(field.state?.displayName ?? field.name, label),
-      value: fmt(field, field.values[rowIndex]),
-    });
+    if (!hideFromTooltip(field)) {
+      contentItems.push({
+        label: stripSeriesName(field.state?.displayName ?? field.name, label),
+        value: fmt(field, field.values[rowIndex]),
+      });
+    }
   });
 
   let footer: ReactNode;
