@@ -10,7 +10,7 @@ import {
   SceneVariableState,
   VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -52,7 +52,8 @@ export function validateVariable<
     expect(sceneVariable?.state.pluginId).toBe(variableKind.spec.pluginId);
   }
   if (sceneVariable instanceof QueryVariable && variableKind.kind === 'QueryVariable') {
-    expect(sceneVariable?.state.datasource).toBe(variableKind.spec.datasource);
+    expect(sceneVariable?.state.datasource?.type).toBe(variableKind.spec.query?.group);
+    expect(sceneVariable?.state.datasource?.uid).toBe(variableKind.spec.query?.datasource?.name);
     expect(sceneVariable?.state.query).toEqual(variableKind.spec.query.spec);
   }
   if (sceneVariable instanceof CustomVariable && variableKind.kind === 'CustomVariable') {
