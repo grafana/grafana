@@ -52,7 +52,12 @@ import DetailState from './DetailState';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
-const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceType: string, datasourceUid: string) => {
+const useResourceAttributesExtensionLinks = (
+  process: TraceProcess,
+  spanTags: TraceKeyValuePair[],
+  datasourceType: string,
+  datasourceUid: string
+) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
     const attributes = (process.tags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
@@ -64,14 +69,24 @@ const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceTy
       return acc;
     }, {});
 
+    const spanAttributes = (spanTags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
+      if (acc[tag.key]) {
+        acc[tag.key].push(tag.value);
+      } else {
+        acc[tag.key] = [tag.value];
+      }
+      return acc;
+    }, {});
+
     return {
       attributes,
+      spanAttributes,
       datasource: {
         type: datasourceType,
         uid: datasourceUid,
       },
     };
-  }, [process.tags, datasourceType, datasourceUid]);
+  }, [process.tags, spanTags, datasourceType, datasourceUid]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
@@ -350,7 +365,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
-  const resourceLinksGetter = useResourceAttributesExtensionLinks(process, datasourceType, datasourceUid);
+  const resourceLinksGetter = useResourceAttributesExtensionLinks(process, tags, datasourceType, datasourceUid);
 
   return (
     <div data-testid="span-detail-component">
@@ -369,6 +384,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             data={tags}
             label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
             isOpen={isTagsOpen}
+            linksGetter={resourceLinksGetter}
             onToggle={() => tagsToggle(spanID)}
           />
           {process.tags && (
