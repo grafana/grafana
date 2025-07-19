@@ -3359,6 +3359,9 @@
       "text-badge-enabled": "Ativado",
       "text-badge-not-enabled": "Não ativado"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "O ponto final .well-known/openid-configuration para o seu IdP",
       "title-open-id-connect-discovery-url": "URL de descoberta do OpenID Connect"
@@ -3559,6 +3562,7 @@
       "empty-message": "Nenhuma pasta encontrada",
       "error-title": "Erro ao carregar pastas",
       "non-folder-item": "Não pasta {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Pesquisar pastas",
       "unknown-error": "Erro desconhecido"
     },
@@ -5931,8 +5935,8 @@
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel de controlo",
         "would-still-dashboard": "Ainda pretende guardar este painel de controlo?"
       },
-      "schema-v2-library-panels-export": "A funcionalidade do painel de controlo dinâmico é experimental e não tem paridade de funcionalidade total com o comportamento atual dos painéis de controlo. Baseia-se num novo formato de esquema, que não suporta painéis de biblioteca. Isto significa que, ao exportar o painel de controlo para o utilizar noutra instância, não incluiremos painéis de biblioteca. Tencionamos suportá-los à medida que avançamos no <2>ciclo de vida</2> da funcionalidade.",
-      "schema-v2-library-panels-export-title": "O Esquema de Painel de Controlo V2 ainda não suporta a exportação de painéis de biblioteca para serem utilizados noutra instância",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Painel de controlo alterado de forma irreversível"
     },
     "save-dashboard-form-common-options": {
@@ -7954,6 +7958,60 @@
       "previous-label": "Mês anterior",
       "select-placeholder": "Selecione data/hora"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Fechar"
     },
@@ -8000,6 +8058,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -11881,7 +11953,6 @@
       },
       "label-apply-to-entire-row": "Aplicar a toda a linha",
       "label-background-display-mode": "Modo de exibição de fundo",
-      "label-wrap-text": "Ajustar texto",
       "wrap-text": "Ajustar texto"
     },
     "column-alignment-options": {
