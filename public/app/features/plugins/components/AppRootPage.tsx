@@ -13,9 +13,12 @@ import {
   OrgRole,
   PluginType,
   PluginContextProvider,
+  RestrictedGrafanaApisContextProvider,
+  RestrictedGrafanaApisContextType,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { Alert, ErrorWithStack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -24,6 +27,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import {
   ExtensionRegistriesProvider,
@@ -56,6 +60,22 @@ interface State {
 }
 
 const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
+
+// This could live somewhere else.
+// The key point here is:
+// - The type-checks will fail if the `DashboardScene.addPanel` (which is not an exposed type) is not compatible with the exposed API signature
+// - The type-checks will fail if the exposed type signature changes in a breaking way (Levitate check)
+const restrictedGrafanaApis: RestrictedGrafanaApisContextType = {
+  addPanel: (vizPanel: VizPanel) => {
+    const dashboardScene = window.__grafanaSceneContext instanceof DashboardScene ? window.__grafanaSceneContext : null;
+    return dashboardScene?.addPanel(vizPanel);
+  },
+};
+
+// This could come from the config (grafana.ini settings?)
+const restrictedGrafanaApisWhitelist: Record<keyof RestrictedGrafanaApisContextType, string[]> = {
+  addPanel: ['grafana-assistant-app'],
+};
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const { pluginId: pluginIdParam = '' } = useParams();
@@ -107,32 +127,38 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   const pluginRoot = plugin.root && (
     <PluginContextProvider meta={plugin.meta}>
-      <PluginErrorBoundary
-        fallback={({ error, errorInfo }) => (
-          <ErrorWithStack
-            title={t('plugins.app-root-page.error-loading-plugin', 'Plugin failed to load')}
-            error={error}
-            errorInfo={errorInfo}
-          />
-        )}
+      <RestrictedGrafanaApisContextProvider
+        pluginId={pluginId}
+        apis={restrictedGrafanaApis}
+        apiWhitelist={restrictedGrafanaApisWhitelist}
       >
-        <ExtensionRegistriesProvider
-          registries={{
-            addedLinksRegistry: addedLinksRegistry.readOnly(),
-            addedComponentsRegistry: addedComponentsRegistry.readOnly(),
-            exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
-            addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
-          }}
+        <PluginErrorBoundary
+          fallback={({ error, errorInfo }) => (
+            <ErrorWithStack
+              title={t('plugins.app-root-page.error-loading-plugin', 'Plugin failed to load')}
+              error={error}
+              errorInfo={errorInfo}
+            />
+          )}
         >
-          <plugin.root
-            meta={plugin.meta}
-            basename={location.pathname}
-            onNavChanged={onNavChanged}
-            query={queryParams}
-            path={location.pathname}
-          />
-        </ExtensionRegistriesProvider>
-      </PluginErrorBoundary>
+          <ExtensionRegistriesProvider
+            registries={{
+              addedLinksRegistry: addedLinksRegistry.readOnly(),
+              addedComponentsRegistry: addedComponentsRegistry.readOnly(),
+              exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+              addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
+            }}
+          >
+            <plugin.root
+              meta={plugin.meta}
+              basename={location.pathname}
+              onNavChanged={onNavChanged}
+              query={queryParams}
+              path={location.pathname}
+            />
+          </ExtensionRegistriesProvider>
+        </PluginErrorBoundary>
+      </RestrictedGrafanaApisContextProvider>
     </PluginContextProvider>
   );
 
