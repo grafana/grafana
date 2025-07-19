@@ -22,6 +22,7 @@ import {
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
+import { inferPills } from './Cells/PillCell';
 import { COLUMN, TABLE } from './constants';
 import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
@@ -71,6 +72,12 @@ export function shouldTextWrap(field: Field): boolean {
 
 // matches characters which CSS
 const spaceRegex = /[\s-]/;
+// 6px horizontal padding on each side
+const PILLS_SPACING = 12;
+// 4px gap between pills
+const PILLS_GAP = 4;
+// Pills are rendered at 12px font size
+const PILLS_TEXT_SIZE_RATIO = 12 / 14;
 
 export interface GetMaxWrapCellOptions {
   colWidths: number[];
@@ -100,13 +107,42 @@ export function getMaxWrapCell(
   for (let i = 0; i < colWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const field = fields[i];
+      const cellOptions = getCellOptions(field);
+
       // special case: for the header, provide `-1` as the row index.
       const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
 
       if (cellTextRaw != null) {
         const cellText = String(cellTextRaw);
 
-        if (spaceRegex.test(cellText)) {
+        // Handle pill cells with wrapping enabled
+        if (cellOptions.type === TableCellDisplayMode.Pill && 'wrapText' in cellOptions && cellOptions.wrapText) {
+          // For pill cells, we need to estimate how many pills will fit per line
+          // and how many lines we'll need. This is a rough estimation.
+          const pillValues = inferPills(cellTextRaw);
+          if (pillValues.length > 0) {
+            const adjustedCharWidth = avgCharWidth * PILLS_TEXT_SIZE_RATIO;
+            let localLines = 0;
+            let currentLineUse = colWidths[i];
+
+            for (const pillValue of pillValues) {
+              const pillWidth = pillValue.length * adjustedCharWidth + PILLS_SPACING;
+              if (currentLineUse + pillWidth > colWidths[i]) {
+                localLines++;
+                currentLineUse = pillWidth;
+              } else {
+                currentLineUse += pillWidth + PILLS_GAP;
+              }
+            }
+
+            if (localLines > maxLines) {
+              maxLines = localLines;
+              maxLinesIdx = i;
+              maxLinesText = cellText;
+            }
+          }
+        } else if (spaceRegex.test(cellText)) {
+          // Handle regular text wrapping
           const charsPerLine = colWidths[i] / avgCharWidth;
           const approxLines = cellText.length / charsPerLine;
 
@@ -135,7 +171,6 @@ export function shouldTextOverflow(field: Field): boolean {
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensure we don't apply overflow hover states for type image
     type !== TableCellDisplayMode.Image &&
-    type !== TableCellDisplayMode.Pill &&
     !shouldTextWrap(field) &&
     !isCellInspectEnabled(field)
   );
