@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
@@ -218,7 +218,7 @@ export const getButtonStyles = (props: StyleProps) => {
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
   const variantStyles = getPropertiesForVariant(theme, variant, fill);
   const disabledStyles = getPropertiesForDisabled(theme, variant, fill);
-  const focusStyle = getFocusStyles(theme);
+  const focusStyle = getButtonFocusStyles(theme);
   const paddingMinusBorder = theme.spacing.gridSize * padding - 1;
 
   return {
@@ -274,12 +274,34 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
+function addTransform(transitions: string[]) {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReducedMotion) {
+    transitions.push('transform');
+  }
+
+  return transitions;
+}
+
+function getActiveButtonStyles(color: ThemeRichColor, theme: GrafanaTheme2, fill: ButtonFill) {
+  let background = fill === 'solid' ? color.activeMain : color.activeTransparent;
+
+  if (color.name === 'secondary') {
+    background = color.activeTransparentSecondary;
+  }
+
+  return {
+    background,
+    transform: 'scale(0.95)',
+  };
+}
+
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
 
-  // Secondary button has some special rules as we lack theem color token to
+  // Secondary button has some special rules as we lack the color token to
   // specify border color for normal button vs border color for outline button
   if (color.name === 'secondary') {
     borderColor = color.border;
@@ -292,7 +314,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: `1px solid ${outlineBorderColor}`,
-      transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+      transition: theme.transitions.create(addTransform(['background-color', 'border-color', 'color']), {
         duration: theme.transitions.duration.short,
       }),
 
@@ -300,6 +322,10 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         background: color.transparent,
         borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
         color: color.text,
+      },
+
+      '&:active, &:active:hover': {
+        ...getActiveButtonStyles(color, theme, fill),
       },
     };
   }
@@ -309,7 +335,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: '1px solid transparent',
-      transition: theme.transitions.create(['background-color', 'color'], {
+      transition: theme.transitions.create(addTransform(['background-color', 'color', 'border-color']), {
         duration: theme.transitions.duration.short,
       }),
 
@@ -322,6 +348,10 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         background: color.transparent,
         textDecoration: 'none',
       },
+
+      '&:active, &:active:hover': {
+        ...getActiveButtonStyles(color, theme, fill),
+      },
     };
   }
 
@@ -329,7 +359,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     background: color.main,
     color: color.contrastText,
     border: `1px solid ${borderColor}`,
-    transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+    transition: theme.transitions.create(addTransform(['background-color', 'box-shadow', 'border-color', 'color']), {
       duration: theme.transitions.duration.short,
     }),
 
@@ -338,6 +368,10 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       color: color.contrastText,
       boxShadow: theme.shadows.z1,
       borderColor: hoverBorderColor,
+    },
+
+    '&:active, &:active:hover': {
+      ...getActiveButtonStyles(color, theme, fill),
     },
   };
 }
