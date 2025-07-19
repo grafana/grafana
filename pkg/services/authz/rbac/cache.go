@@ -80,7 +80,13 @@ func (c *cacheWrapImpl[T]) Get(ctx context.Context, key string) (T, bool) {
 	data, err := c.cache.Get(ctx, key)
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
-			logger.Warn("failed to get from cache", "key", key, "error", err)
+			// Log different types of cache errors with appropriate levels
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+				logger.Debug("cache get timeout", "key", key, "error", err)
+			} else {
+				logger.Warn("failed to get from cache", "key", key, "error", err)
+			}
+			span.SetAttributes(attribute.String("error", err.Error()))
 		}
 		return value, false
 	}
@@ -88,6 +94,7 @@ func (c *cacheWrapImpl[T]) Get(ctx context.Context, key string) (T, bool) {
 	err = json.Unmarshal(data, &value)
 	if err != nil {
 		logger.Warn("failed to unmarshal from cache", "key", key, "error", err)
+		span.SetAttributes(attribute.String("unmarshal_error", err.Error()))
 		return value, false
 	}
 
@@ -103,12 +110,19 @@ func (c *cacheWrapImpl[T]) Set(ctx context.Context, key string, value T) {
 	data, err := json.Marshal(value)
 	if err != nil {
 		logger.Warn("failed to marshal to cache", "key", key, "error", err)
+		span.SetAttributes(attribute.String("marshal_error", err.Error()))
 		return
 	}
 
 	err = c.cache.Set(ctx, key, data, c.ttl)
 	if err != nil {
-		logger.Warn("failed to set to cache", "key", key, "error", err)
+		// Log different types of cache errors with appropriate levels
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			logger.Debug("cache set timeout", "key", key, "error", err)
+		} else {
+			logger.Warn("failed to set to cache", "key", key, "error", err)
+		}
+		span.SetAttributes(attribute.String("error", err.Error()))
 	}
 }
 
