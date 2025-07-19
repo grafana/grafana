@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -28,16 +29,17 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize 
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [currentLog, setCurrentLog] = useState(showDetails[0]);
+  const previousShowDetails = usePrevious(showDetails);
 
   useEffect(() => {
-    focusLogLine(showDetails[0]);
+    focusLogLine(currentLog);
     if (!noInteractions) {
       reportInteraction('logs_log_line_details_displayed', {
         mode: 'sidebar',
       });
     }
-    // Just once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -45,8 +47,14 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize 
       closeDetails();
       return;
     }
-    setCurrentLog(showDetails[showDetails.length - 1]);
-  }, [closeDetails, showDetails]);
+    // Focus on the recently open
+    if (!previousShowDetails || showDetails.length > previousShowDetails.length) {
+      setCurrentLog(showDetails[showDetails.length - 1]);
+      return;
+    } else if (!showDetails.find((log) => log.uid === currentLog.uid)) {
+      setCurrentLog(showDetails[showDetails.length - 1]);
+    }
+  }, [closeDetails, currentLog.uid, previousShowDetails, showDetails]);
 
   const handleResize = useCallback(() => {
     if (containerRef.current) {
@@ -106,7 +114,7 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize 
           </TabsBar>
         )}
         <div className={styles.scrollContainer}>
-          <LogLineDetailsComponent log={currentLog} logs={logs} />
+          <LogLineDetailsComponent focusLogLine={focusLogLine} log={currentLog} logs={logs} />
         </div>
       </div>
     </Resizable>
