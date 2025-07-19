@@ -109,7 +109,7 @@ export {
   type TableFieldOptions,
   type TableSortByFieldState,
   type TableFooterCalc,
-  type AdHocFilterItem,
+  type AdHocFilterItem, // TODO: Move this out from Table - it's not specific to the table
   type TableAutoCellOptions,
   type TableSparklineCellOptions,
   type TableBarGaugeCellOptions,
