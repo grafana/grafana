@@ -41,12 +41,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
-import {
-  DEFAULT_SERIES_LIMIT,
-  GET_AND_POST_METADATA_ENDPOINTS,
-  InstantQueryRefIdIndex,
-  SUGGESTIONS_LIMIT,
-} from './constants';
+import { DEFAULT_SERIES_LIMIT, GET_AND_POST_METADATA_ENDPOINTS, InstantQueryRefIdIndex } from './constants';
 import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
 import {
   exportToAbstractQuery,
@@ -96,7 +91,6 @@ export class PrometheusDatasource
   interval: string;
   languageProvider: PrometheusLanguageProviderInterface;
   lookupsDisabled: boolean;
-  metricNamesAutocompleteSuggestionLimit: number;
   ruleMappings: RuleQueryMapping;
   seriesEndpoint: boolean;
   seriesLimit: number;
@@ -132,8 +126,6 @@ export class PrometheusDatasource
     this.id = instanceSettings.id;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
-    this.metricNamesAutocompleteSuggestionLimit =
-      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
     this.ruleMappings = {};
     this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
     this.seriesLimit = instanceSettings.jsonData.seriesLimit ?? DEFAULT_SERIES_LIMIT;

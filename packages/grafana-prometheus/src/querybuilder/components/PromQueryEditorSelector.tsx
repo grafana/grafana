@@ -22,7 +22,6 @@ import { changeEditorMode, getQueryWithDefaults } from '../state';
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
-import { PromQueryCodeEditorAutocompleteInfo } from './PromQueryCodeEditorAutocompleteInfo';
 
 type Props = PromQueryEditorProps;
 
@@ -148,7 +147,6 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
             <Trans i18nKey="grafana-prometheus.querybuilder.prom-query-editor-selector.run-queries">Run queries</Trans>
           </Button>
         )}
-        <PromQueryCodeEditorAutocompleteInfo datasourceUid={props.datasource.uid} editorMode={editorMode} />
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.editorToggle}>
           <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
         </div>
