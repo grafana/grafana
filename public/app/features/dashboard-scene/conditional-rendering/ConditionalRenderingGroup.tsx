@@ -8,6 +8,7 @@ import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
 import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
 import { ConditionalRenderingGroupVisibility } from './ConditionalRenderingGroupVisibility';
+import { ConditionalRenderingScopes } from './ConditionalRenderingScopes';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { conditionalRenderingSerializerRegistry } from './serializers';
@@ -18,6 +19,7 @@ import {
   GroupConditionItemType,
   GroupConditionVisibility,
   GroupConditionValue,
+  ConditionalRenderingConditions,
 } from './types';
 
 export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
@@ -64,12 +66,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   }
 
   public addItem(itemType: GroupConditionItemType) {
-    const item =
-      itemType === 'data'
-        ? ConditionalRenderingData.createEmpty()
-        : itemType === 'variable'
-          ? ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name)
-          : ConditionalRenderingTimeRangeSize.createEmpty();
+    const item = this._getItemByType(itemType);
 
     // We don't use `setStateAndNotify` here because
     // We need to set a parent and activate the new condition before notifying the root
@@ -121,6 +118,22 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
 
   public static createEmpty(): ConditionalRenderingGroup {
     return new ConditionalRenderingGroup({ condition: 'and', visibility: 'show', value: [] });
+  }
+
+  private _getItemByType(itemType: GroupConditionItemType): ConditionalRenderingConditions {
+    switch (itemType) {
+      case 'data':
+        return ConditionalRenderingData.createEmpty();
+
+      case 'scopes':
+        return ConditionalRenderingScopes.createEmpty();
+
+      case 'timeRangeSize':
+        return ConditionalRenderingTimeRangeSize.createEmpty();
+
+      case 'variable':
+        return ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name);
+    }
   }
 }
 
