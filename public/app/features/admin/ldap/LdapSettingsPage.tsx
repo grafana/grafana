@@ -278,7 +278,14 @@ export const LdapSettingsPage = () => {
     <Alert title={t('ldap-settings-page.login-form-alert.title', 'Basic login disabled')}>
       <Trans i18nKey="ldap-settings-page.login-form-alert.description">
         Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the
-        login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.
+        login form to use LDAP authentication. See our{' '}
+        <TextLink
+          href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#disable_login_form"
+          external
+        >
+          <Trans i18nKey="ldap-settings-page.documentation">documentation</Trans>
+        </TextLink>{' '}
+        for details on how to enable it.
       </Trans>
     </Alert>
   );
