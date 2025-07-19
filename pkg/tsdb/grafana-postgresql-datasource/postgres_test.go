@@ -146,8 +146,9 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
+			tlsManager := &tlsTestManager{settings: tt.tlsSettings}
 			svc := Service{
-				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
+				tlsManager: tlsManager,
 				logger:     backend.NewLoggerWith("logger", "tsdb.postgres"),
 			}
 
@@ -159,7 +160,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 				UID:                     tt.uid,
 			}
 
-			connStr, err := svc.generateConnectionString(ds)
+			connStr, err := GenerateConnectionString(ds, tlsManager, svc.logger)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
