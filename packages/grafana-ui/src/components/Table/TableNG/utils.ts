@@ -26,7 +26,7 @@ import { COLUMN, TABLE } from './constants';
 import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export type CellHeightCalculator = (text: string, cellWidth: number) => number;
+export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
 
 /**
  * @internal
@@ -72,10 +72,13 @@ export function shouldTextWrap(field: Field): boolean {
 // matches characters which CSS
 const spaceRegex = /[\s-]/;
 
-export interface GetMaxWrapCellOptions {
+export interface GetRowHeightOptions {
   colWidths: number[];
   avgCharWidth: number;
   wrappedColIdxs: boolean[];
+  calcNumLines: CellNumLinesCalculator;
+  defaultHeight: number;
+  heightOffset?: number;
 }
 
 /**
@@ -83,28 +86,45 @@ export interface GetMaxWrapCellOptions {
  * loop through the fields and their values, determine which cell is going to determine the
  * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
  */
-export function getMaxWrapCell(
+export function getRowHeight(
   fields: Field[],
   rowIdx: number,
-  { colWidths, avgCharWidth, wrappedColIdxs }: GetMaxWrapCellOptions
-): {
-  text: string;
-  idx: number;
-  numLines: number;
-} {
+  { colWidths, avgCharWidth, wrappedColIdxs, calcNumLines, defaultHeight, heightOffset }: GetRowHeightOptions
+): number {
   let maxLines = 1;
-  let maxLinesIdx = -1;
+  let maxLinesIdx = 0;
   let maxLinesText = '';
 
-  // TODO: consider changing how we store this, using a record by column key instead of an array
   for (let i = 0; i < colWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const field = fields[i];
-      // special case: for the header, provide `-1` as the row index.
-      const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
 
+      // if we're not in the header row, handle some special cases for specific cell types
+      if (rowIdx !== -1) {
+        const cellType = getCellOptions(field).type;
+        switch (cellType) {
+          // for data links cells, each link is on its own line in wrap mode.
+          case TableCellDisplayMode.DataLinks: {
+            const linksCount = field.config.links?.length ?? 0;
+            if (linksCount > maxLines) {
+              maxLines = linksCount;
+              maxLinesIdx = i;
+              maxLinesText = '<link titles>';
+            }
+            continue;
+          }
+          default:
+            break;
+        }
+      }
+
+      // special case: for the header, provide `-1` as the row index.
+      let cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellTextRaw != null) {
         const cellText = String(cellTextRaw);
+        if (maxLinesText === '') {
+          maxLinesText = cellText;
+        }
 
         if (spaceRegex.test(cellText)) {
           const charsPerLine = colWidths[i] / avgCharWidth;
@@ -120,7 +140,11 @@ export function getMaxWrapCell(
     }
   }
 
-  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
+  // go with the maximum of either the calculated number of lines from uPlot or from this pass over the data
+  // for non-text-driven heights like DataLinks or Pills. Apply Math.ceil to ensure we round up to the next line.
+  const numLines = Math.ceil(Math.max(calcNumLines(maxLinesText, colWidths[maxLinesIdx]), maxLines));
+
+  return Math.max(defaultHeight, numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING + (heightOffset ?? 0));
 }
 
 /**
@@ -128,42 +152,78 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
-  let type = getCellOptions(field).type;
-
-  return (
-    field.type === FieldType.string &&
+  const cellOptions = getCellOptions(field);
+  const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-    // so we need to ensure we don't apply overflow hover states for type image
-    type !== TableCellDisplayMode.Image &&
-    type !== TableCellDisplayMode.Pill &&
-    !shouldTextWrap(field) &&
-    !isCellInspectEnabled(field)
-  );
+    // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
+    (field.type === FieldType.string &&
+      cellOptions.type !== TableCellDisplayMode.Image &&
+      cellOptions.type !== TableCellDisplayMode.Pill) ||
+    // regardless of the underlying cell type, data links cells have text overflow.
+    cellOptions.type === TableCellDisplayMode.DataLinks;
+
+  return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
+}
+
+// we only want to infer justifyContent and textAlign for these cellTypes
+const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
+  TableCellDisplayMode.Auto,
+  TableCellDisplayMode.ColorText,
+  TableCellDisplayMode.ColorBackground,
+]);
+
+/**
+ * @internal
+ * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
+ */
+export function getTextAlign(field?: Field): Property.TextAlign {
+  if (!field) {
+    return 'inherit';
+  }
+
+  const custom: TableFieldOptionsType | undefined = field.config.custom;
+  if (custom?.align && custom.align !== 'auto') {
+    return (
+      (
+        {
+          right: 'right',
+          left: 'left',
+          center: 'center',
+        } as const
+      )[custom.align] ?? 'inherit'
+    );
+  }
+
+  if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
+    return 'right';
+  }
+
+  return 'inherit';
 }
 
 /**
  * @internal
- * Returns the text alignment for a field based on its type and configuration.
+ * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
  */
-export function getTextAlign(field?: Field): Property.JustifyContent {
+export function getJustifyContent(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
   }
 
-  if (field.config.custom) {
-    const custom: TableFieldOptionsType = field.config.custom;
-
-    switch (custom.align) {
-      case 'right':
-        return 'flex-end';
-      case 'left':
-        return 'flex-start';
-      case 'center':
-        return 'center';
-    }
+  const custom: TableFieldOptionsType | undefined = field.config.custom;
+  if (custom?.align && custom.align !== 'auto') {
+    return (
+      (
+        {
+          right: 'flex-end',
+          left: 'flex-start',
+          center: 'center',
+        } as const
+      )[custom.align] ?? 'flex-start'
+    );
   }
 
-  if (field.type === FieldType.number) {
+  if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
     return 'flex-end';
   }
 

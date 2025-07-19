@@ -26,9 +26,10 @@ import {
   getDefaultRowHeight,
   getIsNestedTable,
   getTextAlign,
+  getJustifyContent,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
-  getMaxWrapCell,
+  getRowHeight,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -45,7 +46,8 @@ describe('TableNG utils', () => {
           },
         },
       };
-      expect(getTextAlign(leftField)).toBe('flex-start');
+      expect(getTextAlign(leftField)).toBe('left');
+      expect(getJustifyContent(leftField)).toBe('flex-start');
 
       // Test 'center' alignment
       const centerField = {
@@ -59,6 +61,7 @@ describe('TableNG utils', () => {
         },
       };
       expect(getTextAlign(centerField)).toBe('center');
+      expect(getJustifyContent(centerField)).toBe('center');
 
       // Test 'right' alignment
       const rightField = {
@@ -71,7 +74,8 @@ describe('TableNG utils', () => {
           },
         },
       };
-      expect(getTextAlign(rightField)).toBe('flex-end');
+      expect(getTextAlign(rightField)).toBe('right');
+      expect(getJustifyContent(rightField)).toBe('flex-end');
     });
 
     it('should default to flex-start when no alignment specified', () => {
@@ -83,11 +87,13 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getTextAlign(field)).toBe('inherit');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start when no field is specified', () => {
-      expect(getTextAlign(undefined)).toBe('flex-start');
+      expect(getTextAlign(undefined)).toBe('inherit');
+      expect(getJustifyContent(undefined)).toBe('flex-start');
     });
 
     it('should default to flex-end for number types', () => {
@@ -99,7 +105,8 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-end');
+      expect(getTextAlign(field)).toBe('right');
+      expect(getJustifyContent(field)).toBe('flex-end');
     });
 
     it('should default to flex-start for string types', () => {
@@ -111,7 +118,8 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getTextAlign(field)).toBe('inherit');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start for enum types', () => {
@@ -123,7 +131,8 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getTextAlign(field)).toBe('inherit');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start for time types', () => {
@@ -135,7 +144,25 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getTextAlign(field)).toBe('inherit');
+      expect(getJustifyContent(field)).toBe('flex-start');
+    });
+
+    it('should use inherited alignment for DataLinkCell', () => {
+      const field = {
+        name: 'Active',
+        type: FieldType.string,
+        values: [],
+        config: {
+          custom: {
+            cellOptions: {
+              type: TableCellDisplayMode.DataLinks,
+            },
+          },
+        },
+      };
+      expect(getTextAlign(field)).toBe('inherit');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start for boolean types', () => {
@@ -147,7 +174,8 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getTextAlign(field)).toBe('inherit');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
   });
 
@@ -1001,7 +1029,9 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('getMaxWrapCell', () => {
+  describe('getRowHeight', () => {
+    const getHeightForNumLines = (numLines: number) => numLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+
     it('should return the maximum wrap cell length from field state', () => {
       const field1: Field = {
         name: 'field1',
@@ -1027,16 +1057,14 @@ describe('TableNG utils', () => {
 
       const fields = [field1, field2, field3];
 
-      const result = getMaxWrapCell(fields, 0, {
+      const result = getRowHeight(fields, 0, {
         colWidths: [30, 50, 100],
         avgCharWidth: 5,
         wrappedColIdxs: [true, true, true],
+        calcNumLines: jest.fn(() => 2),
+        defaultHeight: 30,
       });
-      expect(result).toEqual({
-        text: 'asdfasdf asdfasdf asdfasdf',
-        idx: 1,
-        numLines: 2.6,
-      });
+      expect(result).toEqual(getHeightForNumLines(3));
     });
 
     it('should take colWidths into account when calculating max wrap cell', () => {
@@ -1065,15 +1093,17 @@ describe('TableNG utils', () => {
       const colWidths = [50, 1000, 30]; // 50px width
       const avgCharWidth = 5; // Assume average character width is 5px
 
-      const result = getMaxWrapCell(fields, 1, { colWidths, avgCharWidth, wrappedColIdxs: [true, true, true] });
+      const result = getRowHeight(fields, 1, {
+        colWidths,
+        avgCharWidth,
+        wrappedColIdxs: [true, true, true],
+        calcNumLines: jest.fn(() => 2),
+        defaultHeight: 30,
+      });
 
       // With a 50px width and 5px per character, we can fit 10 characters per line
       // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
-      expect(result).toEqual({
-        idx: 0,
-        numLines: 1.7,
-        text: 'a bit longer text',
-      });
+      expect(result).toEqual(getHeightForNumLines(2));
     });
 
     it('should use the display name if the rowIdx is -1 (which is used to calc header height in wrapped rows)', () => {
@@ -1102,11 +1132,51 @@ describe('TableNG utils', () => {
       const colWidths = [50, 1000, 30]; // 50px width
       const avgCharWidth = 5; // Assume average character width is 5px
 
-      const result = getMaxWrapCell(fields, -1, { colWidths, avgCharWidth, wrappedColIdxs: [true, true, true] });
+      const result = getRowHeight(fields, -1, {
+        colWidths,
+        avgCharWidth,
+        wrappedColIdxs: [true, true, true],
+        calcNumLines: jest.fn(() => 2),
+        defaultHeight: 30,
+      });
 
       // With a 50px width and 5px per character, we can fit 10 characters per line
       // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
-      expect(result).toEqual({ idx: 0, numLines: 2.7, text: 'Field with a very long name' });
+      expect(result).toEqual(getHeightForNumLines(3));
+    });
+
+    it('should use the datalink titles when calculating the height of a datalink cell', () => {
+      const fields: Field[] = [
+        {
+          name: 'Field with links',
+          type: FieldType.string,
+          config: {
+            links: [
+              { title: 'Link One', url: 'http://example.com/1' },
+              { title: 'Another Link', url: 'http://example.com/2' },
+              { title: 'The longest link title of all', url: 'http://example.com/3' },
+            ],
+            custom: {
+              cellOptions: {
+                type: TableCellDisplayMode.DataLinks,
+              },
+            },
+          },
+          values: ['short', 'a bit longer text'],
+        },
+      ];
+      // Simulate a narrow column width that would cause wrapping
+      const colWidths = [100]; // 100px width
+      const avgCharWidth = 5; // Assume average character width is 5px
+      const result = getRowHeight(fields, 0, {
+        colWidths,
+        avgCharWidth,
+        wrappedColIdxs: [true],
+        calcNumLines: jest.fn(() => 2),
+        defaultHeight: 30,
+      });
+
+      expect(result).toEqual(getHeightForNumLines(3));
     });
 
     it.todo('should ignore columns which are not wrapped');
