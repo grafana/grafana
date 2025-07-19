@@ -15,12 +15,12 @@ var (
 )
 
 type ShortUrl struct {
-	Id         int64
-	OrgId      int64
+	Id         int64 `json:"-"`
+	OrgId      int64 `json:"-"`
 	Uid        string
 	Path       string
-	CreatedBy  int64
-	CreatedAt  int64
+	CreatedBy  int64 `json:"-"`
+	CreatedAt  int64 `json:"-"`
 	LastSeenAt int64
 }
 
