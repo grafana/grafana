@@ -1037,6 +1037,10 @@ export interface FeatureToggles {
   */
   foldersAppPlatformAPI?: boolean;
   /**
+  * Enables adhoc filtering support for the dashboard datasource
+  */
+  dashboardDsAdHocFiltering?: boolean;
+  /**
   * Set this to true to use the new PluginImporter functionality
   * @default false
   */

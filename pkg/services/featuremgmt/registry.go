@@ -1784,6 +1784,13 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:         "dashboardDsAdHocFiltering",
+			Description:  "Enables adhoc filtering support for the dashboard datasource",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:              "enablePluginImporter",
 			Description:       "Set this to true to use the new PluginImporter functionality",
 			Stage:             FeatureStageExperimental,

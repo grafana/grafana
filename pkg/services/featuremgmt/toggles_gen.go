@@ -935,6 +935,10 @@ const (
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
 
+	// FlagDashboardDsAdHocFiltering
+	// Enables adhoc filtering support for the dashboard datasource
+	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
+
 	// FlagEnablePluginImporter
 	// Set this to true to use the new PluginImporter functionality
 	FlagEnablePluginImporter = "enablePluginImporter"
