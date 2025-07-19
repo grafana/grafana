@@ -210,7 +210,7 @@ Table panel result:
 
 {{< figure alt="output of time macro" src="/media/docs/grafana/data-sources/mysql/screenshot-time-and-timefilter-macro.png" >}}
 
-Given the result in the following example, two columns named `Time` and `value_double` are returned, representing the associated data within fixed timestamps. It doesn’t filter data with respect to the time range and returns all the rows in the table.
+Given the result in the following example, two columns named _Time_ and _value_double_ are returned, representing the associated data within fixed timestamps. It doesn’t filter data with respect to the time range and returns all the rows in the table.
 
 **Example with `$__timeFilter(dateColumn)` Macro:**
 
@@ -286,7 +286,7 @@ Table panel result:
 
 {{< figure alt="output of null values to zero case, for time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro-conv-null-to-zero.png" >}}
 
-Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the `Time` column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U) to display the value of `${__field.labels.hostname}`.
+Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the _Time_ column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U) to display the value of `${__field.labels.hostname}`.
 
 **Example with multiple columns for `$__timeGroupAlias(dateColumn,'5m')` Macro:**
 
