@@ -15,7 +15,7 @@ them. This is because we want to store the folder tree relations.
 
 To grant a user access to a specific folder we store `{ “user”: “user:1”, relation: “read”, object:”folder:<name>” }`
 
-To grant a user access to sub resources of a folder we store ``{ “user”: “user:1”, relation: “resource_read”, object:”folder:<uid>”}` with additional context.
+To grant a user access to sub resources of a folder we store `{ “user”: “user:1”, relation: “resource_read”, object:”folder:<uid>”}` with additional context.
 This context holds all GroupResources in a list e.g. `{ "subresources": ["dashboard.grafana.app/dashboards", "alerting.grafana.app/rules" ] }`.
 
 ## Resource level permissions
