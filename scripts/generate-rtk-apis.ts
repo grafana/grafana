@@ -79,6 +79,11 @@ const config: ConfigFile = {
       filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
       tag: true,
     },
+    '../public/app/api/clients/plugins/endpoints.gen.ts': {
+      apiFile: '../public/app/api/clients/plugins/baseAPI.ts',
+      schemaFile: '../data/openapi/plugins.grafana.app-v0alpha1.json',
+      tag: true,
+    },
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };

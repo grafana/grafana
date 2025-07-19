@@ -96,12 +96,13 @@ type service struct {
 	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
-	pluginClient       plugins.Client
-	datasources        datasource.ScopedPluginDatasourceProvider
-	contextProvider    datasource.PluginContextWrapper
-	pluginStore        pluginstore.Store
-	unified            resource.ResourceClient
-	restConfigProvider RestConfigProvider
+	pluginClient    plugins.Client
+	datasources     datasource.ScopedPluginDatasourceProvider
+	contextProvider datasource.PluginContextWrapper
+	pluginStore     pluginstore.Store
+	unified         resource.ResourceClient
+
+	eventualRestConfigProvider *EventualRestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
@@ -121,11 +122,10 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
-	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
-	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
+	eventualRestConfigProvider *EventualRestConfigProvider,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -150,9 +150,9 @@ func ProvideService(
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
-		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
+		eventualRestConfigProvider:        eventualRestConfigProvider,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -204,9 +204,6 @@ func ProvideService(
 	s.rr.Group("/healthz", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
-
-	eventualRestConfigProvider.cfg = s
-	close(eventualRestConfigProvider.ready)
 
 	return s, nil
 }
@@ -301,7 +298,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.eventualRestConfigProvider)
 		optsregister = getter.RegisterOptions
 
 		// Use unified storage client
@@ -402,6 +399,9 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = runningServer.Handler
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
+
+	s.eventualRestConfigProvider.SetRestConfigProvider(s)
+	s.eventualRestConfigProvider.MarkAsReady()
 
 	return nil
 }
