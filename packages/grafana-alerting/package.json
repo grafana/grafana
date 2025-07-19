@@ -54,11 +54,11 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
-    "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
+    "clean": "rimraf ./dist ./compiled ./unstable ./testing ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts",
-    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json && rimraf ./unstable"
+    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=testing,unstable node ../../scripts/prepare-npm-package.js",
+    "postpack": "mv package.json.bak package.json && rimraf ./unstable ./testing"
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
