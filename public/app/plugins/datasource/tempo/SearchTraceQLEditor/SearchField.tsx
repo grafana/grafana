@@ -245,10 +245,15 @@ const SearchField = ({
               }
             }}
             onCreateOption={(val) => {
+              // For service.name and name fields, always use string type for manually entered values
+              const valueType = filter.tag === 'service.name' || filter.tag === 'name' 
+                ? 'string' 
+                : uniqueOptionType;
+              
               updateFilter({
                 ...filter,
                 value: Array.isArray(filter.value) ? filter.value?.concat(val) : val,
-                valueType: uniqueOptionType,
+                valueType: valueType,
                 isCustomValue: true,
               });
             }}
