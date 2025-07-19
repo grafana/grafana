@@ -3385,6 +3385,9 @@
       "text-badge-enabled": "Włączone",
       "text-badge-not-enabled": "Niewłączone"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Punkt końcowy konfiguracji .well-known/openid-configuration dla Twojego dostawcy tożsamości",
       "title-open-id-connect-discovery-url": "Adres URL wykrywania OpenID Connect"
@@ -3595,6 +3598,7 @@
       "empty-message": "Nie znaleziono folderów",
       "error-title": "Błąd podczas ładowania folderów",
       "non-folder-item": "Element {{itemKind}} {{itemUID}} poza folderem",
+      "root-title": "",
       "search-placeholder": "Przeszukaj foldery",
       "unknown-error": "Nieznany błąd"
     },
@@ -5971,8 +5975,8 @@
         "title-someone-else-has-updated-this-dashboard": "Ktoś inny zaktualizował ten pulpit",
         "would-still-dashboard": "Czy nadal chcesz zapisać ten pulpit?"
       },
-      "schema-v2-library-panels-export": "Funkcja pulpitu dynamicznego jest eksperymentalna i nie odpowiada w pełni obecnemu sposobowi działania pulpitów. Opiera się na nowym formacie schematu, który nie obsługuje paneli biblioteki. Oznacza to, że przy eksporcie pulpitu, aby użyć go w innej instancji, nie uwzględnimy paneli biblioteki. Zamierzamy dodać obsługę tych paneli w miarę <2>rozwoju tej funkcji</2>.",
-      "schema-v2-library-panels-export-title": "Schemat pulpitu w wersji 2 nie obsługuje jeszcze eksportowania paneli biblioteki do użytku w innej instancji",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Pulpit został nieodwracalnie zmieniony"
     },
     "save-dashboard-form-common-options": {
@@ -7996,6 +8000,60 @@
       "previous-label": "Poprzedni miesiąc",
       "select-placeholder": "Wybierz datę/godzinę"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Zamknij"
     },
@@ -8042,6 +8100,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -11959,7 +12031,6 @@
       },
       "label-apply-to-entire-row": "Zastosuj do całego wiersza",
       "label-background-display-mode": "Tryb wyświetlania tła",
-      "label-wrap-text": "Zawijaj tekst",
       "wrap-text": "Zawijaj tekst"
     },
     "column-alignment-options": {
