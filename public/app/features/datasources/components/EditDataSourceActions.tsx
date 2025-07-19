@@ -1,5 +1,6 @@
+import { PluginExtensionPoints } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, usePluginLinks } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
@@ -11,9 +12,34 @@ interface Props {
   uid: string;
 }
 
+const allowedPluginIds = [
+  'grafana-lokiexplore-app',
+  'grafana-exploretraces-app',
+  'grafana-metricsdrilldown-app',
+  'grafana-pyroscope-app',
+  'grafana-monitoring-app',
+  'grafana-troubleshooting-app'
+];
+
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
   const hasExploreRights = contextSrv.hasAccessToExplore();
+
+  // Fetch plugin extension links
+  const { links: allLinks, isLoading } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigActions,
+    context: {
+      dataSource: {
+        type: dataSource.type,
+        uid: dataSource.uid,
+        name: dataSource.name,
+        typeName: dataSource.typeName,
+      },
+    },
+    limitPerPlugin: 1,
+  });
+
+  const links = allLinks.filter(link => allowedPluginIds.includes(link.pluginId));
 
   return (
     <>
@@ -51,6 +77,20 @@ export function EditDataSourceActions({ uid }: Props) {
       >
         <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
       </LinkButton>
+
+      {!isLoading && links.map((link) => (
+        <LinkButton
+          key={link.id}
+          size="sm"
+          variant="secondary"
+          href={link.path}
+          onClick={link.onClick}
+          icon={link.icon}
+          tooltip={link.description}
+        >
+          {link.title}
+        </LinkButton>
+      ))}
     </>
   );
 }
