@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, createRef, useState, useEffect } from 'react';
+import { memo, createRef, useState, useEffect, useRef } from 'react';
 
 import {
   rangeUtil,
@@ -106,6 +106,41 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onChangeWithSync(timeRange);
     setOpen(false);
   };
+
+  const isExternalUpdate = useRef(false);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.data) {
+        return;
+      }
+
+      try {
+        const timeRange: TimeRange = JSON.parse(event.data);
+
+        if (timeRange.raw.from === value.raw.from && timeRange.raw.to === value.raw.to) {
+          return;
+        }
+
+        isExternalUpdate.current = true
+        onChangeWithSync(timeRange);
+      } catch (err) {
+        console.warn('Invalid message:', event.data);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    if (!isExternalUpdate.current) {
+      window.parent.postMessage(JSON.stringify(value), '*');
+    } else {
+      isExternalUpdate.current = false;
+    }
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [value, onChangeWithSync]);
 
   useEffect(() => {
     if (isOpen && onToolbarTimePickerClick) {
