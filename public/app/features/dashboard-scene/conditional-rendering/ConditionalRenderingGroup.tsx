@@ -1,7 +1,11 @@
+import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingGroupKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Stack } from '@grafana/ui';
+
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { getQueryRunnerFor } from '../utils/utils';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingData } from './ConditionalRenderingData';
@@ -28,6 +32,8 @@ export interface ConditionalRenderingGroupState extends ConditionalRenderingBase
 export class ConditionalRenderingGroup extends ConditionalRenderingBase<ConditionalRenderingGroupState> {
   public static Component = ConditionalRenderingGroupRenderer;
 
+  private firstRun = true;
+
   public static serializer: ConditionalRenderingSerializerRegistryItem = {
     id: 'ConditionalRenderingGroup',
     name: 'Group',
@@ -45,6 +51,25 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
   public evaluate(): boolean {
     if (this.state.value.length === 0) {
       return true;
+    }
+
+    const hasDataRule = !!this.state.value.find((rule) => rule instanceof ConditionalRenderingData);
+
+    if (hasDataRule && this.firstRun) {
+      const item = this.getItem();
+      if (item instanceof AutoGridItem) {
+        const runner = getQueryRunnerFor(item.state.body);
+
+        if (
+          !runner ||
+          !runner.state.data ||
+          [LoadingState.NotStarted, LoadingState.Loading].includes(runner.state.data.state)
+        ) {
+          return true;
+        } else {
+          this.firstRun = false;
+        }
+      }
     }
 
     const value =
