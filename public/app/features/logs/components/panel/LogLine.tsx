@@ -376,7 +376,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     parsedField: theme.colors.text.primary,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(4).toRgbString();
+  const hoverColor = tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
 
   return {
     logLine: css({
@@ -450,7 +450,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: hoverColor,
+      background: tinycolor(theme.colors.background.canvas).darken(2).toRgbString(),
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
