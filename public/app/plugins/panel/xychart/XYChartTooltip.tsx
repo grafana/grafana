@@ -38,6 +38,10 @@ function hideFromTooltip(field: Field) {
   return field.config.custom.hideFrom?.tooltip ?? false;
 }
 
+function getFieldName(field: Field) {
+  return field.state?.displayName ?? field.name;
+}
+
 export const XYChartTooltip = ({
   dataIdxs,
   seriesIdx,
@@ -75,34 +79,39 @@ export const XYChartTooltip = ({
   };
 
   const contentItems: VizTooltipItem[] = [];
+  const addedFields = new Set<Field>();
 
   if (!hideFromTooltip(xField)) {
     contentItems.push({
-      label: stripSeriesName(xField.state?.displayName ?? xField.name, label),
+      label: stripSeriesName(getFieldName(xField), label),
       value: fmt(xField, xField.values[rowIndex]),
     });
+    addedFields.add(xField);
   }
 
   if (!hideFromTooltip(yField)) {
     contentItems.push({
-      label: stripSeriesName(yField.state?.displayName ?? yField.name, label),
+      label: stripSeriesName(getFieldName(yField), label),
       value: fmt(yField, yField.values[rowIndex]),
     });
+    addedFields.add(yField);
   }
 
   // mapped fields for size/color
-  if (sizeField != null && sizeField !== yField && !hideFromTooltip(sizeField)) {
+  if (sizeField != null && !addedFields.has(sizeField) && !hideFromTooltip(sizeField)) {
     contentItems.push({
-      label: stripSeriesName(sizeField.state?.displayName ?? sizeField.name, label),
+      label: stripSeriesName(getFieldName(sizeField), label),
       value: fmt(sizeField, sizeField.values[rowIndex]),
     });
+    addedFields.add(sizeField);
   }
 
-  if (colorField != null && colorField !== yField && !hideFromTooltip(colorField)) {
+  if (colorField != null && !addedFields.has(colorField) && !hideFromTooltip(colorField)) {
     contentItems.push({
-      label: stripSeriesName(colorField.state?.displayName ?? colorField.name, label),
+      label: stripSeriesName(getFieldName(colorField), label),
       value: fmt(colorField, colorField.values[rowIndex]),
     });
+    addedFields.add(colorField);
   }
 
   series._rest.forEach((field) => {
