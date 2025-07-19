@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -77,4 +78,60 @@ func TestTracingDiagnostics(t *testing.T) {
 			assert.Exactly(t, tc.expected, tc.defaults)
 		})
 	}
+}
+
+func TestCreateProfilingServer(t *testing.T) {
+    tcs := []struct {
+        name     string
+        addr     string
+        handler  http.Handler
+    }{
+        {
+            name:    "default configuration",
+            addr:    "localhost:6060",
+            handler: nil,
+        },
+        {
+            name:    "custom address and port",
+            addr:    "0.0.0.0:8080",
+            handler: http.DefaultServeMux,
+        },
+        {
+            name:    "IPv6 address",
+            addr:    "[::1]:9090",
+            handler: nil,
+        },
+    }
+
+    for _, tc := range tcs {
+        t.Run(tc.name, func(t *testing.T) {
+            server := createProfilingServer(tc.addr, tc.handler)
+            
+            // Verify server configuration
+            assert.Equal(t, tc.addr, server.Addr)
+            assert.Equal(t, tc.handler, server.Handler)
+            
+            // Verify timeout configurations
+            assert.Equal(t, 5*time.Second, server.ReadHeaderTimeout, "ReadHeaderTimeout should be 5 seconds")
+            assert.Equal(t, 10*time.Second, server.ReadTimeout, "ReadTimeout should be 10 seconds")
+            assert.Equal(t, 10*time.Second, server.WriteTimeout, "WriteTimeout should be 10 seconds")
+            assert.Equal(t, 60*time.Second, server.IdleTimeout, "IdleTimeout should be 60 seconds")
+        })
+    }
+}
+
+func TestCreateProfilingServerTimeoutValues(t *testing.T) {
+    server := createProfilingServer("test:1234", nil)
+    
+    // Test that all required timeouts are set to prevent G114 security issue
+    assert.NotZero(t, server.ReadHeaderTimeout, "ReadHeaderTimeout must be set to prevent DoS attacks")
+    assert.NotZero(t, server.ReadTimeout, "ReadTimeout must be set to prevent resource exhaustion")
+    assert.NotZero(t, server.WriteTimeout, "WriteTimeout must be set to prevent hanging connections")
+    assert.NotZero(t, server.IdleTimeout, "IdleTimeout must be set to prevent idle connection buildup")
+    
+    // Verify the timeout values are reasonable (not too short, not too long)
+    assert.True(t, server.ReadHeaderTimeout >= 1*time.Second && server.ReadHeaderTimeout <= 30*time.Second)
+    assert.True(t, server.ReadTimeout >= 5*time.Second && server.ReadTimeout <= 60*time.Second)
+    assert.True(t, server.WriteTimeout >= 5*time.Second && server.WriteTimeout <= 60*time.Second)
+    assert.True(t, server.IdleTimeout >= 30*time.Second && server.IdleTimeout <= 300*time.Second)
 }
