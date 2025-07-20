@@ -309,7 +309,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         targets: [
           {
             refId: 'A',
-            expr: 'histogram_quantile(0.5, traces_spanmetrics_latency)',
+            expr: 'count(traces_spanmetrics_latency) > 0',
             instant: true,
             format: 'table',
           },
