@@ -576,9 +576,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         grafana_version: config.buildInfo.version,
         hasServiceMapQuery: targets.serviceMap[0].serviceMapQuery ? true : false,
       });
-      if (options.targets[0].serviceMapUseNativeHistograms) {
-        console.log('serviceMapUseNativeHistograms', options.targets[0].serviceMapUseNativeHistograms);
-      }
+
       const { datasourceUid } = this.serviceMap;
 
       let histogramType = undefined;
