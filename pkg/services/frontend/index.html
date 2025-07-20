@@ -46,6 +46,7 @@
 
   <body>
     <div class="femt-dev-frame"></div>
+
     <div id="reactRoot"></div>
 
     <script nonce="[[.Nonce]]">
@@ -61,10 +62,43 @@
         console.error('Failed to load Grafana', ...args);
       };
 
-      window.__grafana_boot_data_promise = new Promise(async (resolve) => {
-        const bootData = await fetch("/bootdata");
+      let loadingDiv;
 
-        const rawBootData = await bootData.json();
+      function setLoading() {
+        if (loadingDiv) {
+          loadingDiv.textContent += ".";
+          return;
+        }
+
+        loadingDiv = document.createElement("div");
+        loadingDiv.classList.add("loading");
+        loadingDiv.innerHTML = "Loading...";
+        document.body.appendChild(loadingDiv);
+      }
+
+      function removeLoading() {
+        if (loadingDiv) {
+          loadingDiv.remove();
+        }
+      }
+
+      async function loadBootData() {
+        while (true) {
+          const bootData = await fetch("/bootdata");
+          const rawBootData = await bootData.json();
+
+          if (bootData.status === 503 && rawBootData.code === 'Loading') {
+            setLoading();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+
+          return rawBootData;
+        }
+      }
+
+      window.__grafana_boot_data_promise = new Promise(async (resolve) => {
+        const rawBootData = await loadBootData();
 
         window.grafanaBootData = {
           _femt: true,
