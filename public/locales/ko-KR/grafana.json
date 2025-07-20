@@ -9730,7 +9730,9 @@
       "aria-label": "도움말"
     },
     "invite-user": {
-      "invite-new-member-button": "새 멤버 초대"
+      "invite-button": "초대",
+      "invite-new-member-button": "새 멤버 초대",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "북마크에 추가",

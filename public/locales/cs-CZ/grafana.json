@@ -9817,7 +9817,9 @@
       "aria-label": "Nápověda"
     },
     "invite-user": {
-      "invite-new-member-button": "Pozvat nového člena"
+      "invite-button": "Pozvat",
+      "invite-new-member-button": "Pozvat nového člena",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Přidat do záložek",
