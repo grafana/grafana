@@ -290,6 +290,44 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.tempoVersion = response.data.version;
   };
 
+  async getNativeHistograms(): Promise<boolean> {
+    if (!this.serviceMap?.datasourceUid) {
+      return false;
+    }
+
+    try {
+      const promRequest: DataQueryRequest<PromQuery> = {
+        requestId: 'native-histogram-check',
+        interval: '1m',
+        intervalMs: 60000,
+        range: {
+          from: dateTime().subtract(1, 'hour'),
+          to: dateTime(),
+          raw: { from: 'now-1h', to: 'now' },
+        },
+        scopedVars: {},
+        targets: [
+          {
+            refId: 'A',
+            expr: 'histogram_quantile(0.5, traces_spanmetrics_latency)',
+            instant: true,
+            format: 'table',
+          },
+        ],
+        timezone: 'browser',
+        app: CoreApp.Unknown,
+        startTime: Date.now(),
+      };
+
+      const response = await lastValueFrom(queryPrometheus(promRequest, this.serviceMap.datasourceUid));
+
+      return response?.data?.length > 0;
+    } catch (error) {
+      console.warn('Failed to check for native histograms:', error);
+      return false;
+    }
+  }
+
   /**
    * Check, for the given feature, whether it is available in Grafana.
    *
@@ -538,8 +576,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         grafana_version: config.buildInfo.version,
         hasServiceMapQuery: targets.serviceMap[0].serviceMapQuery ? true : false,
       });
+      if (options.targets[0].serviceMapUseNativeHistograms) {
+        console.log('serviceMapUseNativeHistograms', options.targets[0].serviceMapUseNativeHistograms);
+      }
+      const { datasourceUid } = this.serviceMap;
 
-      const { datasourceUid, histogramType } = this.serviceMap;
+      let histogramType = undefined;
+      // if the query contains the serviceMapUseNativeHistograms flag,
+      // then use the native histograms
+      if (options.targets[0].serviceMapUseNativeHistograms) {
+        histogramType = 'native';
+      }
+
       const tempoDsUid = this.uid;
       subQueries.push(
         serviceMapQuery(options, datasourceUid, tempoDsUid, histogramType).pipe(
