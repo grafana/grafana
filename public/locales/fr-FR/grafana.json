@@ -9759,7 +9759,9 @@
       "aria-label": "Aide"
     },
     "invite-user": {
-      "invite-new-member-button": "Inviter un nouveau membre"
+      "invite-button": "Inviter",
+      "invite-new-member-button": "Inviter un nouveau membre",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Ajouter aux signets",
