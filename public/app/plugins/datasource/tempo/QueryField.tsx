@@ -55,18 +55,24 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
       });
     }
 
-    const nativeHistograms = await this.checkNativeHistograms();
     // indentify the service map can use native histograms
+    const nativeHistograms = await this.checkNativeHistograms();
+
     this.props.onChange({
       ...this.props.query,
       serviceMapUseNativeHistograms: nativeHistograms,
     });
+    // Migrate to native histograms
     // this will ensure that on navigating to the query option service map from a url,
-    // the service map will be rendered with the native histograms
+    // the service map will be rendered with the native histograms when
     // querytype is serviceMap
     // the serviceMapUseNativeHistograms is undefined
     // and nativeHistograms is true
-    if (this.props.query.queryType === 'serviceMap' && nativeHistograms) {
+    if (
+      this.props.query.queryType === 'serviceMap' &&
+      this.props.query.serviceMapUseNativeHistograms === undefined &&
+      nativeHistograms
+    ) {
       this.props.onRunQuery();
     }
   }
