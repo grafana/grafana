@@ -9730,7 +9730,9 @@
       "aria-label": "Bantuan"
     },
     "invite-user": {
-      "invite-new-member-button": "Undang anggota baru"
+      "invite-button": "Undang",
+      "invite-new-member-button": "Undang anggota baru",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Tambahkan ke Bookmark",

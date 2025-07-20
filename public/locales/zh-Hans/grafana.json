@@ -9730,7 +9730,9 @@
       "aria-label": "帮助"
     },
     "invite-user": {
-      "invite-new-member-button": "邀请新成员"
+      "invite-button": "",
+      "invite-new-member-button": "邀请新成员",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "添加到书签",

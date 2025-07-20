@@ -9817,7 +9817,9 @@
       "aria-label": "Справка"
     },
     "invite-user": {
-      "invite-new-member-button": "Пригласить нового члена"
+      "invite-button": "Пригласить",
+      "invite-new-member-button": "Пригласить нового члена",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Добавить в закладки",

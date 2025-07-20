@@ -9759,7 +9759,9 @@
       "aria-label": "Help"
     },
     "invite-user": {
-      "invite-new-member-button": "Nieuw lid uitnodigen"
+      "invite-button": "Uitnodigen",
+      "invite-new-member-button": "Nieuw lid uitnodigen",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Toevoegen aan bladwijzers",

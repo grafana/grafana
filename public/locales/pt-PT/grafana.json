@@ -9759,7 +9759,9 @@
       "aria-label": "Ajuda"
     },
     "invite-user": {
-      "invite-new-member-button": "Convidar um novo membro"
+      "invite-button": "Convidar",
+      "invite-new-member-button": "Convidar um novo membro",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Adicionar aos Marcadores",
