@@ -1,4 +1,4 @@
-package migration
+package promtypemigration
 
 import (
 	"context"
@@ -29,11 +29,11 @@ type PromTypeMigrationProviderImpl struct {
 
 func ProvidePromTypeMigrationProvider(
 	serverLockService *serverlock.ServerLockService,
-	dataSourcePromTypeMigrationService *PromMigrationService,
+	promMigrationService *PromMigrationService,
 ) *PromTypeMigrationProviderImpl {
 	return &PromTypeMigrationProviderImpl{
 		ServerLockService: serverLockService,
-		services:          []PromTypeMigrationService{dataSourcePromTypeMigrationService},
+		services:          []PromTypeMigrationService{promMigrationService},
 	}
 }
 

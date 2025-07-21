@@ -1,4 +1,4 @@
-package migration
+package promtypemigration
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func ProvidePromMigrationService(
 
 func (s *PromMigrationService) Migrate(ctx context.Context) error {
 	//some how check if migration needs to happen
-	logger.Debug("performing secret migration")
+	logger.Debug("performing prometheus data source type migration")
 	query := &datasources.GetDataSourcesByTypeQuery{
 		Type: datasources.DS_PROMETHEUS,
 	}
@@ -34,7 +34,7 @@ func (s *PromMigrationService) Migrate(ctx context.Context) error {
 	}
 
 	for _, ds := range dsList {
-		if ds.JsonData.Get("azureCredentials") == nil {
+		if _, found := ds.JsonData.CheckGet("azureCredentials"); !found {
 			continue
 		}
 		secureJsonData, err := s.dataSourcesService.DecryptedValues(ctx, ds)
@@ -63,7 +63,7 @@ func (s *PromMigrationService) Migrate(ctx context.Context) error {
 		}
 	}
 
-	logger.Debug("promds migration complete")
+	logger.Debug("prometheus data source type migration complete")
 
 	return nil
 }
