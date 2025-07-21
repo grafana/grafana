@@ -8913,6 +8913,7 @@
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
+      "scroll-to-logline": "Scroll to log line",
       "search": {
         "no-results": "No results to display."
       },
