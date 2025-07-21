@@ -1,3 +1,5 @@
+import { t } from '@grafana/i18n';
+
 import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
 import {
   dateTimeAsIso,
@@ -36,44 +38,128 @@ import {
 
 export const getCategories = (): ValueFormatCategory[] => [
   {
-    name: 'Misc',
+    name: t('grafana-data.valueFormats.categories.getCategories.name-misc', 'Misc'),
     formats: [
-      { name: 'Number', id: 'none', fn: toFixedUnit('') },
-      { name: 'String', id: 'string', fn: stringFormater },
       {
-        name: 'short',
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-number', 'Number'),
+        id: 'none',
+        fn: toFixedUnit(''),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-string', 'String'),
+        id: 'string',
+        fn: stringFormater,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-short', 'short'),
         id: 'short',
         fn: scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']),
       },
-      { name: 'SI short', id: 'sishort', fn: SIPrefix('') },
-      { name: 'Percent (0-100)', id: 'percent', fn: toPercent },
-      { name: 'Percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
-      { name: 'Humidity (%H)', id: 'humidity', fn: toFixedUnit('%H') },
-      { name: 'Decibel', id: 'dB', fn: toFixedUnit('dB') },
-      { name: 'Candela (cd)', id: 'candela', fn: SIPrefix('cd') },
-      { name: 'Hexadecimal (0x)', id: 'hex0x', fn: toHex0x },
-      { name: 'Hexadecimal', id: 'hex', fn: toHex },
-      { name: 'Scientific notation', id: 'sci', fn: sci },
-      { name: 'Locale format', id: 'locale', fn: locale },
-      { name: 'Pixels', id: 'pixel', fn: toFixedUnit('px') },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-sishort', 'SI short'),
+        id: 'sishort',
+        fn: SIPrefix(''),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-percent', 'Percent (0-100)'),
+        id: 'percent',
+        fn: toPercent,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-percentuni', 'Percent (0.0-1.0)'),
+        id: 'percentunit',
+        fn: toPercentUnit,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-humidity', 'Humidity (%H)'),
+        id: 'humidity',
+        fn: toFixedUnit('%H'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-decibel', 'Decibel'),
+        id: 'dB',
+        fn: toFixedUnit('dB'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-candela', 'Candela (cd)'),
+        id: 'candela',
+        fn: SIPrefix('cd'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-hex0x', 'Hexadecimal (0x)'),
+        id: 'hex0x',
+        fn: toHex0x,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-hex', 'Hexadecimal'),
+        id: 'hex',
+        fn: toHex,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-scientific', 'Scientific notation'),
+        id: 'sci',
+        fn: sci,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-locale', 'Locale format'),
+        id: 'locale',
+        fn: locale,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-pixel', 'Pixels'),
+        id: 'pixel',
+        fn: toFixedUnit('px'),
+      },
     ],
   },
   {
-    name: 'Acceleration',
+    name: t('grafana-data.valueFormats.categories.getCategories.name-acceleration', 'Acceleration'),
     formats: [
-      { name: 'Meters/sec²', id: 'accMS2', fn: toFixedUnit('m/sec²') },
-      { name: 'Feet/sec²', id: 'accFS2', fn: toFixedUnit('f/sec²') },
-      { name: 'G unit', id: 'accG', fn: toFixedUnit('g') },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.meters-sec', 'Meters/sec²'),
+        id: 'accMS2',
+        fn: toFixedUnit('m/sec²'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.feet-sec', 'Feet/sec²'),
+        id: 'accFS2',
+        fn: toFixedUnit('f/sec²'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.g-unit', 'G unit'),
+        id: 'accG',
+        fn: toFixedUnit('g'),
+      },
     ],
   },
   {
-    name: 'Angle',
+    name: t('grafana-data.valueFormats.categories.getCategories.name-angle', 'Angle'),
     formats: [
-      { name: 'Degrees (°)', id: 'degree', fn: toFixedUnit('°') },
-      { name: 'Radians', id: 'radian', fn: toFixedUnit('rad') },
-      { name: 'Gradian', id: 'grad', fn: toFixedUnit('grad') },
-      { name: 'Arc Minutes', id: 'arcmin', fn: toFixedUnit('arcmin') },
-      { name: 'Arc Seconds', id: 'arcsec', fn: toFixedUnit('arcsec') },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-degrees', 'Degrees (°)'),
+        id: 'degree',
+        fn: toFixedUnit('°'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-radians', 'Radians'),
+        id: 'radian',
+        fn: toFixedUnit('rad'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-gradian', 'Gradian'),
+        id: 'grad',
+        fn: toFixedUnit('grad'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-arc-minutes', 'Arc Minutes'),
+        id: 'arcmin',
+        fn: toFixedUnit('arcmin'),
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.getCategories.formats.name-arc-seconds', 'Arc Seconds'),
+        id: 'arcsec',
+        fn: toFixedUnit('arcsec'),
+      },
     ],
   },
   {
