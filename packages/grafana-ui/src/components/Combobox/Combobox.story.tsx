@@ -206,6 +206,7 @@ export const AsyncOptionsWithLabels: Story = {
 
 function loadOptionsOnlyValues(inputValue: string) {
   loadOptionsAction(inputValue);
+
   return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`).then((options) =>
     options.map((opt) => ({ value: opt.label! }))
   );
@@ -216,6 +217,47 @@ export const AsyncOptionsWithOnlyValues: Story = {
   args: {
     options: loadOptionsOnlyValues,
     value: { value: 'Option 69' },
+    placeholder: 'Select an option',
+  },
+  render: (args: PropsAndCustomArgs) => {
+    const [dynamicArgs, setArgs] = useArgs();
+
+    return (
+      <Field
+        label='Async options fn returns objects like { value: "69" }'
+        description="Search for 'break' to see an error"
+      >
+        <Combobox
+          {...args}
+          {...dynamicArgs}
+          onChange={(value: ComboboxOption | null) => {
+            onChangeAction(value);
+            setArgs({ value });
+          }}
+        />
+      </Field>
+    );
+  },
+};
+
+function loadOptionsEmptyInitial(inputValue: string) {
+  loadOptionsAction(inputValue);
+
+  if (inputValue === '') {
+    // Return an empty array for the initial load
+    return Promise.resolve([]);
+  }
+
+  return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`).then((options) =>
+    options.map((opt) => ({ value: opt.label! }))
+  );
+}
+
+export const AsyncOptionsWithEmptyInitialValues: Story = {
+  name: 'Async - empty initial value',
+  args: {
+    options: loadOptionsEmptyInitial,
+    value: undefined,
     placeholder: 'Select an option',
   },
   render: (args: PropsAndCustomArgs) => {
