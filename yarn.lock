@@ -3760,7 +3760,7 @@ __metadata:
     "@types/chance": "npm:^1.1.7"
     "@types/common-tags": "npm:^1.8.0"
     "@types/d3": "npm:7.4.3"
-    "@types/hoist-non-react-statics": "npm:3.3.6"
+    "@types/hoist-non-react-statics": "npm:3.3.7"
     "@types/is-hotkey": "npm:0.1.10"
     "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:3.5.32"
@@ -9491,13 +9491,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/hoist-non-react-statics@npm:3.3.6, @types/hoist-non-react-statics@npm:^3.3.1":
-  version: 3.3.6
-  resolution: "@types/hoist-non-react-statics@npm:3.3.6"
+"@types/hoist-non-react-statics@npm:3.3.7, @types/hoist-non-react-statics@npm:^3.3.1":
+  version: 3.3.7
+  resolution: "@types/hoist-non-react-statics@npm:3.3.7"
   dependencies:
-    "@types/react": "npm:*"
     hoist-non-react-statics: "npm:^3.3.0"
-  checksum: 10/f03e43bd081876c49584ffa0eb690d69991f258203efca44dcc30efdda49a50653ff06402917d1edc9cb7e2adebbe9e2d1d0e739bc99c1b5372103b1cc534e47
+  peerDependencies:
+    "@types/react": "*"
+  checksum: 10/13f610572c073970b3f43cc446396974fed786fee6eac2d6fd4b0ca5c985f13e79d4a0de58af4e5b4c68470d808567c3a14108d98edb7d526d4d46c8ec851ed1
   languageName: node
   linkType: hard
 
