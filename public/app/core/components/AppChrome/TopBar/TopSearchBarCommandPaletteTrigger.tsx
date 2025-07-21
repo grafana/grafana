@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
@@ -19,7 +19,7 @@ export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
   }));
 
   const isLargeScreen = useMediaQueryMinWidth('lg');
-  const { t } = useTranslate();
+
   const onOpenSearch = () => {
     kbar.toggle();
   };
@@ -48,7 +48,7 @@ interface PretendTextInputProps {
 function PretendTextInput({ onClick }: PretendTextInputProps) {
   const styles = useStyles2(getStyles);
   const modKey = useMemo(() => getModKey(), []);
-  const { t } = useTranslate();
+
   // We want the desktop command palette trigger to look like a search box,
   // but it actually behaves like a button - you active it and it performs an
   // action. You don't actually type into it.

@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import TimegrainConverter from '../../time_grain_converter';
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 
@@ -16,7 +16,6 @@ interface TimeGrainFieldProps extends AzureQueryEditorFieldProps {
 }
 
 const TimeGrainField = ({ query, timeGrainOptions, variableOptionGroup, onQueryChange }: TimeGrainFieldProps) => {
-  const { t } = useTranslate();
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {

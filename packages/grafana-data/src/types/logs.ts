@@ -99,6 +99,7 @@ export interface LogRowModel {
   uid: string;
   uniqueLabels?: Labels;
   datasourceType?: string;
+  datasourceUid?: string;
 }
 
 export interface LogsModel {

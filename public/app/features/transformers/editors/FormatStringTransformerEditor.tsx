@@ -13,29 +13,36 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { FormatStringOutput, FormatStringTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: {
-    width: 30,
-    filter: (f) => f.type === FieldType.string,
-    placeholderText: 'Select text field',
-    noFieldsMessage: 'No text fields found',
-  },
-  name: '',
-  id: '',
-  editor: () => null,
-};
+import darkImage from '../images/dark/formatString.svg';
+import lightImage from '../images/light/formatString.svg';
 
 function FormatStringTransfomerEditor({
   input,
   options,
   onChange,
 }: TransformerUIProps<FormatStringTransformerOptions>) {
-  const { t } = useTranslate();
+  const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+    settings: {
+      width: 30,
+      filter: (f) => f.type === FieldType.string,
+      placeholderText: t(
+        'transformers.format-string-transfomer-editor.field-name-picker-settings.placeholderText.select-text-field',
+        'Select text field'
+      ),
+      noFieldsMessage: t(
+        'transformers.format-string-transfomer-editor.field-name-picker-settings.noFieldsMessage.no-text-fields-found',
+        'No text fields found'
+      ),
+    },
+    name: '',
+    id: '',
+    editor: () => null,
+  };
 
   const onSelectField = useCallback(
     (value: string | undefined) => {
@@ -115,12 +122,18 @@ function FormatStringTransfomerEditor({
   );
 }
 
-export const formatStringTransformerRegistryItem: TransformerRegistryItem<FormatStringTransformerOptions> = {
-  id: DataTransformerID.formatString,
-  editor: FormatStringTransfomerEditor,
-  transformation: standardTransformers.formatStringTransformer,
-  name: standardTransformers.formatStringTransformer.name,
-  state: PluginState.beta,
-  description: standardTransformers.formatStringTransformer.description,
-  categories: new Set([TransformerCategory.Reformat]),
-};
+export const getFormatStringTransformerRegistryItem: () => TransformerRegistryItem<FormatStringTransformerOptions> =
+  () => ({
+    id: DataTransformerID.formatString,
+    editor: FormatStringTransfomerEditor,
+    transformation: standardTransformers.formatStringTransformer,
+    name: t('transformers.format-string-transformer-editor.name.format-string', 'Format string'),
+    state: PluginState.beta,
+    description: t(
+      'transformers.format-string-transformer-editor.description.manipulate-string-fields-formatting',
+      'Manipulate string fields formatting.'
+    ),
+    categories: new Set([TransformerCategory.Reformat]),
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

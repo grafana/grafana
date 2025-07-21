@@ -376,8 +376,8 @@ export class TemplateSrv implements BaseTemplateSrv {
   private _replaceWithVariableRegex(text: string, format: string | Function | undefined, replace: ReplaceFunction) {
     this.regex.lastIndex = 0;
 
-    return text.replace(this.regex, (match, var1, var2, var3, fmt2, var4, fieldPath, fmt3) => {
-      const variableName = var1 || var2 || var3 || var4;
+    return text.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+      const variableName = var1 || var2 || var3;
       const fmt = fmt2 || fmt3 || format;
       return replace(match, variableName, fieldPath, fmt);
     });

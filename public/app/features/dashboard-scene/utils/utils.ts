@@ -1,5 +1,5 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
@@ -13,6 +13,8 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { Dashboard, Panel, RowPanel } from '@grafana/schema';
+import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -30,6 +32,11 @@ import { containsCloneKey, getLastKeyFromClone, getOriginalKey, isInCloneChain }
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
+
+const V1_PANEL_PROPERTIES = {
+  LIBRARY_PANEL: 'libraryPanel',
+  COLLAPSED: 'collapsed',
+} as const;
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -468,3 +475,43 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
+
+// @returns true if the panel is a valid library panel reference
+// a valid library panel reference is a panel with this
+// property: `libraryPanel: {name: string, uid: string}`
+
+export function isValidLibraryPanelRef(panel: Panel): boolean {
+  return (
+    (V1_PANEL_PROPERTIES.LIBRARY_PANEL in panel &&
+      panel.libraryPanel &&
+      Boolean(panel.libraryPanel?.uid && panel.libraryPanel?.name)) ||
+    false
+  );
+}
+
+/**
+ * Checks if a V1 dashboard contains library panels
+ * @returns true if the dashboard contains library panels
+ */
+export function hasLibraryPanelsInV1Dashboard(dashboard: Dashboard | undefined): boolean {
+  if (!dashboard?.panels) {
+    return false;
+  }
+
+  return dashboard.panels.some((panel: Panel | RowPanel) => {
+    if (isValidLibraryPanelRef(panel)) {
+      return true;
+    }
+    // Check if this is a collapsed row containing library panels
+    const isCollapsedRow =
+      V1_PANEL_PROPERTIES.COLLAPSED in panel && panel.collapsed && 'panels' in panel && panel.panels;
+
+    if (!isCollapsedRow) {
+      return false;
+    }
+
+    return panel.panels.some(isValidLibraryPanelRef);
+  });
+}
+
+export const dashboardLog = createLogger('Dashboard');

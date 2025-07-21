@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';

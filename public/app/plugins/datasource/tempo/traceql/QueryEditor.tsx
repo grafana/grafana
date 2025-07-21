@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { defaults } from 'lodash';
 import { useState } from 'react';
 
-import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, InlineLabel, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, InlineLabel, useStyles2 } from '@grafana/ui';
 
 import { TempoDatasource } from '../datasource';
 import { defaultQuery, MyDataSourceOptions, TempoQuery } from '../types';
@@ -28,8 +28,26 @@ export function QueryEditor(props: Props) {
     return genQuery === query.query || genQuery === '{}';
   });
 
+  const alertingWarning = (
+    <Alert title="Tempo metrics is an experimental feature" severity="warning">
+      Please note that TraceQL metrics is an experimental feature and should not be used in production. Read more about
+      it in{' '}
+      <a
+        className={css({ textDecoration: 'underline' })}
+        href="https://grafana.com/docs/tempo/latest/operations/traceql-metrics/"
+        target="_blank"
+      >
+        documentation
+        <Icon name="external-link-alt" />
+      </a>
+      .
+    </Alert>
+  );
+  const inAlerting = props.app === CoreApp.UnifiedAlerting || props.app === CoreApp.CloudAlerting;
+
   return (
     <>
+      {inAlerting && alertingWarning}
       <InlineLabel>
         Build complex queries using TraceQL to select a list of traces.{' '}
         <a rel="noreferrer" target="_blank" href="https://grafana.com/docs/tempo/latest/traceql/">
@@ -70,6 +88,7 @@ export function QueryEditor(props: Props) {
         onChange={props.onChange}
         datasource={props.datasource}
         onRunQuery={props.onRunQuery}
+        range={props.range}
       />
       <div className={styles.optionsContainer}>
         <TempoQueryBuilderOptions

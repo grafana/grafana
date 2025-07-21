@@ -8,7 +8,7 @@ import {
   isUnsignedPluginSignature,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { DataSourcePickerProps, DataSourcePickerState, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
@@ -21,7 +21,6 @@ export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProp
 }
 
 export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) => {
-  const { t } = useTranslate();
   const dataSourceSrv = getDataSourceSrv();
 
   const [state, setState] = useState<DataSourcePickerState>();
@@ -178,7 +177,10 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
         openMenuOnFocus={openMenuOnFocus}
         maxMenuHeight={500}
         placeholder={placeholder}
-        noOptionsMessage="No datasources found"
+        noOptionsMessage={t(
+          'alerting.multiple-data-source-picker.noOptionsMessage-no-datasources-found',
+          'No datasources found'
+        )}
         value={value ?? []}
         invalid={Boolean(state?.error) || Boolean(props.invalid)}
         getOptionLabel={(o) => {

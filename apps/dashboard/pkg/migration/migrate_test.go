@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
 const INPUT_DIR = "testdata/input"
@@ -21,6 +21,9 @@ const OUTPUT_DIR = "testdata/output"
 func TestMigrate(t *testing.T) {
 	files, err := os.ReadDir(INPUT_DIR)
 	require.NoError(t, err)
+
+	// Use the same datasource provider as the frontend test to ensure consistency
+	migration.Initialize(testutil.GetTestProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
 		err := migration.Migrate(map[string]interface{}{
@@ -36,7 +39,13 @@ func TestMigrate(t *testing.T) {
 			continue
 		}
 
-		inputDash, inputVersion, name := load(t, filepath.Join(INPUT_DIR, f.Name()))
+		// Validate filename format
+		if !strings.HasPrefix(f.Name(), "v") || !strings.HasSuffix(f.Name(), ".json") {
+			t.Fatalf("input filename must use v{N}.{name}.json format, got: %s", f.Name())
+		}
+
+		inputDash := loadDashboard(t, filepath.Join(INPUT_DIR, f.Name()))
+		inputVersion := getSchemaVersion(t, inputDash)
 
 		t.Run("input check "+f.Name(), func(t *testing.T) {
 			// use input version as the target version to ensure there are no changes
@@ -50,20 +59,18 @@ func TestMigrate(t *testing.T) {
 			require.JSONEq(t, string(expectedDash), string(outBytes), "%s input check did not match", f.Name())
 		})
 
-		for targetVersion := inputVersion + 1; targetVersion <= schemaversion.LATEST_VERSION; targetVersion++ {
-			testName := fmt.Sprintf("%s v%d to v%d", name, inputVersion, targetVersion)
-			t.Run(testName, func(t *testing.T) {
-				testMigration(t, inputDash, name, inputVersion, targetVersion)
-			})
-		}
+		testName := fmt.Sprintf("%s v%d to v%d", f.Name(), inputVersion, schemaversion.LATEST_VERSION)
+		t.Run(testName, func(t *testing.T) {
+			testMigration(t, inputDash, f.Name(), inputVersion, schemaversion.LATEST_VERSION)
+		})
 	}
 }
 
-func testMigration(t *testing.T, dash map[string]interface{}, name string, inputVersion, targetVersion int) {
+func testMigration(t *testing.T, dash map[string]interface{}, inputFileName string, inputVersion, targetVersion int) {
 	t.Helper()
 	require.NoError(t, migration.Migrate(dash, targetVersion), "%d migration failed", targetVersion)
 
-	outPath := filepath.Join(OUTPUT_DIR, fmt.Sprintf("%d.%s.%d.json", inputVersion, name, targetVersion))
+	outPath := filepath.Join(OUTPUT_DIR, inputFileName)
 	outBytes, err := json.MarshalIndent(dash, "", "  ")
 	require.NoError(t, err, "failed to marshal migrated dashboard")
 
@@ -80,23 +87,30 @@ func testMigration(t *testing.T, dash map[string]interface{}, name string, input
 	require.JSONEq(t, string(existingBytes), string(outBytes), "%s did not match", outPath)
 }
 
-func parseInputName(t *testing.T, name string) (int, string) {
+func getSchemaVersion(t *testing.T, dash map[string]interface{}) int {
 	t.Helper()
-	parts := strings.SplitN(filepath.Base(name), ".", 3)
-	if len(parts) < 3 {
-		t.Fatalf("invalid input filename: %s", name)
+	version, ok := dash["schemaVersion"]
+	require.True(t, ok, "dashboard missing schemaVersion")
+
+	switch v := version.(type) {
+	case int:
+		return v
+	case float64:
+		return int(v)
+	default:
+		t.Fatalf("invalid schemaVersion type: %T", version)
+		return 0
 	}
-	iv, err := strconv.Atoi(parts[0])
-	require.NoError(t, err, "failed to parse input version")
-	return iv, parts[1]
 }
 
-func load(t *testing.T, path string) (dash map[string]interface{}, inputVersion int, name string) {
+func loadDashboard(t *testing.T, path string) map[string]interface{} {
+	t.Helper()
 	// We can ignore gosec G304 here since it's a test
 	// nolint:gosec
 	inputBytes, err := os.ReadFile(path)
-	require.NoError(t, err, "failed to read embedded input file")
+	require.NoError(t, err, "failed to read input file")
+
+	var dash map[string]interface{}
 	require.NoError(t, json.Unmarshal(inputBytes, &dash), "failed to unmarshal dashboard JSON")
-	inputVersion, name = parseInputName(t, path)
-	return dash, inputVersion, name
+	return dash
 }

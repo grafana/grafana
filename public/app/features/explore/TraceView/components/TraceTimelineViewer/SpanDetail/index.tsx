@@ -15,6 +15,7 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
+import { useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
@@ -25,18 +26,22 @@ import {
   TimeRange,
   TraceKeyValuePair,
   TraceLog,
+  PluginExtensionResourceAttributesContext,
+  PluginExtensionPoints,
+  IconName,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { Icon, TextArea, useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc, TNil } from '../../types';
-import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { SpanLinkFunc } from '../../types/links';
+import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -46,6 +51,44 @@ import AccordianText from './AccordianText';
 import DetailState from './DetailState';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
+
+const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceType: string, datasourceUid: string) => {
+  // Stable context for useMemo inside usePluginLinks
+  const context: PluginExtensionResourceAttributesContext = useMemo(() => {
+    const attributes = (process.tags ?? []).reduce<Record<string, string[]>>((acc, tag) => {
+      if (acc[tag.key]) {
+        acc[tag.key].push(tag.value);
+      } else {
+        acc[tag.key] = [tag.value];
+      }
+      return acc;
+    }, {});
+
+    return {
+      attributes,
+      datasource: {
+        type: datasourceType,
+        uid: datasourceUid,
+      },
+    };
+  }, [process.tags, datasourceType, datasourceUid]);
+
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
+    limitPerPlugin: 10,
+    context,
+  });
+
+  const resourceLinksGetter = useCallback(
+    (pairs: TraceKeyValuePair[], index: number) => {
+      const { key } = pairs[index] ?? {};
+      return links.filter((link) => link.category === key);
+    },
+    [links]
+  );
+
+  return resourceLinksGetter;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -117,9 +160,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'AccordianWarningsLabel',
       color: autoColor(theme, '#d36c08'),
     }),
-    AccordianKeyValuesItem: css({
-      marginBottom: theme.spacing(0.5),
-    }),
     Textarea: css({
       wordBreak: 'break-all',
       whiteSpace: 'pre',
@@ -131,6 +171,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexWrap: 'wrap',
       gap: '10px',
+      marginBottom: theme.spacing(2),
     }),
   };
 };
@@ -144,8 +185,8 @@ export type TraceFlameGraphs = {
 };
 
 export type SpanDetailProps = {
+  color: string;
   detailState: DetailState;
-  linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
@@ -164,6 +205,7 @@ export type SpanDetailProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
+  datasourceUid: string;
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
@@ -173,8 +215,8 @@ export type SpanDetailProps = {
 
 export default function SpanDetail(props: SpanDetailProps) {
   const {
+    color,
     detailState,
-    linksGetter,
     logItemToggle,
     logsToggle,
     processToggle,
@@ -190,6 +232,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     createSpanLink,
     createFocusSpanLink,
     datasourceType,
+    datasourceUid,
     traceFlameGraphs,
     setTraceFlameGraphs,
     traceToProfilesOptions,
@@ -219,8 +262,11 @@ export default function SpanDetail(props: SpanDetailProps) {
     references,
     stackTraces,
   } = span;
-  const { t } = useTranslate();
+
   const { timeZone } = props;
+  const durationIcon: IconName = 'hourglass';
+  const startIcon: IconName = 'clock-nine';
+
   let overviewItems = [
     {
       key: 'svc',
@@ -231,11 +277,13 @@ export default function SpanDetail(props: SpanDetailProps) {
       key: 'duration',
       label: t('explore.span-detail.overview-items.label.duration', 'Duration:'),
       value: formatDuration(duration),
+      icon: durationIcon,
     },
     {
       key: 'start',
       label: t('explore.span-detail.overview-items.label.start-time', 'Start Time:'),
       value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
+      icon: startIcon,
     },
     ...(span.childSpanCount > 0
       ? [
@@ -302,6 +350,8 @@ export default function SpanDetail(props: SpanDetailProps) {
   });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
+  const resourceLinksGetter = useResourceAttributesExtensionLinks(process, datasourceType, datasourceUid);
+
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
@@ -309,26 +359,23 @@ export default function SpanDetail(props: SpanDetailProps) {
           {operationName}
         </h2>
         <div className={styles.listWrapper}>
-          <LabeledList className={styles.list} divider={true} items={overviewItems} />
+          <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
         </div>
       </div>
       <div className={styles.linkList}>{linksComponent}</div>
-      <Divider spacing={1} />
       <div>
         <div>
           <AccordianKeyValues
             data={tags}
             label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
-            linksGetter={linksGetter}
             isOpen={isTagsOpen}
             onToggle={() => tagsToggle(spanID)}
           />
           {process.tags && (
             <AccordianKeyValues
-              className={styles.AccordianKeyValuesItem}
               data={process.tags}
               label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
-              linksGetter={linksGetter}
+              linksGetter={resourceLinksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}
             />
@@ -336,7 +383,6 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
         {logs && logs.length > 0 && (
           <AccordianLogs
-            linksGetter={linksGetter}
             logs={logs}
             isOpen={logsState.isOpen}
             openedItems={logsState.openedItems}

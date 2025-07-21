@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
@@ -14,6 +14,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
+import { StaticOptionsOrderType, StaticOptionsType } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
 import { VariableTextAreaField } from '../components/VariableTextAreaField';
@@ -27,8 +28,19 @@ interface QueryVariableEditorProps {
 type VariableQueryType = QueryVariable['state']['query'];
 
 export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
-  const { datasource, regex, sort, refresh, isMulti, includeAll, allValue, query, allowCustomValue } =
-    variable.useState();
+  const {
+    datasource,
+    regex,
+    sort,
+    refresh,
+    isMulti,
+    includeAll,
+    allValue,
+    query,
+    allowCustomValue,
+    staticOptions,
+    staticOptionsOrder,
+  } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
@@ -67,6 +79,16 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     onRunQuery();
   };
 
+  const onStaticOptionsChange = (staticOptions: StaticOptionsType) => {
+    onRunQuery();
+    variable.setState({ staticOptions });
+  };
+
+  const onStaticOptionsOrderChange = (staticOptionsOrder: StaticOptionsOrderType) => {
+    onRunQuery();
+    variable.setState({ staticOptionsOrder });
+  };
+
   return (
     <QueryVariableEditorForm
       datasource={datasource ?? undefined}
@@ -89,6 +111,10 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onAllValueChange={onAllValueChange}
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      staticOptions={staticOptions}
+      staticOptionsOrder={staticOptionsOrder}
+      onStaticOptionsChange={onStaticOptionsChange}
+      onStaticOptionsOrderChange={onStaticOptionsOrderChange}
     />
   );
 }
@@ -108,7 +134,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
 export function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { t } = useTranslate();
+
   const onRunQuery = () => {
     variable.refreshOptions();
   };
@@ -174,7 +200,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
-  const { t } = useTranslate();
+
   const { datasource: selectedDatasource, VariableQueryEditor } = dsConfig ?? {};
 
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
@@ -227,7 +253,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
       <VariableTextAreaField
         defaultValue={regex ?? ''}
-        name="Regex"
+        name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
         description={
           <div>
             <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
@@ -246,7 +272,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
             </Trans>
           </div>
         }
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
         onBlur={onRegExChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}

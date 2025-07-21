@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
@@ -21,7 +21,7 @@ type DiffViewProps = {
 export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLatest }: DiffViewProps) => {
   const diff = jsonDiff(diffData.lhs, diffData.rhs);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <Stack direction="column" gap={1}>
       <Stack justifyContent="space-between" alignItems="center">

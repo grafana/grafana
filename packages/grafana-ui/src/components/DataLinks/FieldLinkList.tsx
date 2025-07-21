@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
 import { DataLinkButton } from './DataLinkButton';

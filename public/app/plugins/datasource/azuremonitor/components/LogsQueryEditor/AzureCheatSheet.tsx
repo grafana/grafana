@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -17,14 +17,8 @@ import {
 } from '@grafana/ui';
 
 import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
-import {
-  AzureMonitorQuery,
-  AzureQueryType,
-  Category,
-  CheatsheetQueries,
-  CheatsheetQuery,
-  DropdownCategories,
-} from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
+import { Category, CheatsheetQueries, CheatsheetQuery, DropdownCategories } from '../../types/types';
 
 import { RawQuery } from './RawQuery';
 import tokenizer from './syntax';
@@ -42,7 +36,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchInputValue, setSearchInputValue] = useState('');
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const lang = { grammar: tokenizer, name: 'kql' };
   const dropdownMenu = useMemo(() => {
     if (cheatsheetQueries) {
@@ -161,7 +155,10 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                 backspaceRemovesValue={true}
                 placeholder={t('components.azure-cheat-sheet.placeholder-all-categories', 'All categories')}
                 isClearable={true}
-                noOptionsMessage="Unable to list all categories"
+                noOptionsMessage={t(
+                  'components.azure-cheat-sheet.noOptionsMessage-unable-to-list-categories',
+                  'Unable to list all categories'
+                )}
                 formatCreateLabel={(input: string) => `Category: ${input}`}
                 isSearchable={true}
                 isMulti={true}

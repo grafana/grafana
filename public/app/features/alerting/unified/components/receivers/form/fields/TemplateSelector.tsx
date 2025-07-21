@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   Drawer,
@@ -28,7 +28,7 @@ import {
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/types';
+import { NotificationChannelOption } from 'app/types/alerting';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
@@ -44,7 +44,7 @@ interface TemplatesPickerProps {
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
   const [showTemplates, setShowTemplates] = useState(false);
-  const { t } = useTranslate();
+
   const onClick = () => {
     setShowTemplates(true);
     trackEditInputWithTemplate();
@@ -123,7 +123,6 @@ interface TemplateSelectorProps {
 }
 
 function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const valueInFormIsCustom = Boolean(valueInForm) && !matchesOnlyOneTemplate(valueInForm);
   const [template, setTemplate] = useState<SelectableValue<Template> | undefined>(undefined);
@@ -143,7 +142,10 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
         'alerting.template-selector.template-options.label.select-notification-template',
         'Select notification template'
       ),
-      ariaLabel: 'Select notification template',
+      ariaLabel: t(
+        'alerting.template-selector.template-options.ariaLabel.select-notification-template',
+        'Select notification template'
+      ),
       value: 'Existing',
       description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
     },
@@ -292,7 +294,6 @@ function OptionCustomfield({
   onCustomTemplateChange(customInput: string): void;
   initialValue: string;
 }) {
-  const { t } = useTranslate();
   const id = `custom-template-${option.label}`;
   return (
     <Stack direction="column" gap={1}>

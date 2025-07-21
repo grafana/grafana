@@ -4,7 +4,7 @@ import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { FieldSet, Button, ButtonGroup, Field, Input, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
@@ -17,7 +17,7 @@ import {
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
@@ -40,7 +40,7 @@ const EmailList = ({
   const styles = useStyles2(getStyles);
   const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteRecipientMutation();
   const [reshareAccess, { isLoading: isReshareLoading }] = useReshareAccessToRecipientMutation();
-  const { t } = useTranslate();
+
   const isLoading = isDeleteLoading || isReshareLoading;
 
   const onDeleteEmail = (recipientUid: string, recipientEmail: string) => {
@@ -102,7 +102,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboardUid);
   const [updateShareType] = useUpdatePublicDashboardAccessMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
-  const { t } = useTranslate();
+
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   const {
@@ -190,7 +190,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
               <div className={styles.emailContainer}>
                 <Input
                   className={styles.emailInput}
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="me@example.com"
                   autoCapitalize="none"
                   {...register('email', {

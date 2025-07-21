@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { Trans, t } from '@grafana/i18n';
 import { config, featureEnabled } from '@grafana/runtime';
-import { HorizontalGroup, LinkButton, useStyles2, Alert, TextLink } from '@grafana/ui';
+import { LinkButton, useStyles2, Alert, TextLink, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getExternalManageLink } from '../../helpers';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
@@ -22,7 +23,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const hasPermission = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
-  const { t } = useTranslate();
+
   const isCompatible = Boolean(latestCompatibleVersion);
 
   if (plugin.type === PluginType.renderer) {
@@ -38,14 +39,26 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
     );
   }
 
+  const isOpenSource = config.buildInfo.edition === GrafanaEdition.OpenSource;
+  const isEnterprise = config.buildInfo.edition === GrafanaEdition.Enterprise;
+
   if (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) {
+    const severity = isOpenSource ? 'info' : 'warning';
+
     return (
-      <Alert severity="warning" title="" className={styles.alert}>
-        <HorizontalGroup height="auto" align="center">
+      <Alert severity={severity} title="" className={styles.alert}>
+        <Stack direction="row" alignItems="center">
           <span>
-            <Trans i18nKey="plugins.install-controls-warning.no-valid-grafana-enterprise-license-detected">
-              No valid Grafana Enterprise license detected.
-            </Trans>
+            {isOpenSource && (
+              <Trans i18nKey="plugins.install-controls-warning.enterprise-plugin-info">
+                This plugin is only available in Grafana Cloud and Grafana Enterprise.
+              </Trans>
+            )}
+            {isEnterprise && (
+              <Trans i18nKey="plugins.install-controls-warning.no-valid-grafana-enterprise-license-detected">
+                No valid Grafana Enterprise license detected.
+              </Trans>
+            )}
           </span>
           <LinkButton
             href={`${getExternalManageLink(plugin.id)}?utm_source=grafana_catalog_learn_more`}
@@ -57,7 +70,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
           >
             <Trans i18nKey="plugins.install-controls-warning.learn-more">Learn more</Trans>
           </LinkButton>
-        </HorizontalGroup>
+        </Stack>
       </Alert>
     );
   }

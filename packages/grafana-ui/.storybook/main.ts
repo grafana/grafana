@@ -2,13 +2,22 @@ import path, { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
 import { copyAssetsSync } from './copyAssets';
 
-// Internal stories should only be visible during development
-const storyGlob =
-  process.env.NODE_ENV === 'production'
-    ? '../src/components/**/!(*.internal).story.tsx'
-    : '../src/components/**/*.story.tsx';
+const coreComponentsGlobs: StorybookConfig['stories'] = ['../src/Intro.mdx', '../src/**/*.story.tsx'];
 
-const stories = ['../src/Intro.mdx', storyGlob];
+const alertingComponentsGlobs: StorybookConfig['stories'] = [
+  {
+    titlePrefix: 'Alerting',
+    directory: '../../grafana-alerting/src',
+    files: 'Intro.mdx',
+  },
+  {
+    titlePrefix: 'Alerting',
+    directory: '../../grafana-alerting/src',
+    files: process.env.NODE_ENV === 'production' ? '**/!(*.internal).story.tsx' : '**/*.story.tsx',
+  },
+];
+
+const stories = [...coreComponentsGlobs, ...alertingComponentsGlobs];
 
 // Copy the assets required by storybook before starting the storybook server.
 copyAssetsSync();

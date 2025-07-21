@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { ActionModel, ActionVariableInput } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { FieldSet } from '../Forms/FieldSet';

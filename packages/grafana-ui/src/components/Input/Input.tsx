@@ -4,7 +4,8 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -167,8 +168,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:not(:first-child):last-child': {
         '> input': {
           borderLeft: 'none',
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
 
@@ -176,8 +177,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:first-child:not(:last-child)': {
         '> input': {
           borderRight: 'none',
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
         },
       },
 
@@ -185,10 +186,10 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       '&:not(:first-child):not(:last-child)': {
         '> input': {
           borderRight: 'none',
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
 
@@ -237,20 +238,20 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       position: 'relative',
 
       '&:first-child': {
-        borderTopRightRadius: 0,
-        borderBottomRightRadius: 0,
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
         '> :last-child': {
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
+          borderTopRightRadius: 'unset',
+          borderBottomRightRadius: 'unset',
         },
       },
 
       '&:last-child': {
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
         '> :first-child': {
-          borderTopLeftRadius: 0,
-          borderBottomLeftRadius: 0,
+          borderTopLeftRadius: 'unset',
+          borderBottomLeftRadius: 'unset',
         },
       },
       '> *:focus': {
@@ -265,8 +266,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(0.5),
         borderRight: 'none',
-        borderTopRightRadius: 0,
-        borderBottomRightRadius: 0,
+        borderTopRightRadius: 'unset',
+        borderBottomRightRadius: 'unset',
       })
     ),
     suffix: cx(
@@ -276,8 +277,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         paddingLeft: theme.spacing(1),
         paddingRight: theme.spacing(1),
         borderLeft: 'none',
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderTopLeftRadius: 'unset',
+        borderBottomLeftRadius: 'unset',
         right: 0,
       })
     ),

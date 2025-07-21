@@ -200,7 +200,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "prometheus_imported_rules",
 				Help:      "The number of rules imported from a Prometheus-compatible source.",
 			},
-			[]string{"org"},
+			[]string{"org", "state"},
 		),
 	}
 }

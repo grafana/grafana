@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Dropdown, Icon, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
@@ -26,7 +26,7 @@ export const EvaluationGroup = ({
   children,
 }: EvaluationGroupProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const isProvisioned = Boolean(provenance);
 
   return (

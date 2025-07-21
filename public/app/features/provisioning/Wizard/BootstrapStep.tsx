@@ -1,21 +1,27 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
+import {
+  RepositoryViewList,
+  useGetRepositoryFilesQuery,
+  useGetResourceStatsQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
+import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
+import { useStepStatus } from './StepStatusContext';
 import { getResourceStats, useModeOptions } from './actions';
-import { StepStatusInfo, WizardFormData } from './types';
+import { WizardFormData } from './types';
 
 export interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
-  onStepStatusUpdate: (info: StepStatusInfo) => void;
   settingsData?: RepositoryViewList;
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepStatusUpdate }: Props) {
+export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props) {
+  const { setStepStatusInfo } = useStepStatus();
   const {
     register,
     control,
@@ -36,25 +42,17 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
   );
   const requiresMigration = settingsData?.legacyStorage || resourceCount > 0;
   const isLoading = resourceStats.isLoading || filesQuery.isLoading;
-  const { t } = useTranslate();
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
     const repository = getValues('repository');
-    switch (repository.type) {
-      case 'github':
-        const name = repository.url ?? 'github';
-        setValue('repository.title', name.replace('https://github.com/', ''));
-        break;
-      case 'local':
-        setValue('repository.title', repository.path ?? 'local');
-        break;
-    }
+    const title = generateRepositoryTitle(repository);
+    setValue('repository.title', title);
   }, [getValues, setValue]);
 
   useEffect(() => {
-    onStepStatusUpdate({ status: isLoading ? 'running' : 'idle' });
-  }, [isLoading, onStepStatusUpdate]);
+    setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
+  }, [isLoading, setStepStatusInfo]);
 
   useEffect(() => {
     setValue('repository.sync.target', target);

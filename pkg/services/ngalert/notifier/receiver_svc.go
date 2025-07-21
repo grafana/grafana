@@ -146,7 +146,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
-	rcv, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	rcv, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		return nil, err
 	}
-	receivers, err := PostableApiReceiversToReceivers(postables, storedProvenances)
+	receivers, err := legacy_storage.PostableApiReceiversToReceivers(postables, storedProvenances)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 	if err != nil {
 		return nil, err
 	}
-	receivers, err := PostableApiReceiversToReceivers(postables, storedProvenances)
+	receivers, err := legacy_storage.PostableApiReceiversToReceivers(postables, storedProvenances)
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +337,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	if err != nil {
 		return err
 	}
-	existing, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
 	if err != nil {
 		return err
 	}
@@ -439,7 +439,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err = PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
+	result, err = legacy_storage.PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
 	if err != nil {
 		return nil, err
 	}
@@ -480,7 +480,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	existing, err := PostableApiReceiverToReceiver(postable, getReceiverProvenance(storedProvenances, postable))
+	existing, err := legacy_storage.PostableApiReceiverToReceiver(postable, legacy_storage.GetReceiverProvenance(storedProvenances, postable))
 	if err != nil {
 		return nil, err
 	}
@@ -567,7 +567,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err := PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
+	result, err := legacy_storage.PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
 	if err != nil {
 		return nil, err
 	}

@@ -16,19 +16,19 @@ import {
   getTimeZoneInfo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { t, Trans } from '../../utils/i18n';
-import { ButtonGroup } from '../Button';
+import { ButtonGroup } from '../Button/ButtonGroup';
 import { getModalStyles } from '../Modal/getModalStyles';
 import { getPortalContainer } from '../Portal/Portal';
-import { ToolbarButton } from '../ToolbarButton';
+import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { WeekStart } from './WeekStartPicker';
-import { quickOptions } from './options';
+import { getQuickOptions } from './options';
 import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
@@ -189,7 +189,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 fiscalYearStartMonth={fiscalYearStartMonth}
                 value={value}
                 onChange={onChange}
-                quickOptions={quickRanges || quickOptions}
+                quickOptions={quickRanges || getQuickOptions()}
                 history={history}
                 showHistory
                 widthOverride={widthOverride}

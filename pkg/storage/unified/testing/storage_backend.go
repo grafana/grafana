@@ -35,6 +35,7 @@ const (
 	TestGetResourceStats          = "get resource stats"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
+	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
 )
 
@@ -54,10 +55,6 @@ func GenerateRandomNSPrefix() string {
 
 // RunStorageBackendTest runs the storage backend test suite
 func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOptions) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	if opts == nil {
 		opts = &TestOptions{}
 	}
@@ -79,6 +76,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
 		{TestListHistory, runTestIntegrationBackendListHistory},
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
+		{TestListTrash, runTestIntegrationBackendTrash},
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 	}
 
@@ -177,8 +175,8 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		require.NoError(t, err)
 		require.Nil(t, resp.Error)
 		require.Len(t, resp.Items, 2)
-		require.Contains(t, string(resp.Items[0].Value), "item2 MODIFIED")
-		require.Contains(t, string(resp.Items[1].Value), "item3 ADDED")
+		require.Contains(t, string(resp.Items[0].Value), "item3 ADDED")
+		require.Contains(t, string(resp.Items[1].Value), "item2 MODIFIED")
 		require.GreaterOrEqual(t, resp.ResourceVersion, rv5) // rv5 is the latest resource version
 	})
 
@@ -226,37 +224,37 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	}
 	// Create resources across different namespaces/groups
 	_, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED,
-		WithNamespace(nsPrefix+"-ns1"),
+		WithNamespace(nsPrefix+"-stats-ns1"),
 		WithGroup("group"),
 		WithResource("resource1"))
 	require.NoError(t, err)
 
 	_, err = writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED,
-		WithNamespace(nsPrefix+"-ns1"),
+		WithNamespace(nsPrefix+"-stats-ns1"),
 		WithGroup("group"),
 		WithResource("resource1"))
 	require.NoError(t, err)
 
 	_, err = writeEvent(ctx, backend, "item3", resourcepb.WatchEvent_ADDED,
-		WithNamespace(nsPrefix+"-ns1"),
+		WithNamespace(nsPrefix+"-stats-ns1"),
 		WithGroup("group"),
 		WithResource("resource2"))
 	require.NoError(t, err)
 
 	_, err = writeEvent(ctx, backend, "item4", resourcepb.WatchEvent_ADDED,
-		WithNamespace(nsPrefix+"-ns2"),
+		WithNamespace(nsPrefix+"-stats-ns2"),
 		WithGroup("group"),
 		WithResource("resource1"))
 	require.NoError(t, err)
 
 	_, err = writeEvent(ctx, backend, "item5", resourcepb.WatchEvent_ADDED,
-		WithNamespace(nsPrefix+"-ns2"),
+		WithNamespace(nsPrefix+"-stats-ns2"),
 		WithGroup("group"),
 		WithResource("resource1"))
 	require.NoError(t, err)
 
 	t.Run("Get stats for ns1", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-ns1", 0)
+		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns1", 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 2)
 
@@ -264,14 +262,14 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 		slices.SortFunc(stats, sortFunc)
 
 		// Check first resource stats
-		require.Equal(t, nsPrefix+"-ns1", stats[0].Namespace)
+		require.Equal(t, nsPrefix+"-stats-ns1", stats[0].Namespace)
 		require.Equal(t, "group", stats[0].Group)
 		require.Equal(t, "resource1", stats[0].Resource)
 		require.Equal(t, int64(2), stats[0].Count)
 		require.Greater(t, stats[0].ResourceVersion, int64(0))
 
 		// Check second resource stats
-		require.Equal(t, nsPrefix+"-ns1", stats[1].Namespace)
+		require.Equal(t, nsPrefix+"-stats-ns1", stats[1].Namespace)
 		require.Equal(t, "group", stats[1].Group)
 		require.Equal(t, "resource2", stats[1].Resource)
 		require.Equal(t, int64(1), stats[1].Count)
@@ -279,11 +277,11 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats for ns2", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-ns2", 0)
+		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns2", 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 
-		require.Equal(t, nsPrefix+"-ns2", stats[0].Namespace)
+		require.Equal(t, nsPrefix+"-stats-ns2", stats[0].Namespace)
 		require.Equal(t, "group", stats[0].Group)
 		require.Equal(t, "resource1", stats[0].Resource)
 		require.Equal(t, int64(2), stats[0].Count)
@@ -291,11 +289,11 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 
 	t.Run("Get stats with minimum count", func(t *testing.T) {
-		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-ns1", 1)
+		stats, err := backend.GetResourceStats(ctx, nsPrefix+"-stats-ns1", 1)
 		require.NoError(t, err)
 		require.Len(t, stats, 1)
 
-		require.Equal(t, nsPrefix+"-ns1", stats[0].Namespace)
+		require.Equal(t, nsPrefix+"-stats-ns1", stats[0].Namespace)
 		require.Equal(t, "group", stats[0].Group)
 		require.Equal(t, "resource1", stats[0].Resource)
 		require.Equal(t, int64(2), stats[0].Count)
@@ -312,7 +310,7 @@ func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.St
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
 	// Create a few resources before initing the watch
-	_, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(nsPrefix+"-ns1"))
+	_, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(nsPrefix+"-watch-ns"))
 	require.NoError(t, err)
 
 	// Start the watch
@@ -320,7 +318,7 @@ func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.St
 	require.NoError(t, err)
 
 	// Create one more event
-	_, err = writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(nsPrefix+"-ns1"))
+	_, err = writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(nsPrefix+"-watch-ns"))
 	require.NoError(t, err)
 	require.Equal(t, "item2", (<-stream).Key.Name)
 
@@ -334,7 +332,7 @@ func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.St
 func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
-	ns := nsPrefix + "-ns1"
+	ns := nsPrefix + "-list-ns"
 	// Create a few resources before starting the watch
 	rv1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
@@ -365,19 +363,20 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		res, err := server.List(ctx, &resourcepb.ListRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
 				},
 			},
 		})
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 5)
-		// should be sorted by key ASC
+		// should be sorted by resource_version ASC
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
-		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
-		require.Contains(t, string(res.Items[3].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[2].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[3].Value), "item2 MODIFIED")
 		require.Contains(t, string(res.Items[4].Value), "item6 ADDED")
 
 		require.Empty(t, res.NextPageToken)
@@ -388,8 +387,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 			Limit: 3,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
 				},
 			},
 		})
@@ -399,8 +399,8 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
-		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[2].Value), "item5 ADDED")
 		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
 	})
 
@@ -409,8 +409,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 			ResourceVersion: rv4,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
 				},
 			},
 		})
@@ -430,19 +431,19 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 			ResourceVersion: rv7,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
 				},
 			},
 		})
-		require.NoError(t, err)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
 		t.Log(res.Items)
 		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
-		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[2].Value), "item5 ADDED")
 
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
@@ -460,29 +461,99 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 			Limit:         2,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
-					Group:    "group",
-					Resource: "resource",
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
 				},
 			},
 		})
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
-		t.Log(res.Items)
-		require.Contains(t, string(res.Items[0].Value), "item4 ADDED")
-		require.Contains(t, string(res.Items[1].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[0].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
 
 		continueToken, err = resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
 		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
+
+	t.Run("Paginate through latest items one by one", func(t *testing.T) {
+		baseKey := &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		}
+		expectedItems := []string{"item1 ADDED", "item4 ADDED", "item5 ADDED", "item2 MODIFIED", "item6 ADDED"}
+		var allItems []*resourcepb.ResourceWrapper
+		var nextPageToken string
+
+		for i, expectedValue := range expectedItems {
+			req := &resourcepb.ListRequest{
+				Limit:         1,
+				NextPageToken: nextPageToken,
+				Options: &resourcepb.ListOptions{
+					Key: baseKey,
+				},
+			}
+
+			res, err := server.List(ctx, req)
+			require.NoError(t, err)
+			require.Nil(t, res.Error)
+			require.Len(t, res.Items, 1)
+			require.Contains(t, string(res.Items[0].Value), expectedValue)
+			allItems = append(allItems, res.Items[0])
+
+			if i < len(expectedItems)-1 {
+				require.NotEmpty(t, res.NextPageToken, "should have a continue token for page %d", i+1)
+				nextPageToken = res.NextPageToken
+			} else {
+				require.Empty(t, res.NextPageToken, "should not have a continue token on the last page")
+			}
+		}
+		require.Len(t, allItems, len(expectedItems))
+	})
+
+	t.Run("Paginate latest with a limit larger than remaining items", func(t *testing.T) {
+		baseKey := &resourcepb.ResourceKey{
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		}
+		// Request first 3 items (out of 5 total)
+		req := &resourcepb.ListRequest{
+			Limit: 3,
+			Options: &resourcepb.ListOptions{
+				Key: baseKey,
+			},
+		}
+		res1, err := server.List(ctx, req)
+		require.NoError(t, err)
+		require.Nil(t, res1.Error)
+		require.Len(t, res1.Items, 3)
+		require.NotEmpty(t, res1.NextPageToken)
+		require.Contains(t, string(res1.Items[0].Value), "item1 ADDED")
+		require.Contains(t, string(res1.Items[1].Value), "item4 ADDED")
+		require.Contains(t, string(res1.Items[2].Value), "item5 ADDED")
+
+		// Request next page with a large limit
+		req.Limit = 10 // Larger than the 2 remaining items
+		req.NextPageToken = res1.NextPageToken
+		res2, err := server.List(ctx, req)
+		require.NoError(t, err)
+		require.Nil(t, res2.Error)
+		require.Len(t, res2.Items, 2) // Should only get the 2 remaining items
+		require.Contains(t, string(res2.Items[0].Value), "item2 MODIFIED")
+		require.Contains(t, string(res2.Items[1].Value), "item6 ADDED")
+		require.Empty(t, res2.NextPageToken, "should be no continue token on the last page")
+	})
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 	server := newServer(t, backend)
-	ns := nsPrefix + "-ns1"
+	ns := nsPrefix + "-history-ns"
 	rv1, _ := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.Greater(t, rv1, int64(0))
 
@@ -656,7 +727,6 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
-		t.Log(res.Items)
 		require.Contains(t, string(res.Items[0].Value), "item1 MODIFIED")
 		require.Equal(t, rvHistory2, res.Items[0].ResourceVersion)
 		require.Contains(t, string(res.Items[1].Value), "item1 MODIFIED")
@@ -983,12 +1053,12 @@ func runTestIntegrationBackendCreateNewResource(t *testing.T, backend resource.S
 
 	request := &resourcepb.CreateRequest{
 		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
+			Namespace: ns,
 			Group:     "test.grafana",
-			Resource:  "Test",
+			Resource:  "tests",
 			Name:      "test",
 		},
-		Value: []byte(`{"apiVersion":"test.grafana/v0alpha1","kind":"Test","metadata":{"name":"test","namespace":"default"}}`),
+		Value: []byte(`{"apiVersion":"test.grafana/v0alpha1","kind":"Test","metadata":{"name":"test","namespace":"` + ns + `","uid":"test-uid-123"}}`),
 	}
 
 	response, err := server.Create(ctx, request)
@@ -1103,7 +1173,7 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 	}
 	meta.SetFolder(options.Folder)
 
-	return store.WriteEvent(ctx, resource.WriteEvent{
+	event := resource.WriteEvent{
 		Type:  action,
 		Value: options.Value,
 		GUID:  uuid.New().String(),
@@ -1113,8 +1183,32 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 			Resource:  options.Resource,
 			Name:      name,
 		},
-		Object: meta,
-	})
+	}
+	switch action {
+	case resourcepb.WatchEvent_DELETED:
+		event.ObjectOld = meta
+
+		obj, err := utils.MetaAccessor(res)
+		if err != nil {
+			return 0, err
+		}
+		now := metav1.Now()
+		obj.SetDeletionTimestamp(&now)
+		obj.SetUpdatedTimestamp(&now.Time)
+		obj.SetManagedFields(nil)
+		obj.SetFinalizers(nil)
+		obj.SetGeneration(utils.DeletedGeneration)
+		obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
+		event.Object = obj
+	case resourcepb.WatchEvent_ADDED:
+		event.Object = meta
+	case resourcepb.WatchEvent_MODIFIED:
+		event.Object = meta //
+		event.ObjectOld = meta
+	default:
+		panic(fmt.Sprintf("invalid action: %s", action))
+	}
+	return store.WriteEvent(ctx, event)
 }
 
 func newServer(t *testing.T, b resource.StorageBackend) resource.ResourceServer {
@@ -1127,4 +1221,96 @@ func newServer(t *testing.T, b resource.StorageBackend) resource.ResourceServer 
 	require.NotNil(t, server)
 
 	return server
+}
+
+func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	server := newServer(t, backend)
+	ns := nsPrefix + "-ns-trash"
+
+	// item1 deleted with multiple history events
+	rv1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rv1, int64(0))
+	rvDelete1, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDelete1, rv1)
+	rvDelete2, err := writeEvent(ctx, backend, "item1", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDelete2, rvDelete1)
+
+	// item2 deleted and recreated, should not be returned in trash
+	rv2, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rv2, int64(0))
+	rvDelete3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_DELETED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rvDelete3, rv2)
+	rv3, err := writeEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+	require.Greater(t, rv3, int64(0))
+
+	tests := []struct {
+		name               string
+		request            *resourcepb.ListRequest
+		expectedVersions   []int64
+		expectedValues     []string
+		minExpectedHeadRV  int64
+		expectedContinueRV int64
+		expectedSortAsc    bool
+	}{
+		{
+			name: "returns the latest delete event",
+			request: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_TRASH,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns,
+						Group:     "group",
+						Resource:  "resource",
+						Name:      "item1",
+					},
+				},
+			},
+			expectedVersions:   []int64{rvDelete2},
+			expectedValues:     []string{"item1 DELETED"},
+			minExpectedHeadRV:  rvDelete2,
+			expectedContinueRV: rvDelete2,
+			expectedSortAsc:    false,
+		},
+		{
+			name: "does not return a version in the resource table",
+			request: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_TRASH,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns,
+						Group:     "group",
+						Resource:  "resource",
+						Name:      "item2",
+					},
+				},
+			},
+			expectedVersions:   []int64{},
+			expectedValues:     []string{},
+			minExpectedHeadRV:  rv3,
+			expectedContinueRV: rv3,
+			expectedSortAsc:    false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := server.List(ctx, tc.request)
+			require.NoError(t, err)
+			require.Nil(t, res.Error)
+			expectedItemCount := len(tc.expectedVersions)
+			require.Len(t, res.Items, expectedItemCount)
+			for i := 0; i < expectedItemCount; i++ {
+				require.Equal(t, tc.expectedVersions[i], res.Items[i].ResourceVersion)
+				require.Contains(t, string(res.Items[i].Value), tc.expectedValues[i])
+			}
+			require.GreaterOrEqual(t, res.ResourceVersion, tc.minExpectedHeadRV)
+		})
+	}
 }

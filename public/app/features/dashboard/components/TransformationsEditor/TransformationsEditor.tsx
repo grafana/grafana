@@ -5,6 +5,7 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   DataFrame,
+  DataQueryRequest,
   DataTransformerConfig,
   PanelData,
   SelectableValue,
@@ -12,8 +13,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -45,6 +45,7 @@ export type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 
 export interface TransformationData {
+  request?: DataQueryRequest;
   series: DataFrame[];
   annotations?: DataFrame[];
 }
@@ -398,8 +399,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               'dashboard.un-themed-transformations-editor.title-delete-all-transformations',
               'Delete all transformations?'
             )}
-            body="By deleting all transformations, you will go back to the main selection screen."
-            confirmText="Delete all"
+            body={t(
+              'dashboard.un-theme-transformations-editor.body-delete-all-transformations',
+              'By deleting all transformations, you will go back to the main selection screen.'
+            )}
+            confirmText={t('dashboard.un-themed-transformations-editor.confirmText-delete-all', 'Delete all')}
             onConfirm={() => this.onTransformationRemoveAll()}
             onDismiss={() => this.setState({ showRemoveAllModal: false })}
           />

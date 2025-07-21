@@ -45,7 +45,7 @@ type Service struct {
 	identityStore   legacy.LegacyIdentityStore
 	settings        Settings
 
-	mapper mapper
+	mapper MapperRegistry
 
 	logger  log.Logger
 	tracer  tracing.Tracer
@@ -58,9 +58,10 @@ type Service struct {
 	idCache         cacheWrap[store.UserIdentifiers]
 	permCache       cacheWrap[map[string]bool]
 	permDenialCache cacheWrap[bool]
-	teamCache       cacheWrap[[]int64]
+	userTeamCache   cacheWrap[[]int64]
 	basicRoleCache  cacheWrap[store.BasicRole]
 	folderCache     cacheWrap[folderTree]
+	teamIDCache     cacheWrap[map[int64]string]
 }
 
 type Settings struct {
@@ -93,13 +94,14 @@ func NewService(
 		logger:          logger,
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
-		mapper:          newMapper(),
+		mapper:          NewMapperRegistry(),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
 		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
+		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL),
+		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
@@ -334,13 +336,13 @@ func (s *Service) validateSubject(ctx context.Context, subject string) (string, 
 func (s *Service) validateAction(ctx context.Context, group, resource, verb string) (string, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.translation(group, resource)
+	t, ok := s.mapper.Get(group, resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", group, "resource", resource)
 		return "", status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	action, ok := t.action(verb)
+	action, ok := t.Action(verb)
 	if !ok {
 		ctxLogger.Error("unsupport verb", "group", group, "resource", resource, "verb", verb)
 		return "", status.Error(codes.NotFound, "unsupported verb")
@@ -435,6 +437,11 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		}
 		scopeMap := getScopeMap(permissions)
 
+		scopeMap, err = s.resolveScopeMap(ctx, ns, scopeMap)
+		if err != nil {
+			return nil, fmt.Errorf("could not resolve scope map: %w", err)
+		}
+
 		s.permCache.Set(ctx, userPermKey, scopeMap)
 		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
 
@@ -516,7 +523,7 @@ func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, user
 
 	teamIDs := make([]int64, 0, 50)
 	teamsCacheKey := userTeamCacheKey(ns.Value, userIdentifiers.UID)
-	if cached, ok := s.teamCache.Get(ctx, teamsCacheKey); ok {
+	if cached, ok := s.userTeamCache.Get(ctx, teamsCacheKey); ok {
 		return cached, nil
 	}
 
@@ -538,7 +545,7 @@ func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, user
 			break
 		}
 	}
-	s.teamCache.Set(ctx, teamsCacheKey, teamIDs)
+	s.userTeamCache.Set(ctx, teamsCacheKey, teamIDs)
 	span.SetAttributes(attribute.Int("num_user_teams", len(teamIDs)))
 
 	return teamIDs, nil
@@ -585,17 +592,17 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return true, nil
 	}
 
-	t, ok := s.mapper.translation(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
 		return false, status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	if req.Name != "" && scopeMap[t.scope(req.Name)] {
+	if req.Name != "" && scopeMap[t.Scope(req.Name)] {
 		return true, nil
 	}
 
-	if !t.folderSupport {
+	if !t.HasFolderSupport() {
 		return false, nil
 	}
 
@@ -679,14 +686,14 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	t, ok := s.mapper.translation(req.Group, req.Resource)
+	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
 		return nil, status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	var tree folderTree
-	if t.folderSupport {
+	if t.HasFolderSupport() {
 		var err error
 		tree, err = s.buildFolderTree(ctx, req.Namespace)
 		if err != nil {
@@ -699,7 +706,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	if strings.HasPrefix(req.Action, "folders:") {
 		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, tree, t.prefix())
+		res = buildItemList(scopeMap, tree, t.Prefix())
 	}
 
 	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))

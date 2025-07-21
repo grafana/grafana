@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -250,34 +248,6 @@ type PrometheusWriterConfig struct {
 	Timeout     time.Duration
 }
 
-func NewPrometheusWriterWithSettings(
-	settings setting.RecordingRuleSettings,
-	httpClientProvider HttpClientProvider,
-	clock clock.Clock,
-	l log.Logger,
-	metrics *metrics.RemoteWriter,
-) (*PrometheusWriter, error) {
-	if err := validateSettings(settings); err != nil {
-		return nil, err
-	}
-
-	headers := make(http.Header)
-	for k, v := range settings.CustomHeaders {
-		headers.Add(k, v)
-	}
-
-	cfg := PrometheusWriterConfig{
-		URL: settings.URL,
-		HTTPOptions: httpclient.Options{
-			BasicAuth: createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
-			Header:    headers,
-		},
-		Timeout: settings.Timeout,
-	}
-
-	return NewPrometheusWriter(cfg, httpClientProvider, clock, l, metrics)
-}
-
 func NewPrometheusWriter(
 	cfg PrometheusWriterConfig,
 	httpClientProvider HttpClientProvider,
@@ -308,34 +278,6 @@ func NewPrometheusWriter(
 		logger:  l,
 		metrics: metrics,
 	}, nil
-}
-
-func validateSettings(settings setting.RecordingRuleSettings) error {
-	if settings.BasicAuthUsername != "" && settings.BasicAuthPassword == "" {
-		return fmt.Errorf("basic auth password is required if username is set")
-	}
-
-	if _, err := url.Parse(settings.URL); err != nil {
-		return fmt.Errorf("invalid URL: %w", err)
-	}
-
-	if settings.Timeout <= 0 {
-		return fmt.Errorf("timeout must be greater than 0")
-	}
-
-	return nil
-}
-
-func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
-	// If username is empty, do not use basic auth and ignore password.
-	if username == "" {
-		return nil
-	}
-
-	return &httpclient.BasicAuthOptions{
-		User:     username,
-		Password: password,
-	}
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.

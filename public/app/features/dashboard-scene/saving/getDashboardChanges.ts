@@ -10,8 +10,9 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
+import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
 import { jsonDiff } from '../settings/version-history/utils';
 
 export function get(obj: any, keys: string[]) {
@@ -252,8 +253,8 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
     } else if (
       variable.type === 'adhoc' &&
       !adHocVariableFiltersEqual(
-        (variable as AdHocVariableModel | undefined)?.filters,
-        (original as AdHocVariableModel | undefined)?.filters
+        validateFiltersOrigin((variable as AdHocVariableModel | undefined)?.filters),
+        validateFiltersOrigin((original as AdHocVariableModel | undefined)?.filters)
       )
     ) {
       hasVariableValueChanges = true;

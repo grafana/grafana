@@ -3,11 +3,11 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, trackRuleListNavigation } from '../Analytics';
@@ -19,6 +19,7 @@ import { RuleListErrors } from '../components/rules/RuleListErrors';
 import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
+import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
@@ -111,7 +112,6 @@ const RuleListV1 = () => {
     }
   }, [dispatch, limitAlerts]);
   useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
-  const { t } = useTranslate();
 
   // Show splash only when we loaded all of the data sources and none of them has alerts
   const hasNoAlertRulesCreatedYet =
@@ -175,20 +175,22 @@ export function CreateAlertButton() {
 
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
-      <LinkButton
-        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
-        icon="plus"
-        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-      >
-        <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
-      </LinkButton>
+      <Stack direction="row" gap={1}>
+        <LinkButton
+          href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
+          icon="plus"
+          onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+        >
+          <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
+        </LinkButton>
+        {canCreateGrafanaRules && AIAlertRuleButtonComponent && <AIAlertRuleButtonComponent />}
+      </Stack>
     );
   }
   return null;
 }
 
 function ExportNewRuleButton() {
-  const { t } = useTranslate();
   const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(`/alerting/export-new-rule`, {
     returnTo,

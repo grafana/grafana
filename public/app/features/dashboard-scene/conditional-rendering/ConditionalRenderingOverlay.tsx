@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 export const ConditionalRenderingOverlay = () => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <div className={styles.container}>

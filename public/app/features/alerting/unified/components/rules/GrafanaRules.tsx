@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -59,7 +59,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const hasGrafanaAlerts = namespaces.length > 0;
   const { canCreateGrafanaRules } = useRulesAccess();
   const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
-  const { t } = useTranslate();
+
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>

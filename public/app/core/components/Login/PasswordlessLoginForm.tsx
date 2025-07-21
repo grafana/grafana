@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
 
 import { PasswordlessFormModel } from './LoginCtrl';
@@ -22,7 +22,7 @@ export const PasswordlessLoginForm = ({ onSubmit, isLoggingIn }: Props) => {
     register,
     formState: { errors },
   } = useForm<PasswordlessFormModel>({ mode: 'onChange' });
-  const { t } = useTranslate();
+
   return (
     <div className={styles.wrapper}>
       <form onSubmit={handleSubmit(onSubmit)}>

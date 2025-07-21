@@ -245,6 +245,9 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						},
 					},
 				},
+			},
+
+			sqlResourceTrash: {
 				{
 					Name: "read trash",
 					Data: &sqlGetHistoryRequest{

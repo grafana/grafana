@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import type { Monaco } from '@grafana/ui';
 
 import {
@@ -17,7 +17,7 @@ import { SuggestionDefinition } from './suggestionDefinition';
 export function getGlobalSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Field;
 
-  /* eslint-disable @grafana/no-untranslated-strings */
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
     {
       label: 'Alerts',
@@ -39,14 +39,14 @@ export function getGlobalSuggestions(monaco: Monaco): SuggestionDefinition[] {
     { label: 'GroupKey', kind, detail: 'string' },
     { label: 'TruncatedAlerts', kind, detail: 'integer' },
   ];
-  /* eslint-enable @grafana/no-untranslated-strings */
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 // Suggestions that are valid only in the scope of an alert (e.g. in the .Alerts loop)
 export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Field;
 
-  /* eslint-disable @grafana/no-untranslated-strings */
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
     {
       label: { label: 'Status', detail: '(Alert)', description: 'string' },
@@ -148,26 +148,26 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
       ),
     },
   ];
-  /* eslint-enable @grafana/no-untranslated-strings */
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 // Suggestions for .Alerts
 export function getAlertsSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Field;
 
-  /* eslint-disable @grafana/no-untranslated-strings */
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
     { label: 'Firing', kind, detail: 'Alert[]' },
     { label: 'Resolved', kind, detail: 'Alert[]' },
   ];
-  /* eslint-disable @grafana/no-untranslated-strings */
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 // Suggestions for the KeyValue types
 export function getKeyValueSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Field;
 
-  /* eslint-disable @grafana/no-untranslated-strings */
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
     { label: 'SortedPairs', kind, detail: '[]KeyValue' },
     { label: 'Names', kind, detail: '[]string' },
@@ -178,7 +178,7 @@ export function getKeyValueSuggestions(monaco: Monaco): SuggestionDefinition[] {
       kind: monaco.languages.CompletionItemKind.Method,
     },
   ];
-  /* eslint-enable @grafana/no-untranslated-strings */
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 export const snippets = {

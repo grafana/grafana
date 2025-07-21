@@ -4,7 +4,7 @@ import { ReactElement, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { Button, ConfirmModal, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
@@ -35,7 +35,7 @@ export function VariableEditorListRow({
 }: VariableEditorListRowProps): ReactElement {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const definition = getDefinition(variable);
   const variableState = variable.state;
   const identifier = variableState.name;
@@ -122,8 +122,15 @@ export function VariableEditorListRow({
               <ConfirmModal
                 isOpen={showDeleteModal}
                 title={t('dashboard-scene.variable-editor-list-row.title-delete-variable', 'Delete variable')}
-                body={`Are you sure you want to delete: ${variableState.name}?`}
-                confirmText="Delete variable"
+                body={t(
+                  'dashboard-scene.variable-editor-list-row.body-delete-variable',
+                  'Are you sure you want to delete: {{variable}}?',
+                  { variable: variableState.name }
+                )}
+                confirmText={t(
+                  'dashboard-scene.variable-editor-list-row.confirmText-delete-variable',
+                  'Delete variable'
+                )}
                 onConfirm={onDeleteVariable}
                 onDismiss={handleDeleteVariableModal(false)}
               />
@@ -145,7 +152,7 @@ interface VariableCheckIndicatorProps {
 
 function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactElement {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   if (passed) {
     return (
       <Tooltip

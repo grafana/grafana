@@ -1,15 +1,13 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, Scope } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, Stack, Text, Icon, Box } from '@grafana/ui';
 
-import { SelectedScope } from './types';
-
 interface RecentScopesProps {
-  recentScopes: SelectedScope[][];
-  onSelect: (scopes: SelectedScope[]) => void;
+  recentScopes: Scope[][];
+  onSelect: (scopeIds: string[]) => void;
 }
 
 export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
@@ -39,12 +37,12 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
             recentScopes.map((recentScopeSet) => (
               <button
                 className={styles.recentScopeButton}
-                key={recentScopeSet.map((s) => s.scope.metadata.name).join(',')}
+                key={recentScopeSet.map((s) => s.metadata.name).join(',')}
                 onClick={() => {
-                  onSelect(recentScopeSet);
+                  onSelect(recentScopeSet.map((s) => s.metadata.name));
                 }}
               >
-                <Text>{recentScopeSet.map((s) => s.scope.spec.title).join(', ')}</Text>
+                <Text>{recentScopeSet.map((s) => s.spec.title).join(', ')}</Text>
               </button>
             ))}
         </Stack>
@@ -75,5 +73,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   legend: css({
     marginBottom: 0,
+    padding: `${theme.spacing(0.5)} 0`,
   }),
 });

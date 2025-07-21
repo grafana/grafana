@@ -496,6 +496,7 @@ func flatPermissionsToResourcePermissions(scope string, permissions []flatResour
 		} else if p.IsInherited(scope) {
 			inherited = append(inherited, p)
 		} else {
+			// Permissions which are neither managed nor inherited must have been provisioned
 			provisioned = append(provisioned, p)
 		}
 	}

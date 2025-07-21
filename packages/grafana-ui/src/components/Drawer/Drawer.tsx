@@ -8,9 +8,9 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -143,17 +143,17 @@ export function Drawer({
             onMouseDown={onMouseDown}
             onTouchStart={onTouchStart}
           />
-          {typeof title === 'string' && (
-            <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
-              <div className={styles.actions}>
-                <IconButton
-                  name="times"
-                  variant="secondary"
-                  onClick={onClose}
-                  data-testid={selectors.components.Drawer.General.close}
-                  tooltip={t(`grafana-ui.drawer.close`, 'Close')}
-                />
-              </div>
+          <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
+            <div className={styles.actions}>
+              <IconButton
+                name="times"
+                variant="secondary"
+                onClick={onClose}
+                data-testid={selectors.components.Drawer.General.close}
+                tooltip={t(`grafana-ui.drawer.close`, 'Close')}
+              />
+            </div>
+            {typeof title === 'string' ? (
               <div className={styles.titleWrapper}>
                 <Text element="h3" {...titleProps}>
                   {title}
@@ -163,11 +163,12 @@ export function Drawer({
                     {subtitle}
                   </div>
                 )}
-                {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>
-            </div>
-          )}
-          {typeof title !== 'string' && title}
+            ) : (
+              title
+            )}
+            {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
+          </div>
           {!scrollableContent ? content : <ScrollContainer showScrollIndicators>{content}</ScrollContainer>}
         </div>
       </FocusScope>

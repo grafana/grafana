@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 
 import {
@@ -10,13 +10,15 @@ import {
   DataTopic,
   dateTime,
   EventBus,
+  getFrameDisplayName,
   GrafanaTheme2,
   LoadingState,
+  shallowCompare,
   SplitOpen,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
 
@@ -34,10 +36,10 @@ type Props = {
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
-  onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
+  onDisplayedSeriesChanged: (series: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
-  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
+  toggleLegendRef?: React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>;
 };
 
 export const LogsVolumePanelList = ({
@@ -46,7 +48,7 @@ export const LogsVolumePanelList = ({
   onUpdateTimeRange,
   width,
   onLoadLogsVolume,
-  onHiddenSeriesChanged,
+  onDisplayedSeriesChanged,
   eventBus,
   splitOpen,
   timeZone,
@@ -80,7 +82,7 @@ export const LogsVolumePanelList = ({
   }, [logsVolumeData]);
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const numberOfLogVolumes = Object.keys(logVolumes).length;
 
   const containsZoomed = Object.values(logVolumes).some((data: DataFrame[]) => {
@@ -95,6 +97,25 @@ export const LogsVolumePanelList = ({
   const from = dateTime(Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from));
   const to = dateTime(Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to));
   const visibleRange: TimeRange = { from, to, raw: { from, to } };
+
+  const handleHiddenSeriesChanged = useCallback(
+    (hiddenSeries: string[]) => {
+      // Not supported
+      if (numberOfLogVolumes > 1) {
+        return;
+      }
+      const allLevels = [
+        ...new Set(
+          Object.values(logVolumes)
+            .map((series) => series.map((dataFrame) => getFrameDisplayName(dataFrame)))
+            .flat()
+        ),
+      ];
+      const displayedLevels = allLevels.filter((level) => !hiddenSeries.includes(level));
+      onDisplayedSeriesChanged(shallowCompare(allLevels, displayedLevels) ? [] : displayedLevels);
+    },
+    [logVolumes, numberOfLogVolumes, onDisplayedSeriesChanged]
+  );
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return (
@@ -185,7 +206,7 @@ export const LogsVolumePanelList = ({
             splitOpen={splitOpen}
             onLoadLogsVolume={onLoadLogsVolume}
             // TODO: Support filtering level from multiple log levels
-            onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
+            onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : handleHiddenSeriesChanged}
             eventBus={eventBus}
             annotations={annotations}
           />

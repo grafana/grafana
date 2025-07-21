@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
-import { Button, ButtonVariant } from '../Button';
+import { t } from '@grafana/i18n';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { Button, ButtonVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {

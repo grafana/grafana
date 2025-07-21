@@ -2,13 +2,14 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { matcherToObjectMatcher } from '../../utils/alertmanager';
 import {
   normalizeMatchers,
@@ -16,6 +17,8 @@ import {
   parsePromQLStyleMatcherLooseSafe,
   unquoteIfRequired,
 } from '../../utils/matchers';
+
+import { ExternalAlertmanagerContactPointSelector } from './ContactPointSelector';
 
 interface NotificationPoliciesFilterProps {
   onChangeMatchers: (labels: ObjectMatcher[]) => void;
@@ -29,6 +32,7 @@ const NotificationPoliciesFilter = ({
   matchingCount,
 }: NotificationPoliciesFilterProps) => {
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
@@ -51,7 +55,6 @@ const NotificationPoliciesFilter = ({
     }
     setSearchParams({ contactPoint: '', queryString: undefined });
   }, [setSearchParams]);
-  const { t } = useTranslate();
 
   const hasFilters = queryString || contactPoint;
 
@@ -107,18 +110,43 @@ const NotificationPoliciesFilter = ({
           label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Search by contact point')}
           style={{ marginBottom: 0 }}
         >
-          <ContactPointSelector
-            selectProps={{
-              id: 'receiver',
-              'aria-label': 'Search by contact point',
-              onChange: (option) => {
-                setSearchParams({ contactPoint: option?.value?.name });
-              },
-              width: 28,
-              isClearable: true,
-            }}
-            selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
-          />
+          {isGrafanaAlertmanager ? (
+            <GrafanaManagedContactPointSelector
+              placeholder={t(
+                'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                'Choose a contact point'
+              )}
+              id="receiver"
+              onChange={(contactPoint) => {
+                // clearing the contact point will return "null"
+                if (!contactPoint) {
+                  setSearchParams({ contactPoint: undefined });
+                } else {
+                  setSearchParams({ contactPoint: contactPoint.spec.title });
+                }
+              }}
+              width={28}
+              isClearable
+              value={searchParams.get('contactPoint') ?? undefined}
+            />
+          ) : (
+            <ExternalAlertmanagerContactPointSelector
+              selectProps={{
+                id: 'receiver',
+                'aria-label': 'Search by contact point',
+                onChange: (option) => {
+                  setSearchParams({ contactPoint: option?.value?.name });
+                },
+                width: 28,
+                isClearable: true,
+                placeholder: t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                ),
+              }}
+              selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
+            />
+          )}
         </Field>
       )}
       {hasFilters && (

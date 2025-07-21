@@ -1,6 +1,6 @@
 # RTK Query API Client Generator
 
-This generator automates the process of creating RTK Query API clients for Grafana's API groups. It replaces the manual steps outlined in the [main API documentation](../README.md).
+This generator automates the process of creating RTK Query API clients for Grafana's API groups. It replaces the manual steps outlined in the [main API documentation](../../public/app/api/README.md).
 
 ## Usage
 
@@ -42,7 +42,7 @@ The generator automates the following:
 If an error about a missing OpenAPI schema appears, check that:
 
 1. The API group and version exist in the backend
-2. The `TestIntegrationOpenAPIs` test has been run to generate the schema (step 1 in the [main API documentation](../README.md)).
+2. The `TestIntegrationOpenAPIs` test has been run to generate the schema (step 1 in the [main API documentation](../../public/app/api/README.md)).
 3. The schema file exists at `data/openapi/<group>-<version>.json`
 
 ### Validation Errors

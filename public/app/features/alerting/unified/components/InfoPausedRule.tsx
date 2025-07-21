@@ -1,9 +1,7 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 const InfoPausedRule = () => {
-  const { t } = useTranslate();
-
   return (
     <Alert severity="info" title={t('alerting.alert.evaluation-paused', 'Alert evaluation currently paused')}>
       <Trans i18nKey="alerting.alert.evaluation-paused-description">

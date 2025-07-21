@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableBarGaugeCellOptions } from '@grafana/schema';
 import { Field, RadioButtonGroup, Stack } from '@grafana/ui';
 
@@ -8,6 +9,7 @@ type Props = TableCellEditorProps<TableBarGaugeCellOptions>;
 
 export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
   // Set the display mode on change
+
   const onCellOptionsChange = (v: BarGaugeDisplayMode) => {
     cellOptions.mode = v;
     onChange(cellOptions);
@@ -20,14 +22,14 @@ export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
 
   return (
     <Stack direction="column" gap={0}>
-      <Field label="Gauge display mode">
+      <Field label={t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode')}>
         <RadioButtonGroup
           value={cellOptions?.mode ?? BarGaugeDisplayMode.Gradient}
           onChange={onCellOptionsChange}
           options={barGaugeOpts}
         />
       </Field>
-      <Field label="Value display">
+      <Field label={t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display')}>
         <RadioButtonGroup
           value={cellOptions?.valueDisplayMode ?? BarGaugeValueMode.Text}
           onChange={onValueModeChange}

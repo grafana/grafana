@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import { Map as OpenLayersMap, MapBrowserEvent, View } from 'ol';
+import OpenLayersMap from 'ol/Map';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
+import View from 'ol/View';
 import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
@@ -13,6 +15,7 @@ import * as React from 'react';
 import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -272,11 +275,11 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ ttipOpen: false, ttip: undefined });
   };
 
-  pointerClickListener = (evt: MapBrowserEvent<MouseEvent>) => {
+  pointerClickListener = (evt: MapBrowserEvent<PointerEvent>) => {
     pointerClickListener(evt, this);
   };
 
-  pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>) => {
+  pointerMoveListener = (evt: MapBrowserEvent<PointerEvent>) => {
     pointerMoveListener(evt, this);
   };
 
@@ -423,7 +426,7 @@ export class GeomapPanel extends Component<Props, State> {
             className={styles.map}
             // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
             tabIndex={0} // Interactivity is added through the ref
-            aria-label={`Navigable map`}
+            aria-label={t('geomap.geomap-panel.aria-label-map', 'Navigable map')}
             ref={this.initMapRef}
           ></div>
           <GeomapOverlay

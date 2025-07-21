@@ -2,14 +2,14 @@ import { produce } from 'immer';
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
 import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
+import { NotifierDTO } from 'app/types/alerting';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
-import { NotifierDTO } from '../../../../../../../types';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { option } from '../../../../utils/notifier-types';
@@ -92,7 +92,6 @@ export function useOnCallIntegration() {
     isLoading: isLoadingOnCallIntegrations,
     isError: isIntegrationsQueryError,
   } = useGrafanaOnCallIntegrationsQuery(undefined, { skip: !isAlertingV2IntegrationEnabled });
-  const { t } = useTranslate();
 
   const onCallFormValidators = useMemo(() => {
     return {
@@ -127,7 +126,7 @@ export function useOnCallIntegration() {
           : t('alerting.irm-integration.integration-required', 'Selection of existing IRM integration is required');
       },
     };
-  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled, notifyApp, t]);
+  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled, notifyApp]);
 
   const extendOnCallReceivers = useCallback(
     (receiver: Receiver): Receiver => {
@@ -255,7 +254,7 @@ export function useOnCallIntegration() {
 
       return notifier;
     },
-    [grafanaOnCallIntegrations, isAlertingV2IntegrationEnabled, t]
+    [grafanaOnCallIntegrations, isAlertingV2IntegrationEnabled]
   );
 
   return {

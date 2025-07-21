@@ -27,19 +27,28 @@ describe('LANGUAGES', () => {
     expect(LANGUAGES).toEqual(expectedLanguages);
   });
 
-  it('should include the pseudo-locale in development mode', async () => {
-    process.env.NODE_ENV = 'development';
-    jest.resetModules();
-    const { LANGUAGES: languages } = await import('./languages');
-
-    expect(languages).toEqual([...expectedLanguages, { code: 'pseudo', name: 'Pseudo-locale' }]);
+  it('should match a canonical locale definition', () => {
+    for (const lang of LANGUAGES) {
+      const resolved = Intl.getCanonicalLocales(lang.code);
+      expect(lang.code).toEqual(resolved[0]);
+    }
   });
 
-  it('should not include the pseudo-locale in production mode', async () => {
-    process.env.NODE_ENV = 'production';
-    jest.resetModules();
-    const { LANGUAGES: languages } = await import('./languages');
+  it('should have locale codes including the country code', () => {
+    for (const lang of LANGUAGES) {
+      if (lang.code === 'pseudo') {
+        // special case pseudo because its not a real language
+        continue;
+      }
+      expect(lang.code).toMatch(/^[a-z]{2}-[a-zA-Z]+$/);
+    }
+  });
 
-    expect(languages).toEqual(expectedLanguages);
+  it('should not have duplicate languages codes', () => {
+    for (let i = 0; i < LANGUAGES.length; i++) {
+      const lang = LANGUAGES[i];
+      const index = LANGUAGES.findIndex((v) => v.code === lang.code);
+      expect(index).toBe(i);
+    }
   });
 });

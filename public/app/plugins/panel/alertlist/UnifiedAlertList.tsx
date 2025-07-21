@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,
@@ -37,7 +38,7 @@ import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/un
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { ThunkDispatch, useDispatch } from 'app/types';
+import { ThunkDispatch, useDispatch } from 'app/types/store';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertingAction, useAlertingAbility } from '../../../features/alerting/unified/hooks/useAbilities';
@@ -249,7 +250,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
         </section>
       )}
       {/* loading moved here to avoid twitching  */}
-      {renderLoading && <LoadingPlaceholder text="Loading..." />}
+      {renderLoading && <LoadingPlaceholder text={t('alertlist.unified-alert-list.text-loading', 'Loading...')} />}
     </ScrollContainer>
   );
 }
@@ -455,7 +456,11 @@ export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>
 
   if (!gmaReadAllowed && !externalReadAllowed) {
     return (
-      <Alert title="Permission required">Sorry, you do not have the required permissions to read alert rules</Alert>
+      <Alert title={t('alertlist.unified-alert-list-panel.title-permission-required', 'Permission required')}>
+        <Trans i18nKey="alertlist.unified-alert-list-panel.body-permission-required">
+          Sorry, you do not have the required permissions to read alert rules.
+        </Trans>
+      </Alert>
     );
   }
 

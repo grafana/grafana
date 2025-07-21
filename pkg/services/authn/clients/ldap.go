@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
@@ -20,8 +22,8 @@ type ldapService interface {
 	User(username string) (*login.ExternalUserInfo, error)
 }
 
-func ProvideLDAP(cfg *setting.Cfg, ldapService ldapService, userService user.Service, authInfoService login.AuthInfoService) *LDAP {
-	return &LDAP{cfg, log.New("authn.ldap"), ldapService, userService, authInfoService}
+func ProvideLDAP(cfg *setting.Cfg, ldapService ldapService, userService user.Service, authInfoService login.AuthInfoService, tracer trace.Tracer) *LDAP {
+	return &LDAP{cfg, log.New("authn.ldap"), ldapService, userService, authInfoService, tracer}
 }
 
 type LDAP struct {
@@ -30,6 +32,7 @@ type LDAP struct {
 	service         ldapService
 	userService     user.Service
 	authInfoService login.AuthInfoService
+	tracer          trace.Tracer
 }
 
 func (c *LDAP) String() string {
@@ -37,6 +40,8 @@ func (c *LDAP) String() string {
 }
 
 func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, _ map[string]string) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.ldap.AuthenticateProxy")
+	defer span.End()
 	info, err := c.service.User(username)
 	if errors.Is(err, multildap.ErrDidNotFindUser) {
 		return c.disableUser(ctx, username)
@@ -50,6 +55,8 @@ func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username
 }
 
 func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.ldap.AuthenticatePassword")
+	defer span.End()
 	info, err := c.service.Login(&login.LoginUserQuery{
 		Username: username,
 		Password: password,
@@ -75,6 +82,8 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 
 // disableUser will disable users if they logged in via LDAP previously
 func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.ldap.disableUser")
+	defer span.End()
 	c.logger.Debug("User was not found in the LDAP directory tree", "username", username)
 	retErr := errIdentityNotFound.Errorf("no user found: %w", multildap.ErrDidNotFindUser)
 

@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
+import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
@@ -35,7 +35,7 @@ const getStatusColor = (state?: SyncStatus['state']) => {
   }
 };
 
-const getJobColumns = (t: TFunction) => [
+const getJobColumns = () => [
   {
     id: 'status',
     header: t('provisioning.recent-jobs.column-status', 'Status'),
@@ -87,7 +87,6 @@ interface ExpandedRowProps {
 }
 
 function ExpandedRow({ row }: ExpandedRowProps) {
-  const { t } = useTranslate();
   const hasSummary = Boolean(row.status?.summary?.length);
   const hasErrors = Boolean(row.status?.errors?.length);
   const hasSpec = Boolean(row.spec);
@@ -163,8 +162,6 @@ function EmptyState() {
 }
 
 function ErrorLoading(typ: string, error: string) {
-  const { t } = useTranslate();
-
   return (
     <Alert
       title={t('provisioning.recent-jobs.error-loading', 'Error loading {{type}}', { type: typ })}
@@ -184,13 +181,12 @@ function Loading() {
 }
 
 export function RecentJobs({ repo }: Props) {
-  const { t } = useTranslate();
   // TODO: Decide on whether we want to wait on historic jobs to show the current ones.
   //   Gut feeling is that current jobs are far more important to show than historic ones.
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
     repositoryName: repo.metadata?.name ?? 'x',
   });
-  const jobColumns = useMemo(() => getJobColumns(t), [t]);
+  const jobColumns = useMemo(() => getJobColumns(), []);
 
   let description: JSX.Element;
   if (activeQuery.isLoading || historicQuery.isLoading) {

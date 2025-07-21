@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Button,
@@ -59,8 +59,6 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
       setDefaultTokenName(`${serviceAccountLogin}-${uuidv4()}`);
     }
   }, [serviceAccountLogin, isOpen]);
-
-  const { t } = useTranslate();
 
   const onExpirationDateChange = (value: Date | string) => {
     const isValid = value !== '';

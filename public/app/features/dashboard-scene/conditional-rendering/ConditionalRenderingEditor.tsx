@@ -1,4 +1,4 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, Stack, Tooltip } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -8,7 +8,6 @@ import { ConditionalRendering } from './ConditionalRendering';
 export function useConditionalRenderingEditor(
   conditionalRendering?: ConditionalRendering
 ): OptionsPaneCategoryDescriptor | null {
-  const { t } = useTranslate();
   if (!conditionalRendering) {
     return null;
   }

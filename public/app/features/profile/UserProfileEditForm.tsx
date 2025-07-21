@@ -1,9 +1,9 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, Input, Tooltip } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import config from 'app/core/config';
-import { UserDTO } from 'app/types';
+import { UserDTO } from 'app/types/user';
 
 import { ProfileUpdateFields } from './types';
 
@@ -16,8 +16,6 @@ export interface Props {
 const { disableLoginForm } = config;
 
 export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props) => {
-  const { t } = useTranslate();
-
   const onSubmitProfileUpdate = (data: ProfileUpdateFields) => {
     updateProfile(data);
   };
@@ -95,8 +93,6 @@ export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props
 export default UserProfileEditForm;
 
 const InputSuffix = () => {
-  const { t } = useTranslate();
-
   return disableLoginForm ? (
     <Tooltip
       content={t(

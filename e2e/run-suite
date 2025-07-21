@@ -26,7 +26,7 @@ declare -A env=(
 )
 
 testFilesForSingleSuite="*.spec.ts"
-rootForEnterpriseSuite="./e2e/extensions-suite"
+rootForEnterpriseSuite="./e2e/extensions"
 rootForOldArch="./e2e/old-arch"
 rootForKubernetesDashboards="./e2e/dashboards-suite"
 rootForSearchDashboards="./e2e/dashboards-search-suite"
@@ -45,6 +45,7 @@ declare -A cypressConfig=(
   [trashAssetsBeforeRuns]=false
   [reporter]=./e2e/log-reporter.js
   [baseUrl]=${BASE_URL:-"http://$HOST:$PORT"}
+  [video]=${CYPRESS_VIDEO:-false}
 )
 
 case "$1" in
@@ -70,8 +71,6 @@ case "$1" in
     "enterprise")
         echo "Enterprise"
         env[SMTP_PLUGIN_ENABLED]=true
-        CLEANUP="rm -rf ./e2e/extensions-suite"
-        SETUP="cp -Lr ./e2e/extensions ./e2e/extensions-suite"
         enterpriseSuite=$(basename "${args[1]}")
         case "$2" in
             "debug")
@@ -87,7 +86,6 @@ case "$1" in
                 ;;
         esac
         cypressConfig[specPattern]=$rootForEnterpriseSuite/$enterpriseSuite/*-suite/*.spec.ts
-        $CLEANUP && $SETUP
         ;;
     "")
         ;;
@@ -153,6 +151,7 @@ case "$1" in
       "dashboard-new-layouts")
       env[kubernetesDashboards]=true
       env[dashboardNewLayouts]=true
+      env[groupByVariable]=true
       cypressConfig[specPattern]=$rootForDashboardNewLayouts/$testFilesForSingleSuite
       cypressConfig[video]=false
           case "$2" in

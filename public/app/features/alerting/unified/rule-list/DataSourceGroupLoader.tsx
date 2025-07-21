@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
@@ -85,7 +85,6 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
         }
       : skipToken
   );
-  const { t } = useTranslate();
 
   const isLoading = isPromResponseLoading || isDsFeaturesLoading || isRulerGroupFetching;
   if (isLoading) {
@@ -142,6 +141,7 @@ export function DataSourceGroupLoader({ groupIdentifier, expectedRulesCount = 3 
             rule={rule}
             groupIdentifier={groupIdentifier}
             application={dsFeatures?.application}
+            showLocation={false}
           />
         ))}
       </>
@@ -195,6 +195,7 @@ export function RulerBasedGroupRules({
             actions={
               <RuleActionsButtons rule={rulerRule} promRule={promRule} groupIdentifier={groupIdentifier} compact />
             }
+            showLocation={false}
           />
         ) : (
           <RuleOperationListItem
@@ -205,6 +206,7 @@ export function RulerBasedGroupRules({
             rulesSource={groupIdentifier.rulesSource}
             application={application}
             operation={RuleOperation.Creating}
+            showLocation={false}
           />
         );
       })}
@@ -217,6 +219,7 @@ export function RulerBasedGroupRules({
           rulesSource={groupIdentifier.rulesSource}
           application={application}
           operation={RuleOperation.Deleting}
+          showLocation={false}
         />
       ))}
     </>

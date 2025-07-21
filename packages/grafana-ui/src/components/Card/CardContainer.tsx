@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { styleMixins, useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
 
 /**
  * @public
@@ -118,7 +119,7 @@ export const getCardContainerStyles = (
           cursor: 'pointer',
           zIndex: 1,
         },
-        '&:focus': styleMixins.getFocusStyles(theme),
+        '&:focus': getFocusStyles(theme),
       }),
 
       ...(isSelectable && {
@@ -149,7 +150,7 @@ export const getCardContainerStyles = (
           cursor: 'pointer',
           zIndex: 1,
         },
-        '&:focus': styleMixins.getFocusStyles(theme),
+        '&:focus': getFocusStyles(theme),
       }),
     }),
   };

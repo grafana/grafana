@@ -6,17 +6,17 @@ import { useOverlay } from '@react-aria/overlays';
 import { FormEvent, useCallback, useRef, useState } from 'react';
 
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2 } from '../../../themes';
-import { Trans, t } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { getInputStyles, Input } from '../../Input/Input';
 import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
-import { quickOptions } from '../options';
+import { getQuickOptions } from '../options';
 
 import {
   isRangeValid,
@@ -39,8 +39,6 @@ type InputState = {
   validation: RangeValidation;
 };
 
-const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
-
 /**
  * @internal
  */
@@ -57,6 +55,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     ref
   );
   const { dialogProps } = useDialog({}, ref);
+  const validOptions = getQuickOptions().filter((o) => isRelativeFormat(o.from));
 
   // the order of middleware is important!
   // see https://floating-ui.com/docs/arrow#order

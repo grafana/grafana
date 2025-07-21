@@ -4,7 +4,7 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Badge,
@@ -55,7 +55,6 @@ const AlertmanagerConfigurationVersionManager = ({
 
   // in here we'll track the configs we are comparing
   const [activeComparison, setActiveComparison] = useState<[left: string, right: string] | undefined>(undefined);
-  const { t } = useTranslate();
 
   const {
     currentData: historicalConfigs = [],
@@ -243,8 +242,14 @@ const AlertmanagerConfigurationVersionManager = ({
       <ConfirmModal
         isOpen={confirmRestore}
         title={t('alerting.alertmanager-configuration-version-manager.title-restore-version', 'Restore version')}
-        body={'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'}
-        confirmText={'Yes, restore configuration'}
+        body={t(
+          'alerting.alertmanager-configuration-version-manager.body-restore-configuration-version-unsaved-changes',
+          'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'
+        )}
+        confirmText={t(
+          'alerting.alertmanager-configuration-version-manager.confirmText-yes-restore-configuration',
+          'Yes, restore configuration'
+        )}
         onConfirm={() => {
           if (activeRestoreVersion) {
             restoreVersion(activeRestoreVersion);

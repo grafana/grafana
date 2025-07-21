@@ -1,4 +1,4 @@
-/* eslint-disable @grafana/no-untranslated-strings */
+/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
@@ -7,7 +7,7 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { allButtonVariants, Button } from '../Button';
+import { allButtonVariants, Button } from '../Button/Button';
 import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Combobox } from '../Combobox/Combobox';

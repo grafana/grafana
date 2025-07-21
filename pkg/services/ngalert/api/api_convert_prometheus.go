@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	amconfig "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
@@ -47,6 +50,14 @@ const (
 	// notificationSettingsHeader is the header that specifies the notification settings to be used for the rules.
 	// The value should be a JSON-encoded AlertRuleNotificationSettings object.
 	notificationSettingsHeader = "X-Grafana-Alerting-Notification-Settings"
+
+	// mergeMatchersHeader is the header that specifies the merge matchers for imported Alertmanager config.
+	// The value should be comma-separated key=value pairs, e.g., "environment=production,team=alerting".
+	mergeMatchersHeader = "X-Grafana-Alerting-Merge-Matchers"
+
+	// configIdentifierHeader is the header that specifies the identifier for imported Alertmanager config.
+	configIdentifierHeader  = "X-Grafana-Alerting-Config-Identifier"
+	defaultConfigIdentifier = "default"
 )
 
 var (
@@ -62,11 +73,6 @@ var (
 		"alerting.recordingRulesNotEnabled",
 		errutil.WithPublicMessage("Cannot import recording rules: Feature not enabled."),
 	).Errorf("recording rules not enabled")
-
-	errRecordingRulesDatasourcesNotEnabled = errutil.ValidationFailed(
-		"alerting.recordingRulesDatasourcesNotEnabled",
-		errutil.WithPublicMessage("Cannot import recording rules: Configuration of target datasources not enabled."),
-	).Errorf("recording rules target datasources configuration not enabled")
 )
 
 func errInvalidHeaderValue(header string, err error) error {
@@ -118,6 +124,13 @@ type ConvertPrometheusSrv struct {
 	datasourceCache  datasources.CacheService
 	alertRuleService *provisioning.AlertRuleService
 	featureToggles   featuremgmt.FeatureToggles
+	am               Alertmanager
+}
+
+type Alertmanager interface {
+	DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error
+	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -127,6 +140,7 @@ func NewConvertPrometheusSrv(
 	datasourceCache datasources.CacheService,
 	alertRuleService *provisioning.AlertRuleService,
 	featureToggles featuremgmt.FeatureToggles,
+	am Alertmanager,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -135,6 +149,7 @@ func NewConvertPrometheusSrv(
 		datasourceCache:  datasourceCache,
 		alertRuleService: alertRuleService,
 		featureToggles:   featureToggles,
+		am:               am,
 	}
 }
 
@@ -163,8 +178,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          folderUIDs,
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               folderUIDs,
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -198,8 +213,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 
 	provenance := getProvenance(c)
 	filterOpts := &provisioning.FilterOptions{
-		NamespaceUIDs:          []string{namespace.UID},
-		ImportedPrometheusRule: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
+		HasPrometheusRuleDefinition: util.Pointer(true),
 	}
 	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
@@ -256,8 +271,8 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetNamespace(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          []string{namespace.UID},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
 	}
 	groups, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -293,9 +308,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	}
 
 	filterOpts := &provisioning.FilterOptions{
-		ImportedPrometheusRule: util.Pointer(true),
-		NamespaceUIDs:          []string{namespace.UID},
-		RuleGroups:             []string{group},
+		HasPrometheusRuleDefinition: util.Pointer(true),
+		NamespaceUIDs:               []string{namespace.UID},
+		RuleGroups:                  []string{group},
 	}
 	groupsWithFolders, err := srv.alertRuleService.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, filterOpts)
 	if err != nil {
@@ -399,11 +414,6 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 					logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
 					return errorToResponse(errRecordingRulesNotEnabled)
 				}
-
-				if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources) {
-					logger.Error("Cannot import recording rules", "error", errRecordingRulesDatasourcesNotEnabled)
-					return errorToResponse(errRecordingRulesDatasourcesNotEnabled)
-				}
 			}
 
 			grafanaGroup, err := srv.convertToGrafanaRuleGroup(
@@ -483,9 +493,12 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 		}
 	}
 	group := prom.PrometheusRuleGroup{
-		Name:     promGroup.Name,
-		Interval: promGroup.Interval,
-		Rules:    rules,
+		Name:        promGroup.Name,
+		Interval:    promGroup.Interval,
+		Rules:       rules,
+		QueryOffset: promGroup.QueryOffset,
+		Limit:       promGroup.Limit,
+		Labels:      promGroup.Labels,
 	}
 
 	converter, err := prom.NewConverter(
@@ -518,6 +531,107 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	}
 
 	return grafanaGroup, nil
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	identifier := parseConfigIdentifierHeader(c)
+
+	mergeMatchers, err := parseMergeMatchersHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse merge matchers header", "error", err, "identifier", identifier)
+		return errorToResponse(err)
+	}
+
+	ec := apimodels.ExtraConfiguration{
+		Identifier:         identifier,
+		MergeMatchers:      mergeMatchers,
+		TemplateFiles:      amCfg.TemplateFiles,
+		AlertmanagerConfig: amCfg.AlertmanagerConfig,
+	}
+	err = ec.Validate()
+	if err != nil {
+		logger.Error("Invalid alertmanager configuration", "error", err, "identifier", identifier)
+		return errorToResponse(err)
+	}
+
+	err = srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), ec)
+	if err != nil {
+		logger.Error("Failed to save alertmanager configuration", "error", err, "identifier", identifier)
+		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
+	}
+
+	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier)
+	return successfulResponse()
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+	ctx := c.Req.Context()
+
+	identifier := parseConfigIdentifierHeader(c)
+
+	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false)
+	if err != nil {
+		logger.Error("failed to get alertmanager configuration", "err", err)
+		return errorToResponse(err)
+	}
+
+	var extraCfg *apimodels.ExtraConfiguration
+	for i := range cfg.ExtraConfigs {
+		if cfg.ExtraConfigs[i].Identifier == identifier {
+			extraCfg = &cfg.ExtraConfigs[i]
+			break
+		}
+	}
+
+	if extraCfg == nil {
+		return response.Error(http.StatusNotFound, "Alertmanager configuration not found", nil)
+	}
+
+	sanitizedConfig, err := extraCfg.GetSanitizedAlertmanagerConfigYAML()
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid Alertmanager configuration format", err)
+	}
+
+	respBody := apimodels.AlertmanagerUserConfig{
+		AlertmanagerConfig: sanitizedConfig,
+		TemplateFiles:      extraCfg.TemplateFiles,
+	}
+
+	resp := response.YAML(http.StatusOK, respBody)
+	resp.SetHeader(configIdentifierHeader, extraCfg.Identifier)
+	resp.SetHeader(mergeMatchersHeader, formatMergeMatchers(extraCfg.MergeMatchers))
+
+	return resp
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	identifier := parseConfigIdentifierHeader(c)
+
+	err := srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
+	if err != nil {
+		logger.Error("Failed to delete alertmanager configuration", "error", err, "identifier", identifier)
+		return errorToResponse(fmt.Errorf("failed to delete alertmanager configuration: %w", err))
+	}
+
+	logger.Info("Successfully deleted extra alertmanager configuration", "identifier", identifier)
+	return successfulResponse()
 }
 
 // parseBooleanHeader parses a boolean header value, returning an error if the header
@@ -641,4 +755,56 @@ func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) ([]models.Not
 	}
 
 	return notificationSettings, nil
+}
+
+// parseMergeMatchersHeader parses the merge matchers header value.
+// Expected format: "key1=value1,key2=value2"
+func parseMergeMatchersHeader(c *contextmodel.ReqContext) (amconfig.Matchers, error) {
+	matchersStr := strings.TrimSpace(c.Req.Header.Get(mergeMatchersHeader))
+
+	if matchersStr == "" {
+		return amconfig.Matchers{}, errInvalidHeaderValue(mergeMatchersHeader, errors.New("value cannot be empty"))
+	}
+
+	matchers := amconfig.Matchers{}
+
+	for pair := range strings.SplitSeq(matchersStr, ",") {
+		parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+		if len(parts) != 2 {
+			return nil, errInvalidHeaderValue(mergeMatchersHeader, errors.New("format should be 'key=value,key2=value2'"))
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		if key == "" || value == "" {
+			return nil, errInvalidHeaderValue(mergeMatchersHeader, errors.New("keys and values cannot be empty"))
+		}
+
+		matchers = append(matchers, &labels.Matcher{
+			Type:  labels.MatchEqual,
+			Name:  key,
+			Value: value,
+		})
+	}
+
+	return matchers, nil
+}
+
+func formatMergeMatchers(matchers amconfig.Matchers) string {
+	var pairs []string
+	for _, matcher := range matchers {
+		if matcher.Type == labels.MatchEqual {
+			pairs = append(pairs, fmt.Sprintf("%s=%s", matcher.Name, matcher.Value))
+		}
+	}
+	return strings.Join(pairs, ",")
+}
+
+func parseConfigIdentifierHeader(c *contextmodel.ReqContext) string {
+	identifier := strings.TrimSpace(c.Req.Header.Get(configIdentifierHeader))
+	if identifier == "" {
+		return defaultConfigIdentifier
+	}
+	return identifier
 }

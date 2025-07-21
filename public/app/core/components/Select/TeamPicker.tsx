@@ -3,10 +3,10 @@ import { isNil } from 'lodash';
 import { Component } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
-import { Team } from 'app/types';
+import { Team } from 'app/types/teams';
 
 export interface Props {
   onSelected: (team: SelectableValue<Team>) => void;
@@ -84,7 +84,7 @@ export class TeamPicker extends Component<Props, State> {
           onChange={onSelected}
           className={className}
           placeholder={t('team-picker.select-placeholder', 'Select a team')}
-          noOptionsMessage="No teams found"
+          noOptionsMessage={t('team-picker.noOptionsMessage-no-teams-found', 'No teams found')}
           aria-label={t('team-picker.select-aria-label', 'Team picker')}
         />
       </div>

@@ -5,8 +5,7 @@ import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
@@ -24,7 +23,7 @@ const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   const scene = context.instanceState?.scene;
 
   const isEditMode = useObservable<boolean>(scene?.editModeEnabled ?? of(false));
-  const { t } = useTranslate();
+
   if (isEditMode && isSelected) {
     return <TextEdit {...props} />;
   }
@@ -174,20 +173,20 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Text'];
+    const category = [t('canvas.text-item.category-text', 'Text')];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: 'Text',
+        name: t('canvas.text-item.name-text', 'Text'),
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: 'Text color',
+        name: t('canvas.text-item.name-text-color', 'Text color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -195,7 +194,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.align',
-        name: 'Align text',
+        name: t('canvas.text-item.name-align-text', 'Align text'),
         settings: {
           options: [
             { value: Align.Left, label: t('canvas.text-item.label.left', 'Left') },
@@ -208,7 +207,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: 'Vertical align',
+        name: t('canvas.text-item.name-vertical-align', 'Vertical align'),
         settings: {
           options: [
             { value: VAlign.Top, label: t('canvas.text-item.label.top', 'Top') },
@@ -221,7 +220,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: 'Text size',
+        name: t('canvas.text-item.name-text-size', 'Text size'),
         settings: {
           placeholder: t('canvas.text-item.placeholder.auto', 'Auto'),
         },

@@ -13,7 +13,7 @@ import {
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
@@ -65,11 +65,25 @@ const ui = {
   webhook: {
     url: byRole('textbox', { name: /^URL/ }),
     tlsConfig: {
-      header: byRole('heading', { name: /TLS/ }),
-      caCertificate: byRole('textbox', { name: /^CA certificate/ }),
-      clientCert: byRole('textbox', { name: /^Client certificate/ }),
-      clientKey: byRole('textbox', { name: /^Client key/ }),
+      container: byTestId('items.0.settings.tlsConfig.container'),
+      caCertificate: byRole('textbox', { name: /^CA Certificate/ }),
+      clientCert: byRole('textbox', { name: /^Client Certificate/ }),
+      clientKey: byRole('textbox', { name: /^Client Key/ }),
       deleteButton: byTestId('items.0.settings.tlsConfig.delete-button'),
+    },
+    httpConfig: {
+      container: byTestId('items.0.settings.http_config.container'),
+      oauth2: {
+        container: byTestId('items.0.settings.http_config.oauth2.container'),
+        clientSecret: byRole('textbox', { name: /^Client Secret/ }),
+        tls_config: {
+          container: byTestId('items.0.settings.http_config.oauth2.tls_config.container'),
+          caCertificate: byRole('textbox', { name: /^CA Certificate/ }),
+          clientCert: byRole('textbox', { name: /^Client Certificate/ }),
+          clientKey: byRole('textbox', { name: /^Client Key/ }),
+          deleteButton: byTestId('items.0.settings.http_config.oauth2.tls_config.delete-button'),
+        },
+      },
     },
     optionalSettings: byRole('button', { name: /optional webhook settings/i }),
   },
@@ -416,6 +430,81 @@ describe('GrafanaReceiverForm', () => {
   });
 
   describe('Webhook contact point', () => {
+    it('should mark secure fields as configured when values exist', async () => {
+      const contactPointName = 'webhook-test';
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .webhook()
+            .params({
+              settings: {
+                url: 'http://example.com',
+                tlsConfig: {
+                  insecureSkipVerify: false,
+                },
+                http_config: {
+                  oauth2: {
+                    client_id: 'client-id',
+                    token_url: 'http://example.com/oauth2/token',
+                    scopes: ['scope1', 'scope2'],
+                    endpoint_params: {
+                      param1: 'value1',
+                      param2: 'value2',
+                    },
+                    tls_config: {
+                      insecureSkipVerify: false,
+                    },
+                    proxy_config: {
+                      proxy_url: 'http://example.com/proxy',
+                      no_proxy: 'example.com',
+                      proxy_from_environment: true,
+                      proxy_connect_header: {
+                        'X-Custom-Header': 'custom-value',
+                      },
+                    },
+                  },
+                },
+              },
+              secureFields: {
+                'tlsConfig.caCertificate': true,
+                'tlsConfig.clientCertificate': true,
+                'tlsConfig.clientKey': true,
+                'http_config.oauth2.client_secret': true,
+                'http_config.oauth2.tls_config.caCertificate': true,
+                'http_config.oauth2.tls_config.clientCertificate': true,
+                'http_config.oauth2.tls_config.clientKey': true,
+              },
+            })
+            .build(),
+        ])
+        .build({ id: 'webhook-id', name: contactPointName, metadata: { name: contactPointName } });
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+      await waitFor(() => expect(ui.webhook.optionalSettings.query()).toBeInTheDocument());
+      await user.click(ui.webhook.optionalSettings.get());
+
+      const tlsContainer = await ui.webhook.tlsConfig.container.find();
+      const caCertField = ui.webhook.tlsConfig.caCertificate.get(tlsContainer);
+      const clientCertField = ui.webhook.tlsConfig.clientCert.get(tlsContainer);
+      const clientKeyField = ui.webhook.tlsConfig.clientKey.get(tlsContainer);
+      expect(caCertField).toHaveValue('configured');
+      expect(clientCertField).toHaveValue('configured');
+      expect(clientKeyField).toHaveValue('configured');
+
+      // Deeply nested secure fields.
+      const oauth2Container = await ui.webhook.httpConfig.oauth2.container.find();
+      const clientSecretField = ui.webhook.httpConfig.oauth2.clientSecret.get(oauth2Container);
+      const oauthCaCertField = ui.webhook.httpConfig.oauth2.tls_config.caCertificate.get(oauth2Container);
+      const oauthClientCertField = ui.webhook.httpConfig.oauth2.tls_config.clientCert.get(oauth2Container);
+      const oauthClientKeyField = ui.webhook.httpConfig.oauth2.tls_config.clientKey.get(oauth2Container);
+      expect(clientSecretField).toHaveValue('configured');
+      expect(oauthCaCertField).toHaveValue('configured');
+      expect(oauthClientCertField).toHaveValue('configured');
+      expect(oauthClientKeyField).toHaveValue('configured');
+    });
+
     it('should properly remove TLS config when deleted', async () => {
       const contactPointName = 'webhook-test';
       const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
@@ -431,6 +520,35 @@ describe('GrafanaReceiverForm', () => {
                   clientKey: 'client-key',
                   insecureSkipVerify: false,
                 },
+                http_config: {
+                  oauth2: {
+                    client_id: 'client-id',
+                    token_url: 'http://example.com/oauth2/token',
+                    scopes: ['scope1', 'scope2'],
+                    endpoint_params: {
+                      param1: 'value1',
+                      param2: 'value2',
+                    },
+                    tls_config: {
+                      // This tls config has existing values via secureFields, delete should remove this correctly as well.
+                      insecureSkipVerify: false,
+                    },
+                    proxy_config: {
+                      proxy_url: 'http://example.com/proxy',
+                      no_proxy: 'example.com',
+                      proxy_from_environment: true,
+                      proxy_connect_header: {
+                        'X-Custom-Header': 'custom-value',
+                      },
+                    },
+                  },
+                },
+              },
+              secureFields: {
+                'http_config.oauth2.client_secret': true,
+                'http_config.oauth2.tls_config.caCertificate': true,
+                'http_config.oauth2.tls_config.clientCertificate': true,
+                'http_config.oauth2.tls_config.clientKey': true,
               },
             })
             .build(),
@@ -448,8 +566,13 @@ describe('GrafanaReceiverForm', () => {
       // Find and click the delete button next to TLS config
       await user.click(ui.webhook.optionalSettings.get());
 
-      expect(await ui.webhook.tlsConfig.header.find(undefined)).toBeInTheDocument();
+      // Delete new tlsConfig values.
+      expect(await ui.webhook.tlsConfig.container.find()).toBeInTheDocument();
       await user.click(await ui.webhook.tlsConfig.deleteButton.find());
+
+      // Delete existing oauth2 values.
+      expect(await ui.webhook.httpConfig.oauth2.tls_config.container.find()).toBeInTheDocument();
+      await user.click(await ui.webhook.httpConfig.oauth2.tls_config.deleteButton.find());
 
       await user.click(ui.saveButton.get());
 
@@ -466,6 +589,12 @@ describe('GrafanaReceiverForm', () => {
       expect(integrationPayload.secureFields).not.toHaveProperty('tlsConfig.caCertificate');
       expect(integrationPayload.secureFields).not.toHaveProperty('tlsConfig.clientCert');
       expect(integrationPayload.secureFields).not.toHaveProperty('tlsConfig.clientKey');
+
+      // Verify that OAuth2 TLS config is not present in the settings
+      expect(integrationPayload.settings).not.toHaveProperty('http_config.oauth2.tls_config');
+      expect(integrationPayload.secureFields).not.toHaveProperty('http_config.oauth2.tls_config.caCertificate');
+      expect(integrationPayload.secureFields).not.toHaveProperty('http_config.oauth2.tls_config.clientCert');
+      expect(integrationPayload.secureFields).not.toHaveProperty('http_config.oauth2.tls_config.clientKey');
 
       expect(postRequestBody).toMatchSnapshot();
     });

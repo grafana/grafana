@@ -1,4 +1,4 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import { AlertManagerDataSource } from '../utils/datasource';
@@ -8,8 +8,6 @@ interface Props {
 }
 
 const NoAlertManagersAvailable = () => {
-  const { t } = useTranslate();
-
   return (
     <Alert
       title={t('alerting.no-alert-managers-available.title-no-alertmanager-found', 'No Alertmanager found')}
@@ -23,8 +21,6 @@ const NoAlertManagersAvailable = () => {
 };
 
 const OtherAlertManagersAvailable = () => {
-  const { t } = useTranslate();
-
   return (
     <Alert
       title={t(

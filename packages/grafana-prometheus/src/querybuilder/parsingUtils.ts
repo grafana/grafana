@@ -36,7 +36,8 @@ const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\
  * parsable and at the same time we can get the variable and its format back from it.
  */
 export function replaceVariables(expr: string) {
-  return expr.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+  const replacedVariables: Record<string, string> = {};
+  const replacedExpr = expr.replace(variableRegex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
     const fmt = fmt2 || fmt3;
     let variable = var1;
     let varType = '0';
@@ -51,8 +52,12 @@ export function replaceVariables(expr: string) {
       varType = '2';
     }
 
-    return `__V_${varType}__` + variable + '__V__' + (fmt ? '__F__' + fmt + '__F__' : '');
+    const replacement = `__V_${varType}__` + variable + '__V__' + (fmt ? '__F__' + fmt + '__F__' : '');
+    replacedVariables[replacement] = match;
+    return replacement;
   });
+
+  return { replacedExpr, replacedVariables };
 }
 
 const varTypeFunc = [
@@ -65,7 +70,7 @@ const varTypeFunc = [
  * Get back the text with variables in their original format.
  * @param expr
  */
-export function returnVariables(expr: string) {
+function returnVariables(expr: string) {
   return expr.replace(/__V_(\d)__(.+?)__V__(?:__F__(\w+)__F__)?/g, (match, type, v, f) => {
     return varTypeFunc[parseInt(type, 10)](v, f);
   });

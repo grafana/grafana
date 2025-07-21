@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 
 	_ "github.com/lib/pq"
@@ -24,6 +25,8 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	cfg := setting.NewCfg()
+	cfg.DataPath = t.TempDir()
 
 	testCases := []struct {
 		desc        string
@@ -144,7 +147,8 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := Service{
-				logger: backend.NewLoggerWith("logger", "tsdb.postgres"),
+				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
+				logger:     backend.NewLoggerWith("logger", "tsdb.postgres"),
 			}
 
 			ds := sqleng.DataSourceInfo{
@@ -155,7 +159,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 				UID:                     tt.uid,
 			}
 
-			connStr, err := svc.generateConnectionString(ds, tt.tlsSettings, false)
+			connStr, err := svc.generateConnectionString(ds)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
@@ -197,11 +201,10 @@ func TestIntegrationPostgres(t *testing.T) {
 	}
 
 	jsonData := sqleng.JsonData{
-		MaxOpenConns:        10,
+		MaxOpenConns:        0,
 		MaxIdleConns:        2,
 		ConnMaxLifetime:     14400,
 		Timescaledb:         false,
-		Mode:                "disable",
 		ConfigurationMethod: "file-path",
 	}
 
@@ -214,7 +217,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	cnnstr := postgresTestDBConnString()
 
-	p, exe, err := newPostgresPGX(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+	db, exe, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 	require.NoError(t, err)
 
@@ -247,7 +250,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				c16_smallint smallint
 			);
 		`
-		_, err := p.Exec(context.Background(), sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		sql = `
@@ -260,7 +263,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				null
 			);
 		`
-		_, err = p.Exec(context.Background(), sql)
+		_, err = db.Exec(sql)
 		require.NoError(t, err)
 
 		t.Run("When doing a table query should map Postgres column types to Go types", func(t *testing.T) {
@@ -275,7 +278,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				},
 			}
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -303,9 +306,9 @@ func TestIntegrationPostgres(t *testing.T) {
 			require.True(t, ok)
 			_, ok = frames[0].Fields[12].At(0).(*time.Time)
 			require.True(t, ok)
-			_, ok = frames[0].Fields[13].At(0).(*string)
+			_, ok = frames[0].Fields[13].At(0).(*time.Time)
 			require.True(t, ok)
-			_, ok = frames[0].Fields[14].At(0).(*string)
+			_, ok = frames[0].Fields[14].At(0).(*time.Time)
 			require.True(t, ok)
 			_, ok = frames[0].Fields[15].At(0).(*time.Time)
 			require.True(t, ok)
@@ -323,7 +326,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				)
 			`
 
-		_, err := p.Exec(context.Background(), sql)
+		_, err := db.Exec(sql)
 		require.NoError(t, err)
 
 		type metric struct {
@@ -350,7 +353,7 @@ func TestIntegrationPostgres(t *testing.T) {
 		}
 
 		for _, m := range series {
-			_, err := p.Exec(context.Background(), `INSERT INTO metric ("time", value) VALUES ($1, $2)`, m.Time.UTC(), m.Value)
+			_, err := db.Exec(`INSERT INTO metric ("time", value) VALUES ($1, $2)`, m.Time.UTC(), m.Value)
 			require.NoError(t, err)
 		}
 
@@ -367,7 +370,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -423,7 +426,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			frames := queryResult.Frames
@@ -451,7 +454,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -505,7 +508,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -531,7 +534,7 @@ func TestIntegrationPostgres(t *testing.T) {
 		}
 
 		for _, m := range series {
-			_, err := p.Exec(context.Background(), `INSERT INTO metric ("time", value) VALUES ($1, $2)`, m.Time.UTC(), m.Value)
+			_, err := db.Exec(`INSERT INTO metric ("time", value) VALUES ($1, $2)`, m.Time.UTC(), m.Value)
 			require.NoError(t, err)
 		}
 
@@ -552,7 +555,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -587,7 +590,7 @@ func TestIntegrationPostgres(t *testing.T) {
 			},
 		}
 
-		resp, err := exe.QueryDataPGX(context.Background(), query)
+		resp, err := exe.QueryData(context.Background(), query)
 		require.NoError(t, err)
 		queryResult := resp.Responses["A"]
 		require.NoError(t, queryResult.Error)
@@ -615,10 +618,10 @@ func TestIntegrationPostgres(t *testing.T) {
 			ValueTwo            int64
 		}
 
-		_, err := p.Exec(context.Background(), "DROP TABLE IF EXISTS metric_values")
+		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
 		require.NoError(t, err)
 
-		_, err = p.Exec(context.Background(), `CREATE TABLE metric_values (
+		_, err = db.Exec(`CREATE TABLE metric_values (
 			"time" TIMESTAMP NULL,
 			"timeInt64" BIGINT NOT NULL, "timeInt64Nullable" BIGINT NULL,
 			"timeFloat64" DOUBLE PRECISION NOT NULL, "timeFloat64Nullable" DOUBLE PRECISION NULL,
@@ -671,7 +674,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 		// _, err = session.InsertMulti(series)
 		for _, m := range series {
-			_, err := p.Exec(context.Background(), `INSERT INTO "metric_values" (
+			_, err := db.Exec(`INSERT INTO "metric_values" (
 				time,
 				"timeInt64", "timeInt64Nullable",
 				"timeFloat64", "timeFloat64Nullable",
@@ -704,7 +707,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(context.Background(), query)
+				resp, err := exe.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -728,7 +731,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(context.Background(), query)
+				resp, err := exe.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -752,7 +755,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(context.Background(), query)
+				resp, err := exe.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -776,7 +779,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(context.Background(), query)
+				resp, err := exe.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -800,7 +803,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(context.Background(), query)
+				resp, err := exe.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -824,7 +827,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(context.Background(), query)
+				resp, err := exe.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -848,7 +851,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(context.Background(), query)
+				resp, err := exe.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -873,7 +876,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := exe.QueryDataPGX(context.Background(), query)
+				resp, err := exe.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -897,7 +900,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -922,7 +925,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -954,7 +957,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -989,7 +992,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1008,9 +1011,9 @@ func TestIntegrationPostgres(t *testing.T) {
 			Tags        string
 		}
 
-		_, err := p.Exec(context.Background(), "DROP TABLE IF EXISTS event")
+		_, err := db.Exec("DROP TABLE IF EXISTS event")
 		require.NoError(t, err)
-		_, err = p.Exec(context.Background(), `CREATE TABLE event (time_sec BIGINT NULL, description VARCHAR(255) NULL, tags VARCHAR(255) NULL)`)
+		_, err = db.Exec(`CREATE TABLE event (time_sec BIGINT NULL, description VARCHAR(255) NULL, tags VARCHAR(255) NULL)`)
 		require.NoError(t, err)
 
 		events := []*event{}
@@ -1028,7 +1031,7 @@ func TestIntegrationPostgres(t *testing.T) {
 		}
 
 		for _, e := range events {
-			_, err := p.Exec(context.Background(), "INSERT INTO event (time_sec, description, tags) VALUES ($1, $2, $3)", e.TimeSec, e.Description, e.Tags)
+			_, err := db.Exec("INSERT INTO event (time_sec, description, tags) VALUES ($1, $2, $3)", e.TimeSec, e.Description, e.Tags)
 			require.NoError(t, err)
 		}
 
@@ -1049,7 +1052,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 
 			queryResult := resp.Responses["Deploys"]
@@ -1076,7 +1079,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 
 			queryResult := resp.Responses["Tickets"]
@@ -1099,7 +1102,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1124,7 +1127,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1149,7 +1152,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1175,7 +1178,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1201,7 +1204,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1227,7 +1230,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1253,7 +1256,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1267,20 +1270,8 @@ func TestIntegrationPostgres(t *testing.T) {
 		})
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
-			jsonData := sqleng.JsonData{
-				MaxOpenConns:        10,
-				MaxIdleConns:        2,
-				ConnMaxLifetime:     14400,
-				Timescaledb:         false,
-				Mode:                "disable",
-				ConfigurationMethod: "file-path",
-			}
-
-			dsInfo := sqleng.DataSourceInfo{
-				JsonData:                jsonData,
-				DecryptedSecureJSONData: map[string]string{},
-			}
-			_, handler, err := newPostgresPGX(context.Background(), "error", 1, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			dsInfo := sqleng.DataSourceInfo{}
+			_, handler, err := newPostgres(context.Background(), "error", 1, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			require.NoError(t, err)
 
@@ -1301,7 +1292,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := handler.QueryDataPGX(context.Background(), query)
+				resp, err := handler.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -1331,7 +1322,7 @@ func TestIntegrationPostgres(t *testing.T) {
 					},
 				}
 
-				resp, err := handler.QueryDataPGX(context.Background(), query)
+				resp, err := handler.QueryData(context.Background(), query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -1347,9 +1338,9 @@ func TestIntegrationPostgres(t *testing.T) {
 	})
 
 	t.Run("Given an empty table", func(t *testing.T) {
-		_, err := p.Exec(context.Background(), "DROP TABLE IF EXISTS empty_obj")
+		_, err := db.Exec("DROP TABLE IF EXISTS empty_obj")
 		require.NoError(t, err)
-		_, err = p.Exec(context.Background(), "CREATE TABLE empty_obj (empty_key VARCHAR(255) NULL, empty_val BIGINT NULL)")
+		_, err = db.Exec("CREATE TABLE empty_obj (empty_key VARCHAR(255) NULL, empty_val BIGINT NULL)")
 		require.NoError(t, err)
 
 		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
@@ -1369,7 +1360,7 @@ func TestIntegrationPostgres(t *testing.T) {
 				},
 			}
 
-			resp, err := exe.QueryDataPGX(context.Background(), query)
+			resp, err := exe.QueryData(context.Background(), query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 
@@ -1393,6 +1384,14 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	}
 
 	return timeRange
+}
+
+type tlsTestManager struct {
+	settings tlsSettings
+}
+
+func (m *tlsTestManager) getTLSSettings(dsInfo sqleng.DataSourceInfo) (tlsSettings, error) {
+	return m.settings, nil
 }
 
 func isTestDbPostgres() bool {

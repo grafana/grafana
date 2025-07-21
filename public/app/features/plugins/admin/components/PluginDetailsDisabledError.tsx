@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 
 import { PluginErrorCode } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';
 
 import { getLatestCompatibleVersion, isDisabledAngularPlugin, isNonAngularVersion } from '../helpers';
@@ -14,7 +14,6 @@ type Props = {
 };
 
 export function PluginDetailsDisabledError({ className, plugin }: Props): ReactElement | null {
-  const { t } = useTranslate();
   if (!plugin.isDisabled) {
     return null;
   }

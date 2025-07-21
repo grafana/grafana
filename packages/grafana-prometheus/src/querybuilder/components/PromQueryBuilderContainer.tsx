@@ -6,15 +6,15 @@ import { PanelData } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromQuery } from '../../types';
-import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
+import { promQueryModeller } from '../shared/modeller_instance';
 import { PromVisualQuery } from '../types';
 
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { QueryPreview } from './QueryPreview';
 import { getSettings, MetricsModalSettings } from './metrics-modal/state/state';
 
-export interface PromQueryBuilderContainerProps {
+interface PromQueryBuilderContainerProps {
   query: PromQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromQuery) => void;
@@ -23,7 +23,7 @@ export interface PromQueryBuilderContainerProps {
   showExplain: boolean;
 }
 
-export interface State {
+interface State {
   visQuery?: PromVisualQuery;
   expr: string;
 }

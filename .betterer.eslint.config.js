@@ -10,6 +10,7 @@ const testingLibraryPlugin = require('eslint-plugin-testing-library');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
+const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
 // Include the Grafana config and remove the rules,
 // as we just want to pull in all of the necessary configuration but not run the rules
@@ -34,7 +35,7 @@ module.exports = [
       'data/',
       'deployment_tools_config.json',
       'devenv',
-      'e2e/test-plugins',
+      'e2e-playwright/test-plugins',
       'e2e/tmp',
       'packages/grafana-ui/src/components/Icon/iconBundle.ts',
       'pkg',
@@ -65,6 +66,7 @@ module.exports = [
       'no-barrel-files': barrelPlugin,
       '@grafana': grafanaPlugin,
       'testing-library': testingLibraryPlugin,
+      '@grafana/i18n': grafanaI18nPlugin,
     },
     linterOptions: {
       // This reports unused disable directives that we can clean up but
@@ -102,6 +104,7 @@ module.exports = [
       '**/__mocks__/**',
       '**/public/test/**',
       '**/mocks.{ts,tsx}',
+      '**/mocks/**/*.{ts,tsx}',
       '**/spec/**/*.{ts,tsx}',
     ],
     rules: {

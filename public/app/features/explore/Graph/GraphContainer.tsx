@@ -11,9 +11,9 @@ import {
   ThresholdsConfig,
   TimeRange,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps } from '@grafana/ui';
-import { ExploreGraphStyle } from 'app/types';
+import { ExploreGraphStyle } from 'app/types/explore';
 
 import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { storeGraphStyle } from '../state/utils';
@@ -65,7 +65,6 @@ export const GraphContainer = ({
   const slicedData = useMemo(() => {
     return showAllSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
   }, [data, showAllSeries]);
-  const { t } = useTranslate();
 
   return (
     <PanelChrome

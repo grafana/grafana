@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig, useStyles2 } from '@grafana/ui';
@@ -15,7 +15,8 @@ import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { mixedRequestId } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { StoreState, ExploreItemState } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
 
 import { GetDataOptions } from '../query/state/PanelQueryRunner';
 
@@ -30,7 +31,6 @@ interface DispatchProps {
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { t } = useTranslate();
   const { onClose, queryResponse, timeZone, isMixed, exploreId } = props;
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,

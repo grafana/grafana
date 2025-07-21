@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import {
   createContext,
   Dispatch,
@@ -6,6 +7,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -20,24 +22,36 @@ import {
   shallowCompare,
   store,
 } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
-import { DownloadFormat, downloadLogs as download } from '../../utils';
+import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
+import { getDisplayedFieldsForLogs } from '../otel/formats';
 
-import { GetRowContextQueryFn } from './LogLineMenu';
+import { LogLineDetailsMode } from './LogLineDetails';
+import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
+import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
+import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
   detailsDisplayed: (log: LogListModel) => boolean;
+  detailsMode: LogLineDetailsMode;
   detailsWidth: number;
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
-  hasUnescapedContent?: boolean;
+  forceEscape: boolean;
+  hasLogsWithErrors?: boolean;
+  hasSampledLogs?: boolean;
+  hasUnescapedContent: boolean;
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
+  setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
+  setFontSize: (size: LogListFontSize) => void;
   setForceEscape: (forceEscape: boolean) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
@@ -56,15 +70,21 @@ export const LogListContext = createContext<LogListContextData>({
   closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
   detailsDisplayed: () => false,
+  detailsMode: 'sidebar',
   detailsWidth: 0,
   displayedFields: [],
   downloadLogs: () => {},
   enableLogDetails: false,
   filterLevels: [],
+  forceEscape: false,
+  fontSize: 'default',
   hasUnescapedContent: false,
+  noInteractions: false,
   setDedupStrategy: () => {},
+  setDetailsMode: () => {},
   setDetailsWidth: () => {},
   setFilterLevels: () => {},
+  setFontSize: () => {},
   setForceEscape: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
@@ -104,9 +124,9 @@ export const useLogIsPermalinked = (log: LogListModel) => {
 export type LogListState = Pick<
   LogListContextData,
   | 'dedupStrategy'
+  | 'fontSize'
   | 'forceEscape'
   | 'filterLevels'
-  | 'hasUnescapedContent'
   | 'pinnedLogs'
   | 'prettifyJSON'
   | 'showUniqueLabels'
@@ -119,19 +139,22 @@ export type LogListState = Pick<
 export interface Props {
   app: CoreApp;
   children?: ReactNode;
+  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
+  detailsMode?: LogLineDetailsMode;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   enableLogDetails: boolean;
   filterLevels?: LogLevel[];
-  forceEscape?: boolean;
-  hasUnescapedContent?: boolean;
+  fontSize: LogListFontSize;
   getRowContextQuery?: GetRowContextQueryFn;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
+  logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
+  noInteractions?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterString?: (value: string, refId?: string) => void;
@@ -148,6 +171,7 @@ export interface Props {
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   prettifyJSON?: boolean;
+  setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showUniqueLabels?: boolean;
   showTime: boolean;
@@ -161,17 +185,19 @@ export const LogListContextProvider = ({
   children,
   containerElement,
   enableLogDetails,
+  detailsMode: detailsModeProp,
   dedupStrategy,
   displayedFields,
   filterLevels,
-  forceEscape = false,
-  hasUnescapedContent,
+  fontSize,
   isLabelFilterActive,
   getRowContextQuery,
   logs,
+  logLineMenuCustomItems,
   logsMeta,
   logOptionsStorageKey,
   logSupportsContext,
+  noInteractions,
   onClickFilterLabel,
   onClickFilterOutLabel,
   onClickFilterString,
@@ -188,6 +214,7 @@ export const LogListContextProvider = ({
   pinLineButtonTooltipTitle,
   pinnedLogs,
   prettifyJSON,
+  setDisplayedFields,
   showControls,
   showTime,
   showUniqueLabels,
@@ -199,8 +226,8 @@ export const LogListContextProvider = ({
     dedupStrategy,
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
-    forceEscape,
-    hasUnescapedContent,
+    fontSize,
+    forceEscape: logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.forceEscape`, false) : false,
     pinnedLogs,
     prettifyJSON,
     showTime,
@@ -210,6 +237,37 @@ export const LogListContextProvider = ({
     wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
+  const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+
+  useEffect(() => {
+    if (noInteractions) {
+      return;
+    }
+    reportInteractionOnce(`logs_log_list_${app}_logs_displayed`, {
+      dedupStrategy,
+      fontSize,
+      forceEscape: logListState.forceEscape,
+      showTime,
+      syntaxHighlighting,
+      wrapLogMessage,
+      detailsWidth,
+      detailsMode,
+      withDisplayedFields: displayedFields.length > 0,
+    });
+    // Just once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
+      return;
+    }
+    const otelDisplayedFields = getDisplayedFieldsForLogs(logs);
+    if (otelDisplayedFields.length) {
+      setDisplayedFields(otelDisplayedFields);
+    }
+  }, [displayedFields.length, logs, setDisplayedFields]);
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -243,22 +301,46 @@ export const LogListContextProvider = ({
     if (filterLevels === undefined) {
       return;
     }
-    if (!shallowCompare(logListState.filterLevels, filterLevels)) {
-      setLogListState({ ...logListState, filterLevels });
-    }
-  }, [filterLevels, logListState]);
+    setLogListState((logListState) => {
+      if (!shallowCompare(logListState.filterLevels, filterLevels)) {
+        return { ...logListState, filterLevels };
+      }
+      return logListState;
+    });
+  }, [filterLevels]);
 
   useEffect(() => {
-    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
-      setLogListState({ ...logListState, hasUnescapedContent });
-    }
-  }, [hasUnescapedContent, logListState]);
+    setLogListState((logListState) => ({ ...logListState, fontSize }));
+  }, [fontSize]);
 
   useEffect(() => {
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
       setLogListState({ ...logListState, pinnedLogs });
     }
   }, [logListState, pinnedLogs]);
+
+  useEffect(() => {
+    if (!showDetails.length) {
+      return;
+    }
+    const newShowDetails = showDetails.filter(
+      (expandedLog) => logs.findIndex((log) => log.uid === expandedLog.uid) >= 0
+    );
+    if (newShowDetails.length !== showDetails.length) {
+      setShowDetails(newShowDetails);
+    }
+  }, [logs, showDetails]);
+
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      setDetailsWidthState((detailsWidth) => getDetailsWidth(containerElement, logOptionsStorageKey, detailsWidth));
+    }, 50);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [containerElement, logOptionsStorageKey]);
 
   const detailsDisplayed = useCallback(
     (log: LogListModel) => !!showDetails.find((shownLog) => shownLog.uid === log.uid),
@@ -271,6 +353,16 @@ export const LogListContextProvider = ({
       onLogOptionsChange?.('dedupStrategy', dedupStrategy);
     },
     [logListState, onLogOptionsChange]
+  );
+
+  const setFontSize = useCallback(
+    (fontSize: LogListFontSize) => {
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.fontSize`, fontSize);
+      }
+      setLogListState((logListState) => ({ ...logListState, fontSize }));
+    },
+    [logOptionsStorageKey]
   );
 
   const setForceEscape = useCallback(
@@ -374,20 +466,22 @@ export const LogListContextProvider = ({
   );
 
   const closeDetails = useCallback(() => {
+    showDetails.forEach((log) => removeDetailsScrollPosition(log));
     setShowDetails([]);
-  }, []);
+  }, [showDetails]);
 
   const toggleDetails = useCallback(
     (log: LogListModel) => {
       if (!enableLogDetails) {
         return;
       }
-      const found = showDetails.findIndex((stateLog) => stateLog === log || stateLog.uid === log.uid);
-      if (found >= 0) {
+      const found = showDetails.find((stateLog) => stateLog === log || stateLog.uid === log.uid);
+      if (found) {
+        removeDetailsScrollPosition(found);
         setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
       } else {
         // Supporting one displayed details for now
-        setShowDetails([log]);
+        setShowDetails([...showDetails, log]);
       }
     },
     [enableLogDetails, showDetails]
@@ -395,18 +489,24 @@ export const LogListContextProvider = ({
 
   const setDetailsWidth = useCallback(
     (width: number) => {
-      if (!logOptionsStorageKey) {
+      if (!logOptionsStorageKey || !containerElement) {
         return;
       }
+
+      const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+      if (width > maxWidth) {
+        return;
+      }
+
       store.set(`${logOptionsStorageKey}.detailsWidth`, width);
+      setDetailsWidthState(width);
     },
-    [logOptionsStorageKey]
+    [containerElement, logOptionsStorageKey]
   );
 
-  const defaultWidth = (containerElement?.clientWidth ?? 0) * 0.4;
-  const detailsWidth = logOptionsStorageKey
-    ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
-    : defaultWidth;
+  const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
+  const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
+  const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
   return (
     <LogListContext.Provider
@@ -415,16 +515,23 @@ export const LogListContextProvider = ({
         closeDetails,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
-        detailsWidth: detailsWidth || defaultWidth,
+        detailsMode,
+        detailsWidth,
         displayedFields,
         downloadLogs,
         enableLogDetails,
         filterLevels: logListState.filterLevels,
+        fontSize: logListState.fontSize,
         forceEscape: logListState.forceEscape,
-        hasUnescapedContent: logListState.hasUnescapedContent,
+        hasLogsWithErrors,
+        hasSampledLogs,
+        hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
+        logLineMenuCustomItems,
+        logOptionsStorageKey,
+        noInteractions: noInteractions ?? false,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
@@ -441,8 +548,11 @@ export const LogListContextProvider = ({
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
+        setDetailsMode,
         setDetailsWidth,
+        setDisplayedFields,
         setFilterLevels,
+        setFontSize,
         setForceEscape,
         setLogListState,
         setPinnedLogs,
@@ -478,3 +588,51 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
     value === LogsDedupStrategy.signature
   );
 }
+
+// Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+function getDetailsWidth(
+  containerElement: HTMLDivElement | undefined,
+  logOptionsStorageKey?: string,
+  currentWidth?: number
+) {
+  if (!containerElement) {
+    return 0;
+  }
+  const defaultWidth = containerElement.clientWidth * 0.4;
+  const detailsWidth =
+    currentWidth ||
+    (logOptionsStorageKey
+      ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`) ?? defaultWidth, 10)
+      : defaultWidth);
+
+  const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+
+  // The user might have resized the screen.
+  if (detailsWidth >= containerElement.clientWidth || detailsWidth > maxWidth) {
+    return currentWidth ?? defaultWidth;
+  }
+  return detailsWidth;
+}
+
+const detailsScrollMap = new Map<string, number>();
+
+export function saveDetailsScrollPosition(log: LogListModel, position: number) {
+  detailsScrollMap.set(log.uid, position);
+}
+
+export function getDetailsScrollPosition(log: LogListModel) {
+  return detailsScrollMap.get(log.uid) ?? 0;
+}
+
+export function removeDetailsScrollPosition(log: LogListModel) {
+  detailsScrollMap.delete(log.uid);
+}
+
+const reportInteractionOnce = (interactionName: string, properties?: Record<string, unknown>) => {
+  const key = `logs.log-list-context.events.${interactionName}`;
+  if (sessionStorage.getItem(key)) {
+    return;
+  }
+  sessionStorage.setItem(key, '1');
+  reportInteraction(interactionName, properties);
+};

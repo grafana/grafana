@@ -1,4 +1,4 @@
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, Stack, Text } from '@grafana/ui';
 
 import { MigrateDataResponseItemDto } from '../api';
@@ -11,8 +11,18 @@ interface ResourceDetailsModalProps {
   onClose: () => void;
 }
 
-function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode'], t: TFunction): string {
+function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string {
   switch (errorCode) {
+    case 'ALERT_RULES_QUOTA_REACHED':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.alert-rules-quota-reached',
+        'Maximum number of alert rules reached: Delete some alert rules or upgrade your plan and try again.'
+      );
+    case 'ALERT_RULES_GROUP_QUOTA_REACHED':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.alert-rules-group-quota-reached',
+        'Maximum number of alert rule groups reached: Delete some alert rule groups or upgrade your plan and try again.'
+      );
     case 'DATASOURCE_NAME_CONFLICT':
       return t(
         'migrate-to-cloud.resource-details.error-messages.datasource-name-conflict',
@@ -75,11 +85,10 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode'], t: TFun
 }
 
 export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
-  const { t } = useTranslate();
   const { resource, onClose } = props;
 
   const refId = resource?.refId;
-  const typeName = resource && prettyTypeName(resource.type, t);
+  const typeName = resource && prettyTypeName(resource.type);
   const hasError = resource?.errorCode || resource?.message;
 
   let msgTitle = t('migrate-to-cloud.resource-details.generic-title', 'Resource migration details:');
@@ -107,9 +116,11 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
             <>
               <Text element="p">{msgTitle}</Text>
               <Text element="p">
-                {getTMessage(resource?.errorCode, t) ||
-                  resource?.message ||
-                  'There has been an error while migrating. Please check the cloud migration logs for more information.'}
+                {getTMessage(resource?.errorCode) || resource?.message || (
+                  <Trans i18nKey="migrate-to-cloud.resource-details.error-messages.generic-error">
+                    There has been an error while migrating. Please check the cloud migration logs for more information.
+                  </Trans>
+                )}
               </Text>
             </>
           ) : (

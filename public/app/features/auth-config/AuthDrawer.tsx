@@ -3,10 +3,10 @@ import { JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Text, TextLink, Switch, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { loadSettings, saveSettings } from './state/actions';
 
@@ -83,7 +83,6 @@ export const AuthDrawerUnconnected = ({
   );
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <Drawer

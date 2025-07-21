@@ -5,12 +5,12 @@ import { useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { useGrafana } from '../../../core/context/GrafanaContext';
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
@@ -98,7 +98,7 @@ export interface SoloPanelProps extends State {
 
 export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: SoloPanelProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   if (notFound) {
     return (
       <Alert

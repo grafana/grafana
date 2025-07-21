@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
@@ -11,7 +11,6 @@ export interface ViewJsonModalProps {
 }
 
 export function ViewJsonModal({ json, onDismiss }: ViewJsonModalProps): JSX.Element {
-  const { t } = useTranslate();
   const getClipboardText = useCallback(() => json, [json]);
   return (
     <Modal

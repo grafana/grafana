@@ -32,6 +32,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -276,12 +277,14 @@ func InstallAPIs(
 	serverLock ServerLockService,
 	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
+	features featuremgmt.FeatureToggles,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
 	var dualWrite grafanarest.DualWriteBuilder
 	metrics := newBuilderMetrics(reg)
+	dualWriterMetrics := grafanarest.NewDualWriterMetrics(reg)
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
@@ -335,11 +338,10 @@ func InstallAPIs(
 				ServerLockService:      serverLock,
 				DataSyncerInterval:     dataSyncerInterval,
 				DataSyncerRecordsLimit: dataSyncerRecordsLimit,
-				Reg:                    reg,
 			}
 
 			// This also sets the currentMode on the syncer config.
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg)
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
 			if err != nil {
 				return nil, err
 			}
@@ -357,7 +359,7 @@ func InstallAPIs(
 			if dualWriterPeriodicDataSyncJobEnabled {
 				// The mode might have changed in SetDualWritingMode, so apply current mode first.
 				syncerCfg.Mode = currentMode
-				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg); err != nil {
+				if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
 					return nil, err
 				}
 			}
@@ -400,6 +402,25 @@ func InstallAPIs(
 			if len(g.PrioritizedVersions) < 1 {
 				continue
 			}
+
+			// if grafanaAPIServerWithExperimentalAPIs is not enabled, remove v0alpha1 resources unless explicitly allowed
+			if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+				if resources, ok := g.VersionedResourcesStorageMap["v0alpha1"]; ok {
+					for name := range resources {
+						if !allowRegisteringResourceByInfo(b.AllowedV0Alpha1Resources(), name) {
+							delete(resources, name)
+						}
+					}
+					if len(resources) == 0 {
+						delete(g.VersionedResourcesStorageMap, "v0alpha1")
+					}
+				}
+			}
+		}
+
+		// skip installing the group if there are no resources left after filtering
+		if len(g.VersionedResourcesStorageMap) == 0 {
+			continue
 		}
 
 		err := server.InstallAPIGroup(&g)
@@ -432,4 +453,17 @@ func AddPostStartHooks(
 		}
 	}
 	return nil
+}
+
+func allowRegisteringResourceByInfo(allowedResources []string, name string) bool {
+	// trim any subresources from the name
+	name = strings.Split(name, "/")[0]
+
+	for _, allowedResource := range allowedResources {
+		if allowedResource == name || allowedResource == AllResourcesAllowed {
+			return true
+		}
+	}
+
+	return false
 }

@@ -4,11 +4,10 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-
-import { StoreState } from '../../types';
+import { StoreState } from 'app/types/store';
 
 import { AnonUsersDevicesTable } from './Users/AnonUsersTable';
 import { fetchUsersAnonymousDevices, changeAnonUserSort, changeAnonPage, changeAnonQuery } from './state/actions';
@@ -54,7 +53,6 @@ const UserListAnonymousDevicesPageUnConnected = ({
   useEffect(() => {
     fetchUsersAnonymousDevices();
   }, [fetchUsersAnonymousDevices]);
-  const { t } = useTranslate();
 
   return (
     <Page.Contents>

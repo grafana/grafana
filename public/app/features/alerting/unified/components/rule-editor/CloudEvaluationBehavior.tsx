@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Field, Input, Select, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -20,7 +20,6 @@ export const CloudEvaluationBehavior = () => {
     watch,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
-  const { t } = useTranslate();
 
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');

@@ -28,8 +28,8 @@ const defaultProps = {
     languageProvider: {
       start: () => Promise.resolve([]),
       syntax: () => {},
-      getLabelKeys: () => [],
-      metrics: [],
+      // getLabelKeys: () => [],
+      retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource,
   query: {

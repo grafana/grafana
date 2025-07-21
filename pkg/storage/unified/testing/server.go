@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -19,6 +20,7 @@ import (
 // RunStorageServerTest runs the storage server test suite
 func RunStorageServerTest(t *testing.T, newBackend NewBackendFunc) {
 	runTestResourcePermissionScenarios(t, newBackend(context.Background()), GenerateRandomNSPrefix())
+	runTestListTrashAccessControl(t, newBackend(context.Background()), GenerateRandomNSPrefix())
 }
 
 // func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
@@ -267,11 +269,233 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 	}
 }
 
+// runTestListTrashAccessControl tests the access control logic for ListTrash
+func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	// Create two different users
+	testUserA := &identity.StaticRequester{
+		Type:           types.TypeUser,
+		Login:          "testuserA",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true, // admin user
+	}
+
+	testUserB := &identity.StaticRequester{
+		Type:           types.TypeUser,
+		Login:          "testuserB",
+		UserID:         456,
+		UserUID:        "u456",
+		OrgRole:        identity.RoleEditor,
+		IsGrafanaAdmin: false, // non-admin user
+	}
+
+	mockAccess := &mockAccessClient{
+		allowed: true, // Allow regular access
+		compileFn: func(user types.AuthInfo, req types.ListRequest) types.ItemChecker {
+			return func(name, folder string) bool {
+				if req.Verb == utils.VerbSetPermissions {
+					if requester, ok := user.(identity.Requester); ok && requester.GetIsGrafanaAdmin() {
+						return true // Admin users can access trash
+					}
+					return false // Non-admin users cannot access trash
+				}
+				return false
+			}
+		},
+	}
+
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: mockAccess,
+	})
+	require.NoError(t, err)
+
+	// Create a resource and delete it with user A
+	ctxA := types.WithAuthInfo(context.Background(), testUserA)
+
+	raw := []byte(`{
+		"apiVersion": "playlist.grafana.app/v0alpha1",
+		"kind": "Playlist",
+		"metadata": {
+			"name": "trash-test-playlist",
+			"uid": "trash-xyz",
+			"namespace": "` + nsPrefix + `-trash-test",
+			"annotations": {
+				"grafana.app/repoName": "elsewhere",
+				"grafana.app/repoPath": "path/to/item",
+				"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
+			}
+		},
+		"spec": {
+			"title": "trash test",
+			"interval": "5m",
+			"items": [
+				{
+					"type": "dashboard_by_uid",
+					"value": "vmie2cmWz"
+				}
+			]
+		}
+	}`)
+
+	key := &resourcepb.ResourceKey{
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+		Namespace: nsPrefix + "-trash-test",
+		Name:      "trash-test-playlist",
+	}
+
+	// Create the resource with user A
+	created, err := server.Create(ctxA, &resourcepb.CreateRequest{
+		Value: raw,
+		Key:   key,
+	})
+	require.NoError(t, err)
+	require.Nil(t, created.Error)
+
+	// Delete the resource with user A
+	deleted, err := server.Delete(ctxA, &resourcepb.DeleteRequest{
+		Key:             key,
+		ResourceVersion: created.ResourceVersion,
+	})
+	require.NoError(t, err)
+	require.True(t, deleted.ResourceVersion > created.ResourceVersion)
+
+	// Test 1: Admin user (user A) should be able to list trash and see their own deleted resource
+	trashList, err := server.List(ctxA, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_TRASH,
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Namespace: key.Namespace,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, trashList.Error)
+	require.Len(t, trashList.Items, 1, "Admin user should see the deleted resource in trash")
+
+	// Test 2: Non-admin user (user B) who didn't delete the resource should NOT see it in trash
+	ctxB := types.WithAuthInfo(context.Background(), testUserB)
+	trashListB, err := server.List(ctxB, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_TRASH,
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Namespace: key.Namespace,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, trashListB.Error)
+	require.Len(t, trashListB.Items, 0, "Non-admin user who didn't delete the resource should not see it in trash")
+
+	// Test 3: Create and delete another resource with user B
+	keyB := &resourcepb.ResourceKey{
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+		Namespace: nsPrefix + "-trash-test",
+		Name:      "trash-test-playlist-b",
+	}
+
+	rawB := []byte(`{
+		"apiVersion": "playlist.grafana.app/v0alpha1",
+		"kind": "Playlist",
+		"metadata": {
+			"name": "trash-test-playlist-b",
+			"uid": "trash-xyz-b",
+			"namespace": "` + nsPrefix + `-trash-test",
+			"annotations": {
+				"grafana.app/repoName": "elsewhere",
+				"grafana.app/repoPath": "path/to/item",
+				"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
+			}
+		},
+		"spec": {
+			"title": "trash test b",
+			"interval": "5m",
+			"items": [
+				{
+					"type": "dashboard_by_uid",
+					"value": "vmie2cmWz"
+				}
+			]
+		}
+	}`)
+
+	// Create the resource with user B
+	createdB, err := server.Create(ctxB, &resourcepb.CreateRequest{
+		Value: rawB,
+		Key:   keyB,
+	})
+	require.NoError(t, err)
+	require.Nil(t, createdB.Error)
+
+	// Delete the resource with user B
+	deletedB, err := server.Delete(ctxB, &resourcepb.DeleteRequest{
+		Key:             keyB,
+		ResourceVersion: createdB.ResourceVersion,
+	})
+	require.NoError(t, err)
+	require.True(t, deletedB.ResourceVersion > createdB.ResourceVersion)
+
+	// Test 4: User B should see their own deleted resource in trash
+	trashListB2, err := server.List(ctxB, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_TRASH,
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     keyB.Group,
+				Resource:  keyB.Resource,
+				Namespace: keyB.Namespace,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, trashListB2.Error)
+	require.Len(t, trashListB2.Items, 1, "User should see their own deleted resource in trash")
+
+	// Test 5: Admin user should see both deleted resources
+	trashListA2, err := server.List(ctxA, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_TRASH,
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     key.Group,
+				Resource:  key.Resource,
+				Namespace: key.Namespace,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, trashListA2.Error)
+	require.Len(t, trashListA2.Items, 2, "Admin user should see all deleted resources in trash")
+
+	// Test 6: Verify the trash items have the correct metadata
+	for _, item := range trashListA2.Items {
+		var obj map[string]interface{}
+		err := json.Unmarshal(item.Value, &obj)
+		require.NoError(t, err)
+
+		// Check that the item has deletion timestamp
+		metadata, ok := obj["metadata"].(map[string]interface{})
+		require.True(t, ok, "Resource should have metadata")
+		require.NotNil(t, metadata["deletionTimestamp"], "Trash item should have deletion timestamp")
+
+		// Check that the item has the correct updatedBy field
+		annotations, ok := metadata["annotations"].(map[string]interface{})
+		require.True(t, ok, "Resource should have annotations")
+		require.Contains(t, annotations, "grafana.app/updatedBy", "Trash item should have updatedBy annotation")
+	}
+}
+
 // Mock access client for testing
 type mockAccessClient struct {
 	allowed    bool
 	allowedMap map[string]bool
 	checkFn    func(types.CheckRequest)
+	compileFn  func(user types.AuthInfo, req types.ListRequest) types.ItemChecker
 }
 
 func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req types.CheckRequest) (types.CheckResponse, error) {
@@ -291,6 +515,9 @@ func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req t
 }
 
 func (m *mockAccessClient) Compile(ctx context.Context, user types.AuthInfo, req types.ListRequest) (types.ItemChecker, error) {
+	if m.compileFn != nil {
+		return m.compileFn(user, req), nil
+	}
 	return func(name, folder string) bool {
 		key := fmt.Sprintf("%s:%s", folder, req.Verb)
 		if allowed, exists := m.allowedMap[key]; exists {

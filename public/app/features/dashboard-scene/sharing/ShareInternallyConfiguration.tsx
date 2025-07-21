@@ -1,5 +1,5 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Label, Spinner, Stack, Switch } from '@grafana/ui';
 
 import { ThemePicker } from '../../dashboard/components/ShareModal/ThemePicker';
@@ -25,8 +25,6 @@ export default function ShareInternallyConfiguration({
   selectedTheme,
   isLoading,
 }: Props) {
-  const { t } = useTranslate();
-
   return (
     <Stack justifyContent="space-between">
       <Stack gap={2} direction="column">
@@ -44,6 +42,7 @@ export default function ShareInternallyConfiguration({
                 'link.share.time-range-description',
                 'Change the current relative time range to an absolute time range'
               )}
+              id="time-range-description"
             >
               <Trans i18nKey="link.share.time-range-label">Lock time range</Trans>
             </Label>

@@ -2,11 +2,14 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
-import { Button, DataLinkButton, Icon, Stack } from '..';
-import { useStyles2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ActionButton } from '../Actions/ActionButton';
+import { Button } from '../Button/Button';
+import { DataLinkButton } from '../DataLinks/DataLinkButton';
+import { Icon } from '../Icon/Icon';
+import { Stack } from '../Layout/Stack/Stack';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
 
 interface VizTooltipFooterProps {

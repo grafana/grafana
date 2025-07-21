@@ -16,7 +16,7 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -135,7 +135,7 @@ type ReferenceItemProps = {
 export function References(props: ReferenceItemProps) {
   const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <div className={styles.AccordianReferencesContent}>
       {data.map((reference, i) => (
@@ -176,7 +176,6 @@ export function References(props: ReferenceItemProps) {
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
                 label={t('explore.references.label-attributes', 'attributes')}
-                linksGetter={null}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>

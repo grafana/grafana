@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -e
 local_dir="${DRONE_WORKSPACE}/dist"
 

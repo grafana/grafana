@@ -2,11 +2,11 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LinkButton } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { panelToRuleFormValues } from '../../utils/rule-form';
@@ -29,7 +29,6 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
     // Templating variables are required to update formValues on each variable's change. It's used implicitly by the templating engine
     [panel, dashboard, templating]
   );
-  const { t } = useTranslate();
 
   if (loading) {
     return (

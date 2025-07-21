@@ -4,6 +4,7 @@ import { memo, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } f
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';
@@ -243,7 +244,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
     <div ref={topLevelRef} className={styles.wrapper}>
       {loading ? (
         <div className={styles.loadingWrapper}>
-          Computing layout&nbsp;
+          <Trans i18nKey="nodeGraph.node-graph.computing-layout">Computing layout</Trans>&nbsp;
           <Spinner />
         </div>
       ) : null}
@@ -289,6 +290,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
                 onMouseLeave={clearEdgeHover}
                 svgIdNamespace={svgIdNamespace}
                 processedNodesLength={processed.nodes.length}
+                processedEdgesLength={processed.edges.length}
               />
             )}
             <Nodes
@@ -305,7 +307,9 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
           </g>
         </svg>
       ) : (
-        <div className={styles.noDataMsg}>No data</div>
+        <div className={styles.noDataMsg}>
+          <Trans i18nKey="nodeGraph.node-graph.no-data">No data</Trans>
+        </div>
       )}
 
       <div className={styles.viewControls}>
@@ -342,9 +346,11 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
         <div
           className={styles.alert}
           style={{ top: panelId ? '0px' : '40px' }} // panelId is undefined in Explore
-          aria-label={'Nodes hidden warning'}
+          aria-label={t('nodeGraph.node-graph.aria-label-nodes-hidden-warning', 'Nodes hidden warning')}
         >
-          <Icon size="sm" name={'info-circle'} /> {hiddenNodesCount} nodes are hidden for performance reasons.
+          <Trans i18nKey="nodeGraph.node-graph.hidden-nodes" count={hiddenNodesCount}>
+            <Icon size="sm" name={'info-circle'} /> {'{{count}}'} nodes are hidden for performance reasons.
+          </Trans>
         </div>
       )}
 
@@ -352,10 +358,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
         <div
           className={styles.alert}
           style={{ top: panelId ? '30px' : '70px' }}
-          aria-label={'Layered layout performance warning'}
+          aria-label={t(
+            'nodeGraph.node-graph.aria-label-layered-layout-performance-warning',
+            'Layered layout performance warning'
+          )}
         >
-          <Icon size="sm" name={'exclamation-triangle'} /> Layered layout may be slow with {processed.nodes.length}{' '}
-          nodes.
+          <Trans i18nKey="nodeGraph.node-graph.processed-nodes" count={processed.nodes.length}>
+            <Icon size="sm" name={'exclamation-triangle'} /> Layered layout may be slow with {'{{count}}'} nodes.
+          </Trans>
         </div>
       )}
 
@@ -421,26 +431,28 @@ interface EdgesProps {
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
   processedNodesLength: number;
+  processedEdgesLength: number;
 }
 const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
-      {props.edges.map((e) => (
-        <Edge
-          key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}`}
-          edge={e}
-          hovering={
-            (e.source as NodeDatum).id === props.nodeHoveringId ||
-            (e.target as NodeDatum).id === props.nodeHoveringId ||
-            props.edgeHoveringId === e.id
-          }
-          onClick={props.onClick}
-          onMouseEnter={props.onMouseEnter}
-          onMouseLeave={props.onMouseLeave}
-          svgIdNamespace={props.svgIdNamespace}
-          processedNodesLength={props.processedNodesLength}
-        />
-      ))}
+      {props.edges.map((e, index) => {
+        return (
+          <Edge
+            key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}-${props.processedEdgesLength}-${index}`}
+            edge={e}
+            hovering={
+              (e.source as NodeDatum).id === props.nodeHoveringId ||
+              (e.target as NodeDatum).id === props.nodeHoveringId ||
+              props.edgeHoveringId === e.id
+            }
+            onClick={props.onClick}
+            onMouseEnter={props.onMouseEnter}
+            onMouseLeave={props.onMouseLeave}
+            svgIdNamespace={props.svgIdNamespace}
+          />
+        );
+      })}
     </>
   );
 });
@@ -453,7 +465,7 @@ interface EdgeLabelsProps {
 const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   return (
     <>
-      {props.edges.map((e, index) => {
+      {props.edges.map((e) => {
         // We show the edge label in case user hovers over the edge directly or if they hover over node edge is
         // connected to.
         const shouldShow =

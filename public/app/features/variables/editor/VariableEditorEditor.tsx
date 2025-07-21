@@ -5,12 +5,11 @@ import { bindActionCreators } from 'redux';
 
 import { GrafanaTheme2, LoadingState, SelectableValue, VariableHide, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, Themeable2, withTheme2 } from '@grafana/ui';
+import { StoreState, ThunkDispatch } from 'app/types/store';
 
-import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -175,7 +174,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
           <VariableTextField
             value={this.props.editor.name}
             onChange={this.onNameChange}
-            name="Name"
+            name={t('variables.variable-editor-editor-un-connected.name-name', 'Name')}
             placeholder={t('variables.variable-editor-editor-un-connected.placeholder-variable-name', 'Variable name')}
             description={t(
               'variables.variable-editor-editor-un-connected.description-template-variable-characters',
@@ -189,7 +188,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
           />
 
           <VariableTextField
-            name="Label"
+            name={t('variables.variable-editor-editor-un-connected.name-label', 'Label')}
             description={t(
               'variables.variable-editor-editor-un-connected.description-optional-display-name',
               'Optional display name'
@@ -200,7 +199,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
             testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
           />
           <VariableTextAreaField
-            name="Description"
+            name={t('variables.variable-editor-un-connected.name-description', 'Description')}
             value={variable.description ?? ''}
             placeholder={t(
               'variables.variable-editor-editor-un-connected.placeholder-descriptive-text',

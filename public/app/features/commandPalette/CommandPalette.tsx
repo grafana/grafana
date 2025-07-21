@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
@@ -15,12 +15,8 @@ import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
-import {
-  useRegisterRecentDashboardsActions,
-  useRegisterRecentScopesActions,
-  useRegisterScopesActions,
-  useRegisterStaticActions,
-} from './actions/useActions';
+import { useRegisterRecentScopesActions, useRegisterScopesActions } from './actions/scopeActions';
+import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
@@ -42,24 +38,28 @@ function CommandPaletteContents() {
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, showing, searchQuery, currentRootActionId } = useKBar((state) => ({
+  const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
     currentRootActionId: state.currentRootActionId,
   }));
 
-  useRegisterRecentDashboardsActions(searchQuery);
+  useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
 
-  // Dashboards and folders
-  const { searchResults, isFetchingSearchResults } = useSearchResults(searchQuery, showing);
+  // This searches dashboards and folders it shows only if we are not in some specific category (and there is no
+  // dashboards category right now, so if any category is selected, we don't show these).
+  // Normally we register actions with kbar, and it knows not to show actions which are under a different parent than is
+  // the currentRootActionId. Because these search results are manually added to the list later, they would show every
+  // time.
+  const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
-    { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
+    { isOpen: true, onClose: () => query.setVisualState(VisualState.animatingOut) },
     ref
   );
 
@@ -69,7 +69,6 @@ function CommandPaletteContents() {
   useEffect(() => {
     reportInteraction('command_palette_opened');
   }, []);
-  const { t } = useTranslate();
 
   return (
     <KBarPositioner className={styles.positioner}>
@@ -138,7 +137,7 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   const { results: kbarResults, rootActionId } = useMatches();
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
-  const { t } = useTranslate();
+
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
   // because dashboard search results aren't registered as actions, we need to manually

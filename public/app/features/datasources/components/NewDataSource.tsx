@@ -1,21 +1,19 @@
 import { Action } from 'redux';
 
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
-import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from 'app/types';
+import { DataSourcePluginCategory } from 'app/types/datasources';
+import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
 import { DataSourceCategories } from '../components/DataSourceCategories';
 import { DataSourceTypeCardList } from '../components/DataSourceTypeCardList';
-import {
-  useAddDatasource,
-  useLoadDataSourcePlugins,
-  getFilteredDataSourcePlugins,
-  setDataSourceTypeSearchQuery,
-} from '../state';
+import { useAddDatasource, useLoadDataSourcePlugins } from '../state/hooks';
+import { setDataSourceTypeSearchQuery } from '../state/reducers';
+import { getFilteredDataSourcePlugins } from '../state/selectors';
 
 export function NewDataSource() {
   useLoadDataSourcePlugins();
@@ -57,8 +55,6 @@ export function NewDataSourceView({
   onAddDataSource,
   onSetSearchQuery,
 }: ViewProps) {
-  const { t } = useTranslate();
-
   if (isLoading) {
     return <PageLoader />;
   }

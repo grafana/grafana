@@ -3,9 +3,9 @@ import { memo, useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
-import { FolderInfo } from 'app/types';
+import { FolderInfo } from 'app/types/folders';
 
 import { FolderFilter } from '../../../../core/components/FolderFilter/FolderFilter';
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
@@ -52,8 +52,6 @@ export const LibraryPanelsSearch = ({
   const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderUID ? [currentFolderUID] : []);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
 
-  const { t } = useTranslate();
-
   const sortOrFiltersVisible = showSort || showPanelFilter || showFolderFilter;
   const verticalGroupSpacing = variant === LibraryPanelsSearchVariant.Tight ? 'lg' : 'xs';
 
@@ -71,7 +69,7 @@ export const LibraryPanelsSearch = ({
               onChange={setSearchQuery}
               placeholder={t(
                 'library-panels.library-panels-search.placeholder-search-by-name-or-description',
-                'Search by name or description'
+                'Search by name, description or folder name'
               )}
               width={0}
               escapeRegex={false}

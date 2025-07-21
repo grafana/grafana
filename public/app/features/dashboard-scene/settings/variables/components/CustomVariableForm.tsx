@@ -2,7 +2,7 @@ import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
 import { TextArea } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -46,9 +46,9 @@ export function CustomVariableForm({
       </VariableLegend>
 
       <VariableTextAreaField
-        name="Values separated by comma"
+        name={t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'Values separated by comma')}
         defaultValue={query}
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
         onBlur={onQueryChange}
         required
@@ -73,8 +73,6 @@ export function CustomVariableForm({
 }
 
 export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
-  const { t } = useTranslate();
-
   if (!(variable instanceof CustomVariable)) {
     return [];
   }
@@ -89,7 +87,6 @@ export function getCustomVariableOptions(variable: SceneVariable): OptionsPaneIt
 
 function ValuesTextField({ variable }: { variable: CustomVariable }) {
   const { query } = variable.useState();
-  const { t } = useTranslate();
 
   const onBlur = async (event: FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ query: event.currentTarget.value });

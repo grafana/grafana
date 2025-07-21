@@ -8,12 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestService(t *testing.T) {
 	ctx := context.Background()
-	mode := ProvideService(featuremgmt.WithFeatures(), nil, nil)
+	mode := ProvideService(featuremgmt.WithFeatures(), nil, kvstore.NewFakeKVStore(), nil)
 
 	gr := schema.GroupResource{Group: "ggg", Resource: "rrr"}
 	status, err := mode.Status(ctx, gr)

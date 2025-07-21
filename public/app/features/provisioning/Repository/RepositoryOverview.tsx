@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning';
+import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { formatTimestamp } from '../utils/time';
@@ -20,7 +20,7 @@ function getColumnCount(hasWebhook: boolean): 3 | 4 {
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const status = repo.status;
   const webhookURL = getWebhookURL(repo);
   const columns = getColumnCount(Boolean(repo.status?.webhook));

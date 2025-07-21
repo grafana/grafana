@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
-import { Alert, Icon, ScrollContainer } from '@grafana/ui';
+import { Alert, ScrollContainer, TextLink } from '@grafana/ui';
 
 import { News } from './component/News';
 import { DEFAULT_FEED_URL } from './constants';
@@ -33,19 +34,22 @@ export function NewsPanel(props: NewsPanelProps) {
 
   if (state.error) {
     return (
-      <Alert title="Error loading RSS feed">
-        Make sure that the feed URL is correct and that CORS is configured correctly on the server. See{' '}
-        <a
-          style={{ textDecoration: 'underline' }}
-          href="https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/news/"
-        >
-          News panel documentation. <Icon name="external-link-alt" />
-        </a>
+      <Alert title={t('news.news-panel.title-error-loading-rss-feed', 'Error loading RSS feed')}>
+        <Trans i18nKey="news.news-panel.body-error-loading-rss-feed">
+          Make sure that the feed URL is correct and that CORS is configured correctly on the server. See{' '}
+          <TextLink href="https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/news/" external>
+            News panel documentation.
+          </TextLink>
+        </Trans>
       </Alert>
     );
   }
   if (state.loading) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Trans i18nKey="news.news-panel.loading">Loading...</Trans>
+      </div>
+    );
   }
 
   if (!state.value) {

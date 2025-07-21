@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip, Icon, InteractiveTable, type CellProps, Column, Stack } from '@grafana/ui';
-import { LdapRole } from 'app/types';
+import { LdapRole } from 'app/types/ldap';
 
 interface Props {
   groups: LdapRole[];
@@ -10,7 +10,6 @@ interface Props {
 
 export const LdapUserGroups = ({ groups }: Props) => {
   const items = useMemo(() => groups, [groups]);
-  const { t } = useTranslate();
 
   const columns = useMemo<Array<Column<LdapRole>>>(
     () => [
@@ -43,7 +42,7 @@ export const LdapUserGroups = ({ groups }: Props) => {
           ),
       },
     ],
-    [t]
+    []
   );
 
   return (

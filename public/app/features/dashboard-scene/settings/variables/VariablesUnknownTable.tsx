@@ -3,7 +3,7 @@ import { ReactElement, useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
@@ -76,7 +76,6 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
 
 function CollapseLabel(): ReactElement {
   const style = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <h5>

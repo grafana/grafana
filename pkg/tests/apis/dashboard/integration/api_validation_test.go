@@ -58,11 +58,10 @@ type TestContext struct {
 // TestIntegrationValidation tests the dashboard K8s API
 func TestIntegrationValidation(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping integration test2")
+		t.Skip("skipping integration test")
 	}
 
-	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -71,6 +70,7 @@ func TestIntegrationValidation(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
+					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
@@ -79,6 +79,36 @@ func TestIntegrationValidation(t *testing.T) {
 				}})
 
 			testIntegrationValidationForServer(t, helper, dualWriterMode)
+		})
+	}
+
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
+			// Create a K8sTestHelper which will set up a real API server
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+				DisableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesDashboards,
+				},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				}})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+			t.Run("Dashboard permission tests", func(t *testing.T) {
+				runDashboardPermissionTests(t, org1Ctx, false)
+			})
 		})
 	}
 }
@@ -106,7 +136,7 @@ func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper
 		})
 
 		t.Run("Dashboard permission tests", func(t *testing.T) {
-			runDashboardPermissionTests(t, org1Ctx)
+			runDashboardPermissionTests(t, org1Ctx, true)
 		})
 
 		t.Run("Dashboard LIST API test", func(t *testing.T) {
@@ -396,17 +426,10 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash1)
 
-			// Try to update with the second copy (should fail with version conflict for mode 0, 4 and 5, but not for mode 1, 2 and 3)
-			updatedDash2, err := updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
-			if ctx.DualWriterMode == rest.Mode1 || ctx.DualWriterMode == rest.Mode2 || ctx.DualWriterMode == rest.Mode3 {
-				require.NoError(t, err)
-				require.NotNil(t, updatedDash2)
-				meta, _ := utils.MetaAccessor(updatedDash2)
-				require.Equal(t, "Updated by second user", meta.FindTitle(""), "Dashboard title should be updated")
-			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
-			}
+			// Try to update with the second copy. Should fail with version conflict.
+			_, err = updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
 
 			// Clean up
 			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
@@ -436,6 +459,31 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 			// Clean up
 			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("dashboard version history available, even for UIDs ending in hyphen", func(t *testing.T) {
+			dashboardUID := "test-dashboard-"
+			dash, err := createDashboard(t, adminClient, "Dashboard with uid ending in hyphen", nil, &dashboardUID)
+			require.NoError(t, err)
+
+			updatedDash, err := updateDashboard(t, adminClient, dash, "Updated dashboard with uid ending in hyphen", nil)
+			require.NoError(t, err)
+			require.NotNil(t, updatedDash)
+
+			labelSelector := utils.LabelKeyGetHistory + "=true"
+			fieldSelector := "metadata.name=" + dashboardUID
+			versions, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
+				LabelSelector: labelSelector,
+				FieldSelector: fieldSelector,
+				Limit:         10,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, versions)
+			// one from initial save, one from update
+			require.Equal(t, len(versions.Items), 2)
+
+			err = adminClient.Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -1207,7 +1255,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 }
 
 // Run tests for dashboard permissions
-func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
+func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashboardsEnabled bool) {
 	t.Helper()
 
 	// Get clients for each user
@@ -1330,8 +1378,22 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 		// Clean up dashboard
 		err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 		require.NoError(t, err)
-		err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
-		require.NoError(t, err)
+
+		if kubernetesDashboardsEnabled {
+			// In case kubernetesDashboards feature flag is set to true,
+			// we don't grant admin permission to dashboard creator on nested folders.
+			// This means that the viewer will not be able to delete the dashboard.
+			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.Error(t, err)
+			err = adminClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		} else {
+			// In case kubernetesDashboards feature flag is set to false,
+			// we grant admin permission to dashboard creator on nested folders.
+			// This means that the viewer will be able to delete the dashboard.
+			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		}
 
 		// Clean up the folder
 		err = adminFolderClient.Resource.Delete(context.Background(), folderUID, v1.DeleteOptions{})
@@ -2399,4 +2461,29 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 		}
 	})
+}
+
+func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, user apis.User) (map[string]interface{}, error) {
+	bodyJSON, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	resp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        user,
+		Method:      http.MethodPost,
+		Path:        path,
+		Body:        bodyJSON,
+		ContentType: "application/json",
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to post: %s", resp.Response.Status)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(resp.Body, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+	}
+
+	return result, nil
 }

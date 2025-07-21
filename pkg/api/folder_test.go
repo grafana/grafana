@@ -440,7 +440,9 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{"parent title", "subfolder title"},
 			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("subfolder")},
 			},
 		},
 		{
@@ -453,6 +455,19 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			expectedParentTitles: []string{REDACTED, REDACTED},
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+			},
+		},
+		{
+			description:          "get folder by UID should return some parent folder titles and some parent folders as redacted if nested folder are enabled and user only has read access to some parent folders",
+			URL:                  "/api/folders/uid",
+			expectedCode:         http.StatusOK,
+			features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedParentUIDs:   []string{REDACTED, "subfolder"},
+			expectedParentOrgIDs: []int64{0, 0},
+			expectedParentTitles: []string{REDACTED, "subfolder title"},
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("subfolder")},
 			},
 		},
 		{

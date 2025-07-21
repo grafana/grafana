@@ -67,13 +67,21 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
 ## Enable alerting high availability using Redis
 
-As an alternative to Memberlist, you can use Redis for high availability. This is useful if you want to have a central
-database for HA and cannot support the meshing of all Grafana servers.
+As an alternative to Memberlist, you can configure Redis to enable high availability. Redis standalone, Redis Cluster and Redis Sentinel modes are supported.
+
+{{< admonition type="note" >}}
+
+Memberlist is the preferred option for high availability. Use Redis only in environments where direct communication between Grafana servers is not possible, such as when TCP or UDP ports are blocked.
+
+{{< /admonition >}}
 
 1. Make sure you have a Redis server that supports pub/sub. If you use a proxy in front of your Redis cluster, make sure the proxy supports pub/sub.
 1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
-1. Set `ha_redis_address` to the Redis server address Grafana should connect to.
+1. Set `ha_redis_address` to the Redis server address or addresses Grafana should connect to. It can be a single Redis address if using Redis standalone, or a list of comma-separated addresses if using Redis Cluster or Sentinel.
+1. Optional: Set `ha_redis_cluster_mode_enabled` to `true` if you are using Redis Cluster.
+1. Optional: Set `ha_redis_sentinel_mode_enabled` to `true` if you are using Redis Sentinel. Also set `ha_redis_sentinel_master_name` to the Redis Sentinel master name.
 1. Optional: Set the username and password if authentication is enabled on the Redis server using `ha_redis_username` and `ha_redis_password`.
+1. Optional: Set the username and password if authentication is enabled on Redis Sentinel using `ha_redis_sentinel_username` and `ha_redis_sentinel_password`.
 1. Optional: Set `ha_redis_prefix` to something unique if you plan to share the Redis server with multiple Grafana instances.
 1. Optional: Set `ha_redis_tls_enabled` to `true` and configure the corresponding `ha_redis_tls_*` fields to secure communications between Grafana and Redis with Transport Layer Security (TLS).
 1. Set `[ha_advertise_address]` to `ha_advertise_address = "${POD_IP}:9094"` This is required if the instance doesn't have an IP address that is part of RFC 6890 with a default route.
@@ -155,13 +163,13 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
 When running multiple Grafana instances, all alert rules are evaluated on every instance. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` do not show any alert status.
 
 The HA settings (`ha_peers`, etc.) apply only to communication between alertmanagers, synchronizing silences and attempting to avoid duplicate notifications, as described in the introduction.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can also confirm your high availability setup by monitoring Alertmanager metrics exposed by Grafana.
 

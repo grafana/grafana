@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, FieldSet, Input, TextArea, useStyles2 } from '@grafana/ui';
 
 import { useCorrelationsFormContext } from './correlationsFormContext';
@@ -22,7 +22,7 @@ export const ConfigureCorrelationBasicInfoForm = () => {
   const { register, formState } = useFormContext<FormDTO>();
   const styles = useStyles2(getStyles);
   const { correlation, readOnly } = useCorrelationsFormContext();
-  const { t } = useTranslate();
+
   return (
     <>
       <FieldSet label={t('correlations.basic-info-form.title', 'Define correlation label (Step 1 of 3)')}>

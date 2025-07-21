@@ -6,137 +6,138 @@
     "advanced-resource-picker": {
       "aria-label-add": "Ekle",
       "aria-label-remove": "Kaldır",
-      "button-add-resource": "",
-      "button-add-resource-uri": "",
+      "button-add-resource": "Kaynak ekle",
+      "button-add-resource-uri": "Kaynak URI'si ekle",
       "label-namespace": "Ad alanı",
-      "label-region": "",
-      "label-resource-group": "",
-      "label-resource-name": "",
-      "label-resource-number": "",
-      "label-resource-uri": "",
-      "label-subscription": "",
+      "label-region": "Bölge",
+      "label-resource-group": "Kaynak Grubu",
+      "label-resource-name": "Kaynak Adı",
+      "label-resource-number": "Kaynak {{resourceNum}}",
+      "label-resource-uri": "Kaynak URI'leri ",
+      "label-subscription": "Abonelik",
       "placeholder-resource-name": "ad",
-      "tooltip-region": "",
-      "tooltip-resource-uri": ""
+      "tooltip-region": "Kaynağın kod bölgesi. Bir kaynak için isteğe bağlıdır ancak birden fazla kaynak seçildiğinde zorunludur.",
+      "tooltip-resource-uri": "<2>Kaynak URI'sini</2> manuel olarak düzenleyin. Birden fazla şablon değişkeni kullanımını destekler (örnek: /subscriptions/$subId/resourceGroups/$rg)"
     },
     "aggregate-item": {
-      "aria-label-aggregate-function": "",
+      "aria-label-aggregate-function": "Toplama işlevi",
       "aria-label-column": "Sütun",
       "aria-label-remove": "Kaldır",
       "label-percentile": "-"
     },
     "aggregate-section": {
-      "label-aggregate": "",
-      "tooltip-aggregate": ""
+      "label-aggregate": "Toplama",
+      "tooltip-aggregate": "Veri satırlarında sayma, toplama, ortalama, minimum, maksimum, standart sapma veya yüzdelikler gibi işlemler yapın."
     },
     "aggregation-field": {
-      "label-aggregation": ""
+      "label-aggregation": "Toplama"
     },
     "app-registration-credentials": {
-      "aria-label-azure-cloud": "",
-      "aria-label-client-id": "",
-      "aria-label-client-secret": "",
-      "aria-label-symbol-client-secret": "",
-      "aria-label-tenant-id": "",
-      "label-azure-cloud": "",
-      "label-client-id": "",
-      "label-client-secret": "",
-      "label-symbol-client-secret": "",
-      "label-tenant-id": "",
-      "placeholder-symbol-client-secret": "",
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "İstemci kimliği",
+      "aria-label-client-secret": "İstemci gizli anahtarı",
+      "aria-label-symbol-client-secret": "İstemci gizli anahtarı",
+      "aria-label-tenant-id": "Kiracı kimliği",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "Uygulama (istemci) kimliği",
+      "label-client-secret": "İstemci gizli anahtarı",
+      "label-symbol-client-secret": "İstemci gizli anahtarı",
+      "label-tenant-id": "Dizin (kiracı) kimliği",
+      "placeholder-symbol-client-secret": "yapılandırılmış",
       "reset-symbol-client-secret": "Sıfırla"
     },
     "azure-cheat-sheet": {
-      "aria-label-raw-query": "",
-      "aria-label-use-query": "",
-      "button-use-query": "",
-      "label-categories": "",
-      "label-query-results": "",
-      "placeholder-all-categories": "",
-      "placeholder-search-logs": "",
+      "aria-label-raw-query": "{{queryDisplayName}} ham sorgusu",
+      "aria-label-use-query": "Bu sorgu düğmesini kullanın",
+      "button-use-query": "Bu sorguyu kullanın",
+      "label-categories": "Kategoriler",
+      "label-query-results": "Sorgu sonuçları: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "Tüm kategoriler",
+      "placeholder-search-logs": "Günlük sorgusu ara",
       "text-loading": "Yükleniyor..."
     },
     "azure-cheat-sheet-modal": {
-      "aria-label-kick-start": "",
-      "title-kick-start": ""
+      "aria-label-kick-start": "Sorgu modülünüzü hızlı başlatın",
+      "title-kick-start": "Sorgunuzu hızlı başlatın"
     },
     "azure-credentials-form": {
-      "description-authentication": "",
+      "description-authentication": "Azure hizmetleri için kimlik doğrulama türünü seçin",
       "label-authentication": "Kimlik doğrulama",
       "title-authentication": "Kimlik doğrulama"
     },
     "basic-logs-toggle": {
-      "aria-label-enable-basic-logs": "",
-      "description-basic-logs": "",
-      "label-enable-basic-logs": ""
+      "aria-label-enable-basic-logs": "Temel Günlükler",
+      "description-basic-logs": "Bu özelliğin etkinleştirilmesi, <2>Temel Günlükler</2> için yapılandırılmış tabloları sorgulayan pano panellerinde Azure Monitor sorgu başına maliyetlerinin oluşmasına neden olur.",
+      "label-enable-basic-logs": "Temel Günlükleri Etkinleştir"
     },
     "config-editor": {
-      "description-additional-settings": "",
-      "description-request-timeout": "",
+      "description-additional-settings": "Ek ayarlar, veri kaynağınız üzerinde daha fazla kontrol sağlamak için yapılandırılabilen isteğe bağlı ayarlardır. Buna Güvenli Socks Proxy de dâhildir.",
+      "description-request-timeout": "İstek zaman aşımı süresini saniye cinsinden ayarlayın. Varsayılan 30 saniye.",
       "title-additional-settings": "Ek ayarlar",
-      "title-request-timeout": ""
+      "title-request-timeout": "İstek Zaman Aşımı"
     },
     "current-user-fallback-credentials": {
-      "alert-fallback-credentials-disabled": "",
-      "body-service-credentials": "",
-      "description-authentication": "",
-      "description-service-credentials": "",
+      "alert-fallback-credentials-disabled": "Yedek kimlik bilgileri devre dışı bırakıldı. Kullanıcı tabanlı kimlik doğrulama doğası gereği yalnızca bir kullanıcının dâhil olduğu istekleri desteklediğinden uyarı, kayıtlı sorgular veya raporlama gibi özellikler beklendiği gibi çalışmayabilir. Daha fazla ayrıntı için lütfen <2>belgeleri</2> inceleyin.",
+      "body-service-credentials": "Kullanıcı tabanlı kimlik doğrulama doğası gereği istek için kullanılabilir bir kullanıcı bilgisi olmadan veri kaynağına istek gönderen Grafana özelliklerini desteklemez. Uyarılar bu duruma örnek olarak verilebilir. İstek anında bir kullanıcı bağlamı olmayan özelliklerin çalışmaya devam etmesini sağlamak istiyorsanız lütfen aşağıya yedek kimlik bilgilerini girin.",
+      "description-authentication": "Azure hizmetleri için kimlik doğrulama türünü seçin",
+      "description-service-credentials": "Bu veri kaynağı için yedek hizmet kimlik bilgilerinin etkinleştirilip etkinleştirilmeyeceğini seçin",
       "label-authentication": "Kimlik doğrulama",
-      "label-service-credentials": "",
-      "note-service-credentials": "",
-      "title-fallback-credentials-disabled": "",
-      "title-fallback-service-credentials": "",
-      "title-service-credentials": ""
+      "label-service-credentials": "Hizmet Kimlik Bilgileri",
+      "note-service-credentials": "Not: Uyarı gibi özellikler, kullanıcı yerine yedek kimlik bilgilerinin erişim düzeyiyle sınırlı olacaktır. Bu durum, kullanıcılar arasında kafa karışıklığına yol açabilir ve netleştirilmesi gerekir.",
+      "title-fallback-credentials-disabled": "Yedek Kimlik Bilgileri Devre Dışı",
+      "title-fallback-service-credentials": "Yedek Hizmet Kimlik Bilgileri",
+      "title-service-credentials": "Hizmet Kimlik Bilgileri"
     },
     "default-subscription": {
-      "aria-label-default-subscription": "",
-      "label-default-subscription": "",
-      "load-subscriptions": ""
+      "aria-label-default-subscription": "Varsayılan Abonelik",
+      "label-default-subscription": "Varsayılan Abonelik",
+      "load-subscriptions": "Abonelikleri Yükle"
     },
     "dimension-fields": {
       "aria-label-remove": "Kaldır",
-      "label-dimensions": "",
+      "label-dimensions": "Boyutlar",
       "placeholder-field": "Alan",
       "placeholder-operation": "Çalıştırma",
       "placeholder-select-value": "Değer seçin",
-      "placeholder-select-values": ""
+      "placeholder-select-values": "Değerleri seçin"
     },
     "editor-for-query-type": {
-      "body-unknown-query-type": "",
-      "title-unknown-query-type": ""
+      "body-unknown-query-type": "{{type}} Grafana 9'da kullanımdan kaldırıldı. Sorgularınızı nasıl taşıyacağınız hakkında daha fazla bilgi edinmek için <3>kullanımdan kaldırma bildirimine</3> bakın. Geçerli sorgu tanımı şudur:",
+      "title-unknown-query-type": "Bilinmeyen sorgu türü"
     },
     "filter": {
-      "aria-label-remove-filter": "",
-      "placeholder-property": "",
+      "aria-label-remove-filter": "Filtreyi kaldır",
+      "placeholder-property": "Özellik",
       "placeholder-value": "Değer"
     },
     "filter-item": {
       "aria-label-column": "Sütun",
-      "aria-label-column-value": "",
+      "aria-label-column-value": "Sütun değeri",
       "aria-label-operator": "İşleç",
-      "label-or": ""
+      "label-or": "VEYA"
     },
     "filter-section": {
       "label-add-group": "Grup ekle",
       "label-and": "VE",
-      "label-filters": "",
-      "tooltip-filters": ""
+      "label-filters": "Filtreler",
+      "tooltip-filters": "Belirli sütunlara koşullar uygulayarak sonuçları daraltın."
     },
     "filters": {
-      "label-filters": ""
+      "label-filters": "Filtreler"
     },
     "format-as-field": {
-      "label-format-as": ""
+      "label-format-as": "Farklı biçimlendir"
     },
     "fuzzy-search": {
-      "aria-label-select-column": "",
-      "label-fuzzy-search": "",
-      "placeholder-search-team": "",
-      "tooltip-fuzzy-search": ""
+      "aria-label-select-column": "Sütunu seçin",
+      "label-fuzzy-search": "Benzer Öge Arama",
+      "placeholder-search-team": "Arama terimi girin",
+      "tooltip-fuzzy-search": "Hatalı yazılmış olsalar bile uygun metin eşleşmelerini bulun. Varsayılan olarak, benzer öge arama yalnızca belirli alanları değil, tablo genelindeki tüm sütunları (*) tarar."
     },
     "grafana-template-variable-fn-input": {
-      "label-grafana-template-variable": "",
-      "placeholder-grafana-template-variable": ""
+      "label-grafana-template-variable": "Grafana şablon değişkeni işlevi",
+      "placeholder-grafana-template-variable": "Bir Grafana şablon değişkeni işlevi yazın, ör. {{example}}"
     },
     "group-by-item": {
       "aria-label-column": "Sütun",
@@ -144,148 +145,160 @@
     },
     "group-by-section": {
       "label-group-by": "Gruplama ölçütü",
-      "tooltip-group-by": ""
+      "tooltip-group-by": "Sonuçları belirtilen sütunlara göre kategorilere ayırın. Gruplandırma, seçilen sütunlardaki tekil değerleri listelemek için tek başına kullanılabileceği gibi, her grup için özet istatistikleri üretmek üzere toplama işlevleriyle birlikte de kullanılabilir. Tek başına kullanıldığında, belirtilen sütunların farklı kombinasyonlarını döndürür."
     },
     "kql-preview": {
       "button-hide": "Gizle",
       "button-show": "Göster",
-      "label-query-preview": ""
+      "label-query-preview": "Sorgu Ön İzlemesi"
     },
     "legend-format-field": {
-      "label-legend-format": "",
-      "placeholder-legend-format": ""
+      "label-legend-format": "Gösterge biçimi",
+      "placeholder-legend-format": "Takma ad kalıpları"
     },
     "limit-section": {
       "label-limit": "Sınırlama",
-      "placeholder-limit": "",
-      "tooltip-limit": ""
+      "placeholder-limit": "Sınır girin",
+      "tooltip-limit": "Döndürülen satır sayısını kısıtlayın (varsayılan 1000'dir)."
     },
     "logs-management": {
-      "description-basic-logs-queries": "",
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "Temel Günlük sorguları, taranan veri miktarına bağlı olarak maliyet doğurur.",
       "label-logs": "Günlük kayıtları",
-      "title-basic-logs-queries": "",
-      "tooltip-logs": ""
+      "title-basic-logs-queries": "Temel Günlük Sorguları",
+      "tooltip-logs": "Temel veya Analitik Günlükleri sorgusunun çalıştırılıp çalıştırılmayacağını belirtir."
     },
     "logs-query-builder": {
-      "title-no-tables": ""
+      "title-no-tables": "Kaynak başarıyla yüklendi ancak herhangi bir tablo yok"
     },
     "logs-query-editor": {
-      "learn-more": "",
-      "view-query": ""
+      "learn-more": "Daha Fazla Bilgi Edinin",
+      "view-query": "Sorguyu Azure Portal'da görüntüleyin"
     },
     "metric-name-field": {
       "label-metric": "Metrik"
     },
     "metric-namespace-field": {
-      "label-metric-namespace": ""
+      "label-metric-namespace": "Metrik ad alanı"
     },
     "nested-row": {
       "text-loading": "Yükleniyor..."
     },
     "order-by-section": {
-      "aria-label-order-by-column": "",
-      "aria-label-order-direction": "",
-      "label-by": "",
-      "label-order-by": "",
-      "tooltip-order-by": ""
+      "aria-label-order-by-column": "Sütuna göre sırala",
+      "aria-label-order-direction": "Sıralama Yönü",
+      "label-by": "ÖLÇÜT",
+      "label-order-by": "Sıralama Ölçütü",
+      "tooltip-order-by": "Sonuçları bir veya daha fazla sütuna göre artan veya azalan düzende sıralayın."
     },
     "query-editor": {
-      "alert-error-occurred": ""
+      "alert-error-occurred": "Azure Monitor'dan meta veriler istenirken bir hata oluştu"
     },
     "query-header": {
-      "aria-label-kick-start": "",
-      "button-kick-start-your-query": "",
+      "aria-label-kick-start": "Azure günlükleri sorgu hızlı başlatma düğmesi",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "Sorgunuzu hızlı başlatın",
       "button-run-query": "Sorgu çalıştır",
-      "label-service": "",
-      "placeholder-service": "",
-      "title-switch-mode": ""
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "Hizmet",
+      "placeholder-service": "Hizmet...",
+      "title-switch-mode": "Düzenleyici moduna geçilsin mi?"
     },
     "raw-query": {
-      "aria-label-selector": ""
+      "aria-label-selector": "Seçici"
     },
     "resource-field": {
-      "label-resource": "",
-      "title-select-resource": ""
+      "label-resource": "Kaynak",
+      "title-select-resource": "Bir kaynak seçin"
     },
     "resource-label": {
-      "select-resource": ""
+      "select-resource": "Bir kaynak seçin"
     },
     "resource-picker": {
       "button-apply": "Uygula",
       "button-cancel": "İptal et",
       "header-location": "Konum",
-      "header-scope": "",
+      "header-scope": "Kapsam",
       "header-type": "Tür",
-      "heading-selection": "",
-      "result-limit": "",
+      "heading-selection": "Seçim",
+      "result-limit": "İlk {{numResults}} sonuç gösteriliyor",
       "text-loading": "Yükleniyor...",
-      "text-no-resources": "",
-      "title-error-occurred": ""
+      "text-no-resources": "Hiçbir kaynak bulunmadı",
+      "title-error-occurred": "Azure Monitor'dan kaynaklar istenirken bir hata oluştu"
+    },
+    "scope-selector": {
+      "label": ""
     },
     "search": {
-      "aria-label-resource-search": "",
-      "placeholder-resource-search": ""
+      "aria-label-resource-search": "Kaynak arama",
+      "placeholder-resource-search": "Kaynak ara"
     },
     "subscription-field": {
-      "label-subscriptions": "",
-      "validation-subscriptions": ""
+      "label-subscriptions": "Abonelikler",
+      "validation-subscriptions": "En az bir abonelik seçilmelidir."
     },
     "table-section": {
-      "aria-label-columns": "",
+      "aria-label-columns": "Sütunlar",
       "aria-label-table": "Tablo",
-      "label-columns": "",
+      "label-columns": "Sütunlar",
       "label-table": "Tablo",
-      "placeholder-select-columns": "",
-      "placeholder-select-table": ""
+      "placeholder-select-columns": "Sütunları seçin",
+      "placeholder-select-table": "Bir tablo seçin"
     },
     "time-grain-field": {
-      "label-time-grain": ""
+      "label-time-grain": "Zaman aralığı"
     },
     "time-management": {
-      "label-time-column": "",
-      "label-time-range": "",
-      "tooltip-time-column": "",
-      "tooltip-time-range": ""
+      "label-time-column": "Zaman Sütunu",
+      "label-time-range": "Zaman aralığı",
+      "tooltip-time-column": "<0>Filtreleme için kullanılacak zaman sütununu belirtir. Varsayılan olarak ilk tablonun <1>timeSpan</1> sütunu, bulunan ilk <3>datetime</3> sütunu veya <5>TimeGenerated</5> sütunu kullanılır.</0>",
+      "tooltip-time-range": "<0>Sorgu için kullanılacak zaman aralığını belirtir. <1>Sorgu</1> seçeneği yalnızca sorguda belirtilen zaman aralıklarını kullanacaktır. <3>Pano</3> yalnızca Grafana zaman aralığını kullanacaktır. Günlük Oluşturucu modunda yalnızca Pano zamanı kullanılacaktır.</0>"
     },
     "top-field": {
-      "label-top": ""
+      "label-top": "En Üst"
     },
     "trace-type-field": {
-      "label-event-type": "",
-      "placeholder-event-type": ""
+      "label-event-type": "Olay Türü",
+      "placeholder-event-type": "Olay türlerini seçin"
     },
     "traces-query-editor": {
-      "label-operation-id": ""
+      "label-operation-id": "İşlem kimliği"
     },
     "user-auth-alert": {
-      "body-unsupported-auth": "",
-      "title-unsupported-auth": ""
+      "body-unsupported-auth": "Bu veri kaynağının kullanımı için Azure Entra (eski adıyla Azure Active Directory) aracılığıyla kimlik doğrulamanız gerekir. Daha fazla bilgi için lütfen <2>belgeleri</2> inceleyin.",
+      "title-unsupported-auth": "Desteklenmeyen kimlik doğrulama sağlayıcısı"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "",
-      "title-no-fallback-credentials": ""
+      "body-no-fallback-credentials": "Veri kaynağı arka uç özellikleri (örneğin uyarı) işlevsellik için hizmet kimlik bilgileri gerektirir. Bu veri kaynağı, hizmet kimlik bilgisi yedeği olmadan yapılandırılmış ya da yedek işlevi devre dışı bırakılmış. Daha fazla bilgi için lütfen <2>belgeleri</2> inceleyin.",
+      "title-no-fallback-credentials": "Yedek kimlik bilgisi yok"
     },
     "variable-editor": {
-      "aria-label-select-custom-namespace": "",
+      "aria-label-select-custom-namespace": "Özel ad alanı seçin",
       "aria-label-select-namespace": "Ad alanı seç",
-      "aria-label-select-query-type": "",
-      "aria-label-select-region": "",
-      "aria-label-select-resource": "",
-      "aria-label-select-resource-group": "",
-      "aria-label-select-subscription": "",
-      "label-custom-namespace": "",
+      "aria-label-select-query-type": "Sorgu türünü seçin",
+      "aria-label-select-region": "Bölge seçin",
+      "aria-label-select-resource": "Kaynak seçin",
+      "aria-label-select-resource-group": "Kaynak grubu seçin",
+      "aria-label-select-subscription": "Abonelik seçin",
+      "label-custom-namespace": "Özel Ad Alanı",
       "label-namespace": "Ad alanı",
-      "label-query-type": "",
-      "label-region": "",
-      "label-resource": "",
-      "label-resource-group": "",
-      "label-resource-type": "",
-      "label-subscription": "",
-      "placeholder-custom-namespace": "",
-      "placeholder-namespace": "",
-      "placeholder-region": "",
-      "placeholder-resource-group": "",
-      "title-error-occurred": ""
+      "label-query-type": "Sorgu Tipi",
+      "label-region": "Bölge",
+      "label-resource": "Kaynak",
+      "label-resource-group": "Kaynak Grubu",
+      "label-resource-type": "Kaynak Türü",
+      "label-subscription": "Abonelik",
+      "placeholder-custom-namespace": "İsteğe bağlı",
+      "placeholder-namespace": "İsteğe bağlı",
+      "placeholder-region": "İsteğe bağlı",
+      "placeholder-resource-group": "İsteğe bağlı",
+      "title-error-occurred": "Azure Monitor'dan meta veriler istenirken bir hata oluştu"
     }
   }
 }

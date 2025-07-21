@@ -25,11 +25,24 @@ jobs:
         fetch-depth: 2
         persist-credentials: false
 
+    - name: Check for Python files
+      id: check-python
+      run: |
+        if [ -z "$(find . -name '*.py' -type f)" ]; then
+          echo "No Python files found, skipping analysis"
+          echo "skip=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "Python files found, proceeding with analysis"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+        fi
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
+      if: steps.check-python.outputs.skip != 'true'
       uses: github/codeql-action/init@v3
       with:
         languages: "python"
 
     - name: Perform CodeQL Analysis
+      if: steps.check-python.outputs.skip != 'true'
       uses: github/codeql-action/analyze@v3

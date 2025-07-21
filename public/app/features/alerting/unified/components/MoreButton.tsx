@@ -1,14 +1,12 @@
 import { Ref, forwardRef } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonProps, Icon, Stack } from '@grafana/ui';
 
 const MoreButton = forwardRef(function MoreButton(
   props: ButtonProps & { title?: string },
   ref: Ref<HTMLButtonElement>
 ) {
-  const { t } = useTranslate();
-
   return (
     <Button
       variant="secondary"

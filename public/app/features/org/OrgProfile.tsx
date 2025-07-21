@@ -1,8 +1,8 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Input, Field, FieldSet, Button } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 export interface Props {
   orgName: string;
@@ -14,7 +14,6 @@ interface FormDTO {
 }
 
 const OrgProfile = ({ onSubmit, orgName }: Props) => {
-  const { t } = useTranslate();
   const canWriteOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
 
   return (

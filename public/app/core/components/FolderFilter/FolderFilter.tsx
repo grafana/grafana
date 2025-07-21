@@ -3,13 +3,14 @@ import debounce from 'debounce-promise';
 import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { FolderInfo, PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
+import { FolderInfo } from 'app/types/folders';
 
 export interface FolderFilterProps {
   onChange: (folder: FolderInfo[]) => void;
@@ -21,7 +22,6 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
   const [loading, setLoading] = useState(false);
   const getOptions = useCallback((searchString: string) => getFoldersAsOptions(searchString, setLoading), []);
   const debouncedLoadOptions = useMemo(() => debounce(getOptions, 300), [getOptions]);
-  const { t } = useTranslate();
 
   const [value, setValue] = useState<Array<SelectableValue<FolderInfo>>>([]);
   const onSelectOptionChange = useCallback(
@@ -47,7 +47,7 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
         loadOptions={debouncedLoadOptions}
         maxMenuHeight={maxMenuHeight}
         placeholder={t('folder-filter.select-placeholder', 'Filter by folder')}
-        noOptionsMessage="No folders found"
+        noOptionsMessage={t('folder-filter.noOptionsMessage-no-folders-found', 'No folders found')}
         prefix={<Icon name="filter" />}
         aria-label={t('folder-filter.select-aria-label', 'Folder filter')}
         defaultOptions

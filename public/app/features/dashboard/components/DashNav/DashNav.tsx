@@ -4,8 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   ButtonGroup,
@@ -14,7 +13,6 @@ import {
   useForceUpdate,
   ToolbarButtonRow,
   ConfirmModal,
-  Badge,
 } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
@@ -29,11 +27,13 @@ import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/Add
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PublicDashboardBadgeLegacy } from 'app/features/dashboard-scene/scene/new-toolbar/actions/PublicDashboardBadge';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { KioskMode, StoreState } from 'app/types';
+import { KioskMode } from 'app/types/dashboard';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { StoreState } from 'app/types/store';
 
 import {
   DynamicDashNavButtonModel,
@@ -57,8 +57,6 @@ const mapStateToProps = (state: StoreState) => ({
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
-
-const selectors = e2eSelectors.pages.Dashboard.DashNav;
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -93,7 +91,7 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const notifyApp = useAppNotification();
-  const { t } = useTranslate();
+
   const onOpenSnapshotOriginal = () => {
     try {
       const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
@@ -117,7 +115,7 @@ export const DashNav = memo<Props>((props) => {
                 </>
               ),
               confirmVariant: 'primary',
-              confirmText: 'Proceed',
+              confirmText: t('dashboard.dash-nav.on-open-snapshot-original.confirmText.proceed', 'Proceed'),
               onConfirm: gotoSnapshotOrigin,
             },
           })
@@ -215,17 +213,8 @@ export const DashNav = memo<Props>((props) => {
       );
     }
 
-    if (dashboard.meta.publicDashboardEnabled) {
-      // TODO: This will be replaced with the new badge component. Color is required but gets override by css
-      buttons.push(
-        <Badge
-          color="blue"
-          text={t('dashboard.dash-nav.render-left-actions.text-public', 'Public')}
-          key="public-dashboard-button-badge"
-          className={publicBadgeStyle}
-          data-testid={selectors.publicDashboardTag}
-        />
-      );
+    if (dashboard.uid) {
+      buttons.push(<PublicDashboardBadgeLegacy key="public-dashboard-badge" uid={dashboard.uid} />);
     }
 
     if (isDevEnv && config.featureToggles.dashboardScene) {
@@ -376,10 +365,4 @@ export default connector(DashNav);
 const modalStyles = css({
   width: 'max-content',
   maxWidth: '80vw',
-});
-
-const publicBadgeStyle = css({
-  color: 'grey',
-  backgroundColor: 'transparent',
-  border: '1px solid',
 });

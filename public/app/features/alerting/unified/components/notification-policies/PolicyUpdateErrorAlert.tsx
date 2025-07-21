@@ -1,27 +1,15 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import { stringifyErrorLike } from '../../utils/misc';
 
 export const NotificationPoliciesErrorAlert = ({ error }: { error: unknown }) => {
-  const { t } = useTranslate();
-  const title = t('alerting.policies.update-errors.title', 'Error saving notification policy');
+  const title = t('alerting.policies.update-errors.title', 'Failed to add or update notification policy');
 
   const errMessage = stringifyErrorLike(error);
   return (
     <Alert title={title} severity="error">
-      <div>
-        <Trans i18nKey="alerting.policies.update-errors.fallback">
-          Something went wrong when updating your notification policies.
-        </Trans>
-      </div>
-      <div>
-        {errMessage || (
-          <Trans i18nKey="alerting.policies.update-errors.error-code" values={{ error }}>
-            Error message: "{{ error }}"
-          </Trans>
-        )}
-      </div>
+      <div>{errMessage}</div>
 
       <Trans i18nKey="alerting.policies.update-errors.suffix">Please refresh the page and try again.</Trans>
     </Alert>

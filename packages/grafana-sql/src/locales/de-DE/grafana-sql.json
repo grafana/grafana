@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "Im Builder-Modus werden keine am Code vorgenommenen Änderungen angezeigt. Der Abfrage-Builder zeigt Ihre letzten Änderungen im Builder-Modus an.",
+        "cancel": "Abbrechen",
+        "clipboard": "Möchten Sie Ihren Code in die Zwischenablage kopieren?",
+        "copy-code-and-switch": "Code kopieren und wechseln",
+        "discard-code-and-switch": "Code verwerfen und wechseln",
+        "warning": "Warnung"
+      },
+      "connection-limits": {
+        "auto-max-idle": "Auto. max. inaktiv",
+        "content-auto-max-idle": "Wenn dies aktiviert ist, wird die Anzahl der <1>Maximalen inaktiven Verbindungen</1> automatisch auf den gleichen Wert der<3> Maximalen offenen Verbindungen</3> festgelegt. Wenn die Anzahl der maximalen offenen Verbindungen nicht festgelegt ist, wird sie auf den Standardwert ({{defaultMaxIdle}}) eingestellt.",
+        "content-max-idle": "Die maximale Anzahl der Verbindungen im Pool der inaktiven Verbindungen. Wenn <1>Maximale offene Verbindungen</1> größer ist als 0, aber kleiner als die Anzahl der <3>Maximalen inaktiven Verbindungen</3>, werden die <5>Maximalen inaktiven Verbindungen</5> verringert, um der Grenze für die Anzahl der <8>Maximalen offenen Verbindungen</8> zu entsprechen. Wenn der Wert auf 0 eingestellt ist, werden keine inaktiven Verbindungen beibehalten.",
+        "content-max-lifetime": "Die maximale Zeitdauer der Wiederverwendung einer Verbindung in Sekunden. Bei einer Einstellung auf 0 werden Verbindungen immer wiederverwendet.",
+        "content-max-open": "Die maximale Anzahl offener Verbindungen zur Datenbank. Wenn <1>Maximale inaktive Verbindungen</1> größer als 0 ist und die Anzahl der <3>Maximalen offenen Verbindungen</3> kleiner als die Anzahl der <5>Maximalen inaktiven Verbindungen</5> ist, werden die <7>Maximalen inaktiven Verbindungen</7> bis zur Grenze für <9>Maximale offene Verbindungen</9> verringert. Wenn 0 festgelegt ist, gibt es keine Begrenzung der Anzahl offener Verbindungen.",
+        "max-idle": "Max. inaktiv",
+        "max-lifetime": "Max. Lebensdauer",
+        "max-open": "Max. offen",
+        "title-connection-limits": "Verbindungsbegrenzungen"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "Datensatz-Selektor"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Fehler"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "Macros"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Gruppieren nach",
+          "title-remove-group-by-column": "Nach Spalte gruppieren entfernen"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "Sortieren nach",
+        "label-limit": "Limit",
+        "label-offset": "Offset",
+        "label-order-by": "Sortieren nach"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Vorschau",
+          "tooltip-copy-to-clipboard": "In die Zwischenablage kopieren"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "Ihre Abfrage ist ungültig. Weitere Informationen finden Sie unten. <1></1>Sie können diese Abfrage aber trotzdem ausführen.",
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-dataset": "Datensatz",
+        "label-filter": "Filter",
+        "label-format": "Format",
+        "label-group": "Gruppe",
+        "label-order": "Reihenfolge",
+        "label-preview": "Vorschau",
+        "label-table": "Tabelle",
+        "placeholder-select-format": "Format auswählen",
+        "run-query": "Abfrage ausführen"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "Drücken Sie STRG/CMD+Eingabe, um die Abfrage auszuführen",
+        "tooltip-collapse": "Editor einklappen",
+        "tooltip-expand": "Editor ausklappen",
+        "tooltip-format-query": "Formatabfrage"
+      },
+      "query-validator": {
+        "query-will-process": "<0></0> Diese Abfrage verarbeitet <2>{{bytes}}</2>, wenn sie ausgeführt wird.",
+        "validating-query": "Abfrage wird validiert …"
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "Bearbeitung im ausgeklappten Code-Editor"
+        },
+        "title-query-num": "Abfrage {{queryNum}}"
+      },
+      "select-column": {
+        "label-column": "Spalte"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "Parameter {{index}} für Spalte {{columnIndex}}",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "Parameter entfernen"
+          }
+        },
+        "title-add-parameter": "Parameter hinzufügen"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "Aggregationen",
+              "macros": "Macros"
+            }
+          }
+        },
+        "label": {
+          "time": "Zeit",
+          "value": "Wert"
+        },
+        "label-alias": "Alias",
+        "label-data-operations": "Datenoperationen",
+        "title-add-column": "Spalte hinzufügen",
+        "title-remove-column": "Spalte entfernen"
+      },
+      "settings": {
+        "aria-label-conjunction": "Konjunktion",
+        "aria-label-field": "Feld",
+        "aria-label-operator": "Bediener",
+        "title-button-filter": "{{ buttonLabel }} Filter"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Editor wird geladen"
+      },
+      "table-selector": {
+        "aria-label-table-selector": "Tabellenselektor",
+        "placeholder-loading": "Tabellen werden geladen",
+        "placeholder-select-table": "Tabelle auswählen"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "Stellen Sie zur Authentifizierung mit einem TLS/SSL-Client-Zertifikat bitte hier das Client-Zertifikat bereit.",
+        "content-tlsssl-client-key": "Stellen Sie zur Authentifizierung mit einem Client-TLS/SSL-Zertifikat bitte hier den Schlüssel bereit.",
+        "content-tlsssl-root-certificate": "Wenn der ausgewählte TLS/SSL-Modus ein Server-Root-Zertifikat erfordert, stellen Sie es bitte hier bereit",
+        "tlsssl-client-certificate": "TLS/SSL-Client-Zertifikat",
+        "tlsssl-client-key": "TLS/SSL-Clientschlüssel",
+        "tlsssl-root-certificate": "TLS/SSL-Root-Zertifikat"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "Nach Spaltenwert filtern",
+        "label-group-by-column": "Nach Spalte gruppieren"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "Macros-Wert-Selektor"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "Ausgewählte Spalten"
+      }
+    }
+  }
+}

@@ -19,7 +19,7 @@ import {
   TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
@@ -29,7 +29,7 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { importDataSourcePlugin } from './plugin_loader';
+import { importDataSourcePlugin } from './pluginLoader';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -205,6 +205,10 @@ export class DatasourceSrv implements DataSourceService {
       const instance = new dsPlugin.DataSourceClass(instanceSettings);
 
       instance.components = dsPlugin.components;
+      if (!instance.userStorage) {
+        // DatasourceApi does not instantiate a userStorage property, but DataSourceWithBackend does
+        instance.userStorage = new UserStorage(instanceSettings.type);
+      }
 
       // Some old plugins does not extend DataSourceApi so we need to manually patch them
       if (!(instance instanceof DataSourceApi)) {

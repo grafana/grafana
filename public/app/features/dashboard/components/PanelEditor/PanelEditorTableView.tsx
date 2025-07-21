@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -38,6 +38,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
+        dashboardTitle: dashboard.title,
         timeData,
         width,
       });
@@ -46,7 +47,6 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
       sub.unsubscribe();
     };
   }, [panel, dashboard, width]);
-  const { t } = useTranslate();
 
   if (!data) {
     return null;

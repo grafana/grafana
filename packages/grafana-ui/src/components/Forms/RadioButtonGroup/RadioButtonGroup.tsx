@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
 
 import { RadioButtonSize, RadioButton, RADIO_GROUP_PADDING } from './RadioButton';

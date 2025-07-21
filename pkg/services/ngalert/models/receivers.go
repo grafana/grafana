@@ -191,8 +191,12 @@ func (f IntegrationFieldPath) String() string {
 	return strings.Join(f, ".")
 }
 
-func (f IntegrationFieldPath) Append(segment string) IntegrationFieldPath {
-	return append(f, segment)
+func (f IntegrationFieldPath) With(segment string) IntegrationFieldPath {
+	// Copy the existing path to avoid modifying the original slice.
+	newPath := make(IntegrationFieldPath, len(f)+1)
+	copy(newPath, f)
+	newPath[len(newPath)-1] = segment
+	return newPath
 }
 
 // IntegrationConfigFromType returns an integration configuration for a given integration type. If the integration type is
@@ -250,11 +254,12 @@ func (config *IntegrationConfig) GetSecretFields() []IntegrationFieldPath {
 func traverseFields(flds map[string]IntegrationField, parentPath IntegrationFieldPath, predicate func(i IntegrationField) bool) []IntegrationFieldPath {
 	var result []IntegrationFieldPath
 	for key, field := range flds {
+		path := parentPath.With(key)
 		if predicate(field) {
-			result = append(result, parentPath.Append(key))
+			result = append(result, path)
 		}
 		if len(field.Fields) > 0 {
-			result = append(result, traverseFields(field.Fields, parentPath.Append(key), predicate)...)
+			result = append(result, traverseFields(field.Fields, path, predicate)...)
 		}
 	}
 	return result

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -153,7 +153,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
  *
  */
 function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
-  const { t } = useTranslate();
   const { watch, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
@@ -252,8 +251,6 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
 
 // Auxiliar components to build the texts and descriptions in the NotificationsStep
 function NeedHelpInfoForNotificationPolicy() {
-  const { t } = useTranslate();
-
   return (
     <NeedHelpInfo
       contentText={
@@ -286,8 +283,6 @@ function NeedHelpInfoForNotificationPolicy() {
 }
 
 function NeedHelpInfoForContactpoint() {
-  const { t } = useTranslate();
-
   return (
     <NeedHelpInfo
       contentText={
@@ -321,7 +316,6 @@ interface NotificationsStepDescriptionProps {
 }
 
 export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
-  const { t } = useTranslate();
   return (
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">

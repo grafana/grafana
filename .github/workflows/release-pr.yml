@@ -16,6 +16,10 @@ on:
         required: true
         type: string
         description: The version of Grafana that is being released (without the `v` prefix)`
+      target:
+        required: false
+        type: string
+        description: 'Unused: left here for backwards compatibility'
       changelog:
         required: false
         type: boolean
@@ -32,25 +36,58 @@ on:
         required: false
         default: false
         type: boolean
+      release_date:
+        required: false
+        type: string
+        description: "Release date in format YYYY-MM-DD"
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
+  capture-date:
+    runs-on: ubuntu-latest
+    outputs:
+      release_date: ${{ steps.set_release_date.outputs.release_date }}
+    steps:
+      - name: compute_release_date
+        run: |
+          if [ -n "$DATE" ]; then
+            echo "release_date=$DATE" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "Fetching workflow run creation date..."
+          created_at=$(gh run view "$GITHUB_RUN_ID" --repo "$GH_REPO" --json createdAt -q .createdAt)
+          formatted_date=$(date -d "$created_at" +%Y-%m-%d)
+          echo "release_date=$formatted_date" >> "$GITHUB_ENV"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          DATE: ${{ inputs.release_date }}
+
+      - id: set_release_date
+        run: echo "release_date=$release_date" >> "$GITHUB_OUTPUT"
+
   push-changelog-to-main:
+    needs: capture-date
     permissions:
       contents: write
       id-token: write
       pull-requests: write
+
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
+    concurrency:
+      group: grafana-release-pr-update-changelog-main
+      cancel-in-progress: false
     with:
       previous_version: ${{inputs.previous_version}}
       version: ${{ inputs.version }}
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}
       target: main
+      work_branch: changelog/update-changelog-${{ needs.capture-date.outputs.release_date }}
 
   create-prs:
     permissions:
@@ -171,7 +208,7 @@ jobs:
         if: ${{ inputs.bump == true || inputs.bump == 'true' }}
         run: |
           git add package.json lerna.json yarn.lock packages public
-          test -e e2e/test-plugins && git add e2e/test-plugins
+          test -e e2e-playwright/test-plugins && git add e2e-playwright/test-plugins
           git commit -m "Update version to $VERSION"
 
       - name: Git push

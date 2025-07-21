@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
@@ -22,7 +22,6 @@ type AlertGroupAlertsTableColumnProps = DynamicTableColumnProps<AlertmanagerAler
 type AlertGroupAlertsTableItemProps = DynamicTableItemProps<AlertmanagerAlert>;
 
 export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   const columns = useMemo(
@@ -59,7 +58,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
         size: 1,
       },
     ],
-    [styles, t]
+    [styles]
   );
 
   const items = useMemo(

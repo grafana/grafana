@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select, Label } from '@grafana/ui';
 
@@ -11,7 +11,8 @@ import {
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
@@ -25,7 +26,6 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const hasLoadedOrderBy = useRef(false);
-  const { t } = useTranslate();
 
   const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>(
     builderQuery?.orderBy?.expressions || []

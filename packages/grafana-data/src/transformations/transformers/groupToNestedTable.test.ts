@@ -46,7 +46,7 @@ describe('GroupToSubframe transformer', () => {
           values: ['one', 'two', 'three'],
         },
         {
-          name: 'Nested frames',
+          name: '__nestedFrames',
           type: FieldType.nestedFrames,
           config: {},
           values: [
@@ -153,7 +153,7 @@ describe('GroupToSubframe transformer', () => {
         },
         {
           config: {},
-          name: 'Nested frames',
+          name: '__nestedFrames',
           type: FieldType.nestedFrames,
           values: [
             [

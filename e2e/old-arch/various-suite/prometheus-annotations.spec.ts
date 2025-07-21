@@ -1,5 +1,3 @@
-import { selectors } from '@grafana/e2e-selectors';
-
 import { e2e } from '../utils';
 import { addDashboard } from '../utils/flows';
 
@@ -56,7 +54,7 @@ describe('Prometheus annotations', () => {
 
     // check for other parts of the annotations
     // min step
-    cy.get(`#${selectors.components.DataSource.Prometheus.annotations.minStep}`);
+    e2e.components.DataSource.Prometheus.annotations.minStep().should('exist');
 
     // title
     e2e.components.DataSource.Prometheus.annotations.title().scrollIntoView().should('exist');

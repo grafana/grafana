@@ -13,7 +13,7 @@ import {
   SupplementaryQueryType,
   TimeRange,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -24,7 +24,7 @@ import { LogRows } from '../../logs/components/LogRows';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
-import { SETTINGS_KEYS } from './utils/logs';
+import { SETTING_KEY_ROOT, SETTINGS_KEYS } from './utils/logs';
 
 type Props = {
   queryResponse: DataQueryResponse | undefined;
@@ -41,7 +41,7 @@ export function LogsSamplePanel(props: Props) {
   const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, queries, splitOpen } = props;
 
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const logsContainerRef = useRef<HTMLDivElement | null>(null);
 
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
@@ -118,8 +118,9 @@ export function LogsSamplePanel(props: Props) {
           enableLogDetails
           dedupStrategy={LogsDedupStrategy.none}
           displayedFields={[]}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
           logs={logs.rows}
-          showControls={false}
+          showControls
           showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
           sortOrder={store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending}
           timeRange={props.timeRange}

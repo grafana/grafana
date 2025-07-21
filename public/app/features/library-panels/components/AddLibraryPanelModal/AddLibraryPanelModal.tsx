@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, FetchError, isFetchError } from '@grafana/runtime';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
@@ -60,8 +60,6 @@ export const AddLibraryPanelContents = ({
     }
   }, [debouncedPanelName, folderUid]);
 
-  const { t } = useTranslate();
-
   const invalidInput =
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 
@@ -86,11 +84,7 @@ export const AddLibraryPanelContents = ({
           'Library panel permissions are derived from the folder permissions'
         )}
       >
-        <FolderPicker
-          onChange={(uid) => setFolderUid(uid)}
-          value={folderUid}
-          inputId="share-panel-library-panel-folder-picker"
-        />
+        <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
       </Field>
       {config.featureToggles.newDashboardSharingComponent ? (
         <Stack gap={1} justifyContent={'start'}>
@@ -120,7 +114,6 @@ interface Props extends AddLibraryPanelContentsProps {
 }
 
 export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
-  const { t } = useTranslate();
   return (
     <Modal
       title={t('library-panels.add-library-panel-modal.title-create-library-panel', 'Create library panel')}

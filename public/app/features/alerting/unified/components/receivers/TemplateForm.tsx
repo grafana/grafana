@@ -7,7 +7,7 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -29,6 +29,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -139,7 +140,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     setValue,
     watch,
   } = formApi;
-  const { t } = useTranslate();
+
   const submit = async (values: TemplateFormValues) => {
     const returnLink = makeAMLink('/alerting/notifications', alertmanager, {
       tab: ContactPointsActiveTabs.NotificationTemplates,
@@ -162,6 +163,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     const content = getValues('content'),
       newValue = !content ? example : `${content}\n${example}`;
     setValue('content', newValue);
+  };
+
+  const handleTemplateGenerated = (template: string) => {
+    setValue('content', template);
   };
 
   return (
@@ -275,6 +280,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                     </Button>
                                   </Dropdown>
                                 )}
+                                {/* GenAI button – only available for Grafana Alertmanager and enterprise */}
+                                {isGrafanaAlertManager && (
+                                  <AITemplateButtonComponent
+                                    onTemplateGenerated={handleTemplateGenerated}
+                                    disabled={isProvisioned}
+                                  />
+                                )}
                                 <Button
                                   icon="question-circle"
                                   size="sm"
@@ -363,7 +375,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
 function TemplatingBasics() {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const intro = t(
     'alerting.templates.help.intro',
     `Notification templates use Go templating language to create notification messages.

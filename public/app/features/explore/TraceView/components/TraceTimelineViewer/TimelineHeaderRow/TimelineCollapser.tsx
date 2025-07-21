@@ -14,16 +14,27 @@
 
 import { css } from '@emotion/css';
 
-import { useTranslate } from '@grafana/i18n';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Button, useStyles2 } from '@grafana/ui';
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   TimelineCollapser: css({
     alignItems: 'center',
     display: 'flex',
     flex: 'none',
     justifyContent: 'center',
     marginRight: '0.5rem',
+  }),
+  buttonsContainer: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '0.5rem',
+    paddingRight: theme.spacing(1),
+  }),
+  buttonContainer: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
 });
 
@@ -37,38 +48,55 @@ type CollapserProps = {
 export function TimelineCollapser(props: CollapserProps) {
   const { onExpandAll, onExpandOne, onCollapseAll, onCollapseOne } = props;
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <div className={styles.TimelineCollapser} data-testid="TimelineCollapser">
-      <IconButton
-        tooltip={t('explore.timeline-collapser.tooltip-expand', 'Expand +1')}
-        size="xl"
-        tooltipPlacement="top"
-        name="angle-down"
-        onClick={onExpandOne}
-      />
-      <IconButton
-        tooltip={t('explore.timeline-collapser.tooltip-collapse', 'Collapse +1')}
-        size="xl"
-        tooltipPlacement="top"
-        name="angle-right"
-        onClick={onCollapseOne}
-      />
-      <IconButton
-        tooltip={t('explore.timeline-collapser.tooltip-expand-all', 'Expand all')}
-        size="xl"
-        tooltipPlacement="top"
-        name="angle-double-down"
-        onClick={onExpandAll}
-      />
-      <IconButton
-        tooltip={t('explore.timeline-collapser.tooltip-collapse-all', 'Collapse all')}
-        size="xl"
-        tooltipPlacement="top"
-        name="angle-double-right"
-        onClick={onCollapseAll}
-      />
+      <div className={styles.buttonsContainer}>
+        <div className={styles.buttonContainer}>
+          <Button
+            aria-label={t('explore.timeline-collapser.tooltip-expand', 'Expand +1')}
+            tooltip={t('explore.timeline-collapser.tooltip-expand', 'Expand +1')}
+            size="sm"
+            tooltipPlacement="top"
+            icon="angle-down"
+            onClick={onExpandOne}
+            fill="solid"
+            variant="secondary"
+          />
+          <Button
+            aria-label={t('explore.timeline-collapser.tooltip-collapse', 'Collapse +1')}
+            tooltip={t('explore.timeline-collapser.tooltip-collapse', 'Collapse +1')}
+            size="sm"
+            tooltipPlacement="top"
+            icon="angle-up"
+            onClick={onCollapseOne}
+            fill="solid"
+            variant="secondary"
+          />
+        </div>
+        <div className={styles.buttonContainer}>
+          <Button
+            aria-label={t('explore.timeline-collapser.tooltip-expand-all', 'Expand all')}
+            tooltip={t('explore.timeline-collapser.tooltip-expand-all', 'Expand all')}
+            size="sm"
+            tooltipPlacement="top"
+            icon="angle-double-down"
+            onClick={onExpandAll}
+            fill="solid"
+            variant="secondary"
+          />
+          <Button
+            aria-label={t('explore.timeline-collapser.tooltip-collapse-all', 'Collapse all')}
+            tooltip={t('explore.timeline-collapser.tooltip-collapse-all', 'Collapse all')}
+            size="sm"
+            tooltipPlacement="top"
+            icon="angle-double-up"
+            onClick={onCollapseAll}
+            fill="solid"
+            variant="secondary"
+          />
+        </div>
+      </div>
     </div>
   );
 }

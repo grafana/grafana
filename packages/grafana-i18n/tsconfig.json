@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "declarationDir": "./compiled",
+    "declarationDir": "./dist/types",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts"]
+  "include": ["src/**/*.ts*"]
 }

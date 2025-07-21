@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { IconName, Menu } from '@grafana/ui';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -13,7 +13,7 @@ const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportBu
 
 export interface ExportDrawerMenuItem {
   shareId: string;
-  testId: string;
+  testId?: string;
   label: string;
   description?: string;
   icon: IconName;
@@ -28,8 +28,6 @@ export function addDashboardExportDrawerItem(item: ExportDrawerMenuItem) {
 }
 
 export default function ExportMenu({ dashboard }: { dashboard: DashboardScene }) {
-  const { t } = useTranslate();
-
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
   };
@@ -52,8 +50,16 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       onClick: () => onMenuItemClick(shareDashboardType.export),
     });
 
+    menuItems.push({
+      shareId: shareDashboardType.image,
+      icon: 'camera',
+      label: t('share-dashboard.menu.export-image-title', 'Export as image'),
+      renderCondition: Boolean(config.featureToggles.sharingDashboardImage),
+      onClick: () => onMenuItemClick(shareDashboardType.image),
+    });
+
     return menuItems.filter((item) => item.renderCondition);
-  }, [t]);
+  }, []);
 
   const onClick = (item: ExportDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({
@@ -65,15 +71,18 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
   };
 
   return (
-    <Menu data-testid={newExportButtonSelector.container}>
+    <Menu
+      ariaLabel={t('dashboard.export.menu.label', 'Export dashboard menu')}
+      data-testid={newExportButtonSelector.container}
+    >
       {buildMenuItems().map((item) => (
         <Menu.Item
           key={item.label}
-          testId={item.testId}
           label={item.label}
           icon={item.icon}
           description={item.description}
           onClick={() => onClick(item)}
+          testId={item.testId}
         />
       ))}
     </Menu>

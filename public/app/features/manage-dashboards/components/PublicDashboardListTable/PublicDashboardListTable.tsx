@@ -4,7 +4,7 @@ import { useMedia } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Card,
@@ -27,7 +27,7 @@ import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { PublicDashboardListResponse } from '../../types';
 
@@ -39,7 +39,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
 
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
-  const { t } = useTranslate();
+
   const selectors = e2eSelectors.pages.PublicDashboards;
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
@@ -137,7 +137,7 @@ export const PublicDashboardListTable = () => {
 
   const styles = useStyles2(getStyles);
   const { data: paginatedPublicDashboards, isLoading, isError } = useListPublicDashboardsQuery(page);
-  const { t } = useTranslate();
+
   return (
     <Page navId="dashboards/public">
       <Page.Contents isLoading={isLoading}>

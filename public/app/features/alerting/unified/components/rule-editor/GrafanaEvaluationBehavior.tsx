@@ -5,8 +5,7 @@ import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } fr
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Box,
   Button,
@@ -118,7 +117,6 @@ export function GrafanaEvaluationBehaviorStep({
   existing: boolean;
   enableProvisionedGroups: boolean;
 }) {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
 
@@ -215,7 +213,10 @@ export function GrafanaEvaluationBehaviorStep({
                     isLoading={loadingGroups}
                     invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
                     cacheOptions
-                    loadingMessage={'Loading groups...'}
+                    loadingMessage={t(
+                      'alerting.grafana-evaluation-behavior-step.loadingMessage-loading-groups',
+                      'Loading groups...'
+                    )}
                     defaultValue={defaultGroupValue}
                     options={groupOptions}
                     getOptionLabel={(option: SelectableValue<string>) => (
@@ -373,30 +374,62 @@ export function GrafanaEvaluationBehaviorStep({
                 label={t('alerting.alert.missing-series-resolve', 'Missing series evaluations to resolve')}
                 description={t(
                   'alerting.alert.description-missing-series-evaluations',
-                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.'
+                  'The number of consecutive evaluation intervals a dimension must be missing before the alert instance becomes stale, and is then automatically resolved and evicted. Defaults to 2 if empty.'
                 )}
                 invalid={!!errors.missingSeriesEvalsToResolve?.message}
                 error={errors.missingSeriesEvalsToResolve?.message}
                 className={styles.inlineField}
                 htmlFor="missing-series-resolve"
               >
-                <Input
-                  placeholder={t(
-                    'alerting.grafana-evaluation-behavior-step.missing-series-resolve-placeholder',
-                    'Default: 2'
-                  )}
-                  id="missing-series-resolve"
-                  {...register('missingSeriesEvalsToResolve', {
-                    pattern: {
-                      value: /^\d+$/,
-                      message: t(
-                        'alerting.grafana-evaluation-behavior-step.message.must-be-a-positive-integer',
-                        'Must be a positive integer.'
-                      ),
-                    },
-                  })}
-                  width={21}
-                />
+                <Stack direction="row" gap={0.5} alignItems="center">
+                  <Input
+                    placeholder={t(
+                      'alerting.grafana-evaluation-behavior-step.missing-series-resolve-placeholder',
+                      'Default: 2'
+                    )}
+                    id="missing-series-resolve"
+                    {...register('missingSeriesEvalsToResolve', {
+                      pattern: {
+                        value: /^\d+$/,
+                        message: t(
+                          'alerting.grafana-evaluation-behavior-step.message.must-be-a-positive-integer',
+                          'Must be a positive integer.'
+                        ),
+                      },
+                    })}
+                    width={21}
+                  />
+                  <NeedHelpInfo
+                    contentText={
+                      <>
+                        <p>
+                          {t(
+                            'alerting.alert-missing-evaluations-to-stale.help-info.text1',
+                            'An alert instance is considered stale if the alert rule query returns data, but the specific dimension (or series) for that alert instance is missing for several consecutive evaluation intervals.'
+                          )}
+                        </p>
+                        <p>
+                          {t(
+                            'alerting.alert-missing-evaluations-to-stale.help-info.text2',
+                            'A stale alert instance is resolved and then evicted.'
+                          )}
+                        </p>
+                        {t(
+                          'alerting.alert-missing-evaluations-to-stale.help-info.text3',
+                          'This setting defines how many consecutive evaluation intervals must pass without data before an alert instance is considered stale. Defaults to 2 if empty.'
+                        )}
+                      </>
+                    }
+                    externalLink={
+                      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/'
+                    }
+                    linkText={t(
+                      'alerting.alert-missing-evaluations-to-stale.help-info.link-text',
+                      `Read more about stale alert instances`
+                    )}
+                    title={t('alerting.alert-missing-evaluations-to-stale.help-info.title', 'Stale alert instances')}
+                  />
+                </Stack>
               </Field>
             </>
           )}
@@ -415,7 +448,6 @@ function EvaluationGroupCreationModal({
   onCreate: (group: string, evaluationInterval: string) => void;
   groupfoldersForGrafana?: RulerRulesConfigDTO | null;
 }): React.ReactElement {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const { watch } = useFormContext<RuleFormValues>();
 

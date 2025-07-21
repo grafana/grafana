@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -eo pipefail
 
 . scripts/grafana-server/variables
@@ -41,11 +41,11 @@ echo -e "Copying custom plugins from e2e tests"
 
 mkdir -p "$RUNDIR/data/plugins"
 
-if [ -d "./e2e/test-plugins" ]; then
-  ln -s $(realpath ./e2e/test-plugins/*) "$RUNDIR/data/plugins"
+if [ -d "./e2e-playwright/test-plugins" ]; then
+  ln -s $(realpath ./e2e-playwright/test-plugins/*) "$RUNDIR/data/plugins"
 # when running in CI
-elif [ -d "../e2e/test-plugins" ]; then
-  cp -r "../e2e/test-plugins" "$RUNDIR/data/plugins"
+elif [ -d "../e2e-playwright/test-plugins" ]; then
+  cp -r "../e2e-playwright/test-plugins" "$RUNDIR/data/plugins"
 fi
 
 if [ "$INSTALL_IMAGE_RENDERER" ]; then
@@ -62,15 +62,15 @@ cp devenv/plugins.yaml $PROV_DIR/plugins
 
 cp -r devenv $RUNDIR
 
-echo -e "Starting Grafana Server port $PORT"
+echo -e "Starting Grafana server port $PORT"
 
-$RUNDIR/bin/"$ARCH"grafana-server \
-  --homepath=$HOME_PATH \
-  --pidfile=$RUNDIR/pid \
-  cfg:server.http_port=$PORT \
-  cfg:server.router_logging=1 \
-  cfg:app_mode=development \
-  cfg:enterprise.license_path=$1
-
-# 2>&1 > $RUNDIR/output.log &
-# cfg:log.level=debug \
+# We get a lot of "context canceled" errors from navigating away from pages,
+# so filter them out because they're not useful
+{
+  exec "$RUNDIR/bin/${ARCH}grafana" server \
+    --homepath="$HOME_PATH" \
+    --pidfile="$RUNDIR/pid" \
+    cfg:server.http_port="$PORT" \
+    cfg:enterprise.license_path="$1" \
+    2>&1
+} | grep -v -i "context canceled"

@@ -1,10 +1,9 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Checkbox } from '@grafana/ui';
 
 import { DashboardTreeHeaderProps, SelectionState } from '../types';
 
 export default function CheckboxHeaderCell({ isSelected, onAllSelectionChange }: DashboardTreeHeaderProps) {
-  const { t } = useTranslate();
   const state = isSelected?.('$all') ?? SelectionState.Unselected;
 
   return (

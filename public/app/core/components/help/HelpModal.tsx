@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { TFunction, Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
-const getShortcuts = (modKey: string, t: TFunction) => {
+const getShortcuts = (modKey: string) => {
   return [
     {
       category: t('help-modal.shortcuts-category.global', 'Global'),
@@ -165,10 +165,9 @@ export interface HelpModalProps {
 
 export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   const modKey = useMemo(() => getModKey(), []);
-  const shortcuts = useMemo(() => getShortcuts(modKey, t), [modKey, t]);
+  const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
       <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>

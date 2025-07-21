@@ -7,7 +7,7 @@ import { Checkbox, Field, Input, SecretInput, Select, Switch, useTheme2 } from '
 
 import { fieldMap } from './fields';
 import { SSOProviderDTO, SSOSettingsField } from './types';
-import { isSelectableValue } from './utils/guards';
+import { isSelectableValueArray } from './utils/guards';
 
 interface FieldRendererProps
   extends Pick<
@@ -123,7 +123,7 @@ export const FieldRenderer = ({
       const watchOptions = watch(name);
       let options = fieldData.options;
       if (!fieldData.options?.length) {
-        options = isSelectableValue(watchOptions) ? watchOptions : [];
+        options = isSelectableValueArray(watchOptions) ? watchOptions : [];
       }
       return (
         <Field key={name} {...fieldProps} htmlFor={name}>

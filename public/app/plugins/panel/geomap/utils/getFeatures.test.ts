@@ -1,4 +1,4 @@
-import { Feature } from 'ol';
+import Feature from 'ol/Feature';
 import { Point } from 'ol/geom';
 
 import { GeometryTypeId } from '../style/types';

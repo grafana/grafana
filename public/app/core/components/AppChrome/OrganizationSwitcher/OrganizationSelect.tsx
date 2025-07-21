@@ -2,16 +2,16 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, Select, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { UserOrg } from 'app/types';
+import { UserOrg } from 'app/types/user';
 
 import { OrganizationBaseProps } from './types';
 
 export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBaseProps) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const { orgId } = contextSrv.user;
 
   const options = useMemo(

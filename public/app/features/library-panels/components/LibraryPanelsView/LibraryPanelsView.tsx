@@ -3,7 +3,7 @@ import { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { LibraryElementDTO } from '../../types';
@@ -59,7 +59,6 @@ export const LibraryPanelsView = ({
     300,
     [searchString, sortDirection, panelFilter, folderFilter, page, asyncDispatch]
   );
-  const { t } = useTranslate();
 
   const onDelete = ({ uid }: LibraryElementDTO) =>
     asyncDispatch(

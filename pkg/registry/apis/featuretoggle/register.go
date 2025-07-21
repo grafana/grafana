@@ -80,6 +80,10 @@ func (b *FeatureFlagAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func (b *FeatureFlagAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return nil
+}
+
 func (b *FeatureFlagAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	featureStore := NewFeaturesStorage()
 	toggleStore := NewTogglesStorage(b.features)

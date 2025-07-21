@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { Annotations, Labels } from 'app/types/unified-alerting-dto';
@@ -44,7 +44,7 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
   const [notificationType, setNotificationType] = useState<NotificationType>(NotificationType.predefined);
   const styles = useStyles2(getStyles);
   const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
-  const { t } = useTranslate();
+
   const onSubmit = (data: FormFields) => {
     if (notificationType === NotificationType.custom) {
       const alert = {

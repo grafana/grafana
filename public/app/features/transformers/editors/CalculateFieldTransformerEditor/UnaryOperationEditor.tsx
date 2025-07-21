@@ -1,6 +1,6 @@
 import { unaryOperators, SelectableValue, UnaryOperationID } from '@grafana/data';
 import { UnaryOptions, CalculateFieldMode, CalculateFieldTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineLabel, Select } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
@@ -10,7 +10,6 @@ export const UnaryOperationEditor = (props: {
   names: string[];
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
-  const { t } = useTranslate();
   const { options, onChange } = props;
   const { unary } = options;
 
@@ -59,11 +58,7 @@ export const UnaryOperationEditor = (props: {
         >
           <Select options={ops} value={unary?.operator ?? ops[0].value} onChange={onUnaryOperationChanged} />
         </InlineField>
-        <InlineField
-          // eslint-disable-next-line @grafana/no-untranslated-strings
-          label="("
-          labelWidth={2}
-        >
+        <InlineField label="(" labelWidth={2}>
           <Select
             placeholder={t('transformers.unary-operation-editor.placeholder-field', 'Field')}
             className="min-width-11"
@@ -72,7 +67,6 @@ export const UnaryOperationEditor = (props: {
             onChange={onUnaryValueChanged}
           />
         </InlineField>
-        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         <InlineLabel width={2}>)</InlineLabel>
       </InlineFieldRow>
     </>

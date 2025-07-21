@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -13,13 +15,23 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 	ctx, span := s.tracer.Start(ctx, "server.Read")
 	defer span.End()
 
-	if err := authorize(ctx, req.GetNamespace()); err != nil {
+	res, err := s.read(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to perform read request", "error", err, "namespace", req.GetNamespace())
+		return nil, errors.New("failed to perform read request")
+	}
+
+	return res, nil
+}
+
+func (s *Server) read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
 	storeInf, err := s.getStoreInfo(ctx, req.Namespace)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
 	readReq := &openfgav1.ReadRequest{
@@ -38,6 +50,7 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 
 	res, err := s.openfga.Read(ctx, readReq)
 	if err != nil {
+		s.logger.Error("failed to perform openfga Read request", "error", errors.Unwrap(err))
 		return nil, err
 	}
 

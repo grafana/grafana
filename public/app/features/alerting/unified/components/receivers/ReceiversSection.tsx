@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
@@ -34,7 +34,7 @@ export const ReceiversSection = ({
   const styles = useStyles2(getStyles);
   const showMore = showExport;
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
-  const { t } = useTranslate();
+
   const newMenu = (
     <Menu>
       {showExport && (

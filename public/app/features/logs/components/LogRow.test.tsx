@@ -6,14 +6,15 @@ import tinycolor from 'tinycolor2';
 import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
 
 import { LogRow } from './LogRow';
-import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: (interactionName: string, properties?: Record<string, unknown> | undefined) =>
     reportInteraction(interactionName, properties),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 const theme = createTheme();

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -13,7 +13,7 @@ import {
   onPasteCopiedPanel,
 } from 'app/features/dashboard/utils/dashboard';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../../state/reducers';
 
@@ -25,7 +25,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
   const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(), []);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-  const { t } = useTranslate();
+
   return (
     <Menu>
       <Menu.Item

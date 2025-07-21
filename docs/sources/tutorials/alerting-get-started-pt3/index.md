@@ -277,8 +277,10 @@ Following the above example, [notification policies](ref:notification-policies) 
    These nested policies should route alert instances where the region label is either us-west or us-east. Only the us-west region team should receive grouped alert notifications.
 
    {{< admonition type="note" >}}
-   In Grafana, each label within a notification policy must have a unique key. If you attempt to add the same label key (e.g., region) with different values (us-west and us-east), only the last entry is saved, and the previous one is discarded. This is because labels are stored as associative arrays (maps), where each key must be unique.
-   For identical label keys use regex matchers (e.g., _region=~"us-west|us-east"_).
+   Label matchers are combined using the `AND` logical operator. This means that all matchers must be satisfied for a rule to be linked to a policy. If you attempt to use the same label key (e.g., region) with different values (e.g., us-west and us-east), the condition will not match, because it is logically impossible for a single key to have multiple values simultaneously.
+
+   However, `region!=us-east && region=!us-west` can match. For example, it would match a label set where `region=eu-central`.
+   Alternatively, for identical label keys use regular expression matchers (e.g., `region=~us-west|us-east`).
    {{</ admonition >}}
 
 <!-- INTERACTIVE ignore END -->
@@ -324,8 +326,9 @@ Following the above example, [notification policies](ref:notification-policies) 
 
    - Repeat for `region = us-east` with a different webhook or a different contact point.
 
-     **Note**: In Grafana, each label within a notification policy must have a unique key. If you attempt to add the same label key (e.g., region) with different values (us-west and us-east), only the last entry is saved, and the previous one is discarded. This is because labels are stored as associative arrays (maps), where each key must be unique.
-     For identical label keys use regex matchers (e.g., _region=~"us-west|us-east"_).
+     **Note**: Label matchers are combined using the `AND` logical operator. This means that all matchers must be satisfied for a rule to be linked to a policy. If you attempt to use the same label key (e.g., region) with different values (e.g., us-west and us-east), the condition will not match, because it is logically impossible for a single key to have multiple values simultaneously.
+
+     However, `region!=us-east && region=!us-west` can match. For example, it would match a label set where `region=eu-central`.Alternatively, for identical label keys use regular expression matchers (e.g., `region=~us-west|us-east`).
 
 {{< /docs/ignore >}}
 
@@ -510,13 +513,13 @@ _Detail of memory alert instances grouped into a separate notification for us-ea
 
 By configuring **notification policies** and using **labels** (such as _region_), you can group alert notifications based on specific criteria and route them to the appropriate teams. Fine-tuning **timing options**—including group wait, group interval, and repeat interval—further can reduce noise and ensures notifications remain actionable without overwhelming on-call engineers.
 
-## Learn more in [Grafana Alerting Templating](http://www.grafana.com/tutorials/alerting-get-started-pt4/)
+## Learn more in [Grafana Alerting: Template your alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt4/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Templating](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
+In [Get started with Grafana Alerting: Template your alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
 
 {{< /admonition >}}
 
@@ -524,7 +527,7 @@ In [Get started with Grafana Alerting - Templating](http://www.grafana.com/tutor
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Templating](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
+In [Get started with Grafana Alerting: Template your alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
 
 {{< /docs/ignore >}}
 

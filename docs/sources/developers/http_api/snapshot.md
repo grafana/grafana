@@ -69,9 +69,9 @@ JSON Body schema:
 - **key** - Optional. Define the unique key. Required if **external** is `true`.
 - **deleteKey** - Optional. Unique key used to delete the snapshot. It is different from the **key** so that only the creator can delete the snapshot. Required if **external** is `true`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Example Response**:
 

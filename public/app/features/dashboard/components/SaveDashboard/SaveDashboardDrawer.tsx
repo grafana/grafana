@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
@@ -54,7 +54,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
         onSaveSuccess();
       }
     : onDismiss;
-  const { t } = useTranslate();
 
   const renderSaveBody = () => {
     if (showDiff) {
@@ -104,11 +103,11 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   }
 
-  let title = 'Save dashboard';
+  let title = t('dashboard.save-dashboard-drawer.title', 'Save dashboard');
   if (isCopy) {
-    title = 'Save dashboard copy';
+    title = t('dashboard.save-dashboard-drawer.title-copy', 'Save dashboard copy');
   } else if (isProvisioned) {
-    title = 'Provisioned dashboard';
+    title = t('dashboard.save-dashboard-drawer.title-provisioned', 'Provisioned dashboard');
   }
 
   return (

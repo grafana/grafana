@@ -5,8 +5,8 @@ import { select, openMenu } from 'react-select-event';
 
 import * as ui from '@grafana/ui';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import createMockDatasource from '../../mocks/datasource';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
 
 import VariableEditor from './VariableEditor';
 
@@ -37,11 +37,11 @@ jest.mock('@grafana/runtime', () => ({
 const getResourceGroups = jest.fn().mockResolvedValue([{ resourceGroupURI: 'rg', resourceGroupName: 'rg', count: 1 }]);
 const getResourceNames = jest.fn().mockResolvedValue([
   {
-    id: 'foobarID',
+    id: '/subscriptions/subID/resourceGroups/resourceGroup/providers/foobarProvider/foobarType/foobar',
     name: 'foobar',
     subscriptionId: 'subID',
     resourceGroup: 'resourceGroup',
-    type: 'foobarType',
+    type: 'foobarProvider/foobarType',
     location: 'london',
   },
 ]);

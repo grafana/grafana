@@ -2,16 +2,10 @@ name: Backend Unit Tests
 
 on:
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
   push:
     branches:
       - main
       - release-*.*.*
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,10 +14,29 @@ concurrency:
 permissions: {}
 
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/backend-unit-tests.yml
+
   grafana:
     # Run this workflow only for PRs from forks
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    needs: detect-changes
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         shard: [
@@ -47,19 +60,18 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Generate Go code
-        run: make gen-go
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           go test -short -timeout=30m "${PACKAGES[@]}"
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    # If it gets merged into `main` or `release-*`, then a junit test result is uploaded to GCS.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         shard: [
@@ -74,6 +86,7 @@ jobs:
       contents: read
       id-token: write
     steps:
+      # Set up repository clone
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -86,34 +99,48 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           github-app-name: 'grafana-ci-bot'
+
+      # Prepare what we need to upload test results
       - run: echo "RESULTS_FILE=$(date --rfc-3339=seconds --utc | sed -s 's/ /-/g')_${SHARD/\//_}.xml" >> "$GITHUB_ENV"
         env:
           SHARD: ${{ matrix.shard }}
       - run: go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
-      - name: Generate Go code
-        run: make gen-go
+
+      # Run code
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}
         run: |
+          set -euo pipefail
+
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
-          go test -short -v -timeout=30m "${PACKAGES[@]}" | tee >(go-junit-report -set-exit-code > "$RESULTS_FILE")
-      - name: Log in to GCS
-        if: github.repository == 'grafana/grafana' && (success() || failure())
-        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs-v0.2.0
-        with:
-          service_account: github-junit-uploader@grafanalabs-workload-identity.iam.gserviceaccount.com
-          bucket: grafana-test-results
-      - if: github.repository == 'grafana/grafana' && (success() || failure())
-        run: echo "BUCKET_PATH=go-unit-tests/$(echo ${REF_NAME} | sed 's/\//-/g')" >> "$GITHUB_ENV"
+          # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
+          # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
+          go test -short -timeout=30m "${PACKAGES[@]}"
+
+  # This is the job that is actually required by rulesets.
+  # We need to require EITHER the OSS or the Enterprise job to pass.
+  # However, if one is skipped, GitHub won't flat-map the shards,
+  #   so they won't be accepted by a ruleset.
+  required-backend-unit-tests:
+    needs:
+      - grafana
+      - grafana-enterprise
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All backend unit tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test suites
         env:
-          REF_NAME: ${{ github.ref_name }}
-      - name: Upload test results
-        if: github.repository == 'grafana/grafana' && (success() || failure())
-        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
-        with:
-          bucket: grafana-test-results
-          service_account: github-junit-uploader@grafanalabs-workload-identity.iam.gserviceaccount.com
-          environment: "dev" # Can be dev/prod (defaults to dev)
-          path: ${{ env.RESULTS_FILE }}
-          bucket_path: ${{ env.BUCKET_PATH }}
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"

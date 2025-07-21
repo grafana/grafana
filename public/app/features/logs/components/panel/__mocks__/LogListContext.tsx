@@ -1,7 +1,9 @@
 import { createContext, useContext } from 'react';
 
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
+import { LogLineDetailsMode } from '../LogLineDetails';
 import { LogListContextData, Props } from '../LogListContext';
 import { LogListModel } from '../processing';
 
@@ -15,10 +17,13 @@ export const LogListContext = createContext<LogListContextData>({
   downloadLogs: () => {},
   enableLogDetails: false,
   filterLevels: [],
+  fontSize: 'default',
+  forceEscape: false,
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
   setDetailsWidth: () => {},
   setFilterLevels: () => {},
+  setFontSize: () => {},
   setForceEscape: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
@@ -34,6 +39,10 @@ export const LogListContext = createContext<LogListContextData>({
   syntaxHighlighting: true,
   toggleDetails: () => {},
   wrapLogMessage: false,
+  detailsMode: 'sidebar',
+  setDetailsMode: function (mode: LogLineDetailsMode): void {
+    throw new Error('Function not implemented.');
+  },
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -56,8 +65,11 @@ export const useLogIsPermalinked = (log: LogListModel) => {
 };
 
 export const defaultValue: LogListContextData = {
+  detailsMode: 'sidebar',
+  setDetailsMode: jest.fn(),
   setDedupStrategy: jest.fn(),
   setFilterLevels: jest.fn(),
+  setFontSize: jest.fn(),
   setForceEscape: jest.fn(),
   setLogListState: jest.fn(),
   setPinnedLogs: jest.fn(),
@@ -69,10 +81,13 @@ export const defaultValue: LogListContextData = {
   setWrapLogMessage: jest.fn(),
   closeDetails: jest.fn(),
   detailsDisplayed: jest.fn(),
-  detailsWidth: 0,
+  detailsWidth: 300,
   downloadLogs: jest.fn(),
   enableLogDetails: false,
   filterLevels: [],
+  fontSize: 'default',
+  forceEscape: false,
+  hasUnescapedContent: false,
   setDetailsWidth: jest.fn(),
   showDetails: [],
   toggleDetails: jest.fn(),
@@ -91,6 +106,7 @@ export const defaultProps: Props = {
   displayedFields: [],
   enableLogDetails: false,
   filterLevels: [],
+  fontSize: 'default',
   getRowContextQuery: jest.fn(),
   logSupportsContext: jest.fn(),
   logs: [],
@@ -114,6 +130,8 @@ export const LogListContextProvider = ({
   enableLogDetails = false,
   filterLevels = [],
   getRowContextQuery = jest.fn(),
+  logLineMenuCustomItems = undefined,
+  logs = [],
   logSupportsContext = jest.fn(),
   onLogLineHover,
   onPermalinkClick = jest.fn(),
@@ -122,11 +140,15 @@ export const LogListContextProvider = ({
   onUnpinLine = jest.fn(),
   permalinkedLogId,
   pinnedLogs = [],
+  showDetails = [],
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
   wrapLogMessage = true,
-}: Partial<Props>) => {
+}: Partial<Props> & { showDetails?: LogListModel[] }) => {
+  const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
+  const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
+
   return (
     <LogListContext.Provider
       value={{
@@ -136,8 +158,11 @@ export const LogListContextProvider = ({
         displayedFields,
         downloadLogs: jest.fn(),
         enableLogDetails,
+        hasLogsWithErrors,
+        hasSampledLogs,
         filterLevels,
         getRowContextQuery,
+        logLineMenuCustomItems,
         logSupportsContext,
         onLogLineHover,
         onPermalinkClick,
@@ -148,6 +173,7 @@ export const LogListContextProvider = ({
         pinnedLogs,
         setDedupStrategy: jest.fn(),
         setFilterLevels: jest.fn(),
+        setFontSize: jest.fn(),
         setForceEscape: jest.fn(),
         setLogListState: jest.fn(),
         setPinnedLogs: jest.fn(),
@@ -157,6 +183,7 @@ export const LogListContextProvider = ({
         setSortOrder: jest.fn(),
         setSyntaxHighlighting: jest.fn(),
         setWrapLogMessage: jest.fn(),
+        showDetails,
         showTime,
         sortOrder,
         syntaxHighlighting,
@@ -167,3 +194,9 @@ export const LogListContextProvider = ({
     </LogListContext.Provider>
   );
 };
+
+export const saveDetailsScrollPosition = jest.fn();
+
+export const getDetailsScrollPosition = jest.fn();
+
+export const removeDetailsScrollPosition = jest.fn();

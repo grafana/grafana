@@ -1,17 +1,16 @@
 import { screen } from '@testing-library/react';
 
 import { ScopesService } from '../../ScopesService';
-import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
 
 const selectors = {
   tree: {
     recentScopesSection: 'scopes-selector-recent-scopes-section',
     search: 'scopes-tree-search',
     headline: 'scopes-tree-headline',
-    select: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-checkbox`,
-    radio: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-radio`,
-    expand: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-expand`,
-    title: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-title`,
+    select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
+    radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
+    expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
+    title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
   },
   selector: {
     input: 'scopes-selector-input',
@@ -64,43 +63,33 @@ export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dash
 
 export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
 export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
-export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications', 'result'));
+export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
 export const queryResultApplicationsGrafanaSelect = () =>
-  screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'result'));
+  screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const getResultApplicationsGrafanaSelect = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'result'));
+  screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const queryPersistedApplicationsGrafanaSelect = () =>
-  screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'persisted'));
+  screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana'));
 export const getPersistedApplicationsGrafanaSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-grafana', 'persisted'));
+  screen.getByTestId(selectors.tree.select('applications-grafana'));
 export const queryResultApplicationsMimirSelect = () =>
-  screen.queryByTestId(selectors.tree.select('applications-mimir', 'result'));
+  screen.queryByTestId(selectors.tree.select('applications-mimir'));
 export const getResultApplicationsMimirSelect = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-mimir', 'result'));
+  screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-mimir'));
 export const queryPersistedApplicationsMimirSelect = () =>
-  screen.queryByTestId(selectors.tree.select('applications-mimir', 'persisted'));
+  screen.queryByTestId(selectors.tree.select('applications-mimir'));
 export const getPersistedApplicationsMimirSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-mimir', 'persisted'));
+  screen.getByTestId(selectors.tree.select('applications-mimir'));
 export const queryResultApplicationsCloudSelect = () =>
-  screen.queryByTestId(selectors.tree.select('applications-cloud', 'result'));
-export const getResultApplicationsCloudSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-cloud', 'result'));
-export const getResultApplicationsCloudExpand = () =>
-  screen.getByTestId(selectors.tree.expand('applications-cloud', 'result'));
+  screen.queryByTestId(selectors.tree.select('applications-cloud'));
+export const getResultApplicationsCloudSelect = () => screen.getByTestId(selectors.tree.select('applications-cloud'));
+export const getResultApplicationsCloudExpand = () => screen.getByTestId(selectors.tree.expand('applications-cloud'));
 export const getResultApplicationsCloudDevSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-cloud-dev', 'result'));
+  screen.getByTestId(selectors.tree.select('applications-cloud-dev'));
 
-export const getResultCloudSelect = () => screen.getByTestId(selectors.tree.select('cloud', 'result'));
-export const getResultCloudExpand = () => screen.getByTestId(selectors.tree.expand('cloud', 'result'));
-export const getResultCloudDevRadio = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-dev', 'result'));
-export const getResultCloudOpsRadio = () =>
-  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops', 'result'));
+export const getResultCloudSelect = () => screen.getByTestId(selectors.tree.select('cloud'));
+export const getResultCloudExpand = () => screen.getByTestId(selectors.tree.expand('cloud'));
+export const getResultCloudDevRadio = () => screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-dev'));
+export const getResultCloudOpsRadio = () => screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops'));
 
 export const getListOfScopes = (service: ScopesService) => service.state.value;
-export const getListOfSelectedScopes = (service: ScopesSelectorService) => service.state.selectedScopes;
-export const getListOfTreeScopes = (service: ScopesSelectorService) => service.state.treeScopes;
-export const getSelectedScope = (service: ScopesSelectorService, name: string) =>
-  getListOfSelectedScopes(service)?.find((selectedScope) => selectedScope.scope.metadata.name === name);
-export const getTreeScope = (service: ScopesSelectorService, name: string) =>
-  getListOfTreeScopes(service)?.find((treeScope) => treeScope.scopeName === name);

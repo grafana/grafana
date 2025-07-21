@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
 import { MIXED_DATASOURCE_NAME } from '../../plugins/datasource/mixed/MixedDataSource';
@@ -46,7 +46,7 @@ export function SecondaryActions({
   const theme = useTheme2();
   const styles = getStyles(theme);
   const exploreActiveDS = useSelector(selectExploreDSMaps);
-  const { t } = useTranslate();
+
   // Prefill the query library filter with the dataSource.
   // Get current dataSource that is open. As this is only used in Explore we get it from Explore state.
   const listOfDatasources = createDatasourcesList();

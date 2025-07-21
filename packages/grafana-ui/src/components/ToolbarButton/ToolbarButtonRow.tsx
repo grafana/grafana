@@ -5,9 +5,9 @@ import { useOverlay } from '@react-aria/overlays';
 import { Children, forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';

@@ -84,9 +84,9 @@ For details on data source management, including instructions on how configure u
 
 Before you can create your first dashboard, you need to add your data source.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Only users with the organization admin role can add data sources.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **To add a data source:**
 

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   CellProps,
@@ -16,7 +17,8 @@ import {
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 
@@ -163,7 +165,6 @@ const getRoleCell = (
   roleOptions: Role[],
   onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void
 ) => {
-  const { t } = useTranslate();
   const displayRolePicker =
     contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
@@ -205,7 +206,6 @@ const getActionsCell = (
   onDisable: (serviceAccount: ServiceAccountDTO) => void,
   onRemoveButtonClick: (serviceAccount: ServiceAccountDTO) => void
 ) => {
-  const { t } = useTranslate();
   if (isLoading) {
     return <Skeleton width={100} />;
   } else {

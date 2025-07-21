@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+	"go.opentelemetry.io/otel/trace"
 
 	authlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
@@ -41,7 +42,7 @@ var (
 	)
 )
 
-func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
+func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	})
@@ -60,6 +61,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
 		namespaceMapper:     request.GetNamespaceMapper(cfg),
 		accessTokenVerifier: accessTokenVerifier,
 		idTokenVerifier:     idTokenVerifier,
+		tracer:              tracer,
 	}
 }
 
@@ -69,9 +71,13 @@ type ExtendedJWT struct {
 	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
 	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
 	namespaceMapper     request.NamespaceMapper
+	tracer              trace.Tracer
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.extjwt.Authenticate")
+	defer span.End()
+
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
 	accessTokenClaims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
@@ -167,9 +173,14 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	if len(permissions) > 0 {
 		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
 		fetchPermissionsParams.AllowedActions = make([]string, 0, len(permissions))
+		fetchPermissionsParams.K8s = make([]string, 0, len(permissions))
+
 		for i := range permissions {
 			if strings.HasPrefix(permissions[i], "fixed:") {
 				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
+			} else if strings.Contains(permissions[i], "grafana.app") {
+				// Check for pattern <resource>.grafana.app/<resource>:<action>
+				fetchPermissionsParams.K8s = append(fetchPermissionsParams.K8s, permissions[i])
 			} else {
 				fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions[i])
 			}

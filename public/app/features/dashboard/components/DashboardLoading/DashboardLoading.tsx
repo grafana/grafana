@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Spinner, useStyles2, VerticalGroup } from '@grafana/ui';
-import { DashboardInitPhase } from 'app/types';
+import { DashboardInitPhase } from 'app/types/dashboard';
 
 export interface Props {
   initPhase: DashboardInitPhase;

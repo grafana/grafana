@@ -1,16 +1,14 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Permissions } from 'app/core/components/AccessControl';
 import { contextSrv } from 'app/core/services/context_srv';
-
-import { AccessControlAction, ServiceAccountDTO } from '../../types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ServiceAccountDTO } from 'app/types/serviceaccount';
 
 type ServiceAccountPermissionsProps = {
   serviceAccount: ServiceAccountDTO;
 };
 
 export const ServiceAccountPermissions = (props: ServiceAccountPermissionsProps) => {
-  const { t } = useTranslate();
-
   const canSetPermissions = contextSrv.hasPermissionInMetadata(
     AccessControlAction.ServiceAccountsPermissionsWrite,
     props.serviceAccount

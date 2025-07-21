@@ -1,4 +1,4 @@
-APP_SDK_VERSION := v0.38.2
+APP_SDK_VERSION := v0.39.2
 APP_SDK_DIR     := $(shell go env GOPATH)/bin/app-sdk-$(APP_SDK_VERSION)
 APP_SDK_BIN     := $(APP_SDK_DIR)/grafana-app-sdk
 
@@ -60,3 +60,10 @@ post-generate-cleanup: ## Clean up the generated code
 	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
 	@echo "" >> ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
 	@cat ./kinds/v2alpha1/dashboard_spec.cue >> ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
+
+	# Copy dashboard/v2alpha2 spec so we can use it for schema validation
+	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2alpha2/dashboard_spec.cue
+	@echo "// Source: apps/dashboard/kinds/v2alpha2/dashboard_spec.cue" >> ./pkg/apis/dashboard/v2alpha2/dashboard_spec.cue
+	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2alpha2/dashboard_spec.cue
+	@echo "" >> ./pkg/apis/dashboard/v2alpha2/dashboard_spec.cue
+	@cat ./kinds/v2alpha2/dashboard_spec.cue >> ./pkg/apis/dashboard/v2alpha2/dashboard_spec.cue

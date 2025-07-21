@@ -3,10 +3,15 @@ import { FUNCTIONS } from '../promql';
 
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
-import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';
-import { PromQueryPattern, PromQueryPatternType, PromVisualQueryOperationCategory } from './types';
+import { PromQueryModellerBase } from './shared/PromQueryModellerBase';
+import {
+  PromQueryPattern,
+  PromQueryPatternType,
+  PromVisualQueryOperationCategory,
+  PromQueryModellerInterface,
+} from './types';
 
-export class PromQueryModeller extends LokiAndPromQueryModellerBase {
+export class PromQueryModeller extends PromQueryModellerBase implements PromQueryModellerInterface {
   constructor() {
     super(() => {
       const allOperations = [...getOperationDefinitions(), ...getAggregationOperations()];
@@ -90,5 +95,3 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase {
     ];
   }
 }
-
-export const promQueryModeller = new PromQueryModeller();

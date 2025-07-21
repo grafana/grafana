@@ -3,8 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
@@ -19,7 +18,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
-import { FolderBulkActionsButton } from '../folder-actions/FolderActionsButton';
+import { FolderActionsButton } from '../folder-actions/FolderActionsButton';
 
 import { ActionIcon } from './ActionIcon';
 import { RuleGroupStats } from './RuleStats';
@@ -56,7 +55,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const { folder } = useFolder(folderUID);
 
   const { canEditRules } = useRulesAccess();
-  const { t } = useTranslate();
+
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
@@ -68,8 +67,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const isPluginProvided = group.rules.some((rule) => isPluginProvidedRule(rule.rulerRule ?? rule.promRule));
 
   const canEditGroup = hasRuler && !isProvisioned && !isFederated && !isPluginProvided && canEditRules(rulesSourceName);
-
-  const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
   // check what view mode we are in
   const isListView = viewMode === 'list';
@@ -139,19 +136,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       }
       if (folder) {
         if (isListView) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
-              data-testid="export-folder"
-              key="export-folder"
-              icon="download-alt"
-              tooltip={t('alerting.rule-group-action.export-rules-folder', 'Export rules folder')}
-              onClick={() => setIsExporting('folder')}
-            />
-          );
-          if (isFolderBulkActionsEnabled && folderUID && isListView) {
-            actionIcons.push(<FolderBulkActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
-          }
+          actionIcons.push(<FolderActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
         }
       }
     }
@@ -333,7 +318,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin: `0 ${theme.spacing(2)}`,
     }),
     actionIcons: css({
-      width: '80px',
+      width: '120px',
       alignItems: 'center',
 
       flexShrink: 0,

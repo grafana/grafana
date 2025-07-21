@@ -12,10 +12,12 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/groupBy.svg';
+import lightImage from '../images/light/groupBy.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -24,12 +26,7 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
-export const GroupByTransformerEditor = ({
-  input,
-  options,
-  onChange,
-}: TransformerUIProps<GroupByTransformerOptions>) => {
-  const { t } = useTranslate();
+const GroupByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<GroupByTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input, true);
 
   const onConfigChange = useCallback(
@@ -87,14 +84,9 @@ export const GroupByTransformerEditor = ({
   );
 };
 
-const options = [
-  { label: 'Group by', value: GroupByOperationID.groupBy },
-  { label: 'Calculate', value: GroupByOperationID.aggregate },
-];
-
-export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
+const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const styles = getStyles(theme);
 
   const onChange = useCallback(
@@ -106,6 +98,17 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     },
     [config, onConfigChange]
   );
+
+  const options = [
+    {
+      label: t('transformers.group-by-field-configuration.options.label.group-by', 'Group by'),
+      value: GroupByOperationID.groupBy,
+    },
+    {
+      label: t('transformers.group-by-field-configuration.options.label.calculate', 'Calculate'),
+      value: GroupByOperationID.aggregate,
+    },
+  ];
 
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
@@ -120,7 +123,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
           />
         </div>
 
-        {config?.operation === GroupByOperationID.aggregate && (
+        {config?.operation && (
           <StatsPicker
             className={styles.aggregations}
             placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
@@ -129,6 +132,9 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
             onChange={(stats) => {
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
+            filterOptions={(option) =>
+              config?.operation === GroupByOperationID.groupBy ? option.id === ReducerID.count : true
+            }
           />
         )}
       </Stack>
@@ -154,16 +160,21 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
+export const getGroupByTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> = () => ({
   id: DataTransformerID.groupBy,
   editor: GroupByTransformerEditor,
   transformation: standardTransformers.groupByTransformer,
-  name: standardTransformers.groupByTransformer.name,
-  description: standardTransformers.groupByTransformer.description,
+  name: t('transformers.group-by-transformer-editor.name.group-by', 'Group by'),
+  description: t(
+    'transformers.group-by-transformer-editor.description.group-series-by-field-calculate-stats',
+    'Group data by a field value and create aggregate data.'
+  ),
   categories: new Set([
     TransformerCategory.Combine,
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
   help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

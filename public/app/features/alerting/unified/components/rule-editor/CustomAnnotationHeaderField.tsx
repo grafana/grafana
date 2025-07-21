@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Input, useStyles2 } from '@grafana/ui';
 
 interface CustomAnnotationHeaderFieldProps {
@@ -10,7 +10,7 @@ interface CustomAnnotationHeaderFieldProps {
 
 const CustomAnnotationHeaderField = ({ field }: CustomAnnotationHeaderFieldProps) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <div>
       <span className={styles.annotationTitle}>
