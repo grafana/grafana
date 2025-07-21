@@ -9776,7 +9776,9 @@
       "aria-label": "Help"
     },
     "invite-user": {
-      "invite-new-member-button": "Invite new member"
+      "invite-button": "Invite",
+      "invite-new-member-button": "Invite new member",
+      "invite-tooltip": "Invite user"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",
