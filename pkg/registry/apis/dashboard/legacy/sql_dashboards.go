@@ -263,6 +263,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data, &apiVersion,
 	)
+
 	switch apiVersion.String {
 	case "":
 		apiVersion.String = dashboardV0.VERSION // default value
