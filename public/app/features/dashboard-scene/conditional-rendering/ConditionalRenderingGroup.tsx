@@ -23,6 +23,7 @@ import {
   GroupConditionItemType,
   GroupConditionVisibility,
   GroupConditionValue,
+  ConditionalRenderingConditions,
 } from './types';
 
 export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
@@ -79,7 +80,7 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     return item;
   }
 
-  public addItem(item: ConditionalRenderingData | ConditionalRenderingVariable | ConditionalRenderingTimeRangeSize) {
+  public addItem(item: ConditionalRenderingConditions) {
     // We don't use `setStateAndNotify` here because
     // We need to set a parent and activate the new condition before notifying the root
     this.setState({ value: [...this.state.value, item] });
