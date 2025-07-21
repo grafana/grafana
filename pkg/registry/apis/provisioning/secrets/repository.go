@@ -16,7 +16,7 @@ import (
 func ProvideRepositorySecrets(
 	features featuremgmt.FeatureToggles,
 	legacySecretsSvc grafanasecrets.Service,
-	secretsSvc contracts.SecureValueClient,
+	secretsSvc contracts.SecureValueClientProvider,
 	decryptSvc service.DecryptService,
 ) RepositorySecrets {
 	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc), NewSingleTenant(legacySecretsSvc))

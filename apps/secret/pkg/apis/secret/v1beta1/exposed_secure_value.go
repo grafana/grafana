@@ -5,11 +5,7 @@
 package v1beta1
 
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
-
-	"gopkg.in/yaml.v3"
 )
 
 const redacted = "[REDACTED]"
@@ -21,8 +17,6 @@ var (
 	_ fmt.Stringer   = (*ExposedSecureValue)(nil)
 	_ fmt.Formatter  = (*ExposedSecureValue)(nil)
 	_ fmt.GoStringer = (*ExposedSecureValue)(nil)
-	_ json.Marshaler = (*ExposedSecureValue)(nil)
-	_ yaml.Marshaler = (*ExposedSecureValue)(nil)
 )
 
 // NewExposedSecureValue creates a new exposed secure value wrapper.
@@ -57,14 +51,4 @@ func (s ExposedSecureValue) Format(f fmt.State, _verb rune) {
 // GoString must not return the exposed secure value.
 func (s ExposedSecureValue) GoString() string {
 	return redacted
-}
-
-// MarshalJSON must not return the exposed secure value.
-func (s ExposedSecureValue) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.Quote(redacted)), nil
-}
-
-// MarshalYAML must not return the exposed secure value.
-func (s ExposedSecureValue) MarshalYAML() (any, error) {
-	return redacted, nil
 }
