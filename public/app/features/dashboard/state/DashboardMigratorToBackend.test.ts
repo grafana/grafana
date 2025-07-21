@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
+import { getPanelPlugin } from '@grafana/data/test';
+import { config } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -104,6 +106,11 @@ describe('Backend / Frontend result comparison', () => {
     'output'
   );
 
+  config.panels = {
+    stat: getPanelPlugin({ id: 'stat' }).meta,
+    gauge: getPanelPlugin({ id: 'gauge' }).meta,
+  };
+
   const jsonInputs = readdirSync(inputDir);
 
   jsonInputs.forEach((inputFile) => {
@@ -119,6 +126,11 @@ describe('Backend / Frontend result comparison', () => {
       // This avoid issues with the default values in the frontend, wheter they were set in the input JSON or not.
       const frontendMigrationResult = new DashboardModel(jsonInput).getSaveModelClone();
       const backendMigrationResult = new DashboardModel(backendOutput).getSaveModelClone();
+      if (jsonInput.schemaVersion === 27) {
+        console.log('backendOutput', backendOutput);
+        console.log('frontendMigrationResult', frontendMigrationResult);
+        console.log('backendMigrationResult', backendMigrationResult);
+      }
       expect(backendMigrationResult).toMatchObject(frontendMigrationResult);
     });
   });

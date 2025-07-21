@@ -1,105 +1,235 @@
 {
   "panels": [
     {
+      "aliasYAxis": {
+        "test": 2
+      },
+      "autoMigrateFrom": "singlestat",
       "datasource": {
-        "uid": "prometheus"
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "text": "Down"
-                },
-                "1": {
-                  "color": "green",
-                  "text": "Up"
-                }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF0000",
+                "value": null
               },
-              "type": "value"
-            }
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "grid": {
+        "max": 10,
+        "min": 1
+      },
+      "legend": true,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
           ]
         }
       },
-      "id": 1,
       "targets": [
         {
           "datasource": {
-            "uid": "prometheus"
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
-          "expr": "up",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          }
         }
       ],
-      "title": "Singlestat to Stat Panel",
-      "type": "grafana-singlestat-panel"
+      "type": "stat"
     },
     {
+      "autoMigrateFrom": "singlestat",
       "datasource": {
-        "uid": "prometheus"
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
       "fieldConfig": {
         "defaults": {
-          "max": 100,
-          "min": 0,
-          "unit": "percent"
-        }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF0000",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
       },
-      "gauge": {
-        "show": true,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
+      "grid": {
+        "max": 10,
+        "min": 1
       },
-      "id": 2,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ]
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
       "targets": [
         {
           "datasource": {
-            "uid": "prometheus"
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
-          "expr": "cpu_usage_idle",
           "refId": "A"
         }
       ],
-      "title": "Singlestat to Gauge Panel",
-      "type": "grafana-singlestat-panel"
+      "type": "gauge"
     },
     {
+      "aliasYAxis": {
+        "test": 2
+      },
+      "autoMigrateFrom": "singlestat",
       "datasource": {
-        "uid": "prometheus"
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
-      "gauge": {
-        "show": false
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FF0000",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
       },
-      "id": 3,
-      "targets": [
+      "grid": {
+        "max": 10,
+        "min": 1
+      },
+      "legend": true,
+      "mappingType": 1,
+      "mappingTypes": [
         {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "memory_usage",
-          "refId": "A"
+          "name": "value to text",
+          "value": 1
         }
       ],
-      "title": "Singlestat with Gauge Disabled",
-      "type": "grafana-singlestat-panel"
-    },
-    {
-      "datasource": {
-        "uid": "prometheus"
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ]
+        }
       },
-      "id": 4,
       "targets": [
         {
           "datasource": {
-            "uid": "prometheus"
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          }
+        }
+      ],
+      "type": "stat",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "test",
+          "value": "20"
+        },
+        {
+          "op": "=",
+          "text": "test1",
+          "value": "30"
+        },
+        {
+          "op": "=",
+          "text": "50",
+          "value": "40"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
           "expr": "rate(http_requests_total[5m])",
           "refId": "A"
         }
       ],
-      "title": "Regular Timeseries Panel",
       "type": "timeseries"
     }
   ],

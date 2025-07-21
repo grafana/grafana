@@ -3,80 +3,60 @@
   "schemaVersion": 27,
   "panels": [
     {
-      "id": 1,
-      "title": "Singlestat to Stat Panel",
       "type": "singlestat",
-      "datasource": "prometheus",
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "up"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "text": "Down"
-                },
-                "1": {
-                  "color": "green",
-                  "text": "Up"
-                }
-              },
-              "type": "value"
-            }
-          ]
-        }
-      }
+      "legend": true,
+      "thresholds": "10,20,30",
+      "colors": ["#FF0000", "green", "orange"],
+      "aliasYAxis": { "test": 2 },
+      "grid": { "min": 1, "max": 10 },
+      "targets": [{ "refId": "A" }, {}]
     },
     {
-      "id": 2,
-      "title": "Singlestat to Gauge Panel",
       "type": "singlestat",
-      "datasource": "prometheus",
+      "thresholds": "10,20,30",
+      "colors": ["#FF0000", "green", "orange"],
       "gauge": {
         "show": true,
         "thresholdMarkers": true,
         "thresholdLabels": false
       },
-      "targets": [
+      "grid": { "min": 1, "max": 10 }
+    },  
+    {
+      "type": "singlestat",
+      "legend": true,
+      "thresholds": "10,20,30",
+      "colors": ["#FF0000", "green", "orange"],
+      "aliasYAxis": { "test": 2 },
+      "grid": { "min": 1, "max": 10 },
+      "targets": [{ "refId": "A" }, {}],
+      "mappingType": 1,
+      "mappingTypes": [
         {
-          "refId": "A",
-          "expr": "cpu_usage_idle"
+          "name": "value to text",
+          "value": 1
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        }
-      }
-    },
-    {
-      "id": 3,
-      "title": "Singlestat with Gauge Disabled",
-      "type": "singlestat",
-      "datasource": "prometheus",
-      "gauge": {
-        "show": false
-      },
-      "targets": [
+      "valueMaps": [
         {
-          "refId": "A",
-          "expr": "memory_usage"
+          "op": "=",
+          "text": "test",
+          "value": "20"
+        },
+        {
+          "op": "=",
+          "text": "test1",
+          "value": "30"
+        },
+        {
+          "op": "=",
+          "text": "50",
+          "value": "40"
         }
       ]
     },
     {
-      "id": 4,
-      "title": "Regular Timeseries Panel",
       "type": "timeseries",
-      "datasource": "prometheus",
       "targets": [
         {
           "refId": "A",
