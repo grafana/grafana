@@ -40,8 +40,3 @@ func (id ProviderID) Kind() (string, error) {
 func KeyLabel(providerID ProviderID) string {
 	return fmt.Sprintf("%s@%s", time.Now().Format("2006-01-02"), providerID)
 }
-
-// BackgroundProvider should be implemented for a provider that has a task that needs to be run in the background.
-type BackgroundProvider interface {
-	Run(ctx context.Context) error
-}
