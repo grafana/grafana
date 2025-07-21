@@ -43,7 +43,7 @@ It’s 12.1 time! We’re really excited about GA for a new Alerts page that mak
 
 Speaking of security, Grafana now supports Entra Workload Identity, simplifying OAuth and increasing security for instances using Microsoft Azure. Thanks to community contributor [mehighlow](https://github.com/mehighlow) for this feature!
 
-We have one more community contributor to thank for this release. [Chris Hodges](https://github.com/chodges15) delivered server-configurable quick time ranges for Dashboards. Now you can define custom time range presets for the time picker on Dashboards, perfect for teams that routinely analyze specific, context-driven time windows.
+We have one more community contributor to thank for this release. [Chris Hodges](https://github.com/chodges15) delivered server-configurable quick time ranges for dashboards. Now you can define custom time range presets for the time picker on dashboards, perfect for teams that routinely analyze specific, context-driven time windows.
 
 Keep reading to learn about what else we have in store for 12.1.
 
