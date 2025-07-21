@@ -30,6 +30,13 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
       },
     },
   },
+  provisioningAPIv0alpha1: {
+    endpoints: {
+      listRepository: {
+        select: jest.fn(() => () => ({ data: { items: [] } })),
+      },
+    },
+  },
 }));
 
 jest.mock('../hooks/useProvisionedFolderFormData');
