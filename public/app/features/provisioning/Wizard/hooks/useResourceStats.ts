@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -48,9 +49,9 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
 /**
  * Hook that provides resource statistics and sync logic
  */
-export function useResourceStats(repoName: string, isLegacyStorage?: boolean) {
-  const resourceStatsQuery = useGetResourceStatsQuery();
-  const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
+export function useResourceStats(repoName?: string, isLegacyStorage?: boolean) {
+  const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
+  const filesQuery = useGetRepositoryFilesQuery(repoName ? { name: repoName } : skipToken);
 
   const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
 
