@@ -107,7 +107,7 @@ export const GenAISQLSuggestionsButton = ({
       onHistoryChange={onHistoryUpdate}
       temperature={0.3}
       text={t('sql-expressions.sql-ai-interaction', `{{text}}`, { text })}
-      timeout={30000} // 30 seconds
+      timeout={60000} // 60 seconds
       toggleTipTitle={t('sql-expressions.ai-suggestions-title', 'AI-powered SQL expression suggestions')}
       tooltip={
         refIds.length === 0
