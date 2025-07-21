@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef, MouseEvent } from 'react';
 
+import { createContext, ItemDataType, useAssistant } from '@grafana/assistant';
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
@@ -34,6 +36,7 @@ interface Props {
 }
 
 export const LogLineMenu = ({ log, styles }: Props) => {
+  const [isAssistantAvailable, openMainAssistant] = useAssistant();
   const {
     enableLogDetails,
     detailsDisplayed,
@@ -81,6 +84,43 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     }
   }, [log, onPinLine, onUnpinLine, pinned]);
 
+  const openAssistant = useCallback(async () => {
+    if (!openMainAssistant) {
+      return;
+    }
+
+    const datasource = await getDataSourceSrv().get(log.datasourceUid);
+    const context = [];
+    if (datasource) {
+      context.push(
+        createContext(ItemDataType.Datasource, {
+          datasourceUid: datasource.uid,
+          datasourceName: datasource.name,
+          datasourceType: datasource.type,
+        })
+      );
+    }
+    openMainAssistant({
+      prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line')}:
+
+      \`\`\`
+${log.entry.replaceAll('`', '\\`')}
+      \`\`\`
+      `,
+      context: [
+        ...context,
+        createContext(ItemDataType.Structured, {
+          title: t('logs.log-line-menu.log-line', 'Log line'),
+          data: {
+            labels: log.labels,
+            value: log.entry,
+            timestamp: log.timestamp,
+          },
+        }),
+      ],
+    });
+  }, [log.entry, log.datasourceUid, log.labels, log.timestamp, openMainAssistant]);
+
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
@@ -108,6 +148,12 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
         )}
+        {isAssistantAvailable && (
+          <Menu.Item
+            onClick={openAssistant}
+            label={t('logs.log-line-menu.open-assistant', '✨ Explain this log line in Assistant')}
+          />
+        )}
         {logLineMenuCustomItems.map((item, i) => {
           if (isDivider(item)) {
             return <Menu.Divider key={i} />;
@@ -134,6 +180,8 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       showContext,
       toggleLogDetails,
       togglePinning,
+      isAssistantAvailable,
+      openAssistant,
     ]
   );
 
