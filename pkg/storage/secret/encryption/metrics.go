@@ -17,7 +17,6 @@ type DataKeyMetrics struct {
 	GetAllDataKeysDuration    prometheus.Histogram
 	DisableDataKeysDuration   prometheus.Histogram
 	DeleteDataKeyDuration     prometheus.Histogram
-	ReEncryptDataKeysDuration prometheus.Histogram
 }
 
 func newDataKeyMetrics() *DataKeyMetrics {
@@ -64,17 +63,11 @@ func newDataKeyMetrics() *DataKeyMetrics {
 			Help:      "Duration of delete data key operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
-		ReEncryptDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "re_encrypt_data_keys_duration_seconds",
-			Help:      "Duration of re-encrypt data keys operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
 	}
 }
 
-// NewDataKeyMetrics returns a singleton instance of the SecretsMetrics struct containing registered metrics
+// NewDataKeyMetrics returns an instance of the DataKeyMetrics
+// struct containing registered metrics if [reg] is not nil.
 func NewDataKeyMetrics(reg prometheus.Registerer) *DataKeyMetrics {
 	m := newDataKeyMetrics()
 
@@ -86,13 +79,8 @@ func NewDataKeyMetrics(reg prometheus.Registerer) *DataKeyMetrics {
 			m.GetAllDataKeysDuration,
 			m.DisableDataKeysDuration,
 			m.DeleteDataKeyDuration,
-			m.ReEncryptDataKeysDuration,
 		)
 	}
 
 	return m
-}
-
-func NewTestMetrics() *DataKeyMetrics {
-	return newDataKeyMetrics()
 }
