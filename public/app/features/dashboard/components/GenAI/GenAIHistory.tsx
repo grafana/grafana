@@ -19,7 +19,6 @@ export interface GenAIHistoryProps {
   updateHistory: (historyEntry: string) => void;
   eventTrackingSrc: EventTrackingSrc;
   timeout?: number;
-  startWithPrompt?: boolean;
 }
 
 const temperature = 0.5;
@@ -31,7 +30,6 @@ export const GenAIHistory = ({
   onApplySuggestion,
   updateHistory,
   timeout,
-  startWithPrompt = false,
 }: GenAIHistoryProps) => {
   const styles = useStyles2(getStyles);
 
@@ -112,16 +110,7 @@ export const GenAIHistory = ({
         </Alert>
       )}
 
-      {history.length > 0 ? (
-        <GenerationHistoryCarousel history={history} index={currentIndex} onNavigate={onNavigate} />
-      ) : startWithPrompt ? (
-        <div className={styles.emptyHistoryMessage}>
-          <Text element="p" color="secondary">
-            <Trans i18nKey="gen-ai.improve-placeholder">Write any prompt to get started</Trans>
-          </Text>
-        </div>
-      ) : null}
-
+      <GenerationHistoryCarousel history={history} index={currentIndex} onNavigate={onNavigate} />
       <div className={styles.actionButtons}>
         <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
       </div>
@@ -221,18 +210,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: '24px 0 8px 0',
-  }),
-  emptyHistoryMessage: css({
-    display: 'flex',
-    flexBasis: '100%',
-    flexGrow: 3,
-    whiteSpace: 'pre-wrap',
-    maxHeight: 110,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    padding: theme.spacing(2),
-    marginBottom: theme.spacing(2),
   }),
 });

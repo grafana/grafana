@@ -100,7 +100,6 @@ export const GenAISQLSuggestionsButton = ({
 
   return (
     <GenAIButton
-      startWithPrompt
       disabled={refIds.length === 0}
       eventTrackingSrc={EventTrackingSrc.sqlExpressions}
       messages={messages}

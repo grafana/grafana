@@ -40,8 +40,6 @@ export interface GenAIButtonProps {
   onHistoryChange?: (history: string[]) => void;
   // Optional timeout for the LLM stream. Default is 10 seconds
   timeout?: number;
-  // Start directly with the improve functionality (skip initial generation)
-  startWithPrompt?: boolean;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
 
@@ -58,7 +56,6 @@ export const GenAIButton = ({
   tooltip,
   onHistoryChange,
   timeout = TIMEOUT,
-  startWithPrompt = false,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
@@ -91,7 +88,7 @@ export const GenAIButton = ({
   });
 
   const [showHistory, setShowHistory] = useState(false);
-  const hasHistory = history.length > 0 || startWithPrompt;
+  const hasHistory = history.length > 0;
   const isFirstHistoryEntry = !hasHistory;
 
   const isGenerating = streamStatus === StreamStatus.GENERATING;
@@ -110,14 +107,11 @@ export const GenAIButton = ({
     if (streamStatus === StreamStatus.GENERATING) {
       stopGeneration();
     } else {
-      // Check if we should show improve UI (either has history or startWithPrompt is true)
-      if (hasHistory || startWithPrompt) {
-        // This is the improve path
-        setShowHistory(true);
-      } else {
-        // This is the initial generation path
+      if (!hasHistory) {
         onClickProp?.(e);
         setMessages(getMessages());
+      } else {
+        setShowHistory(true);
       }
     }
 
@@ -140,11 +134,6 @@ export const GenAIButton = ({
     reportInteraction(AutoGenerateItem.applySuggestion);
     onGenerate(suggestion);
     setShowHistory(false);
-
-    // If this was a startWithPrompt scenario, add the suggestion to history
-    if (startWithPrompt && history.length === 0) {
-      unshiftHistoryEntry(suggestion);
-    }
   };
 
   const getIcon = () => {
@@ -207,7 +196,6 @@ export const GenAIButton = ({
               updateHistory={unshiftHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}
               timeout={timeout}
-              startWithPrompt={startWithPrompt}
             />
           }
           placement="left-start"
