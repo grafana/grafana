@@ -26,7 +26,7 @@ import { DashboardTreeSelection } from '../types';
 import { DescendantCount } from './BrowseActions/DescendantCount';
 import { BulkActionFailureBanner, MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionProgress, ProgressState } from './BulkActionProgress';
-import { extractErrorMessage, fetchProvisionedDashboardPath } from './utils';
+import { collectSelectedItems, extractErrorMessage, fetchProvisionedDashboardPath } from './utils';
 
 interface BulkDeleteFormData {
   comment: string;
@@ -252,31 +252,4 @@ export function BulkDeleteProvisionedResource({
       folderPath={folderPath}
     />
   );
-}
-
-// Collect selected dashboard and folder from the DashboardTreeSelection
-// This is used to prepare the items for bulk delete operation.
-function collectSelectedItems(
-  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
-  childrenByParentUID: ReturnType<typeof useChildrenByParentUIDState>
-) {
-  const targets: Array<{ uid: string; isFolder: boolean; displayName: string }> = [];
-
-  // folders
-  for (const [uid, selected] of Object.entries(selectedItems.folder)) {
-    if (selected) {
-      const item = findItem([], childrenByParentUID, uid);
-      targets.push({ uid, isFolder: true, displayName: item?.title || uid });
-    }
-  }
-
-  // dashboards
-  for (const [uid, selected] of Object.entries(selectedItems.dashboard)) {
-    if (selected) {
-      const item = findItem([], childrenByParentUID, uid);
-      targets.push({ uid, isFolder: false, displayName: item?.title || uid });
-    }
-  }
-
-  return targets;
 }
