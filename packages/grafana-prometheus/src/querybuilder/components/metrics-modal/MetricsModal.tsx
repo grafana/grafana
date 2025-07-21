@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
-import { useMemo, useReducer, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -15,7 +15,7 @@ import {
   Pagination,
   Spinner,
   Toggletip,
-  useTheme2,
+  useStyles2,
 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
@@ -31,7 +31,6 @@ import {
 } from './MetricsModalContext';
 import { ResultsTable } from './ResultsTable';
 import { calculatePageList, calculateResultsPerPage, getPlaceholders, getPromTypes } from './state/helpers';
-import { initialState, setFuzzySearchQuery, setSelectedTypes, stateSlice } from './state/state';
 import { getStyles } from './styles';
 import { metricsModaltestIds } from './testIds';
 import { PromFilterOption } from './types';
@@ -47,13 +46,20 @@ interface MetricsModalProps {
 const MetricsModalContent = (props: MetricsModalProps) => {
   const { isOpen, onClose, onChange, query } = props;
 
-  const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query));
-
   const [showAdditionalSettings, setShowAdditionalSettings] = useState(false);
-  const { isLoading, metricsData, pagination, setPagination } = useMetricsModal();
+  const {
+    isLoading,
+    metricsData,
+    settings: { hasMetadata, disableTextWrap },
+    pagination,
+    setPagination,
+    selectedTypes,
+    setSelectedTypes,
+    textSearch,
+    setTextSearch,
+  } = useMetricsModal();
 
-  const theme = useTheme2();
-  const styles = getStyles(theme, state.disableTextWrap);
+  const styles = useStyles2(getStyles, disableTextWrap);
   const placeholders = getPlaceholders();
   const promTypes = getPromTypes();
 
@@ -134,7 +140,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
   //   dispatch(setMetaHaystack(haystackData));
   // }
 
-  function searchCallback(query: string, fullMetaSearchVal: boolean) {
+  function searchCallback(query: string, fullMetaSearchVal?: boolean) {
     // if (state.useBackend && query === '') {
     //   // get all metrics data if a user erases everything in the input
     //   updateMetricsMetadata();
@@ -175,23 +181,24 @@ const MetricsModalContent = (props: MetricsModalProps) => {
             autoFocus={true}
             data-testid={metricsModaltestIds.searchMetric}
             placeholder={placeholders.browse}
-            value={state.fuzzySearchQuery}
+            value={textSearch.fuzzySearchQuery}
             onInput={(e) => {
               const value = e.currentTarget.value ?? '';
-              dispatch(setFuzzySearchQuery(value));
-              searchCallback(value, state.fullMetaSearch);
+              setTextSearch({ ...textSearch, fuzzySearchQuery: value });
+              setPagination({ ...pagination, pageNum: 1 });
+              searchCallback(value);
             }}
           />
         </div>
-        {state.hasMetadata && (
+        {hasMetadata && (
           <div className={styles.inputItem}>
             <MultiSelect
               data-testid={metricsModaltestIds.selectType}
               inputId="my-select"
               options={typeOptions}
-              value={state.selectedTypes}
-              placeholder={placeholders.type}
-              onChange={(v) => dispatch(setSelectedTypes(v))}
+              value={selectedTypes}
+              placeholder={placeholders.filterType}
+              onChange={(v) => setSelectedTypes(v)}
             />
           </div>
         )}
@@ -253,18 +260,10 @@ const MetricsModalContent = (props: MetricsModalProps) => {
         )}
       </div>
       <div className={styles.results}>
-        {metricsData && (
-          <ResultsTable
-            onChange={onChange}
-            onClose={onClose}
-            query={query}
-            state={state}
-            disableTextWrap={state.disableTextWrap}
-          />
-        )}
+        {metricsData && <ResultsTable onChange={onChange} onClose={onClose} query={query} />}
       </div>
       <div className={styles.resultsFooter}>
-        <div className={styles.resultsAmount}>
+        {/*<div className={styles.resultsAmount}>
           <Trans
             i18nKey="grafana-prometheus.querybuilder.metrics-modal.results-amount"
             values={{ num: state.filteredMetricCount }}
@@ -272,7 +271,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
           >
             Showing {'{{num}}'} of {'{{count}}'} results
           </Trans>
-        </div>
+        </div>*/}
         <Pagination
           currentPage={pagination.pageNum ?? 1}
           numberOfPages={calculatePageList(metricsData, pagination.resultsPerPage).length}

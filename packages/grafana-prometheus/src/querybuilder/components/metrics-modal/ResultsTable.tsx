@@ -11,24 +11,23 @@ import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
 
 import { useMetricsModal } from './MetricsModalContext';
-import { tracking } from './state/helpers';
-import { MetricsModalState } from './state/state';
 import { MetricData } from './types';
 
 type ResultsTableProps = {
   onChange: (query: PromVisualQuery) => void;
   onClose: () => void;
   query: PromVisualQuery;
-  state: MetricsModalState;
-  disableTextWrap: boolean;
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const { onChange, onClose, query, state, disableTextWrap } = props;
+  const { onChange, onClose, query } = props;
   const {
     isLoading,
     metricsData,
+    settings: { hasMetadata, fullMetaSearch, useBackend, disableTextWrap },
     pagination: { pageNum, resultsPerPage },
+    selectedTypes,
+    textSearch,
   } = useMetricsModal();
 
   const slicedMetrics = metricsData.slice(
@@ -42,20 +41,19 @@ export function ResultsTable(props: ResultsTableProps) {
   function selectMetric(metric: MetricData) {
     if (metric.value) {
       onChange({ ...query, metric: metric.value });
-      tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
       onClose();
     }
   }
 
   function metaRows(metric: MetricData) {
-    if (state.fullMetaSearch && metric) {
+    if (fullMetaSearch && metric) {
       return (
         <>
           <td>{displayType(metric.type ?? '')}</td>
           <td>
             <Highlighter
               textToHighlight={metric.description ?? ''}
-              searchWords={state.metaHaystackMatches}
+              searchWords={textSearch.metaHaystackMatches}
               autoEscape
               highlightClassName={styles.matchHighLight}
             />
@@ -115,7 +113,7 @@ export function ResultsTable(props: ResultsTableProps) {
   function noMetricsMessages(): ReactElement {
     let message;
 
-    if (!state.fuzzySearchQuery) {
+    if (!textSearch.fuzzySearchQuery) {
       message = t(
         'grafana-prometheus.querybuilder.results-table.message-no-metrics-found',
         'There are no metrics found in the data source.'
@@ -129,7 +127,7 @@ export function ResultsTable(props: ResultsTableProps) {
       );
     }
 
-    if (state.fuzzySearchQuery || state.selectedTypes.length > 0) {
+    if (textSearch.fuzzySearchQuery || selectedTypes.length > 0) {
       message = t(
         'grafana-prometheus.querybuilder.results-table.message-expand-search',
         'There are no metrics found. Try to expand your search and filters.'
@@ -143,13 +141,17 @@ export function ResultsTable(props: ResultsTableProps) {
     );
   }
 
-  function textHighlight(state: MetricsModalState) {
-    if (state.useBackend) {
+  function textHighlight(state: {
+    fuzzySearchQuery: string;
+    metaHaystackMatches: string[];
+    nameHaystackMatches: string[];
+  }): string[] {
+    if (useBackend) {
       // highlight the input only for the backend search
       // this highlight is equivalent to how the metric select highlights
       // look into matching on regex input
       return [state.fuzzySearchQuery];
-    } else if (state.fullMetaSearch) {
+    } else if (fullMetaSearch) {
       // highlight the matches in the ufuzzy metaHaystack
       return state.metaHaystackMatches;
     } else {
@@ -165,7 +167,7 @@ export function ResultsTable(props: ResultsTableProps) {
           <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>
             <Trans i18nKey="grafana-prometheus.querybuilder.results-table.name">Name</Trans>
           </th>
-          {state.hasMetadata && (
+          {hasMetadata && (
             <>
               <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>
                 <Trans i18nKey="grafana-prometheus.querybuilder.results-table.type">Type</Trans>
@@ -187,12 +189,16 @@ export function ResultsTable(props: ResultsTableProps) {
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
-                      searchWords={textHighlight(state)}
+                      searchWords={textHighlight({
+                        fuzzySearchQuery: textSearch.fuzzySearchQuery,
+                        metaHaystackMatches: textSearch.metaHaystackMatches,
+                        nameHaystackMatches: textSearch.nameHaystackMatches,
+                      })}
                       autoEscape
                       highlightClassName={styles.matchHighLight}
                     />
                   </td>
-                  {state.hasMetadata && metaRows(metric)}
+                  {hasMetadata && metaRows(metric)}
                   <td>
                     <Button
                       size="md"

@@ -13,7 +13,6 @@ import { PromVisualQuery } from '../types';
 
 import { formatKeyValueStrings } from './formatter';
 import { MetricsModal } from './metrics-modal/MetricsModal';
-import { tracking } from './metrics-modal/state/helpers';
 
 export interface MetricComboboxProps {
   metricLookupDisabled: boolean;
@@ -103,10 +102,7 @@ export function MetricCombobox({
           )}
           variant="secondary"
           icon="book-open"
-          onClick={() => {
-            tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
-            setMetricsModalOpen(true);
-          }}
+          onClick={() => setMetricsModalOpen(true)}
         />
       </InputGroup>
     );

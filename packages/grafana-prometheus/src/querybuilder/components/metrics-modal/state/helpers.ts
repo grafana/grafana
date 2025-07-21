@@ -1,13 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/state/helpers.ts
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 
 import { PrometheusLanguageProviderInterface } from '../../../../language_provider';
 import { PromMetricsMetadata } from '../../../../types';
-import { PromVisualQuery } from '../../../types';
 import { MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { MetricsModalState } from './state';
 //
 // export async function setMetrics(
 //   datasource: PrometheusDatasource,
@@ -210,30 +207,6 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
   return results ?? defaultResults;
 };
 
-export function tracking(event: string, state?: MetricsModalState | null, metric?: string, query?: PromVisualQuery) {
-  switch (event) {
-    case 'grafana_prom_metric_encycopedia_tracking':
-      reportInteraction(event, {
-        metric: metric,
-        hasMetadata: state?.hasMetadata,
-        totalMetricCount: state?.totalMetricCount,
-        fuzzySearchQuery: state?.fuzzySearchQuery,
-        fullMetaSearch: state?.fullMetaSearch,
-        selectedTypes: state?.selectedTypes,
-        useRegexSearch: state?.useBackend,
-        includeResultsWithoutMetadata: state?.includeNullMetadata,
-      });
-    case 'grafana_prom_metric_encycopedia_disable_text_wrap_interaction':
-      reportInteraction(event, {
-        disableTextWrap: state?.disableTextWrap,
-      });
-    case 'grafana_prometheus_metric_encyclopedia_open':
-      reportInteraction(event, {
-        query: query,
-      });
-  }
-}
-
 export const getPromTypes: () => PromFilterOption[] = () => [
   {
     value: 'counter',
@@ -299,7 +272,7 @@ export const getPlaceholders = () => ({
     'grafana-prometheus.querybuilder.get-placeholders.metadata-search-switch',
     'Include description in search'
   ),
-  type: t('grafana-prometheus.querybuilder.get-placeholders.type', 'Filter by type'),
+  filterType: t('grafana-prometheus.querybuilder.get-placeholders.type', 'Filter by type'),
   includeNullMetadata: t(
     'grafana-prometheus.querybuilder.get-placeholders.include-null-metadata',
     'Include results with no metadata'

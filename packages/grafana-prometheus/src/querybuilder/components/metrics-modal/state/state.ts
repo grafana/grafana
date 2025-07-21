@@ -4,7 +4,6 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { SelectableValue } from '@grafana/data';
 
 import { PromVisualQuery } from '../../../types';
-import {DEFAULT_RESULTS_PER_PAGE} from "../MetricsModalContext";
 import { HaystackDictionary, MetricsData } from '../types';
 
 /**
@@ -13,9 +12,6 @@ import { HaystackDictionary, MetricsData } from '../types';
  */
 export function initialState(query?: PromVisualQuery): MetricsModalState {
   return {
-    // isLoading: true,
-    // metrics: [],
-    hasMetadata: true,
     metaHaystackDictionary: {},
     metaHaystackMatches: [],
     metaHaystackOrder: [],
@@ -24,15 +20,10 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     nameHaystackMatches: [],
     totalMetricCount: 0,
     filteredMetricCount: null,
-    resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
-    pageNum: 1,
     fuzzySearchQuery: '',
-    fullMetaSearch: false,
     includeNullMetadata: true,
     selectedTypes: [],
     useBackend: false,
-    disableTextWrap: false,
-    showAdditionalSettings: false,
   };
 }
 
@@ -40,16 +31,6 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
  * The metrics explorer state object
  */
 export interface MetricsModalState {
-  /** Used for the loading spinner */
-  // isLoading: boolean;
-  /**
-   * Initial collection of metrics.
-   * The frontend filters do not impact this, but
-   * it is reduced by the backend search.
-   */
-  // metrics: MetricsData;
-  /** Field for disabling type select and switches that rely on metadata */
-  hasMetadata: boolean;
   /** Used to display metrics and help with fuzzy order */
   nameHaystackDictionary: HaystackDictionary;
   /** Used to sort name fuzzy search by relevance */
@@ -66,24 +47,14 @@ export interface MetricsModalState {
   totalMetricCount: number;
   /** Set after filtering metrics */
   filteredMetricCount: number | null;
-  /** Pagination field for showing results in table */
-  resultsPerPage: number;
-  /** Pagination field */
-  pageNum: number;
   /** The text query used to match metrics */
   fuzzySearchQuery: string;
-  /** Enables the fuzzy meatadata search */
-  fullMetaSearch: boolean;
   /** Includes results that are missing type and description */
   includeNullMetadata: boolean;
   /** Filter by prometheus type */
   selectedTypes: Array<SelectableValue<string>>;
   /** Filter by the series match endpoint instead of the fuzzy search */
   useBackend: boolean;
-  /** Disable text wrap for descriptions in the results table */
-  disableTextWrap: boolean;
-  /** Display toggle switches for settings */
-  showAdditionalSettings: boolean;
 }
 
 /**
@@ -118,27 +89,15 @@ export const stateSlice = createSlice({
     buildMetrics: (state, action: PayloadAction<MetricsModalMetadata>) => {
       // state.isLoading = action.payload.isLoading;
       // state.metrics = action.payload.metrics;
-      state.hasMetadata = action.payload.hasMetadata;
+      // state.hasMetadata = action.payload.hasMetadata;
       state.metaHaystackDictionary = action.payload.metaHaystackDictionary;
       state.nameHaystackDictionary = action.payload.nameHaystackDictionary;
       state.totalMetricCount = action.payload.totalMetricCount;
       state.filteredMetricCount = action.payload.filteredMetricCount;
     },
-    setIsLoading: (state, action: PayloadAction<boolean>) => {
-      // state.isLoading = action.payload;
-    },
-    setFilteredMetricCount: (state, action: PayloadAction<number>) => {
-      state.filteredMetricCount = action.payload;
-    },
-    setResultsPerPage: (state, action: PayloadAction<number>) => {
-      state.resultsPerPage = action.payload;
-    },
-    setPageNum: (state, action: PayloadAction<number>) => {
-      state.pageNum = action.payload;
-    },
     setFuzzySearchQuery: (state, action: PayloadAction<string>) => {
       state.fuzzySearchQuery = action.payload;
-      state.pageNum = 1;
+      // state.pageNum = 1;
     },
     setNameHaystack: (state, action: PayloadAction<string[][]>) => {
       state.nameHaystackOrder = action.payload[0];
@@ -150,20 +109,16 @@ export const stateSlice = createSlice({
     },
     setSelectedTypes: (state, action: PayloadAction<Array<SelectableValue<string>>>) => {
       state.selectedTypes = action.payload;
-      state.pageNum = 1;
+      // state.pageNum = 1;
     },
   },
 });
 
 export const {
-  setIsLoading,
   buildMetrics,
   filterMetricsBackend,
-  setResultsPerPage,
-  setPageNum,
   setFuzzySearchQuery,
   setNameHaystack,
   setMetaHaystack,
   setSelectedTypes,
-  setFilteredMetricCount,
 } = stateSlice.actions;
