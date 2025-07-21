@@ -15,11 +15,17 @@ type SecretsManagerSettings struct {
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
 	ConfiguredKMSProviders map[string]map[string]string
+
+	DecryptServerType    string // "local" or "grpc"
+	DecryptServerAddress string // Address for external secrets server (used when storage_type = grpc)
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
 	secretsMgmt := cfg.Raw.Section("secrets_manager")
 	cfg.SecretsManagement.CurrentEncryptionProvider = secretsMgmt.Key("encryption_provider").MustString(MisconfiguredProvider)
+
+	cfg.SecretsManagement.DecryptServerType = valueAsString(secretsMgmt, "decrypt_server_type", "local")
+	cfg.SecretsManagement.DecryptServerAddress = valueAsString(secretsMgmt, "decrypt_server_address", "")
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

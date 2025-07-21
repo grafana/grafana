@@ -89,7 +89,8 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 			"spec": map[string]interface{}{
 				"description": "provisioning: " + name,
 				"value":       data,
-				"decrypters":  []string{svcName},
+				// TODO: Remove after testing!!
+				"decrypters": []string{svcName, "secrets-manager-testing"},
 			},
 		},
 	}
