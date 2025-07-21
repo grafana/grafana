@@ -3478,7 +3478,8 @@
   },
   "browse-dashboard": {
     "bulk-delete-resources-form": {
-      "api-success": ""
+      "api-success_one": "Successfully deleted {{count}} item",
+      "api-success_other": "Successfully deleted {{count}} items"
     }
   },
   "browse-dashboards": {
@@ -3517,14 +3518,15 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-action-resources-form": {
-      "failed-alert_one": "{{count}} {{item}} failed",
-      "failed-alert_other": "{{count}} {{item}} failed"
+      "failed-alert_one": "{{count}} item failed",
+      "failed-alert_other": "{{count}} items failed"
     },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:"
+      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
+      "error-path-not-found": "Path not found"
     },
     "bulk-move-resources-form": {
       "progress": "Progress: {{current}} of {{total}}"

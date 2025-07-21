@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { DashboardViewItem } from 'app/features/search/types';
 
 import { useChildrenByParentUIDState } from '../state/hooks';
 import { findItem } from '../state/utils';
@@ -77,30 +78,19 @@ export async function fetchProvisionedDashboardPath(uid: string): Promise<string
   }
 }
 
-export function extractErrorMessage(error: unknown): string {
-  if (error && typeof error === 'object') {
-    if ('data' in error && error.data && typeof error.data === 'object' && 'message' in error.data) {
-      return String(error.data.message);
-    }
-    if ('message' in error) {
-      return String(error.message);
-    }
-  }
-  return String(error);
-}
-
 // Collect selected dashboard and folder from the DashboardTreeSelection
 // This is used to prepare the items for bulk delete operation.
 export function collectSelectedItems(
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
-  childrenByParentUID: ReturnType<typeof useChildrenByParentUIDState>
+  childrenByParentUID: ReturnType<typeof useChildrenByParentUIDState>,
+  rootItems: DashboardViewItem[] = []
 ) {
   const targets: Array<{ uid: string; isFolder: boolean; displayName: string }> = [];
 
   // folders
   for (const [uid, selected] of Object.entries(selectedItems.folder)) {
     if (selected) {
-      const item = findItem([], childrenByParentUID, uid);
+      const item = findItem(rootItems, childrenByParentUID, uid);
       targets.push({ uid, isFolder: true, displayName: item?.title || uid });
     }
   }
@@ -108,7 +98,7 @@ export function collectSelectedItems(
   // dashboards
   for (const [uid, selected] of Object.entries(selectedItems.dashboard)) {
     if (selected) {
-      const item = findItem([], childrenByParentUID, uid);
+      const item = findItem(rootItems, childrenByParentUID, uid);
       targets.push({ uid, isFolder: false, displayName: item?.title || uid });
     }
   }

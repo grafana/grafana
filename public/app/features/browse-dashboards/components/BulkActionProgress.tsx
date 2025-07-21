@@ -1,4 +1,4 @@
-import { t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { Box, Text } from '@grafana/ui';
 import ProgressBar from 'app/features/provisioning/Shared/ProgressBar';
 
@@ -14,10 +14,11 @@ export function BulkActionProgress({ progress }: { progress: ProgressState }) {
   return (
     <Box>
       <Text>
-        {t('browse-dashboards.bulk-move-resources-form.progress', 'Progress: {{current}} of {{total}}', {
-          current: progress.current,
-          total: progress.total,
-        })}
+        <Trans
+          i18nKey="browse-dashboards.bulk-move-resources-form.progress"
+          defaults="Progress: {{current}} of {{total}}"
+          values={{ current: progress.current, total: progress.total }}
+        />
       </Text>
       <ProgressBar progress={progressPercentage} />
       <Text variant="bodySmall" color="secondary">

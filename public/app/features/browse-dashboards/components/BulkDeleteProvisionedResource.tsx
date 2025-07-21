@@ -12,21 +12,23 @@ import {
   RepositoryView,
   useDeleteRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
+import { useSelector } from 'app/types/store';
 
-import { useChildrenByParentUIDState } from '../state/hooks';
+import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
 import { findItem } from '../state/utils';
 import { DashboardTreeSelection } from '../types';
 
 import { DescendantCount } from './BrowseActions/DescendantCount';
 import { BulkActionFailureBanner, MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionProgress, ProgressState } from './BulkActionProgress';
-import { collectSelectedItems, extractErrorMessage, fetchProvisionedDashboardPath } from './utils';
+import { collectSelectedItems, fetchProvisionedDashboardPath } from './utils';
 
 interface BulkDeleteFormData {
   comment: string;
@@ -54,19 +56,6 @@ type BulkSuccessResponse = Array<{
   data: DeleteRepositoryFilesWithPathApiResponse;
 }>;
 
-function updateProgress(
-  index: number,
-  total: number,
-  title: string | undefined,
-  setProgress: React.Dispatch<React.SetStateAction<ProgressState | null>>
-) {
-  setProgress({
-    current: index,
-    total,
-    item: title || 'Unknown',
-  });
-}
-
 function FormContent({
   initialValues,
   selectedItems,
@@ -82,12 +71,13 @@ function FormContent({
 
   const methods = useForm<BulkDeleteFormData>({ defaultValues: initialValues });
   const childrenByParentUID = useChildrenByParentUIDState();
+  const rootItems = useSelector(rootItemsSelector);
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
   const navigate = useNavigate();
 
   const getResourcePath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
-    const item = findItem([], childrenByParentUID, uid);
+    const item = findItem(rootItems?.items || [], childrenByParentUID, uid);
     if (!item) {
       return undefined;
     }
@@ -98,7 +88,9 @@ function FormContent({
     getAppEvents().publish({
       type: AppEvents.alertSuccess.name,
       payload: [
-        t('browse-dashboard.bulk-delete-resources-form.api-success', `Successfully deleted ${successes.length} items`),
+        t('browse-dashboard.bulk-delete-resources-form.api-success', `Successfully deleted {{count}} items`, {
+          count: successes.length,
+        }),
       ],
     });
 
@@ -119,10 +111,14 @@ function FormContent({
   const handleSubmitForm = async (data: BulkDeleteFormData) => {
     setFailureResults(undefined);
 
-    const targets = collectSelectedItems(selectedItems, childrenByParentUID);
+    const targets = collectSelectedItems(selectedItems, childrenByParentUID, rootItems?.items || []);
 
     if (targets.length > 0) {
-      updateProgress(0, targets.length, targets[0].displayName, setProgress);
+      setProgress({
+        current: 0,
+        total: targets.length,
+        item: targets[0].displayName || 'Unknown',
+      });
     }
 
     const successes: BulkSuccessResponse = [];
@@ -132,7 +128,11 @@ function FormContent({
     // We want sequential processing to avoid overwhelming the API
     for (let i = 0; i < targets.length; i++) {
       const { uid, isFolder, displayName } = targets[i];
-      updateProgress(i, targets.length, displayName, setProgress);
+      setProgress({
+        current: i,
+        total: targets.length,
+        item: displayName,
+      });
 
       try {
         // get path in repository
@@ -141,7 +141,7 @@ function FormContent({
           failures.push({
             status: 'failed',
             title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
-            errorMessage: 'Path not found - item may not be provisioned',
+            errorMessage: t('browse-dashboards.bulk-delete-resources-form.error-path-not-found', 'Path not found'),
           });
           continue;
         }
@@ -165,7 +165,11 @@ function FormContent({
         });
       }
 
-      updateProgress(i + 1, targets.length, targets[i + 1]?.displayName, setProgress);
+      setProgress({
+        current: i + 1,
+        total: targets.length,
+        item: targets[i + 1]?.displayName,
+      });
     }
 
     setProgress(null);

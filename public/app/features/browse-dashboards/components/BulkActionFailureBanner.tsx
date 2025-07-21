@@ -11,9 +11,8 @@ export function BulkActionFailureBanner({ result, onDismiss }: { result: MoveRes
   return (
     <Alert
       severity="error"
-      title={t('browse-dashboards.bulk-action-resources-form.failed-alert', '{{count}} {{item}} failed', {
+      title={t('browse-dashboards.bulk-action-resources-form.failed-alert', '{{count}} items failed', {
         count: result.length,
-        item: result.length === 1 ? 'item' : 'items',
       })}
       onRemove={onDismiss}
     >
