@@ -99,10 +99,6 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
 
     const series = data?.series ?? [];
 
-    // if (this.parent?.parent?.parent?.state.body.state.title === 'panel') {
-    //   console.log('data', data);
-    // }
-
     for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
       if (series[seriesIdx].length > 0) {
         return true;

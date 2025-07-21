@@ -61,9 +61,8 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
         const runner = getQueryRunnerFor(item.state.body);
 
         if (
-          !runner ||
-          !runner.state.data ||
-          [LoadingState.NotStarted, LoadingState.Loading].includes(runner.state.data.state)
+          runner &&
+          (!runner.state.data || [LoadingState.NotStarted, LoadingState.Loading].includes(runner.state.data.state))
         ) {
           return true;
         } else {
