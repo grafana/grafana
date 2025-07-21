@@ -91,7 +91,7 @@ func toRingConfig(cfg *setting.Cfg, KVStore kv.Config) ring.Config {
 	rc.KVStore = KVStore
 	rc.HeartbeatTimeout = resource.RingHeartbeatTimeout
 
-	rc.ReplicationFactor = cfg.RingReplicationFactor
+	rc.ReplicationFactor = cfg.SearchRingReplicationFactor
 
 	return rc
 }
