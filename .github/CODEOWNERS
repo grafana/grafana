@@ -415,8 +415,17 @@
 /packages/grafana-alerting/ @grafana/alerting-frontend
 
 # @grafana/data
+/packages/grafana-data/CHANGELOG.md @grafana/grafana-frontend-platform
+/packages/grafana-data/LICENSE_APACHE2 @grafana/grafana-frontend-platform
+/packages/grafana-data/README.md @grafana/grafana-frontend-platform
+/packages/grafana-data/package.json @grafana/grafana-frontend-platform
+/packages/grafana-data/src/index.ts @grafana/grafana-frontend-platform
+/packages/grafana-data/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/project.json @grafana/frontend-ops
 /packages/grafana-data/rollup.config.ts @grafana/frontend-ops
+/packages/grafana-data/tsconfig.build.json @grafana/frontend-ops
+/packages/grafana-data/tsconfig.json @grafana/frontend-ops
+
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-data/src/context/plugins/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/dataframe/ @grafana/dataviz-squad
@@ -431,8 +440,6 @@
 /packages/grafana-data/src/text/ @grafana/dataviz-squad
 /packages/grafana-data/src/themes/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/transformations/ @grafana/datapro
-/packages/grafana-data/tsconfig.build.json @grafana/frontend-ops
-/packages/grafana-data/tsconfig.json @grafana/frontend-ops
 
 # @grafana/e2e-selectors
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
@@ -461,7 +468,16 @@
 /packages/grafana-prometheus/ @grafana/oss-big-tent
 
 # @grafana/runtime
+/packages/grafana-runtime/CHANGELOG.md @grafana/grafana-frontend-platform
+/packages/grafana-runtime/LICENSE_APACHE2 @grafana/grafana-frontend-platform
+/packages/grafana-runtime/README.md @grafana/grafana-frontend-platform
+/packages/grafana-runtime/package.json @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/project.json @grafana/frontend-ops
+/packages/grafana-runtime/tsconfig.build.json @grafana/frontend-ops
+/packages/grafana-runtime/tsconfig.json @grafana/frontend-ops
+
 /packages/grafana-runtime/src/analytics/plugins @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/components/FolderPicker.tsx @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/PluginPage.tsx @grafana/grafana-search-navigate-organise
@@ -474,13 +490,10 @@
 /packages/grafana-runtime/src/services/live.ts @grafana/dashboards-squad
 /packages/grafana-runtime/src/utils/chromeHeaderHeight.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-search-navigate-organise
-/packages/grafana-runtime/tsconfig.build.json @grafana/frontend-ops
-/packages/grafana-runtime/tsconfig.json @grafana/frontend-ops
 
 # @grafana/schema
 /packages/grafana-schema/project.json @grafana/frontend-ops
 /packages/grafana-schema/rollup.config.ts @grafana/frontend-ops
-/packages/grafana-schema/src/schema/dashboard/ @grafana/dashboards-squad
 /packages/grafana-schema/src/**/annotationslist @grafana/dashboards-squad
 /packages/grafana-schema/src/**/azuremonitor @grafana/partner-datasources
 /packages/grafana-schema/src/**/barchart @grafana/dataviz-squad
