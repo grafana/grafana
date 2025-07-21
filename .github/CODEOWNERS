@@ -415,6 +415,7 @@
 /packages/grafana-alerting/ @grafana/alerting-frontend
 
 # @grafana/data
+/packages/grafana-data/project.json @grafana/frontend-ops
 /packages/grafana-data/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-data/src/context/plugins/ @grafana/plugins-platform-frontend
@@ -458,10 +459,24 @@
 /packages/grafana-prometheus/ @grafana/oss-big-tent
 
 # @grafana/runtime
+/packages/grafana-runtime/project.json @grafana/frontend-ops
+/packages/grafana-runtime/src/analytics/plugins @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/components/FolderPicker.tsx @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/components/PluginPage.tsx @grafana/grafana-search-navigate-organise
+/packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/services/pluginExtensions @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/services/CorrelationsService.ts @grafana/datapro
+/packages/grafana-runtime/src/services/LocationService.test.tsx @grafana/grafana-search-navigate-organise
+/packages/grafana-runtime/src/services/LocationService.tsx @grafana/grafana-search-navigate-organise
+/packages/grafana-runtime/src/services/LocationSrv.ts @grafana/grafana-search-navigate-organise
+/packages/grafana-runtime/src/services/live.ts @grafana/dashboards-squad
+/packages/grafana-runtime/src/utils/chromeHeaderHeight.ts @grafana/grafana-search-navigate-organise
+/packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/tsconfig.build.json @grafana/frontend-ops
 /packages/grafana-runtime/tsconfig.json @grafana/frontend-ops
 
 # @grafana/schema
+/packages/grafana-schema/project.json @grafana/frontend-ops
 /packages/grafana-schema/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-schema/src/**/annotationslist @grafana/dashboards-squad
 /packages/grafana-schema/src/**/azuremonitor @grafana/partner-datasources
