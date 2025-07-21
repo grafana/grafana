@@ -416,6 +416,13 @@
         "title-add": "Add {{name}}",
         "title-remove": "Remove {{name}}"
       },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "Calculates {{aggregationName}} over dimensions while preserving {{labelWord}} {{labels}}.",
+          "label-default": "Calculates {{aggregationName}} over the dimensions.",
+          "label-without": "Calculates {{aggregationName}} over the dimensions {{labels}}. All other labels are preserved."
+        }
+      },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Set lower limit for the step parameter",
         "aria-label-select-resolution": "Select resolution",
