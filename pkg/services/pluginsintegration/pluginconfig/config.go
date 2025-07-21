@@ -30,7 +30,6 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.PluginsCDNURLTemplate,
 		cfg.AppURL,
 		config.Features{
-			ExternalCorePluginsEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins),
 			SkipHostEnvVarsEnabled:      features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
 			SriChecksEnabled:            features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
 			PluginsCDNSyncLoaderEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsCDNSyncLoader),
