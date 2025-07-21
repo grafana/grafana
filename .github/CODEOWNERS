@@ -422,7 +422,9 @@
 /packages/grafana-data/src/dataframe/ @grafana/dataviz-squad
 /packages/grafana-data/src/datetime/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/events/ @grafana/grafana-frontend-platform
+/packages/grafana-data/src/field/ @grafana/dashboards-squad
 /packages/grafana-data/src/geo/ @grafana/dataviz-squad
+/packages/grafana-data/src/panel/ @grafana/dashboards-squad
 /packages/grafana-data/src/query/ @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/rbac/ @grafana/access-squad
 /packages/grafana-data/src/table/ @grafana/dataviz-squad
@@ -478,6 +480,7 @@
 # @grafana/schema
 /packages/grafana-schema/project.json @grafana/frontend-ops
 /packages/grafana-schema/rollup.config.ts @grafana/frontend-ops
+/packages/grafana-schema/src/schema/dashboard/ @grafana/dashboards-squad
 /packages/grafana-schema/src/**/annotationslist @grafana/dashboards-squad
 /packages/grafana-schema/src/**/azuremonitor @grafana/partner-datasources
 /packages/grafana-schema/src/**/barchart @grafana/dataviz-squad
@@ -485,6 +488,7 @@
 /packages/grafana-schema/src/**/candlestick @grafana/dataviz-squad
 /packages/grafana-schema/src/**/canvas @grafana/dataviz-squad
 /packages/grafana-schema/src/**/cloudwatch @grafana/aws-datasources
+/packages/grafana-schema/src/**/dashboard @grafana/dashboards-squad
 /packages/grafana-schema/src/**/dashboardlist @grafana/grafana-search-navigate-organise
 /packages/grafana-schema/src/**/datagrid @grafana/dataviz-squad
 /packages/grafana-schema/src/**/debug @ryantxu
@@ -495,6 +499,7 @@
 /packages/grafana-schema/src/**/grafanapyroscope @grafana/observability-traces-and-profiling
 /packages/grafana-schema/src/**/heatmap @grafana/dataviz-squad
 /packages/grafana-schema/src/**/histogram @grafana/dataviz-squad
+/packages/grafana-schema/src/**/librarypanel @grafana/sharing-squad
 /packages/grafana-schema/src/**/logs @grafana/observability-logs
 /packages/grafana-schema/src/**/logsnew @grafana/observability-logs
 /packages/grafana-schema/src/**/loki @grafana/oss-big-tent @grafana/observability-logs
@@ -502,6 +507,7 @@
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /packages/grafana-schema/src/**/parca @grafana/oss-big-tent
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
+/packages/grafana-schema/src/**/publicdashboard @grafana/sharing-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad
@@ -511,6 +517,7 @@
 /packages/grafana-schema/src/**/timeseries @grafana/dataviz-squad
 /packages/grafana-schema/src/**/trend @grafana/dataviz-squad
 /packages/grafana-schema/src/**/xychart @grafana/dataviz-squad
+/packages/grafana-schema/src/**/xychart2 @grafana/dataviz-squad
 /packages/grafana-schema/tsconfig.build.json @grafana/frontend-ops
 /packages/grafana-schema/tsconfig.json @grafana/frontend-ops
 
