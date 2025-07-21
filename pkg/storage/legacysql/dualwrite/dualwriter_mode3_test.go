@@ -109,11 +109,30 @@ func TestMode3_Get(t *testing.T) {
 				},
 			},
 			{
-				name: "should return an error when getting an object in the unified store fails, and should not go to legacy",
+				name: "should return an error when getting an object in the unified store fails",
 				setupStorageFn: func(m *mock.Mock, name string) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
 				},
 				wantErr: true,
+			},
+			{
+				name: "should return an error when getting an object in the unified store fails with not found error, and legacy fails as well",
+				setupLegacyFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
+				},
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboards.dashboard.grafana.app", Resource: "dashboard"}, "uid"))
+				},
+				wantErr: true,
+			},
+			{
+				name: "should succeed when getting an object in the UnifiedStorage fails with NotFound, but Legacy succeeds",
+				setupLegacyFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				},
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboards.dashboard.grafana.app", Resource: "dashboard"}, "uid"))
+				},
 			},
 			{
 				name: "should succeed when getting an object in the LegacyStorage fails",

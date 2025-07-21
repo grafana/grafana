@@ -1,10 +1,31 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTimeParse, systemDateFormats, TimeRange } from '@grafana/data';
+import { dateTimeParse, FeatureToggles, systemDateFormats, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import * as commonFormatModule from '../commonFormat';
+
 import { TimeRangeContent } from './TimeRangeContent';
+
+// If this flag is deleted, this mock also should be, and the additional tests for when
+// the flag was disabled.
+type LocaleFormatPreferenceType = FeatureToggles['localeFormatPreference'];
+jest.mock('../commonFormat', () => {
+  const format = 'YYYY-MM-DD HH:mm:ss' as const;
+  const moduleObject = {
+    __esModule: true,
+    commonFormat: format as undefined | 'YYYY-MM-DD HH:mm:ss',
+    mockSetCommonFormat,
+  };
+  function mockSetCommonFormat(enabled: LocaleFormatPreferenceType = true) {
+    moduleObject.commonFormat = enabled ? format : undefined;
+  }
+  return moduleObject;
+});
+// @ts-expect-error mockSetCommonFormat doesn't exist on the export type of commonFormat,
+// but it's added above in the mock.
+const mockSetCommonFormat: (enabled: LocaleFormatPreferenceType) => void = commonFormatModule.mockSetCommonFormat;
 
 const mockClipboard = {
   writeText: jest.fn(),
@@ -25,9 +46,16 @@ const customRawTimeRange = {
   to: '2023-06-19 23:59:00',
 };
 
+const mockOnApply = jest.fn();
+
+beforeEach(() => {
+  mockSetCommonFormat(true);
+  mockOnApply.mockClear();
+});
+
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
   return {
-    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={() => {}} timeZone={timeZone} />),
+    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={mockOnApply} timeZone={timeZone} />),
     getCalendarDayByLabelText: (label: string) => {
       const item = screen.getByLabelText(label);
       return item?.parentElement as HTMLButtonElement;
@@ -54,7 +82,6 @@ describe('TimeRangeForm', () => {
   });
 
   it('should display calendar when clicking the calendar icon', async () => {
-    const user = userEvent.setup();
     setup();
     const { TimePicker } = selectors.components;
     const openCalendarButton = screen.getAllByRole('button', { name: 'Open calendar' });
@@ -90,6 +117,29 @@ describe('TimeRangeForm', () => {
     expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
   });
 
+  describe('when common format are entered', () => {
+    it('parses those dates in the current timezone', async () => {
+      setup();
+
+      const fromInput = screen.getByLabelText('From');
+      const toInput = screen.getByLabelText('To');
+      await user.clear(fromInput);
+      await user.type(fromInput, '2021-05-10 20:00:00');
+      await user.clear(toInput);
+      await user.type(toInput, '2021-05-12 19:59:00');
+
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
+      expect(appliedOrUndefined).not.toBe(undefined);
+      const applied = appliedOrUndefined!; // previous line throws if undefined
+      expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
+      expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
+    });
+  });
+
+  // once localeFormatPreference is permanently on, the only tests that should remain
+  // in this block will be ones that ensures the system format is *not* used
   describe('Given custom system date format', () => {
     const originalFullDate = systemDateFormats.fullDate;
     beforeEach(() => {
@@ -100,7 +150,7 @@ describe('TimeRangeForm', () => {
       systemDateFormats.fullDate = originalFullDate;
     });
 
-    it('should parse UTC iso strings and render in current timezone', () => {
+    it('should parse UTC iso strings and render them in the common format and current timezone', () => {
       const { getByLabelText } = setup(
         {
           from: defaultTimeRange.from,
@@ -113,8 +163,96 @@ describe('TimeRangeForm', () => {
         'America/New_York'
       );
 
-      expect(getByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
-      expect(getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+      expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
+      expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+    });
+
+    describe('when common format dates are entered', () => {
+      it('parses those dates in the current timezone', async () => {
+        setup();
+
+        const fromInput = screen.getByLabelText('From');
+        const toInput = screen.getByLabelText('To');
+        await user.clear(fromInput);
+        await user.type(fromInput, '2021-05-10 20:00:00');
+        await user.clear(toInput);
+        await user.type(toInput, '2021-05-12 19:59:00');
+
+        await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+        const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
+        expect(appliedOrUndefined).not.toBe(undefined);
+        const applied = appliedOrUndefined!; // previous line throws if undefined
+        expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
+        expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
+      });
+    });
+
+    describe('when the localeFormatPreference feature toggle is off', () => {
+      beforeEach(() => {
+        // when localeFormatPreference is permanently on, the parent describe block ("Given custom systemdate format")
+        // needs to be cleared out as most of these tests will be redundant.
+        mockSetCommonFormat(false);
+      });
+
+      it('should parse UTC ISO strings and render them in the system format', () => {
+        const { getByLabelText } = setup(
+          {
+            from: defaultTimeRange.from,
+            to: defaultTimeRange.to,
+            raw: {
+              from: defaultTimeRange.from.toISOString(),
+              to: defaultTimeRange.to.toISOString(),
+            },
+          },
+          'America/New_York'
+        );
+
+        expect(getByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
+        expect(getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+      });
+
+      describe('when common format dates are entered', () => {
+        it('should show an error because of parsing failure', async () => {
+          setup();
+
+          const fromInput = screen.getByLabelText('From');
+          const toInput = screen.getByLabelText('To');
+          await user.clear(fromInput);
+          await user.type(fromInput, '2021-05-10 20:00:00');
+          await user.clear(toInput);
+          await user.type(toInput, '2021-05-12 19:59:00');
+
+          await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+          const error = screen.getAllByRole('alert');
+
+          expect(error).toHaveLength(2);
+          expect(error[0]).toBeVisible();
+          expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+        });
+      });
+
+      describe('when common format dates are entered', () => {
+        it('should show an error because of parsing failure', async () => {
+          setup();
+
+          const fromInput = screen.getByLabelText('From');
+          const toInput = screen.getByLabelText('To');
+          await user.clear(fromInput);
+          await user.type(fromInput, '10.05.2021 20:00:00');
+          await user.clear(toInput);
+          await user.type(toInput, '12.05.2021 19:59:00');
+
+          await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+          const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
+          expect(appliedOrUndefined).not.toBe(undefined);
+          const applied = appliedOrUndefined!; // previous line throws if undefined
+          expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
+          expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
+        });
+      });
     });
   });
 

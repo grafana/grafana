@@ -1,3 +1,63 @@
+<!-- 12.0.2+security-01 START -->
+
+# 12.0.2+security-01 (2025-07-17)
+
+### Features and enhancements
+
+- **Profiles:** Stop passing response headers for Grafana-Pyroscope and parca datasources [#106730](https://github.com/grafana/grafana/pull/106730), [@simonswine](https://github.com/simonswine)
+
+### Bug fixes
+
+- **FlameGraph:** Fix bug for function names that conflict with JavaScript object prototype properties [#106625](https://github.com/grafana/grafana/pull/106625), [@simonswine](https://github.com/simonswine)
+- **Security:** Fixed CVE-2025-6023
+- **Security:** Fixed CVE-2025-6197
+
+<!-- 12.0.2+security-01 END -->
+<!-- 11.6.3+security-01 START -->
+
+# 11.6.3+security-01 (2025-07-17)
+
+### Features and enhancements
+
+- **Profiles:** Stop passing response headers for Grafana-Pyroscope and parca datasources [#106729](https://github.com/grafana/grafana/pull/106729), [@simonswine](https://github.com/simonswine)
+
+### Bug fixes
+
+- **FlameGraph:** Fix bug for function names that conflict with JavaScript object prototype properties [#106624](https://github.com/grafana/grafana/pull/106624), [@simonswine](https://github.com/simonswine)
+- **Security:** Fixed CVE-2025-6023
+- **Security:** Fixed CVE-2025-6197
+
+<!-- 11.6.3+security-01 END -->
+<!-- 11.5.6+security-01 START -->
+
+# 11.5.6+security-01 (2025-07-17)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-6023
+- **Security:** Fixed CVE-2025-6197
+
+<!-- 11.5.6+security-01 END -->
+<!-- 11.4.6+security-01 START -->
+
+# 11.4.6+security-01 (2025-07-17)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-6023
+- **Security:** Fixed CVE-2025-6197
+
+<!-- 11.4.6+security-01 END -->
+<!-- 11.3.8+security-01 START -->
+
+# 11.3.8+security-01 (2025-07-17)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-6023
+- **Security:** Fixed CVE-2025-6197
+
+<!-- 11.3.8+security-01 END -->
 <!-- 12.0.2 START -->
 
 # 12.0.2 (2025-06-17)

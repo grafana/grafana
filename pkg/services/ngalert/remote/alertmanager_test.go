@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"crypto/md5"
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
 	"slices"
 	"strings"
 	"testing"
@@ -23,6 +25,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
@@ -46,6 +49,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+//go:embed test-data/*.*
+var testData embed.FS
 
 var (
 	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
@@ -127,6 +133,125 @@ func TestNewAlertmanager(t *testing.T) {
 			require.Equal(tt, am.url, test.url)
 			require.Equal(tt, am.orgID, test.orgID)
 			require.NotNil(tt, am.amClient)
+		})
+	}
+}
+
+func TestGetRemoteState(t *testing.T) {
+	const tenantID = "test"
+	ctx := context.Background()
+	store := ngfakes.NewFakeKVStore(t)
+	fstore := notifier.NewFileStore(1, store)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+
+	// getOkHandler allows us to specify a full state the test server is going to respond with.
+	getOkHandler := func(state string) http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+			require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
+
+			res := map[string]any{
+				"status": "success",
+				"data": map[string]any{
+					"state": state,
+				},
+			}
+			w.Header().Add("content-type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(res))
+		})
+	}
+
+	// errorHandler makes the test server return a 500 status code and a non-JSON response.
+	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	// Test full states:
+	// - One with unknown part keys
+	// - One with the expected part keys
+	badState := alertingClusterPB.FullState{
+		Parts: []alertingClusterPB.Part{
+			{Key: "unknown", Data: []byte("data")},
+		},
+	}
+	rawBadState, err := badState.Marshal()
+	require.NoError(t, err)
+
+	state := alertingClusterPB.FullState{
+		Parts: []alertingClusterPB.Part{
+			{Key: "nfl:test", Data: []byte("test-nflog")},
+			{Key: "sil:test", Data: []byte("test-silences")},
+		},
+	}
+	rawState, err := state.Marshal()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		handler     http.Handler
+		expNflog    []byte
+		expSilences []byte
+		expErr      string
+	}{
+		{
+			name:    "non base64-encoded state",
+			handler: getOkHandler("invalid state"),
+			expErr:  "failed to base64-decode remote state: illegal base64 data at input byte 7",
+		},
+		{
+			name:    "error from the Mimir API",
+			handler: errorHandler,
+			expErr:  "failed to pull remote state: Response content-type is not application/json: text/html; charset=utf-8",
+		},
+		{
+			name:    "invalid state, base64-encoded",
+			handler: getOkHandler(base64.StdEncoding.EncodeToString([]byte("invalid state"))),
+			expErr:  "failed to unmarshal remote state: proto: FullState: wiretype end group for non-group",
+		},
+		{
+			name:    "unknown part key",
+			handler: getOkHandler(base64.StdEncoding.EncodeToString(rawBadState)),
+			expErr:  "unknown part key \"unknown\"",
+		},
+		{
+			name:        "success",
+			handler:     getOkHandler(base64.StdEncoding.EncodeToString(rawState)),
+			expNflog:    []byte("test-nflog"),
+			expSilences: []byte("test-silences"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			server := httptest.NewServer(test.handler)
+			cfg := AlertmanagerConfig{
+				OrgID:         1,
+				TenantID:      tenantID,
+				URL:           server.URL,
+				DefaultConfig: defaultGrafanaConfig,
+			}
+			am, err := NewAlertmanager(ctx,
+				cfg,
+				fstore,
+				tc,
+				NoopAutogenFn,
+				m,
+				tracing.InitializeTracerForTest(),
+			)
+			require.NoError(t, err)
+
+			s, err := am.GetRemoteState(ctx)
+			if test.expErr != "" {
+				require.Error(t, err)
+				require.Equal(t, test.expErr, err.Error())
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, test.expNflog, s.Nflog)
+			require.Equal(t, test.expSilences, s.Silences)
 		})
 	}
 }
@@ -357,12 +482,20 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	testGrafanaConfigWithBadEncryption, err := json.Marshal(inputCfg)
 	require.NoError(t, err)
 
-	cfgWithDecryptedSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+	test, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
+	cfgWithDecryptedSecret := client.GrafanaAlertmanagerConfig{
+		TemplateFiles:      test.TemplateFiles,
+		AlertmanagerConfig: test.AlertmanagerConfig,
+	}
 
-	cfgWithAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+	testAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
-	require.NoError(t, testAutogenFn(nil, nil, 0, &cfgWithAutogenRoutes.AlertmanagerConfig, false))
+	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, false))
+	cfgWithAutogenRoutes := client.GrafanaAlertmanagerConfig{
+		TemplateFiles:      testAutogenRoutes.TemplateFiles,
+		AlertmanagerConfig: testAutogenRoutes.AlertmanagerConfig,
+	}
 
 	// Calculate hashes for expected configurations
 	cfgWithDecryptedSecretBytes, err := json.Marshal(cfgWithDecryptedSecret)
@@ -372,6 +505,21 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	cfgWithAutogenRoutesBytes, err := json.Marshal(cfgWithAutogenRoutes)
 	require.NoError(t, err)
 	cfgWithAutogenRoutesHash := fmt.Sprintf("%x", md5.Sum(cfgWithAutogenRoutesBytes))
+
+	cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
+	require.NoError(t, err)
+	cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
+	require.NoError(t, err)
+	r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
+	require.NoError(t, err)
+	cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
+		TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
+		AlertmanagerConfig: r.Config,
+		Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
+	}
+	cfgWithExtraMergedBytes, err := json.Marshal(cfgWithExtraMerged)
+	require.NoError(t, err)
+	cfgWithExtraMergedHash := fmt.Sprintf("%x", md5.Sum(cfgWithExtraMergedBytes))
 
 	tests := []struct {
 		name           string
@@ -427,6 +575,15 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				Hash:                      cfgWithAutogenRoutesHash,
 			},
 			nil,
+		},
+		{
+			name:      "no error, with extra configurations",
+			config:    string(cfgWithExtraUnmergedBytes),
+			autogenFn: NoopAutogenFn,
+			expCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: cfgWithExtraMerged,
+				Hash:                      cfgWithExtraMergedHash,
+			},
 		},
 	}
 
@@ -677,7 +834,7 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 			// Return an empty config to ensure it gets replaced
 			w.Header().Add("content-type", "application/json")
 			require.NoError(t, json.NewEncoder(w).Encode(client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: &apimodels.PostableUserConfig{},
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{},
 			}))
 			return
 		}

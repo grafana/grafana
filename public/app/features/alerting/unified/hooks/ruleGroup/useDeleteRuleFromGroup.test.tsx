@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import server from '@grafana/test-utils/server';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../../mockApi';

@@ -7,7 +7,7 @@ import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKey
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { SearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItemKind, SearchState } from 'app/features/search/types';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { useHasSelection } from '../state/hooks';
 import { setAllSelection, setItemSelectionState } from '../state/slice';
