@@ -143,9 +143,9 @@ export class GeomapPanel extends Component<Props, State> {
     if (this.map && this.props.data !== prevProps.data) {
       this.dataChanged(this.props.data);
     }
-    // Handle options changes here where this.props has the updated values
+    // Handle options changes
     if (this.props.options !== prevProps.options) {
-      this.optionsChanged(prevProps.options);
+      this.optionsChanged(prevProps.options, this.props.options);
     }
   }
 
@@ -176,26 +176,29 @@ export class GeomapPanel extends Component<Props, State> {
    *
    * NOTE: changes to basemap and layers are handled independently
    */
-  optionsChanged(options: Options) {
-    const oldOptions = this.props.options;
-
-    // Check if noRepeat option changed - requires full map reinitialize
-    const noRepeatChanged = oldOptions.view?.noRepeat !== options.view?.noRepeat;
+  optionsChanged(oldOptions: Options, newOptions: Options) {
+    // First check if noRepeat changed - requires full map reinitialization
+    const noRepeatChanged = oldOptions.view?.noRepeat !== newOptions.view?.noRepeat;
 
     if (noRepeatChanged) {
       if (this.mapDiv) {
         this.initMapRef(this.mapDiv);
       }
-    } else if (oldOptions.view !== options.view) {
-      const view = this.initMapView(oldOptions.view);
+      // Skip other options processing
+      return;
+    }
 
+    // Handle incremental view changes
+    if (oldOptions.view !== newOptions.view) {
+      const view = this.initMapView(newOptions.view);
       if (this.map && view) {
         this.map.setView(view);
       }
     }
 
-    if (options.controls !== oldOptions.controls) {
-      this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
+    // Handle controls changes
+    if (newOptions.controls !== oldOptions.controls) {
+      this.initControls(newOptions.controls ?? { showZoom: true, showAttribution: true });
     }
   }
 
