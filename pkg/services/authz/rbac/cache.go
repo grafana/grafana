@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/authlib/cache"
@@ -49,10 +50,43 @@ func teamIDsCacheKey(namespace string) string {
 	return namespace + ".teams"
 }
 
+// rbacCacheState holds the cache skip state for a request using atomic operations for thread safety
+type rbacCacheState struct {
+	skip atomic.Bool
+}
+
+// cacheSkipKey is used to store rbacCacheState in context
+type cacheSkipKey struct{}
+
+// Global key instance to avoid allocations on each context lookup
+var globalSkipKey = cacheSkipKey{}
+
+// shouldSkipCache returns true if cache operations should be skipped for this request.
+// Optimized for high-performance with fast path atomic read (~5ns).
+func shouldSkipCache(ctx context.Context) bool {
+	if state, ok := ctx.Value(globalSkipKey).(*rbacCacheState); ok {
+		return state.skip.Load()
+	}
+	return false
+}
+
+// markCacheSkip marks the context to skip cache operations for the rest of the request.
+// Only allocates once per request on first cache error.
+func markCacheSkip(ctx context.Context) {
+	if state, ok := ctx.Value(globalSkipKey).(*rbacCacheState); ok {
+		state.skip.Store(true) // Already have state, just flip atomic flag
+	}
+
+	// First error in request - create state (allocates once per request with cache errors)
+	state := &rbacCacheState{}
+	state.skip.Store(true)
+}
+
 type cacheWrap[T any] interface {
 	Get(ctx context.Context, key string) (T, bool)
 	Set(ctx context.Context, key string, value T)
 }
+
 type cacheWrapImpl[T any] struct {
 	cache  cache.Cache
 	logger log.Logger
@@ -77,10 +111,19 @@ func (c *cacheWrapImpl[T]) Get(ctx context.Context, key string) (T, bool) {
 	logger := c.logger.FromContext(ctx)
 
 	var value T
+
+	// Skip cache if marked for skip (fast atomic check ~5ns)
+	if shouldSkipCache(ctx) {
+		span.SetAttributes(attribute.Bool("skipped", true))
+		return value, false
+	}
+
 	data, err := c.cache.Get(ctx, key)
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
 			logger.Warn("failed to get from cache", "key", key, "error", err)
+			// Mark context to skip subsequent cache operations (minimal allocation)
+			markCacheSkip(ctx)
 		}
 		return value, false
 	}
@@ -88,6 +131,8 @@ func (c *cacheWrapImpl[T]) Get(ctx context.Context, key string) (T, bool) {
 	err = json.Unmarshal(data, &value)
 	if err != nil {
 		logger.Warn("failed to unmarshal from cache", "key", key, "error", err)
+		// Mark context to skip subsequent cache operations
+		markCacheSkip(ctx)
 		return value, false
 	}
 
@@ -100,15 +145,25 @@ func (c *cacheWrapImpl[T]) Set(ctx context.Context, key string, value T) {
 	defer span.End()
 	logger := c.logger.FromContext(ctx)
 
+	// Skip cache if marked for skip (fast atomic check ~5ns)
+	if shouldSkipCache(ctx) {
+		span.SetAttributes(attribute.Bool("skipped", true))
+		return
+	}
+
 	data, err := json.Marshal(value)
 	if err != nil {
 		logger.Warn("failed to marshal to cache", "key", key, "error", err)
+		// Mark context to skip subsequent cache operations
+		markCacheSkip(ctx)
 		return
 	}
 
 	err = c.cache.Set(ctx, key, data, c.ttl)
 	if err != nil {
 		logger.Warn("failed to set to cache", "key", key, "error", err)
+		// Mark context to skip subsequent cache operations
+		markCacheSkip(ctx)
 	}
 }
 
