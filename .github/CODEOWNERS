@@ -408,7 +408,6 @@
 /e2e-playwright/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
 
 # Packages
-/packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-data/src/transformations/ @grafana/datapro
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
