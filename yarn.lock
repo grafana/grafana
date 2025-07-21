@@ -3519,7 +3519,7 @@ __metadata:
     lodash: "npm:4.17.21"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
-    monaco-promql: "npm:1.7.4"
+    monaco-promql: "npm:1.8.0"
     pluralize: "npm:8.0.0"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
@@ -12501,13 +12501,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:5.3.5":
-  version: 5.3.5
-  resolution: "centrifuge@npm:5.3.5"
+"centrifuge@npm:5.4.0":
+  version: 5.4.0
+  resolution: "centrifuge@npm:5.4.0"
   dependencies:
     events: "npm:^3.3.0"
     protobufjs: "npm:^7.2.5"
-  checksum: 10/71eecfaf90707fec428857fa7520f997bb56a9e6104a33b95d3c4b837be183d3f94641ca626874b1ea888dc4f6f983d24b3b777ab6e357359cb8dd3c7b515784
+  checksum: 10/251788a36675dcc89906a158b8554f1d36869aba4236c3eeb54fe0ff819fffa6d91e5189b5bb31d48505482f6fdb3425e487f94c79a2e1f316061a229768227a
   languageName: node
   linkType: hard
 
@@ -17978,7 +17978,7 @@ __metadata:
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
-    centrifuge: "npm:5.3.5"
+    centrifuge: "npm:5.4.0"
     chance: "npm:^1.1.13"
     chrome-remote-interface: "npm:0.33.3"
     classnames: "npm:2.5.1"
@@ -22702,10 +22702,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-promql@npm:1.7.4":
-  version: 1.7.4
-  resolution: "monaco-promql@npm:1.7.4"
-  checksum: 10/5bafbc3c1f00da27fd637ebc5ff106e96951ebf688b99b8ad7c447fee1d3298c3873369914c599aec836fa019ea3b8b93ce3b02157d0666d394b06b8a55e728c
+"monaco-promql@npm:1.8.0":
+  version: 1.8.0
+  resolution: "monaco-promql@npm:1.8.0"
+  checksum: 10/d757ecd46fb3fb3ee31d1ee06b21e2860735d24d41ca161e8d4e576a956a83e86103b7ddbecdf1e02ea9fac6a3782694c996e3ce46b7483f3c47630627b40c68
   languageName: node
   linkType: hard
 
