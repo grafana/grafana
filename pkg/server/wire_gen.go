@@ -796,7 +796,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	secretDBMigrator := migrator2.NewWithEngine(sqlStore)
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(cfg, secretDBMigrator, acimplService)
 	if err != nil {
 		return nil, err
 	}
@@ -1349,7 +1349,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	secretDBMigrator := migrator2.NewWithEngine(sqlStore)
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(cfg, secretDBMigrator, acimplService)
 	if err != nil {
 		return nil, err
 	}
