@@ -8,6 +8,7 @@ import {
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { useStepStatus } from './StepStatusContext';
 import { getResourceStats, useModeOptions } from './actions';
@@ -45,15 +46,8 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
   useEffect(() => {
     // Pick a name nice name based on type+settings
     const repository = getValues('repository');
-    switch (repository.type) {
-      case 'github':
-        const name = repository.url ?? 'github';
-        setValue('repository.title', name.replace('https://github.com/', ''));
-        break;
-      case 'local':
-        setValue('repository.title', repository.path ?? 'local');
-        break;
-    }
+    const title = generateRepositoryTitle(repository);
+    setValue('repository.title', title);
   }, [getValues, setValue]);
 
   useEffect(() => {

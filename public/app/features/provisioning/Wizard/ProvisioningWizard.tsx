@@ -165,11 +165,12 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const onSubmit = async () => {
     if (currentStepConfig?.submitOnNext) {
       // Validate form data before proceeding
-      if (activeStep === 'connection' || activeStep === 'bootstrap') {
-        const isValid = await trigger(['repository', 'repository.title']);
-        if (!isValid) {
-          return;
-        }
+      const fieldsToValidate =
+        activeStep === 'connection' ? (['repository'] as const) : (['repository', 'repository.title'] as const);
+
+      const isValid = await trigger(fieldsToValidate);
+      if (!isValid) {
+        return;
       }
 
       setIsSubmitting(true);
