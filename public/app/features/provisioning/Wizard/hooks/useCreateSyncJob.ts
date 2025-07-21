@@ -1,12 +1,13 @@
 import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StepStatusInfo } from '../types';
+import { isGitProvider } from '../../utils/repositoryTypes';
+import { RepoType, StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
   repoName: string;
   requiresMigration: boolean;
-  repoType?: string;
+  repoType: RepoType;
   isLegacyStorage?: boolean;
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
@@ -19,7 +20,7 @@ export function useCreateSyncJob({
   setStepStatusInfo,
 }: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
-  const supportsHistory = repoType === 'github' && isLegacyStorage;
+  const supportsHistory = isGitProvider(repoType) && isLegacyStorage;
 
   const createSyncJob = async (options?: { history?: boolean }) => {
     if (!repoName) {

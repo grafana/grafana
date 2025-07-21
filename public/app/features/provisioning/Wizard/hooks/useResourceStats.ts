@@ -12,11 +12,14 @@ import {
  * Calculates resource statistics from API responses
  */
 function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetResourceStatsApiResponse) {
-  const fileCount =
-    files?.items?.reduce((count, file) => {
-      const path = file.path ?? '';
-      return path.endsWith('.json') || path.endsWith('.yaml') ? count + 1 : count;
-    }, 0) ?? 0;
+  const isSupportedFile = (path: string) => path.endsWith('.json') || path.endsWith('.yaml');
+
+  const items = files?.items ?? [];
+
+  const fileCount = items.filter((file) => {
+    const path = file.path ?? '';
+    return isSupportedFile(path);
+  }).length;
 
   let counts: string[] = [];
   let resourceCount = 0;
