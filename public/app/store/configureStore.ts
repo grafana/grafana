@@ -13,6 +13,7 @@ import { advisorAPIv0alpha1 } from '../api/clients/advisor/v0alpha1';
 import { folderAPIv1beta1 } from '../api/clients/folder/v1beta1';
 import { iamAPIv0alpha1 } from '../api/clients/iam/v0alpha1';
 import { playlistAPIv0alpha1 } from '../api/clients/playlist/v0alpha1';
+import { pluginsAPI } from '../api/clients/plugins';
 import { provisioningAPIv0alpha1 } from '../api/clients/provisioning/v0alpha1';
 // Used by the API client generator
 // PLOP_INJECT_IMPORT
@@ -53,6 +54,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         provisioningAPIv0alpha1.middleware,
         folderAPIv1beta1.middleware,
         advisorAPIv0alpha1.middleware,
+        pluginsAPI.middleware,
         // PLOP_INJECT_MIDDLEWARE
         // Used by the API client generator
         ...extraMiddleware

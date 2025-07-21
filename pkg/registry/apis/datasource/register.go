@@ -64,37 +64,40 @@ func RegisterAPIService(
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
-	var err error
-	var builder *DataSourceAPIBuilder
-	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
-	ids := []string{
-		"grafana-testdata-datasource",
-		"prometheus",
-		"graphite",
-	}
-
-	for _, ds := range all {
-		if explictPluginList && !slices.Contains(ids, ds.ID) {
-			continue // skip this one
+	go func() {
+		logger := log.New("datasource.api")
+		all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
+		ids := []string{
+			"grafana-testdata-datasource",
+			"prometheus",
+			"graphite",
 		}
 
-		if !ds.Backend {
-			continue // skip frontend only plugins
-		}
+		for _, ds := range all {
+			if explictPluginList && !slices.Contains(ids, ds.ID) {
+				continue // skip this one
+			}
 
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
-			pluginClient,
-			datasources.GetDatasourceProvider(ds.JSONData),
-			contextProvider,
-			accessControl,
-			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-		)
-		if err != nil {
-			return nil, err
+			if !ds.Backend {
+				continue // skip frontend only plugins
+			}
+
+			apiBuilder, err := NewDataSourceAPIBuilder(ds.JSONData,
+				pluginClient,
+				datasources.GetDatasourceProvider(ds.JSONData),
+				contextProvider,
+				accessControl,
+				features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+			)
+			if err != nil {
+				logger.Error("Failed to create datasource api builder", "error", err, "plugin", ds.ID)
+				continue
+			}
+			apiRegistrar.RegisterAPI(apiBuilder)
 		}
-		apiRegistrar.RegisterAPI(builder)
-	}
-	return builder, nil // only used for wire
+	}()
+
+	return &DataSourceAPIBuilder{}, nil // only used for wire
 }
 
 // PluginClient is a subset of the plugins.Client interface with only the

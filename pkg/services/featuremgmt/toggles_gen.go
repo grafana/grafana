@@ -954,4 +954,8 @@ const (
 	// FlagUnifiedStorageSearchDualReaderEnabled
 	// Enable dual reader for unified storage search
 	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
+
+	// FlagPluginsApp
+	// Enable the plugins app
+	FlagPluginsApp = "pluginsApp"
 )

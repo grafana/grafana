@@ -35,21 +35,21 @@ type DirectRestConfigProvider interface {
 	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
-func ProvideEventualRestConfigProvider() *eventualRestConfigProvider {
-	return &eventualRestConfigProvider{
+func ProvideEventualRestConfigProvider() *EventualRestConfigProvider {
+	return &EventualRestConfigProvider{
 		ready: make(chan struct{}),
 	}
 }
 
 var (
-	_ RestConfigProvider       = (*eventualRestConfigProvider)(nil)
-	_ DirectRestConfigProvider = (*eventualRestConfigProvider)(nil)
+	_ RestConfigProvider       = (*EventualRestConfigProvider)(nil)
+	_ DirectRestConfigProvider = (*EventualRestConfigProvider)(nil)
 )
 
-// eventualRestConfigProvider is a RestConfigProvider that will not return a rest config until the ready channel is closed.
+// EventualRestConfigProvider is a RestConfigProvider that will not return a rest config until the ready channel is closed.
 // This exists to alleviate a circular dependency between the apiserver.server's dependencies and their dependencies wanting a rest config.
 // Importantly, this is handled by wire as opposed to a mutable global.
-type eventualRestConfigProvider struct {
+type EventualRestConfigProvider struct {
 	// When this channel is closed, we can start returning the rest config.
 	ready chan struct{}
 	cfg   interface {
@@ -58,7 +58,18 @@ type eventualRestConfigProvider struct {
 	}
 }
 
-func (e *eventualRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
+func (e *EventualRestConfigProvider) SetRestConfigProvider(cfg interface {
+	RestConfigProvider
+	DirectRestConfigProvider
+}) {
+	e.cfg = cfg
+}
+
+func (e *EventualRestConfigProvider) MarkAsReady() {
+	close(e.ready)
+}
+
+func (e *EventualRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	select {
 	case <-e.ready:
 		return e.cfg.GetRestConfig(ctx)
@@ -67,7 +78,7 @@ func (e *eventualRestConfigProvider) GetRestConfig(ctx context.Context) (*client
 	}
 }
 
-func (e *eventualRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
+func (e *EventualRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
 	select {
 	case <-e.ready:
 		return e.cfg.GetDirectRestConfig(c)
@@ -76,7 +87,7 @@ func (e *eventualRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqCont
 	}
 }
 
-func (e *eventualRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (e *EventualRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	select {
 	case <-e.ready:
 		e.cfg.DirectlyServeHTTP(w, r)
