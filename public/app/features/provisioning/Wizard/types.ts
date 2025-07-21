@@ -26,12 +26,5 @@ export interface ModeOption {
   subtitle: string;
 }
 
-export interface SystemState {
-  resourceCount: number;
-  resourceCountString: string;
-  fileCount: number;
-  actions: ModeOption[];
-}
-
 export type StepStatus = 'idle' | 'running' | 'error' | 'success';
 export type StepStatusInfo = { status: StepStatus } | { status: 'error'; error: string };

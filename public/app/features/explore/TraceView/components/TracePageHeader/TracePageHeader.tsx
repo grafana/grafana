@@ -17,12 +17,11 @@ import cx from 'classnames';
 import { memo, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
-import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { TraceSearchProps, CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { SearchProps } from '../../useSearch';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
@@ -38,8 +37,8 @@ export type TracePageHeaderProps = {
   data: DataFrame;
   app?: CoreApp;
   timeZone: TimeZone;
-  search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
+  search: TraceSearchProps;
+  setSearch: (newSearch: TraceSearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;

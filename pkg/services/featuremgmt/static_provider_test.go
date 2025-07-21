@@ -51,6 +51,7 @@ func setup(t *testing.T, conf []byte) {
 	t.Helper()
 	cfg, err := setting.NewCfgFromBytes(conf)
 	require.NoError(t, err)
+
 	err = InitOpenFeatureWithCfg(cfg)
 	require.NoError(t, err)
 }
