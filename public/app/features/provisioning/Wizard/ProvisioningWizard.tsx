@@ -283,7 +283,9 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               </Text>
             </Box>
 
-            {hasStepError && <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />}
+            {hasStepError && 'error' in stepStatusInfo && stepStatusInfo.error && (
+              <Alert severity="error" title={stepStatusInfo.error} />
+            )}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
