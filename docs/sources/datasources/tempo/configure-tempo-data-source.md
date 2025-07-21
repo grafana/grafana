@@ -324,9 +324,6 @@ You can configure this setting as follows:
 ### Tags time range
 
 The **Tags time range** feature controls how tag and tag-value queries are executed by specifying the time window applied to these requests. You can select one of the following options to constrain your queries:
-Specifies the time range to use for tags and tag value requests.
-
-You can configure this setting as follows:
 
 | Name                | Description                        |
 | ------------------- | ---------------------------------- |
