@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/ResultsTable.tsx
 import { css } from '@emotion/css';
-import { ReactElement } from 'react';
+import { ReactElement, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -30,10 +30,30 @@ export function ResultsTable(props: ResultsTableProps) {
     textSearch,
   } = useMetricsModal();
 
-  const slicedMetrics = metricsData.slice(
-    (pageNum - 1) * resultsPerPage,
-    (pageNum - 1) * resultsPerPage + resultsPerPage
-  );
+  const slicedMetrics = useMemo(() => {
+    let filteredMetrics = metricsData;
+    if (selectedTypes.length > 0) {
+      filteredMetrics = metricsData.filter((m: MetricData, idx) => {
+        // Matches type
+        const matchesSelectedType = selectedTypes.some((t) => {
+          if (m.type && t.value) {
+            return m.type.includes(t.value);
+          }
+
+          if (!m.type && t.value === 'no type') {
+            return true;
+          }
+
+          return false;
+        });
+
+        // when a user filters for type, only return metrics with defined types
+        return matchesSelectedType;
+      });
+    }
+
+    return filteredMetrics.slice((pageNum - 1) * resultsPerPage, (pageNum - 1) * resultsPerPage + resultsPerPage);
+  }, [metricsData, pageNum, resultsPerPage, selectedTypes]);
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
