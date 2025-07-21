@@ -2,10 +2,12 @@ package shorturlimpl
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -67,4 +69,13 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedIn
 
 func (s ShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error {
 	return s.SQLStore.Delete(ctx, cmd)
+}
+
+func (s ShortURLService) ConvertShortURLToDTO(shortURL *shorturls.ShortUrl, appURL string) *dtos.ShortURL {
+	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(appURL, "/"), shortURL.Uid, shortURL.OrgId)
+
+	return &dtos.ShortURL{
+		UID: shortURL.Uid,
+		URL: url,
+	}
 }
