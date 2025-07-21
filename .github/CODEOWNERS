@@ -408,9 +408,25 @@
 /e2e-playwright/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
 
 # Packages
+/packages/README.md @grafana/grafana-frontend-platform
+/packages/grafana-data/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
+/packages/grafana-data/src/context/plugins/ @grafana/plugins-platform-frontend
+/packages/grafana-data/src/dataframe/ @grafana/dataviz-squad
+/packages/grafana-data/src/datetime/ @grafana/grafana-frontend-platform
+/packages/grafana-data/src/events/ @grafana/grafana-frontend-platform
+/packages/grafana-data/src/geo/ @grafana/dataviz-squad
+/packages/grafana-data/src/query/ @grafana/grafana-datasources-core-services
+/packages/grafana-data/src/rbac/ @grafana/access-squad
+/packages/grafana-data/src/table/ @grafana/dataviz-squad
+/packages/grafana-data/src/text/ @grafana/dataviz-squad
+/packages/grafana-data/src/themes/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/transformations/ @grafana/datapro
+/packages/grafana-data/tsconfig.build.json @grafana/frontend-ops
+/packages/grafana-data/tsconfig.json @grafana/frontend-ops
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
+/packages/grafana-eslint-rules/ @grafana/grafana-frontend-platform
+/packages/grafana-eslint-rules/tsconfig.json @grafana/frontend-ops
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs
 /packages/grafana-o11y-ds-frontend/src/IntervalInput/ @grafana/observability-traces-and-profiling
@@ -422,14 +438,16 @@
 /packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/observability-traces-and-profiling
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
 /packages/grafana-prometheus/ @grafana/oss-big-tent
+/packages/grafana-runtime/tsconfig.build.json @grafana/frontend-ops
+/packages/grafana-runtime/tsconfig.json @grafana/frontend-ops
 /packages/grafana-schema/src/**/*canvas* @grafana/dataviz-squad
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
+/packages/grafana-schema/tsconfig.build.json @grafana/frontend-ops
+/packages/grafana-schema/tsconfig.json @grafana/frontend-ops
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
-/packages/grafana-ui/.storybook/ @grafana/grafana-frontend-platform
-/packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
+/packages/grafana-ui/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/PluginSignatureBadge/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/Sparkline/ @grafana/grafana-frontend-platform @grafana/app-o11y-visualizations
@@ -444,10 +462,12 @@
 /packages/grafana-ui/src/graveyard/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
-/packages/grafana-ui/src/utils/storybook/ @grafana/grafana-frontend-platform
+/packages/grafana-ui/tsconfig.build.json @grafana/frontend-ops
+/packages/grafana-ui/tsconfig.json @grafana/frontend-ops
 /packages/grafana-alerting/ @grafana/alerting-frontend
 /packages/grafana-i18n/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-test-utils @grafana/grafana-frontend-platform
+/packages/rollup.config.parts.ts @grafana/frontend-ops
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
