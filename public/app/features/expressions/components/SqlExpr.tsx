@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { FeatureState, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { useStyles2, Stack, Button } from '@grafana/ui';
+import { useStyles2, Stack, Button, FeatureBadge } from '@grafana/ui';
 
 import { ExpressionQueryEditorProps } from '../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../types';
@@ -206,6 +206,13 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, metadata }:
         {config.featureToggles.sqlExpressions && (
           <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
             <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+              <FeatureBadge
+                tooltip={t(
+                  'expressions.sql-expr.tooltip-experimental',
+                  'SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team.'
+                )}
+                featureState={FeatureState.experimental}
+              />
               <Suspense fallback={null}>
                 {shouldShowViewExplanation ? (
                   <Button
