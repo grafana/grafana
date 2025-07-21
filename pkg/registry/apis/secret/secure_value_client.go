@@ -2,6 +2,7 @@ package secret
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
@@ -91,7 +92,7 @@ func (c *secureValueClient) Create(ctx context.Context, obj *unstructured.Unstru
 
 	createdSv, err := c.service.Create(ctx, sv, user.GetUID())
 	if err != nil {
-		return nil, err
+		return nil, c.mapError(err, sv.Name)
 	}
 
 	return toUnstructured(createdSv)
@@ -112,7 +113,7 @@ func (c *secureValueClient) Get(ctx context.Context, name string, _ metav1.GetOp
 
 	sv, err := c.service.Read(ctx, xkube.Namespace(c.namespace), name)
 	if err != nil {
-		return nil, err
+		return nil, c.mapError(err, name)
 	}
 
 	return toUnstructured(sv)
@@ -157,7 +158,7 @@ func (c *secureValueClient) Update(ctx context.Context, obj *unstructured.Unstru
 
 	updatedSv, _, err := c.service.Update(ctx, sv, user.GetUID())
 	if err != nil {
-		return nil, err
+		return nil, c.mapError(err, sv.Name)
 	}
 
 	return toUnstructured(updatedSv)
@@ -177,7 +178,7 @@ func (c *secureValueClient) Delete(ctx context.Context, name string, _ metav1.De
 	}
 
 	_, err := c.service.Delete(ctx, xkube.Namespace(c.namespace), name)
-	return err
+	return c.mapError(err, name)
 }
 
 // List all secure values in the namespace. Options and subresources are not supported and ignored.
@@ -192,7 +193,7 @@ func (c *secureValueClient) List(ctx context.Context, _ metav1.ListOptions) (*un
 
 	list, err := c.service.List(ctx, xkube.Namespace(c.namespace))
 	if err != nil {
-		return nil, err
+		return nil, c.mapError(err, "")
 	}
 
 	items := make([]unstructured.Unstructured, 0, len(list.Items))
@@ -238,6 +239,24 @@ func (c *secureValueClient) UpdateStatus(_ context.Context, _ *unstructured.Unst
 // ApplyStatus is not supported and returns an error.
 func (c *secureValueClient) ApplyStatus(_ context.Context, _ string, _ *unstructured.Unstructured, _ metav1.ApplyOptions) (*unstructured.Unstructured, error) {
 	return nil, fmt.Errorf("applyStatus is not supported")
+}
+
+// Maps an error from the domain to a K8s API Status error.
+func (c *secureValueClient) mapError(err error, name string) error {
+	if err == nil {
+		return nil
+	}
+
+	gr := secretv1beta1.SecureValuesResourceInfo.GroupResource()
+
+	switch {
+	case errors.Is(err, ErrSecureValueNotFound):
+		return apierrors.NewNotFound(gr, name)
+	case errors.Is(err, ErrSecureValueAlreadyExists):
+		return apierrors.NewAlreadyExists(gr, name)
+	}
+
+	return apierrors.NewInternalError(err)
 }
 
 func (c *secureValueClient) checkAccess(ctx context.Context, name, verb string) error {
