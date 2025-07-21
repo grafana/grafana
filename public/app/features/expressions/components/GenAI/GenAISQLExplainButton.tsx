@@ -85,7 +85,7 @@ export const GenAISQLExplainButton = ({
       onGenerate={onExplain}
       temperature={0.3}
       text={t('sql-expressions.explain-query', 'Explain query')}
-      timeout={15000} // 15 seconds
+      timeout={30000} // 20 seconds
       toggleTipTitle={t('sql-expressions.ai-explain-title', 'AI-powered SQL expression explanation')}
       tooltip={
         !hasQuery

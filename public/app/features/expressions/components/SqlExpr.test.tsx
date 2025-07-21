@@ -35,7 +35,6 @@ jest.mock('./GenAI/hooks/useSQLSuggestions', () => ({
     handleCloseDrawer: jest.fn(),
     handleOpenDrawer: jest.fn(),
     isDrawerOpen: false,
-    hasUnseenSuggestions: false,
     suggestions: [],
   })),
 }));
@@ -162,7 +161,7 @@ describe('SqlExpr with GenAI features', () => {
     expect(await findByText('Explain query')).toBeInTheDocument();
   });
 
-  it('renders SuggestionsBadge when there are suggestions', async () => {
+  it('renders SuggestionsDrawerButton when there are suggestions', async () => {
     const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
     useSQLSuggestions.mockImplementation(() => ({ suggestions: ['suggestion1', 'suggestion2'] }));
 
@@ -170,7 +169,7 @@ describe('SqlExpr with GenAI features', () => {
     expect(await findByTestId('suggestions-badge')).toBeInTheDocument();
   });
 
-  it('does not render SuggestionsBadge when there are no suggestions', async () => {
+  it('does not render SuggestionsDrawerButton when there are no suggestions', async () => {
     const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
     useSQLSuggestions.mockImplementation(() => ({ suggestions: [] }));
 
@@ -209,13 +208,5 @@ describe('SqlExpr with GenAI features', () => {
 
     const { findByTestId } = render(<SqlExpr {...defaultProps} />);
     expect(await findByTestId('explanation-drawer')).toBeInTheDocument();
-  });
-
-  it('renders dot when there are unseen suggestions', async () => {
-    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
-    useSQLSuggestions.mockImplementation(() => ({ hasUnseenSuggestions: true, suggestions: ['suggestion1'] }));
-
-    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByTestId('suggestions-badge-dot')).toBeInTheDocument();
   });
 });

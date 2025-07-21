@@ -7,6 +7,7 @@ import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { useStyles2, Stack, Button } from '@grafana/ui';
 
+import { ExpressionQueryEditorProps } from '../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../types';
 
 // Conditionally import GenAI features only when feature flag is enabled
@@ -27,7 +28,6 @@ const getGenAIFeatures = () => {
       handleCloseDrawer: () => {},
       handleOpenDrawer: () => {},
       isDrawerOpen: false,
-      hasUnseenSuggestions: false,
       suggestions: [],
     }),
     useSQLExplanations: () => ({
@@ -55,9 +55,9 @@ const GenAISQLExplainButton = lazy(() =>
   }))
 );
 
-const SuggestionsBadge = lazy(() =>
-  import('./GenAI/SuggestionsBadge').then((module) => ({
-    default: module.SuggestionsBadge,
+const SuggestionsDrawerButton = lazy(() =>
+  import('./GenAI/SuggestionsDrawerButton').then((module) => ({
+    default: module.SuggestionsDrawerButton,
   }))
 );
 
@@ -92,10 +92,12 @@ export interface SqlExprProps {
   onChange: (query: SqlExpressionQuery) => void;
   /** Should the `format` property be set to `alerting`? */
   alerting?: boolean;
-  panelId?: string;
+  metadata?: ExpressionQueryEditorProps;
 }
 
-export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: SqlExprProps) => {
+export const SqlExpr = ({ onChange, refIds, query, alerting = false, metadata }: SqlExprProps) => {
+  const panelId = metadata?.data?.request?.panelPluginId;
+
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const initialQuery = `SELECT *
   FROM ${vars[0]}
@@ -108,15 +110,8 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
   // Conditionally use GenAI features based on feature flag
   const { useSQLSuggestions, useSQLExplanations } = getGenAIFeatures();
 
-  const {
-    handleApplySuggestion,
-    handleHistoryUpdate,
-    handleCloseDrawer,
-    handleOpenDrawer,
-    isDrawerOpen,
-    hasUnseenSuggestions,
-    suggestions,
-  } = useSQLSuggestions();
+  const { handleApplySuggestion, handleHistoryUpdate, handleCloseDrawer, handleOpenDrawer, isDrawerOpen, suggestions } =
+    useSQLSuggestions();
 
   const {
     explanation,
@@ -128,7 +123,44 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
     updatePrevExpression,
   } = useSQLExplanations(query.expression || '');
 
-  const queryContext = useMemo(() => ({ alerting, panelId }), [alerting, panelId]);
+  const queryContext = useMemo(
+    () => ({
+      alerting,
+      panelId,
+      queries: metadata?.queries,
+      dashboardContext: {
+        dashboardTitle: metadata?.data?.request?.dashboardTitle ?? '',
+        panelName: metadata?.data?.request?.panelName ?? '',
+      },
+      datasources: metadata?.queries?.map((query) => query.datasource?.type ?? '') ?? [],
+      totalRows: metadata?.data?.series.reduce((sum, frame) => sum + frame.length, 0),
+      requestTime: metadata?.data?.request?.endTime
+        ? metadata?.data?.request?.endTime - metadata?.data?.request?.startTime
+        : -1,
+      numberOfQueries: metadata?.data?.request?.targets?.length ?? 0,
+      seriesData: metadata?.data?.series,
+    }),
+    [alerting, panelId, metadata]
+  );
+
+  const errorContext = useMemo(() => {
+    if (!metadata?.data) {
+      return [];
+    }
+
+    const errors: string[] = [];
+
+    // Handle multiple errors (preferred)
+    if (metadata.data.errors?.length) {
+      errors.push(...metadata.data.errors.map((err) => err.message).filter((msg): msg is string => Boolean(msg)));
+    }
+    // Handle legacy single error
+    else if (metadata.data.error?.message) {
+      errors.push(metadata.data.error.message);
+    }
+
+    return errors;
+  }, [metadata?.data]);
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -203,18 +235,14 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
                   onHistoryUpdate={handleHistoryUpdate}
                   queryContext={queryContext}
                   refIds={vars}
-                  // errorContext={errorContext} // Will be added when error tracking is implemented
+                  errorContext={errorContext} // Will be added when error tracking is implemented
                   // schemas={schemas} // Will be added when schema extraction is implemented
                 />
               </Suspense>
             </Stack>
             {suggestions.length > 0 && (
               <Suspense fallback={null}>
-                <SuggestionsBadge
-                  handleOpenDrawer={handleOpenDrawer}
-                  hasUnseenSuggestions={hasUnseenSuggestions}
-                  suggestions={suggestions}
-                />
+                <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
               </Suspense>
             )}
           </Stack>

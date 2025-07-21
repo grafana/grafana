@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -19,6 +19,7 @@ export interface GenAIHistoryProps {
   updateHistory: (historyEntry: string) => void;
   eventTrackingSrc: EventTrackingSrc;
   timeout?: number;
+  startWithPrompt?: boolean;
 }
 
 const temperature = 0.5;
@@ -30,11 +31,16 @@ export const GenAIHistory = ({
   onApplySuggestion,
   updateHistory,
   timeout,
+  startWithPrompt = false,
 }: GenAIHistoryProps) => {
   const styles = useStyles2(getStyles);
 
   const [currentIndex, setCurrentIndex] = useState(1);
   const [customFeedback, setCustomPrompt] = useState('');
+
+  // Keep ref in sync with messages prop to avoid stale closure issues
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
 
   const onResponse = useCallback(
     (response: string) => {
@@ -73,7 +79,7 @@ export const GenAIHistory = ({
   };
 
   const onGenerateWithFeedback = (suggestion: string) => {
-    setMessages((messages) => [...messages, ...getFeedbackMessage(history[currentIndex - 1], suggestion)]);
+    setMessages(() => [...messagesRef.current, ...getFeedbackMessage(history[currentIndex - 1], suggestion)]);
 
     if (suggestion in QuickFeedbackType) {
       reportInteraction(AutoGenerateItem.quickFeedback, { quickFeedbackItem: suggestion });
@@ -106,7 +112,15 @@ export const GenAIHistory = ({
         </Alert>
       )}
 
-      <GenerationHistoryCarousel history={history} index={currentIndex} onNavigate={onNavigate} />
+      {history.length > 0 ? (
+        <GenerationHistoryCarousel history={history} index={currentIndex} onNavigate={onNavigate} />
+      ) : startWithPrompt ? (
+        <div className={styles.emptyHistoryMessage}>
+          <Text element="p" color="secondary">
+            <Trans i18nKey="gen-ai.improve-placeholder">Write any prompt to get started</Trans>
+          </Text>
+        </div>
+      ) : null}
 
       <div className={styles.actionButtons}>
         <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
@@ -207,5 +221,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: '24px 0 8px 0',
+  }),
+  emptyHistoryMessage: css({
+    display: 'flex',
+    flexBasis: '100%',
+    flexGrow: 3,
+    whiteSpace: 'pre-wrap',
+    maxHeight: 110,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(2),
   }),
 });

@@ -7,10 +7,9 @@ import { Button, Stack, Text, useStyles2 } from '@grafana/ui';
 interface SuggestionsBadgeProps {
   suggestions: string[];
   handleOpenDrawer: () => void;
-  hasUnseenSuggestions: boolean;
 }
 
-export const SuggestionsBadge = ({ suggestions, handleOpenDrawer, hasUnseenSuggestions }: SuggestionsBadgeProps) => {
+export const SuggestionsDrawerButton = ({ suggestions, handleOpenDrawer }: SuggestionsBadgeProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -25,7 +24,6 @@ export const SuggestionsBadge = ({ suggestions, handleOpenDrawer, hasUnseenSugge
           </span>
         </Stack>
       </Button>
-      {hasUnseenSuggestions && <span className={styles.newDot} data-testid="suggestions-badge-dot" />}
     </div>
   );
 };
@@ -38,15 +36,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   buttonWrapper: css({
     position: 'relative',
     display: 'inline-block',
-  }),
-  newDot: css({
-    position: 'absolute',
-    top: '-2px',
-    right: '-2px',
-    width: theme.spacing(1),
-    height: theme.spacing(1),
-    backgroundColor: theme.colors.error.main,
-    borderRadius: theme.shape.radius.pill,
-    zIndex: 1,
   }),
 });

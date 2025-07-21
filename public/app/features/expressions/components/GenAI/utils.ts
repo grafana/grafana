@@ -19,16 +19,13 @@
  * ]
  */
 export const parseSuggestion = (suggestion: string) => {
-  // Remove common LLM response prefixes that don't add value
-  const cleanedSuggestion = suggestion.replace(/^(Certainly!?|Sure!?|Of course!?|Absolutely!?|Yes!?)\s*/i, '').trim();
-
-  if (!cleanedSuggestion) {
+  if (!suggestion) {
     return [];
   }
   const parts: Array<{ type: 'text' | 'code'; content: string; language?: string }> = [];
 
   // Split by triple backticks to find code blocks
-  const segments = cleanedSuggestion.split(/```/);
+  const segments = suggestion.split(/```/);
 
   segments.forEach((segment, index) => {
     if (index % 2 === 0) {

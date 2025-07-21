@@ -15,7 +15,7 @@ interface GenAISQLSuggestionsButtonProps {
   refIds: string[];
   initialQuery: string;
   schemas?: unknown; // Reserved for future schema implementation
-  errorContext?: unknown; // Reserved for future error context implementation
+  errorContext?: string[];
   queryContext?: QueryUsageContext;
 }
 
@@ -26,22 +26,13 @@ const getContextualPrompts = (refIds: string[], currentQuery: string): string[] 
 
   // If there's a current query, focus more on fixing/improving it
   if (trimmedQuery) {
-    return [
-      `Fix syntax errors in this SQL query: ${trimmedQuery}`,
-      `Optimize this SQL query: ${trimmedQuery}`,
-      `Improve this SQL query: ${trimmedQuery}`,
-      `Join data from ${refIds.join(', ')} to correlate metrics`,
-      `Aggregate data by time intervals`,
-    ];
+    return [`Improve, fix syntax errors, or optimize this SQL query: ${trimmedQuery}`];
   }
 
   // If no current query, focus on suggestions
   return [
-    `Join data from ${refIds.join(', ')} to correlate metrics`,
-    `Aggregate data by time intervals`,
-    `Filter data to identify outliers`,
-    `Calculate percentiles from the data`,
-    `Create time-based window functions`,
+    `Join, aggregate, filter, calculate percentiles, create time-based 
+    window functions, or generally just make common SQL pattern queries for data from ${refIds.join(', ')}`,
   ];
 };
 
@@ -59,7 +50,7 @@ const getSQLSuggestionMessages = (
   refIds: string[],
   currentQuery: string,
   schemas?: unknown,
-  errorContext?: unknown,
+  errorContext?: string[],
   queryContext?: QueryUsageContext
 ): Message[] => {
   const trimmedQuery = currentQuery.trim();
@@ -72,7 +63,7 @@ const getSQLSuggestionMessages = (
     currentQuery: trimmedQuery || 'No current query provided',
     queryInstruction: queryInstruction,
     schemas, // Will be utilized once schema extraction is implemented
-    errorContext, // Will be utilized once error tracking is implemented
+    errorContext,
     queryContext,
   });
 
@@ -98,7 +89,7 @@ export const GenAISQLSuggestionsButton = ({
   refIds,
   initialQuery,
   schemas, // Future implementation will use this for enhanced context
-  errorContext, // Will be utilized once error tracking is implemented
+  errorContext,
   queryContext,
 }: GenAISQLSuggestionsButtonProps) => {
   const messages = useCallback(() => {
@@ -109,6 +100,7 @@ export const GenAISQLSuggestionsButton = ({
 
   return (
     <GenAIButton
+      startWithPrompt
       disabled={refIds.length === 0}
       eventTrackingSrc={EventTrackingSrc.sqlExpressions}
       messages={messages}
@@ -116,7 +108,7 @@ export const GenAISQLSuggestionsButton = ({
       onHistoryChange={onHistoryUpdate}
       temperature={0.3}
       text={t('sql-expressions.sql-ai-interaction', `{{text}}`, { text })}
-      timeout={15000} // 15 seconds
+      timeout={30000} // 20 seconds
       toggleTipTitle={t('sql-expressions.ai-suggestions-title', 'AI-powered SQL expression suggestions')}
       tooltip={
         refIds.length === 0

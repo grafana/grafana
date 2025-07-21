@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 export const useSQLSuggestions = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [hasUnseenSuggestions, setHasUnseenSuggestions] = useState(false);
+  const prevSuggestionsLengthRef = useRef(0);
 
   /**
    * Handle new suggestions from the AI system
@@ -11,13 +11,14 @@ export const useSQLSuggestions = () => {
    */
   const handleHistoryUpdate = (history: string[]) => {
     setSuggestions(history);
-    setHasUnseenSuggestions(true);
 
-    // Auto-open drawer when first suggestion is generated
-    if (history.length === 1) {
+    // Auto-open drawer when new suggestions are received during feedback loop
+    if (history.length > prevSuggestionsLengthRef.current) {
       setIsDrawerOpen(true);
-      setHasUnseenSuggestions(false);
     }
+
+    // Update the reference to track suggestion count for next time
+    prevSuggestionsLengthRef.current = history.length;
   };
 
   /**
@@ -30,26 +31,19 @@ export const useSQLSuggestions = () => {
     return suggestion;
   };
 
-  const handleOpenDrawer = () => {
-    setIsDrawerOpen(true);
-    setHasUnseenSuggestions(false);
-  };
-
+  const handleOpenDrawer = () => setIsDrawerOpen(true);
   const handleCloseDrawer = () => setIsDrawerOpen(false);
 
   const clearSuggestions = () => {
     setSuggestions([]);
-    setHasUnseenSuggestions(false);
     setIsDrawerOpen(false);
+    prevSuggestionsLengthRef.current = 0;
   };
 
   return {
     // state
     suggestions,
     isDrawerOpen,
-
-    // computed state
-    hasUnseenSuggestions,
 
     // actions
     handleHistoryUpdate,
