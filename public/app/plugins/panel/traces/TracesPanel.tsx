@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useMemo, createRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { Field, LinkModel, PanelProps } from '@grafana/data';
+import { TraceSearchProps, Field, LinkModel, PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { SpanLinkFunc } from 'app/features/explore/TraceView/components/types/links';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 
-import { replaceSearchVariables, SearchProps } from '../../../features/explore/TraceView/useSearch';
+import { replaceSearchVariables } from '../../../features/explore/TraceView/useSearch';
 
 const styles = {
   wrapper: css({
@@ -22,7 +22,7 @@ export interface TracesPanelOptions {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
-  spanFilters?: SearchProps;
+  spanFilters?: TraceSearchProps;
 }
 
 export const TracesPanel = ({ data, options, replaceVariables }: PanelProps<TracesPanelOptions>) => {

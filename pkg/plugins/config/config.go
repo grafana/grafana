@@ -30,7 +30,6 @@ type PluginManagementCfg struct {
 
 // Features contains the feature toggles used for the plugin management system.
 type Features struct {
-	ExternalCorePluginsEnabled  bool
 	SkipHostEnvVarsEnabled      bool
 	SriChecksEnabled            bool
 	PluginsCDNSyncLoaderEnabled bool
@@ -38,6 +37,7 @@ type Features struct {
 	// Needed only until Tempo Alerting / metrics TraceQL is stable
 	// https://github.com/grafana/grafana/issues/106888
 	TempoAlertingEnabled bool
+	PluginAssetProvider  bool
 }
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.

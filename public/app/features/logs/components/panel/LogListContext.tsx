@@ -22,7 +22,7 @@ import {
   shallowCompare,
   store,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
@@ -42,9 +42,10 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
+  forceEscape: boolean;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
-  hasUnescapedContent?: boolean;
+  hasUnescapedContent: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDetailsMode: (mode: LogLineDetailsMode) => void;
@@ -75,8 +76,10 @@ export const LogListContext = createContext<LogListContextData>({
   downloadLogs: () => {},
   enableLogDetails: false,
   filterLevels: [],
+  forceEscape: false,
   fontSize: 'default',
   hasUnescapedContent: false,
+  noInteractions: false,
   setDedupStrategy: () => {},
   setDetailsMode: () => {},
   setDetailsWidth: () => {},
@@ -124,7 +127,6 @@ export type LogListState = Pick<
   | 'fontSize'
   | 'forceEscape'
   | 'filterLevels'
-  | 'hasUnescapedContent'
   | 'pinnedLogs'
   | 'prettifyJSON'
   | 'showUniqueLabels'
@@ -145,8 +147,6 @@ export interface Props {
   enableLogDetails: boolean;
   filterLevels?: LogLevel[];
   fontSize: LogListFontSize;
-  forceEscape?: boolean;
-  hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
@@ -154,6 +154,7 @@ export interface Props {
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
+  noInteractions?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterString?: (value: string, refId?: string) => void;
@@ -189,8 +190,6 @@ export const LogListContextProvider = ({
   displayedFields,
   filterLevels,
   fontSize,
-  forceEscape = false,
-  hasUnescapedContent,
   isLabelFilterActive,
   getRowContextQuery,
   logs,
@@ -198,6 +197,7 @@ export const LogListContextProvider = ({
   logsMeta,
   logOptionsStorageKey,
   logSupportsContext,
+  noInteractions,
   onClickFilterLabel,
   onClickFilterOutLabel,
   onClickFilterString,
@@ -227,8 +227,7 @@ export const LogListContextProvider = ({
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
     fontSize,
-    forceEscape,
-    hasUnescapedContent,
+    forceEscape: logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.forceEscape`, false) : false,
     pinnedLogs,
     prettifyJSON,
     showTime,
@@ -240,6 +239,25 @@ export const LogListContextProvider = ({
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+
+  useEffect(() => {
+    if (noInteractions) {
+      return;
+    }
+    reportInteractionOnce(`logs_log_list_${app}_logs_displayed`, {
+      dedupStrategy,
+      fontSize,
+      forceEscape: logListState.forceEscape,
+      showTime,
+      syntaxHighlighting,
+      wrapLogMessage,
+      detailsWidth,
+      detailsMode,
+      withDisplayedFields: displayedFields.length > 0,
+    });
+    // Just once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (displayedFields.length > 0 || !config.featureToggles.otelLogsFormatting || !setDisplayedFields) {
@@ -294,12 +312,6 @@ export const LogListContextProvider = ({
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
   }, [fontSize]);
-
-  useEffect(() => {
-    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
-      setLogListState({ ...logListState, hasUnescapedContent });
-    }
-  }, [hasUnescapedContent, logListState]);
 
   useEffect(() => {
     if (!shallowCompare(logListState.pinnedLogs ?? [], pinnedLogs ?? [])) {
@@ -454,9 +466,7 @@ export const LogListContextProvider = ({
   );
 
   const closeDetails = useCallback(() => {
-    if (showDetails.length) {
-      removeDetailsScrollPosition(showDetails[0]);
-    }
+    showDetails.forEach((log) => removeDetailsScrollPosition(log));
     setShowDetails([]);
   }, [showDetails]);
 
@@ -465,12 +475,13 @@ export const LogListContextProvider = ({
       if (!enableLogDetails) {
         return;
       }
-      const found = showDetails.findIndex((stateLog) => stateLog === log || stateLog.uid === log.uid);
-      if (found >= 0) {
+      const found = showDetails.find((stateLog) => stateLog === log || stateLog.uid === log.uid);
+      if (found) {
+        removeDetailsScrollPosition(found);
         setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
       } else {
         // Supporting one displayed details for now
-        setShowDetails([log]);
+        setShowDetails([...showDetails, log]);
       }
     },
     [enableLogDetails, showDetails]
@@ -495,6 +506,7 @@ export const LogListContextProvider = ({
 
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
+  const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
 
   return (
     <LogListContext.Provider
@@ -513,12 +525,13 @@ export const LogListContextProvider = ({
         forceEscape: logListState.forceEscape,
         hasLogsWithErrors,
         hasSampledLogs,
-        hasUnescapedContent: logListState.hasUnescapedContent,
+        hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
         logLineMenuCustomItems,
         logOptionsStorageKey,
+        noInteractions: noInteractions ?? false,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
@@ -614,3 +627,12 @@ export function getDetailsScrollPosition(log: LogListModel) {
 export function removeDetailsScrollPosition(log: LogListModel) {
   detailsScrollMap.delete(log.uid);
 }
+
+const reportInteractionOnce = (interactionName: string, properties?: Record<string, unknown>) => {
+  const key = `logs.log-list-context.events.${interactionName}`;
+  if (sessionStorage.getItem(key)) {
+    return;
+  }
+  sessionStorage.setItem(key, '1');
+  reportInteraction(interactionName, properties);
+};

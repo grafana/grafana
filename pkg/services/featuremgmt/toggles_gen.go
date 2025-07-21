@@ -227,10 +227,6 @@ const (
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
 
-	// FlagExternalCorePlugins
-	// Allow core plugins to be loaded as external
-	FlagExternalCorePlugins = "externalCorePlugins"
-
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
@@ -258,6 +254,10 @@ const (
 	// FlagKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
+
+	// FlagKubernetesLibraryPanelConnections
+	// Routes library panel connections requests from /api to using search
+	FlagKubernetesLibraryPanelConnections = "kubernetesLibraryPanelConnections"
 
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
@@ -458,10 +458,6 @@ const (
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
-
-	// FlagSsoSettingsSAML
-	// Use the new SSO Settings API to configure the SAML connector
-	FlagSsoSettingsSAML = "ssoSettingsSAML"
 
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
@@ -946,4 +942,16 @@ const (
 	// FlagOtelLogsFormatting
 	// Applies OTel formatting templates to displayed logs
 	FlagOtelLogsFormatting = "otelLogsFormatting"
+
+	// FlagAlertingNotificationHistory
+	// Enables the notification history feature
+	FlagAlertingNotificationHistory = "alertingNotificationHistory"
+
+	// FlagPluginAssetProvider
+	// Allows decoupled core plugins to load from the Grafana CDN
+	FlagPluginAssetProvider = "pluginAssetProvider"
+
+	// FlagUnifiedStorageSearchDualReaderEnabled
+	// Enable dual reader for unified storage search
+	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
 )
