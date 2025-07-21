@@ -130,9 +130,8 @@ func setupTestSearchWrapper(t *testing.T, dual *MockDualWriter, unifiedClient, l
 func TestSearchClient_NewSearchClient(t *testing.T) {
 	gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
 
-	t.Run("returns wrapper when dual writer is enabled", func(t *testing.T) {
+	t.Run("always returns wrapper", func(t *testing.T) {
 		dual := &MockDualWriter{} // Create fresh mock for this test
-		dual.On("IsEnabled", gr).Return(true)
 
 		client := NewSearchClient(dual, gr, unifiedClient, legacyClient, features)
 
@@ -142,30 +141,6 @@ func TestSearchClient_NewSearchClient(t *testing.T) {
 		assert.Equal(t, gr, wrapper.groupResource)
 		assert.Equal(t, unifiedClient, wrapper.unifiedClient)
 		assert.Equal(t, legacyClient, wrapper.legacyClient)
-
-		dual.AssertExpectations(t)
-	})
-
-	t.Run("returns unified client when dual writer disabled but read from unified", func(t *testing.T) {
-		dual := &MockDualWriter{} // Create fresh mock for this test
-		dual.On("IsEnabled", gr).Return(false)
-		dual.On("ReadFromUnified", mock.Anything, gr).Return(true, nil)
-
-		client := NewSearchClient(dual, gr, unifiedClient, legacyClient, features)
-
-		assert.Equal(t, unifiedClient, client)
-		dual.AssertExpectations(t)
-	})
-
-	t.Run("returns legacy client when dual writer disabled and not reading from unified", func(t *testing.T) {
-		dual := &MockDualWriter{} // Create fresh mock for this test
-		dual.On("IsEnabled", gr).Return(false)
-		dual.On("ReadFromUnified", mock.Anything, gr).Return(false, nil)
-
-		client := NewSearchClient(dual, gr, unifiedClient, legacyClient, features)
-
-		assert.Equal(t, legacyClient, client)
-		dual.AssertExpectations(t)
 	})
 }
 
