@@ -3429,17 +3429,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:2.0.0":
-  version: 2.0.0
-  resolution: "@grafana/plugin-e2e@npm:2.0.0"
+"@grafana/plugin-e2e@npm:2.1.7":
+  version: 2.1.7
+  resolution: "@grafana/plugin-e2e@npm:2.1.7"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^12.1.0-240060"
+    "@grafana/e2e-selectors": "npm:^12.1.0-254610"
     semver: "npm:^7.5.4"
     uuid: "npm:^11.0.2"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.52.0
-  checksum: 10/d9bdc1f072e97465904949cc16fce9017c443173aebcf142d77a409bea743fcded80736e55a0a19e95f890cfd9b3d8c68327e0dbcd1799a32e63c168771af5d9
+  checksum: 10/4e14bda1c6304c89a1ffca972dda18d3ab1fad59ee30e6735112d75f7c5c40856091e2e17f46451aec5261b6368f67c245edb112072d98c9067723f4ca2c71c3
   languageName: node
   linkType: hard
 
@@ -12501,13 +12501,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:5.3.5":
-  version: 5.3.5
-  resolution: "centrifuge@npm:5.3.5"
+"centrifuge@npm:5.4.0":
+  version: 5.4.0
+  resolution: "centrifuge@npm:5.4.0"
   dependencies:
     events: "npm:^3.3.0"
     protobufjs: "npm:^7.2.5"
-  checksum: 10/71eecfaf90707fec428857fa7520f997bb56a9e6104a33b95d3c4b837be183d3f94641ca626874b1ea888dc4f6f983d24b3b777ab6e357359cb8dd3c7b515784
+  checksum: 10/251788a36675dcc89906a158b8554f1d36869aba4236c3eeb54fe0ff819fffa6d91e5189b5bb31d48505482f6fdb3425e487f94c79a2e1f316061a229768227a
   languageName: node
   linkType: hard
 
@@ -15090,8 +15090,8 @@ __metadata:
   linkType: hard
 
 "downshift@npm:^9.0.6":
-  version: 9.0.9
-  resolution: "downshift@npm:9.0.9"
+  version: 9.0.10
+  resolution: "downshift@npm:9.0.10"
   dependencies:
     "@babel/runtime": "npm:^7.24.5"
     compute-scroll-into-view: "npm:^3.1.0"
@@ -15100,7 +15100,7 @@ __metadata:
     tslib: "npm:^2.6.2"
   peerDependencies:
     react: ">=16.12.0"
-  checksum: 10/6abc7a585f002f0ebaba1ec42f6102b940257f294d0a33bf189387a316afa24254f0d49c4d5d2553a2263b4e42f497297a8c66dab9bebe24b3dce11fa1456d20
+  checksum: 10/eb102d7eb18613c292b2b3e2b42ec70eb36ddda4d2bbcb544cc85932359b727ac566de4f3cf66123741d44fe16ac7639ff148abb5a9702e1f70bfab8ec1a3468
   languageName: node
   linkType: hard
 
@@ -17860,7 +17860,7 @@ __metadata:
     "@grafana/llm": "npm:0.22.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:2.0.0"
+    "@grafana/plugin-e2e": "npm:2.1.7"
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
@@ -17978,7 +17978,7 @@ __metadata:
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
-    centrifuge: "npm:5.3.5"
+    centrifuge: "npm:5.4.0"
     chance: "npm:^1.1.13"
     chrome-remote-interface: "npm:0.33.3"
     classnames: "npm:2.5.1"

@@ -9817,7 +9817,9 @@
       "aria-label": "Pomoc"
     },
     "invite-user": {
-      "invite-new-member-button": "Zaproś nowego członka"
+      "invite-button": "Zaproś",
+      "invite-new-member-button": "Zaproś nowego członka",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Dodaj do zakładek",
