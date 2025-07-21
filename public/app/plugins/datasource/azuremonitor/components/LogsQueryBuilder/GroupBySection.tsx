@@ -10,7 +10,8 @@ import {
   BuilderQueryEditorGroupByExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { GroupByItem } from './GroupByItem';
 import { BuildAndUpdateOptions } from './utils';

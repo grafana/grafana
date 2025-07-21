@@ -199,7 +199,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
+	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService(), nil)
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService, tracer)
 
 	ctx := context.Background()
@@ -847,7 +847,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	})
 }
 
-func TestDeleteFoldersFromApiServer(t *testing.T) {
+func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)

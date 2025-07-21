@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -80,28 +81,16 @@ type ResourceIndex interface {
 
 // SearchBackend contains the technology specific logic to support search
 type SearchBackend interface {
-	// This will return nil if the key does not exist
+	// GetIndex returns existing index, or nil.
 	GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error)
 
-	// Build an index from scratch
-	BuildIndex(ctx context.Context,
-		key NamespacedResource,
+	// BuildIndex builds an index from scratch.
+	// Depending on the size, the backend may choose different options (eg: memory vs disk).
+	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
+	// The builder will write all documents before returning.
+	BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, nonStandardFields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error)
 
-		// When the size is known, it will be passed along here
-		// Depending on the size, the backend may choose different options (eg: memory vs disk)
-		size int64,
-
-		// The last known resource version (can be used to know that nothing has changed)
-		resourceVersion int64,
-
-		// The non-standard index fields
-		fields SearchableDocumentFields,
-
-		// The builder will write all documents before returning
-		builder func(index ResourceIndex) (int64, error),
-	) (ResourceIndex, error)
-
-	// Gets the total number of documents across all indexes
+	// TotalDocs returns the total number of documents across all indexes.
 	TotalDocs() int64
 }
 
@@ -119,6 +108,8 @@ type searchSupport struct {
 	initWorkers  int
 	initMinSize  int
 	initMaxSize  int
+
+	buildIndex singleflight.Group
 
 	// Index queue processors
 	indexQueueProcessorsMutex sync.Mutex
@@ -608,24 +599,53 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"GetOrCreateIndex")
 	defer span.End()
 
-	// TODO???
-	// We want to block while building the index and return the same index for the key
-	// simple mutex not great... we don't want to block while anything in building, just the same key
 	idx, err := s.search.GetIndex(ctx, key)
 	if err != nil {
 		return nil, err
 	}
 
-	if idx == nil {
-		idx, _, err = s.build(ctx, key, 10, 0) // unknown size and RV
+	if idx != nil {
+		return idx, nil
+	}
+
+	idxInt, err, _ := s.buildIndex.Do(key.String(), func() (interface{}, error) {
+		// Recheck if some other goroutine managed to build an index in the meantime.
+		// (That is, it finished running this function and stored the index into the cache)
+		idx, err := s.search.GetIndex(ctx, key)
+		if err == nil && idx != nil {
+			return idx, nil
+		}
+
+		// Get correct value of size + RV for building the index. This is important for our Bleve
+		// backend to decide whether to build index in-memory or as file-based.
+		stats, err := s.storage.GetResourceStats(ctx, key.Namespace, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get resource stats: %w", err)
+		}
+
+		size := int64(0)
+		rv := int64(0)
+		for _, stat := range stats {
+			if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
+				size = stat.Count
+				rv = stat.ResourceVersion
+				break
+			}
+		}
+
+		idx, _, err = s.build(ctx, key, size, rv)
 		if err != nil {
 			return nil, fmt.Errorf("error building search index, %w", err)
 		}
 		if idx == nil {
 			return nil, fmt.Errorf("nil index after build")
 		}
+		return idx, nil
+	})
+	if err != nil {
+		return nil, err
 	}
-	return idx, nil
+	return idxInt.(ResourceIndex), nil
 }
 
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {
@@ -639,8 +659,6 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return nil, 0, err
 	}
 	fields := s.builders.GetFields(nsr)
-
-	logger.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
 
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
 		rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{

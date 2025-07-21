@@ -4,7 +4,7 @@ import { Fragment } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 
-import { InstallControlsWarning } from '../components/InstallControls';
+import { InstallControlsWarning } from '../components/InstallControls/InstallControlsWarning';
 import { getLatestCompatibleVersion, hasInstallControlWarning } from '../helpers';
 import { useInstallStatus, useIsRemotePluginsAvailable } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';

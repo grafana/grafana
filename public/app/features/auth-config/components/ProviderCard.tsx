@@ -51,7 +51,7 @@ export function ProviderSAMLCard() {
           external
           variant="bodySmall"
           color="secondary"
-          href="https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-authorization-admin"
+          href="https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-grafana&cnt=admin-authorization-saml"
         >
           {t('auth-config.provider-card.saml-learn-more', 'Single sign-on (SSO) with SAML.')}
         </TextLink>
@@ -77,7 +77,7 @@ export function ProviderSCIMCard() {
             external
             variant="bodySmall"
             color="secondary"
-            href="https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-authorization-admin"
+            href="https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-grafana&cnt=admin-authorization-scim"
           >
             {t('auth-config.provider-card.scim-learn-more', ' Sync users and teams with SCIM.')}
           </TextLink>

@@ -10,7 +10,7 @@ import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
 import { findMaxFields } from './utils';
 
-const MINIMUM_FIELDS_REQUIRED = 2;
+const MINIMUM_FIELDS_REQUIRED = 1;
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',
@@ -146,11 +146,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 
 const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
-  return (
-    options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
-    Array.isArray(options?.fields[fieldName].aggregations) &&
-    options?.fields[fieldName].aggregations.length > 0
-  );
+  return Array.isArray(options?.fields[fieldName]?.aggregations) && options?.fields[fieldName].aggregations.length > 0;
 };
 
 /**

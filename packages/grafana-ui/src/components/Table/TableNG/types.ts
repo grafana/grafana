@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
 import {
@@ -9,13 +10,14 @@ import {
   TimeRange,
   FieldConfigSource,
   ActionModel,
-  InterpolateFunction,
   FieldType,
   DataFrameWithValue,
+  SelectableValue,
 } from '@grafana/data';
-import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
+import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
+import { TableCellOptions } from '../types';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -27,23 +29,24 @@ export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: 
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (
-  frame: DataFrame,
-  field: Field,
-  rowIndex: number,
-  replaceVariables?: InterpolateFunction
-) => ActionModel[];
+export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
 };
 
-export type FilterType = {
-  [key: string]: {
+export type FilterType = Record<
+  string,
+  {
     filteredSet: Set<string>;
-  };
-};
+    filtered?: Array<SelectableValue<unknown>>;
+    searchFilter?: string;
+    operator?: SelectableValue<string>;
+  }
+>;
 
 /* ----------------------------- Table specific types ----------------------------- */
 export interface TableSummaryRow {
@@ -51,12 +54,9 @@ export interface TableSummaryRow {
 }
 
 export interface TableColumn extends Column<TableRow, TableSummaryRow> {
-  key: string; // Unique identifier used by DataGrid
-  name: string; // Display name in header
   field: Field; // Grafana field data/config
   width?: number | string; // Column width
   minWidth?: number; // Min width constraint
-  cellClass?: string; // CSS styling
 }
 
 // Possible values for table cells based on field types
@@ -77,7 +77,8 @@ export interface TableRow {
 
   // Nested table properties
   data?: DataFrame;
-  'Nested frames'?: DataFrame[];
+  __nestedFrames?: DataFrame[];
+  __expanded?: boolean; // For row expansion state
 
   // Generic typing for column values
   [columnName: string]: TableCellValue;
@@ -104,7 +105,7 @@ export interface TableSortByFieldState {
 
 export interface TableFooterCalc {
   show: boolean;
-  reducer?: string[]; // Make this optional
+  reducer?: string[];
   fields?: string[];
   enablePagination?: boolean;
   countRows?: boolean;
@@ -129,6 +130,8 @@ export interface BaseTableProps {
   footerValues?: FooterItem[];
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  structureRev?: number;
+  transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
@@ -136,7 +139,6 @@ export interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  replaceVariables?: InterpolateFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
 }
@@ -144,28 +146,48 @@ export interface BaseTableProps {
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
-export interface TableCellNGProps {
-  field: Field;
-  frame: DataFrame;
-  getActions?: GetActionsFunction;
-  height: number;
-  justifyContent: Property.JustifyContent;
+export interface TableCellRendererProps {
   rowIdx: number;
-  setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
-  setIsInspecting: (isInspecting: boolean) => void;
-  shouldTextOverflow: () => boolean;
-  theme: GrafanaTheme2;
-  timeRange: TimeRange;
+  frame: DataFrame;
+  timeRange?: TimeRange;
   value: TableCellValue;
-  rowBg: Function | undefined;
+  height: number;
+  // flags that are static per column
+  field: Field;
+  cellOptions: TableCellOptions;
+  width: number;
+  theme: GrafanaTheme2;
+  cellInspect: boolean;
+  showFilters: boolean;
+  justifyContent: Property.JustifyContent;
+  getActions?: GetActionsFunctionLocal;
+}
+
+export type ContextMenuProps = {
+  rowIdx?: number;
+  value: string;
+  mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  top?: number;
+  left?: number;
+};
+
+export interface TableCellActionsProps {
+  field: Field;
+  value: TableCellValue;
+  cellOptions: TableCellOptions;
+  displayName: string;
+  cellInspect: boolean;
+  showFilters: boolean;
+  setIsInspecting: React.Dispatch<React.SetStateAction<boolean>>;
+  setContextMenuProps: React.Dispatch<React.SetStateAction<ContextMenuProps | null>>;
+  className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
-  replaceVariables?: InterpolateFunction;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
   height: number;
-  onCellExpand: () => void;
+  onCellExpand: (e: SyntheticEvent) => void;
   isExpanded?: boolean;
 }
 
@@ -174,22 +196,21 @@ export interface SparklineCellProps {
   justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
   value: TableCellValue;
   width: number;
 }
 
-export interface BarGaugeCellProps extends ActionCellProps {
+export interface BarGaugeCellProps {
   field: Field;
   height: number;
   rowIdx: number;
   theme: GrafanaTheme2;
   value: TableCellValue;
   width: number;
-  timeRange: TimeRange;
 }
 
-export interface ImageCellProps extends ActionCellProps {
+export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
   height: number;
@@ -198,7 +219,7 @@ export interface ImageCellProps extends ActionCellProps {
   rowIdx: number;
 }
 
-export interface JSONCellProps extends ActionCellProps {
+export interface JSONCellProps {
   justifyContent: Property.JustifyContent;
   value: TableCellValue;
   field: Field;
@@ -216,22 +237,22 @@ export interface GeoCellProps {
   height: number;
 }
 
-export interface ActionCellProps {
-  actions?: ActionModel[];
-}
-
 export interface CellColors {
   textColor?: string;
   bgColor?: string;
   bgHoverColor?: string;
 }
 
-export interface AutoCellProps extends ActionCellProps {
-  value: TableCellValue;
+export interface AutoCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
+  value: TableCellValue;
   rowIdx: number;
-  cellOptions: TableCellOptions;
+}
+
+export interface ActionCellProps {
+  field: Field;
+  rowIdx: number;
+  getActions: GetActionsFunctionLocal;
 }
 
 // Comparator for sorting table values

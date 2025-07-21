@@ -9,10 +9,10 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 
-import { regionVariable } from '../__mocks__/CloudWatchDataSource';
-import { setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
-import { LogsRequestMock } from '../__mocks__/Request';
-import { validLogsQuery } from '../__mocks__/queries';
+import { regionVariable } from '../mocks/CloudWatchDataSource';
+import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
+import { LogsRequestMock } from '../mocks/Request';
+import { validLogsQuery } from '../mocks/queries';
 import { CloudWatchLogsQuery } from '../types'; // Add this import statement
 
 import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';

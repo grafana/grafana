@@ -6,24 +6,39 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 // decryptAuthorizer is the authorizer implementation for decrypt operations.
 type decryptAuthorizer struct {
-	allowList contracts.DecryptAllowList
+	tracer trace.Tracer
 }
 
-func ProvideDecryptAuthorizer(allowList contracts.DecryptAllowList) contracts.DecryptAuthorizer {
+func ProvideDecryptAuthorizer(tracer trace.Tracer) contracts.DecryptAuthorizer {
 	return &decryptAuthorizer{
-		allowList: allowList,
+		tracer: tracer,
 	}
 }
 
 // authorize checks whether the auth info token has the right permissions to decrypt the secure value.
-func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (string, bool) {
+func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (id string, isAllowed bool) {
+	ctx, span := a.tracer.Start(ctx, "DecryptAuthorizer.Authorize", trace.WithAttributes(
+		attribute.String("name", secureValueName),
+		attribute.StringSlice("decrypters", secureValueDecrypters),
+	))
+	defer span.End()
+
+	defer func() {
+		if id != "" {
+			span.SetAttributes(attribute.String("serviceIdentity", id))
+		}
+		span.SetAttributes(attribute.Bool("allowed", isAllowed))
+	}()
+
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return "", false
@@ -39,13 +54,9 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 		return "", false
 	}
 
-	serviceIdentity := serviceIdentityList[0]
-
-	// TEMPORARY: while we can't onboard every app into secrets, we can block them from decrypting
-	// securevalues preemptively here before even reaching out to the database.
-	// This check can be removed once we open the gates for any service to use secrets.
-	if _, exists := a.allowList[serviceIdentity]; !exists || serviceIdentity == "" {
-		return serviceIdentity, false
+	serviceIdentity := strings.TrimSpace(serviceIdentityList[0])
+	if len(serviceIdentity) == 0 {
+		return "", false
 	}
 
 	// Checks whether the token has the permission to decrypt secure values.
@@ -69,8 +80,8 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 // Changes: 1) we don't support `*` for verbs; 2) we support specific names in the permission.
 func hasPermissionInToken(tokenPermissions []string, name string) bool {
 	var (
-		group    = secretv0alpha1.GROUP
-		resource = secretv0alpha1.SecureValuesResourceInfo.GetName()
+		group    = secretv1beta1.APIGroup
+		resource = secretv1beta1.SecureValuesResourceInfo.GetName()
 		verb     = "decrypt"
 	)
 
