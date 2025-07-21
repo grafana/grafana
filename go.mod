@@ -555,15 +555,36 @@ require (
 
 require github.com/urfave/cli/v3 v3.3.8 // @grafana/grafana-backend-group
 
-require github.com/grafana/grafana/pkg/build v0.0.0-20250721154131-193471c6aeab
+require (
+	github.com/grafana/grafana/apps/folder v0.0.0-20250721164111-548964f728fb
+	github.com/grafana/grafana/pkg/build v0.0.0-20250721154131-193471c6aeab
+	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250526193351-814707152d3d
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250422074709-7c8433fbb2c2
+)
 
 require (
-	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.36.1 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.29.4 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.57 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.27 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.10 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.3.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.17.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.58.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.24.14 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.33.12 // indirect
 	github.com/aws/smithy-go v1.22.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
-	github.com/jtolds/gls v4.20.0+incompatible // indirect
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20250526193351-814707152d3d // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
