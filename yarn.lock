@@ -3519,7 +3519,7 @@ __metadata:
     lodash: "npm:4.17.21"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
-    monaco-promql: "npm:1.7.4"
+    monaco-promql: "npm:1.8.0"
     pluralize: "npm:8.0.0"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
@@ -22702,10 +22702,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-promql@npm:1.7.4":
-  version: 1.7.4
-  resolution: "monaco-promql@npm:1.7.4"
-  checksum: 10/5bafbc3c1f00da27fd637ebc5ff106e96951ebf688b99b8ad7c447fee1d3298c3873369914c599aec836fa019ea3b8b93ce3b02157d0666d394b06b8a55e728c
+"monaco-promql@npm:1.8.0":
+  version: 1.8.0
+  resolution: "monaco-promql@npm:1.8.0"
+  checksum: 10/d757ecd46fb3fb3ee31d1ee06b21e2860735d24d41ca161e8d4e576a956a83e86103b7ddbecdf1e02ea9fac6a3782694c996e3ce46b7483f3c47630627b40c68
   languageName: node
   linkType: hard
 
