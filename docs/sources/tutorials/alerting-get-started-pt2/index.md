@@ -25,6 +25,8 @@ This tutorial is a continuation of the [Grafana Alerting - Create and receive yo
 
 In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
 
+{{< youtube id="nI-_MEnFBQs" >}}
+
 After introducing each component, you will learn how to:
 
 - Configure an alert rule that returns more than one alert instance
