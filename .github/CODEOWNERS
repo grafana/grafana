@@ -419,13 +419,14 @@
 /packages/grafana-data/LICENSE_APACHE2 @grafana/grafana-frontend-platform
 /packages/grafana-data/README.md @grafana/grafana-frontend-platform
 /packages/grafana-data/package.json @grafana/grafana-frontend-platform
+/packages/grafana-data/project.json @grafana/frontend-ops
+/packages/grafana-data/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-data/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/unstable.ts @grafana/grafana-frontend-platform
-/packages/grafana-data/project.json @grafana/frontend-ops
-/packages/grafana-data/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-data/tsconfig.build.json @grafana/frontend-ops
 /packages/grafana-data/tsconfig.json @grafana/frontend-ops
+/packages/grafana-data/typings/ @grafana/grafana-frontend-platform
 
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-data/src/context/plugins/ @grafana/plugins-platform-frontend
@@ -474,11 +475,11 @@
 /packages/grafana-runtime/LICENSE_APACHE2 @grafana/grafana-frontend-platform
 /packages/grafana-runtime/README.md @grafana/grafana-frontend-platform
 /packages/grafana-runtime/package.json @grafana/grafana-frontend-platform
+/packages/grafana-runtime/project.json @grafana/frontend-ops
+/packages/grafana-runtime/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform
-/packages/grafana-runtime/project.json @grafana/frontend-ops
-/packages/grafana-runtime/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-runtime/tsconfig.build.json @grafana/frontend-ops
 /packages/grafana-runtime/tsconfig.json @grafana/frontend-ops
 
@@ -496,8 +497,12 @@
 /packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-search-navigate-organise
 
 # @grafana/schema
+/packages/grafana-schema/ @grafana/grafana-app-platform-squad
 /packages/grafana-schema/project.json @grafana/frontend-ops
 /packages/grafana-schema/rollup.config.ts @grafana/frontend-ops
+/packages/grafana-schema/tsconfig.build.json @grafana/frontend-ops
+/packages/grafana-schema/tsconfig.json @grafana/frontend-ops
+
 /packages/grafana-schema/src/**/annotationslist @grafana/dashboards-squad
 /packages/grafana-schema/src/**/azuremonitor @grafana/partner-datasources
 /packages/grafana-schema/src/**/barchart @grafana/dataviz-squad
@@ -535,8 +540,6 @@
 /packages/grafana-schema/src/**/trend @grafana/dataviz-squad
 /packages/grafana-schema/src/**/xychart @grafana/dataviz-squad
 /packages/grafana-schema/src/**/xychart2 @grafana/dataviz-squad
-/packages/grafana-schema/tsconfig.build.json @grafana/frontend-ops
-/packages/grafana-schema/tsconfig.json @grafana/frontend-ops
 
 # @grafana/sql
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
