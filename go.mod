@@ -78,7 +78,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20250411135245-cad0d384d430 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
@@ -211,20 +211,18 @@ require (
 	github.com/grafana/grafana/apps/advisor v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250513075908-8866f2cfc173 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-	github.com/grafana/grafana/apps/folder v0.0.0-20250721154131-193471c6aeab // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250220163425-b4c4b9abbdc8 // @fcjack @matryer
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250422074709-7c8433fbb2c2 // @grafana/grafana-app-platform-squad
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-search-and-storage
 
 )
 
@@ -242,7 +240,6 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
@@ -273,25 +270,6 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.30.3 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.3 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.27.27 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.27 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.11 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.10 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.15 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.15 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.3.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.17.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.58.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.22.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.26.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.30.3 // indirect
-	github.com/aws/smithy-go v1.20.3 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20240507144631-af9851f82b27 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -467,7 +445,6 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
@@ -578,12 +555,16 @@ require (
 
 require github.com/urfave/cli/v3 v3.3.8 // @grafana/grafana-backend-group
 
-require (
-	github.com/grafana/grafana/pkg/build v0.0.0-20250721154131-193471c6aeab
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250220154326-6e5de80ef295
-)
+require github.com/grafana/grafana/pkg/build v0.0.0-20250721154131-193471c6aeab
 
-require github.com/cenkalti/backoff/v5 v5.0.2 // indirect
+require (
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.36.1 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.29.4 // indirect
+	github.com/aws/smithy-go v1.22.2 // indirect
+	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
+	github.com/jtolds/gls v4.20.0+incompatible // indirect
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56

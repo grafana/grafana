@@ -7,7 +7,7 @@ replace github.com/grafana/grafana/pkg/codegen => ../../codegen
 require (
 	cuelang.org/go v0.11.1
 	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d
-	github.com/grafana/cog v0.0.28
+	github.com/grafana/cog v0.0.36
 	github.com/grafana/cuetsy v0.1.11
 	github.com/grafana/grafana/pkg/codegen v0.0.0-00010101000000-000000000000
 )
@@ -44,7 +44,7 @@ require (
 	github.com/yalue/merged_fs v1.3.0 // indirect
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/oauth2 v0.27.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
