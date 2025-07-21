@@ -7,7 +7,6 @@ import kbn from '../../../../core/utils/kbn';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
-  // AnnoKeyFolderUrl,
   AnnoKeyManagerKind,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
