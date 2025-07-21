@@ -33,7 +33,6 @@ type Features struct {
 	ExternalCorePluginsEnabled  bool
 	SkipHostEnvVarsEnabled      bool
 	SriChecksEnabled            bool
-	PluginsCDNSyncLoaderEnabled bool
 	LocalizationForPlugins      bool
 	// Needed only until Tempo Alerting / metrics TraceQL is stable
 	// https://github.com/grafana/grafana/issues/106888

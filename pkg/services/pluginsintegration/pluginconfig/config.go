@@ -33,7 +33,6 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 			ExternalCorePluginsEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins),
 			SkipHostEnvVarsEnabled:      features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
 			SriChecksEnabled:            features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
-			PluginsCDNSyncLoaderEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsCDNSyncLoader),
 			LocalizationForPlugins:      features.IsEnabledGlobally(featuremgmt.FlagLocalizationForPlugins),
 			TempoAlertingEnabled:        features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 			PluginAssetProvider:         features.IsEnabledGlobally(featuremgmt.FlagPluginAssetProvider),

@@ -2512,7 +2512,8 @@
       "metadata": {
         "name": "pluginsCDNSyncLoader",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-02-07T10:07:08Z"
+        "creationTimestamp": "2025-02-07T10:07:08Z",
+        "deletionTimestamp": "2025-07-21T10:13:07Z"
       },
       "spec": {
         "description": "Loads plugins from CDN synchronously",
