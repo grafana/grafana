@@ -83,7 +83,6 @@ func addBuilderRoutes(
 				return processor.PostProcessOpenAPI(openAPISpec)
 			}
 		}
-
 	}
 	return openAPISpec, nil
 }
