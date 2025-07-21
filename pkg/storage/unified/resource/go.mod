@@ -18,7 +18,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.35.1
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250513075908-8866f2cfc173
-	github.com/grafana/grafana/apps/folder v0.0.0-20250402082028-6781612335d9
+	github.com/grafana/grafana/apps/folder v0.0.0-20250721154131-193471c6aeab
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
