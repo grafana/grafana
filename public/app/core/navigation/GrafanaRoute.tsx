@@ -20,7 +20,7 @@ export function GrafanaRoute(props: Props) {
 
   useLayoutEffect(() => {
     keybindings.clearAndInitGlobalBindings(props.route);
-  }, [keybindings, chrome, props.route]);
+  }, [keybindings, props.route]);
 
   useEffect(() => {
     updateBodyClassNames(props.route);
@@ -65,8 +65,8 @@ export function GrafanaRouteWrapper({ route }: Pick<Props, 'route'>) {
 
   // Perform login check in the frontend now
   if (config.featureToggles.multiTenantFrontend) {
-    const signInRequired = !route.allowAnonymous && !config.anonymousEnabled;
-    if (signInRequired && !contextSrv.isSignedIn && location.pathname !== '/login') {
+    const routeRequiresSignin = !route.allowAnonymous && !config.anonymousEnabled;
+    if (routeRequiresSignin && !contextSrv.isSignedIn) {
       contextSrv.setRedirectToUrl();
 
       return <Navigate replace to="/login" />;
