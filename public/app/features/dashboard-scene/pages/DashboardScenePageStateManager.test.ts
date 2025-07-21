@@ -1248,7 +1248,7 @@ const customHomeDashboardV1Spec = {
         content: '# Welcome to the home dashboard!\n\n## Example of v2 schema home dashboard',
         mode: 'markdown',
       },
-      pluginVersion: '',
+      pluginVersion: '1.0.0',
       targets: [{ refId: 'A' }],
       title: 'Welcome',
       transformations: [],
