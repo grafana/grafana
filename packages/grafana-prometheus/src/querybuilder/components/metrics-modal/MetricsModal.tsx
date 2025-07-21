@@ -22,7 +22,7 @@ import {
 import { getDebounceTimeInMilliseconds } from '../../../caching';
 import { METRIC_LABEL } from '../../../constants';
 import { regexifyLabelValuesQueryString } from '../../parsingUtils';
-import { formatPrometheusLabelFilters } from '../shared/formatter';
+import { formatPrometheusLabelFilters } from '../formatter';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';

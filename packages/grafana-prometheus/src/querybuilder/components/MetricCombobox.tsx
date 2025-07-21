@@ -11,9 +11,9 @@ import { PrometheusDatasource } from '../../datasource';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
+import { formatKeyValueStrings } from './formatter';
 import { MetricsModal } from './metrics-modal/MetricsModal';
 import { tracking } from './metrics-modal/state/helpers';
-import { formatKeyValueStrings } from './shared/formatter';
 
 export interface MetricComboboxProps {
   metricLookupDisabled: boolean;
