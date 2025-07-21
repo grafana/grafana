@@ -1,13 +1,9 @@
 import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import {
-  GetRepositoryFilesApiResponse,
-  GetResourceStatsApiResponse,
-  RepositoryViewList,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 
-import { ModeOption } from './types';
+import { ModeOption } from '../types';
 
 /**
  * Filters available mode options based on system state
@@ -67,35 +63,4 @@ export function useModeOptions(repoName: string, settings?: RepositoryViewList) 
 
     return filterModeOptions(modeOptions, repoName, settings);
   }, [repoName, settings]);
-}
-
-export function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetResourceStatsApiResponse) {
-  const fileCount =
-    files?.items?.reduce((count, file) => {
-      const path = file.path ?? '';
-      return path.endsWith('.json') || path.endsWith('.yaml') ? count + 1 : count;
-    }, 0) ?? 0;
-
-  let counts: string[] = [];
-  let resourceCount = 0;
-
-  stats?.instance?.forEach((stat) => {
-    switch (stat.group) {
-      case 'folders':
-      case 'folder.grafana.app':
-        resourceCount += stat.count;
-        counts.push(`${stat.count} ${stat.count > 1 ? 'folders' : 'folder'}`);
-        break;
-      case 'dashboard.grafana.app':
-        resourceCount += stat.count;
-        counts.push(`${stat.count} ${stat.count > 1 ? 'dashboards' : 'dashboard'}`);
-        break;
-    }
-  });
-
-  return {
-    fileCount,
-    resourceCount,
-    resourceCountString: counts.join(',\n'),
-  };
 }
