@@ -32,7 +32,7 @@ posts:
       - whats-new/2025-07-14-enhanced-custom-currency-format-display-exact-financial-values.md
   - title: Authentication and authorization
     items:
-      - docs/grafana-cloud/whats-new/2025-07-14-entra-id-workload-identity-support.md
+      - whats-new/2025-07-14-entra-id-workload-identity-support.md
 whats_new_grafana_version: 12.1
 weight: -50
 ---
