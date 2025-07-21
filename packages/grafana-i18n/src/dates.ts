@@ -1,7 +1,12 @@
 import deepEqual from 'fast-deep-equal';
-import memoize from 'micro-memoize';
+import memoize, { AnyFn, Memoized } from 'micro-memoize';
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
+
+function clearMemoizedCache(fn: Memoized<AnyFn>) {
+  fn.cache.keys.length = 0;
+  fn.cache.values.length = 0;
+}
 
 let regionalFormat: string | undefined;
 
@@ -41,5 +46,8 @@ export const formatDateRange = (
 };
 
 export const initRegionalFormat = (regionalFormatArg: string) => {
+  clearMemoizedCache(formatDate);
+  clearMemoizedCache(formatDuration);
+
   regionalFormat = regionalFormatArg;
 };
