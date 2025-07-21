@@ -6,6 +6,7 @@ import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/
 import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
+import { isGitProvider } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { WizardFormData } from './types';
@@ -20,7 +21,7 @@ export function SynchronizeStep({ requiresMigration, isLegacyStorage }: Synchron
   const [createJob] = useCreateRepositoryJobsMutation();
   const { getValues, register, watch } = useFormContext<WizardFormData>();
   const repoType = watch('repository.type');
-  const supportsHistory = repoType === 'github' && isLegacyStorage;
+  const supportsHistory = isGitProvider(repoType) && isLegacyStorage;
   const [job, setJob] = useState<Job>();
 
   const startSynchronization = async () => {
