@@ -7,6 +7,7 @@ import { configFromQueryTransformRegistryItem } from './configFromQuery/ConfigFr
 import { calculateFieldTransformRegistryItem } from './editors/CalculateFieldTransformerEditor';
 import { concatenateTransformRegistryItem } from './editors/ConcatenateTransformerEditor';
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
+import { eventDistributionTransformerRegistryItem } from './editors/EventDistributionTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefIdTransformerEditor';
 import { formatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
@@ -64,6 +65,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     limitTransformRegistryItem,
     joinByLabelsTransformRegistryItem,
     partitionByValuesTransformRegistryItem,
+    eventDistributionTransformerRegistryItem,
     ...(config.featureToggles.formatString ? [formatStringTransformerRegistryItem] : []),
     ...(config.featureToggles.regressionTransformation ? [regressionTransformerRegistryItem] : []),
     ...(config.featureToggles.groupToNestedTableTransformation ? [groupToNestedTableTransformRegistryItem] : []),
