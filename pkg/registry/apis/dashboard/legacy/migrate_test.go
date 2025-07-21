@@ -115,9 +115,8 @@ func TestDashboardMigrationQuery(t *testing.T) {
 		require.Contains(t, sql, "dashboard_version.data",
 			"Regular history SQL should use direct dashboard_version.data")
 
-		// Verify it has the strict filter that requires version entries to exist
-		require.Contains(t, sql, "dashboard_version.id IS NOT NULL",
-			"Regular history SQL should exclude dashboards without version entries")
+		// NOTE: We intentionally do NOT add dashboard_version.id IS NOT NULL filter
+		// to allow for cases where dashboard_version entries might be missing
 
 		// Should not contain COALESCE functions
 		require.NotContains(t, sql, "COALESCE(dashboard_version.created, dashboard.updated)",

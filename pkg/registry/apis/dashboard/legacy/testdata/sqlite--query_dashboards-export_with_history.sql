@@ -26,7 +26,6 @@ LEFT OUTER JOIN "grafana"."user" as created_user ON dashboard.created_by = creat
 LEFT OUTER JOIN "grafana"."user" as updated_user ON dashboard_version.created_by = updated_user.id
 WHERE dashboard.is_folder = FALSE
   AND dashboard.org_id = 1
-  AND dashboard_version.id IS NOT NULL
   ORDER BY
     dashboard_version.created ASC,
     dashboard_version.version ASC,

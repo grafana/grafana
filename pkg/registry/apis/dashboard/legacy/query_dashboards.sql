@@ -61,9 +61,6 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   AND COALESCE(dashboard_version.version, dashboard.version) < {{ .Arg .Query.LastID }}
   {{ end }}
   {{ end }}
-  {{ if and .Query.GetHistory (not .Query.AllowFallback) }}
-  AND dashboard_version.id IS NOT NULL
-  {{ end }}
   ORDER BY
     {{ if and .Query.GetHistory (not .Query.AllowFallback) }}
     dashboard_version.created {{ .Query.Order }},
