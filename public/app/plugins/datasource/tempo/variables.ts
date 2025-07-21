@@ -18,7 +18,7 @@ export class TempoVariableSupport extends CustomVariableSupport<TempoDatasource,
       throw new Error('Datasource not initialized');
     }
 
-    const result = this.datasource.executeVariableQuery(request.targets[0]);
+    const result = this.datasource.executeVariableQuery(request.targets[0], request.range);
     return from(result).pipe(map((data) => ({ data })));
   }
 }
