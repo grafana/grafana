@@ -81,7 +81,7 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			}
 		}
 
-		resourceInfo = dashboardV2alpha1.DashboardResourceInfo
+		resourceInfo = dashboardV2alpha2.DashboardResourceInfo
 
 		// Noop for V2
 	default:
