@@ -28,9 +28,17 @@
   postUpdateOptions: ["yarnDedupeHighest"],
   packageRules: [
     {
+      automerge: true,
       matchCurrentVersion: "!/^0/",
       matchUpdateTypes: ["patch"],
-      matchPackageNames: ["!/^@?storybook/", "!/^@locker/"],
+      matchPackageNames: ["!/^@?storybook/", "!/^@locker/", "!/^@grafana/"],
+      minimumReleaseAge: "7 days"
+    },
+    {
+      automerge: true,
+      matchCurrentVersion: "!/^0/",
+      matchUpdateTypes: ["patch"],
+      matchPackageNames: ["/^@grafana/"],
     },
     {
       extends: ["schedule:monthly"],
