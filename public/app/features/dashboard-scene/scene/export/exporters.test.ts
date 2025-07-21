@@ -767,7 +767,8 @@ describe('dashboard exporter v2', () => {
     expect(placeholderPanel.kind).toBe('Panel');
     expect((placeholderPanel as PanelKind).spec.id).toBe(125);
     expect((placeholderPanel as PanelKind).spec.title).toBe('Invalid Library Panel');
-    expect((placeholderPanel as PanelKind).spec.vizConfig.kind).toBe('text');
+    expect((placeholderPanel as PanelKind).spec.vizConfig.kind).toBe('VizConfig');
+    expect((placeholderPanel as PanelKind).spec.vizConfig.group).toBe('text');
 
     // Verify console.error was called
     expect(consoleSpy).toHaveBeenCalledWith('Failed to load library panel invalid-uid:', expect.any(Error));

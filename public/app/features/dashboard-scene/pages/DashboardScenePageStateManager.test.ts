@@ -1305,9 +1305,10 @@ const customHomeDashboardV2Spec = {
           },
         },
         vizConfig: {
-          kind: 'text',
+          kind: 'VizConfig',
+          version: '1.0.0',
+          group: 'text',
           spec: {
-            pluginVersion: '',
             options: {
               mode: 'markdown',
               content: '# Welcome to the home dashboard!\n\n## Example of v2 schema home dashboard',
