@@ -75,4 +75,4 @@ function ExportNewRuleButton() {
       <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-new-rule">Export rule definition</Trans>
     </LinkButton>
   );
-} 
+}

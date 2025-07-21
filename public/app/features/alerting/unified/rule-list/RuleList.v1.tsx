@@ -28,7 +28,6 @@ import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/data
 import { RuleListPageTitle } from './RuleListPageTitle';
 import { RuleListActionButtons } from './components/RuleListActionButtons';
 
-
 const VIEWS = {
   groups: RuleListGroupView,
   state: RuleListStateView,
@@ -96,7 +95,7 @@ const RuleListV1 = () => {
   }, [loading, limitAlerts, dispatch]);
 
   useEffect(() => {
-    trackRuleListNavigation().catch(() => { });
+    trackRuleListNavigation().catch(() => {});
   }, []);
 
   // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
