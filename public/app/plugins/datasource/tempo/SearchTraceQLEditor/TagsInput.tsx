@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { FetchError } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -41,6 +41,8 @@ interface Props {
   hideValues?: boolean;
   requireTagAndValue?: boolean;
   addVariablesToOptions?: boolean;
+  range?: TimeRange;
+  timeRangeForTags?: number;
 }
 const TagsInput = ({
   updateFilter,
@@ -54,6 +56,8 @@ const TagsInput = ({
   requireTagAndValue,
   generateQueryWithoutFilter,
   addVariablesToOptions,
+  range,
+  timeRangeForTags,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const handleOnAdd = useCallback(
@@ -91,6 +95,8 @@ const TagsInput = ({
             hideValue={hideValues}
             query={generateQueryWithoutFilter(f)}
             addVariablesToOptions={addVariablesToOptions}
+            range={range}
+            timeRangeForTags={timeRangeForTags}
           />
           {(validInput(f) || filters.length > 1) && (
             <AccessoryButton

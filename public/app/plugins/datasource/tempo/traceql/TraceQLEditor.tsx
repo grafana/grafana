@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
+import { DEFAULT_TIME_RANGE_FOR_TAGS } from '../configuration/TagsTimeRangeSettings';
 import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
@@ -20,13 +21,19 @@ interface Props {
   onRunQuery: () => void;
   datasource: TempoDatasource;
   readOnly?: boolean;
+  range?: TimeRange;
 }
 
 export function TraceQLEditor(props: Props) {
   const [alertText, setAlertText] = useState<string>();
 
   const { query, onChange, onRunQuery, placeholder } = props;
-  const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
+  const setupAutocompleteFn = useAutocomplete(
+    props.datasource,
+    setAlertText,
+    props.datasource.timeRangeForTags ?? DEFAULT_TIME_RANGE_FOR_TAGS,
+    props.range
+  );
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
 
@@ -192,20 +199,34 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
  * Hook that returns function that will set up monaco autocomplete for the label selector
  * @param datasource the Tempo datasource instance
  * @param setAlertText setter for alert's text
+ * @param timeRangeForTags time range for tags and tag values queries
+ * @param range time range
  */
-function useAutocomplete(datasource: TempoDatasource, setAlertText: (text?: string) => void) {
+function useAutocomplete(
+  datasource: TempoDatasource,
+  setAlertText: (text?: string) => void,
+  timeRangeForTags: number,
+  range?: TimeRange
+) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
   // values here but there is additional setup needed for the provider later on. We could run the getSeries() in the
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
   // need to.
   const providerRef = useRef<CompletionProvider>(
-    new CompletionProvider({ languageProvider: datasource.languageProvider, setAlertText })
+    new CompletionProvider({
+      languageProvider: datasource.languageProvider,
+      setAlertText,
+      timeRangeForTags,
+      range,
+    })
   );
+
+  const previousRangeRef = useRef<TimeRange | undefined>(range);
 
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        await datasource.languageProvider.start();
+        await datasource.languageProvider.start(range, timeRangeForTags);
         setAlertText(undefined);
       } catch (error) {
         if (error instanceof Error) {
@@ -214,7 +235,20 @@ function useAutocomplete(datasource: TempoDatasource, setAlertText: (text?: stri
       }
     };
     fetchTags();
-  }, [datasource, setAlertText]);
+  }, [datasource, setAlertText, range, timeRangeForTags]);
+
+  useEffect(() => {
+    const rangeChanged = datasource.languageProvider.shouldRefreshLabels(range, previousRangeRef.current);
+
+    if (rangeChanged) {
+      providerRef.current.range = range;
+      previousRangeRef.current = range;
+    }
+  }, [range, datasource.languageProvider]);
+
+  useEffect(() => {
+    providerRef.current.timeRangeForTags = timeRangeForTags;
+  }, [timeRangeForTags]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {
