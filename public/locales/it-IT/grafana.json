@@ -3256,6 +3256,11 @@
       "id-token-attribute-name-label": "Nome attributo token ID",
       "login-attribute-path-description": "Espressione JMESPath da utilizzare per la ricerca dell'accesso utente dal token ID utente.",
       "login-attribute-path-label": "Percorso attributo di accesso",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "L'ID client dell'identità gestita della credenziale di identità federata della tua app OAuth2.",
       "managed-identity-client-id-label": "ID client identità gestita FIC",
       "name-attribute-path-description": "Espressione JMESPath da utilizzare per la ricerca del nome utente dal token ID utente. \nQuesto nome verrà visualizzato come nome dell'utente.",
@@ -3353,6 +3358,9 @@
     "provider-config-page": {
       "text-badge-enabled": "Abilitato",
       "text-badge-not-enabled": "Non abilitato"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "L'endpoint .well-known/openid-configuration per il tuo IdP",
@@ -3554,6 +3562,7 @@
       "empty-message": "Nessuna cartella trovata",
       "error-title": "Errore durante il caricamento delle cartelle",
       "non-folder-item": "Non cartella {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Cerca cartelle",
       "unknown-error": "Errore sconosciuto"
     },
@@ -5926,8 +5935,8 @@
         "title-someone-else-has-updated-this-dashboard": "Qualcun altro ha aggiornato questa dashboard",
         "would-still-dashboard": "Desideri comunque salvare questa dashboard?"
       },
-      "schema-v2-library-panels-export": "La funzionalità della dashboard dinamica è in fase sperimentale e non ha una parità di funzionalità completa con il comportamento attuale delle dashboard. Si basa su un nuovo formato di schema, che non supporta i pannelli della libreria. Ciò significa che quando si esporta la dashboard per utilizzarla in un'altra istanza, non includeremo i pannelli della libreria. Intendiamo supportarli man mano che progrediamo nel <2>ciclo di vita</2> della funzionalità.",
-      "schema-v2-library-panels-export-title": "Schema Dashboard V2 non supporta ancora l'esportazione di pannelli della libreria da utilizzare in un'altra istanza",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": ""
     },
     "save-dashboard-form-common-options": {
@@ -7949,6 +7958,60 @@
       "previous-label": "Mese precedente",
       "select-placeholder": "Selezionare data e ora"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Chiudi"
     },
@@ -7995,6 +8058,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -9682,7 +9759,9 @@
       "aria-label": "Guida"
     },
     "invite-user": {
-      "invite-new-member-button": "Invita un nuovo membro"
+      "invite-button": "Invito",
+      "invite-new-member-button": "Invita un nuovo membro",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Aggiungi a Segnalibri",
@@ -11876,7 +11955,6 @@
       },
       "label-apply-to-entire-row": "",
       "label-background-display-mode": "",
-      "label-wrap-text": "",
       "wrap-text": ""
     },
     "column-alignment-options": {

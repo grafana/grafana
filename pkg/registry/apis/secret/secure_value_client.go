@@ -13,11 +13,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/client-go/dynamic"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
 
 // SecureValueClient is a CRUD client for the secure value API.
@@ -27,14 +30,16 @@ type secureValueClient struct {
 	namespace string
 	service   contracts.SecureValueService
 	validator contracts.SecureValueValidator
+	access    authorizer.Authorizer
 }
 
 var _ SecureValueClient = &secureValueClient{}
 
-func ProvideSecureValueClient(service contracts.SecureValueService, validator contracts.SecureValueValidator) SecureValueClient {
+func ProvideSecureValueClient(service contracts.SecureValueService, validator contracts.SecureValueValidator, access claims.AccessClient) SecureValueClient {
 	return &secureValueClient{
 		service:   service,
 		validator: validator,
+		access:    authsvc.NewResourceAuthorizer(access),
 	}
 }
 
@@ -62,6 +67,10 @@ func (c *secureValueClient) Namespace(ns string) dynamic.ResourceInterface {
 func (c *secureValueClient) Create(ctx context.Context, obj *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
 	if len(c.namespace) == 0 {
 		return nil, fmt.Errorf("namespace is required")
+	}
+
+	if err := c.checkAccess(ctx, obj.GetName(), utils.VerbCreate); err != nil {
+		return nil, err
 	}
 
 	sv, err := fromUnstructured(obj)
@@ -98,6 +107,10 @@ func (c *secureValueClient) Get(ctx context.Context, name string, _ metav1.GetOp
 		return nil, fmt.Errorf("name is required")
 	}
 
+	if err := c.checkAccess(ctx, name, utils.VerbGet); err != nil {
+		return nil, err
+	}
+
 	sv, err := c.service.Read(ctx, xkube.Namespace(c.namespace), name)
 	if err != nil {
 		return nil, c.mapError(err, name)
@@ -110,6 +123,10 @@ func (c *secureValueClient) Get(ctx context.Context, name string, _ metav1.GetOp
 func (c *secureValueClient) Update(ctx context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
 	if len(c.namespace) == 0 {
 		return nil, fmt.Errorf("namespace is required")
+	}
+
+	if err := c.checkAccess(ctx, obj.GetName(), utils.VerbUpdate); err != nil {
+		return nil, err
 	}
 
 	oldUnstructured, err := c.Get(ctx, obj.GetName(), metav1.GetOptions{})
@@ -156,6 +173,10 @@ func (c *secureValueClient) Delete(ctx context.Context, name string, _ metav1.De
 		return fmt.Errorf("name is required")
 	}
 
+	if err := c.checkAccess(ctx, name, utils.VerbDelete); err != nil {
+		return err
+	}
+
 	_, err := c.service.Delete(ctx, xkube.Namespace(c.namespace), name)
 	return c.mapError(err, name)
 }
@@ -164,6 +185,10 @@ func (c *secureValueClient) Delete(ctx context.Context, name string, _ metav1.De
 func (c *secureValueClient) List(ctx context.Context, _ metav1.ListOptions) (*unstructured.UnstructuredList, error) {
 	if len(c.namespace) == 0 {
 		return nil, fmt.Errorf("namespace is required")
+	}
+
+	if err := c.checkAccess(ctx, "", utils.VerbList); err != nil {
+		return nil, err
 	}
 
 	list, err := c.service.List(ctx, xkube.Namespace(c.namespace))
@@ -232,6 +257,31 @@ func (c *secureValueClient) mapError(err error, name string) error {
 	}
 
 	return apierrors.NewInternalError(err)
+}
+
+func (c *secureValueClient) checkAccess(ctx context.Context, name, verb string) error {
+	gr := secretv1beta1.SecureValuesResourceInfo.GroupResource()
+
+	decision, reason, err := c.access.Authorize(ctx, authorizer.AttributesRecord{
+		Verb:            verb,
+		Namespace:       c.namespace,
+		APIGroup:        secretv1beta1.APIGroup,
+		APIVersion:      secretv1beta1.APIVersion,
+		Resource:        gr.Resource,
+		Subresource:     "",
+		Name:            name,
+		ResourceRequest: true,
+	})
+
+	if err != nil {
+		return apierrors.NewForbidden(gr, name, fmt.Errorf("failed to check access: %w", err))
+	}
+
+	if decision != authorizer.DecisionAllow {
+		return apierrors.NewForbidden(gr, name, fmt.Errorf("no access to %s: %s", verb, reason))
+	}
+
+	return nil
 }
 
 func toUnstructured(sv *secretv1beta1.SecureValue) (*unstructured.Unstructured, error) {

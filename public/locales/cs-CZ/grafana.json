@@ -3282,6 +3282,11 @@
       "id-token-attribute-name-label": "Název atributu ID tokenu",
       "login-attribute-path-description": "Výraz JMESPath, který se použije pro vyhledání přihlašovacích údajů uživatele z tokenu ID uživatele.",
       "login-attribute-path-label": "Cesta atributu přihlášení",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "ID klienta spravované identity federovaných identifikačních údajů vaší aplikace OAuth2.",
       "managed-identity-client-id-label": "ID klienta spravované identity FIC",
       "name-attribute-path-description": "Výraz JMESPath, který se použije pro vyhledání uživatelského jména z tokenu ID uživatele.\nToto jméno bude použito jako zobrazované jméno uživatele.",
@@ -3379,6 +3384,9 @@
     "provider-config-page": {
       "text-badge-enabled": "Povoleno",
       "text-badge-not-enabled": "Není povoleno"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Koncový bod .well-known / openid-configuration pro vašeho poskytovatele identity",
@@ -3590,6 +3598,7 @@
       "empty-message": "Nebyly nalezeny žádné složky",
       "error-title": "Chyba při načítání složek",
       "non-folder-item": "Bez složky {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Vyhledat složky",
       "unknown-error": "Neznámá chyba"
     },
@@ -5966,8 +5975,8 @@
         "title-someone-else-has-updated-this-dashboard": "Tuto nástěnku aktualizoval jiný uživatel",
         "would-still-dashboard": "Chcete přesto tuto nástěnku uložit?"
       },
-      "schema-v2-library-panels-export": "Funkce dynamické nástěnky panelu je experimentální a nemá plnou funkčnost srovnatelnou se současným chováním nástěnek. Je založena na novém formátu schématu, který nepodporuje panely knihovny. To znamená, že při exportu nástěnky pro použití v jiné instanci nebudeme zahrnovat panely knihoven. Jejich podpora je naplánována v rámci <2>životního cyklu</2> funkce.",
-      "schema-v2-library-panels-export-title": "Schéma nástěnky V2 zatím nepodporuje export panelů knihoven pro použití v jiné instanci",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Nástěnka byla nevratně změněna"
     },
     "save-dashboard-form-common-options": {
@@ -7991,6 +8000,60 @@
       "previous-label": "Předchozí měsíc",
       "select-placeholder": "Vyberte datum/čas"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Zavřít"
     },
@@ -8037,6 +8100,20 @@
       "description-fields-with-value": "Nastavit vlastnosti pro pole s podmínkou reduktoru",
       "field-name-picker": {
         "placeholder": "Vyberte pole"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "Pole s názvem odpovídajícím regulárnímu výrazu",
       "name-fields-by-query": "Pole vrácená dotazem",
@@ -9740,7 +9817,9 @@
       "aria-label": "Nápověda"
     },
     "invite-user": {
-      "invite-new-member-button": "Pozvat nového člena"
+      "invite-button": "Pozvat",
+      "invite-new-member-button": "Pozvat nového člena",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Přidat do záložek",
@@ -11954,7 +12033,6 @@
       },
       "label-apply-to-entire-row": "Použít na celý řádek",
       "label-background-display-mode": "Režim zobrazení pozadí",
-      "label-wrap-text": "Zalomení textu",
       "wrap-text": "Zalomení textu"
     },
     "column-alignment-options": {

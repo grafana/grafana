@@ -89,6 +89,7 @@
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/bus/ @grafana/grafana-search-and-storage
+/pkg/clientauth/ @grafana/grafana-app-platform-squad
 /pkg/cmd/ @grafana/grafana-backend-group
 /pkg/cmd/grafana-cli/commands/install_command.go @grafana/plugins-platform-backend
 /pkg/cmd/grafana-cli/commands/install_command_test.go @grafana/plugins-platform-backend
@@ -149,6 +150,7 @@
 /pkg/services/hooks/ @grafana/grafana-backend-group
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
+/pkg/services/mtdsclient/ @grafana/grafana-datasources-core-services
 /pkg/services/navtree/ @grafana/grafana-backend-group
 /pkg/services/notifications/ @grafana/grafana-backend-group
 /pkg/services/org/ @grafana/grafana-backend-group
@@ -177,7 +179,6 @@
 /pkg/setting/ @grafana/grafana-backend-services-squad
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
-/pkg/tests/apis/query @grafana/grafana-datasources-core-services
 /pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group

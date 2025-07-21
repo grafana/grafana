@@ -3243,6 +3243,11 @@
       "id-token-attribute-name-label": "ID 權杖屬性名稱",
       "login-attribute-path-description": "用於從使用者 ID 權杖中查找使用者登入的 JMESPath 表達式。",
       "login-attribute-path-label": "登入屬性路徑",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "OAuth2 應用程式中聯合身分憑證的受控身分用戶端 ID。",
       "managed-identity-client-id-label": "FIC 受控身分用戶端 ID",
       "name-attribute-path-description": "用於從使用者 ID 權杖中查找使用者名稱的 JMESPath 表達式。\n此名稱將用作使用者的顯示名稱。",
@@ -3340,6 +3345,9 @@
     "provider-config-page": {
       "text-badge-enabled": "已啟用",
       "text-badge-not-enabled": "未啟用"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "您的 IdP 的 .well-known/openid-configuration 端點",
@@ -3536,6 +3544,7 @@
       "empty-message": "未發現資料夾",
       "error-title": "載入資料夾時發生錯誤",
       "non-folder-item": "非資料夾 {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "搜尋資料夾",
       "unknown-error": "未知錯誤"
     },
@@ -5906,8 +5915,8 @@
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此儀表板",
         "would-still-dashboard": "仍要儲存此儀表板嗎？"
       },
-      "schema-v2-library-panels-export": "動態儀表板功能僅供試驗，並未與目前的儀表板行為具有完全的功能平等性。它以新的模式格式為基礎，不支援資料庫面板。這表示在匯出儀表板以便在另一個執行個體中使用時，我們不會包含資料庫面板。隨著我們在功能<2>生命週期</2>中取得進展，我們計劃為其提供支援。",
-      "schema-v2-library-panels-export-title": "儀表板架構 V2 尚不支援為了在另一個執行個體中使用而匯出資料庫面板",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "已永久變更儀表板"
     },
     "save-dashboard-form-common-options": {
@@ -7928,6 +7937,60 @@
       "previous-label": "上個月",
       "select-placeholder": "選擇日期／時間"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "關閉"
     },
@@ -7974,6 +8037,20 @@
       "description-fields-with-value": "為具有縮減條件的欄位設定屬性",
       "field-name-picker": {
         "placeholder": "選擇欄位"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "名稱與正則表達式相符的欄位",
       "name-fields-by-query": "查詢傳回的欄位",
@@ -9653,7 +9730,9 @@
       "aria-label": "說明"
     },
     "invite-user": {
-      "invite-new-member-button": "邀請新成員"
+      "invite-button": "邀請",
+      "invite-new-member-button": "邀請新成員",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "新增至書籤",
@@ -11837,7 +11916,6 @@
       },
       "label-apply-to-entire-row": "套用至整列",
       "label-background-display-mode": "背景顯示模式",
-      "label-wrap-text": "文字自動換行",
       "wrap-text": "文字自動換行"
     },
     "column-alignment-options": {

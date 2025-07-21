@@ -3282,6 +3282,11 @@
       "id-token-attribute-name-label": "Путь атрибута идентификационного токена",
       "login-attribute-path-description": "Выражение JMESPath, используемое для поиска логина в идентификационном токене пользователя.",
       "login-attribute-path-label": "Путь атрибута логина",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "Идентификатор клиента управляемого удостоверения федеративных учетных данных вашего приложения OAuth2.",
       "managed-identity-client-id-label": "Идентификатор клиента управляемого удостоверения FIC",
       "name-attribute-path-description": "Выражение JMESPath, используемое для поиска имени пользователя в его идентификационном токене. \nЭто имя будет использоваться в качестве отображаемого имени пользователя.",
@@ -3379,6 +3384,9 @@
     "provider-config-page": {
       "text-badge-enabled": "Включено",
       "text-badge-not-enabled": "Не включена"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Конечная точка .well-known/openid-configuration для вашего поставщика удостоверений (IdP)",
@@ -3590,6 +3598,7 @@
       "empty-message": "Папки не найдены",
       "error-title": "Ошибка загрузки папок",
       "non-folder-item": "{{itemKind}} {{itemUID}} не является папкой",
+      "root-title": "",
       "search-placeholder": "Поиск папок",
       "unknown-error": "Неизвестная ошибка"
     },
@@ -5966,8 +5975,8 @@
         "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
         "would-still-dashboard": "Все равно сохранить дашборд?"
       },
-      "schema-v2-library-panels-export": "Функциональность динамического дашборда является экспериментальной и не имеет полного паритета функциональных возможностей с текущим поведением дашбордов. Она основана на новом формате схемы, который не поддерживает панели библиотеки. Таким образом, экспорт дашборда для использования в другом экземпляре не будет включать панели библиотеки. Мы намерены поддерживать их по мере прохождения <2>жизненного цикла</2> функции.",
-      "schema-v2-library-panels-export-title": "Дашборды схемы V2 пока не поддерживают экспорт панелей библиотеки для использования в другом экземпляре",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Дашборд необратимо изменен"
     },
     "save-dashboard-form-common-options": {
@@ -7991,6 +8000,60 @@
       "previous-label": "Предыдущий месяц",
       "select-placeholder": "Выбрать дату/время"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Закрыть"
     },
@@ -8037,6 +8100,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -9740,7 +9817,9 @@
       "aria-label": "Справка"
     },
     "invite-user": {
-      "invite-new-member-button": "Пригласить нового члена"
+      "invite-button": "Пригласить",
+      "invite-new-member-button": "Пригласить нового члена",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Добавить в закладки",
@@ -11954,7 +12033,6 @@
       },
       "label-apply-to-entire-row": "Применить ко всей строке",
       "label-background-display-mode": "Режим отображения фона",
-      "label-wrap-text": "Перенос текста",
       "wrap-text": "Перенос текста"
     },
     "column-alignment-options": {

@@ -3256,6 +3256,11 @@
       "id-token-attribute-name-label": "Naam id-tokenattribuut",
       "login-attribute-path-description": "JMESPath-expressie om te gebruiken voor het opzoeken van gebruikersaanmeldingen uit het gebruikers-id-token.",
       "login-attribute-path-label": "Pad inlogattribuut",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "De beheerde identiteitsclient-id van de federatieve identiteitsreferentie van je OAuth2-app.",
       "managed-identity-client-id-label": "FIC-beheerde identiteitsclient-id",
       "name-attribute-path-description": "JMESPath-expressie om te gebruiken voor het opzoeken van gebruikersaanmeldingen uit het gebruikers-id-token.\nDeze naam wordt gebruikt als de weergavenaam van de gebruiker.",
@@ -3353,6 +3358,9 @@
     "provider-config-page": {
       "text-badge-enabled": "Ingeschakeld",
       "text-badge-not-enabled": "Niet ingeschakeld"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Het .well-known/openid-configuration endpoint voor je IdP",
@@ -3554,6 +3562,7 @@
       "empty-message": "Geen mappen gevonden",
       "error-title": "Fout bij laden van mappen",
       "non-folder-item": "Niet-map {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Mappen doorzoeken",
       "unknown-error": "Onbekende fout"
     },
@@ -5926,8 +5935,8 @@
         "title-someone-else-has-updated-this-dashboard": "Iemand anders heeft dit dashboard bijgewerkt",
         "would-still-dashboard": "Wil je dit dashboard nog steeds opslaan?"
       },
-      "schema-v2-library-panels-export": "De dynamische dashboardfunctionaliteit is experimenteel en heeft geen volledige functiepariteit met het huidige gedrag van dashboards. Het is gebaseerd op een nieuw schemaformaat, dat geen bibliotheekpanelen ondersteunt. Dit betekent dat we bij het exporteren van het dashboard om het in een andere instantie te gebruiken, geen bibliotheekpanelen opnemen. We zijn van plan om ze te ondersteunen naarmate we verder komen in de <2>levenscyclus</2> van de functie.",
-      "schema-v2-library-panels-export-title": "Dashboardschema V2 biedt nog geen ondersteuning voor het exporteren van bibliotheekpanelen die in een andere instantie kunnen worden gebruikt",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Dashboard onomkeerbaar gewijzigd"
     },
     "save-dashboard-form-common-options": {
@@ -7949,6 +7958,60 @@
       "previous-label": "Vorige maand",
       "select-placeholder": "Selecteer datum/tijd"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Sluiten"
     },
@@ -7995,6 +8058,20 @@
       "description-fields-with-value": "Eigenschappen instellen voor velden met reduceringsvoorwaarde",
       "field-name-picker": {
         "placeholder": "Veld selecteren"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "Velden met naam die overeenkomen met regex",
       "name-fields-by-query": "Velden opgehaald via de query",
@@ -9682,7 +9759,9 @@
       "aria-label": "Help"
     },
     "invite-user": {
-      "invite-new-member-button": "Nieuw lid uitnodigen"
+      "invite-button": "Uitnodigen",
+      "invite-new-member-button": "Nieuw lid uitnodigen",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Toevoegen aan bladwijzers",
@@ -11876,7 +11955,6 @@
       },
       "label-apply-to-entire-row": "Toepassen op hele rij",
       "label-background-display-mode": "Achtergrondweergavemodus",
-      "label-wrap-text": "Tekst afbreken",
       "wrap-text": "Tekst afbreken"
     },
     "column-alignment-options": {

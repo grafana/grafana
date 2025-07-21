@@ -942,4 +942,16 @@ const (
 	// FlagOtelLogsFormatting
 	// Applies OTel formatting templates to displayed logs
 	FlagOtelLogsFormatting = "otelLogsFormatting"
+
+	// FlagAlertingNotificationHistory
+	// Enables the notification history feature
+	FlagAlertingNotificationHistory = "alertingNotificationHistory"
+
+	// FlagPluginAssetProvider
+	// Allows decoupled core plugins to load from the Grafana CDN
+	FlagPluginAssetProvider = "pluginAssetProvider"
+
+	// FlagUnifiedStorageSearchDualReaderEnabled
+	// Enable dual reader for unified storage search
+	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
 )

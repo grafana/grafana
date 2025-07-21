@@ -387,7 +387,7 @@ func ProvideDashboardServiceImpl(
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 ) (*DashboardServiceImpl, error) {
-	k8sclient := dashboardclient.NewK8sClientWithFallback(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, r)
+	k8sclient := dashboardclient.NewK8sClientWithFallback(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, r, features)
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
 		log:                       log.New("dashboard-service"),
