@@ -208,24 +208,24 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-	github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/apps/investigations v0.0.0-20250220163425-b4c4b9abbdc8 // @fcjack @matryer
-	github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a // @grafana/grafana-app-platform-squad
+	// Commented out external grafana app/package dependencies - using local workspace modules instead
+	// github.com/grafana/grafana/apps/advisor v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/plugins-platform-backend
+	// github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/alerting-backend
+	// github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad // Commented out - using local workspace module
+	// github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b // @grafana/grafana-search-and-storage
+	// github.com/grafana/grafana/apps/investigations v0.0.0-20250220163425-b4c4b9abbdc8 // @fcjack @matryer
+	// github.com/grafana/grafana/apps/playlist v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
+	// github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8 // @grafana/grafana-app-platform-squad
+	// github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250401081501-6af5fbf3fff0 // @grafana/grafana-app-platform-squad
+	// github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250319110241-5a004939da2a // @grafana/grafana-operator-experience-squad
+	// github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a // @grafana/grafana-app-platform-squad
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250220164708-c8d4ff28a450 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043 // @grafana/grafana-search-and-storage
+// Removed external dependencies - using local workspace modules instead
 )
 
 require (
@@ -256,7 +256,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.51.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.51.0 // indirect
-	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -423,7 +422,6 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
-	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
@@ -470,7 +468,6 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
@@ -582,9 +579,21 @@ require (
 require github.com/urfave/cli/v3 v3.3.8 // @grafana/grafana-backend-group
 
 require (
-	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
-	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v1.36.0 // indirect
+	github.com/grafana/grafana/apps/advisor v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250513075908-8866f2cfc173
+	github.com/grafana/grafana/apps/folder v0.0.0-20250414115220-48647355c37b
+	github.com/grafana/grafana/apps/investigations v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana/apps/playlist v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250220163425-b4c4b9abbdc8
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/pkg/apis/secret v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a
+	github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-00010101000000-000000000000
 )
+
+require github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
@@ -612,3 +621,30 @@ exclude k8s.io/client-go v12.0.0+incompatible
 
 // k8s.io/apiserver fails due to incompatibility with cel-go 0.23, can be removed once apiserver v0.33.x is released.
 replace github.com/google/cel-go => github.com/google/cel-go v0.22.1
+
+// Force local workspace modules instead of external versions for storage
+replace github.com/grafana/grafana/pkg/storage/unified/resource => ./pkg/storage/unified/resource
+
+replace github.com/grafana/grafana/pkg/storage/unified/apistore => ./pkg/storage/unified/apistore
+
+// Force local workspace modules instead of external versions for apps
+replace github.com/grafana/grafana/apps/advisor => ./apps/advisor
+
+replace github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
+
+replace github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
+
+replace github.com/grafana/grafana/apps/folder => ./apps/folder
+
+replace github.com/grafana/grafana/apps/investigations => ./apps/investigations
+
+replace github.com/grafana/grafana/apps/playlist => ./apps/playlist
+
+// Force local workspace modules instead of external versions for packages
+replace github.com/grafana/grafana/pkg/aggregator => ./pkg/aggregator
+
+replace github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
+
+replace github.com/grafana/grafana/pkg/apis/secret => ./pkg/apis/secret
+
+replace github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver

@@ -19,7 +19,7 @@ require (
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250513075908-8866f2cfc173
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250325075903-77fa2271be7a
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043
+	// github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250317130411-3f270d1de043 // Commented out - using local workspace module via replace directive
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
