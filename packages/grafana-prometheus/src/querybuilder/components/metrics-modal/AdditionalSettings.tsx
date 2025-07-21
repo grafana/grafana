@@ -2,43 +2,43 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { metricsModaltestIds } from './shared/testIds';
-import { AdditionalSettingsProps } from './shared/types';
+import { useMetricsModal } from './MetricsModalContext';
 import { getPlaceholders } from './state/helpers';
+import { metricsModaltestIds } from './testIds';
 
-export function AdditionalSettings(props: AdditionalSettingsProps) {
-  const { state, onChangeFullMetaSearch, onChangeIncludeNullMetadata, onChangeDisableTextWrap, onChangeUseBackend } =
-    props;
-
+export function AdditionalSettings() {
   const theme = useTheme2();
   const styles = getStyles(theme);
-
   const placeholders = getPlaceholders();
+  const { settings, overrideSettings } = useMetricsModal();
 
   return (
     <>
       <div className={styles.selectItem}>
         <Switch
           data-testid={metricsModaltestIds.searchWithMetadata}
-          value={state.fullMetaSearch}
-          disabled={state.useBackend || !state.hasMetadata}
-          onChange={() => onChangeFullMetaSearch()}
+          value={settings.fullMetaSearch}
+          disabled={settings.useBackend || !settings.hasMetadata}
+          onChange={() => overrideSettings({ fullMetaSearch: !settings.fullMetaSearch })}
         />
         <div className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</div>
       </div>
       <div className={styles.selectItem}>
         <Switch
-          value={state.includeNullMetadata}
-          disabled={!state.hasMetadata}
-          onChange={() => onChangeIncludeNullMetadata()}
+          value={settings.includeNullMetadata}
+          disabled={!settings.hasMetadata}
+          onChange={() => overrideSettings({ includeNullMetadata: !settings.includeNullMetadata })}
         />
         <div className={styles.selectItemLabel}>{placeholders.includeNullMetadata}</div>
       </div>
       <div className={styles.selectItem}>
-        <Switch value={state.disableTextWrap} onChange={() => onChangeDisableTextWrap()} />
+        <Switch
+          value={settings.disableTextWrap}
+          onChange={() => overrideSettings({ disableTextWrap: !settings.disableTextWrap })}
+        />
         <div className={styles.selectItemLabel}>
           <Trans i18nKey="grafana-prometheus.querybuilder.additional-settings.disable-text-wrap">
             Disable text wrap
@@ -48,8 +48,8 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
       <div className={styles.selectItem}>
         <Switch
           data-testid={metricsModaltestIds.setUseBackend}
-          value={state.useBackend}
-          onChange={() => onChangeUseBackend()}
+          value={settings.useBackend}
+          onChange={() => overrideSettings({ useBackend: !settings.useBackend })}
         />
         <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
         <Tooltip

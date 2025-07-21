@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
 import debounce from 'debounce-promise';
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -21,14 +21,15 @@ import {
 
 import { getDebounceTimeInMilliseconds } from '../../../caching';
 import { METRIC_LABEL } from '../../../constants';
+import { PrometheusDatasource } from '../../../datasource';
 import { regexifyLabelValuesQueryString } from '../../parsingUtils';
+import { PromVisualQuery } from '../../types';
 import { formatPrometheusLabelFilters } from '../formatter';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
+import { MetricsModalContextProvider } from './MetricsModalContext';
 import { ResultsTable } from './ResultsTable';
-import { metricsModaltestIds } from './shared/testIds';
-import { MetricsModalProps } from './shared/types';
 import {
   calculatePageList,
   calculateResultsPerPage,
@@ -36,7 +37,6 @@ import {
   getPlaceholders,
   getPromTypes,
   setMetrics,
-  tracking,
 } from './state/helpers';
 import {
   buildMetrics,
@@ -45,28 +45,35 @@ import {
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
   MetricsModalMetadata,
-  setDisableTextWrap,
-  setFullMetaSearch,
   setFuzzySearchQuery,
-  setIncludeNullMetadata,
   setIsLoading,
   setMetaHaystack,
   setNameHaystack,
   setPageNum,
   setResultsPerPage,
   setSelectedTypes,
-  setUseBackend,
-  showAdditionalSettings,
   stateSlice,
 } from './state/state';
 import { getStyles } from './styles';
+import { metricsModaltestIds } from './testIds';
 import { PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
 
-export const MetricsModal = (props: MetricsModalProps) => {
+interface MetricsModalProps {
+  datasource: PrometheusDatasource;
+  isOpen: boolean;
+  query: PromVisualQuery;
+  onClose: () => void;
+  onChange: (query: PromVisualQuery) => void;
+  initialMetrics: string[] | (() => Promise<string[]>);
+  timeRange: TimeRange;
+}
+
+const MetricsModalContent = (props: MetricsModalProps) => {
   const { datasource, isOpen, onClose, onChange, query, initialMetrics, timeRange } = props;
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query));
+  const [showAdditionalSettings, setShowAdditionalSettings] = useState(false);
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
@@ -165,41 +172,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
   }
 
   /* Settings switches */
-  const additionalSettings = (
-    <AdditionalSettings
-      state={state}
-      onChangeFullMetaSearch={() => {
-        const newVal = !state.fullMetaSearch;
-        dispatch(setFullMetaSearch(newVal));
-        onChange({ ...query, fullMetaSearch: newVal });
-        searchCallback(state.fuzzySearchQuery, newVal);
-      }}
-      onChangeIncludeNullMetadata={() => {
-        dispatch(setIncludeNullMetadata(!state.includeNullMetadata));
-        onChange({ ...query, includeNullMetadata: !state.includeNullMetadata });
-      }}
-      onChangeDisableTextWrap={() => {
-        dispatch(setDisableTextWrap());
-        onChange({ ...query, disableTextWrap: !state.disableTextWrap });
-        tracking('grafana_prom_metric_encycopedia_disable_text_wrap_interaction', state, '');
-      }}
-      onChangeUseBackend={() => {
-        const newVal = !state.useBackend;
-        dispatch(setUseBackend(newVal));
-        onChange({ ...query, useBackend: newVal });
-        if (newVal === false) {
-          // rebuild the metrics metadata if we turn off useBackend
-          updateMetricsMetadata();
-        } else {
-          // check if there is text in the browse search and update
-          if (state.fuzzySearchQuery !== '') {
-            debouncedBackendSearch(state.fuzzySearchQuery);
-          }
-          // otherwise wait for user typing
-        }
-      }}
-    />
-  );
+  const additionalSettings = useMemo(() => <AdditionalSettings />, []);
 
   return (
     <Modal
@@ -257,7 +230,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
               <Button
                 variant="secondary"
                 size="md"
-                onClick={() => dispatch(showAdditionalSettings())}
+                onClick={() => setShowAdditionalSettings(!showAdditionalSettings)}
                 data-testid={metricsModaltestIds.showAdditionalSettings}
                 className={styles.noBorder}
               >
@@ -268,7 +241,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
               <Button
                 className={styles.noBorder}
                 variant="secondary"
-                icon={state.showAdditionalSettings ? 'angle-up' : 'angle-down'}
+                icon={showAdditionalSettings ? 'angle-up' : 'angle-down'}
               />
             </ButtonGroup>
           </Toggletip>
@@ -354,5 +327,13 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
       </div>
     </Modal>
+  );
+};
+
+export const MetricsModal = (props: MetricsModalProps) => {
+  return (
+    <MetricsModalContextProvider>
+      <MetricsModalContent {...props} />
+    </MetricsModalContextProvider>
   );
 };

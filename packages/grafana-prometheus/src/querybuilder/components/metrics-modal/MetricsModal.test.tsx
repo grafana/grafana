@@ -12,7 +12,7 @@ import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 
 import { MetricsModal } from './MetricsModal';
-import { metricsModaltestIds } from './shared/testIds';
+import { metricsModaltestIds } from './testIds';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
