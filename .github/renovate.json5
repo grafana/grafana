@@ -28,7 +28,6 @@
   postUpdateOptions: ["yarnDedupeHighest"],
   packageRules: [
     {
-      automerge: true,
       matchCurrentVersion: "!/^0/",
       matchUpdateTypes: ["patch"],
       matchPackageNames: ["!/^@?storybook/", "!/^@locker/"],
