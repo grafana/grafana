@@ -52,6 +52,7 @@
       "button-use-query": "Utiliser cette requête",
       "label-categories": "Catégories",
       "label-query-results": "Résultats de la requête : {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Toutes les catégories",
       "placeholder-search-logs": "Rechercher des requêtes de journaux",
       "text-loading": "Chargement en cours..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "Limitez le nombre de lignes renvoyées (la valeur par défaut est 1 000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Les requêtes de journaux de base entraînent des coûts en fonction de la quantité de données analysées.",
       "label-logs": "Journaux",
       "title-basic-logs-queries": "Requêtes de journaux de base",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Bouton Lancer votre requête des journaux Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Lancer votre requête",
       "button-run-query": "Exécuter la requête",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Service",
       "placeholder-service": "Service...",
       "title-switch-mode": "Passer au mode d’édition ?"
@@ -221,6 +231,9 @@
       "text-loading": "Chargement en cours...",
       "text-no-resources": "Aucune ressource trouvée",
       "title-error-occurred": "Une erreur s’est produite lors de la demande de ressources à Azure Monitor"
+    },
+    "scope-selector": {
+      "label": "Portée"
     },
     "search": {
       "aria-label-resource-search": "Recherche de ressources",

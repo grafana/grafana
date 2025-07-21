@@ -105,11 +105,10 @@ func TestSetDualWritingMode(t *testing.T) {
 			SkipDataSync:      tt.skipDataSync,
 			ServerLockService: serverLockSvc,
 			RequestInfo:       &request.RequestInfo{},
-			Reg:               p,
 
 			DataSyncerRecordsLimit: 1000,
 			DataSyncerInterval:     time.Hour,
-		})
+		}, NewDualWriterMetrics(nil))
 		require.NoError(t, err)
 		require.Equal(t, tt.expectedMode, dwMode)
 

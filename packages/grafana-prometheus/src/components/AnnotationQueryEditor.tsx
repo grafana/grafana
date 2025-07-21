@@ -100,6 +100,7 @@ export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: 
               value={query.interval ?? ''}
               onChange={(e) => handleMinStepChange(e.currentTarget.value)}
               id={selectors.components.DataSource.Prometheus.annotations.minStep}
+              data-testid={selectors.components.DataSource.Prometheus.annotations.minStep}
             />
           </EditorField>
         </EditorRow>

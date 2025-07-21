@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
@@ -83,8 +84,8 @@ func TestLoader_Load(t *testing.T) {
 							Description: "Data source for Amazon AWS monitoring service",
 							Keywords:    []string{"aws", "amazon"},
 							Logos: plugins.Logos{
-								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Small: "public/plugins/cloudwatch/img/amazon-web-services.png",
+								Large: "public/plugins/cloudwatch/img/amazon-web-services.png",
 							},
 							Links: []plugins.InfoLink{
 								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
@@ -121,7 +122,7 @@ func TestLoader_Load(t *testing.T) {
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
 					Module:    "core:plugin/cloudwatch",
-					BaseURL:   "public/app/plugins/datasource/cloudwatch",
+					BaseURL:   "public/plugins/cloudwatch",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureStatusInternal,
 					Class:     plugins.ClassCore,
@@ -1325,8 +1326,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
 		},
-		Module:        "public/plugins/test-datasource/nested/module.js",
-		BaseURL:       "public/plugins/test-datasource/nested",
+		Module:        "public/plugins/test-panel/module.js",
+		BaseURL:       "public/plugins/test-panel",
 		FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "nested-plugins/parent/nested")),
 		Signature:     plugins.SignatureStatusValid,
 		SignatureType: plugins.SignatureTypeGrafana,
@@ -1497,8 +1498,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						{Name: "License", URL: "https://github.com/grafana/grafana-starter-panel/blob/master/LICENSE"},
 					},
 					Logos: plugins.Logos{
-						Small: "public/plugins/myorgid-simple-app/child/img/logo.svg",
-						Large: "public/plugins/myorgid-simple-app/child/img/logo.svg",
+						Small: "public/plugins/myorgid-simple-panel/img/logo.svg",
+						Large: "public/plugins/myorgid-simple-panel/img/logo.svg",
 					},
 					Screenshots: []plugins.Screenshots{},
 					Description: "Grafana Panel Plugin Template",
@@ -1523,8 +1524,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
 			},
-			Module:          "public/plugins/myorgid-simple-app/child/module.js",
-			BaseURL:         "public/plugins/myorgid-simple-app/child",
+			Module:          "public/plugins/myorgid-simple-panel/module.js",
+			BaseURL:         "public/plugins/myorgid-simple-panel",
 			FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureStatusValid,
@@ -1572,7 +1573,7 @@ type loaderDepOpts struct {
 func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Service, proc process.Manager,
 	backendFactory plugins.BackendFactoryProvider, errTracker pluginerrs.ErrorTracker,
 ) *Loader {
-	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
+	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg), pluginassets.ProvideService())
 	angularInspector := angularinspector.NewStaticInspector()
 
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
@@ -1586,7 +1587,7 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 }
 
 func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loaderDepOpts) *Loader {
-	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
+	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg), pluginassets.ProvideService())
 	reg := fakes.NewFakePluginRegistry()
 	proc := fakes.NewFakeProcessManager()
 

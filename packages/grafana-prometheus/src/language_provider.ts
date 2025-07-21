@@ -18,16 +18,17 @@ import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { DEFAULT_SERIES_LIMIT, MATCH_ALL_LABELS_STR, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
   fixSummariesMetadata,
   processHistogramMetrics,
   processLabels,
+  removeQuotesIfExist,
   toPromLikeQuery,
 } from './language_utils';
-import PromqlSyntax from './promql';
+import { promqlGrammar } from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
 import { PromMetricsMetadata, PromQuery } from './types';
@@ -45,7 +46,7 @@ const API_V1 = {
   LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
 };
 
-export interface PrometheusBaseLanguageProvider {
+interface PrometheusBaseLanguageProvider {
   datasource: PrometheusDatasource;
 
   /**
@@ -70,7 +71,7 @@ export interface PrometheusBaseLanguageProvider {
 /**
  * @deprecated This interface is deprecated and will be removed.
  */
-export interface PrometheusLegacyLanguageProvider {
+interface PrometheusLegacyLanguageProvider {
   /**
    * @deprecated Use retrieveHistogramMetrics() method instead
    */
@@ -522,7 +523,7 @@ export interface PrometheusLanguageProviderInterface
   retrieveMetrics: () => string[];
   retrieveLabelKeys: () => string[];
 
-  queryMetricsMetadata: () => Promise<PromMetricsMetadata>;
+  queryMetricsMetadata: (limit?: number) => Promise<PromMetricsMetadata>;
   queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: number) => Promise<string[]>;
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: number) => Promise<string[]>;
 }
@@ -577,7 +578,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     if (this.datasource.lookupsDisabled) {
       return [];
     }
-    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata(this.datasource.seriesLimit)]);
     return this._backwardCompatibleStart();
   };
 
@@ -599,12 +600,12 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves when metadata has been fetched
    */
-  private _queryMetadata = async () => {
+  private _queryMetadata = async (limit?: number): Promise<PromMetricsMetadata> => {
     const secondsInDay = 86400;
     const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
     const metadata = await this.request(
       API_V1.METADATA,
-      {},
+      { limit: limit ?? this.datasource.seriesLimit },
       {
         showErrorAlert: false,
         ...headers,
@@ -660,9 +661,9 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves to the fetched metadata
    */
-  public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
+  public queryMetricsMetadata = async (limit?: number): Promise<PromMetricsMetadata> => {
     try {
-      this._metricsMetadata = (await this._queryMetadata()) ?? {};
+      this._metricsMetadata = (await this._queryMetadata(limit)) ?? {};
     } catch (error) {
       this._metricsMetadata = {};
     }
@@ -736,7 +737,7 @@ export const exportToAbstractQuery = (query: PromQuery): AbstractQuery => {
   if (!promQuery || promQuery.length === 0) {
     return { refId: query.refId, labelMatchers: [] };
   }
-  const tokens = Prism.tokenize(promQuery, PromqlSyntax);
+  const tokens = Prism.tokenize(promQuery, promqlGrammar);
   const labelMatchers: AbstractLabelMatcher[] = extractLabelMatchers(tokens);
   const nameLabelValue = getNameLabelValue(promQuery, tokens);
   if (nameLabelValue && nameLabelValue.length > 0) {
@@ -766,18 +767,6 @@ function isCancelledError(error: unknown): error is {
   return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
 }
 
-/**
- * Removes quotes from a string if they exist.
- * Used to handle utf8 label keys in Prometheus queries.
- *
- * @param {string} input - Input string that may have surrounding quotes
- * @returns {string} String with surrounding quotes removed if they existed
- */
-export function removeQuotesIfExist(input: string): string {
-  const match = input.match(/^"(.*)"$/); // extract the content inside the quotes
-  return match?.[1] ?? input;
-}
-
 function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {
   let nameLabelValue = '';
 
@@ -796,11 +785,11 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
  * Handles UTF8 metrics by properly escaping them.
  *
  * @param {PromQuery[]} queries - Array of Prometheus queries
- * @returns {string} Metric names as a regex matcher
+ * @returns {string[]} Metric names as a regex matcher inside the array for easy handling
  */
-export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string => {
+export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string[] => {
   if (!queries) {
-    return MATCH_ALL_LABELS_STR;
+    return [];
   }
 
   const metrics = (queries ?? []).reduce<string[]>((params, query) => {
@@ -818,5 +807,5 @@ export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string =>
     return params;
   }, []);
 
-  return metrics.length === 0 ? MATCH_ALL_LABELS_STR : `__name__=~"${metrics.join('|')}"`;
+  return metrics.length === 0 ? [] : [`__name__=~"${metrics.join('|')}"`];
 };

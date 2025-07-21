@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 
 import { SUGGESTIONS_LIMIT } from '../../../constants';
 import { FUNCTIONS } from '../../../promql';
-import { getMockTimeRange } from '../../../test/__mocks__/datasource';
+import { getMockTimeRange } from '../../../test/mocks/datasource';
 
 import { filterMetricNames, getCompletions } from './completions';
 import { DataProvider, type DataProviderParams } from './data_provider';

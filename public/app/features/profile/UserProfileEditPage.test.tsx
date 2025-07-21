@@ -8,7 +8,7 @@ import { setPluginComponentsHook, usePluginComponents } from '@grafana/runtime';
 
 import { backendSrv } from '../../core/services/backend_srv';
 import { createComponentWithMeta } from '../plugins/extensions/usePluginComponents';
-import { getMockTeam } from '../teams/__mocks__/teamMocks';
+import { getMockTeam } from '../teams/mocks/teamMocks';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';
 import { initialUserState } from './state/reducers';

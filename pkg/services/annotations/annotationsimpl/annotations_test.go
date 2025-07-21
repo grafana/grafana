@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -70,7 +71,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		kvstore.NewFakeKVStore())
 	require.NoError(t, err)
 	dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
-	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc)
+	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc, prometheus.NewPedanticRegistry())
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
@@ -344,7 +345,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationMaximumTagsLength = 60
 			ruleStore := alertingStore.SetupStoreForTesting(t, sql)
-			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql), tracing.InitializeTracerForTest(), ruleStore, dashSvc)
+			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql), tracing.InitializeTracerForTest(), ruleStore, dashSvc, prometheus.NewPedanticRegistry())
 
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			testutil.SetupRBACPermission(t, sql, role, usr)

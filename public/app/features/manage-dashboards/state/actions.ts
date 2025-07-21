@@ -10,7 +10,8 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
+import { PermissionLevelString, SearchQueryType } from 'app/types/acl';
+import { ThunkResult } from 'app/types/store';
 
 import {
   Input,

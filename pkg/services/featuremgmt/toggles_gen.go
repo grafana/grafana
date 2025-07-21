@@ -87,10 +87,6 @@ const (
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
 
-	// FlagLokiQuerySplittingConfig
-	// Give users the option to configure split durations for Loki queries
-	FlagLokiQuerySplittingConfig = "lokiQuerySplittingConfig"
-
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
@@ -143,10 +139,6 @@ const (
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
 
-	// FlagLokiPredefinedOperations
-	// Adds predefined query operations to Loki query editor
-	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
-
 	// FlagPluginsFrontendSandbox
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
@@ -191,9 +183,9 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
-	// FlagNanoGit
-	// Use experimental git library for provisioning
-	FlagNanoGit = "nanoGit"
+	// FlagProvisioningSecretsService
+	// Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+	FlagProvisioningSecretsService = "provisioningSecretsService"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -215,10 +207,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagAngularDeprecationUI
-	// Display Angular warnings in dashboards and panels
-	FlagAngularDeprecationUI = "angularDeprecationUI"
-
 	// FlagDashgpt
 	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"
@@ -234,10 +222,6 @@ const (
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
-
-	// FlagLibraryPanelRBAC
-	// Enables RBAC support for library panels
-	FlagLibraryPanelRBAC = "libraryPanelRBAC"
 
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
@@ -319,10 +303,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagLokiStructuredMetadata
-	// Enables the loki data source to request structured metadata from the Loki server
-	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
-
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
@@ -375,10 +355,6 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
-	// FlagSsoSettingsApi
-	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
-	FlagSsoSettingsApi = "ssoSettingsApi"
-
 	// FlagCanvasPanelPanZoom
 	// Allow pan and zoom in canvas panel
 	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
@@ -402,10 +378,6 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
-
-	// FlagLokiQueryHints
-	// Enables query hints for Loki
-	FlagLokiQueryHints = "lokiQueryHints"
 
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
@@ -487,10 +459,6 @@ const (
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
 
-	// FlagSsoSettingsSAML
-	// Use the new SSO Settings API to configure the SAML connector
-	FlagSsoSettingsSAML = "ssoSettingsSAML"
-
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
@@ -558,10 +526,6 @@ const (
 	// FlagSsoSettingsLDAP
 	// Use the new SSO Settings API to configure LDAP
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
-
-	// FlagFailWrongDSUID
-	// Throws an error if a data source has an invalid UIDs
-	FlagFailWrongDSUID = "failWrongDSUID"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -703,10 +667,6 @@ const (
 	// Enables browser crash detection reporting to Faro.
 	FlagCrashDetection = "crashDetection"
 
-	// FlagJaegerBackendMigration
-	// Enables querying the Jaeger data source without the proxy
-	FlagJaegerBackendMigration = "jaegerBackendMigration"
-
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
@@ -714,6 +674,22 @@ const (
 	// FlagAzureMonitorEnableUserAuth
 	// Enables user auth for Azure Monitor datasource only
 	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
+
+	// FlagAlertingAIGenAlertRules
+	// Enable AI-generated alert rules.
+	FlagAlertingAIGenAlertRules = "alertingAIGenAlertRules"
+
+	// FlagAlertingAIImproveAlertRules
+	// Enable AI-improve alert rules labels and annotations.
+	FlagAlertingAIImproveAlertRules = "alertingAIImproveAlertRules"
+
+	// FlagAlertingAIGenTemplates
+	// Enable AI-generated alerting templates.
+	FlagAlertingAIGenTemplates = "alertingAIGenTemplates"
+
+	// FlagAlertingAIAnalyzeCentralStateHistory
+	// Enable AI-analyze central state history.
+	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
@@ -891,6 +867,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagTempoAlerting
+	// Enables creating alerts from Tempo data source
+	FlagTempoAlerting = "tempoAlerting"
+
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
@@ -910,10 +890,6 @@ const (
 	// FlagAlertingBulkActionsInUI
 	// Enables the alerting bulk actions in the UI
 	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
-
-	// FlagExtensionsReadOnlyProxy
-	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
-	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
 
 	// FlagKubernetesAuthzApis
 	// Registers AuthZ /apis endpoint
@@ -935,6 +911,10 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
+	// FlagSharingDashboardImage
+	// Enables image sharing functionality for dashboards
+	FlagSharingDashboardImage = "sharingDashboardImage"
+
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
@@ -946,4 +926,32 @@ const (
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
+
+	// FlagEnableAppChromeExtensions
+	// Set this to true to enable all app chrome extensions registered by plugins.
+	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
+
+	// FlagFoldersAppPlatformAPI
+	// Enables use of app platform API for folders
+	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
+
+	// FlagEnablePluginImporter
+	// Set this to true to use the new PluginImporter functionality
+	FlagEnablePluginImporter = "enablePluginImporter"
+
+	// FlagOtelLogsFormatting
+	// Applies OTel formatting templates to displayed logs
+	FlagOtelLogsFormatting = "otelLogsFormatting"
+
+	// FlagAlertingNotificationHistory
+	// Enables the notification history feature
+	FlagAlertingNotificationHistory = "alertingNotificationHistory"
+
+	// FlagPluginAssetProvider
+	// Allows decoupled core plugins to load from the Grafana CDN
+	FlagPluginAssetProvider = "pluginAssetProvider"
+
+	// FlagUnifiedStorageSearchDualReaderEnabled
+	// Enable dual reader for unified storage search
+	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
 )

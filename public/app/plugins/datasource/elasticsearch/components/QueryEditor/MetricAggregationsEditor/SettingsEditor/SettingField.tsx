@@ -2,9 +2,12 @@ import { uniqueId } from 'lodash';
 import { ComponentProps, useState } from 'react';
 
 import { InlineField, Input, TextArea } from '@grafana/ui';
+import {
+  MetricAggregationWithSettings,
+  MetricAggregationWithInlineScript,
+} from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { MetricAggregationWithInlineScript, MetricAggregationWithSettings } from '../../../../types';
 import { getScriptValue } from '../../../../utils';
 import { SettingKeyOf } from '../../../types';
 import { changeMetricSetting } from '../state/actions';

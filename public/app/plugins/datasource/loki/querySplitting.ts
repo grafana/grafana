@@ -8,8 +8,6 @@ import {
   DataQueryResponse,
   DataTopic,
   dateTime,
-  durationToMilliseconds,
-  parseDuration,
   rangeUtil,
   TimeRange,
   LoadingState,
@@ -295,7 +293,10 @@ export function runSplitQuery(
   request: DataQueryRequest<LokiQuery>,
   options: QuerySplittingOptions = {}
 ) {
-  const queries = request.targets.filter((query) => !query.hide).filter((query) => query.expr);
+  const queries = request.targets
+    .filter((query) => !query.hide)
+    .filter((query) => query.expr)
+    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
@@ -307,45 +308,35 @@ export function runSplitQuery(
   const requests: LokiGroupedRequest[] = [];
 
   for (const direction in directionPartitionedLogQueries) {
-    const rangePartitionedLogQueries = groupBy(directionPartitionedLogQueries[direction], (query) =>
-      query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
-    );
-    for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedLogQueries)) {
-      const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
-      for (const resolution in resolutionPartition) {
-        const groupedRequest = {
-          request: { ...request, targets: resolutionPartition[resolution] },
-          partition: partitionTimeRange(true, request.range, request.intervalMs, Number(chunkRangeMs)),
-        };
+    const queries = directionPartitionedLogQueries[direction];
+    const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
+    for (const resolution in resolutionPartition) {
+      const groupedRequest = {
+        request: { ...request, targets: resolutionPartition[resolution] },
+        partition: partitionTimeRange(true, request.range, request.intervalMs, oneDayMs),
+      };
 
-        if (direction === LokiQueryDirection.Forward) {
-          groupedRequest.partition.reverse();
-        }
-
-        requests.push(groupedRequest);
+      if (direction === LokiQueryDirection.Forward) {
+        groupedRequest.partition.reverse();
       }
+
+      requests.push(groupedRequest);
     }
   }
 
-  const rangePartitionedMetricQueries = groupBy(metricQueries, (query) =>
-    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
+  const stepMsPartition = groupBy(metricQueries, (query) =>
+    calculateStep(request.intervalMs, request.range, query.resolution || 1, query.step)
   );
 
-  for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedMetricQueries)) {
-    const stepMsPartition = groupBy(queries, (query) =>
-      calculateStep(request.intervalMs, request.range, query.resolution || 1, query.step)
-    );
-
-    for (const stepMs in stepMsPartition) {
-      const targets = stepMsPartition[stepMs].map((q) => {
-        const { maxLines, ...query } = q;
-        return query;
-      });
-      requests.push({
-        request: { ...request, targets },
-        partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
-      });
-    }
+  for (const stepMs in stepMsPartition) {
+    const targets = stepMsPartition[stepMs].map((q) => {
+      const { maxLines, ...query } = q;
+      return query;
+    });
+    requests.push({
+      request: { ...request, targets },
+      partition: partitionTimeRange(false, request.range, Number(stepMs), oneDayMs),
+    });
   }
 
   if (nonSplittingQueries.length) {
@@ -359,9 +350,7 @@ export function runSplitQuery(
   return runSplitGroupedQueries(datasource, requests, options).pipe(
     tap((response) => {
       if (response.state === LoadingState.Done) {
-        trackGroupedQueries(response, requests, request, startTime, {
-          predefinedOperations: datasource.predefinedOperations,
-        });
+        trackGroupedQueries(response, requests, request, startTime);
       }
     })
   );

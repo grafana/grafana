@@ -1,6 +1,7 @@
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
@@ -9,8 +10,8 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { SaveDashboardAsOptions, SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
-import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/store';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -59,7 +60,7 @@ export function useSaveDashboard(isCopy = false) {
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
-        notifyApp.success('Dashboard saved');
+        notifyApp.success(t('dashboard-scene.use-save-dashboard.message-dashboard-saved', 'Dashboard saved'));
 
         //Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(resultData.uid);

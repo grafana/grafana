@@ -52,6 +52,7 @@
       "button-use-query": "使用此查询",
       "label-categories": "类别",
       "label-query-results": "查询结果：{{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "所有类别",
       "placeholder-search-logs": "在日志查询中搜索",
       "text-loading": "加载中..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "限制返回的行数（默认为 1000）。"
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "基本日志查询根据扫描的数据量产生费用。",
       "label-logs": "日志",
       "title-basic-logs-queries": "基本日志查询",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 日志启动查询按钮",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "启动您的查询",
       "button-run-query": "运行查询",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "服务",
       "placeholder-service": "服务...",
       "title-switch-mode": "切换编辑器模式？"
@@ -221,6 +231,9 @@
       "text-loading": "加载中...",
       "text-no-resources": "未找到资源",
       "title-error-occurred": "从 Azure Monitor 请求资源时发生错误"
+    },
+    "scope-selector": {
+      "label": "范围"
     },
     "search": {
       "aria-label-resource-search": "资源搜索",

@@ -2,12 +2,15 @@ package iam
 
 import (
 	"context"
+	"maps"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -123,7 +126,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := legacyiamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.legacyAccessClient)
+	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient)
+
+	// TODO: Figure out what's missing for the DualWriter setup in a MT setup
+	// MT app is unable to start if DW is configured
+	// store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// storage[userResource.StoragePath()] = dw
+	storage[userResource.StoragePath()] = legacyStore
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo
@@ -149,18 +167,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	defs := legacyiamv0.GetOpenAPIDefinitions
-	if b.enableAuthZApis {
-		defs = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-			def1 := legacyiamv0.GetOpenAPIDefinitions(ref)
-			def2 := iamv0.GetOpenAPIDefinitions(ref)
-			for k, v := range def2 {
-				def1[k] = v
-			}
-			return def1
-		}
+	return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		dst := legacyiamv0.GetOpenAPIDefinitions(rc)
+		maps.Copy(dst, iamv0.GetOpenAPIDefinitions(rc))
+
+		return dst
 	}
-	return defs
 }
 
 func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -222,6 +234,77 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.authorizer
+}
+
+// Validate implements builder.APIGroupValidation.
+// TODO: Move this to the ValidateFunc of the user resource after moving the APIs to use the app-platofrm-sdk.
+// TODO: https://github.com/grafana/grafana/blob/main/apps/playlist/pkg/app/app.go#L62
+func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	switch a.GetOperation() {
+	case admission.Create:
+		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
+			return b.validateCreateUser(ctx, a, o)
+		}
+		return nil
+	case admission.Connect:
+	case admission.Delete:
+	case admission.Update:
+		return nil
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	userObj, ok := a.GetObject().(*iamv0.User)
+	if !ok {
+		return nil
+	}
+
+	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {
+		return apierrors.NewBadRequest("user must have either login or email")
+	}
+
+	return nil
+}
+
+// Mutate implements builder.APIGroupMutation.
+// TODO: Move this to the MutateFunc of the user resource after moving the APIs to use the app-platofrm-sdk.
+// TODO: https://github.com/grafana/grafana/blob/main/apps/playlist/pkg/app/app.go#L62
+func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	switch a.GetOperation() {
+	case admission.Create:
+		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
+			return b.mutateUser(ctx, a, o)
+		}
+		return nil
+	case admission.Update:
+		return nil
+	case admission.Delete:
+		return nil
+	case admission.Connect:
+		return nil
+	}
+
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) mutateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	userObj, ok := a.GetObject().(*iamv0.User)
+	if !ok {
+		return nil
+	}
+
+	userObj.Spec.Email = strings.ToLower(userObj.Spec.Email)
+	userObj.Spec.Login = strings.ToLower(userObj.Spec.Login)
+
+	if userObj.Spec.Login == "" {
+		userObj.Spec.Login = userObj.Spec.Email
+	}
+	if userObj.Spec.Email == "" {
+		userObj.Spec.Email = userObj.Spec.Login
+	}
+
+	return nil
 }
 
 func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter,

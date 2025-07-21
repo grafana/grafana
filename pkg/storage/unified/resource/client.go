@@ -48,14 +48,14 @@ type resourceClient struct {
 	resourcepb.DiagnosticsClient
 }
 
-func NewResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
+func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
-		return NewLegacyResourceClient(conn), nil
+		return NewLegacyResourceClient(conn, indexConn), nil
 	}
 
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
 
-	return NewRemoteResourceClient(tracer, conn, RemoteResourceClientConfig{
+	return NewRemoteResourceClient(tracer, conn, indexConn, RemoteResourceClientConfig{
 		Token:            clientCfg.Token,
 		TokenExchangeURL: clientCfg.TokenExchangeURL,
 		Audiences:        []string{"resourceStore"},
@@ -64,16 +64,25 @@ func NewResourceClient(conn grpc.ClientConnInterface, cfg *setting.Cfg, features
 	})
 }
 
-func NewLegacyResourceClient(channel grpc.ClientConnInterface) ResourceClient {
-	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientConnInterface) ResourceClient {
 	return &resourceClient{
-		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
-		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
-		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
-		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
-		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
-		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
+		ResourceStoreClient:      resourcepb.NewResourceStoreClient(storageCc),
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(indexCc),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(indexCc),
+		BulkStoreClient:          resourcepb.NewBulkStoreClient(storageCc),
+		BlobStoreClient:          resourcepb.NewBlobStoreClient(storageCc),
+		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(storageCc),
 	}
+}
+
+func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
+	return newResourceClient(cc, cc)
+}
+
+func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc.ClientConnInterface) ResourceClient {
+	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	cci := grpchan.InterceptClientConn(indexChannel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	return newResourceClient(cc, cci)
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {
@@ -106,14 +115,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return &resourceClient{
-		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
-		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
-		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
-		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
-		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
-		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
-	}
+	return newResourceClient(cc, cc)
 }
 
 type RemoteResourceClientConfig struct {
@@ -124,7 +126,7 @@ type RemoteResourceClientConfig struct {
 	AllowInsecure    bool
 }
 
-func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
 	exchangeOpts := []authnlib.ExchangeClientOpts{}
 
 	if cfg.AllowInsecure {
@@ -148,14 +150,8 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 	)
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return &resourceClient{
-		ResourceStoreClient:      resourcepb.NewResourceStoreClient(cc),
-		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
-		BlobStoreClient:          resourcepb.NewBlobStoreClient(cc),
-		BulkStoreClient:          resourcepb.NewBulkStoreClient(cc),
-		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
-		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
-	}, nil
+	cci := grpchan.InterceptClientConn(indexConn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return newResourceClient(cc, cci), nil
 }
 
 var authLogger = slog.Default().With("logger", "resource-client-auth-interceptor")

@@ -39,7 +39,16 @@ type dualWriter struct {
 func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	// If we read from unified, we can just do that and return.
 	if d.readUnified {
-		return d.unified.Get(ctx, name, options)
+		unifiedGet, unifiedErr := d.unified.Get(ctx, name, options)
+		if apierrors.IsNotFound(unifiedErr) {
+			// If resource is not found in unified storage, fallback to legacy.
+			// This fixes cases in where records (stored in multiple tables, including permissions)
+			// are inserted first in legacy and then on Unified.
+			log := logging.FromContext(ctx).With("method", "Get")
+			log.Error("resource not found in Unified Storage, trying to GET from legacy", "err", unifiedErr)
+			return d.legacy.Get(ctx, name, options)
+		}
+		return unifiedGet, unifiedErr
 	}
 	// If legacy is still our main store, lets first read from it.
 	legacyGet, err := d.legacy.Get(ctx, name, options)
@@ -100,7 +109,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	// This can happen, as unified storage iteration is doing paging not only based on the provided limit,
 	// but also based on the response size. This check prevents starting the new iteration again.
 	if options.Continue != "" && legacyToken == "" {
-		return nil, nil
+		return d.NewList(), nil
 	}
 
 	// In some cases, where the stores are not in sync yet, the unified storage continue token might already

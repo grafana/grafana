@@ -11,14 +11,11 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
-import {
-  RevisionsModel,
-  VersionHistoryComparison,
-  VersionHistoryHeader,
-  VersionHistoryTable,
-  VersionsHistoryButtons,
-  historySrv,
-} from './version-history';
+import { RevisionsModel, historySrv } from './version-history/HistorySrv';
+import { VersionsHistoryButtons } from './version-history/VersionHistoryButtons';
+import { VersionHistoryComparison } from './version-history/VersionHistoryComparison';
+import { VersionHistoryHeader } from './version-history/VersionHistoryHeader';
+import { VersionHistoryTable } from './version-history/VersionHistoryTable';
 
 export const VERSIONS_FETCH_LIMIT = 10;
 
