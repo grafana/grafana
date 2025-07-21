@@ -553,6 +553,7 @@ github.com/GoogleCloudPlatform/cloudsql-proxy v1.36.0 h1:kAtNAWwvTt5+iew6baV0kbO
 github.com/GoogleCloudPlatform/cloudsql-proxy v1.36.0/go.mod h1:VRKXU8C7Y/aUKjRBTGfw0Ndv4YqNxlB8zAPJJDxbASE=
 github.com/GoogleCloudPlatform/cloudsql-proxy v1.37.6 h1:UucmvNRPE75F3KzT68GHhKzOPwttxiFkh1d5LTTywW8=
 github.com/GoogleCloudPlatform/cloudsql-proxy v1.37.6/go.mod h1:XGripOBEUAcge8IUWR/NMAB5qO9k82tkbpoewBpyjYQ=
+github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.2/go.mod h1:dppbR7CwXD4pgtV9t3wD1812RaLDcBjtblcDF5f1vI0=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.25.0/go.mod h1:obipzmGjfSjam60XLwGfqUkJsfiheAl+TUjG+4yzyPM=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.48.1/go.mod h1:jyqM3eLpJ3IbIFDTKVz2rF9T/xWGW0rIriGwnz8l9Tk=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.50.0/go.mod h1:ZV4VOm0/eHR06JLrXWe09068dHpr3TRpY9Uo7T+anuA=
