@@ -88,6 +88,8 @@ Transformations are a powerful way to manipulate data returned by a query before
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
+{{< docs/learning-journeys title="Transform data in a Grafana Cloud dashboard" url="https://grafana.com/docs/learning-journeys/data-transformation/" >}}
+
 For users that rely on multiple views of the same dataset, transformations offer an efficient method of creating and maintaining numerous dashboards.
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
@@ -645,7 +647,7 @@ After choosing which field you want to group your data by, you can add various c
 | server 2  | 88.6                   |
 | server 3  | 59.6                   |
 
-If you had added the count stat to the group by, there would be an extra column showing that the count of each server from above was 3.
+If you had added the count stat to the group by transformation, there would be an extra column showing that the count of each server from above was 3.
 
 | Server ID | CPU Temperature (mean) | Server ID (count) |
 | --------- | ---------------------- | ----------------- |

@@ -102,6 +102,8 @@ Transformations are a powerful way to manipulate data returned by a query before
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
+{{< docs/learning-journeys title="Transform data in a Grafana Cloud dashboard" url="https://grafana.com/docs/learning-journeys/data-transformation/" >}}
+
 For users that rely on multiple views of the same dataset, transformations offer an efficient method of creating and maintaining numerous dashboards.
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
