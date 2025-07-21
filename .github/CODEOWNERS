@@ -421,6 +421,7 @@
 /packages/grafana-data/package.json @grafana/grafana-frontend-platform
 /packages/grafana-data/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/internal/index.ts @grafana/grafana-frontend-platform
+/packages/grafana-data/src/unstable.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/project.json @grafana/frontend-ops
 /packages/grafana-data/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-data/tsconfig.build.json @grafana/frontend-ops
@@ -440,6 +441,7 @@
 /packages/grafana-data/src/text/ @grafana/dataviz-squad
 /packages/grafana-data/src/themes/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/transformations/ @grafana/datapro
+/packages/grafana-data/src/types/ @grafana/grafana-frontend-platform
 
 # @grafana/e2e-selectors
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
@@ -474,7 +476,9 @@
 /packages/grafana-runtime/package.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/project.json @grafana/frontend-ops
+/packages/grafana-runtime/rollup.config.ts @grafana/frontend-ops
 /packages/grafana-runtime/tsconfig.build.json @grafana/frontend-ops
 /packages/grafana-runtime/tsconfig.json @grafana/frontend-ops
 
