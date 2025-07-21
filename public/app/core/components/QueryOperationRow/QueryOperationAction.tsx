@@ -11,13 +11,21 @@ interface BaseQueryOperationActionProps {
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
   dataTestId?: string;
+  isGroupEnd?: boolean;
+  isHighlighted?: boolean;
 }
 
 function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperationToggleActionProps) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, Boolean(props.isHighlighted));
 
   return (
-    <div className={cx(styles.icon, 'active' in props && props.active && styles.active)}>
+    <div
+      className={cx(
+        styles.icon,
+        'active' in props && props.active && styles.active,
+        props.isGroupEnd && styles.iconGroupEnd
+      )}
+    >
       <IconButton
         name={props.icon}
         tooltip={props.title}
@@ -44,12 +52,17 @@ export const QueryOperationToggleAction = (props: QueryOperationToggleActionProp
   return <BaseQueryOperationAction {...props} />;
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, isHighlighted: boolean) => {
   return {
     icon: css({
       display: 'flex',
       position: 'relative',
-      color: theme.colors.text.secondary,
+      color: isHighlighted ? theme.colors.primary.main : theme.colors.text.secondary,
+    }),
+
+    iconGroupEnd: css({
+      borderRight: `1px solid ${theme.colors.border.medium}`,
+      paddingRight: theme.spacing(0.5),
     }),
     active: css({
       '&:before': {

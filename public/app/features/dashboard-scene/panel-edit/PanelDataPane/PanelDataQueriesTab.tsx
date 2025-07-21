@@ -391,7 +391,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             </Button>
             {queryLibraryEnabled && (
               <Button
-                icon="plus"
+                icon="ai"
                 onClick={() =>
                   openQueryLibraryDrawer(getDatasourceNames(datasource, queries), onSelectQueryFromLibrary)
                 }
