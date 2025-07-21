@@ -17,8 +17,8 @@ export function BulkActionFailureBanner({ result, onDismiss }: { result: MoveRes
       onRemove={onDismiss}
     >
       <ul>
-        {result.map((item) => (
-          <li key={item.title}>
+        {result.map((item, index) => (
+          <li key={item.title || `failed-item-${index}`}>
             <strong>{item.title}</strong>
             {item.errorMessage && `: ${item.errorMessage}`}
           </li>

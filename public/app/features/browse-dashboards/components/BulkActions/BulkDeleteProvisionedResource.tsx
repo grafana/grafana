@@ -21,14 +21,14 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { useSelector } from 'app/types/store';
 
-import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
-import { findItem } from '../state/utils';
-import { DashboardTreeSelection } from '../types';
+import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
+import { findItem } from '../../state/utils';
+import { DashboardTreeSelection } from '../../types';
+import { DescendantCount } from '../BrowseActions/DescendantCount';
+import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 
-import { DescendantCount } from './BrowseActions/DescendantCount';
 import { BulkActionFailureBanner, MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionProgress, ProgressState } from './BulkActionProgress';
-import { collectSelectedItems, fetchProvisionedDashboardPath } from './utils';
 
 interface BulkDeleteFormData {
   comment: string;
@@ -213,7 +213,7 @@ function FormContent({
                 ? t('browse-dashboards.bulk-delete-resources-form.button-deleting', 'Deleting...')
                 : t('browse-dashboards.bulk-delete-resources-form.button-delete', 'Delete')}
             </Button>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+            <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={request.isLoading}>
               <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
             </Button>
           </Stack>
