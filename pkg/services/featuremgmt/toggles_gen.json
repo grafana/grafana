@@ -1084,7 +1084,8 @@
       "metadata": {
         "name": "enableExtensionsAdminPage",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2024-11-05T15:55:10Z"
+        "creationTimestamp": "2024-11-05T15:55:10Z",
+        "deletionTimestamp": "2025-07-21T16:18:16Z"
       },
       "spec": {
         "description": "Enables the extension admin page regardless of development mode",

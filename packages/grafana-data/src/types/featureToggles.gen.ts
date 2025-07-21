@@ -721,10 +721,6 @@ export interface FeatureToggles {
   */
   prometheusSpecialCharsInLabelValues?: boolean;
   /**
-  * Enables the extension admin page regardless of development mode
-  */
-  enableExtensionsAdminPage?: boolean;
-  /**
   * Enables SCIM support for user and group management
   */
   enableSCIM?: boolean;
