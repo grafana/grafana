@@ -67,6 +67,21 @@ func TestIntegrationPlaylist(t *testing.T) {
 				  },
 				  "scope": "Namespaced",
 				  "singularResource": "playlist",
+				  "subresources": [
+					{
+					  "responseKind": {
+						"group": "",
+						"kind": "Playlist",
+						"version": ""
+					  },
+					  "subresource": "status",
+					  "verbs": [
+						"get",
+						"patch",
+						"update"
+					  ]
+					}
+				  ],
 				  "verbs": [
 					"create",
 					"delete",
@@ -468,6 +483,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			Path:   "/api/playlists",
 			Body:   []byte(legacyPayload),
 		}, &playlist.Playlist{})
+		require.Equal(t, 200, legacyCreate.Response.StatusCode)
 		require.NotNil(t, legacyCreate.Result)
 		uid := legacyCreate.Result.UID
 		require.NotEmpty(t, uid)

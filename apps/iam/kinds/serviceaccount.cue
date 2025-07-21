@@ -8,14 +8,13 @@ serviceaccount: {
 	kind:       "ServiceAccount"
 	pluralName: "ServiceAccounts"
 	current:    "v0alpha1"
-    
-	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
-	}
 
 	versions: {
 		"v0alpha1": {
+			codegen: {
+				ts: { enabled: false }
+				go: { enabled: true }
+			}
 			schema: {
 				spec: v0alpha1.ServiceAccountSpec
 			}

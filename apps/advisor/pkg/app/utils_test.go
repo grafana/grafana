@@ -295,7 +295,8 @@ type mockClient struct {
 }
 
 func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
-	m.values = append(m.values, req.Operations[0].Value)
+	value := req.Operations[0].Value
+	m.values = append(m.values, value)
 	return nil
 }
 

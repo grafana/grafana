@@ -12,9 +12,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
-
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
 )
 
 type PlaylistConfig struct {
