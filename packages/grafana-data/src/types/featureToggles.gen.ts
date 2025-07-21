@@ -257,11 +257,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Allow core plugins to be loaded as external
-  * @default true
-  */
-  externalCorePlugins?: boolean;
-  /**
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;
