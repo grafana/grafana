@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -37,6 +37,7 @@ import { PromFilterOption } from './types';
 
 interface MetricsModalProps {
   datasource: PrometheusDatasource;
+  timeRange: TimeRange;
   isOpen: boolean;
   query: PromVisualQuery;
   onClose: () => void;
@@ -44,12 +45,13 @@ interface MetricsModalProps {
 }
 
 const MetricsModalContent = (props: MetricsModalProps) => {
-  const { isOpen, onClose, onChange, query } = props;
+  const { isOpen, onClose, onChange, query, timeRange } = props;
 
   const [showAdditionalSettings, setShowAdditionalSettings] = useState(false);
   const {
     isLoading,
     metricsData,
+    debouncedBackendSearch,
     settings: { hasMetadata, disableTextWrap },
     pagination,
     setPagination,
@@ -102,36 +104,6 @@ const MetricsModalContent = (props: MetricsModalProps) => {
     };
   });
 
-  /**
-   * The backend debounced search
-   * FIXME we might need this
-   */
-  // const debouncedBackendSearch = useMemo(
-  //   () =>
-  //     debounce(async (metricText: string) => {
-  //       setIsLoading(true);
-  //
-  //       const queryString = regexifyLabelValuesQueryString(metricText);
-  //       const filterArray = query.labels ? formatPrometheusLabelFilters(query.labels) : [];
-  //       const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
-  //
-  //       const results = await datasource.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
-  //
-  //       const resultsOptions = results.map((result) => ({
-  //         value: result,
-  //       }));
-  //
-  //       dispatch(
-  //         filterMetricsBackend({
-  //           metrics: resultsOptions,
-  //           filteredMetricCount: resultsOptions.length,
-  //           isLoading: false,
-  //         })
-  //       );
-  //     }, getDebounceTimeInMilliseconds(datasource.cacheLevel)),
-  //   [datasource.cacheLevel, datasource.languageProvider, query.labels, setIsLoading, timeRange]
-  // );
-
   // function fuzzyNameDispatch(haystackData: string[][]) {
   //   dispatch(setNameHaystack(haystackData));
   // }
@@ -140,7 +112,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
   //   dispatch(setMetaHaystack(haystackData));
   // }
 
-  function searchCallback(query: string, fullMetaSearchVal?: boolean) {
+  const searchCallback = (query: string, fullMetaSearchVal?: boolean) => {
     // if (state.useBackend && query === '') {
     //   // get all metrics data if a user erases everything in the input
     //   updateMetricsMetadata();
@@ -156,11 +128,9 @@ const MetricsModalContent = (props: MetricsModalProps) => {
     //   }
     // }
 
+    debouncedBackendSearch(timeRange, query);
     console.log('make call to backend with: ', { query, fullMetaSearchVal });
-  }
-
-  /* Settings switches */
-  const additionalSettings = useMemo(() => <AdditionalSettings />, []);
+  };
 
   return (
     <Modal
@@ -198,7 +168,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
               options={typeOptions}
               value={selectedTypes}
               placeholder={placeholders.filterType}
-              onChange={(v) => setSelectedTypes(v)}
+              onChange={setSelectedTypes}
             />
           </div>
         )}
@@ -211,7 +181,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
               'grafana-prometheus.querybuilder.metrics-modal.aria-label-additional-settings',
               'Additional settings'
             )}
-            content={additionalSettings}
+            content={<AdditionalSettings />}
             placement="bottom-end"
             closeButton={false}
           >

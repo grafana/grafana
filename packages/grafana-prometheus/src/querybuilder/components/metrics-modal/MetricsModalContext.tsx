@@ -1,9 +1,13 @@
-import { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
+import debounce from 'debounce-promise';
+import { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 
-import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from '../../../constants';
+import { METRIC_LABEL, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from '../../../constants';
 import { PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { regexifyLabelValuesQueryString } from '../../parsingUtils';
+import { QueryBuilderLabelFilter } from '../../shared/types';
+import { formatPrometheusLabelFilters } from '../formatter';
 
 import { generateMetricData } from './state/helpers';
 import { HaystackDictionary, MetricData, MetricsData } from './types';
@@ -45,6 +49,11 @@ type MetricsModalContextValue = {
   isLoading: boolean;
   setIsLoading: (val: boolean) => void;
   metricsData: MetricData[];
+  debouncedBackendSearch: (
+    timeRange: TimeRange,
+    metricText: string,
+    queryLabels?: QueryBuilderLabelFilter[]
+  ) => Promise<void>;
   settings: Settings;
   overrideSettings: (settings: Partial<Settings>) => void;
   pagination: Pagination;
@@ -99,6 +108,27 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     [settings]
   );
 
+  const debouncedBackendSearch = useMemo(
+    () =>
+      debounce(async (timeRange: TimeRange, metricText: string, queryLabels?: QueryBuilderLabelFilter[]) => {
+        setIsLoading(true);
+
+        const queryString = regexifyLabelValuesQueryString(metricText);
+        const filterArray = queryLabels ? formatPrometheusLabelFilters(queryLabels) : [];
+        const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
+
+        const results = await languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
+
+        const resultsOptions = results.map((result) => ({
+          value: result,
+        }));
+
+        setIsLoading(false);
+        setMetricsData(resultsOptions);
+      }, 300),
+    [languageProvider]
+  );
+
   const fetchMetadata = useCallback(async () => {
     setIsLoading(true);
     const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
@@ -125,6 +155,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
         isLoading,
         setIsLoading,
         metricsData,
+        debouncedBackendSearch,
         pagination,
         setPagination,
         selectedTypes,

@@ -117,6 +117,7 @@ export function MetricCombobox({
           onClose={() => setMetricsModalOpen(false)}
           query={query}
           onChange={onChange}
+          timeRange={timeRange}
         />
       )}
       {variableEditor ? (
