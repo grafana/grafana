@@ -1250,7 +1250,8 @@
       "metadata": {
         "name": "externalCorePlugins",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-09-22T08:50:13Z"
+        "creationTimestamp": "2023-09-22T08:50:13Z",
+        "deletionTimestamp": "2025-07-21T09:49:02Z"
       },
       "spec": {
         "description": "Allow core plugins to be loaded as external",
@@ -1796,6 +1797,19 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesLibraryPanelConnections",
+        "resourceVersion": "1753100797468",
+        "creationTimestamp": "2025-07-21T12:26:37Z"
+      },
+      "spec": {
+        "description": "Routes library panel connections requests from /api to using search",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {

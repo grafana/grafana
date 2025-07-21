@@ -257,11 +257,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Allow core plugins to be loaded as external
-  * @default true
-  */
-  externalCorePlugins?: boolean;
-  /**
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;
@@ -291,6 +286,10 @@ export interface FeatureToggles {
   * Routes library panel requests from /api to the /apis endpoint
   */
   kubernetesLibraryPanels?: boolean;
+  /**
+  * Routes library panel connections requests from /api to using search
+  */
+  kubernetesLibraryPanelConnections?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
   */
