@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "더 추가하기"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "경고 상태",
       "annotations": "주석",
@@ -3234,6 +3243,11 @@
       "id-token-attribute-name-label": "ID 토큰 속성 이름",
       "login-attribute-path-description": "사용자 ID 토큰에서 사용자 로그인 조회에 사용할 JMESPath 표현식입니다.",
       "login-attribute-path-label": "로그인 속성 경로",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "OAuth2 앱의 페더레이션 ID 자격 증명의 관리 ID 클라이언트 ID입니다.",
       "managed-identity-client-id-label": "FIC 관리 ID 클라이언트 ID",
       "name-attribute-path-description": "사용자 ID 토큰에서 사용자 이름 조회에 사용할 JMESPath 표현식입니다.이 이름은 사용자의 표시 이름으로 사용됩니다.",
@@ -3331,6 +3345,9 @@
     "provider-config-page": {
       "text-badge-enabled": "활성화됨",
       "text-badge-not-enabled": "활성화되지 않음"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "사용하는 IdP의 .well-known/openid-configuration 엔드포인트",
@@ -3448,6 +3465,8 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
+      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "취소",
       "cannot-move-folders": "폴더는 이동할 수 없습니다.",
       "confirmation-text": "삭제",
@@ -3466,7 +3485,9 @@
       "move-modal-text": "이 작업을 수행하면 다음 콘텐츠가 이동됩니다.",
       "move-modal-title": "이동",
       "moving": "이동 중...",
-      "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다."
+      "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "최근에 삭제됨"
@@ -3523,6 +3544,7 @@
       "empty-message": "폴더를 찾을 수 없음",
       "error-title": "폴더 로딩 중 오류 발생",
       "non-folder-item": "비폴더 {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "폴더 검색",
       "unknown-error": "알 수 없는 오류"
     },
@@ -5893,8 +5915,8 @@
         "title-someone-else-has-updated-this-dashboard": "다른 사람이 이 대시보드를 업데이트했습니다",
         "would-still-dashboard": "그래도 이 대시보드를 저장하시겠어요?"
       },
-      "schema-v2-library-panels-export": "동적 대시보드 기능은 실험 단계이며 현재 대시보드 동작과 모든 기능이 동일하지는 않습니다. 이 기능은 라이브러리 패널을 지원하지 않는 새로운 스키마 형식을 기반으로 합니다. 즉, 다른 인스턴스에서 사용하기 위해 대시보드를 내보낼 때 라이브러리 패널이 포함되지 않는다는 것을 의미합니다. Grafana는 기능 <2>수명 주기</2>가 진행됨에 따라 이를 지원할 계획입니다.",
-      "schema-v2-library-panels-export-title": "대시보드 스키마 V2는 아직 다른 인스턴스에서 사용할 라이브러리 패널 내보내기를 지원하지 않습니다",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "대시보드가 되돌릴 수 없게 변경됨"
     },
     "save-dashboard-form-common-options": {
@@ -7915,6 +7937,60 @@
       "previous-label": "지난 달",
       "select-placeholder": "날짜/시간 선택"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "닫기"
     },
@@ -7961,6 +8037,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -9640,7 +9730,9 @@
       "aria-label": "도움말"
     },
     "invite-user": {
-      "invite-new-member-button": "새 멤버 초대"
+      "invite-button": "초대",
+      "invite-new-member-button": "새 멤버 초대",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "북마크에 추가",
@@ -11824,7 +11916,6 @@
       },
       "label-apply-to-entire-row": "전체 행에 적용",
       "label-background-display-mode": "배경 표시 모드",
-      "label-wrap-text": "자동 줄바꿈",
       "wrap-text": "자동 줄바꿈"
     },
     "column-alignment-options": {

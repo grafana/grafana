@@ -28,12 +28,13 @@ import {
   TraceLog,
   PluginExtensionResourceAttributesContext,
   PluginExtensionPoints,
+  IconName,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { Icon, TextArea, useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
@@ -159,9 +160,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'AccordianWarningsLabel',
       color: autoColor(theme, '#d36c08'),
     }),
-    AccordianKeyValuesItem: css({
-      marginBottom: theme.spacing(0.5),
-    }),
     Textarea: css({
       wordBreak: 'break-all',
       whiteSpace: 'pre',
@@ -173,6 +171,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexWrap: 'wrap',
       gap: '10px',
+      marginBottom: theme.spacing(2),
     }),
   };
 };
@@ -186,6 +185,7 @@ export type TraceFlameGraphs = {
 };
 
 export type SpanDetailProps = {
+  color: string;
   detailState: DetailState;
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
@@ -215,6 +215,7 @@ export type SpanDetailProps = {
 
 export default function SpanDetail(props: SpanDetailProps) {
   const {
+    color,
     detailState,
     logItemToggle,
     logsToggle,
@@ -263,6 +264,9 @@ export default function SpanDetail(props: SpanDetailProps) {
   } = span;
 
   const { timeZone } = props;
+  const durationIcon: IconName = 'hourglass';
+  const startIcon: IconName = 'clock-nine';
+
   let overviewItems = [
     {
       key: 'svc',
@@ -273,11 +277,13 @@ export default function SpanDetail(props: SpanDetailProps) {
       key: 'duration',
       label: t('explore.span-detail.overview-items.label.duration', 'Duration:'),
       value: formatDuration(duration),
+      icon: durationIcon,
     },
     {
       key: 'start',
       label: t('explore.span-detail.overview-items.label.start-time', 'Start Time:'),
       value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
+      icon: startIcon,
     },
     ...(span.childSpanCount > 0
       ? [
@@ -353,11 +359,10 @@ export default function SpanDetail(props: SpanDetailProps) {
           {operationName}
         </h2>
         <div className={styles.listWrapper}>
-          <LabeledList className={styles.list} divider={true} items={overviewItems} />
+          <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
         </div>
       </div>
       <div className={styles.linkList}>{linksComponent}</div>
-      <Divider spacing={1} />
       <div>
         <div>
           <AccordianKeyValues
@@ -368,7 +373,6 @@ export default function SpanDetail(props: SpanDetailProps) {
           />
           {process.tags && (
             <AccordianKeyValues
-              className={styles.AccordianKeyValuesItem}
               data={process.tags}
               label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
               linksGetter={resourceLinksGetter}

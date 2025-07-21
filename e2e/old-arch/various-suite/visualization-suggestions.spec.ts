@@ -6,7 +6,7 @@ describe('Visualization suggestions', () => {
   });
 
   it('Should be shown and clickable', () => {
-    e2e.flows.openDashboard({ uid: 'aBXrJ0R7z', queryParams: { editPanel: 9 } });
+    e2e.flows.openDashboard({ uid: 'aBXrJ0R7z', queryParams: { '__feature.tableNextGen': false, editPanel: 9 } });
 
     // Try visualization suggestions
     e2e.components.PanelEditor.toggleVizPicker().click();
