@@ -186,6 +186,7 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
+  * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
@@ -210,9 +211,9 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Use experimental git library for provisioning
+  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
   */
-  nanoGit?: boolean;
+  provisioningSecretsService?: boolean;
   /**
   * Start an additional https handler and write kubectl options
   */
@@ -256,11 +257,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Allow core plugins to be loaded as external
-  * @default true
-  */
-  externalCorePlugins?: boolean;
-  /**
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;
@@ -290,6 +286,10 @@ export interface FeatureToggles {
   * Routes library panel requests from /api to the /apis endpoint
   */
   kubernetesLibraryPanels?: boolean;
+  /**
+  * Routes library panel connections requests from /api to using search
+  */
+  kubernetesLibraryPanelConnections?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
   */
@@ -507,11 +507,6 @@ export interface FeatureToggles {
   * Enables the use of scope filters in Grafana
   */
   scopeFilters?: boolean;
-  /**
-  * Use the new SSO Settings API to configure the SAML connector
-  * @default true
-  */
-  ssoSettingsSAML?: boolean;
   /**
   * Require that sub claims is present in oauth tokens.
   */
@@ -748,6 +743,26 @@ export interface FeatureToggles {
   */
   azureMonitorEnableUserAuth?: boolean;
   /**
+  * Enable AI-generated alert rules.
+  * @default false
+  */
+  alertingAIGenAlertRules?: boolean;
+  /**
+  * Enable AI-improve alert rules labels and annotations.
+  * @default false
+  */
+  alertingAIImproveAlertRules?: boolean;
+  /**
+  * Enable AI-generated alerting templates.
+  * @default false
+  */
+  alertingAIGenTemplates?: boolean;
+  /**
+  * Enable AI-analyze central state history.
+  * @default false
+  */
+  alertingAIAnalyzeCentralStateHistory?: boolean;
+  /**
   * Enables simplified step mode in the notifications section
   * @default true
   */
@@ -942,6 +957,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables creating alerts from Tempo data source
+  */
+  tempoAlerting?: boolean;
+  /**
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
@@ -988,6 +1007,10 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
+  * Enables image sharing functionality for dashboards
+  */
+  sharingDashboardImage?: boolean;
+  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
@@ -1012,4 +1035,27 @@ export interface FeatureToggles {
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
+  /**
+  * Set this to true to use the new PluginImporter functionality
+  * @default false
+  */
+  enablePluginImporter?: boolean;
+  /**
+  * Applies OTel formatting templates to displayed logs
+  */
+  otelLogsFormatting?: boolean;
+  /**
+  * Enables the notification history feature
+  * @default false
+  */
+  alertingNotificationHistory?: boolean;
+  /**
+  * Allows decoupled core plugins to load from the Grafana CDN
+  * @default false
+  */
+  pluginAssetProvider?: boolean;
+  /**
+  * Enable dual reader for unified storage search
+  */
+  unifiedStorageSearchDualReaderEnabled?: boolean;
 }

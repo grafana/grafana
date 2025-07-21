@@ -71,18 +71,7 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
           return nextIndex;
         });
-      } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-        // Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux) - open in new tab
-        event.preventDefault();
-
-        if (activeRef.current instanceof HTMLAnchorElement) {
-          window.open(activeRef.current.href, '_blank', 'noopener,noreferrer');
-          query.toggle();
-        } else {
-          // For action-based items (rendered as <div> tags), execute normally
-          activeRef.current?.click();
-        }
-      } else if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
+      } else if (event.key === 'Enter' && !event.metaKey) {
         event.preventDefault();
         // storing the active dom element in a ref prevents us from
         // having to calculate the current action to perform based
@@ -132,6 +121,10 @@ export const KBarResults = (props: KBarResultsProps) => {
       const url = (item as ActionImpl & { url?: string }).url;
 
       if (item.command) {
+        if (url) {
+          // If the item also has a url we should block navigation.
+          ev.preventDefault();
+        }
         item.command.perform(item);
         // TODO: ideally the perform method would return some marker or we would have something like preventDefault()
         if (!item.id.startsWith('scopes/') || item.id === 'scopes/apply') {
