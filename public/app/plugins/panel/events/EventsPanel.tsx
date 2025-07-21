@@ -34,6 +34,8 @@ function getSeverityColor(severity: EventSeverity, theme: GrafanaTheme2) {
             return theme.colors.warning.main;
         case 'info':
             return theme.colors.info.main;
+        case 'success':
+            return theme.colors.success.main;
         case 'unknown':
         default:
             return theme.colors.text.secondary;
@@ -86,7 +88,7 @@ function mergeEventsData(theme: GrafanaTheme2, frames: DataFrame[], fieldConfig?
 
         // Extract the specified columns
         const alertType = row.alert_type;
-        const message = row.title;
+        const message = row.title || row.msg_title;
         const timeMs = Number(row.oodle_event_time_epoch_ms);
         const rawEvent = row.oodle_raw_event;
 
@@ -95,7 +97,7 @@ function mergeEventsData(theme: GrafanaTheme2, frames: DataFrame[], fieldConfig?
         Object.keys(row).forEach((key) => {
             const value = row[key];
             if (value !== null && value !== undefined && value !== '' &&
-                !['alert_type', 'datadog_events_v1', 'date_happened', 'datadog_events', 'AlertType', 'alerttype', 'title', 'MsgTitle', 'message', 'Message', 'msg',
+                !['alert_type', 'datadog_events_v1', 'date_happened', 'datadog_events', 'AlertType', 'alerttype', 'title', 'MsgTitle', 'msg_title', 'message', 'Message', 'msg',
                     'oodle_event_time_epoch_ms', 'OodleEventTimeEpochMs', 'time', 'Time', '__name__'].includes(key)) {
                 tags.push(`${key}: ${value}`);
             }

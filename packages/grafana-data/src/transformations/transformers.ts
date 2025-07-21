@@ -2,6 +2,7 @@ import { calculateFieldTransformer } from './transformers/calculateField';
 import { concatenateTransformer } from './transformers/concat';
 import { convertFieldTypeTransformer } from './transformers/convertFieldType';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
+import { eventDistributionTransformer } from './transformers/eventDistribution';
 import { filterFieldsTransformer, filterFramesTransformer } from './transformers/filter';
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
@@ -57,4 +58,5 @@ export const standardTransformers = {
   limitTransformer,
   groupToNestedTable,
   transposeTransformer,
+  eventDistributionTransformer,
 };
