@@ -884,14 +884,15 @@ describe('DashboardSceneSerializer', () => {
 
         const panelSpec = saveAsModel.elements['panel-1'].spec as PanelSpec;
         expect(panelSpec.vizConfig).toMatchObject({
-          kind: 'graph',
+          kind: 'VizConfig',
+          group: 'graph',
+          version: '1.0.0',
           spec: {
             fieldConfig: {
               defaults: { custom: { lineWidth: 2 } },
               overrides: [],
             },
             options: { legend: { show: true } },
-            pluginVersion: '1.0.0',
           },
         });
       });
@@ -922,7 +923,7 @@ describe('DashboardSceneSerializer', () => {
           });
           const saveAsModel = serializer.getSaveAsModel(dashboard, baseOptions);
           // referencing index 1 as transformation adds built in annotation query
-          expect(saveAsModel.annotations[1].spec.query?.datasource).toBeUndefined();
+          expect(saveAsModel.annotations[1].spec.query.datasource).toBeUndefined();
         });
 
         it('should fill data source references for annotations when input did contain it', () => {

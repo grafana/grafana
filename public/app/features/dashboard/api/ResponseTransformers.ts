@@ -938,7 +938,7 @@ function transformV2PanelToV1Panel(
     const panel = p.spec;
     return {
       id: panel.id,
-      type: panel.vizConfig.kind,
+      type: panel.vizConfig.group,
       title: panel.title,
       description: panel.description,
       fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
