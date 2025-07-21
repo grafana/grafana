@@ -100,6 +100,7 @@ export const GenAISQLSuggestionsButton = ({
 
   return (
     <GenAIButton
+      iconVisible={false}
       disabled={refIds.length === 0}
       eventTrackingSrc={EventTrackingSrc.sqlExpressions}
       messages={messages}

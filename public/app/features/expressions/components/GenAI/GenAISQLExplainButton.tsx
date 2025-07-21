@@ -79,6 +79,7 @@ export const GenAISQLExplainButton = ({
 
   return (
     <GenAIButton
+      iconVisible={false}
       disabled={!hasQuery}
       eventTrackingSrc={EventTrackingSrc.sqlExpressions}
       messages={messages}

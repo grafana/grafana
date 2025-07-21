@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 
-import { FeatureState, SelectableValue } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { useStyles2, Stack, Button, FeatureBadge } from '@grafana/ui';
+import { useStyles2, Stack, Button, Tooltip, Icon } from '@grafana/ui';
 
 import { ExpressionQueryEditorProps } from '../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../types';
@@ -96,8 +96,6 @@ export interface SqlExprProps {
 }
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, metadata }: SqlExprProps) => {
-  const panelId = metadata?.data?.request?.panelPluginId;
-
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const initialQuery = `SELECT *
   FROM ${vars[0]}
@@ -126,7 +124,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, metadata }:
   const queryContext = useMemo(
     () => ({
       alerting,
-      panelId,
+      panelId: metadata?.data?.request?.panelPluginId,
       queries: metadata?.queries,
       dashboardContext: {
         dashboardTitle: metadata?.data?.request?.dashboardTitle ?? '',
@@ -140,7 +138,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, metadata }:
       numberOfQueries: metadata?.data?.request?.targets?.length ?? 0,
       seriesData: metadata?.data?.series,
     }),
-    [alerting, panelId, metadata]
+    [alerting, metadata]
   );
 
   const errorContext = useMemo(() => {
@@ -202,17 +200,20 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, metadata }:
 
   return (
     <>
-      <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={1.5}>
         {config.featureToggles.sqlExpressions && (
-          <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+          <div className={styles.sqlButtons}>
             <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-              <FeatureBadge
-                tooltip={t(
+              <Tooltip
+                content={t(
                   'expressions.sql-expr.tooltip-experimental',
                   'SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team.'
                 )}
-                featureState={FeatureState.experimental}
-              />
+                placement="top"
+                interactive={true}
+              >
+                <Icon name="ai-sparkle" />
+              </Tooltip>
               <Suspense fallback={null}>
                 {shouldShowViewExplanation ? (
                   <Button
@@ -252,7 +253,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, metadata }:
                 <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
               </Suspense>
             )}
-          </Stack>
+          </div>
         )}
 
         <div ref={containerRef} className={styles.editorContainer}>
@@ -287,11 +288,21 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, metadata }:
   );
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   editorContainer: css({
     height: '240px',
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
+  }),
+  sqlButtons: css({
+    // This is NOT ideal. The alternative is to expose SQL buttons as a separate component,
+    // Then consume them in ExpressionQueryEditor. This requires a lot of refactoring and
+    // can be prioritized later.
+    marginTop: theme.spacing(-4),
+    gap: theme.spacing(1),
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   }),
 });
