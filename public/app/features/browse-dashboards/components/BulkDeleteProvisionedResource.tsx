@@ -88,7 +88,7 @@ function FormContent({
     getAppEvents().publish({
       type: AppEvents.alertSuccess.name,
       payload: [
-        t('browse-dashboard.bulk-delete-resources-form.api-success', `Successfully deleted {{count}} items`, {
+        t('browse-dashboards.bulk-delete-resources-form.api-success', `Successfully deleted {{count}} items`, {
           count: successes.length,
         }),
       ],

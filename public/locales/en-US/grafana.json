@@ -3476,12 +3476,6 @@
   "bouncing-loader": {
     "label": "Loading"
   },
-  "browse-dashboard": {
-    "bulk-delete-resources-form": {
-      "api-success_one": "Successfully deleted {{count}} item",
-      "api-success_other": "Successfully deleted {{count}} items"
-    }
-  },
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
@@ -3522,6 +3516,8 @@
       "failed-alert_other": "{{count}} items failed"
     },
     "bulk-delete-resources-form": {
+      "api-success_one": "Successfully deleted {{count}} item",
+      "api-success_other": "Successfully deleted {{count}} items",
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
