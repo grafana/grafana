@@ -419,6 +419,12 @@ func (c contactPointsExtension) UpdateStructDescriptor(structDescriptor *jsonite
 		desc.Decoder = codec
 		desc.Encoder = codec
 	}
+	if structDescriptor.Type == reflect2.TypeOf(definitions.JiraIntegration{}) {
+		bind := structDescriptor.GetField("Fields")
+		codec := &mapToJSONStringCodec{}
+		bind.Decoder = codec
+		bind.Encoder = codec
+	}
 }
 
 type emailAddressCodec struct{}
@@ -493,4 +499,56 @@ func (d *numberAsStringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator
 		iter.ReportError("numberAsStringCodec", "not number or string")
 	}
 	*((*(*int64))(ptr)) = &value
+}
+
+type mapToJSONStringCodec struct{}
+
+func (d *mapToJSONStringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+	var str string
+	switch iter.WhatIsNext() {
+	case jsoniter.ObjectValue:
+		var raw map[string]any
+		iter.ReadVal(&raw)
+		b, err := json.Marshal(raw)
+		if err != nil {
+			iter.ReportError("mapToJSONStringCodec.Decode", err.Error())
+			return
+		}
+		str = string(b)
+	case jsoniter.NilValue:
+		iter.ReadNil()
+		*(**string)(ptr) = nil
+		return
+	default:
+		iter.ReportError("mapToJSONStringCodec.Decode", "unsupported input type")
+		return
+	}
+	// Allocate a new string and set the pointer.
+	newStr := str
+	*(**string)(ptr) = &newStr
+}
+
+// IsEmpty is used by Encoder to determine if the field is empty.
+func (d *mapToJSONStringCodec) IsEmpty(ptr unsafe.Pointer) bool {
+	strPtr := *(**string)(ptr)
+	return strPtr == nil || *strPtr == ""
+}
+
+// This method is not used in production code, but is required by a test that ensure marshalling and unmarshalling does not change the value.
+func (d *mapToJSONStringCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	strPtr := *(**string)(ptr)
+	if strPtr == nil {
+		stream.WriteNil()
+		return
+	}
+
+	// Validate the string contains valid JSON
+	var raw any
+	if err := json.Unmarshal([]byte(*strPtr), &raw); err != nil {
+		stream.Error = fmt.Errorf("invalid JSON in *string field: %w", err)
+		return
+	}
+
+	// Write the parsed value as native JSON (object, array, etc.)
+	stream.WriteVal(raw)
 }

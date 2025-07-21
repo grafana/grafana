@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Test that conversion notify.APIReceiver -> definitions.ContactPoint -> notify.APIReceiver does not lose data
@@ -225,5 +226,88 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 		require.Equal(t, int64(112), *result.Mqtt[0].QoS)
 		require.Nil(t, result.Mqtt[1].QoS)
 		require.Nil(t, result.Mqtt[2].QoS)
+	})
+
+	t.Run("jira with various fields values as string", func(t *testing.T) {
+		testcases := []struct {
+			name        string
+			input       definitions.RawMessage
+			expected    *string
+			expectedErr bool
+		}{
+			{
+				name:     "standard map[string]string",
+				input:    definitions.RawMessage(`{ "fields" : {"test-data" : "test-value"} }`),
+				expected: util.Pointer(`{"test-data":"test-value"}`),
+			},
+			{
+				name:     "map[string]int",
+				input:    definitions.RawMessage(`{ "fields" : {"test-data" : 42} }`),
+				expected: util.Pointer(`{"test-data":42}`),
+			},
+			{
+				name:     "map[string]interface{} with null value",
+				input:    definitions.RawMessage(`{ "fields" : {"test-data" : null} }`),
+				expected: util.Pointer(`{"test-data":null}`),
+			},
+			{
+				name:     "null fields",
+				input:    definitions.RawMessage(`{ "fields" : null }`),
+				expected: nil,
+			},
+			{
+				name:     "empty map",
+				input:    definitions.RawMessage(`{ "fields" : {} }`),
+				expected: util.Pointer(`{}`),
+			},
+			{
+				name:     "nested map",
+				input:    definitions.RawMessage(`{ "fields" : {"test-data" : {"test-data-nested" : "test-value-nested"}} }`),
+				expected: util.Pointer(`{"test-data":{"test-data-nested":"test-value-nested"}}`),
+			},
+			{
+				name:     "nested slice",
+				input:    definitions.RawMessage(`{ "fields" : {"test-data" : ["slice1", "slice2"]} }`),
+				expected: util.Pointer(`{"test-data":["slice1","slice2"]}`),
+			},
+			{
+				name:        "string value",
+				input:       definitions.RawMessage(`{ "fields" : "some string" }`),
+				expectedErr: true,
+			},
+			{
+				name:        "slice",
+				input:       definitions.RawMessage(`{ "fields" : ["slice1", "slice2"} }`),
+				expectedErr: true,
+			},
+		}
+		for _, tc := range testcases {
+			t.Run(tc.name, func(t *testing.T) {
+				export := definitions.ContactPointExport{
+					Name: "test",
+					Receivers: []definitions.ReceiverExport{
+						{
+							Type:     "jira",
+							Settings: tc.input,
+						},
+					},
+				}
+
+				result, err := ContactPointFromContactPointExport(export)
+				if tc.expectedErr {
+					require.Error(t, err, "Expected error for input: %s", tc.input)
+					return
+				} else {
+					require.NoError(t, err, "Unexpected error for input: %s", tc.input)
+				}
+				require.Len(t, result.Jira, 1)
+
+				if tc.expected == nil {
+					require.Nil(t, result.Jira[0].Fields)
+				} else {
+					require.Equal(t, *tc.expected, *result.Jira[0].Fields)
+				}
+			})
+		}
 	})
 }
