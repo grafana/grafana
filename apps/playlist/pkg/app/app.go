@@ -2,8 +2,6 @@ package app
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -13,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
-	"knative.dev/pkg/logging"
 
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/apps/playlist/pkg/reconcilers"
@@ -73,18 +70,6 @@ func New(cfg app.Config) (app.App, error) {
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						// do something here if needed
 						return nil
-					},
-				},
-				CustomRoutes: map[simple.AppCustomRoute]simple.AppCustomRouteHandler{
-					{
-						Method: simple.AppCustomRouteMethodGet,
-						Path:   "example",
-					}: func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-						logging.FromContext(ctx).Info("called example subresource", "resource", request.ResourceIdentifier.Name, "namespace", request.ResourceIdentifier.Namespace)
-						writer.WriteHeader(http.StatusOK)
-						return json.NewEncoder(writer).Encode(playlistv0alpha1.GetExample{
-							Status: "ok",
-						})
 					},
 				},
 			},
