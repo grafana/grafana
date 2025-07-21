@@ -6,7 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { useMetricsModal } from './MetricsModalContext';
-import { getPlaceholders } from './state/helpers';
+import { getPlaceholders } from './helpers';
 import { metricsModaltestIds } from './testIds';
 
 export function AdditionalSettings() {

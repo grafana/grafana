@@ -9,11 +9,11 @@ import { regexifyLabelValuesQueryString } from '../../parsingUtils';
 import { QueryBuilderLabelFilter } from '../../shared/types';
 import { formatPrometheusLabelFilters } from '../formatter';
 
-import { generateMetricData } from './state/helpers';
+import { generateMetricData } from './helpers';
 import { HaystackDictionary, MetricData, MetricsData } from './types';
 
-export const DEFAULT_RESULTS_PER_PAGE = 100;
-export const MAXIMUM_RESULTS_PER_PAGE = 1000;
+export const DEFAULT_RESULTS_PER_PAGE = 25;
+export const MAXIMUM_RESULTS_PER_PAGE = 100;
 
 type Settings = {
   useBackend: boolean;
@@ -108,27 +108,6 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     [settings]
   );
 
-  const debouncedBackendSearch = useMemo(
-    () =>
-      debounce(async (timeRange: TimeRange, metricText: string, queryLabels?: QueryBuilderLabelFilter[]) => {
-        setIsLoading(true);
-
-        const queryString = regexifyLabelValuesQueryString(metricText);
-        const filterArray = queryLabels ? formatPrometheusLabelFilters(queryLabels) : [];
-        const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
-
-        const results = await languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
-
-        const resultsOptions = results.map((result) => ({
-          value: result,
-        }));
-
-        setIsLoading(false);
-        setMetricsData(resultsOptions);
-      }, 300),
-    [languageProvider]
-  );
-
   const fetchMetadata = useCallback(async () => {
     setIsLoading(true);
     const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
@@ -140,6 +119,30 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     setMetricsData(Object.keys(metadata).map((m) => generateMetricData(m, languageProvider)));
     setIsLoading(false);
   }, [languageProvider, overrideSettings]);
+
+  const debouncedBackendSearch = useMemo(
+    () =>
+      debounce(async (timeRange: TimeRange, metricText: string, queryLabels?: QueryBuilderLabelFilter[]) => {
+        if (metricText === '') {
+          fetchMetadata();
+          return;
+        }
+
+        setIsLoading(true);
+
+        const queryString = regexifyLabelValuesQueryString(metricText);
+        const filterArray = queryLabels ? formatPrometheusLabelFilters(queryLabels) : [];
+        const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
+
+        const results = await languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
+
+        const resultsOptions: MetricsData = results.map((m) => generateMetricData(m, languageProvider));
+
+        setIsLoading(false);
+        setMetricsData(resultsOptions);
+      }, 300),
+    [fetchMetadata, languageProvider]
+  );
 
   useEffect(() => {
     fetchMetadata();

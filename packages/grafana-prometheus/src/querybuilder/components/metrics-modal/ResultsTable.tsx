@@ -24,7 +24,7 @@ export function ResultsTable(props: ResultsTableProps) {
   const {
     isLoading,
     metricsData,
-    settings: { hasMetadata, fullMetaSearch, useBackend, disableTextWrap },
+    settings: { hasMetadata, fullMetaSearch, disableTextWrap },
     pagination: { pageNum, resultsPerPage },
     selectedTypes,
     textSearch,
@@ -161,25 +161,6 @@ export function ResultsTable(props: ResultsTableProps) {
     );
   }
 
-  function textHighlight(state: {
-    fuzzySearchQuery: string;
-    metaHaystackMatches: string[];
-    nameHaystackMatches: string[];
-  }): string[] {
-    if (useBackend) {
-      // highlight the input only for the backend search
-      // this highlight is equivalent to how the metric select highlights
-      // look into matching on regex input
-      return [state.fuzzySearchQuery];
-    } else if (fullMetaSearch) {
-      // highlight the matches in the ufuzzy metaHaystack
-      return state.metaHaystackMatches;
-    } else {
-      // highlight the ufuzzy name matches
-      return state.nameHaystackMatches;
-    }
-  }
-
   return (
     <table className={styles.table}>
       <thead className={styles.stickyHeader}>
@@ -209,11 +190,7 @@ export function ResultsTable(props: ResultsTableProps) {
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
-                      searchWords={textHighlight({
-                        fuzzySearchQuery: textSearch.fuzzySearchQuery,
-                        metaHaystackMatches: textSearch.metaHaystackMatches,
-                        nameHaystackMatches: textSearch.nameHaystackMatches,
-                      })}
+                      searchWords={[textSearch.fuzzySearchQuery]}
                       autoEscape
                       highlightClassName={styles.matchHighLight}
                     />

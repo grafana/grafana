@@ -30,7 +30,7 @@ import {
   useMetricsModal,
 } from './MetricsModalContext';
 import { ResultsTable } from './ResultsTable';
-import { calculatePageList, calculateResultsPerPage, getPlaceholders, getPromTypes } from './state/helpers';
+import { calculatePageList, calculateResultsPerPage, getPlaceholders, getPromTypes } from './helpers';
 import { getStyles } from './styles';
 import { metricsModaltestIds } from './testIds';
 import { PromFilterOption } from './types';
@@ -65,37 +65,6 @@ const MetricsModalContent = (props: MetricsModalProps) => {
   const placeholders = getPlaceholders();
   const promTypes = getPromTypes();
 
-  /**
-   * loads metrics and metadata on opening modal and switching off useBackend
-   */
-  // const updateMetricsMetadata = useCallback(async () => {
-  //   // *** Loading Gif
-  //   // dispatch(setIsLoading(true));
-  //   setIsLoading(true);
-  //
-  //   // Because Combobox in MetricsCombobox doesn't use the same lifecycle as Select to open the Metrics Explorer
-  //   // it might not have loaded any metrics yet, so it instead passes in an async function to get the metrics
-  //   const metrics = typeof initialMetrics === 'function' ? await initialMetrics() : initialMetrics;
-  //
-  //   const data: MetricsModalMetadata = await setMetrics(datasource, query, metrics);
-  //   setIsLoading(false);
-  //   dispatch(
-  //     buildMetrics({
-  //       // isLoading: false,
-  //       hasMetadata: data.hasMetadata,
-  //       metrics: data.metrics,
-  //       metaHaystackDictionary: data.metaHaystackDictionary,
-  //       nameHaystackDictionary: data.nameHaystackDictionary,
-  //       totalMetricCount: data.metrics.length,
-  //       filteredMetricCount: data.metrics.length,
-  //     })
-  //   );
-  // }, [setIsLoading, initialMetrics, datasource, query]);
-
-  // useEffect(() => {
-  //   updateMetricsMetadata();
-  // }, [updateMetricsMetadata]);
-
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
       value: t.value,
@@ -104,30 +73,8 @@ const MetricsModalContent = (props: MetricsModalProps) => {
     };
   });
 
-  // function fuzzyNameDispatch(haystackData: string[][]) {
-  //   dispatch(setNameHaystack(haystackData));
-  // }
-  //
-  // function fuzzyMetaDispatch(haystackData: string[][]) {
-  //   dispatch(setMetaHaystack(haystackData));
-  // }
-
   const searchCallback = (query: string, fullMetaSearchVal?: boolean) => {
-    // if (state.useBackend && query === '') {
-    //   // get all metrics data if a user erases everything in the input
-    //   updateMetricsMetadata();
-    // } else if (state.useBackend) {
-    //   debouncedBackendSearch(query);
-    // } else {
-    //   // search either the names or all metadata
-    //   // fuzzy search go!
-    //   if (fullMetaSearchVal) {
-    //     debouncedFuzzySearch(Object.keys(state.metaHaystackDictionary), query, fuzzyMetaDispatch);
-    //   } else {
-    //     debouncedFuzzySearch(Object.keys(state.nameHaystackDictionary), query, fuzzyNameDispatch);
-    //   }
-    // }
-
+    setTextSearch({ ...textSearch, fuzzySearchQuery: query });
     debouncedBackendSearch(timeRange, query);
     console.log('make call to backend with: ', { query, fullMetaSearchVal });
   };
