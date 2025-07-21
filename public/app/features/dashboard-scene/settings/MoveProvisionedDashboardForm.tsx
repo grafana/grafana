@@ -13,6 +13,7 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { moveResource, MoveResourceResult } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
@@ -59,7 +60,6 @@ export function MoveProvisionedDashboardForm({
   });
 
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
-
   const [createFile, createRequest] = useCreateRepositoryFilesWithPathMutation();
   const [deleteFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
@@ -98,38 +98,18 @@ export function MoveProvisionedDashboardForm({
     const branchRef = workflow === 'write' ? loadedFromRef : ref;
     const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
 
-    try {
-      await createFile({
-        name: repo,
-        path: targetPath,
-        ref: branchRef,
-        message: commitMessage,
-        body: currentFileData.resource.file,
-      }).unwrap();
+    const result = await moveResource({
+      repositoryName: repo,
+      currentPath: path,
+      targetPath,
+      fileContent: currentFileData.resource.file,
+      commitMessage,
+      ref: branchRef,
+      mutations: { createFile, deleteFile },
+    });
 
-      await deleteFile({
-        name: repo,
-        path: path,
-        ref: branchRef,
-        message: commitMessage,
-      }).unwrap();
-    } catch (error) {
-      if (createRequest.isSuccess && !deleteRequest.isSuccess) {
-        appEvents.publish({
-          type: AppEvents.alertWarning.name,
-          payload: [
-            t(
-              'dashboard-scene.move-provisioned-dashboard-form.partial-failure-warning',
-              'Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.'
-            ),
-          ],
-        });
-      }
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error],
-      });
-    }
+    // failed or partial failed message, all success message will be handle below in useProvisionedRequestHandler hook
+    notifyFailedResult(result, 'Dashboard');
   };
 
   const onWriteSuccess = () => {
@@ -235,4 +215,27 @@ export function MoveProvisionedDashboardForm({
       </FormProvider>
     </Drawer>
   );
+}
+
+// Common error handling for move operations
+function notifyFailedResult(result: MoveResourceResult, resourceName: string) {
+  const appEvents = getAppEvents();
+
+  if (result.failedToDelete) {
+    appEvents.publish({
+      type: AppEvents.alertWarning.name,
+      payload: [
+        t(
+          'move-operations.partial-success-warning',
+          `{{resourceName}} was created at new location but could not be deleted from original location. Please manually remove the old file.`,
+          { resourceName }
+        ),
+      ],
+    });
+  } else {
+    appEvents.publish({
+      type: AppEvents.alertError.name,
+      payload: [t('move-operations.error', `Failed to move {{resourceName}}`, { resourceName }), result.error],
+    });
+  }
 }

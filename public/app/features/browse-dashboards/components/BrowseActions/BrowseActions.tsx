@@ -15,6 +15,7 @@ import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
 
+import { BulkMoveProvisionedResourceDrawer } from './BulkMoveProvisionedResourcesDrawer';
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
 import { SelectedMixResourcesMsgModal } from './SelectedMixResourcesMsgModal';
@@ -26,6 +27,7 @@ export interface Props {
 
 export function BrowseActions({ folderDTO }: Props) {
   const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
+  const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
 
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
@@ -69,6 +71,24 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showMoveModal = () => {
+    if (provisioningEnabled && hasProvisioned && hasNonProvisioned) {
+      // Mixed selection
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: SelectedMixResourcesMsgModal,
+          props: {},
+        })
+      );
+      return;
+    }
+
+    if (provisioningEnabled && hasProvisioned) {
+      // Only provisioned items
+      setShowBulkMoveProvisionedResource(true);
+      return;
+    }
+
+    // Only non-provisioned items
     appEvents.publish(
       new ShowModalReactEvent({
         component: MoveModal,
@@ -78,6 +98,7 @@ export function BrowseActions({ folderDTO }: Props) {
         },
       })
     );
+    return;
   };
 
   const showDeleteModal = () => {
@@ -89,21 +110,25 @@ export function BrowseActions({ folderDTO }: Props) {
           props: {},
         })
       );
-    } else if (hasProvisioned && provisioningEnabled) {
+      return;
+    }
+
+    if (hasProvisioned && provisioningEnabled) {
       // Only provisioned items
       setShowBulkDeleteProvisionedResource(true);
-    } else {
-      // Only non-provisioned items
-      appEvents.publish(
-        new ShowModalReactEvent({
-          component: DeleteModal,
-          props: {
-            selectedItems,
-            onConfirm: onDelete,
-          },
-        })
-      );
+      return;
     }
+
+    // Only non-provisioned items
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: DeleteModal,
+        props: {
+          selectedItems,
+          onConfirm: onDelete,
+        },
+      })
+    );
   };
 
   const moveButton = (
@@ -138,6 +163,13 @@ export function BrowseActions({ folderDTO }: Props) {
             Bulk delete for provisioned resources is not implemented yet.
           </Trans>
         </Drawer>
+      )}
+      {showBulkMoveProvisionedResource && (
+        <BulkMoveProvisionedResourceDrawer
+          selectedItems={selectedItems}
+          folderUid={folderDTO?.uid}
+          onClose={() => setShowBulkMoveProvisionedResource(false)}
+        />
       )}
     </>
   );

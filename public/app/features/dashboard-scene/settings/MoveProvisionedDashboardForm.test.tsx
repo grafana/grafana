@@ -29,6 +29,10 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
 }));
 
+jest.mock('app/features/provisioning/utils/selectors', () => ({
+  selectAllRepos: jest.fn().mockReturnValue([]),
+}));
+
 jest.mock('app/api/clients/folder/v1beta1', () => ({
   useGetFolderQuery: jest.fn(),
 }));

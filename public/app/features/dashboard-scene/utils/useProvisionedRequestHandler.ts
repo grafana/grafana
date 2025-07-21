@@ -34,12 +34,14 @@ export function useProvisionedRequestHandler({
   workflow,
   handlers,
   isNew,
+  hideAlert = false,
 }: {
   dashboard: DashboardScene;
   request: ProvisionedRequest;
   workflow?: string;
   handlers: RequestHandlers;
   isNew?: boolean;
+  hideAlert?: boolean;
 }) {
   useEffect(() => {
     if (request.isError) {
@@ -57,11 +59,14 @@ export function useProvisionedRequestHandler({
         return;
       }
 
-      // Success message (could be configurable)
-      getAppEvents().publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [t('dashboard-scene.edit-provisioned-dashboard-form.success', 'Dashboard changes saved successfully')],
-      });
+      if (!hideAlert) {
+        getAppEvents().publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [
+            t('dashboard-scene.edit-provisioned-dashboard-form.success', 'Dashboard changes saved successfully'),
+          ],
+        });
+      }
 
       // New dashboard flow
       if (isNew && resource?.upsert && handlers.onNewDashboardSuccess) {
@@ -73,5 +78,5 @@ export function useProvisionedRequestHandler({
       // Write workflow
       handlers.onWriteSuccess?.();
     }
-  }, [request, workflow, handlers, isNew, dashboard]);
+  }, [request, workflow, handlers, isNew, dashboard, hideAlert]);
 }
