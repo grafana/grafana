@@ -133,7 +133,7 @@
     "uwrap": "0.1.1"
   },
   "devDependencies": {
-    "@babel/core": "7.26.10",
+    "@babel/core": "7.28.0",
     "@faker-js/faker": "^9.0.0",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "16.0.1",
@@ -195,10 +195,10 @@
     "rimraf": "6.0.1",
     "rollup": "^4.22.4",
     "rollup-plugin-copy": "3.5.0",
-    "rollup-plugin-esbuild": "6.2.0",
+    "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "rollup-plugin-svg-import": "3.0.0",
-    "sass-loader": "16.0.4",
+    "sass-loader": "16.0.5",
     "storybook": "^8.6.2",
     "style-loader": "4.0.0",
     "typescript": "5.8.3",

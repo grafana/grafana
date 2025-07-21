@@ -3359,6 +3359,9 @@
       "text-badge-enabled": "Aktiviert",
       "text-badge-not-enabled": "Nicht aktiviert"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Der Endpunkt .well-known/openid-configuration für Ihren IdP",
       "title-open-id-connect-discovery-url": "OpenID-Connect-Discovery-URL"
@@ -3559,6 +3562,7 @@
       "empty-message": "Keine Ordner gefunden",
       "error-title": "Fehler beim Laden der Ordner",
       "non-folder-item": "{{itemKind}} {{itemUID}} nicht im Ordner enthalten",
+      "root-title": "",
       "search-placeholder": "Ordner suchen",
       "unknown-error": "Unbekannter Fehler"
     },
@@ -5931,8 +5935,8 @@
         "title-someone-else-has-updated-this-dashboard": "Eine andere Person hat dieses Dashboard aktualisiert",
         "would-still-dashboard": "Möchten Sie dieses Dashboard trotzdem speichern?"
       },
-      "schema-v2-library-panels-export": "Die dynamische Dashboard-Funktionalität ist experimentell und weist keine vollständige Funktionsparität mit dem aktuellen Dashboard-Verhalten auf. Sie basiert auf einem neuen Schemaformat, das keine Bibliotheks-Panels unterstützt. Das bedeutet, dass wir bei einem Export des Dashboards für die Nutzung in einer anderen Instanz keine Bibliotheks-Panels einbeziehen. Wir planen, sie im weiteren Verlauf des <2>Lebenszyklus</2> der Funktion zu unterstützen.",
-      "schema-v2-library-panels-export-title": "Das Dashboard-Schema V2 unterstützt noch keinen Export von Bibliotheks-Panels für die Verwendung in einer anderen Instanz",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Dashboard irreversibel geändert"
     },
     "save-dashboard-form-common-options": {
@@ -7954,6 +7958,60 @@
       "previous-label": "Vorheriger Monat",
       "select-placeholder": "Datum/Uhrzeit auswählen"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Schließen"
     },
@@ -8000,6 +8058,20 @@
       "description-fields-with-value": "Eigenschaften für Felder mit Reduzierbedingung festlegen",
       "field-name-picker": {
         "placeholder": "Feld auswählen"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "Felder mit Namen, die Regex entsprechen",
       "name-fields-by-query": "Von der Abfrage zurückgegebene Felder",
@@ -9687,7 +9759,9 @@
       "aria-label": "Hilfe"
     },
     "invite-user": {
-      "invite-new-member-button": "Neues Mitglied einladen"
+      "invite-button": "",
+      "invite-new-member-button": "Neues Mitglied einladen",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Zu Lesezeichen hinzufügen",
@@ -11881,7 +11955,6 @@
       },
       "label-apply-to-entire-row": "Auf gesamte Zeile anwenden",
       "label-background-display-mode": "Hintergrundanzeigemodus",
-      "label-wrap-text": "Text umbrechen",
       "wrap-text": "Text umbrechen"
     },
     "column-alignment-options": {
