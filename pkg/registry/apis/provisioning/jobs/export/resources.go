@@ -95,9 +95,6 @@ func exportResource(ctx context.Context,
 	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
-		if shim != nil {
-			item, err = shim(ctx, item)
-		}
 
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
@@ -105,6 +102,10 @@ func exportResource(ctx context.Context,
 			Resource: resource,
 			Group:    gvk.Group,
 			Action:   repository.FileActionCreated,
+		}
+
+		if shim != nil {
+			item, err = shim(ctx, item)
 		}
 
 		if err == nil {
