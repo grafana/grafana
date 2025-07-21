@@ -76,18 +76,6 @@ export function MetricCombobox({
     [getMetricLabels, onGetMetrics]
   );
 
-  const loadMetricsExplorerMetrics = useCallback(async () => {
-    const allMetrics = await onGetMetrics();
-    const metrics: string[] = [];
-    for (const metric of allMetrics) {
-      if (metric.value) {
-        metrics.push(metric.value);
-      }
-    }
-
-    return metrics;
-  }, [onGetMetrics]);
-
   const asyncSelect = () => {
     return (
       <InputGroup>
@@ -133,8 +121,6 @@ export function MetricCombobox({
           onClose={() => setMetricsModalOpen(false)}
           query={query}
           onChange={onChange}
-          initialMetrics={loadMetricsExplorerMetrics}
-          timeRange={timeRange}
         />
       )}
       {variableEditor ? (

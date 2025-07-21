@@ -10,12 +10,12 @@ import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
 
+import { useMetricsModal } from './MetricsModalContext';
 import { tracking } from './state/helpers';
 import { MetricsModalState } from './state/state';
-import { MetricData, MetricsData } from './types';
+import { MetricData } from './types';
 
 type ResultsTableProps = {
-  metrics: MetricsData;
   onChange: (query: PromVisualQuery) => void;
   onClose: () => void;
   query: PromVisualQuery;
@@ -24,7 +24,17 @@ type ResultsTableProps = {
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const { metrics, onChange, onClose, query, state, disableTextWrap } = props;
+  const { onChange, onClose, query, state, disableTextWrap } = props;
+  const {
+    isLoading,
+    metricsData,
+    pagination: { pageNum, resultsPerPage },
+  } = useMetricsModal();
+
+  const slicedMetrics = metricsData.slice(
+    (pageNum - 1) * resultsPerPage,
+    (pageNum - 1) * resultsPerPage + resultsPerPage
+  );
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
@@ -165,13 +175,13 @@ export function ResultsTable(props: ResultsTableProps) {
               </th>
             </>
           )}
-          <th className={styles.selectButtonWidth}> </th>
+          <th className={styles.selectButtonWidth}></th>
         </tr>
       </thead>
       <tbody>
         <>
-          {metrics.length > 0 &&
-            metrics.map((metric: MetricData, idx: number) => {
+          {slicedMetrics.length > 0 &&
+            slicedMetrics.map((metric: MetricData, idx: number) => {
               return (
                 <tr key={metric?.value ?? idx} className={styles.row}>
                   <td className={styles.nameOverflow}>
@@ -196,7 +206,7 @@ export function ResultsTable(props: ResultsTableProps) {
                 </tr>
               );
             })}
-          {metrics.length === 0 && !state.isLoading && noMetricsMessages()}
+          {slicedMetrics.length === 0 && !isLoading && noMetricsMessages()}
         </>
       </tbody>
     </table>

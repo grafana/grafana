@@ -1,68 +1,97 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/state/helpers.ts
-import { AnyAction } from '@reduxjs/toolkit';
-
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 
-import { PrometheusDatasource } from '../../../../datasource';
+import { PrometheusLanguageProviderInterface } from '../../../../language_provider';
 import { PromMetricsMetadata } from '../../../../types';
 import { PromVisualQuery } from '../../../types';
-import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
+import { MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { MetricsModalMetadata, MetricsModalState, setFilteredMetricCount } from './state';
+import { MetricsModalState } from './state';
+//
+// export async function setMetrics(
+//   datasource: PrometheusDatasource,
+//   query: PromVisualQuery,
+//   initialMetrics?: string[]
+// ): Promise<MetricsModalMetadata> {
+//   // metadata is set in the metric select now
+//   // use this to disable metadata search and display
+//   let hasMetadata = true;
+//   const metadata = datasource.languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+//   if (metadata && Object.keys(metadata).length === 0) {
+//     hasMetadata = false;
+//   }
+//
+//   let nameHaystackDictionaryData: HaystackDictionary = {};
+//   let metaHaystackDictionaryData: HaystackDictionary = {};
+//
+//   // pass in metrics from getMetrics in the query builder, reduced in the metric select
+//   let metricsData: MetricsData | undefined;
+//
+//   metricsData = initialMetrics?.map((m: string) => {
+//     const metricData = buildMetricData(m, datasource);
+//
+//     const metaDataString = `${m}¦${metricData.description}`;
+//
+//     nameHaystackDictionaryData[m] = metricData;
+//     metaHaystackDictionaryData[metaDataString] = metricData;
+//
+//     return metricData;
+//   });
+//
+//   return {
+//     hasMetadata: hasMetadata,
+//     // metrics: metricsData ?? [],
+//     metaHaystackDictionary: metaHaystackDictionaryData,
+//     nameHaystackDictionary: nameHaystackDictionaryData,
+//     totalMetricCount: metricsData?.length ?? 0,
+//     filteredMetricCount: metricsData?.length ?? 0,
+//   };
+// }
 
-export async function setMetrics(
-  datasource: PrometheusDatasource,
-  query: PromVisualQuery,
-  initialMetrics?: string[]
-): Promise<MetricsModalMetadata> {
-  // metadata is set in the metric select now
-  // use this to disable metadata search and display
-  let hasMetadata = true;
-  const metadata = datasource.languageProvider.retrieveMetricsMetadata();
-  if (metadata && Object.keys(metadata).length === 0) {
-    hasMetadata = false;
-  }
-
-  let nameHaystackDictionaryData: HaystackDictionary = {};
-  let metaHaystackDictionaryData: HaystackDictionary = {};
-
-  // pass in metrics from getMetrics in the query builder, reduced in the metric select
-  let metricsData: MetricsData | undefined;
-
-  metricsData = initialMetrics?.map((m: string) => {
-    const metricData = buildMetricData(m, datasource);
-
-    const metaDataString = `${m}¦${metricData.description}`;
-
-    nameHaystackDictionaryData[m] = metricData;
-    metaHaystackDictionaryData[metaDataString] = metricData;
-
-    return metricData;
-  });
-
-  return {
-    isLoading: false,
-    hasMetadata: hasMetadata,
-    metrics: metricsData ?? [],
-    metaHaystackDictionary: metaHaystackDictionaryData,
-    nameHaystackDictionary: nameHaystackDictionaryData,
-    totalMetricCount: metricsData?.length ?? 0,
-    filteredMetricCount: metricsData?.length ?? 0,
-  };
-}
+// /**
+//  * Builds the metric data object with type and description
+//  *
+//  * @param   metric  The metric name
+//  * @param   datasource  The Prometheus datasource for mapping metradata to the metric name
+//  * @returns A MetricData object.
+//  */
+// function buildMetricData(metric: string, datasource: PrometheusDatasource): MetricData {
+//   let type = getMetadataType(metric, datasource.languageProvider.retrieveMetricsMetadata());
+//
+//   const description = getMetadataHelp(metric, datasource.languageProvider.retrieveMetricsMetadata());
+//
+//   ['histogram', 'summary'].forEach((t) => {
+//     if (description?.toLowerCase().includes(t) && type !== t) {
+//       type += ` (${t})`;
+//     }
+//   });
+//
+//   const oldHistogramMatch = metric.match(/^\w+_bucket$|^\w+_bucket{.*}$/);
+//
+//   if (type === 'histogram' && !oldHistogramMatch) {
+//     type = 'native histogram';
+//   }
+//
+//   const metricData: MetricData = {
+//     value: metric,
+//     type: type,
+//     description: description,
+//   };
+//
+//   return metricData;
+// }
 
 /**
  * Builds the metric data object with type and description
- *
- * @param   metric  The metric name
- * @param   datasource  The Prometheus datasource for mapping metradata to the metric name
- * @returns A MetricData object.
  */
-function buildMetricData(metric: string, datasource: PrometheusDatasource): MetricData {
-  let type = getMetadataType(metric, datasource.languageProvider.retrieveMetricsMetadata());
+export const generateMetricData = (
+  metric: string,
+  languageProvider: PrometheusLanguageProviderInterface
+): MetricData => {
+  let type = getMetadataType(metric, languageProvider.retrieveMetricsMetadata());
 
-  const description = getMetadataHelp(metric, datasource.languageProvider.retrieveMetricsMetadata());
+  const description = getMetadataHelp(metric, languageProvider.retrieveMetricsMetadata());
 
   ['histogram', 'summary'].forEach((t) => {
     if (description?.toLowerCase().includes(t) && type !== t) {
@@ -83,7 +112,7 @@ function buildMetricData(metric: string, datasource: PrometheusDatasource): Metr
   };
 
   return metricData;
-}
+};
 
 function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
   return metadata[metric]?.help;
@@ -93,80 +122,81 @@ function getMetadataType(metric: string, metadata: PromMetricsMetadata): string 
   return metadata[metric]?.type;
 }
 
-/**
- * The filtered and paginated metrics displayed in the modal
- * */
-export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispatch<AnyAction>) {
-  const filteredSorted: MetricsData = filterMetrics(state);
+// /**
+//  * The filtered and paginated metrics displayed in the modal
+//  * */
+// export function displayedMetrics(isLoading: boolean, state: MetricsModalState, dispatch: Dispatch<AnyAction>) {
+//   const filteredSorted: MetricsData = filterMetrics(state);
+//
+//   if (!isLoading && state.filteredMetricCount !== filteredSorted.length) {
+//     dispatch(setFilteredMetricCount(filteredSorted.length));
+//   }
+//
+//   return sliceMetrics(filteredSorted, state.pageNum, state.resultsPerPage);
+// }
 
-  if (!state.isLoading && state.filteredMetricCount !== filteredSorted.length) {
-    dispatch(setFilteredMetricCount(filteredSorted.length));
-  }
+// /**
+//  * Filter the metrics with all the options, fuzzy, type, null metadata
+//  */
+// function filterMetrics(state: MetricsModalState): MetricsData {
+//   let filteredMetrics: MetricsData = state.metrics;
+//
+//   if (state.fuzzySearchQuery && !state.useBackend) {
+//     if (state.fullMetaSearch) {
+//       filteredMetrics = state.metaHaystackOrder.map((needle: string) => state.metaHaystackDictionary[needle]);
+//     } else {
+//       filteredMetrics = state.nameHaystackOrder.map((needle: string) => state.nameHaystackDictionary[needle]);
+//     }
+//   }
+//
+//   if (state.selectedTypes.length > 0) {
+//     filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
+//       // Matches type
+//       const matchesSelectedType = state.selectedTypes.some((t) => {
+//         if (m.type && t.value) {
+//           return m.type.includes(t.value);
+//         }
+//
+//         if (!m.type && t.value === 'no type') {
+//           return true;
+//         }
+//
+//         return false;
+//       });
+//
+//       // when a user filters for type, only return metrics with defined types
+//       return matchesSelectedType;
+//     });
+//   }
+//
+//   if (!state.includeNullMetadata) {
+//     filteredMetrics = filteredMetrics.filter((m: MetricData) => {
+//       return m.type !== undefined && m.description !== undefined;
+//     });
+//   }
+//
+//   return filteredMetrics;
+// }
 
-  return sliceMetrics(filteredSorted, state.pageNum, state.resultsPerPage);
-}
-
-/**
- * Filter the metrics with all the options, fuzzy, type, null metadata
- */
-function filterMetrics(state: MetricsModalState): MetricsData {
-  let filteredMetrics: MetricsData = state.metrics;
-
-  if (state.fuzzySearchQuery && !state.useBackend) {
-    if (state.fullMetaSearch) {
-      filteredMetrics = state.metaHaystackOrder.map((needle: string) => state.metaHaystackDictionary[needle]);
-    } else {
-      filteredMetrics = state.nameHaystackOrder.map((needle: string) => state.nameHaystackDictionary[needle]);
-    }
-  }
-
-  if (state.selectedTypes.length > 0) {
-    filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
-      // Matches type
-      const matchesSelectedType = state.selectedTypes.some((t) => {
-        if (m.type && t.value) {
-          return m.type.includes(t.value);
-        }
-
-        if (!m.type && t.value === 'no type') {
-          return true;
-        }
-
-        return false;
-      });
-
-      // when a user filters for type, only return metrics with defined types
-      return matchesSelectedType;
-    });
-  }
-
-  if (!state.includeNullMetadata) {
-    filteredMetrics = filteredMetrics.filter((m: MetricData) => {
-      return m.type !== undefined && m.description !== undefined;
-    });
-  }
-
-  return filteredMetrics;
-}
-
-export function calculatePageList(state: MetricsModalState) {
-  if (!state.metrics.length) {
+export function calculatePageList(metricsData: MetricsData, resultsPerPage: number) {
+  if (!metricsData.length) {
     return [];
   }
 
-  const calcResultsPerPage: number = state.resultsPerPage === 0 ? 1 : state.resultsPerPage;
+  const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
 
-  const pages = Math.floor(filterMetrics(state).length / calcResultsPerPage) + 1;
+  // const pages = Math.floor(filterMetrics(state).length / calcResultsPerPage) + 1;
+  const pages = Math.floor(metricsData.length / calcResultsPerPage) + 1;
 
   return [...Array(pages).keys()].map((i) => i + 1);
 }
 
-function sliceMetrics(metrics: MetricsData, pageNum: number, resultsPerPage: number) {
-  const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
-  const start: number = pageNum === 1 ? 0 : (pageNum - 1) * calcResultsPerPage;
-  const end: number = start + calcResultsPerPage;
-  return metrics.slice(start, end);
-}
+// function sliceMetrics(metrics: MetricsData, pageNum: number, resultsPerPage: number) {
+//   const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
+//   const start: number = pageNum === 1 ? 0 : (pageNum - 1) * calcResultsPerPage;
+//   const end: number = start + calcResultsPerPage;
+//   return metrics.slice(start, end);
+// }
 
 export const calculateResultsPerPage = (results: number, defaultResults: number, max: number) => {
   if (results < 1) {

@@ -1,4 +1,13 @@
-import { createContext, FC, PropsWithChildren, useContext, useState } from 'react';
+import { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect, useState } from 'react';
+
+import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from '../../../constants';
+import { PrometheusLanguageProviderInterface } from '../../../language_provider';
+
+import { generateMetricData } from './state/helpers';
+import { MetricData, MetricsData } from './types';
+
+export const DEFAULT_RESULTS_PER_PAGE = 100;
+export const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
 type Settings = {
   useBackend: boolean;
@@ -8,14 +17,37 @@ type Settings = {
   fullMetaSearch: boolean;
 };
 
+type Pagination = {
+  pageNum: number;
+  resultsPerPage: number;
+};
+
 type MetricsModalContextValue = {
+  isLoading: boolean;
+  setIsLoading: (val: boolean) => void;
+  metricsData: MetricData[];
   settings: Settings;
   overrideSettings: (settings: Partial<Settings>) => void;
+  pagination: Pagination;
+  setPagination: (val: Pagination) => void;
 };
 
 const MetricsModalContext = createContext<MetricsModalContextValue | undefined>(undefined);
 
-export const MetricsModalContextProvider: FC<PropsWithChildren> = ({ children }) => {
+type MetricsModalContextProviderProps = {
+  languageProvider: PrometheusLanguageProviderInterface;
+};
+
+export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalContextProviderProps>> = ({
+  children,
+  languageProvider,
+}) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [metricsData, setMetricsData] = useState<MetricsData>([]);
+  const [pagination, setPagination] = useState<Pagination>({
+    pageNum: 1,
+    resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
+  });
   const [settings, setSettings] = useState<Settings>({
     disableTextWrap: false,
     hasMetadata: true,
@@ -24,14 +56,41 @@ export const MetricsModalContextProvider: FC<PropsWithChildren> = ({ children })
     fullMetaSearch: false,
   });
 
-  const overrideSettings = (override: Partial<Settings>) => {
-    setSettings({
-      ...settings,
-      ...override,
-    });
-  };
+  const overrideSettings = useCallback(
+    (override: Partial<Settings>) => {
+      setSettings({
+        ...settings,
+        ...override,
+      });
+    },
+    [settings]
+  );
 
-  return <MetricsModalContext.Provider value={{ settings, overrideSettings }}>{children}</MetricsModalContext.Provider>;
+  const fetchMetadata = useCallback(async () => {
+    setIsLoading(true);
+    const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+    if (Object.keys(metadata).length === 0) {
+      overrideSettings({ hasMetadata: false });
+      return;
+    }
+
+    setMetricsData(Object.keys(metadata).map((m) => generateMetricData(m, languageProvider)));
+    setIsLoading(false);
+  }, [languageProvider, overrideSettings]);
+
+  useEffect(() => {
+    fetchMetadata();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <MetricsModalContext.Provider
+      value={{ settings, overrideSettings, isLoading, setIsLoading, metricsData, pagination, setPagination }}
+    >
+      {children}
+    </MetricsModalContext.Provider>
+  );
 };
 
 export function useMetricsModal() {
