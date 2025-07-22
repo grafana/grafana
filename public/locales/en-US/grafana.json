@@ -13052,7 +13052,9 @@
       },
       "label-field": "Field",
       "label-format": "Format",
-      "label-substring-range": "Substring range"
+      "label-substring-range": "Substring range",
+      "label-substring-prefix": "Prefix",
+      "label-substring-suffix": "Suffix"
     },
     "format-string-transformer-editor": {
       "description": {

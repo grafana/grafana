@@ -18,6 +18,7 @@ export enum FormatStringOutput {
   KebabCase = 'Kebab Case',
   Trim = 'Trim',
   Substring = 'Substring',
+  Affix = 'Affix'
 }
 
 export interface FormatStringTransformerOptions {
@@ -25,6 +26,8 @@ export interface FormatStringTransformerOptions {
   substringStart: number;
   substringEnd: number;
   outputFormat: FormatStringOutput;
+  stringPrefix: string;
+  stringSuffix: string;
 }
 
 const splitToCapitalWords = (input: string) => {
@@ -60,6 +63,8 @@ export const getFormatStringFunction = (options: FormatStringTransformerOptions)
           return value.trim();
         case FormatStringOutput.Substring:
           return value.substring(options.substringStart, options.substringEnd);
+        case FormatStringOutput.Affix:
+          return (options.stringPrefix ?? "") + value + (options.stringSuffix ?? "");          
       }
     });
 };

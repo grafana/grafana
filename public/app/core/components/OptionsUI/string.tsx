@@ -6,9 +6,10 @@ import { Input, TextArea } from '@grafana/ui';
 
 interface Props extends StandardEditorProps<string, StringFieldConfigSettings> {
   suffix?: ReactNode;
+  preserveWhitespace?: boolean;
 }
 
-export const StringValueEditor = ({ value, onChange, item, suffix }: Props) => {
+export const StringValueEditor = ({ value, onChange, item, suffix, preserveWhitespace}: Props) => {
   const Component = item.settings?.useTextarea ? TextArea : Input;
   const onValueChange = useCallback(
     (
@@ -20,18 +21,18 @@ export const StringValueEditor = ({ value, onChange, item, suffix }: Props) => {
       if ('key' in e) {
         // handling keyboard event
         if (e.key === 'Enter' && !item.settings?.useTextarea) {
-          nextValue = e.currentTarget.value.trim();
+          nextValue = (preserveWhitespace ?? false) ? e.currentTarget.value : e.currentTarget.value.trim();
         }
       } else {
         // handling blur event
-        nextValue = e.currentTarget.value.trim();
+        nextValue = (preserveWhitespace ?? false) ? e.currentTarget.value : e.currentTarget.value.trim();
       }
       if (nextValue === value) {
         return; // no change
       }
       onChange(nextValue === '' ? undefined : nextValue);
     },
-    [value, item.settings?.useTextarea, onChange]
+    [value, item.settings?.useTextarea, onChange, preserveWhitespace]
   );
 
   return (
