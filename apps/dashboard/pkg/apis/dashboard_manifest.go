@@ -18,6 +18,8 @@ import (
 	v2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
 	AppName: "dashboard",
 	Group:   "dashboard.grafana.app",
