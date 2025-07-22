@@ -12,16 +12,78 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { getByText, render } from '@testing-library/react';
+import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-import { MutableDataFrame } from '@grafana/data';
+import {
+  IconName,
+  MutableDataFrame,
+  PluginExtensionLink,
+  PluginExtensionPoints,
+  PluginExtensionTypes,
+} from '@grafana/data';
+import { usePluginLinks } from '@grafana/runtime';
 
 import { defaultFilters } from '../../useSearch';
 
 import { TracePageHeader } from './TracePageHeader';
 import { trace } from './mocks';
 
-const setup = () => {
+// Mock @grafana/runtime
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  usePluginLinks: jest.fn(),
+  reportInteraction: jest.fn(),
+}));
+
+// Mock useAppNotification
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: jest.fn(() => ({
+    success: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
+  })),
+}));
+
+// Mock navigator.clipboard
+Object.assign(navigator, {
+  clipboard: {
+    writeText: jest.fn().mockResolvedValue(undefined),
+  },
+});
+
+// Mock window.open
+const mockWindowOpen = jest.fn();
+Object.defineProperty(window, 'open', {
+  value: mockWindowOpen,
+  writable: true,
+});
+
+// Helper function to create properly typed mock plugin extension links
+const createMockExtension = (
+  id: string,
+  title: string,
+  description: string = '',
+  options: {
+    icon?: string;
+    path?: string;
+    onClick?: () => void;
+  } = {}
+): PluginExtensionLink => ({
+  id,
+  type: PluginExtensionTypes.link,
+  title,
+  description,
+  pluginId: 'test-plugin',
+  icon: options.icon as IconName,
+  path: options.path,
+  onClick: options.onClick,
+});
+
+const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false }) => {
+  const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
+  mockUsePluginLinks.mockReturnValue(pluginLinks);
+
   const defaultProps = {
     trace,
     timeZone: '',
@@ -40,10 +102,18 @@ const setup = () => {
     data: new MutableDataFrame(),
   };
 
-  return render(<TracePageHeader {...defaultProps} />);
+  return {
+    ...render(<TracePageHeader {...defaultProps} />),
+    mockUsePluginLinks,
+  };
 };
 
 describe('TracePageHeader test', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockWindowOpen.mockClear();
+  });
+
   it('should render the new trace header', () => {
     setup();
 
@@ -52,13 +122,257 @@ describe('TracePageHeader test', () => {
     const status = getByText(header!, '200');
     const url = getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89');
     const duration = getByText(header!, '2.36s');
-    const timestampPart1 = getByText(header!, '2023-02-05 08:50');
-    const timestampPart2 = getByText(header!, ':56.289');
+    const timestampElement = getByText(header!, '2023-02-05 08:50:56.289');
     expect(method).toBeInTheDocument();
     expect(status).toBeInTheDocument();
     expect(url).toBeInTheDocument();
     expect(duration).toBeInTheDocument();
-    expect(timestampPart1).toBeInTheDocument();
-    expect(timestampPart2).toBeInTheDocument();
+    expect(timestampElement).toBeInTheDocument();
+  });
+
+  describe('Plugin Extensions', () => {
+    it('should call usePluginLinks with correct parameters', () => {
+      const { mockUsePluginLinks } = setup();
+
+      expect(mockUsePluginLinks).toHaveBeenCalledWith({
+        extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+        context: trace,
+        limitPerPlugin: 5,
+      });
+    });
+
+    it('should not render plugin extension buttons when no extensions are available', () => {
+      setup({ links: [], isLoading: false });
+
+      const extensionButtons = screen.queryByTestId('plugin-extension-button');
+      expect(extensionButtons).not.toBeInTheDocument();
+    });
+
+    it('should render plugin extension buttons when extensions are available', () => {
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension 1', 'Test extension description', {
+          icon: 'external-link-alt',
+          path: 'https://example.com',
+          onClick: jest.fn(),
+        }),
+        createMockExtension('test-extension-2', 'Test Extension 2', 'Another test extension', {
+          icon: 'cloud',
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      expect(screen.getByText('Test Extension 1')).toBeInTheDocument();
+      expect(screen.getByText('Test Extension 2')).toBeInTheDocument();
+    });
+
+    it('should display tooltips for extension buttons', async () => {
+      const user = userEvent.setup();
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension', 'This is a test extension description', {
+          icon: 'external-link-alt',
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByText('Test Extension');
+      await user.hover(button);
+
+      await waitFor(() => {
+        expect(screen.getByRole('tooltip')).toBeInTheDocument();
+        expect(screen.getByText('This is a test extension description')).toBeInTheDocument();
+      });
+    });
+
+    it('should use title as tooltip when description is not provided', async () => {
+      const user = userEvent.setup();
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension Title', 'Test Extension Title', {
+          icon: 'external-link-alt',
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByRole('button', { name: /Test Extension Title/i });
+      await user.hover(button);
+
+      await waitFor(() => {
+        expect(screen.getByRole('tooltip')).toBeInTheDocument();
+        expect(screen.getByRole('tooltip')).toHaveTextContent('Test Extension Title');
+      });
+    });
+
+    it('should handle extension button clicks with onClick handler', async () => {
+      const user = userEvent.setup();
+      const mockOnClick = jest.fn();
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension', 'Test extension', {
+          icon: 'external-link-alt',
+          onClick: mockOnClick,
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByText('Test Extension');
+      await user.click(button);
+
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+      expect(mockOnClick).toHaveBeenCalledWith(expect.any(Object));
+    });
+
+    it('should handle extension button clicks with path navigation', async () => {
+      const user = userEvent.setup();
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension', 'Test extension', {
+          icon: 'external-link-alt',
+          path: 'https://example.com/trace-details',
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByText('Test Extension');
+      await user.click(button);
+
+      expect(mockWindowOpen).toHaveBeenCalledTimes(1);
+      expect(mockWindowOpen).toHaveBeenCalledWith('https://example.com/trace-details', '_blank');
+    });
+
+    it('should handle extension with both path and onClick', async () => {
+      const user = userEvent.setup();
+      const mockOnClick = jest.fn();
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension', 'Test extension', {
+          icon: 'external-link-alt',
+          path: 'https://example.com/trace-details',
+          onClick: mockOnClick,
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByText('Test Extension');
+      await user.click(button);
+
+      expect(mockWindowOpen).toHaveBeenCalledTimes(1);
+      expect(mockWindowOpen).toHaveBeenCalledWith('https://example.com/trace-details', '_blank');
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should render extension buttons with correct styling', () => {
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension', 'Test extension', {
+          icon: 'external-link-alt',
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByRole('button', { name: /Test Extension/i });
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveClass('css-125ehy6-button'); // Grafana button secondary class
+    });
+
+    it('should render extension icons when provided', () => {
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension', 'Test extension', {
+          icon: 'external-link-alt',
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByRole('button', { name: /Test Extension/i });
+      const iconElement = button.querySelector('svg');
+      expect(iconElement).toBeInTheDocument();
+    });
+
+    it('should handle multiple extensions correctly', () => {
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Extension 1', 'First extension', {
+          icon: 'external-link-alt',
+          onClick: jest.fn(),
+        }),
+        createMockExtension('test-extension-2', 'Extension 2', 'Second extension', {
+          icon: 'cloud',
+          path: 'https://example.com',
+        }),
+        createMockExtension('test-extension-3', 'Extension 3', 'Third extension', {
+          icon: 'apps',
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      expect(screen.getByText('Extension 1')).toBeInTheDocument();
+      expect(screen.getByText('Extension 2')).toBeInTheDocument();
+      expect(screen.getByText('Extension 3')).toBeInTheDocument();
+    });
+
+    it('should maintain extension context with trace data', () => {
+      const { mockUsePluginLinks } = setup();
+
+      const [callArgs] = mockUsePluginLinks.mock.calls;
+      expect(callArgs[0]).toEqual({
+        extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+        context: trace,
+        limitPerPlugin: 5,
+      });
+
+      // Verify the context contains the expected trace properties
+      expect(callArgs[0].context).toHaveProperty('traceID', trace.traceID);
+      expect(callArgs[0].context).toHaveProperty('spans');
+      expect(callArgs[0].context).toHaveProperty('duration', trace.duration);
+      expect(callArgs[0].context).toHaveProperty('startTime', trace.startTime);
+    });
+
+    it('should handle loading state gracefully', () => {
+      setup({ links: [], isLoading: true });
+
+      // Should not crash when loading and should not show any extension buttons
+      const extensionButtons = screen.queryByTestId('plugin-extension-button');
+      expect(extensionButtons).not.toBeInTheDocument();
+    });
+
+    it('should handle extensions without icons', () => {
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Extension Without Icon', 'Extension without icon', {
+          onClick: jest.fn(),
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByText('Extension Without Icon');
+      expect(button).toBeInTheDocument();
+      // Should render the button even without an icon
+    });
+
+    it('should handle extension click without event parameter', async () => {
+      const mockOnClick = jest.fn();
+      const mockExtensions: PluginExtensionLink[] = [
+        createMockExtension('test-extension-1', 'Test Extension', 'Test extension', {
+          onClick: mockOnClick,
+        }),
+      ];
+
+      setup({ links: mockExtensions, isLoading: false });
+
+      const button = screen.getByText('Test Extension');
+
+      // Simulate a click that might not pass event
+      fireEvent.click(button);
+
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
   });
 });

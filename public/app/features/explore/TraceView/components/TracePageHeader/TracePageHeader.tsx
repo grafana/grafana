@@ -16,9 +16,16 @@ import { css, cx } from '@emotion/css';
 import { memo, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { CoreApp, DataFrame, dateTimeFormat, dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
+import {
+  CoreApp,
+  DataFrame,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
+  GrafanaTheme2,
+  PluginExtensionPoints,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Button, Dropdown, Icon, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -86,6 +93,13 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const serviceCount = useMemo(() => {
     return new Set(trace.spans.map((span) => span.process?.serviceName)).size;
   }, [trace.spans]);
+
+  // Get plugin extensions for trace view header actions
+  const { links: extensionLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+    context: trace,
+    limitPerPlugin: 5,
+  });
 
   let statusColor: BadgeColor = 'green';
   if (status && status.length > 0) {
@@ -175,6 +189,30 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
               />
             </Dropdown>
           </div>
+
+          {/* Plugin extension actions */}
+          {extensionLinks.length > 0 && (
+            <div className={styles.actions}>
+              {extensionLinks.map((link) => (
+                <Tooltip key={link.id} content={link.description || link.title}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    fill="outline"
+                    icon={link.icon}
+                    onClick={(event) => {
+                      if (link.path) {
+                        window.open(link.path, '_blank');
+                      }
+                      link.onClick?.(event);
+                    }}
+                  >
+                    {link.title}
+                  </Button>
+                </Tooltip>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
