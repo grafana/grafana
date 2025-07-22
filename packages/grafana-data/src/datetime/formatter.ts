@@ -28,7 +28,7 @@ function toDate(dateInUtc: DateTimeInput): Date {
 /**
  * Converts a Grafana timezone string to an IANA timezone string.
  */
-function toIANATimezone(grafanaTimezone: string) {
+export function toIANATimezone(grafanaTimezone: string) {
   // Intl APIs will use the browser's timezone by default (if tz is undefined)
   if (grafanaTimezone === 'browser') {
     return undefined;
