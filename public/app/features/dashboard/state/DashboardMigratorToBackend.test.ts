@@ -126,11 +126,7 @@ describe('Backend / Frontend result comparison', () => {
       // This avoid issues with the default values in the frontend, wheter they were set in the input JSON or not.
       const frontendMigrationResult = new DashboardModel(jsonInput).getSaveModelClone();
       const backendMigrationResult = new DashboardModel(backendOutput).getSaveModelClone();
-      if (jsonInput.schemaVersion === 27) {
-        console.log('backendOutput', backendOutput);
-        console.log('frontendMigrationResult', frontendMigrationResult);
-        console.log('backendMigrationResult', backendMigrationResult);
-      }
+
       expect(backendMigrationResult).toMatchObject(frontendMigrationResult);
     });
   });

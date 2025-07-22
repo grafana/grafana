@@ -107,9 +107,7 @@
           "calcs": [
             "mean"
           ]
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
+        }
       },
       "targets": [
         {
@@ -121,7 +119,7 @@
           "refId": "A"
         }
       ],
-      "type": "gauge"
+      "type": "stat"
     },
     {
       "aliasYAxis": {

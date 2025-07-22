@@ -102,7 +102,7 @@ func TestV28(t *testing.T) {
 			},
 		},
 		{
-			name: "migrate angular singlestat to gauge panel",
+			name: "migrate angular singlestat to stat panel with gauge options",
 			input: map[string]interface{}{
 				"schemaVersion": 27,
 				"panels": []interface{}{
@@ -132,17 +132,15 @@ func TestV28(t *testing.T) {
 				"panels": []interface{}{
 					map[string]interface{}{
 						"id":              1,
-						"type":            "gauge",
+						"type":            "stat",
 						"autoMigrateFrom": "singlestat",
 						"options": map[string]interface{}{
 							"reduceOptions": map[string]interface{}{
 								"calcs": []string{"lastNotNull"},
 							},
-							"orientation":          "horizontal",
-							"colorMode":            "background",
-							"graphMode":            "area",
-							"showThresholdMarkers": true,
-							"showThresholdLabels":  false,
+							"orientation": "horizontal",
+							"colorMode":   "background",
+							"graphMode":   "area",
 						},
 						"fieldConfig": map[string]interface{}{
 							"defaults": map[string]interface{}{

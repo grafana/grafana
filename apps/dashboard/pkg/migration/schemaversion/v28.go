@@ -94,9 +94,10 @@ func processPanelsV28(panels []interface{}, panelPlugins []PanelPluginInfo) {
 	}
 }
 
-// migrateSinglestatPanel migrates a singlestat panel to either stat or gauge panel
+// migrateSinglestatPanel migrates a singlestat panel to a stat panel
 func migrateSinglestatPanel(panel map[string]interface{}, panelPlugins []PanelPluginInfo) {
 	originalType := panel["type"].(string)
+	targetType := "stat"
 
 	// Check if grafana-singlestat-panel plugin exists
 	for _, info := range panelPlugins {
@@ -108,14 +109,14 @@ func migrateSinglestatPanel(panel map[string]interface{}, panelPlugins []PanelPl
 		}
 	}
 
-	// Determine target panel type based on gauge configuration
-	// This matches the frontend logic: (panel as any).gauge?.show
-	targetType := "stat"
-	if gauge, ok := panel["gauge"].(map[string]interface{}); ok {
-		if show, ok := gauge["show"].(bool); ok && show {
-			targetType = "gauge"
-		}
-	}
+	// NOTE: DashboardMigrator's migrateSinglestat function has some logic that never gets called
+	// migrateSinglestat will only run if (panel.type === 'singlestat')
+	// but this will not be the case because PanelModel runs restoreModel in the constructor
+	// and since singlestat is in the autoMigrateAngular map, it will be migrated to stat,
+	// and therefore migrateSinglestat will never run so this logic inside of it will never apply
+	// if ((panel as any).gauge?.show) {
+	// 	gaugePanelPlugin.meta = config.panels['gauge']
+	// 	panel.changePlugin(gaugePanelPlugin)
 
 	// Store original type for migration context (only for stat/gauge migration)
 	// This matches the frontend behavior where autoMigrateFrom is set in PanelModel.restoreModel
@@ -218,36 +219,6 @@ func migrateFromAngularSinglestat(panel map[string]interface{}, defaults map[str
 	// Migrate value mappings
 	if valueMappings, ok := angularOpts["valueMappings"].([]interface{}); ok {
 		migrateValueMappings(defaults, valueMappings)
-	}
-
-	// Migrate gauge configuration
-	if gauge, ok := angularOpts["gauge"].(map[string]interface{}); ok {
-		if show, ok := gauge["show"].(bool); ok && show {
-			if minValue, ok := gauge["minValue"]; ok {
-				defaults["min"] = minValue
-			}
-			if maxValue, ok := gauge["maxValue"]; ok {
-				defaults["max"] = maxValue
-			}
-
-			// Add gauge-specific options
-			if targetType == "gauge" {
-				if thresholdMarkers, ok := gauge["thresholdMarkers"]; ok {
-					options["showThresholdMarkers"] = thresholdMarkers
-				}
-				if thresholdLabels, ok := gauge["thresholdLabels"]; ok {
-					options["showThresholdLabels"] = thresholdLabels
-				}
-			}
-		}
-	}
-
-	// Preserve gauge configuration for gauge panels (frontend expects this)
-	// Based on frontend behavior where gauge config is preserved
-	if targetType == "gauge" {
-		if gauge, ok := angularOpts["gauge"].(map[string]interface{}); ok {
-			panel["gauge"] = gauge
-		}
 	}
 
 	// Migrate sparkline configuration
@@ -530,7 +501,7 @@ func cleanupAngularProperties(panel map[string]interface{}, originalType string)
 		delete(panel, "decimals")
 		delete(panel, "thresholds")
 		delete(panel, "colors")
-		delete(panel, "gauge") // <-- always remove gauge, even for gauge panels
+		delete(panel, "gauge")
 		delete(panel, "sparkline")
 		delete(panel, "colorBackground")
 		delete(panel, "colorValue")
