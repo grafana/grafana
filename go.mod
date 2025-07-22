@@ -566,7 +566,6 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
@@ -599,3 +598,25 @@ exclude k8s.io/client-go v12.0.0+incompatible
 
 // k8s.io/apiserver fails due to incompatibility with cel-go 0.23, can be removed once apiserver v0.32.3 is released.
 replace github.com/google/cel-go => github.com/google/cel-go v0.22.1
+
+// Force local workspace modules instead of external versions to prevent Go version cascade
+// This prevents external dependencies from overriding workspace modules during go mod tidy
+replace github.com/grafana/grafana/pkg/storage/unified/resource => ./pkg/storage/unified/resource
+
+replace github.com/grafana/grafana/pkg/storage/unified/apistore => ./pkg/storage/unified/apistore
+
+replace github.com/grafana/grafana/apps/advisor => ./apps/advisor
+
+replace github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
+
+replace github.com/grafana/grafana/apps/investigations => ./apps/investigations
+
+replace github.com/grafana/grafana/apps/playlist => ./apps/playlist
+
+replace github.com/grafana/grafana/pkg/aggregator => ./pkg/aggregator
+
+replace github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
+
+replace github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
+
+replace github.com/grafana/grafana/pkg/semconv => ./pkg/semconv
