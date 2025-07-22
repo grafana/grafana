@@ -129,26 +129,26 @@ Changes made to a query in Code mode will not transfer to Builder mode and will 
 
 You can add macros to your queries to simplify the syntax and enable dynamic elements, such as date range filters.
 
-| Macro example                                         | Description                                                                                                                                                                                                                             |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `$__time(dateColumn)`                                 | Replaces the value with an expression to convert to a UNIX timestamp and renames the column to `time_sec`. It also helps to recognize time column as required in Time Series format. Example: _UNIX_TIMESTAMP(dateColumn) AS time_sec_. |
-| `$__timeEpoch(dateColumn)`                            | Replaces the value with an expression to convert to a UNIX Epoch timestamp and renames the column to `time_sec`. Example: _UNIX_TIMESTAMP(dateColumn) AS time_sec_.                                                                     |
-| `$__timeFilter(dateColumn)`                           | Replaces the value with a time range filter using the specified column name, ensuring only the data that lies between the range is fetched. Example: _dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)_       |
-| `$__timeFrom()`                                       | Replaces the value with the start of the currently active time selection. Example: _FROM_UNIXTIME(1494410783)_                                                                                                                          |
-| `$__timeTo()`                                         | Replaces the value with the end of the currently active time selection. Example: _FROM_UNIXTIME(1494410983)_                                                                                                                            |
-| `$__timeGroup(dateColumn,'5m')`                       | Replaces the value with an expression suitable for use in a GROUP BY clause and creates the bucket timestamps of fixed interval. Example: *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),\*                      |
-| `$__timeGroup(dateColumn,'5m', 0)`                    | Same as the `$__timeGroup(dateColumn,'5m')` macro, but includes a fill parameter to ensure missing points in the series are added by Grafana, using 0 as the default value. **This applies only to time series queries.**               |
-| `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as the `$__timeGroup(dateColumn,'5m', 0)` but NULL is used as the value for missing points. **This applies only to time series queries.**                                                                                          |
-| `$__timeGroup(dateColumn,'5m', previous)`             | Same as the `$__timeGroup(dateColumn,'5m', previous)` macro, but uses the previous value in the series as the fill value. If no previous value exists,`NULL` will be used. **This applies only to time series queries.**                |
-| `$__timeGroupAlias(dateColumn,'5m')`                  | Replaces the value identical to $\_\_timeGroup but with an added column alias.                                                                                                                                                          |
-| `$__unixEpochFilter(dateColumn)`                      | Replaces the value by a time range filter using the specified column name with times represented as a UNIX timestamp. Example: _dateColumn > 1494410783 AND dateColumn < 1494497183_                                                    |
-| `$__unixEpochFrom()`                                  | Replaces the value with the start of the currently active time selection as a UNIX timestamp. Example: _1494410783_                                                                                                                     |
-| `$__unixEpochTo()`                                    | Replaces the value with the end of the currently active time selection as UNIX timestamp. Example: _1494497183_                                                                                                                         |
-| `$__unixEpochNanoFilter(dateColumn)`                  | Replaces the value with a time range filter using the specified column name with time represented as a nanosecond timestamp. Example: _dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872_                           |
-| `$__unixEpochNanoFrom()`                              | Replaces the value with the start of the currently active time selection as nanosecond timestamp. Example: _1494410783152415214_                                                                                                        |
-| `$__unixEpochNanoTo()`                                | Replaces the value with the end of the currently active time selection as nanosecond timestamp. Example: _1494497183142514872_                                                                                                          |
-| `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as $\_\_timeGroup but for times stored as Unix timestamp. **Note that `fillMode` only works with time series queries.**                                                                                                            |
-| `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as $\_\_timeGroup but also adds a column alias. **Note that `fillMode` only works with time series queries.**                                                                                                                      |
+| Macro example                                         | Description                                                                                                                                                                                                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$__time(dateColumn)`                                 | Replaces the value with an expression to convert to a UNIX timestamp and renames the column to `Time`. It also helps to recognize the `time` column, as required in Time Series format. Example: _UNIX_TIMESTAMP(dateColumn) AS time_sec_.                                                            |
+| `$__timeEpoch(dateColumn)`                            | Replaces the value with an expression to convert to a UNIX Epoch timestamp and renames the column to `time_sec`. Example: _UNIX_TIMESTAMP(dateColumn) AS time_sec_.                                                       |
+| `$__timeFilter(dateColumn)`                           | Applies a time range filter using the specified column name and fetches only the data that falls within that range. Example: _dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)_                                 |
+| `$__timeFrom()`                                       | Replaces the value with the start of the currently active time selection. Example: _FROM_UNIXTIME(1494410783)_                                                                                                            |
+| `$__timeTo()`                                         | Replaces the value with the end of the currently active time selection. Example: _FROM_UNIXTIME(1494410983)_                                                                                                              |
+| `$__timeGroup(dateColumn,'5m')`                       | Replaces the value with an expression suitable for use in a GROUP BY clause and creates the bucket timestamps at a fixed interval. Example: *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),\*                                                   |
+| `$__timeGroup(dateColumn,'5m', 0)`                    | Same as the `$__timeGroup(dateColumn,'5m')` macro, but includes a fill parameter to ensure missing points in the series are added by Grafana, using 0 as the default value. **This applies only to time series queries.** |
+| `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as the `$__timeGroup(dateColumn,'5m', 0)` but NULL is used as the value for missing points. **This applies only to time series queries.**                                                                            |
+| `$__timeGroup(dateColumn,'5m', previous)`             | Same as the `$__timeGroup(dateColumn,'5m', previous)` macro, but uses the previous value in the series as the fill value. If no previous value exists,`NULL` will be used. **This applies only to time series queries.**  |
+| `$__timeGroupAlias(dateColumn,'5m')`                  | Replaces the value identical to $\_\_timeGroup but with an added column alias.                                                                                                                                            |
+| `$__unixEpochFilter(dateColumn)`                      | Replaces the value by a time range filter using the specified column name with times represented as a UNIX timestamp. Example: _dateColumn > 1494410783 AND dateColumn < 1494497183_                                      |
+| `$__unixEpochFrom()`                                  | Replaces the value with the start of the currently active time selection as a UNIX timestamp. Example: _1494410783_                                                                                                       |
+| `$__unixEpochTo()`                                    | Replaces the value with the end of the currently active time selection as UNIX timestamp. Example: _1494497183_                                                                                                           |
+| `$__unixEpochNanoFilter(dateColumn)`                  | Replaces the value with a time range filter using the specified column name with time represented as a nanosecond timestamp. Example: _dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872_             |
+| `$__unixEpochNanoFrom()`                              | Replaces the value with the start of the currently active time selection as nanosecond timestamp. Example: _1494410783152415214_                                                                                          |
+| `$__unixEpochNanoTo()`                                | Replaces the value with the end of the currently active time selection as nanosecond timestamp. Example: _1494497183142514872_                                                                                            |
+| `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as $\_\_timeGroup but for times stored as Unix timestamp. **Note that `fillMode` only works with time series queries.**                                                                                              |
+| `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as $\_\_timeGroup but also adds a column alias. **Note that `fillMode` only works with time series queries.**                                                                                                        |
 
 ## Table SQL queries
 
@@ -210,7 +210,7 @@ Table panel result:
 
 {{< figure alt="output of time macro" src="/media/docs/grafana/data-sources/mysql/screenshot-time-and-timefilter-macro.png" >}}
 
-Given the result in the following example, two columns named _Time_ and _value_double_ are returned, representing the associated data within fixed timestamps. It doesn’t filter data with respect to the time range and returns all the rows in the table.
+In the following example, the result includes two columns, `Time` and `value_double`, which represent the data associated with fixed timestamps. This query does not apply a time range filter and returns all rows from the table.
 
 **Example with `$__timeFilter(dateColumn)` Macro:**
 
@@ -227,7 +227,7 @@ Table panel result:
 
 {{< figure alt="output of time filter macro" src="/media/docs/grafana/data-sources/mysql/screenshot-time-and-timefilter-macro.png" >}}
 
-Given the result in the following example is identical to the previous example except that you can filter the data using the Grafana time picker function.
+This example returns the same result as the previous one, but adds support for filtering data using the Grafana time picker.
 
 **Example with `$__timeGroup(dateColumn,'5m')` Macro:**
 
@@ -264,7 +264,7 @@ Table panel result:
 
 {{< figure alt="output of time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro.png" >}}
 
-The following result is similar to the prior `$__timeGroup(dateColumn,'5m')` macro’s result where the only difference is a built-in time column alias feature.
+The following result is similar to the result of the `$__timeGroup(dateColumn,'5m')` macro, except it uses a built-in alias for the time column.
 To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U).
 
 **Example with `$__timeGroupAlias` Macro to convert null values to zero instead:**
@@ -285,7 +285,7 @@ Table panel result:
 
 {{< figure alt="output of null values to zero case, for time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro-conv-null-to-zero.png" >}}
 
-Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the _Time_ column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U) to display the value of `${__field.labels.hostname}`.
+Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the `Time` column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U) to display the value of `${__field.labels.hostname}`.
 
 **Example with multiple columns for `$__timeGroupAlias(dateColumn,'5m')` Macro:**
 
@@ -304,7 +304,7 @@ Table panel result:
 
 {{< figure alt="output with multiple colummns for time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro-multiple-columns.png" >}}
 
-Multiple columns representing minimum and maximum values within the defined range.
+The query returns multiple columns representing minimum and maximum values within the defined range.
 
 ## Templating
 
@@ -404,7 +404,7 @@ Read more about variable formatting options in the [Variables](ref:variable-synt
 
 [Annotations](ref:annotate-visualizations) allow you to overlay rich event information on top of graphs. You add annotation queries via the **Dashboard settings > Annotations view**.
 
-**Example query using a `time` column with epoch values:**
+**Example query using a`time` column with epoch values:**
 
 ```sql
 SELECT
