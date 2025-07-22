@@ -153,7 +153,7 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
  * @internal
  * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
  */
-export function getTextAlign(field?: Field): Property.TextAlign {
+export function getTextAlign(field?: Field): Property.TextAlign | undefined {
   if (!field) {
     return 'inherit';
   }
@@ -161,21 +161,19 @@ export function getTextAlign(field?: Field): Property.TextAlign {
   const custom: TableFieldOptionsType | undefined = field.config.custom;
   if (custom?.align && custom.align !== 'auto') {
     return (
-      (
-        {
-          right: 'right',
-          left: 'left',
-          center: 'center',
-        } as const
-      )[custom.align] ?? 'inherit'
-    );
+      {
+        right: 'right',
+        left: 'left',
+        center: 'center',
+      } as const
+    )[custom.align];
   }
 
   if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
     return 'right';
   }
 
-  return 'inherit';
+  return;
 }
 
 /**
