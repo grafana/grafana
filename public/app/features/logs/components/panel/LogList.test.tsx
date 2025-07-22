@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder, store } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { createLogRow } from '../mocks/logRow';
@@ -17,6 +18,7 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+    reportInteraction: jest.fn(),
     config: {
       ...jest.requireActual('@grafana/runtime').config,
       featureToggles: {
@@ -341,6 +343,22 @@ describe('LogList', () => {
 
       expect(screen.getByText('log message 1')).toBeInTheDocument();
       expect(screen.getByText('some text')).toBeInTheDocument();
+    });
+  });
+  describe('Interactions', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+      jest.mocked(reportInteraction).mockClear();
+    });
+    test('Reports interactions ', async () => {
+      render(<LogList {...defaultProps} />);
+      await screen.findByText('log message 1');
+      expect(reportInteraction).toHaveBeenCalled();
+    });
+    test('Can disable interaction report ', async () => {
+      render(<LogList {...defaultProps} noInteractions={true} />);
+      await screen.findByText('log message 1');
+      expect(reportInteraction).not.toHaveBeenCalled();
     });
   });
 });
