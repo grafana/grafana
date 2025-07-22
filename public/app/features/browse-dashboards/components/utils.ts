@@ -106,18 +106,17 @@ export function collectSelectedItems(
   return targets;
 }
 
-export function canEditItemType(
-  itemKind: string,
-  { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards }: BrowseDashboardsPermissions
-): boolean {
+export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions) {
+  const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
   return itemKind === 'folder'
     ? Boolean(canEditFolders && canDeleteFolders)
     : Boolean(canEditDashboards && canDeleteDashboards);
 }
 
-export function canSelectItems(permissions: BrowseDashboardsPermissions): boolean {
+export function canSelectItems(permissions: BrowseDashboardsPermissions) {
+  const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
   // Users can select items only if they have both edit and delete permissions for at least one item type
-  const canSelectFolders = permissions.canEditFolders && permissions.canDeleteFolders;
-  const canSelectDashboards = permissions.canEditDashboards && permissions.canDeleteDashboards;
+  const canSelectFolders = canEditFolders || canDeleteFolders;
+  const canSelectDashboards = canEditDashboards || canDeleteDashboards;
   return Boolean(canSelectFolders || canSelectDashboards);
 }
