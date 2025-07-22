@@ -182,7 +182,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     // Short-circuit: if any filter has '=' operator with missing field, reject all rows
     const hasImpossibleFilter = filterFieldIndices.some(({ fieldIndex }) => fieldIndex === -1);
     if (hasImpossibleFilter) {
-      return this.reconstructDataFrame(frame, new Set<number>());
+      return this.reconstructDataFrame(frame);
     }
 
     const matchingRows = new Set<number>();
@@ -255,12 +255,15 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
    * Reconstruct DataFrame with only matching rows
    * Optimized to avoid repeated array operations
    */
-  private reconstructDataFrame(frame: DataFrame, matchingRows: Set<number>): DataFrame {
+  private reconstructDataFrame(frame: DataFrame, matchingRows?: Set<number>): DataFrame {
+    // Default to empty set if no matching rows provided (reject all rows)
+    const rows = matchingRows ?? new Set<number>();
+
     const fields: Field[] = frame.fields.map((field) => {
       // Pre-allocate array and use direct assignment for better performance with large datasets
-      const newValues = new Array(matchingRows.size);
+      const newValues = new Array(rows.size);
       let i = 0;
-      for (const rowIndex of matchingRows) {
+      for (const rowIndex of rows) {
         newValues[i++] = field.values[rowIndex];
       }
 
@@ -274,7 +277,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     return {
       ...frame,
       fields: fields,
-      length: matchingRows.size,
+      length: rows.size,
     };
   }
 
