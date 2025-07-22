@@ -47,21 +47,21 @@ export function AdditionalSettings() {
     <K extends keyof typeof settings>(key: K) => {
       updateSettings({ [key]: !settings[key] });
     },
-    [settings, updateSettings],
+    [settings, updateSettings]
   );
 
   const backendTooltipContent = useMemo(
     () =>
       t(
         'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
-        'Filter metric names by regex search, using an additional call on the Prometheus API.',
+        'Filter metric names by regex search, using an additional call on the Prometheus API.'
       ),
-    [],
+    []
   );
 
   const isMetadataSearchDisabled = useMemo(
     () => settings.useBackend || !settings.hasMetadata,
-    [settings.useBackend, settings.hasMetadata],
+    [settings.useBackend, settings.hasMetadata]
   );
 
   const isNullMetadataDisabled = useMemo(() => !settings.hasMetadata, [settings.hasMetadata]);
