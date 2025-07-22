@@ -95,7 +95,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
           }),
         ],
       })}>
-        <Trans i18nKey="explore.trace-page-actions.open-assistant">Open Assistant</Trans>
+        <Trans i18nKey="explore.trace-page-actions.open-assistant">Analyze trace</Trans>
       </button>
     );
   }
