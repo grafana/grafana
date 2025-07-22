@@ -138,10 +138,12 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      // Apply AdHoc filters to series data (copied and simplified from filterByValue.ts)
-      const filteredSeries =
-        filters.length > 0 ? series.map((frame) => this.applyAdHocFilters(frame, filters)) : series;
+      if (!config.featureToggles.dashboardDsAdHocFiltering || filters.length === 0) {
+        return [...series, ...annotations];
+      }
 
+      // Apply AdHoc filters to series data
+      const filteredSeries = series.map((frame) => this.applyAdHocFilters(frame, filters));
       return [...filteredSeries, ...annotations];
     }
   }
