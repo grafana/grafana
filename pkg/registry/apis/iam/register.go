@@ -242,20 +242,18 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 // TODO: https://github.com/grafana/grafana/blob/main/apps/playlist/pkg/app/app.go#L62
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
-	case admission.Create:
+	case admission.Create, admission.Update:
 		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
-			return b.validateCreateUser(ctx, a, o)
+			return b.validateUser(ctx, a, o)
 		}
 		return nil
 	case admission.Connect:
 	case admission.Delete:
-	case admission.Update:
-		return nil
 	}
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (b *IdentityAccessManagementAPIBuilder) validateUser(_ context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	userObj, ok := a.GetObject().(*iamv0.User)
 	if !ok {
 		return nil
@@ -273,12 +271,10 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreateUser(_ context.Contex
 // TODO: https://github.com/grafana/grafana/blob/main/apps/playlist/pkg/app/app.go#L62
 func (b *IdentityAccessManagementAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
-	case admission.Create:
+	case admission.Create, admission.Update:
 		if a.GetKind() == legacyiamv0.UserResourceInfo.GroupVersionKind() {
 			return b.mutateUser(ctx, a, o)
 		}
-		return nil
-	case admission.Update:
 		return nil
 	case admission.Delete:
 		return nil
@@ -301,6 +297,8 @@ func (b *IdentityAccessManagementAPIBuilder) mutateUser(_ context.Context, a adm
 	if userObj.Spec.Login == "" {
 		userObj.Spec.Login = userObj.Spec.Email
 	}
+
+	// TODO: Verify whether this behavior is correct.
 	if userObj.Spec.Email == "" {
 		userObj.Spec.Email = userObj.Spec.Login
 	}

@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
@@ -48,7 +49,60 @@ type LegacyStore struct {
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("method not yet implemented")
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	existing, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return existing, false, err
+	}
+
+	// Get the updated object info
+	updatedObj, err := objInfo.UpdatedObject(ctx, existing)
+	if err != nil {
+		return nil, false, err
+	}
+
+	userObj, ok := updatedObj.(*iamv0alpha.User)
+	if !ok {
+		return nil, false, fmt.Errorf("expected User object, got %T", updatedObj)
+	}
+
+	// Validate the update
+	if updateValidation != nil {
+		if err := updateValidation(ctx, updatedObj, existing); err != nil {
+			return nil, false, err
+		}
+	}
+
+	// Ensure the name hasn't changed (UIDs are immutable)
+	if userObj.Name != name {
+		return nil, false, fmt.Errorf("user UID cannot be changed")
+	}
+
+	// Build the update command
+	updateCmd := legacy.UpdateUserCommand{
+		UID:           name,
+		Login:         userObj.Spec.Login,
+		Email:         userObj.Spec.Email,
+		Name:          userObj.Spec.Name,
+		IsAdmin:       userObj.Spec.GrafanaAdmin,
+		IsDisabled:    userObj.Spec.Disabled,
+		EmailVerified: userObj.Spec.EmailVerified,
+		IsProvisioned: userObj.Spec.Provisioned,
+	}
+
+	// Execute the update
+	result, err := s.store.UpdateUser(ctx, ns, updateCmd)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Return the updated user object
+	updatedUserObj := toUserItem(&result.User, ns.Value)
+	return &updatedUserObj, false, nil
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
@@ -63,23 +117,13 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 		return nil, false, err
 	}
 
-	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-		OrgID:      ns.OrgID,
-		UID:        name,
-		Pagination: common.Pagination{Limit: 1},
-	})
+	user, err := s.Get(ctx, name, nil)
 	if err != nil {
-		return nil, false, err
+		return user, false, err
 	}
-	if found == nil || len(found.Users) < 1 {
-		return nil, false, resource.NewNotFound(name)
-	}
-
-	userToDelete := &found.Users[0]
 
 	if deleteValidation != nil {
-		userObj := toUserItem(userToDelete, ns.Value)
-		if err := deleteValidation(ctx, &userObj); err != nil {
+		if err := deleteValidation(ctx, user); err != nil {
 			return nil, false, err
 		}
 	}
@@ -93,8 +137,7 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 		return nil, false, fmt.Errorf("failed to delete user: %w", err)
 	}
 
-	deletedUser := toUserItem(userToDelete, ns.Value)
-	return &deletedUser, true, nil
+	return user, true, nil
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -222,6 +265,7 @@ func toUserItem(u *user.User, ns string) iamv0alpha.User {
 	item := &iamv0alpha.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
+			UID:               types.UID(u.UID),
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(u.Created),

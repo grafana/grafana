@@ -210,7 +210,7 @@ func TestIntegrationUsers(t *testing.T) {
 }
 
 func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create user and delete it using the new APIs", func(t *testing.T) {
+	t.Run("should create, update, and delete user using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -252,6 +252,36 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
 
+		// Update the user - modify name and email
+		updated := fetched.DeepCopy()
+		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		updatedSpec["name"] = "Updated Test User 1"
+		updatedSpec["email"] = "updated-testuser1@example123.com"
+		updatedSpec["emailVerified"] = true
+
+		updatedUser, err := userClient.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updatedUser)
+
+		// Verify update response
+		updatedUserSpec := updatedUser.Object["spec"].(map[string]interface{})
+		require.Equal(t, "updated-testuser1@example123.com", updatedUserSpec["email"])
+		require.Equal(t, "testuser1", updatedUserSpec["login"]) // login should remain unchanged
+		require.Equal(t, "Updated Test User 1", updatedUserSpec["name"])
+		require.Equal(t, true, updatedUserSpec["emailVerified"])
+		require.Equal(t, false, updatedUserSpec["provisioned"])
+
+		// Fetch again to verify update persisted
+		refetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, refetched)
+
+		refetchedSpec := refetched.Object["spec"].(map[string]interface{})
+		require.Equal(t, "updated-testuser1@example123.com", refetchedSpec["email"])
+		require.Equal(t, "testuser1", refetchedSpec["login"])
+		require.Equal(t, "Updated Test User 1", refetchedSpec["name"])
+		require.Equal(t, true, refetchedSpec["emailVerified"])
+
 		err = userClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
@@ -280,10 +310,39 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 			})
 		}
 	})
+
+	t.Run("should validate update operations", func(t *testing.T) {
+		ctx := context.Background()
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvrUsers,
+		})
+
+		// Create the user first
+		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		createdUID := created.GetName()
+
+		// Test: Should fail when trying to remove both login and email
+		updated := created.DeepCopy()
+		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		updatedSpec["login"] = ""
+		updatedSpec["email"] = ""
+
+		_, err = userClient.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "user must have either login or email")
+
+		// Cleanup
+		err = userClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
 }
 
 func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create user using legacy APIs and delete it using the new APIs", func(t *testing.T) {
+	t.Run("should create user using legacy APIs, update using new APIs, and delete using legacy APIs", func(t *testing.T) {
 		ctx := context.Background()
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -309,20 +368,50 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		require.NotEmpty(t, rsp.Result.UID)
 
 		// Now try to fetch the user via the new API
-		user, err := userClient.Resource.Get(context.Background(), rsp.Result.UID, metav1.GetOptions{})
+		fetchedUser, err := userClient.Resource.Get(context.Background(), rsp.Result.UID, metav1.GetOptions{})
 		require.NoError(t, err)
-		require.NotNil(t, user)
+		require.NotNil(t, fetchedUser)
 
 		// Verify fetched user matches created user
-		userSpec := user.Object["spec"].(map[string]interface{})
+		userSpec := fetchedUser.Object["spec"].(map[string]interface{})
 		require.Equal(t, "testuser2@example.com", userSpec["email"])
 		require.Equal(t, "testuser2", userSpec["login"])
 		require.Equal(t, "Test User 2", userSpec["name"])
 		require.Equal(t, false, userSpec["provisioned"])
 
 		// Verify metadata
-		require.Equal(t, rsp.Result.UID, user.GetName())
-		require.Equal(t, "default", user.GetNamespace())
+		require.Equal(t, rsp.Result.UID, fetchedUser.GetName())
+		require.Equal(t, "default", fetchedUser.GetNamespace())
+
+		// Update the user using the new API - test interoperability
+		updated := fetchedUser.DeepCopy()
+		updatedSpec := updated.Object["spec"].(map[string]interface{})
+		updatedSpec["name"] = "Updated Test User 2"
+		updatedSpec["email"] = "updated-testuser2@example.com"
+		updatedSpec["disabled"] = true
+
+		updatedUser, err := userClient.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updatedUser)
+
+		// Verify update response
+		updatedUserSpec := updatedUser.Object["spec"].(map[string]interface{})
+		require.Equal(t, "updated-testuser2@example.com", updatedUserSpec["email"])
+		require.Equal(t, "testuser2", updatedUserSpec["login"]) // login should remain unchanged
+		require.Equal(t, "Updated Test User 2", updatedUserSpec["name"])
+		require.Equal(t, true, updatedUserSpec["disabled"])
+		require.Equal(t, false, updatedUserSpec["provisioned"])
+
+		// Verify the update is visible via legacy API as well (test interoperability)
+		getUserRsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   fmt.Sprintf("/api/users/%d", rsp.Result.ID),
+		}, &user.User{})
+		require.Equal(t, 200, getUserRsp.Response.StatusCode)
+		require.Equal(t, "Updated Test User 2", getUserRsp.Result.Name)
+		require.Equal(t, "updated-testuser2@example.com", getUserRsp.Result.Email)
+		require.Equal(t, true, getUserRsp.Result.IsDisabled)
 
 		// Now delete the user using the legacy API
 		deleteRsp := apis.DoRequest(helper, apis.RequestParams{

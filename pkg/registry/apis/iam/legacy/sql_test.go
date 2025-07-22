@@ -58,6 +58,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	updateUser := func(cmd *UpdateUserCommand) sqltemplate.SQLTemplate {
+		v := newUpdateUser(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	listTeams := func(q *ListTeamQuery) sqltemplate.SQLTemplate {
 		v := newListTeams(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -415,6 +421,53 @@ func TestIdentityQueries(t *testing.T) {
 						Updated:       time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
 						LastSeenAt:    time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
 						Role:          "Admin",
+					}),
+				},
+			},
+			sqlUpdateUserTemplate: {
+				{
+					Name: "update_user_basic",
+					Data: updateUser(&UpdateUserCommand{
+						UID:           "user-1",
+						Email:         "updated@example.com",
+						Login:         "updated-user",
+						Name:          "Updated User",
+						OrgID:         1,
+						IsAdmin:       false,
+						IsDisabled:    false,
+						EmailVerified: true,
+						IsProvisioned: false,
+						Updated:       time.Date(2023, 1, 15, 14, 30, 0, 0, time.UTC),
+					}),
+				},
+				{
+					Name: "update_user_to_admin",
+					Data: updateUser(&UpdateUserCommand{
+						UID:           "user-2",
+						Email:         "admin-update@example.com",
+						Login:         "admin-user",
+						Name:          "Admin Updated User",
+						OrgID:         2,
+						IsAdmin:       true,
+						IsDisabled:    false,
+						EmailVerified: true,
+						IsProvisioned: true,
+						Updated:       time.Date(2023, 2, 15, 16, 45, 0, 0, time.UTC),
+					}),
+				},
+				{
+					Name: "update_user_disable",
+					Data: updateUser(&UpdateUserCommand{
+						UID:           "user-3",
+						Email:         "disabled@example.com",
+						Login:         "disabled-user",
+						Name:          "Disabled User",
+						OrgID:         1,
+						IsAdmin:       false,
+						IsDisabled:    true,
+						EmailVerified: false,
+						IsProvisioned: false,
+						Updated:       time.Date(2023, 3, 10, 9, 15, 0, 0, time.UTC),
 					}),
 				},
 			},
