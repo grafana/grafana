@@ -788,9 +788,6 @@ export interface TableImageCellOptions {
  * Show data links in the cell
  */
 export interface TableDataLinksCellOptions {
-  /**
-   * wrapText?: bool
-   */
   type: TableCellDisplayMode.DataLinks;
 }
 

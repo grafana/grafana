@@ -5,11 +5,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksCellProps } from '../types';
-import { getCellLinks /*, shouldTextWrap */ } from '../utils';
+import { getCellLinks } from '../utils';
 
 export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
-  // const textWrap = shouldTextWrap(field);
-  const styles = useStyles2(getStyles /*, textWrap */);
+  const styles = useStyles2(getStyles);
   const links = useMemo(() => getCellLinks(field, rowIdx!), [field, rowIdx]);
 
   if (!links || links.length === 0) {
@@ -41,7 +40,6 @@ const getStyles = (theme: GrafanaTheme2 /*, textWrap?: boolean*/) => ({
     userSelect: 'text',
     fontWeight: theme.typography.fontWeightMedium,
     whiteSpace: 'nowrap',
-    // ...(!textWrap && {
     paddingInline: theme.spacing(1),
     borderRight: `2px solid ${theme.colors.border.medium}`,
     '&:first-child': {
@@ -51,6 +49,5 @@ const getStyles = (theme: GrafanaTheme2 /*, textWrap?: boolean*/) => ({
       borderRight: 'none',
       paddingInlineEnd: 0,
     },
-    // }),
   }),
 });

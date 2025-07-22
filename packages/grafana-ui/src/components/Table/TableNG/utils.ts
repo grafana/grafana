@@ -11,6 +11,7 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
+  DisplayProcessor,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -661,3 +662,27 @@ export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDis
     (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
   );
 }
+
+export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue => {
+  let displayValue: string;
+
+  // Handle string values that might be JSON
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      displayValue = JSON.stringify(parsed, null, ' ');
+    } catch {
+      displayValue = value; // Keep original if not valid JSON
+    }
+  } else {
+    // For non-string values, stringify them
+    try {
+      displayValue = JSON.stringify(value, null, ' ');
+    } catch (error) {
+      // Handle circular references or other stringify errors
+      displayValue = String(value);
+    }
+  }
+
+  return { text: displayValue, numeric: Number.NaN };
+};

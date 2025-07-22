@@ -73,6 +73,7 @@ import {
   getCellLinks,
   withDataLinksActionsTooltip,
   getJustifyContent,
+  displayJsonValue,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -307,6 +308,11 @@ export function TableNG(props: TableNGProps) {
           field.display = getDisplayProcessor({ field, theme });
         }
 
+        // attach JSONCell custom display function to JSONView cell type
+        if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
+          field.display = displayJsonValue;
+        }
+
         const textAlign = getTextAlign(field);
         const justifyContent = getJustifyContent(field);
         const footerStyles = getFooterStyles(justifyContent);
@@ -333,6 +339,7 @@ export function TableNG(props: TableNGProps) {
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
+        const isMonospace = cellType === TableCellDisplayMode.JSONView;
 
         result.colsWithTooltip[displayName] = withTooltip;
 
@@ -346,7 +353,15 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.ColorText:
           case TableCellDisplayMode.DataLinks:
           case TableCellDisplayMode.JSONView:
-            cellClass = getCellStyles(theme, textAlign, justifyContent, shouldWrap, shouldOverflow, canBeColorized);
+            cellClass = getCellStyles(
+              theme,
+              textAlign,
+              justifyContent,
+              shouldWrap,
+              shouldOverflow,
+              canBeColorized,
+              isMonospace
+            );
             break;
         }
 
@@ -907,7 +922,8 @@ const getCellStyles = (
   justifyContent: Property.JustifyContent,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  isColorized: boolean
+  isColorized: boolean,
+  isMonospace: boolean
 ) =>
   css({
     display: 'flex',
@@ -917,7 +933,8 @@ const getCellStyles = (
     paddingInline: TABLE.CELL_PADDING,
     minHeight: '100%',
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
-    ...(shouldWrap && { whiteSpace: 'pre-line' }),
+    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
+    ...(isMonospace && { fontFamily: 'monospace' }),
 
     '&:last-child': {
       borderInlineEnd: 'none',
@@ -932,6 +949,7 @@ const getCellStyles = (
         whiteSpace: 'pre-line',
         height: 'fit-content',
         minWidth: 'fit-content',
+        ...(isMonospace && { whiteSpace: 'pre' }),
       }),
     },
 
