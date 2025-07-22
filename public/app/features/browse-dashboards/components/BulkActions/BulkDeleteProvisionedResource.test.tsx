@@ -5,7 +5,6 @@ import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 
-// Mock only the essential API calls and hooks
 jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   const originalModule = jest.requireActual('app/api/clients/provisioning/v0alpha1');
   return {
@@ -56,7 +55,6 @@ function setup(
 
   const onDismiss = jest.fn();
 
-  // Setup basic mocks
   mockUseGetResourceRepositoryView.mockReturnValue({
     repository,
     folder: repository
@@ -79,7 +77,6 @@ function setup(
 
   mockUseDeleteRepositoryFilesWithPathMutation.mockReturnValue([mockDeleteMutation, { isLoading }]);
 
-  // Setup state mocks to make findItem work
   const mockRootItems = [
     { uid: 'folder-1', title: 'Test Folder', kind: 'folder' },
     { uid: 'dashboard-1', title: 'Test Dashboard', kind: 'dashboard' },
@@ -87,13 +84,10 @@ function setup(
 
   mockStateHooks.useChildrenByParentUIDState.mockReturnValue({});
   mockStateHooks.rootItemsSelector.mockReturnValue({ items: mockRootItems });
-
-  // Mock findItem to return the appropriate item
   mockStateUtils.findItem.mockImplementation((rootItems: unknown[], childrenByUID: unknown, uid: string) => {
     return mockRootItems.find((item) => item.uid === uid);
   });
 
-  // Setup default mock for deleteRepoFile to return unwrap method
   mockDeleteMutation.mockReturnValue({
     unwrap: jest.fn().mockResolvedValue({ urls: {} }),
   });
