@@ -450,14 +450,15 @@ describe('ResponseTransformers', () => {
           id: 1,
           links: [],
           vizConfig: {
-            kind: 'timeseries',
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: undefined,
             spec: {
               fieldConfig: {
                 defaults: {},
                 overrides: [],
               },
               options: {},
-              pluginVersion: undefined,
             },
           },
           data: {
@@ -1032,12 +1033,12 @@ describe('ResponseTransformers', () => {
 
     expect(v1.id).toBe(v2Spec.id);
     expect(v1.id).toBe(v2Spec.id);
-    expect(v1.type).toBe(v2Spec.vizConfig.kind);
+    expect(v1.type).toBe(v2Spec.vizConfig.group);
     expect(v1.title).toBe(v2Spec.title);
     expect(v1.description).toBe(v2Spec.description);
     expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
     expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
-    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.spec.pluginVersion);
+    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.version);
     expect(v1.links).toEqual(v2Spec.links);
     expect(v1.targets).toEqual(
       v2Spec.data.spec.queries.map((q) => {

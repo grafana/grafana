@@ -378,9 +378,10 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
           },
         },
         vizConfig: {
-          kind: 'text',
+          kind: 'VizConfig',
+          group: 'text',
+          version: '',
           spec: {
-            pluginVersion: '',
             options: {
               content: `**Library Panel Load Error**\n\nUnable to load library panel: ${libraryPanel.name} (${libraryPanel.uid})\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`,
               mode: 'markdown',

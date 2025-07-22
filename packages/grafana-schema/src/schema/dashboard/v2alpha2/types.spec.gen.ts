@@ -225,25 +225,27 @@ export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
 });
 
 export interface VizConfigKind {
-	// The kind of a VizConfigKind is the plugin ID
-	kind: string;
+	kind: "VizConfig";
+	// The group is the plugin ID
+	group: string;
+	version: string;
 	spec: VizConfigSpec;
 }
 
 export const defaultVizConfigKind = (): VizConfigKind => ({
-	kind: "",
+	kind: "VizConfig",
+	group: "",
+	version: "",
 	spec: defaultVizConfigSpec(),
 });
 
 // --- Kinds ---
 export interface VizConfigSpec {
-	pluginVersion: string;
 	options: Record<string, any>;
 	fieldConfig: FieldConfigSource;
 }
 
 export const defaultVizConfigSpec = (): VizConfigSpec => ({
-	pluginVersion: "",
 	options: {},
 	fieldConfig: defaultFieldConfigSource(),
 });

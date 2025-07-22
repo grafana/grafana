@@ -369,14 +369,15 @@ Kind: {
 
 // --- Kinds ---
 VizConfigSpec: {
-	pluginVersion: string
 	options: [string]: _
 	fieldConfig: FieldConfigSource
 }
 
 VizConfigKind: {
-	// The kind of a VizConfigKind is the plugin ID
-	kind: string
+	kind: "VizConfig"
+	// The group is the plugin ID
+	group: string
+	version: string
 	spec: VizConfigSpec
 }
 

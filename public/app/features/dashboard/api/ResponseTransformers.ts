@@ -487,11 +487,12 @@ export function buildPanelKind(p: Panel): PanelKind {
       title: p.title || '',
       description: p.description || '',
       vizConfig: {
-        kind: p.type,
+        kind: 'VizConfig',
+        group: p.type,
+        version: p.pluginVersion!,
         spec: {
           fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
           options: p.options as any,
-          pluginVersion: p.pluginVersion!,
         },
       },
       links:
@@ -966,12 +967,12 @@ function transformV2PanelToV1Panel(
     const panel = p.spec;
     return {
       id: panel.id,
-      type: panel.vizConfig.kind,
+      type: panel.vizConfig.group,
       title: panel.title,
       description: panel.description,
       fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
       options: panel.vizConfig.spec.options,
-      pluginVersion: panel.vizConfig.spec.pluginVersion,
+      pluginVersion: panel.vizConfig.version,
       links:
         // @ts-expect-error - Panel link is wrongly typed as DashboardLink
         panel.links?.map<DashboardLink>((l) => ({
