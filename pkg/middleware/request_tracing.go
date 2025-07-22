@@ -71,6 +71,8 @@ func RouteOperationName(req *http.Request) (string, bool) {
 	return "", false
 }
 
+// Paths that don't need tracing spans applied to them because of the
+// little value that would provide us
 func SkipTracingPaths(req *http.Request) bool {
 	return strings.HasPrefix(req.URL.Path, "/public/") ||
 		req.URL.Path == "/robots.txt" ||
