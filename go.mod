@@ -195,6 +195,9 @@ require (
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // @grafana/partner-datasources
 	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // @grafana-app-platform-squad
+	// xorm dependencies: We use modern xorm.io/* paths, but some transitive dependencies 
+	// still import legacy github.com/go-xorm/* paths, causing harmless module path warnings.
+	// This is safe to ignore - backend compilation works correctly.
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
 	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-backend
