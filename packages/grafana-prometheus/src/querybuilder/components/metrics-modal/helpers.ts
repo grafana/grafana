@@ -13,6 +13,9 @@ const NATIVE_HISTOGRAM_TYPE = 'native histogram';
 
 /**
  * Builds the metric data object with type and description
+ * @param metric - The metric name
+ * @param languageProvider - The Prometheus language provider interface
+ * @returns MetricData object with value, type, and description
  */
 export const generateMetricData = (
   metric: string,
@@ -25,7 +28,7 @@ export const generateMetricData = (
 
   HISTOGRAM_TYPES.forEach((t) => {
     if (description?.toLowerCase().includes(t) && type !== t) {
-      type += ` (${t})`;
+      type = type ? `${type} (${t})` : t;
     }
   });
 
@@ -42,28 +45,29 @@ export const generateMetricData = (
   };
 };
 
-export function calculatePageList(metricsData: MetricsData, resultsPerPage: number) {
-  if (!metricsData.length) {
+export function calculatePageList(metricsData: MetricsData, resultsPerPage: number): number[] {
+  if (!Array.isArray(metricsData) || metricsData.length === 0) {
     return [];
   }
 
-  const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
+  if (resultsPerPage <= 0) {
+    return [1];
+  }
 
-  const pages = Math.floor(metricsData.length / calcResultsPerPage) + 1;
-
-  return [...Array(pages).keys()].map((i) => i + 1);
+  const totalPages = Math.ceil(metricsData.length / resultsPerPage);
+  return Array.from({ length: totalPages }, (_, i) => i + 1);
 }
 
-export const calculateResultsPerPage = (results: number, defaultResults: number, max: number) => {
-  if (results < 1) {
-    return 1;
+export const calculateResultsPerPage = (results: number, defaultResults: number, max: number): number => {
+  if (!Number.isInteger(results) || results < 1) {
+    return Math.max(1, defaultResults);
   }
 
   if (results > max) {
     return max;
   }
 
-  return results ?? defaultResults;
+  return results;
 };
 
 export const getPromTypes: () => PromFilterOption[] = () => [
