@@ -197,20 +197,20 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Metric value'];
+    const category = [t('canvas.category-metric-value', 'Metric value')];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: 'Text',
+        name: t('canvas.name-text', 'Text'),
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: 'Text color',
+        name: t('canvas.name-color', 'Text color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -218,7 +218,7 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.align',
-        name: 'Align text',
+        name: t('canvas.name-align-text', 'Align text'),
         settings: {
           options: [
             { value: Align.Left, label: t('canvas.metric-value-item.label.left', 'Left') },
@@ -231,7 +231,7 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: 'Vertical align',
+        name: t('canvas.name-vertical-align', 'Vertical align'),
         settings: {
           options: [
             { value: VAlign.Top, label: t('canvas.metric-value-item.label.top', 'Top') },
@@ -244,7 +244,7 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: 'Text size',
+        name: t('canvas.name-text-size', 'Text size'),
         settings: {
           placeholder: t('canvas.metric-value-item.placeholder.auto', 'Auto'),
         },

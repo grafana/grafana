@@ -29,7 +29,7 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
         <div className={styles.modalHeaderTitle}>
           <Icon name="exclamation-triangle" size="lg" />
           <span className={styles.titleText}>
-            <Trans i18nKey="components.confirm-modal.warning">Warning</Trans>
+            <Trans i18nKey="grafana-sql.components.confirm-modal.warning">Warning</Trans>
           </span>
         </div>
       }
@@ -37,23 +37,25 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
       isOpen={isOpen}
     >
       <p>
-        <Trans i18nKey="components.confirm-modal.builder-mode">
+        <Trans i18nKey="grafana-sql.components.confirm-modal.builder-mode">
           Builder mode does not display changes made in code. The query builder will display the last changes you made
           in builder mode.
         </Trans>
       </p>
       <p>
-        <Trans i18nKey="components.confirm-modal.clipboard">Do you want to copy your code to the clipboard?</Trans>
+        <Trans i18nKey="grafana-sql.components.confirm-modal.clipboard">
+          Do you want to copy your code to the clipboard?
+        </Trans>
       </p>
       <Modal.ButtonRow>
         <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
-          <Trans i18nKey="components.confirm-modal.cancel">Cancel</Trans>
+          <Trans i18nKey="grafana-sql.components.confirm-modal.cancel">Cancel</Trans>
         </Button>
         <Button variant="destructive" type="button" onClick={onDiscard} ref={buttonRef}>
-          <Trans i18nKey="components.confirm-modal.discard-code-and-switch">Discard code and switch</Trans>
+          <Trans i18nKey="grafana-sql.components.confirm-modal.discard-code-and-switch">Discard code and switch</Trans>
         </Button>
         <Button variant="primary" onClick={onCopy}>
-          <Trans i18nKey="components.confirm-modal.copy-code-and-switch">Copy code and switch</Trans>
+          <Trans i18nKey="grafana-sql.components.confirm-modal.copy-code-and-switch">Copy code and switch</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

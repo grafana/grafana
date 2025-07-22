@@ -52,6 +52,7 @@
       "button-use-query": "Gebruik deze query",
       "label-categories": "Categorieën",
       "label-query-results": "Resultaten van query: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Alle categorieën",
       "placeholder-search-logs": "Querylogboeken zoeken",
       "text-loading": "Laden..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "Beperk het aantal geretourneerde rijen (standaard is 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Basislogquery's brengen kosten met zich mee op basis van de hoeveelheid gescande gegevens.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Basislogquery's",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Knop Start query met Azure-logboeken",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Start je query",
       "button-run-query": "Query uitvoeren",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Service",
       "placeholder-service": "Service...",
       "title-switch-mode": "Veranderen van bewerkersmodus?"
@@ -221,6 +231,9 @@
       "text-loading": "Laden...",
       "text-no-resources": "Geen bronnen gevonden",
       "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor"
+    },
+    "scope-selector": {
+      "label": "Bereik"
     },
     "search": {
       "aria-label-resource-search": "Bron zoeken",

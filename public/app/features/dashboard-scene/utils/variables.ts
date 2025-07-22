@@ -1,4 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
+import { AdHocVariableFilter, TypedVariableModel } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -133,6 +133,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     description: variable.description,
   };
   if (variable.type === 'adhoc') {
+    const originFilters: AdHocVariableFilter[] = [];
+    const filters: AdHocVariableFilter[] = [];
+    variable.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+
     return new AdHocFiltersVariable({
       ...commonProperties,
       description: variable.description,
@@ -140,7 +144,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       datasource: variable.datasource,
       applyMode: 'auto',
-      filters: variable.filters ?? [],
+      originFilters,
+      filters,
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
@@ -185,6 +190,11 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       definition: variable.definition,
       allowCustomValue: variable.allowCustomValue,
+      staticOptions: variable.staticOptions?.map((option) => ({
+        label: String(option.text),
+        value: String(option.value),
+      })),
+      staticOptionsOrder: variable.staticOptionsOrder,
     });
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({

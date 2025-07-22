@@ -307,6 +307,11 @@ abstract class DataSourceApi<
   metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
 
   /**
+   * Verify adhoc filters applicability based on queries and current filters
+   */
+  getFiltersApplicability?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<FiltersApplicability[]>;
+
+  /**
    * Get tag keys for adhoc filters
    */
   getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
@@ -574,6 +579,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
+  dashboardTitle?: string;
   headers?: Record<string, string>;
 
   /** Filters to dynamically apply to all queries */
@@ -637,11 +643,22 @@ export interface MetricFindValue {
   expandable?: boolean;
 }
 
+export interface FiltersApplicability {
+  key: string;
+  applicable: boolean;
+  // message explaining why the filter is not applicable
+  reason?: string;
+  // needed to differentiate between filters with same key
+  // but different origin
+  origin?: string;
+}
+
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
   profile?: string;
   manageAlerts?: boolean;
+  allowAsRecordingRulesTarget?: boolean;
   alertmanagerUid?: string;
   disableGrafanaCache?: boolean;
 }

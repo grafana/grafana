@@ -74,18 +74,19 @@ export const DataSourceSection = ({
                   </Text>
                 )}
 
+                <Spacer />
+
                 {Boolean(error) && (
                   <Toggletip
                     title={t('alerting.rule-list.ds-error.title', 'Cannot load rules for this datasource')}
-                    content={<div>{stringifyErrorLike(error)}</div>}
+                    content={<Text color="error">{stringifyErrorLike(error)}</Text>}
                   >
-                    <Button variant="destructive" fill="outline" size="sm" icon="exclamation-circle">
+                    <Button variant="destructive" fill="text" size="sm" icon="exclamation-circle">
                       <Trans i18nKey="alerting.rule-list.error-button">Error</Trans>
                     </Button>
                   </Toggletip>
                 )}
 
-                <Spacer />
                 {configureLink && (
                   <WithReturnButton
                     title={t('alerting.rule-list.return-button.title', 'Alert rules')}

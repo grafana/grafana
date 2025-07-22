@@ -1,11 +1,11 @@
 package metadata
 
 import (
-	"database/sql"
 	"testing"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
+	"k8s.io/utils/ptr"
 )
 
 func TestKeeperQueries(t *testing.T) {
@@ -104,104 +104,129 @@ func TestKeeperQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueListByName: {
+				{
+					Name: "list",
+					Data: listByNameSecureValue{
+						SQLTemplate:      mocks.NewTestingSQLTemplate(),
+						Namespace:        "ns",
+						UsedSecureValues: []string{"a", "b"},
+					},
+				},
+			},
 		},
 	})
 }
 
-func TestSecureValueOutboxQueries(t *testing.T) {
+func TestSecureValueQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlSecureValueOutboxUpdateReceiveCount: {
+			sqlGetLatestSecureValueVersion: {
 				{
-
-					Name: "update-receive-count",
-					Data: &incrementReceiveCountOutbox{
+					Name: "get latest secure value version",
+					Data: &getLatestSecureValueVersion{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageIDs:  []string{"id1", "id2", "id3"},
+						Name:        "name",
+						Namespace:   "ns",
 					},
 				},
 			},
-			sqlSecureValueOutboxAppend: {
+			sqlSecureValueSetVersionToActive: {
 				{
-					Name: "no-encrypted-secret",
-					Data: &appendSecureValueOutbox{
+					Name: "set secure value version to active",
+					Data: &secureValueSetVersionToActive{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageDB{
-							MessageID:   "my-uuid",
-							MessageType: "some-type",
+						Name:        "name",
+						Namespace:   "ns",
+						Version:     1,
+					},
+				},
+			},
+			sqlSecureValueRead: {
+				{
+					Name: "read",
+					Data: &readSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+					},
+				},
+				{
+					Name: "read-for-update",
+					Data: &readSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						IsForUpdate: true,
+					},
+				},
+			},
+			sqlSecureValueList: {
+				{
+					Name: "list",
+					Data: &listSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+					},
+				},
+			},
+			sqlSecureValueCreate: {
+				{
+					Name: "create-null",
+					Data: &createSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &secureValueDB{
+							GUID:        "abc",
 							Name:        "name",
-							Namespace:   "namespace",
-							ExternalID:  sql.NullString{Valid: true, String: "external-id"},
-							KeeperName:  sql.NullString{Valid: true, String: "keeper"},
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
 							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Version:     1,
+							Description: "description",
+							Keeper:      toNullString(nil),
+							Decrypters:  toNullString(nil),
+							Ref:         toNullString(nil),
+							ExternalID:  "extId",
 						},
 					},
 				},
 				{
-					Name: "no-external-id",
-					Data: &appendSecureValueOutbox{
+					Name: "create-not-null",
+					Data: &createSecureValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageDB{
-							MessageID:       "my-uuid",
-							MessageType:     "some-type",
-							Name:            "name",
-							Namespace:       "namespace",
-							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
-							KeeperName:      sql.NullString{Valid: true, String: "keeper"},
-							Created:         1234,
-						},
-					},
-				},
-				{
-					Name: "no-keeper-name",
-					Data: &appendSecureValueOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageDB{
-							MessageID:       "my-uuid",
-							MessageType:     "some-type",
-							Name:            "name",
-							Namespace:       "namespace",
-							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
-							ExternalID:      sql.NullString{Valid: true, String: "external-id"},
-							Created:         1234,
-						},
-					},
-				},
-				{
-					Name: "all-fields-present",
-					Data: &appendSecureValueOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageDB{
-							MessageID:       "my-uuid",
-							MessageType:     "some-type",
-							Name:            "name",
-							Namespace:       "namespace",
-							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
-							ExternalID:      sql.NullString{Valid: true, String: ""}, // can be empty string
-							KeeperName:      sql.NullString{Valid: true, String: "keeper"},
-							Created:         1234,
+						Row: &secureValueDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Version:     1,
+							Description: "description",
+							Keeper:      toNullString(ptr.To("keeper_test")),
+							Decrypters:  toNullString(ptr.To("decrypters_test")),
+							Ref:         toNullString(ptr.To("ref_test")),
+							ExternalID:  "extId",
 						},
 					},
 				},
 			},
-
-			sqlSecureValueOutboxReceiveN: {
+			sqlSecureValueUpdateExternalId: {
 				{
-					Name: "basic",
-					Data: &receiveNSecureValueOutbox{
-						SQLTemplate:  mocks.NewTestingSQLTemplate(),
-						ReceiveLimit: 10,
-					},
-				},
-			},
-
-			sqlSecureValueOutboxDelete: {
-				{
-					Name: "basic",
-					Data: &deleteSecureValueOutbox{
+					Name: "updateExternalId",
+					Data: &updateExternalIdSecureValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageID:   "my-uuid",
+						Name:        "name",
+						Namespace:   "ns",
+						ExternalID:  "extId",
 					},
 				},
 			},

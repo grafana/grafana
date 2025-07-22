@@ -1,4 +1,4 @@
-import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning';
+import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryFormData } from '../types';
 
@@ -24,13 +24,6 @@ export interface ModeOption {
   label: string;
   description: string;
   subtitle: string;
-}
-
-export interface SystemState {
-  resourceCount: number;
-  resourceCountString: string;
-  fileCount: number;
-  actions: ModeOption[];
 }
 
 export type StepStatus = 'idle' | 'running' | 'error' | 'success';

@@ -22,16 +22,16 @@ Label-Based Access Control (LBAC) allows fine-grained access control to data sou
 
 ### Feature availability
 
-LBAC for data sources is currently generally available for `Loki` and in **experimental** for `Prometheus`. Support for additional data sources may be added in future updates.
+LBAC for data sources is currently for `Loki` and `Prometheus`. Support for additional data sources may be added in future updates.
 
-| Data source | Grafana Cloud | Grafana Enterprise                                        | Cross-tenant query support |
-| ----------- | ------------- | --------------------------------------------------------- | -------------------------- |
-| Loki        | GA            | GA (requires GEL - Grafana Enterprise Logs)               | ❌                         |
-| Prometheus  | PublicPreview | PublicPreview (requires GEM - Grafana Enterprise Metrics) | ❌                         |
+| Data source | Grafana Cloud | Grafana Enterprise                             | Cross-tenant query support |
+| ----------- | ------------- | ---------------------------------------------- | -------------------------- |
+| Loki        | GA            | GA (requires GEL - Grafana Enterprise Logs)    | ❌                         |
+| Prometheus  | GA            | GA (requires GEM - Grafana Enterprise Metrics) | ❌                         |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For enterprise this feature requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL) to function.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **LBAC for data sources offers:**
 

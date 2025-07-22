@@ -8,8 +8,8 @@ import { Button, useTheme2 } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
 
-import { overhaulStyles } from './ConfigEditor';
 import { ExemplarSetting } from './ExemplarSetting';
+import { overhaulStyles } from './shared/utils';
 
 type Props = {
   options?: ExemplarTraceIdDestination[];
@@ -23,7 +23,7 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
   return (
     <div className={styles.sectionBottomPadding}>
       <ConfigSubSection
-        title={t('configuration.exemplars-settings.title-exemplars', 'Exemplars')}
+        title={t('grafana-prometheus.configuration.exemplars-settings.title-exemplars', 'Exemplars')}
         className={styles.container}
       >
         {options &&
@@ -61,12 +61,12 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
               onChange(newOptions);
             }}
           >
-            <Trans i18nKey="configuration.exemplars-settings.add">Add</Trans>
+            <Trans i18nKey="grafana-prometheus.configuration.exemplars-settings.add">Add</Trans>
           </Button>
         )}
         {disabled && !options && (
           <i>
-            <Trans i18nKey="configuration.exemplars-settings.no-exemplars-configurations">
+            <Trans i18nKey="grafana-prometheus.configuration.exemplars-settings.no-exemplars-configurations">
               No exemplars configurations
             </Trans>
           </i>

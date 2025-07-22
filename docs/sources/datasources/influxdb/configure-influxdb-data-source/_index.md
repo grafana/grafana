@@ -126,6 +126,7 @@ The following settings are specific to the InfluxQL query language option.
 - **Password** - Defines the token used to query the bucket defined in **Database**. Retrieve the password from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI.
 - **HTTP method** - Sets the HTTP method used to query your data source. The POST method allows for larger queries that would return an error using the GET method. The default method is `POST`.
 - **Min time interval** - _(Optional)_ Sets the minimum time interval for auto group-by. Grafana recommends setting this to match the data write frequency. For example, if your data is written every minute, it’s recommended to set this interval to 1 minute, so that each group contains data from each new write. The default is `10s`. Refer to [Min time interval](#min-time-interval) for format examples.
+- **Autocomplete range** - _(Optional)_ Sets a time range limit for the query editor's autocomplete to reduce the execution time of tag filter queries. As a result, any tags not present within the defined time range will be filtered out. For example, setting the value to 12h will include only tag keys/values from the past 12 hours. This feature is recommended for use with very large databases, where significant performance improvements can be observed.
 - **Max series** - _(Optional)_ Sets a limit on the maximum number of series or tables that Grafana processes. Set a lower limit to prevent system overload, or increase it if you have many small time series and need to display more of them. The default is `1000`.
 
 ### SQL-specific configuration section
@@ -176,10 +177,10 @@ You can define and configure the data source in YAML files as part of Grafana's 
 For more information about provisioning, and for available configuration options, refer
 to [Provision Grafana](ref:provision-grafana).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).
 Grafana recommends using the `dbName` field in `jsonData`. There is no need to change existing provisioning settings.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Provisioning examples
 

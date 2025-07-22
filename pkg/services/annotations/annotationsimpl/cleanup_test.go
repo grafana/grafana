@@ -3,6 +3,7 @@ package annotationsimpl
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
 	"time"
 
@@ -238,24 +239,27 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 	newAnnotationTags := make([]*annotationTag, 0, 2*expectedCount)
 	for i := 0; i < expectedCount; i++ {
 		a := &annotations.Item{
-			ID:          int64(i + 1),
-			DashboardID: 1,
-			OrgID:       1,
-			UserID:      1,
-			PanelID:     1,
-			Text:        "",
+			ID:           int64(i + 1),
+			DashboardID:  1,
+			DashboardUID: "uid" + strconv.Itoa(i),
+			OrgID:        1,
+			UserID:       1,
+			PanelID:      1,
+			Text:         "",
 		}
 
 		// mark every third as an API annotation
 		// that does not belong to a dashboard
 		if i%3 == 1 {
-			a.DashboardID = 0
+			a.DashboardID = 0 // nolint: staticcheck
+			a.DashboardUID = ""
 		}
 
 		// mark every third annotation as an alert annotation
 		if i%3 == 0 {
 			a.AlertID = 10
-			a.DashboardID = 2
+			a.DashboardID = 2 // nolint: staticcheck
+			a.DashboardUID = "dashboard2uid"
 		}
 
 		// create epoch as int annotations.go line 40

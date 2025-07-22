@@ -137,6 +137,10 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		IncludeInAll:       false,
 	})
 
+	referenceMapper := bleve.NewDocumentMapping()
+	referenceMapper.DefaultAnalyzer = keyword.Name
+	mapper.AddSubDocumentMapping("reference", referenceMapper)
+
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 

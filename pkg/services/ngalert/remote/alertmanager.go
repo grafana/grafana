@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/alerting/definition"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 )
@@ -47,12 +49,14 @@ func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.Postab
 	return nil
 }
 
-// DecryptFn is a function that takes in an encrypted value and returns it decrypted.
-type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
+type Crypto interface {
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
+	DecryptExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error
+}
 
 type Alertmanager struct {
 	autogenFn         AutogenFn
-	decrypt           DecryptFn
+	crypto            Crypto
 	defaultConfig     string
 	defaultConfigHash string
 	log               log.Logger
@@ -70,6 +74,8 @@ type Alertmanager struct {
 
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
+
+	smtp remoteClient.SmtpConfig
 }
 
 type AlertmanagerConfig struct {
@@ -87,15 +93,19 @@ type AlertmanagerConfig struct {
 	// The same flag is used for promoting state.
 	PromoteConfig bool
 
-	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
-	SmtpFrom      string
-	StaticHeaders map[string]string
+	// SmtpConfig has all the necessary settings for the remote Alertmanager to create an email sender.
+	SmtpConfig remoteClient.SmtpConfig
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
 	SyncInterval time.Duration
 
 	// Timeout for the HTTP client.
 	Timeout time.Duration
+
+	// TODO: Remove once everything can be send in the 'smtp_config' field.
+	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	SmtpFrom      string
+	StaticHeaders map[string]string
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -113,7 +123,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -131,6 +141,10 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
+
+		Smtp: cfg.SmtpConfig,
+
+		// TODO: Remove once everything can be sent in the 'smtp_config' field.
 		SmtpFrom:      cfg.SmtpFrom,
 		StaticHeaders: cfg.StaticHeaders,
 	}
@@ -193,19 +207,22 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	return &Alertmanager{
 		amClient:          amc,
 		autogenFn:         autogenFn,
-		decrypt:           decryptFn,
+		crypto:            crypto,
 		defaultConfig:     string(rawCfg),
 		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
 		log:               logger,
 		metrics:           metrics,
 		mimirClient:       mc,
 		orgID:             cfg.OrgID,
-		smtpFrom:          cfg.SmtpFrom,
 		state:             store,
 		sender:            s,
 		syncInterval:      cfg.SyncInterval,
 		tenantID:          cfg.TenantID,
 		url:               cfg.URL,
+		smtp:              cfg.SmtpConfig,
+
+		// TODO: Remove once it can be sent only in the 'smtp_config' field.
+		smtpFrom: cfg.SmtpFrom,
 	}, nil
 }
 
@@ -267,22 +284,30 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
 		return err
 	}
-	rawDecrypted, configHash, err := am.decryptConfiguration(ctx, c)
+
+	decryptedCfg, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
 	}
+
+	// Decrypt and merge extra configs
+	payload, err := am.mergeExtraConfigs(ctx, decryptedCfg)
+	if err != nil {
+		return fmt.Errorf("unable to merge extra configurations: %w", err)
+	}
+	rawPayload, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("unable to marshal decrypted configuration: %w", err)
+	}
+
+	configHash := md5.Sum(rawPayload)
 
 	// Send the configuration only if we need to.
 	if !am.shouldSendConfig(ctx, configHash) {
 		return nil
 	}
 
-	decrypted, err := notifier.Load(rawDecrypted)
-	if err != nil {
-		return err
-	}
-
-	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, am.isDefaultConfiguration(configHash))
+	return am.sendConfiguration(ctx, payload, fmt.Sprintf("%x", configHash), config.CreatedAt, am.isDefaultConfiguration(configHash))
 }
 
 func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
@@ -292,45 +317,76 @@ func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
 // decryptConfiguration creates a copy of the configuration, decrypts it, and returns the decrypted configuration alongside its hash.
 // Should not be used outside of this package and the specific use case of decrypting the configuration before sending
 // it to the remote Alertmanager.
-func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) ([]byte, [16]byte, error) {
-	fn := func(payload []byte) ([]byte, error) {
-		return am.decrypt(ctx, payload)
-	}
-
+func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) (*apimodels.PostableUserConfig, error) {
 	// Create a copy of the configuration to avoid modifying the original
 	cfgCopy := &apimodels.PostableUserConfig{}
 	rawCfg, err := json.Marshal(cfg)
 	if err != nil {
-		return nil, [16]byte{}, fmt.Errorf("unable to marshal original configuration: %w", err)
+		return nil, fmt.Errorf("unable to marshal original configuration: %w", err)
 	}
 	if err := json.Unmarshal(rawCfg, cfgCopy); err != nil {
-		return nil, [16]byte{}, fmt.Errorf("unable to unmarshal original configuration: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal original configuration: %w", err)
 	}
 
-	// Iterate through receivers and decrypt secure settings on the copy
-	for _, rcv := range cfgCopy.AlertmanagerConfig.Receivers {
-		for _, gmr := range rcv.GrafanaManagedReceivers {
-			decrypted, err := gmr.DecryptSecureSettings(fn)
-			if err != nil {
-				return nil, [16]byte{}, fmt.Errorf("unable to decrypt settings on receiver %q (uid: %q): %w", gmr.Name, gmr.UID, err)
-			}
-			gmr.SecureSettings = decrypted
-		}
-	}
-
-	rawDecrypted, err := json.Marshal(cfgCopy)
+	// Decrypt the receivers in the configuration.
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfgCopy.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
 	if err != nil {
-		return nil, [16]byte{}, fmt.Errorf("unable to marshal decrypted configuration: %w", err)
+		return nil, fmt.Errorf("unable to decrypt receivers: %w", err)
 	}
+	cfgCopy.AlertmanagerConfig.Receivers = decryptedReceivers
 
-	return rawDecrypted, md5.Sum(rawDecrypted), nil
+	return cfgCopy, nil
 }
 
-func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
+func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
+	return func(value string) (string, error) {
+		decoded, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			return "", err
+		}
+		decrypted, err := crypto.Decrypt(ctx, decoded)
+		if err != nil {
+			return "", err
+		}
+		return string(decrypted), nil
+	}
+}
+
+// mergeExtraConfigs decrypts and applies merged configuration if extra configs exist.
+func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) (remoteClient.GrafanaAlertmanagerConfig, error) {
+	if len(config.ExtraConfigs) == 0 {
+		return remoteClient.GrafanaAlertmanagerConfig{
+			TemplateFiles:      config.TemplateFiles,
+			AlertmanagerConfig: config.AlertmanagerConfig,
+			Templates:          nil,
+		}, nil
+	}
+
+	if err := am.crypto.DecryptExtraConfigs(ctx, config); err != nil {
+		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to decrypt extra configs: %w", err)
+	}
+
+	mergeResult, err := config.GetMergedAlertmanagerConfig()
+	if err != nil {
+		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
+	}
+	if logctx := mergeResult.LogContext(); len(logctx) > 0 {
+		am.log.Debug("Configurations merged successfully but some resources were renamed", logctx...)
+	}
+	templates := definition.TemplatesMapToPostableAPITemplates(config.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)
+	return remoteClient.GrafanaAlertmanagerConfig{
+		// TODO keep sending Grafana templates as a map to not break old Mimir
+		TemplateFiles:      config.TemplateFiles,
+		AlertmanagerConfig: mergeResult.Config,
+		Templates:          templates,
+	}, nil
+}
+
+func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg remoteClient.GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		decrypted,
+		cfg,
 		hash,
 		createdAt,
 		isDefault,
@@ -341,6 +397,42 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 	am.metrics.LastConfigSync.SetToCurrentTime()
 	am.lastConfigSync = time.Now()
 	return nil
+}
+
+// GetRemoteState gets the remote Alertmanager's internal state.
+func (am *Alertmanager) GetRemoteState(ctx context.Context) (notifier.ExternalState, error) {
+	var rs notifier.ExternalState
+
+	s, err := am.mimirClient.GetFullState(ctx)
+	if err != nil {
+		return rs, fmt.Errorf("failed to pull remote state: %w", err)
+	}
+
+	// Decode and unmarshal the base64-encoded state we got from Mimir.
+	decoded, err := base64.StdEncoding.DecodeString(s.State)
+	if err != nil {
+		return rs, fmt.Errorf("failed to base64-decode remote state: %w", err)
+	}
+	protoState := &alertingClusterPB.FullState{}
+	if err := protoState.Unmarshal(decoded); err != nil {
+		return rs, fmt.Errorf("failed to unmarshal remote state: %w", err)
+	}
+
+	// Mimir state has two parts:
+	// - "sil:<tenantID>": silences
+	// - "nfl:<tenantID>": notification log entries
+	for _, p := range protoState.Parts {
+		switch p.Key {
+		case "sil:" + am.tenantID:
+			rs.Silences = p.Data
+		case "nfl:" + am.tenantID:
+			rs.Nflog = p.Data
+		default:
+			return rs, fmt.Errorf("unknown part key %q", p.Key)
+		}
+	}
+
+	return rs, nil
 }
 
 // SendState gets the Alertmanager's internal state and sends it to the remote Alertmanager.
@@ -364,28 +456,26 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	// Get the hash for the encrypted configuration.
-	rawCfg, err := json.Marshal(cfg)
+	// Add auto-generated routes and decrypt before sending.
+	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig, false); err != nil {
+		return err
+	}
+	decryptedCfg, err := am.decryptConfiguration(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	payload, err := am.mergeExtraConfigs(ctx, decryptedCfg)
+	if err != nil {
+		return fmt.Errorf("unable to merge extra configurations: %w", err)
+	}
+	rawCfg, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
-	// Add auto-generated routes and decrypt before sending.
-	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig, false); err != nil {
-		return err
-	}
-	rawDecrypted, _, err := am.decryptConfiguration(ctx, cfg)
-	if err != nil {
-		return err
-	}
-
-	decrypted, err := notifier.Load(rawDecrypted)
-	if err != nil {
-		return err
-	}
-
-	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), false)
+	return am.sendConfiguration(ctx, payload, hash, time.Now().Unix(), false)
 }
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
@@ -399,20 +489,25 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
 		return err
 	}
-	rawDecrypted, _, err := am.decryptConfiguration(ctx, c)
+	decryptedCfg, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
 	}
 
-	decrypted, err := notifier.Load(rawDecrypted)
+	payload := remoteClient.GrafanaAlertmanagerConfig{
+		TemplateFiles:      c.TemplateFiles,
+		AlertmanagerConfig: decryptedCfg.AlertmanagerConfig,
+	}
+	rawCfg, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
 	return am.sendConfiguration(
 		ctx,
-		decrypted,
-		am.defaultConfigHash,
+		payload,
+		hash,
 		time.Now().Unix(),
 		true,
 	)
@@ -568,34 +663,14 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	fn := func(payload []byte) ([]byte, error) {
-		return am.decrypt(ctx, payload)
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.Receivers, decrypter(ctx, am.crypto))
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
 	}
 
-	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
-	for _, r := range c.Receivers {
-		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
-		for _, gr := range r.GrafanaManagedReceivers {
-			decrypted, err := gr.DecryptSecureSettings(fn)
-			if err != nil {
-				return nil, 0, err
-			}
-
-			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
-				UID:                   gr.UID,
-				Name:                  gr.Name,
-				Type:                  gr.Type,
-				DisableResolveMessage: gr.DisableResolveMessage,
-				Settings:              json.RawMessage(gr.Settings),
-				SecureSettings:        decrypted,
-			})
-		}
-		receivers = append(receivers, &alertingNotify.APIReceiver{
-			ConfigReceiver: r.Receiver,
-			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
-				Integrations: integrations,
-			},
-		})
+	apiReceivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
+	for _, r := range decryptedReceivers {
+		apiReceivers = append(apiReceivers, notifier.PostableApiReceiverToApiReceiver(r))
 	}
 	var alert *alertingNotify.TestReceiversConfigAlertParams
 	if c.Alert != nil {
@@ -604,7 +679,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 
 	return am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
 		Alert:     alert,
-		Receivers: receivers,
+		Receivers: apiReceivers,
 	})
 }
 
@@ -686,11 +761,34 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 		return true
 	}
 
+	// TODO: Remove when the from address can be sent only in the 'smtp_config' field.
 	if rc.SmtpFrom != am.smtpFrom {
 		am.log.Debug("SMTP 'from' address is different, sending the configuration to the remote Alertmanager", "remote", rc.SmtpFrom, "local", am.smtpFrom)
 		return true
 	}
 
+	// Compare SMTP configs.
+	if rc.SmtpConfig.EhloIdentity != am.smtp.EhloIdentity ||
+		rc.SmtpConfig.Password != am.smtp.Password ||
+		rc.SmtpConfig.FromAddress != am.smtp.FromAddress ||
+		rc.SmtpConfig.FromName != am.smtp.FromName ||
+		rc.SmtpConfig.Host != am.smtp.Host ||
+		rc.SmtpConfig.SkipVerify != am.smtp.SkipVerify ||
+		rc.SmtpConfig.StartTLSPolicy != am.smtp.StartTLSPolicy ||
+		len(rc.SmtpConfig.StaticHeaders) != len(am.smtp.StaticHeaders) ||
+		rc.SmtpConfig.User != am.smtp.User {
+		am.log.Debug("SMTP config is different, sending the configuration to the remote Alertmanager")
+		return true
+	}
+
+	for k, v := range rc.SmtpConfig.StaticHeaders {
+		if value, ok := am.smtp.StaticHeaders[k]; !ok || v != value {
+			am.log.Debug("SMTP static headers are different, sending the configuration to the remote Alertmanager")
+			return true
+		}
+	}
+
+	// Hash and compare Alertmanager configs.
 	rawRemote, err := json.Marshal(rc.GrafanaAlertmanagerConfig)
 	if err != nil {
 		am.log.Error("Unable to marshal the remote Alertmanager configuration for comparison", "err", err)

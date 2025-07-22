@@ -14,6 +14,7 @@ keywords:
   - alerting
   - silence
   - mute
+  - active
 labels:
   products:
     - cloud
@@ -67,9 +68,9 @@ Silences stop notifications from being created for a specified time window but d
 Silences are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
 {{< /admonition >}}
 
-## Mute timings vs silences
+## Mute and active timings vs silences
 
-[Mute timings](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
+[Mute and active timings](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
 
 The following table highlights the key differences between mute timings and silences.
 
@@ -111,9 +112,9 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
   | `=~`     | Select labels that regex-match the value.          |
   | `!~`     | Select labels that do not regex-match the value.   |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Label matching example**
 

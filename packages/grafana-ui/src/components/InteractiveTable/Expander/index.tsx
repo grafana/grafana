@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { CellProps, HeaderProps } from 'react-table';
 
-import { t } from '../../../utils/i18n';
+import { t } from '@grafana/i18n';
+
 import { IconButton } from '../../IconButton/IconButton';
 
 const expanderContainerStyles = css({

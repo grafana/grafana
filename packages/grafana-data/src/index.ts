@@ -98,7 +98,7 @@ export {
 } from './text/string';
 export { type TextMatch, findHighlightChunksInText, findMatchesInText, parseFlags } from './text/text';
 export { type RenderMarkdownOptions, renderMarkdown, renderTextPanelMarkdown } from './text/markdown';
-export { textUtil } from './text/sanitize';
+export { textUtil, validatePath, PathValidationError } from './text/sanitize';
 
 // Events
 export { eventFactory } from './events/eventFactory';
@@ -137,6 +137,8 @@ export {
   fieldColorModeRegistry,
   type FieldColorMode,
   getFieldSeriesColor,
+  /** @internal */
+  getColorByStringHash,
 } from './field/fieldColor';
 export { FieldConfigOptionsRegistry } from './field/FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './field/thresholds';
@@ -258,8 +260,9 @@ export * as arrayUtils from './utils/arrayUtils';
 export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
+export { fuzzySearch } from './utils/fuzzySearch';
 
-// Tranformations
+// Transformations
 export { standardTransformers } from './transformations/transformers';
 export {
   fieldMatchers,
@@ -431,7 +434,11 @@ export {
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
-export { type PluginContextType, type DataSourcePluginContextType } from './context/plugins/PluginContext';
+export {
+  type PluginContextType,
+  type DataSourcePluginContextType,
+  PluginContext,
+} from './context/plugins/PluginContext';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
@@ -485,6 +492,8 @@ export type {
   ExploreLogsPanelState,
   SplitOpenOptions,
   SplitOpen,
+  TraceSearchProps,
+  TraceSearchTag,
 } from './types/explore';
 export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
 export type { FlotDataPoint } from './types/flot';
@@ -554,6 +563,7 @@ export {
   type ComponentTypeWithExtensionMeta,
   type PluginExtensionFunction,
   type PluginExtensionEventHelpers,
+  type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
@@ -650,6 +660,7 @@ export {
   type QueryFixAction,
   type QueryHint,
   type MetricFindValue,
+  type FiltersApplicability,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,

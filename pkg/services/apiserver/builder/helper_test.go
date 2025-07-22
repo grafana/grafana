@@ -99,6 +99,10 @@ func (m *mockAPIGroupPostStartHookProvider) InstallSchema(scheme *runtime.Scheme
 	return nil
 }
 
+func (m *mockAPIGroupPostStartHookProvider) AllowedV0Alpha1Resources() []string {
+	return nil
+}
+
 func (m *mockAPIGroupPostStartHookProvider) UpdateAPIGroupInfo(apiGroupInfo *server.APIGroupInfo, opts builder.APIGroupOptions) error {
 	return nil
 }

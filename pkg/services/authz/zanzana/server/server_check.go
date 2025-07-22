@@ -7,6 +7,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -15,6 +16,9 @@ import (
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.Check")
 	defer span.End()
+	span.SetAttributes(
+		attribute.String("namespace", r.GetNamespace()),
+	)
 
 	res, err := s.check(ctx, r)
 	if err != nil {
@@ -26,7 +30,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 }
 
 func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	if err := authorize(ctx, r.GetNamespace()); err != nil {
+	if err := authorize(ctx, r.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
@@ -70,6 +74,9 @@ func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 // checkGroupResource check if subject has access to the full "GroupResource", if they do they can access every object
 // within it.
 func (s *Server) checkGroupResource(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.CheckResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.checkGroupResource")
+	defer span.End()
+
 	if !common.IsGroupResourceRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
@@ -84,6 +91,9 @@ func (s *Server) checkGroupResource(ctx context.Context, subject, relation strin
 
 // checkTyped checks on our typed resources e.g. folder.
 func (s *Server) checkTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.CheckResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.checkTyped")
+	defer span.End()
+
 	if !resource.IsValidRelation(relation) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
@@ -123,6 +133,9 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 // 1. If subject has access as a sub resource for a folder.
 // 2. If subject has direct access to resource.
 func (s *Server) checkGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.CheckResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.checkGeneric")
+	defer span.End()
+
 	var (
 		folderIdent    = resource.FolderIdent()
 		resourceCtx    = resource.Context()

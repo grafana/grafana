@@ -10,9 +10,9 @@ weight: 20
 
 # Correlations Editor in Explore
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The Explore editor is available in 10.1 and later versions. In the editor, transformations is available in Grafana 10.3 and later versions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Correlations allow users to build a link between any two data sources. For more information about correlations in general, please see the [correlations](/docs/grafana/<GRAFANA_VERSION>/administration/correlations/) topic in the administration page.
 

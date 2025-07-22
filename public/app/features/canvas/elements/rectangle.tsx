@@ -97,20 +97,20 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = ['Rectangle'];
+    const category = [t('canvas.rectangle-item.category-rectangle', 'Rectangle')];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: 'Text',
+        name: t('canvas.rectangle-item.name-text', 'Text'),
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: 'Text color',
+        name: t('canvas.rectangle-item.name-text-color', 'Text color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -118,7 +118,7 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.align',
-        name: 'Align text',
+        name: t('canvas.rectangle-item.name-align-text', 'Align text'),
         settings: {
           options: [
             { value: Align.Left, label: t('canvas.rectangle-item.label.left', 'Left') },
@@ -131,7 +131,7 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: 'Vertical align',
+        name: t('canvas.rectangle-item.name-vertical-align', 'Vertical align'),
         settings: {
           options: [
             { value: VAlign.Top, label: t('canvas.rectangle-item.label.top', 'Top') },
@@ -144,7 +144,7 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: 'Text size',
+        name: t('canvas.rectangle-item.name-text-size', 'Text size'),
         settings: {
           placeholder: t('canvas.rectangle-item.placeholder.auto', 'Auto'),
         },

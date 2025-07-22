@@ -5,9 +5,9 @@ import * as React from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { Combobox } from '../../Combobox/Combobox';
 import { Field } from '../../Forms/Field';
@@ -18,7 +18,7 @@ import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
 import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
-import { monthOptions } from '../options';
+import { getMonthOptions } from '../options';
 
 interface Props {
   timeZone?: TimeZone;
@@ -146,7 +146,7 @@ export const TimePickerFooter = (props: Props) => {
                 >
                   <Combobox
                     value={fiscalYearStartMonth ?? null}
-                    options={monthOptions}
+                    options={getMonthOptions()}
                     onChange={(value) => {
                       if (onChangeFiscalYearStartMonth) {
                         onChangeFiscalYearStartMonth(value?.value ?? 0);

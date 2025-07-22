@@ -1,6 +1,6 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { StoreState } from '../../types';
+import { StoreState } from 'app/types/store';
 
 export type CleanUpAction = (state: StoreState) => void;
 

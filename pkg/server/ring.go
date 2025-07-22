@@ -25,7 +25,7 @@ import (
 
 var metricsPrefix = resource.RingName + "_"
 
-func (ms *ModuleServer) initRing() (services.Service, error) {
+func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 	if !ms.cfg.EnableSharding {
 		return nil, nil
 	}
@@ -48,7 +48,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		return nil, fmt.Errorf("failed to create KV store client: %s", err)
 	}
 
-	storageRing, err := ring.NewWithStoreClientAndStrategy(
+	searchServerRing, err := ring.NewWithStoreClientAndStrategy(
 		toRingConfig(ms.cfg, ms.MemberlistKVConfig),
 		resource.RingName,
 		resource.RingKey,
@@ -58,11 +58,11 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		logger,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize storage-ring ring: %s", err)
+		return nil, fmt.Errorf("failed to initialize index-server-ring ring: %s", err)
 	}
 
 	startFn := func(ctx context.Context) error {
-		err = storageRing.StartAsync(ctx)
+		err = searchServerRing.StartAsync(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to start the ring: %s", err)
 		}
@@ -74,10 +74,10 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		return nil
 	}
 
-	ms.storageRing = storageRing
-	ms.storageRingClientPool = pool
+	ms.searchServerRing = searchServerRing
+	ms.searchServerRingClientPool = pool
 
-	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(storageRing)
+	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(searchServerRing)
 
 	svc := services.NewIdleService(startFn, nil)
 
@@ -91,7 +91,7 @@ func toRingConfig(cfg *setting.Cfg, KVStore kv.Config) ring.Config {
 	rc.KVStore = KVStore
 	rc.HeartbeatTimeout = resource.RingHeartbeatTimeout
 
-	rc.ReplicationFactor = 1
+	rc.ReplicationFactor = cfg.SearchRingReplicationFactor
 
 	return rc
 }
@@ -124,10 +124,7 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
 		}
 
-		client, err := resource.NewResourceClient(conn, cfg, features, tracer)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get resource client for server %s %s: %s", inst.Id, inst.Addr, err)
-		}
+		client := resource.NewAuthlessResourceClient(conn)
 
 		return &resource.RingClient{
 			Client:       client,

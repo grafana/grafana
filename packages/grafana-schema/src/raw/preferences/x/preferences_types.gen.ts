@@ -47,10 +47,6 @@ export interface Preferences {
    */
   language?: string;
   /**
-   * Selected locale (beta)
-   */
-  locale?: string;
-  /**
    * Navigation preferences
    */
   navbar?: NavbarPreference;
@@ -58,6 +54,10 @@ export interface Preferences {
    * Explore query history preferences
    */
   queryHistory?: QueryHistoryPreference;
+  /**
+   * Selected locale (beta)
+   */
+  regionalFormat?: string;
   /**
    * light, dark, empty is default
    */

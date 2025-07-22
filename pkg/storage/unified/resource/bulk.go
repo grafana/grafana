@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
 
 	authlib "github.com/grafana/authlib/types"
@@ -18,6 +20,13 @@ import (
 const grpcMetaKeyCollection = "x-gf-batch-collection"
 const grpcMetaKeyRebuildCollection = "x-gf-batch-rebuild-collection"
 const grpcMetaKeySkipValidation = "x-gf-batch-skip-validation"
+
+// Logged in trace.
+var metadataKeys = []string{
+	grpcMetaKeyCollection,
+	grpcMetaKeyRebuildCollection,
+	grpcMetaKeySkipValidation,
+}
 
 func grpcMetaValueIsTrue(vals []string) bool {
 	return len(vals) == 1 && vals[0] == "true"
@@ -100,9 +109,17 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
 func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) error {
 	ctx := stream.Context()
+	ctx, span := s.tracer.Start(ctx, "resource.server.BulkProcess")
+	defer span.End()
+
+	sendAndClose := func(rsp *resourcepb.BulkResponse) error {
+		span.AddEvent("sendAndClose", trace.WithAttributes(attribute.String("msg", rsp.String())))
+		return stream.SendAndClose(rsp)
+	}
+
 	user, ok := authlib.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return stream.SendAndClose(&resourcepb.BulkResponse{
+		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: "no user found in context",
 				Code:    http.StatusUnauthorized,
@@ -112,20 +129,30 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return stream.SendAndClose(&resourcepb.BulkResponse{
+		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: "unable to read metadata gRPC request",
 				Code:    http.StatusPreconditionFailed,
 			},
 		})
 	}
+
+	// Add relevant metadata into span.
+	for _, k := range metadataKeys {
+		meta := md.Get(k)
+		if len(meta) > 0 {
+			span.SetAttributes(attribute.StringSlice(k, meta))
+		}
+	}
+
 	runner := &batchRunner{
 		checker: make(map[string]authlib.ItemChecker), // Can create
 		stream:  stream,
+		span:    span,
 	}
 	settings, err := NewBulkSettings(md)
 	if err != nil {
-		return stream.SendAndClose(&resourcepb.BulkResponse{
+		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: "error reading settings",
 				Reason:  err.Error(),
@@ -135,7 +162,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	}
 
 	if len(settings.Collection) < 1 {
-		return stream.SendAndClose(&resourcepb.BulkResponse{
+		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: "Missing target collection(s) in request header",
 				Code:    http.StatusBadRequest,
@@ -153,7 +180,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Verb:      utils.VerbDeleteCollection,
 			})
 			if err != nil || !rsp.Allowed {
-				return stream.SendAndClose(&resourcepb.BulkResponse{
+				return sendAndClose(&resourcepb.BulkResponse{
 					Error: &resourcepb.ErrorResult{
 						Message: fmt.Sprintf("Requester must be able to: %s", utils.VerbDeleteCollection),
 						Code:    http.StatusForbidden,
@@ -169,7 +196,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 				Verb:      utils.VerbCreate,
 			})
 			if err != nil {
-				return stream.SendAndClose(&resourcepb.BulkResponse{
+				return sendAndClose(&resourcepb.BulkResponse{
 					Error: &resourcepb.ErrorResult{
 						Message: "Unable to check `create` permission",
 						Code:    http.StatusForbidden,
@@ -178,7 +205,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			}
 		}
 	} else {
-		return stream.SendAndClose(&resourcepb.BulkResponse{
+		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: "Bulk currently only supports RebuildCollection",
 				Code:    http.StatusBadRequest,
@@ -188,7 +215,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 
 	backend, ok := s.backend.(BulkProcessingBackend)
 	if !ok {
-		return stream.SendAndClose(&resourcepb.BulkResponse{
+		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: "The server backend does not support batch processing",
 				Code:    http.StatusNotImplemented,
@@ -228,7 +255,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 			}
 		}
 	}
-	return stream.SendAndClose(rsp)
+	return sendAndClose(rsp)
 }
 
 var (
@@ -241,6 +268,7 @@ type batchRunner struct {
 	request  *resourcepb.BulkRequest
 	err      error
 	checker  map[string]authlib.ItemChecker
+	span     trace.Span
 }
 
 // Next implements BulkRequestIterator.
@@ -259,6 +287,7 @@ func (b *batchRunner) Next() bool {
 
 	if b.err != nil {
 		b.rollback = true
+		b.span.AddEvent("next", trace.WithAttributes(attribute.String("error", b.err.Error())))
 		return true
 	}
 
@@ -273,6 +302,16 @@ func (b *batchRunner) Next() bool {
 			b.err = fmt.Errorf("not allowed to create resource")
 			b.rollback = true
 		}
+
+		// Mention resource in the span.
+		attrs := []attribute.KeyValue{
+			attribute.String("key", nsgrWithName(key)),
+		}
+		if b.err != nil {
+			attrs = append(attrs, attribute.String("error", b.err.Error()))
+		}
+
+		b.span.AddEvent("next", trace.WithAttributes(attrs...))
 		return true
 	}
 	return false

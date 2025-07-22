@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
-export interface Props {
+interface Props {
   query: string;
   lang: {
     grammar: Grammar;
@@ -23,7 +23,7 @@ export function RawQuery({ query, lang, className }: Props) {
   return (
     <div
       className={cx(styles.editorField, 'prism-syntax-highlight', className)}
-      aria-label={t('querybuilder.raw-query.aria-label-selector', 'selector')}
+      aria-label={t('grafana-prometheus.querybuilder.raw-query.aria-label-selector', 'selector')}
       dangerouslySetInnerHTML={{ __html: highlighted }}
     />
   );

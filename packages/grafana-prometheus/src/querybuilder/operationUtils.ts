@@ -3,8 +3,8 @@ import { capitalize } from 'lodash';
 import pluralize from 'pluralize';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { LabelParamEditor } from './components/LabelParamEditor';
 import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
@@ -120,10 +120,6 @@ export function getPromOperationDisplayName(funcName: string) {
   return capitalize(funcName.replace(/_/g, ' '));
 }
 
-export function getOperationParamId(operationId: string, paramIndex: number) {
-  return `operations.${operationId}.param.${paramIndex}`;
-}
-
 export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOperationParamDef {
   /* eslint-disable @grafana/i18n/no-untranslated-strings */
   const options: Array<SelectableValue<string>> = [
@@ -191,7 +187,7 @@ export function createAggregationOperation(
           type: 'string',
           restParam: true,
           optional: true,
-          editor: LabelParamEditor,
+          editor: 'LabelParamEditor',
         },
       ],
       defaultParams: [''],
@@ -213,7 +209,7 @@ export function createAggregationOperation(
           type: 'string',
           restParam: true,
           optional: true,
-          editor: LabelParamEditor,
+          editor: 'LabelParamEditor',
         },
       ],
       defaultParams: [''],
@@ -248,7 +244,7 @@ export function createAggregationOperationWithParam(
   return operations;
 }
 
-function getAggregationByRenderer(aggregation: string) {
+export function getAggregationByRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
   };
@@ -270,11 +266,23 @@ export function getAggregationExplainer(aggregationName: string, mode: 'by' | 'w
 
     switch (mode) {
       case 'by':
-        return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
+        return t(
+          'grafana-prometheus.querybuilder.operation-utils.getAggregationExplainer.label-by',
+          'Calculates {{aggregationName}} over dimensions while preserving {{labelWord}} {{labels}}.',
+          { aggregationName, labelWord, labels }
+        );
       case 'without':
-        return `Calculates ${aggregationName} over the dimensions ${labels}. All other labels are preserved.`;
+        return t(
+          'grafana-prometheus.querybuilder.operation-utils.getAggregationExplainer.label-without',
+          'Calculates {{aggregationName}} over the dimensions {{labels}}. All other labels are preserved.',
+          { aggregationName, labels }
+        );
       default:
-        return `Calculates ${aggregationName} over the dimensions.`;
+        return t(
+          'grafana-prometheus.querybuilder.operation-utils.getAggregationExplainer.label-default',
+          'Calculates {{aggregationName}} over the dimensions.',
+          { aggregationName }
+        );
     }
   };
 }

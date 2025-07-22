@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "De bouwmodus geeft geen wijzigingen weer die in de code zijn aangebracht. De querybouwer geeft de laatste wijzigingen weer die je in de bouwmodus hebt aangebracht.",
+        "cancel": "Annuleren",
+        "clipboard": "Wil je je code naar het klembord kopiëren?",
+        "copy-code-and-switch": "Code kopiëren en schakelen",
+        "discard-code-and-switch": "Code verwijderen en schakelen",
+        "warning": "Waarschuwing"
+      },
+      "connection-limits": {
+        "auto-max-idle": "Automatisch maximaal inactief",
+        "content-auto-max-idle": "Indien ingeschakeld, stel je het aantal <1>Maximale inactieve verbindingen</1> automatisch in op dezelfde waarde als<3> Max open verbindingen</3>. Als het aantal maximale open verbindingen niet is ingesteld, wordt dit ingesteld op de standaardwaarde ({{defaultMaxIdle}}).",
+        "content-max-idle": "Het maximale aantal verbindingen in de inactieve verbindingspool. Als <1>Max open verbindingen</1> groter is dan 0 maar kleiner dan de <3>Max inactieve verbindingen</3>, dan worden de <5>Max inactieve verbindingen</5> verminderd om overeen te komen met de limiet <8>Max open verbindingen</8>. Indien ingesteld op 0, blijven er geen inactieve verbindingen behouden.",
+        "content-max-lifetime": "De maximale hoeveelheid tijd in seconden dat een verbinding opnieuw kan worden gebruikt. Indien ingesteld op 0, worden verbindingen voor altijd hergebruikt.",
+        "content-max-open": "Het maximale aantal open verbindingen met de database. Als <1>Max inactieve verbindingen</1> groter is dan 0 en de <3>Max open verbindingen</3> kleiner is dan <5>Max inactieve verbindingen</5>, dan wordt <7>Max inactieve verbindingen</7> verminderd om overeen te komen met de limiet <9>Max open verbindingen</9>. Indien ingesteld op 0, is er geen limiet op het aantal open verbindingen.",
+        "max-idle": "Max. inactief",
+        "max-lifetime": "Max. levensduur",
+        "max-open": "Max. open",
+        "title-connection-limits": "Verbindingslimieten"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "Gegevenssetkiezer"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Fout"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "Macro's"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Groeperen op",
+          "title-remove-group-by-column": "Groep verwijderen per kolom"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "Sorteren op",
+        "label-limit": "Limiet",
+        "label-offset": "Offset",
+        "label-order-by": "Sorteren op"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Voorbeeld",
+          "tooltip-copy-to-clipboard": "Kopiëren naar klembord"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "Je query is ongeldig. Kijk hieronder voor meer informatie. <1></1>Je kunt deze query echter nog steeds uitvoeren.",
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-dataset": "Gegevensreeks",
+        "label-filter": "Filter",
+        "label-format": "Formaat",
+        "label-group": "Groep",
+        "label-order": "Orde",
+        "label-preview": "Voorbeeld",
+        "label-table": "Tabel",
+        "placeholder-select-format": "Selecteer het formaat",
+        "run-query": "Query uitvoeren"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "Druk op CTRL/CMD+Return om de query uit te voeren",
+        "tooltip-collapse": "Editor samenvouwen",
+        "tooltip-expand": "Editor uitvouwen",
+        "tooltip-format-query": "Query-formaat"
+      },
+      "query-validator": {
+        "query-will-process": "<0></0> Deze query zal <2>{{bytes}}</2> verwerken wanneer deze wordt uitgevoerd.",
+        "validating-query": "Query valideren..."
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "Bewerken in uitgevouwen code-editor"
+        },
+        "title-query-num": "Query {{queryNum}}"
+      },
+      "select-column": {
+        "label-column": "Kolom"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "Parameter {{index}} voor kolom {{columnIndex}}",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "Parameter verwijderen"
+          }
+        },
+        "title-add-parameter": "Parameter toevoegen"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "Aggregaties",
+              "macros": "Macro's"
+            }
+          }
+        },
+        "label": {
+          "time": "tijd",
+          "value": "waarde"
+        },
+        "label-alias": "Alias",
+        "label-data-operations": "Gegevensbewerkingen",
+        "title-add-column": "Kolom toevoegen",
+        "title-remove-column": "Kolom verwijderen"
+      },
+      "settings": {
+        "aria-label-conjunction": "Conjunctie",
+        "aria-label-field": "Veld",
+        "aria-label-operator": "Operator",
+        "title-button-filter": "{{ buttonLabel }}-filter"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Editor word geladen"
+      },
+      "table-selector": {
+        "aria-label-table-selector": "Tabelkiezer",
+        "placeholder-loading": "Tabellen laden",
+        "placeholder-select-table": "Tabel selecteren"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "Geef hier het clientcertificaat op om te verifiëren met een TLS/SSL-clientcertificaat.",
+        "content-tlsssl-client-key": "Geef hier de sleutel op om te verifiëren met een TLS/SSL-clientcertificaat.",
+        "content-tlsssl-root-certificate": "Als de geselecteerde TLS/SSL-modus een serverrootcertificaat vereist, geef dit dan hier op",
+        "tlsssl-client-certificate": "TLS/SSL-gebruikerscertificaat",
+        "tlsssl-client-key": "TLS/SSL-clientsleutel",
+        "tlsssl-root-certificate": "TLS/SSL-rootcertificaat"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "Filteren op kolomwaarde",
+        "label-group-by-column": "Groeperen op kolom"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "Macro's waardekiezer"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "Geselecteerde kolommen"
+      }
+    }
+  }
+}

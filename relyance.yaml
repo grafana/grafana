@@ -1,0 +1,99 @@
+# Relyance Compliance Inspector Configuration
+
+repository: grafana/grafana
+
+# Services and Code Relationship
+# Purpose: Configuration used to visualize the code base and relationships between microservices and code.
+# Note: Directory paths are relative to the repository's root directory. 
+# Note: Need a separate entry for each microservice. See example below.
+services:
+
+
+
+# Example: Services and Code Relationship 
+# Note: Do not use below. It is an example.
+# Note: Directory paths are relative to the repository's root directory
+#- service: paymentservice
+#  source:
+#     - src/payments 
+#     - src/checkout_service
+#- service: catalogservice
+#  source:
+#     - src/catalog 
+
+
+# Source Directories to Exclude
+# Purpose: Configuration is used to exclude directories from analysis such as test directories etc.
+# Note: Directory paths are relative to the repository's root directory
+exclude:
+  # Test and development environments
+  - e2e
+  - devenv
+  - hack
+  - scripts
+  - tools
+  - pkg/tests
+
+  # Documentation and examples
+  - docs
+  - contribute
+  - grafana-mixin
+
+  # Build artifacts and dependencies
+  - packaging
+  - data
+  - bin
+  - plugins-bundled
+  - vendor
+  - node_modules
+
+  # Static UI assets
+  - public/fonts
+  - public/img
+  - public/locales
+  - public/vendor
+  - public/lib
+
+  # Configuration templates
+  - conf
+  - emails
+  - cue.mod
+  - kinds
+  - kindsv2
+
+  # Temporary and cache directories
+  - tmp
+  - cache
+  - .cache
+  - venv
+
+
+# Excluding files and directories using patterns (enable lines as needed)
+exclude_patterns:
+  # Test and mock files
+  - "**/*_test.go"
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+  - "**/testdata/**"
+  - "**/*_mock.go"
+  - "**/mocks/**"
+
+  # Generated code
+  - "**/*_gen.go"
+  - "**/wire_gen.go"
+
+  # Documentation and examples
+  - "**/*.md"
+  - "**/README.*"
+  - "**/LICENSE*"
+  - "**/*.example.*"
+
+  # System files and dependencies
+  - "**/.DS_Store"
+  - "**/*.log"
+  - "**/go.sum"
+  - "**/yarn.lock"
+
+  # Generated specs
+  - "**/swagger.json"
+  - "**/openapi*.json"

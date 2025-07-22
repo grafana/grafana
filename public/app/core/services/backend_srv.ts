@@ -25,7 +25,8 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
-import { DashboardDTO, FolderDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
+import { FolderDTO } from 'app/types/folders';
 
 import { ShowModalReactEvent } from '../../types/events';
 import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
@@ -147,7 +148,14 @@ export class BackendSrv implements BackendService {
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
     const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
-    const url = parseUrlFromOptions(options);
+
+    let url: string;
+    try {
+      url = parseUrlFromOptions(options);
+    } catch (error) {
+      return throwError(() => error);
+    }
+
     const init = parseInitFromOptions({
       ...options,
       requestId,
@@ -295,8 +303,14 @@ export class BackendSrv implements BackendService {
   }
 
   private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions(options);
+
+    let url: string;
+    try {
+      url = parseUrlFromOptions(options);
+    } catch (error) {
+      return throwError(() => error);
+    }
 
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async (response) => {

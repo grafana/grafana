@@ -44,10 +44,10 @@ export type Preferences = {
   homeDashboardUID?: string;
   /** Selected language (beta) */
   language?: string;
-  /** Selected locale (beta) */
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  /** Selected locale (beta) */
+  regionalFormat?: string;
   /** light, dark, empty is default */
   theme?: string;
   /** The timezone selection
@@ -76,9 +76,9 @@ export type PatchPrefsCmd = {
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark';
   timezone?: 'utc' | 'browser';
   weekStart?: string;
@@ -89,9 +89,9 @@ export type UpdatePrefsCmd = {
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
   timezone?: 'utc' | 'browser';
   weekStart?: string;

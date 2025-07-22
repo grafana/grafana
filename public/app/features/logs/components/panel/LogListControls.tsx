@@ -12,6 +12,7 @@ import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
 import { useLogListContext } from './LogListContext';
+import { useLogListSearchContext } from './LogListSearchContext';
 import { ScrollToLogsEvent } from './virtualization';
 
 type Props = {
@@ -63,6 +64,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     syntaxHighlighting,
     wrapLogMessage,
   } = useLogListContext();
+  const { hideSearch, searchVisible, showSearch } = useLogListSearchContext();
 
   const onScrollToTopClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_scroll_top_clicked');
@@ -244,6 +246,19 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           {visualisationType === 'logs' && (
             <>
               <div className={styles.divider} />
+              {config.featureToggles.newLogsPanel && (
+                <IconButton
+                  name={'search'}
+                  className={searchVisible ? styles.controlButtonActive : styles.controlButton}
+                  onClick={searchVisible ? hideSearch : showSearch}
+                  tooltip={
+                    searchVisible
+                      ? t('logs.logs-controls.hide-search', 'Close search')
+                      : t('logs.logs-controls.show-search', 'Search in logs result')
+                  }
+                  size="lg"
+                />
+              )}
               <Dropdown overlay={deduplicationMenu} placement="auto-end">
                 <IconButton
                   name={'filter'}
@@ -380,14 +395,46 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           )}
         </>
       ) : (
-        <Dropdown overlay={filterLevelsMenu} placement="auto-end">
-          <IconButton
-            name={'gf-logs'}
-            className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
-            tooltip={t('logs.logs-controls.display-level', 'Display levels')}
-            size="lg"
-          />
-        </Dropdown>
+        <>
+          {config.featureToggles.newLogsPanel && (
+            <IconButton
+              name={'search'}
+              className={searchVisible ? styles.controlButtonActive : styles.controlButton}
+              onClick={searchVisible ? hideSearch : showSearch}
+              tooltip={
+                searchVisible
+                  ? t('logs.logs-controls.hide-search', 'Close search')
+                  : t('logs.logs-controls.show-search', 'Search in logs result')
+              }
+              size="lg"
+            />
+          )}
+          <Dropdown overlay={filterLevelsMenu} placement="auto-end">
+            <IconButton
+              name={'gf-logs'}
+              className={filterLevels && filterLevels.length > 0 ? styles.controlButtonActive : styles.controlButton}
+              tooltip={t('logs.logs-controls.display-level', 'Display levels')}
+              size="lg"
+            />
+          </Dropdown>
+          {visualisationType === 'logs' && hasUnescapedContent && (
+            <IconButton
+              name="enter"
+              aria-pressed={forceEscape}
+              className={forceEscape ? styles.controlButtonActive : styles.controlButton}
+              onClick={onForceEscapeClick}
+              tooltip={
+                forceEscape
+                  ? t('logs.logs-controls.remove-escaping', 'Remove escaping')
+                  : t(
+                      'logs.logs-controls.escape-newlines',
+                      'Fix incorrectly escaped newline and tab sequences in log lines'
+                    )
+              }
+              size="lg"
+            />
+          )}
+        </>
       )}
       {visualisationType === 'logs' && (
         <IconButton

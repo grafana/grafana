@@ -106,9 +106,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       return formValuesFromPrefill(prefill);
     }
 
-    const defaultRuleType = ruleType || RuleFormType.grafana;
-
-    return defaultFormValuesForRuleType(defaultRuleType);
+    return defaultFormValuesForRuleType(ruleType);
   }, [existing, prefill, ruleType]);
 
   const formAPI = useForm<RuleFormValues>({

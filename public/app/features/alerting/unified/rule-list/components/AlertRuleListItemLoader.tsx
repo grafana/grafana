@@ -17,6 +17,7 @@ export function AlertRuleListItemSkeleton() {
       description={<Skeleton width={256} />}
       actions={<RuleActionsSkeleton />}
       data-testid="alert-rule-list-item-loader"
+      aria-disabled={true}
     />
   );
 }

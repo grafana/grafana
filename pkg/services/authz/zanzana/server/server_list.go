@@ -11,6 +11,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -18,6 +19,9 @@ import (
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
+	span.SetAttributes(
+		attribute.String("namespace", r.GetNamespace()),
+	)
 
 	res, err := s.list(ctx, r)
 	if err != nil {
@@ -29,7 +33,7 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 }
 
 func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	if err := authorize(ctx, r.GetNamespace()); err != nil {
+	if err := authorize(ctx, r.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
@@ -63,6 +67,9 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 }
 
 func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.listTyped")
+	defer span.End()
+
 	if !resource.IsValidRelation(relation) {
 		return &authzv1.ListResponse{}, nil
 	}
@@ -112,6 +119,9 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 }
 
 func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.listGeneric")
+	defer span.End()
+
 	var (
 		folderRelation = common.SubresourceRelation(relation)
 		resourceCtx    = resource.Context()
@@ -168,7 +178,7 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 		fn = s.streamedListObjects
 	}
 
-	if s.cfg.CheckQueryCache {
+	if s.cfg.CacheSettings.CheckQueryCacheEnabled {
 		return s.listObjectCached(ctx, req, fn)
 	}
 

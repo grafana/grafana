@@ -206,7 +206,9 @@ type QueryEditorProperty struct {
 
 // NewQueryEditorProperty creates a new QueryEditorProperty object.
 func NewQueryEditorProperty() *QueryEditorProperty {
-	return &QueryEditorProperty{}
+	return &QueryEditorProperty{
+		Type: QueryEditorPropertyTypeString,
+	}
 }
 
 type QueryEditorPropertyType string

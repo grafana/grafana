@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	libmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -888,25 +889,47 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc           string
-		title          string
-		expectedResult res
-		typ            string
+		desc            string
+		title           string
+		titleExactMatch bool
+		expectedResult  *res
+		typ             string
 	}{
 		{
 			desc:           "find dashboard under general",
 			title:          "dashboard under general",
-			expectedResult: res{title: "dashboard under general"},
+			expectedResult: &res{title: "dashboard under general"},
 		},
 		{
 			desc:           "find dashboard under f0",
 			title:          "dashboard under f0",
-			expectedResult: res{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
+			expectedResult: &res{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
 		},
 		{
 			desc:           "find dashboard under subfolder",
 			title:          "dashboard under subfolder",
-			expectedResult: res{title: "dashboard under subfolder", folderUID: subfolder.UID, folderTitle: subfolder.Title},
+			expectedResult: &res{title: "dashboard under subfolder", folderUID: subfolder.UID, folderTitle: subfolder.Title},
+		},
+		{
+			desc:            "find folder 'sub' using partial match: 1 result found",
+			title:           "sub",
+			titleExactMatch: false,
+			typ:             "dash-folder",
+			expectedResult:  &res{title: "subfolder", folderUID: f0.UID, folderTitle: f0.Title},
+		},
+		{
+			desc:            "find folder 'sub' using exact match: no results",
+			title:           "sub",
+			titleExactMatch: true,
+			typ:             "dash-folder",
+			expectedResult:  nil,
+		},
+		{
+			desc:            "find folder 'subfolder' using exact match: 1 result",
+			title:           "subfolder",
+			titleExactMatch: true,
+			typ:             "dash-folder",
+			expectedResult:  &res{title: "subfolder", folderUID: f0.UID, folderTitle: f0.Title},
 		},
 	}
 
@@ -915,11 +938,18 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 			dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 			require.NoError(t, err)
 			res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
-				SignedInUser: user,
-				Type:         tc.typ,
-				Title:        tc.title,
+				SignedInUser:    user,
+				Type:            tc.typ,
+				Title:           tc.title,
+				TitleExactMatch: tc.titleExactMatch,
 			})
 			require.NoError(t, err)
+
+			if tc.expectedResult == nil {
+				require.Equal(t, 0, len(res))
+				return
+			}
+
 			require.Equal(t, 1, len(res))
 
 			r := tc.expectedResult
@@ -1114,6 +1144,94 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestIntegrationGetDashboardsByLibraryPanelUID(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore))
+	require.NoError(t, err)
+
+	t.Run("Should return dashboards connected to a library panel", func(t *testing.T) {
+		libraryElement := insertTestLibraryElement(t, sqlStore, "test-library-panel", 1, "", "Test Library Panel")
+		dash1 := insertTestDashboard(t, dashboardStore, "Dashboard 1", 1, 0, "", false, "prod")
+		dash2 := insertTestDashboard(t, dashboardStore, "Dashboard 2", 1, 0, "", false, "webapp")
+		dash3 := insertTestDashboard(t, dashboardStore, "Dashboard 3", 1, 0, "", false, "backend")
+		// connect all but the last one
+		insertTestLibraryElementConnection(t, sqlStore, libraryElement.ID, dash1.ID)
+		insertTestLibraryElementConnection(t, sqlStore, libraryElement.ID, dash2.ID)
+
+		connectedDashboards, err := dashboardStore.GetDashboardsByLibraryPanelUID(context.Background(), libraryElement.UID, 1)
+		require.NoError(t, err)
+		require.Len(t, connectedDashboards, 2)
+
+		uids := []string{connectedDashboards[0].UID, connectedDashboards[1].UID}
+		require.Contains(t, uids, dash1.UID)
+		require.Contains(t, uids, dash2.UID)
+		require.NotContains(t, uids, dash3.UID)
+	})
+
+	t.Run("Returns nothing when library panel has no connections", func(t *testing.T) {
+		libraryElement := insertTestLibraryElement(t, sqlStore, "empty-library-panel", 1, "", "Empty Library Panel")
+		connectedDashboards, err := dashboardStore.GetDashboardsByLibraryPanelUID(context.Background(), libraryElement.UID, 1)
+		require.NoError(t, err)
+		require.Len(t, connectedDashboards, 0)
+	})
+
+	t.Run("Returns nothing when library panel does not exist", func(t *testing.T) {
+		connectedDashboards, err := dashboardStore.GetDashboardsByLibraryPanelUID(context.Background(), "non-existent-uid", 1)
+		require.NoError(t, err)
+		require.Len(t, connectedDashboards, 0)
+	})
+}
+
+func insertTestLibraryElement(t *testing.T, sqlStore db.DB, uid string, orgID int64, folderUID string, name string) *libmodel.LibraryElement {
+	t.Helper()
+
+	element := &libmodel.LibraryElement{
+		OrgID:       orgID,
+		FolderUID:   folderUID,
+		UID:         uid,
+		Name:        name,
+		Kind:        1,
+		Type:        "text",
+		Description: "Test library element",
+		Model:       []byte(`{"type": "text", "content": "test"}`),
+		Version:     1,
+		Created:     time.Now(),
+		Updated:     time.Now(),
+		CreatedBy:   1,
+		UpdatedBy:   1,
+	}
+
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Insert(element)
+		return err
+	})
+	require.NoError(t, err)
+
+	return element
+}
+
+func insertTestLibraryElementConnection(t *testing.T, sqlStore db.DB, elementID int64, dashboardID int64) {
+	t.Helper()
+
+	connection := &libmodel.LibraryElementConnection{
+		ElementID:    elementID,
+		Kind:         1,
+		ConnectionID: dashboardID,
+		Created:      time.Now(),
+		CreatedBy:    1,
+	}
+
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Insert(connection)
+		return err
+	})
+	require.NoError(t, err)
 }
 
 func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {

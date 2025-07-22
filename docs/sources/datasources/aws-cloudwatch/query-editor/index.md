@@ -111,9 +111,9 @@ For details on the available functions, refer to [AWS Metric Math](https://docs.
 
 For example, to apply arithmetic operations to a metric, apply a unique string id to the raw metric, then use this id and apply arithmetic operations to it in the Expression field of the new metric.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Period macro
 
@@ -192,9 +192,9 @@ The suggestions appear after typing a space, comma, or dollar (`$`) character, o
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.png" max-width="500px" class="docs-image--right" caption="Code editor autocomplete" >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Template variables in the code editor can interfere with autocompletion.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To run the query, click **Run query** above the code editor.
 

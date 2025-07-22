@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { BASE_URL } from 'app/api/clients/provisioning/baseAPI';
+import { BASE_URL } from 'app/api/clients/provisioning/v0alpha1/baseAPI';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -27,7 +27,7 @@ import {
   DashboardRoutes,
   HomeDashboardRedirectDTO,
   isRedirectResponse,
-} from 'app/types';
+} from 'app/types/dashboard';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -362,6 +362,10 @@ abstract class DashboardScenePageStateManagerBase<T>
     this.cache[cacheKey] = scene;
   }
 
+  public removeSceneCache(cacheKey: string) {
+    delete this.cache[cacheKey];
+  }
+
   public clearSceneCache() {
     this.cache = {};
   }
@@ -371,7 +375,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
     const fromCache = this.getSceneFromCache(options.uid);
 
-    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+    if (
+      fromCache &&
+      fromCache.state.version === rsp?.dashboard.version &&
+      fromCache.state.meta.created === rsp?.meta.created
+    ) {
       return fromCache;
     }
 
@@ -817,6 +825,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public setSceneCache(cacheKey: string, scene: DashboardScene): void {
     this.activeManager.setSceneCache(cacheKey, scene);
+  }
+
+  public removeSceneCache(cacheKey: string): void {
+    this.v1Manager.removeSceneCache(cacheKey);
+    this.v2Manager.removeSceneCache(cacheKey);
   }
 
   public getCache() {
