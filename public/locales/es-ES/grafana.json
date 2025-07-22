@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Añadir más"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Estado de la alerta",
       "annotations": "Anotaciones",
@@ -3228,6 +3237,9 @@
       "define-allowed-teams-ids-label": "Definir ID de equipos permitidos",
       "display-name-description": "Se mostrará en la página de inicio de sesión como «Iniciar sesión con...». Resulta útil si utiliza más de un proveedor de identidad o protocolos SSO.",
       "display-name-label": "Nombre para mostrar",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "Nombre de la clave que se utilizará para la búsqueda de correo electrónico del usuario dentro del mapa de atributos del token de identificación OAuth2.",
       "email-attribute-name-label": "Nombre del atributo de correo electrónico",
       "email-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de correo electrónico del usuario a partir de la información del usuario.",
@@ -3244,6 +3256,11 @@
       "id-token-attribute-name-label": "Nombre del atributo del token de ID",
       "login-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de inicios de sesión del usuario a partir del token de ID de usuario.",
       "login-attribute-path-label": "Ruta del atributo de inicio de sesión",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "El ID de cliente de identidad administrada de la credencial de identidad federada de su aplicación OAuth2.",
       "managed-identity-client-id-label": "ID de cliente de identidad gestionada de FIC",
       "name-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de nombres de usuario a partir del token de ID de usuario. \nEste nombre se utilizará como nombre para mostrar del usuario.",
@@ -3341,6 +3358,9 @@
     "provider-config-page": {
       "text-badge-enabled": "Activado",
       "text-badge-not-enabled": "No habilitada"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "El punto final .well-known/openid-configuration para tu IdP",
@@ -3458,6 +3478,7 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
       "cancel-button": "Cancelar",
       "cannot-move-folders": "Las carpetas no se pueden mover",
       "confirmation-text": "Eliminar",
@@ -3476,7 +3497,9 @@
       "move-modal-text": "Esta acción moverá el siguiente contenido:",
       "move-modal-title": "Mover",
       "moving": "Moviendo...",
-      "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta."
+      "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Eliminados recientemente"
@@ -3487,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Esta carpeta está vacía"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
@@ -3538,6 +3577,7 @@
       "empty-message": "No se ha encontrado ninguna carpeta",
       "error-title": "Error al cargar las carpetas",
       "non-folder-item": "{{itemKind}} {{itemUID}} no es una carpeta",
+      "root-title": "",
       "search-placeholder": "Buscar carpetas",
       "unknown-error": "Error desconocido"
     },
@@ -4613,6 +4653,14 @@
     },
     "errors": {
       "failed-to-load": "Error al cargar el panel de control"
+    },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
     },
     "fetch-dashboard": {
       "message": {
@@ -5837,10 +5885,13 @@
       "description-examples": "Los grupos de captura con nombre se pueden utilizar para separar el texto y el valor de la pantalla (<1>consulta los ejemplos</1>).",
       "description-optional": "Es opcional si quieres extraer parte del nombre de una serie o segmento de nodo métrico.",
       "label-data-source": "Fuente de datos",
+      "label-static-options-sort": "",
       "label-target-data-source": "Fuente de datos de destino",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Opciones de consulta",
-      "selection-options": "Opciones de selección"
+      "selection-options": "Opciones de selección",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -5899,8 +5950,8 @@
         "title-someone-else-has-updated-this-dashboard": "Otra persona ha actualizado este dashboard",
         "would-still-dashboard": "¿Seguro que quieres guardar este dashboard?"
       },
-      "schema-v2-library-panels-export": "La funcionalidad del dashboard dinámico es experimental y no tiene una paridad de características completa con el comportamiento actual de los dashboards. Se basa en un nuevo formato de esquema, que no admite paneles de librería. Esto significa que al exportar el dashboard para usarlo en otra instancia, no se incluirán paneles de librería. Tenemos la intención de admitirlos a medida que avanzamos en el <2>ciclo de vida</2> de la función.",
-      "schema-v2-library-panels-export-title": "El esquema de dashboard V2 aún no admite la exportación de paneles de librería para su uso en otra instancia",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "El dashboard ha cambiado de forma irreversible"
     },
     "save-dashboard-form-common-options": {
@@ -7922,6 +7973,60 @@
       "previous-label": "Mes anterior",
       "select-placeholder": "Seleccionar fecha y hora"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Cerrar"
     },
@@ -7968,6 +8073,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -8635,9 +8754,7 @@
     "share-panel": {
       "config-description": "Crea un enlace personalizado y directo para compartir tu panel dentro de tu organización, con los siguientes ajustes de personalización:",
       "download-image": "Descargar imagen",
-      "render-image": "Generar imagen",
-      "render-image-error": "Error al representar la imagen del panel",
-      "render-image-error-description": "Se ha producido un error al generar la imagen"
+      "render-image": "Generar imagen"
     }
   },
   "live": {
@@ -8805,9 +8922,13 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": ""
       },
@@ -9655,7 +9776,9 @@
       "aria-label": "Ayuda"
     },
     "invite-user": {
-      "invite-new-member-button": "Invitar a un nuevo miembro"
+      "invite-button": "",
+      "invite-new-member-button": "Invitar a un nuevo miembro",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Añadir a marcadores",
@@ -10413,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10423,6 +10549,25 @@
   "provisioning": {
     "banner": {
       "message": "Esta función se encuentra actualmente en desarrollo activo. Para obtener la mejor experiencia y las últimas mejoras, recomendamos utilizar la <2>compilación nocturna</2> de Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Añade un nombre claro para esta conexión de repositorio",
@@ -10445,36 +10590,20 @@
       "button-save": "Guardar",
       "button-saving": "Guardando…",
       "description-enabled": "Una vez que la extracción automática está habilitada, el objetivo no se puede cambiar.",
-      "description-path": "Ruta a un subdirectorio en el repositorio Git",
       "description-read-only": "Los recursos no se pueden modificar a través de Grafana.",
-      "description-repository-url": "Introduce la URL del repositorio GitHub",
       "description-title": "Un nombre legible para la configuración",
       "error-required": "Este campo es obligatorio.",
       "error-save-repository": "Error al guardar los ajustes del repositorio",
-      "error-valid-github-url": "Introduce una URL de repositorio GitHub válida",
       "label-automatic-pulling": "Extracción automática",
-      "label-branch": "Rama",
       "label-enabled": "Activado",
-      "label-github-token": "Token de GitHub",
       "label-interval-seconds": "Intervalo (segundos)",
-      "label-local-path": "Ruta local",
-      "label-path": "Ruta",
-      "label-pr-workflow": "Habilitar la opción de solicitud de extracción al guardar",
       "label-repository-type": "Tipo de repositorio",
-      "label-repository-url": "URL del repositorio",
       "label-target": "Destino",
       "label-title": "Título",
       "option-entire-instance": "Instancia completa",
-      "option-github": "GitHub",
-      "option-local": "Local",
       "option-managed-folder": "Carpeta administrada",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "ghp_tuTokenAquí1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/nombre-usuario/nombre-repo",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/ruta/a/repo",
-      "placeholder-my-config": "Mi configuración",
-      "placeholder-select-repository-type": "Seleccionar tipo de repositorio"
+      "placeholder-my-config": "Mi configuración"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Configura webhooks</0> para obtener actualizaciones instantáneas en Grafana en cuanto se realicen los cambios. Revisa y aprueba los cambios mediante solicitudes de extracción antes de que se publiquen.",
@@ -10488,26 +10617,7 @@
     },
     "connect-repository-button": {
       "configure": "Configurar",
-      "configure-file": "Configurar el aprovisionamiento de archivos",
-      "configure-git-sync": "Configurar Git Sync",
       "repository-limit-info-alert": "Se ha alcanzado el límite del repositorio ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Rama que se utilizará para el repositorio GitHub",
-      "description-github-path": "Esta es la ruta a un subdirectorio en tu repositorio de GitHub donde se almacenarán y aprovisionarán los paneles",
-      "description-paste-your-git-hub-personal-access-token": "Pega tu token de acceso personal de GitHub",
-      "description-repository-url": "Pega la URL de tu repositorio de GitHub",
-      "error-field-required": "Este campo es obligatorio.",
-      "error-invalid-github-url": "Introduce una URL de repositorio GitHub válida",
-      "label-access-token": "Token de acceso a GitHub",
-      "label-branch": "Nombre de la rama",
-      "label-local-path": "Ruta local",
-      "label-path": "Ruta al subdirectorio en el repositorio",
-      "label-repository-url": "URL del repositorio GitHub",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "github_pat_tuTokenAquí1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/nombre_de_usuario/repo",
-      "placeholder-local-path": "/ruta/a/repo"
     },
     "delete-repository-button": {
       "button-delete": "Eliminar",
@@ -10549,8 +10659,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Configurar los conmutadores de características necesarios"
       },
-      "manage-dashboards-provision-updates-automatically": "Gestiona los dashboards como código en GitHub y aprovisiona las actualizaciones de forma automática",
-      "manage-your-dashboards-with-remote-provisioning": "Comenzar con GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Almacena los dashboards en un almacenamiento controlado por versiones para mejorar la organización y el seguimiento del historial"
     },
     "file-history-page": {
@@ -10571,18 +10681,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Añade una vista previa de la imagen de los cambios del dashboard en las solicitudes de extracción. Las imágenes de tus paneles de Grafana se compartirán en tu repositorio Git y serán visibles para cualquier persona con acceso al repositorio.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Requiere renderizado de imágenes. <2>Configurar el renderizado de imágenes</2>",
-      "description-often-shall-instance-updates-git-hub": "¿Con qué frecuencia la instancia extraerá actualizaciones de GitHub?",
-      "description-pr-enable-description": "Permite a los usuarios elegir si desean abrir una solicitud de extracción al guardar los cambios. Si el repositorio no permite cambios directos en la rama principal, es posible que aún se requiera una solicitud de extracción.",
+      "description-preview-requirements": "",
       "description-read-only": "Los recursos no se pueden modificar a través de Grafana.",
-      "description-webhooks-enable": "Permite a los usuarios elegir si desean abrir una solicitud de extracción al guardar los cambios. Si el repositorio no permite cambios directos en la rama principal, es posible que aún se requiera una solicitud de extracción.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Habilitar las vistas previas del dashboard en las solicitudes de extracción",
-      "label-pr-workflow": "Habilitar la opción de solicitud de extracción al guardar",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Solo lectura",
-      "label-update-instance-interval-seconds": "Actualizar el intervalo de la instancia (segundos)",
-      "placeholder": "60",
-      "text-setup-later": "Siempre puedes configurar esto más tarde",
-      "title-enhance-github": "Mejora tu experiencia en GitHub"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No hay resultados que coincidan con tu consulta",
@@ -10612,6 +10720,57 @@
     "getting-started-page": {
       "header": "Aprovisionamiento",
       "subtitle-provisioning-feature": "Ver y gestionar tus conexiones de aprovisionamiento"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "No encontrado"
@@ -10643,6 +10802,11 @@
       },
       "summary": "Resumen"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Después de la configuración, se creará una nueva carpeta de Grafana y se sincronizará con el almacenamiento externo. Si hay recursos presentes en el almacenamiento externo, se aprovisionarán en esta nueva carpeta. Todos los recursos nuevos creados en esta carpeta se almacenarán y versionarán en un almacenamiento externo.",
@@ -10667,7 +10831,7 @@
     },
     "repository-actions": {
       "settings": "Configuración",
-      "source-code": "Código fuente"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10731,6 +10895,24 @@
       "title": "Estado del repositorio",
       "title-legacy-storage": "Almacenamiento heredado",
       "title-queued-for-deletion": "En cola para su eliminación"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Base",
@@ -11398,6 +11580,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "Exportar como JSON",
       "share-externally-title": "Compartir externamente",
       "share-internally-title": "Compartir internamente",
@@ -11433,6 +11616,19 @@
       "view-button": "Ver JSON",
       "view-button-yaml": "Ver YAML"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "Cree un panel de librería."
     },
@@ -11441,7 +11637,7 @@
       "info-text": "Cree un enlace directo a este panel de control o panel, personalizado con las siguientes opciones.",
       "link-url": "URL del enlace",
       "render-alert": "Complemento de renderizador de imagen no instalado",
-      "render-instructions": "Para representar una imagen de panel, debes instalar el <2>complemento de renderizado de imágenes de Grafana</2>. Ponte en contacto con tu administrador de Grafana para instalar el complemento.",
+      "render-instructions": "",
       "rendered-image": "Enlace directo a la imagen renderizada",
       "save-alert": "El panel de control no se ha guardado",
       "save-dashboard": "Para renderizar una imagen de panel, primero debe guardar el panel de control.",
@@ -11509,6 +11705,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "Vista previa del panel"
     },
@@ -11829,7 +12031,6 @@
       },
       "label-apply-to-entire-row": "Aplicar a toda la fila",
       "label-background-display-mode": "Modo de visualización del fondo",
-      "label-wrap-text": "Ajustar texto",
       "wrap-text": "Ajustar texto"
     },
     "column-alignment-options": {
@@ -13157,6 +13358,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

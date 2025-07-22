@@ -763,7 +763,9 @@ type DashboardRepeatOptions struct {
 
 // NewDashboardRepeatOptions creates a new DashboardRepeatOptions object.
 func NewDashboardRepeatOptions() *DashboardRepeatOptions {
-	return &DashboardRepeatOptions{}
+	return &DashboardRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
 }
 
 // other repeat modes will be added in the future: label, frame
@@ -938,7 +940,9 @@ type DashboardRowRepeatOptions struct {
 
 // NewDashboardRowRepeatOptions creates a new DashboardRowRepeatOptions object.
 func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
-	return &DashboardRowRepeatOptions{}
+	return &DashboardRowRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -1011,7 +1015,9 @@ type DashboardAutoGridRepeatOptions struct {
 
 // NewDashboardAutoGridRepeatOptions creates a new DashboardAutoGridRepeatOptions object.
 func NewDashboardAutoGridRepeatOptions() *DashboardAutoGridRepeatOptions {
-	return &DashboardAutoGridRepeatOptions{}
+	return &DashboardAutoGridRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -1077,7 +1083,9 @@ type DashboardTabRepeatOptions struct {
 
 // NewDashboardTabRepeatOptions creates a new DashboardTabRepeatOptions object.
 func NewDashboardTabRepeatOptions() *DashboardTabRepeatOptions {
-	return &DashboardTabRepeatOptions{}
+	return &DashboardTabRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
 }
 
 // Links with references to other dashboards or external resources
@@ -1689,7 +1697,9 @@ type DashboardAdHocFilterWithLabels struct {
 
 // NewDashboardAdHocFilterWithLabels creates a new DashboardAdHocFilterWithLabels object.
 func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
-	return &DashboardAdHocFilterWithLabels{}
+	return &DashboardAdHocFilterWithLabels{
+		Origin: DashboardFilterOrigin,
+	}
 }
 
 // Determine the origin of the adhoc variable filter
