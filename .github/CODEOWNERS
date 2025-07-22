@@ -426,6 +426,7 @@
 /packages/grafana-data/src/unstable.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/tsconfig.build.json @grafana/frontend-ops
 /packages/grafana-data/tsconfig.json @grafana/frontend-ops
+/packages/grafana-data/test/ @grafana/grafana-frontend-platform
 /packages/grafana-data/typings/ @grafana/grafana-frontend-platform
 
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
@@ -435,6 +436,7 @@
 /packages/grafana-data/src/events/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/field/ @grafana/dashboards-squad
 /packages/grafana-data/src/geo/ @grafana/dataviz-squad
+/packages/grafana-data/src/monaco/ @grafana/partner-datasources
 /packages/grafana-data/src/panel/ @grafana/dashboards-squad
 /packages/grafana-data/src/query/ @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/rbac/ @grafana/access-squad
@@ -443,6 +445,7 @@
 /packages/grafana-data/src/themes/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/transformations/ @grafana/datapro
 /packages/grafana-data/src/types/ @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/__snapshots__/ @grafanabot
 /packages/grafana-data/src/utils/anyToNumber.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/arrayUtils* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/binaryOperators.ts @grafana/datapro
@@ -455,10 +458,13 @@
 /packages/grafana-data/src/utils/namedColorsPalette* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/nodeGraph.ts @grafana/observability-traces-and-profiling
 /packages/grafana-data/src/utils/selectUtils.ts @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/store* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/testdata/ @grafana/dataviz-squad
+/packages/grafana-data/src/utils/tests/ @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/throwIfAngular* @grafana/plugins-platform-frontend
 /packages/grafana-data/src/utils/unaryOperators.ts @grafana/datapro
 /packages/grafana-data/src/utils/url* @grafana/grafana-search-navigate-organise
-/packages/grafana-data/src/utils/throwIfAngular* @grafana/plugins-platform-frontend
+/packages/grafana-data/src/utils/valueMappings* @grafana/dashboards-squad
 /packages/grafana-data/src/valueFormats/ @grafana/dashboards-squad
 /packages/grafana-data/src/vector/ @grafana/dataviz-squad
 
@@ -503,12 +509,15 @@
 
 /packages/grafana-runtime/src/analytics @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/analytics/plugins @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/components/EmbeddedDashboard.tsx @grafana/dashboards-squad
 /packages/grafana-runtime/src/components/FolderPicker.tsx @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/PanelRenderer.tsx @grafana/dashboards-squad
 /packages/grafana-runtime/src/components/PanelDataErrorView.tsx @grafana/dashboards-squad
 /packages/grafana-runtime/src/components/PluginPage.tsx @grafana/grafana-search-navigate-organise
+/packages/grafana-runtime/src/components/QueryEditorWithMigration* @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/components/PluginPage.tsx @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/services/pluginExtensions @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/services/CorrelationsService.ts @grafana/datapro
 /packages/grafana-runtime/src/services/LocationService.test.tsx @grafana/grafana-search-navigate-organise
