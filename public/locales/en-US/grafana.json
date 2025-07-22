@@ -3479,7 +3479,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
-      "bulk-delete-provisioned-resources-not-implemented": "Bulk delete for provisioned resources is not implemented yet.",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3511,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "{{count}} item failed",
+      "failed-alert_other": "{{count}} items failed"
+    },
+    "bulk-delete-resources-form": {
+      "api-success_one": "Successfully deleted {{count}} item",
+      "api-success_other": "Successfully deleted {{count}} items",
+      "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
+      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
+      "error-path-not-found": "Path not found"
+    },
+    "bulk-move-resources-form": {
+      "progress": "Progress: {{current}} of {{total}}"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
@@ -8912,6 +8927,8 @@
       "no-details": "No fields to display.",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
+      "remove-log": "Remove log",
+      "scroll-to-logline": "Scroll to log line",
       "search": {
         "no-results": "No results to display."
       },
@@ -10519,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "This resource is behind the branch in GitHub.",
+      "new-branch": "View it in GitHub to see the latest changes.",
       "not-saved": "The value is not yet saved in the Grafana database",
+      "open-git-hub": "Open in Github",
       "open-pull-request-in-git-hub": "Open pull request in GitHub",
       "view-pull-request-in-git-hub": "View pull request in GitHub"
     },
@@ -10550,12 +10570,16 @@
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
+      "dashboards-count_one": "{{count}} dashboard",
+      "dashboards-count_other": "{{count}} dashboards",
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "ext-storage": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
+      "folders-count_one": "{{count}} folder",
+      "folders-count_other": "{{count}} folders",
       "grafana": "Grafana instance",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
@@ -10923,6 +10947,11 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "sync-job": {
+      "error-no-job-id": "Failed to start job",
+      "error-no-repository-name": "No repository name provided",
+      "error-starting-job": "Error starting job"
+    },
     "sync-repository": {
       "body-edit-configuration": "Edit the configuration",
       "button-edit": "Edit",
@@ -10933,9 +10962,6 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
-      "error-no-job-id": "Failed to start job",
-      "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
     },
