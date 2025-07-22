@@ -66,11 +66,11 @@ export class DataProvider {
    * Queries metric names with optional filtering.
    * Safely constructs regex patterns and handles errors.
    */
-  queryMetricNames = async (timeRange: TimeRange, word: string | undefined): Promise<string[]> => {
+  queryMetricNames = async (timeRange: TimeRange, searchTerm: string | undefined): Promise<string[]> => {
     try {
       let match: string | undefined;
-      if (word) {
-        const escapedWord = escapeForUtf8Support(removeQuotesIfExist(word));
+      if (searchTerm) {
+        const escapedWord = escapeForUtf8Support(removeQuotesIfExist(searchTerm));
         match = `{__name__=~".*${escapedWord}.*"}`;
       }
 

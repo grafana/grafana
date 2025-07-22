@@ -14,7 +14,6 @@ const dataProviderSettings = {
     datasource: {
       metricNamesAutocompleteSuggestionLimit: DEFAULT_COMPLETION_LIMIT,
     },
-    // retrieveMetrics: jest.fn(),
     queryLabelKeys: jest.fn(),
     queryLabelValues: jest.fn(),
     retrieveLabelKeys: jest.fn(),

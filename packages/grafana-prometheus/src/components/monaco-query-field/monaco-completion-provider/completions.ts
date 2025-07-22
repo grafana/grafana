@@ -65,11 +65,11 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
 
 // we order items like: history, functions, metrics
 async function getAllMetricNamesCompletions(
-  word: string | undefined,
+  searchTerm: string | undefined,
   dataProvider: DataProvider,
   timeRange: TimeRange
 ): Promise<Completion[]> {
-  let metricNames = await dataProvider.queryMetricNames(timeRange, word);
+  let metricNames = await dataProvider.queryMetricNames(timeRange, searchTerm);
 
   if (
     config.featureToggles.prometheusCodeModeMetricNamesSearch &&
@@ -114,11 +114,14 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
 }));
 
 async function getAllFunctionsAndMetricNamesCompletions(
-  word: string | undefined,
+  searchTerm: string | undefined,
   dataProvider: DataProvider,
   timeRange: TimeRange
 ): Promise<Completion[]> {
-  const metricNames = await getAllMetricNamesCompletions(word, dataProvider, timeRange);
+  let metricNames: Completion[] = [];
+  if (searchTerm?.length ?? 0 >= 3) {
+    metricNames = await getAllMetricNamesCompletions(searchTerm, dataProvider, timeRange);
+  }
 
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
@@ -151,7 +154,11 @@ function getAllHistoryCompletions(dataProvider: DataProvider): Completion[] {
   }));
 }
 
-function makeSelector(metricName: string | undefined, labels: Label[]): string {
+function makeSelector(metricName: string | undefined, labels: Label[]): string | undefined {
+  if (metricName === undefined && labels.length === 0) {
+    return undefined;
+  }
+
   const allLabels = [...labels];
 
   // we transform the metricName to a label, if it exists
@@ -172,19 +179,13 @@ async function getLabelNames(
   dataProvider: DataProvider,
   timeRange: TimeRange
 ): Promise<string[]> {
-  if (metric === undefined && otherLabels.length === 0) {
-    // if there is no filtering, we have to use a special endpoint
-    return Promise.resolve(dataProvider.queryLabelKeys(timeRange, undefined, DEFAULT_COMPLETION_LIMIT));
-  } else {
-    const selector = makeSelector(metric, otherLabels);
-    const labelNames = await dataProvider.queryLabelKeys(timeRange, selector);
-
-    // Exclude __name__ from output
-    otherLabels.push({ name: '__name__', value: '', op: '!=' });
-    const usedLabelNames = new Set(otherLabels.map((l) => l.name));
-    // names used in the query
-    return labelNames.filter((l) => !usedLabelNames.has(l));
-  }
+  const selector = makeSelector(metric, otherLabels);
+  const labelNames = await dataProvider.queryLabelKeys(timeRange, selector, DEFAULT_COMPLETION_LIMIT);
+  // Exclude __name__ from output
+  otherLabels.push({ name: '__name__', value: '', op: '!=' });
+  const usedLabelNames = new Set(otherLabels.map((l) => l.name));
+  // names used in the query
+  return labelNames.filter((l) => !usedLabelNames.has(l));
 }
 
 async function getLabelNamesForCompletions(
@@ -239,13 +240,8 @@ async function getLabelValues(
   dataProvider: DataProvider,
   timeRange: TimeRange
 ): Promise<string[]> {
-  if (metric === undefined && otherLabels.length === 0) {
-    // if there is no filtering, we have to use a special endpoint
-    return dataProvider.queryLabelValues(timeRange, labelName);
-  } else {
-    const selector = makeSelector(metric, otherLabels);
-    return await dataProvider.queryLabelValues(timeRange, labelName, selector);
-  }
+  const selector = makeSelector(metric, otherLabels);
+  return await dataProvider.queryLabelValues(timeRange, labelName, selector);
 }
 
 async function getLabelValuesForMetricCompletions(
@@ -273,18 +269,18 @@ export async function getCompletions(
   situation: Situation,
   dataProvider: DataProvider,
   timeRange: TimeRange,
-  word?: string
+  searchTerm?: string
 ): Promise<Completion[]> {
   switch (situation.type) {
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(word, dataProvider, timeRange);
+      return getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange);
     case 'AT_ROOT': {
-      return getAllFunctionsAndMetricNamesCompletions(word, dataProvider, timeRange);
+      return getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange);
     }
     case 'EMPTY': {
-      const metricNames = await getAllMetricNamesCompletions(word, dataProvider, timeRange);
+      const metricNames = await getAllMetricNamesCompletions(searchTerm, dataProvider, timeRange);
       const historyCompletions = getAllHistoryCompletions(dataProvider);
       return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);
     }
