@@ -380,6 +380,15 @@
     "add-button": {
       "add-more": "Lägg till fler"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Varningstillstånd",
       "annotations": "Kommentarer",
@@ -3247,6 +3256,11 @@
       "id-token-attribute-name-label": "ID-tokenattributnamn",
       "login-attribute-path-description": "JMESPath-uttryck som ska användas för användarens inloggningssökning från användar-ID-token.",
       "login-attribute-path-label": "Sökväg för inloggningsattribut",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "Klient-ID för den hanterade identiteten för din OAuth2-apps federerade identitetsuppgift.",
       "managed-identity-client-id-label": "FIC klient-ID för hanterad identitet",
       "name-attribute-path-description": "JMESPath-uttryck som ska användas för användarnamnsökning från användar-ID-token.Det här namnet kommer att användas som användarens visningsnamn.",
@@ -3344,6 +3358,9 @@
     "provider-config-page": {
       "text-badge-enabled": "Aktiverad",
       "text-badge-not-enabled": "Ej aktiverat"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Slutpunkten .well-known/openid-configuration för din identitetsleverantör",
@@ -3461,6 +3478,7 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
       "cancel-button": "Avbryt",
       "cannot-move-folders": "Mapparna kan inte flyttas",
       "confirmation-text": "Ta bort",
@@ -3479,7 +3497,9 @@
       "move-modal-text": "Denna åtgärd flyttar följande innehåll:",
       "move-modal-title": "Flytta",
       "moving": "Flyttar ...",
-      "new-folder-name-required-phrase": "Mappnamn krävs."
+      "new-folder-name-required-phrase": "Mappnamn krävs.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Nyligen raderat"
@@ -3490,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Denna mapp är tom"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} varningsregel",
@@ -3541,6 +3577,7 @@
       "empty-message": "Inga mappar hittades",
       "error-title": "Fel vid laddning av mappar",
       "non-folder-item": "Icke-mapp {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Sök mappar",
       "unknown-error": "Okänt fel"
     },
@@ -5913,8 +5950,8 @@
         "title-someone-else-has-updated-this-dashboard": "Någon annan har uppdaterat denna instrumentpanel",
         "would-still-dashboard": "Vill du fortfarande spara denna instrumentpanel?"
       },
-      "schema-v2-library-panels-export": "Funktionen för dynamiska instrumentpaneler är experimentell och har ännu inte fullständig funktionsparitet med nuvarande instrumentpanelbeteende. Det är baserat på ett nytt schemaformat som saknar stöd för bibliotekspaneler. Det innebär att om du vill använda instrumentpanelen i en annan instans och exporterar den kommer inte bibliotekspaneler att inkluderas under exporten. Vi har för avsikt att inkludera stöd för dem när vi går vidare med funktionens <2>livscykel</2>.",
-      "schema-v2-library-panels-export-title": "Instrumentpanelschema V2 saknar för närvarande stöd för export av bibliotekspaneler för användning i en annan instans",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Instrumentpanelen har ändrats oåterkalleligt"
     },
     "save-dashboard-form-common-options": {
@@ -7936,6 +7973,60 @@
       "previous-label": "Föregående månad",
       "select-placeholder": "Välj datum/tid"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Stäng"
     },
@@ -7982,6 +8073,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -8822,6 +8927,8 @@
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": ""
       },
@@ -9669,7 +9776,9 @@
       "aria-label": "Hjälp"
     },
     "invite-user": {
-      "invite-new-member-button": "Bjud in ny medlem"
+      "invite-button": "Bjud in",
+      "invite-new-member-button": "Bjud in ny medlem",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Lägg till bokmärken",
@@ -10427,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10437,6 +10549,25 @@
   "provisioning": {
     "banner": {
       "message": "Den här funktionen är för närvarande under aktiv utveckling. För den bästa upplevelsen och de senaste förbättringarna rekommenderar vi att du använder <2> nightly-versionen</2> av Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Lägg till ett tydligt namn för den här lagringsplatsanslutningen",
@@ -10459,36 +10590,20 @@
       "button-save": "Spara",
       "button-saving": "Sparar ...",
       "description-enabled": "När automatisk hämtning är aktiverad kan målet inte ändras.",
-      "description-path": "Sökväg till en underkatalog på Git-lagringsplatsen",
       "description-read-only": "Resurser kan inte ändras via Grafana.",
-      "description-repository-url": "Ange webbadressen för GitHub-lagringsplatsen",
       "description-title": "Ett användarvänligt namn för konfigurationen",
       "error-required": "Detta fält är obligatoriskt.",
       "error-save-repository": "Det gick inte att spara lagringsplatsinställningar",
-      "error-valid-github-url": "Ange en giltig webbadress till GitHub-lagringsplatsen",
       "label-automatic-pulling": "Automatisk hämtning",
-      "label-branch": "Gren",
       "label-enabled": "Aktiverad",
-      "label-github-token": "GitHub-token",
       "label-interval-seconds": "Intervall (sekunder)",
-      "label-local-path": "Lokal sökväg",
-      "label-path": "Sökväg",
-      "label-pr-workflow": "Aktivera alternativ för hämtningsbegäran när du sparar",
       "label-repository-type": "Typ av lagringsplats",
-      "label-repository-url": "Webbadress för lagringsplats",
       "label-target": "Mål",
       "label-title": "Titel",
       "option-entire-instance": "Hela instansen",
-      "option-github": "GitHub",
-      "option-local": "Lokal",
       "option-managed-folder": "Hanterad mapp",
-      "placeholder-branch": "viktigast",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Min konfiguration",
-      "placeholder-select-repository-type": "Välj typ av lagringsplats"
+      "placeholder-my-config": "Min konfiguration"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Konfigurera webhooks</0> för att få omedelbara uppdateringar i Grafana så snart ändringar görs. Granska och godkänn ändringar med hjälp av pull-förfrågningar innan de publiceras.",
@@ -10502,26 +10617,7 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurera",
-      "configure-file": "Konfigurera provisionering med filer",
-      "configure-git-sync": "Konfigurera Git Sync",
       "repository-limit-info-alert": "Gränsen för lagringsplatsen har uppnåtts ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Gren som ska användas för GitHub-lagringsplatsen",
-      "description-github-path": "Det här är sökvägen till en underkatalog i din GitHub-lagringsplats där paneler kommer att lagras och provisioneras från",
-      "description-paste-your-git-hub-personal-access-token": "Klistra in din personliga GitHub-åtkomsttoken",
-      "description-repository-url": "Klistra in webbadressen för GitHub-lagringsplatsen",
-      "error-field-required": "Detta fält är obligatoriskt.",
-      "error-invalid-github-url": "Ange en giltig webbadress till GitHub-lagringsplatsen",
-      "label-access-token": "Åtkomsttoken för GitHub",
-      "label-branch": "Grennamn",
-      "label-local-path": "Lokal sökväg",
-      "label-path": "Sökväg till underkatalog på lagringsplatsen",
-      "label-repository-url": "Webbadress för GitHub-lagringsplatsen",
-      "placeholder-branch": "viktigast",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Ta bort",
@@ -10563,8 +10659,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Konfigurera obligatoriska funktionsväxlare"
       },
-      "manage-dashboards-provision-updates-automatically": "Hantera instrumentpaneler som kod i GitHub och provisionering av uppdateringar automatiskt",
-      "manage-your-dashboards-with-remote-provisioning": "Kom igång med GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Lagra instrumentpaneler med versionsstyrd lagring för bättre organisering och historikspårning"
     },
     "file-history-page": {
@@ -10585,18 +10681,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Lägger till en förhandsgranskning av ändringar i instrumentpanelen för pull-förfrågningar. Bilder av dina Grafana-instrumentpaneler kommer att delas på din Git-lagringsplats och vara synliga för alla med lagringsåtkomst.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Kräver bildrendering. <2>Konfigurera bildrendering</2>",
-      "description-often-shall-instance-updates-git-hub": "Hur ofta ska instansen hämta uppdateringar från GitHub?",
-      "description-pr-enable-description": "Låter användare välja om en pull-begäran ska öppnas när ändringar sparas. Om lagringsplatsen inte tillåter direkta ändringar i huvudgrenen kan en pull-begäran fortfarande krävas.",
+      "description-preview-requirements": "",
       "description-read-only": "Resurser kan inte ändras via Grafana.",
-      "description-webhooks-enable": "Låter användare välja om en pull-begäran ska öppnas när ändringar sparas. Om lagringsplatsen inte tillåter direkta ändringar i huvudgrenen kan en pull-begäran fortfarande krävas.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Aktivera förhandsgranskningar av panelen i pull-förfrågningar",
-      "label-pr-workflow": "Aktivera alternativ för hämtningsbegäran när du sparar",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Skrivskyddad",
-      "label-update-instance-interval-seconds": "Uppdatera instansintervall (sekunder)",
-      "placeholder": "60",
-      "text-setup-later": "Du kan alltid konfigurera detta senare",
-      "title-enhance-github": "Förbättra din GitHub-upplevelse"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Inga resultat som matchar din fråga",
@@ -10626,6 +10720,57 @@
     "getting-started-page": {
       "header": "Provisionering",
       "subtitle-provisioning-feature": "Visa och hantera dina provisioneringsanslutningar"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Hittades inte"
@@ -10657,6 +10802,11 @@
       },
       "summary": "Sammanfattning"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Efter installationen kommer en ny Grafana-mapp att skapas och synkroniseras med extern lagring. Om några resurser finns i extern lagring kommer de att provisioneras till den här nya mappen. Alla nya resurser som skapas i den här mappen kommer att sparas och versionshanteras i extern lagring.",
@@ -10681,7 +10831,7 @@
     },
     "repository-actions": {
       "settings": "Inställningar",
-      "source-code": "Källkod"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10745,6 +10895,24 @@
       "title": "Status för lagringsplats",
       "title-legacy-storage": "Äldre lagring",
       "title-queued-for-deletion": "Köad för radering"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Bas",
@@ -11863,7 +12031,6 @@
       },
       "label-apply-to-entire-row": "Tillämpa på hela raden",
       "label-background-display-mode": "Bakgrundsvisningsläge",
-      "label-wrap-text": "Radbryt text",
       "wrap-text": "Radbryt text"
     },
     "column-alignment-options": {

@@ -296,6 +296,21 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistory",
+        "resourceVersion": "1752682072771",
+        "creationTimestamp": "2025-07-16T16:07:52Z"
+      },
+      "spec": {
+        "description": "Enables the notification history feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-11-22T11:07:45Z"
@@ -1235,7 +1250,8 @@
       "metadata": {
         "name": "externalCorePlugins",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-09-22T08:50:13Z"
+        "creationTimestamp": "2023-09-22T08:50:13Z",
+        "deletionTimestamp": "2025-07-21T09:49:02Z"
       },
       "spec": {
         "description": "Allow core plugins to be loaded as external",
@@ -1781,6 +1797,19 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesLibraryPanelConnections",
+        "resourceVersion": "1753100797468",
+        "creationTimestamp": "2025-07-21T12:26:37Z"
+      },
+      "spec": {
+        "description": "Routes library panel connections requests from /api to using search",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {
@@ -2437,6 +2466,22 @@
     },
     {
       "metadata": {
+        "name": "pluginAssetProvider",
+        "resourceVersion": "1752486584712",
+        "creationTimestamp": "2025-07-14T09:49:44Z"
+      },
+      "spec": {
+        "description": "Allows decoupled core plugins to load from the Grafana CDN",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginLoadingRefactor",
         "resourceVersion": "1752218524617",
         "creationTimestamp": "2025-07-11T07:22:04Z",
@@ -2481,7 +2526,8 @@
       "metadata": {
         "name": "pluginsCDNSyncLoader",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-02-07T10:07:08Z"
+        "creationTimestamp": "2025-02-07T10:07:08Z",
+        "deletionTimestamp": "2025-07-21T10:13:07Z"
       },
       "spec": {
         "description": "Loads plugins from CDN synchronously",
@@ -3313,6 +3359,20 @@
       },
       "spec": {
         "description": "Enable unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageSearchDualReaderEnabled",
+        "resourceVersion": "1752500336818",
+        "creationTimestamp": "2025-07-14T13:38:56Z"
+      },
+      "spec": {
+        "description": "Enable dual reader for unified storage search",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
