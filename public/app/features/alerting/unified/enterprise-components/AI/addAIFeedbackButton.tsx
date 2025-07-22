@@ -8,8 +8,7 @@ import { logError } from '../../Analytics';
 
 export interface GenAIFeedbackButtonProps {
   origin: AIFeedbackOrigin;
-  featureEnabled: boolean;
-  showComment?: boolean;
+  shouldShowFeedbackButton?: boolean;
   // If true, the component will use the route detection to determine if the feedback should be shown
   // this is necessary for example in alerting rule form, where the feedback button is shown in the same page as the rule form
   useRouteDetection?: boolean;
@@ -29,7 +28,14 @@ export const AIFeedbackButtonComponent: ComponentType<GenAIFeedbackButtonProps> 
     errorLogger: logError,
   });
 
-  return createElement(WrappedComponent, props);
+  // Provide default value for shouldShowFeedbackButton
+  const propsWithDefaults = {
+    shouldShowFeedbackButton: true,
+    useRouteDetection: false,
+    ...props,
+  };
+
+  return createElement(WrappedComponent, propsWithDefaults);
 };
 
 export function addAIFeedbackButton(component: ComponentType<GenAIFeedbackButtonProps> | null) {

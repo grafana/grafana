@@ -5,7 +5,6 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Box, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 
 import { TemplatePreviewErrors, TemplatePreviewResponse, TemplatePreviewResult } from '../../api/templateApi';
@@ -66,12 +65,7 @@ export function TemplatePreview({
         }
       />
       <div className={styles.viewer.feedbackContainer}>
-        <AIFeedbackButtonComponent
-          origin="template"
-          featureEnabled={config.featureToggles.alertingAIGenTemplates === true && Boolean(aiGeneratedTemplate)}
-          showComment={true}
-          useRouteDetection={false}
-        />
+        <AIFeedbackButtonComponent origin="template" shouldShowFeedbackButton={Boolean(aiGeneratedTemplate)} />
       </div>
       <Box flex={1}>
         <AutoSizer disableWidth>
