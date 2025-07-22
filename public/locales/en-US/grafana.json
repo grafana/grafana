@@ -8838,6 +8838,7 @@
       "move-displayed-field-down": "Move down",
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "search": {

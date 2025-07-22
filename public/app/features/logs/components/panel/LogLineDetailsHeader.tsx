@@ -34,6 +34,8 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     onPinLine,
     onUnpinLine,
     wrapLogMessage,
+    isAssistantAvailable,
+    openAssistantByLog,
   } = useLogListContext();
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
@@ -136,6 +138,16 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
         />
       )}
       <div className={styles.icons}>
+        {isAssistantAvailable && (
+          <IconButton
+            tooltip={t('logs.log-line-details.open-assistant', 'Explain this log line in Assistant')}
+            tooltipPlacement="top"
+            size="md"
+            name="ai-sparkle"
+            onClick={() => openAssistantByLog?.(log)}
+            tabIndex={0}
+          />
+        )}
         <IconButton
           tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
           tooltipPlacement="top"

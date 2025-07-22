@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, MouseEvent } from 'react';
 
-import { createContext, ItemDataType, useAssistant } from '@grafana/assistant';
+import { createContext, ItemDataType } from '@grafana/assistant';
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -36,7 +36,6 @@ interface Props {
 }
 
 export const LogLineMenu = ({ log, styles }: Props) => {
-  const [isAssistantAvailable, openMainAssistant] = useAssistant();
   const {
     enableLogDetails,
     detailsDisplayed,
@@ -48,6 +47,8 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     logLineMenuCustomItems = [],
     logSupportsContext,
     toggleDetails,
+    isAssistantAvailable,
+    openAssistantByLog,
   } = useLogListContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
@@ -84,43 +85,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     }
   }, [log, onPinLine, onUnpinLine, pinned]);
 
-  const openAssistant = useCallback(async () => {
-    if (!openMainAssistant) {
-      return;
-    }
-
-    const datasource = await getDataSourceSrv().get(log.datasourceUid);
-    const context = [];
-    if (datasource) {
-      context.push(
-        createContext(ItemDataType.Datasource, {
-          datasourceUid: datasource.uid,
-          datasourceName: datasource.name,
-          datasourceType: datasource.type,
-        })
-      );
-    }
-    openMainAssistant({
-      prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
-
-      \`\`\`
-${log.entry.replaceAll('`', '\\`')}
-      \`\`\`
-      `,
-      context: [
-        ...context,
-        createContext(ItemDataType.Structured, {
-          title: t('logs.log-line-menu.log-line', 'Log line'),
-          data: {
-            labels: log.labels,
-            value: log.entry,
-            timestamp: log.timestamp,
-          },
-        }),
-      ],
-    });
-  }, [log.entry, log.datasourceUid, log.labels, log.timestamp, openMainAssistant]);
-
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
@@ -150,7 +114,7 @@ ${log.entry.replaceAll('`', '\\`')}
         )}
         {isAssistantAvailable && (
           <Menu.Item
-            onClick={openAssistant}
+            onClick={() => openAssistantByLog?.(log)}
             icon="ai-sparkle"
             label={t('logs.log-line-menu.open-assistant', 'Explain this log line in Assistant')}
           />
@@ -182,7 +146,7 @@ ${log.entry.replaceAll('`', '\\`')}
       toggleLogDetails,
       togglePinning,
       isAssistantAvailable,
-      openAssistant,
+      openAssistantByLog,
     ]
   );
 
