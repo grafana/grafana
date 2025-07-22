@@ -4774,10 +4774,24 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardVizConfigKind(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The kind of a VizConfigKind is the plugin ID",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The group is the plugin ID",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"spec": {
@@ -4787,7 +4801,7 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardVizConfigKind(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"kind", "spec"},
+				Required: []string{"kind", "group", "version", "spec"},
 			},
 		},
 		Dependencies: []string{
@@ -4802,13 +4816,6 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardVizConfigSpec(ref common.Refere
 				Description: "--- Kinds ---",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"pluginVersion": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -4830,7 +4837,7 @@ func schema_pkg_apis_dashboard_v2alpha2_DashboardVizConfigSpec(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"pluginVersion", "options", "fieldConfig"},
+				Required: []string{"options", "fieldConfig"},
 			},
 		},
 		Dependencies: []string{
