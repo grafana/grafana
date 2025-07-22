@@ -84,7 +84,9 @@ const CUSTOM_RENDERER: TableCellRenderer = (props) => {
   return <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />;
 };
 
-const MARKDOWN_RENDERER: TableCellRenderer = (props) => <MarkdownCell field={props.field} rowIdx={props.rowIdx} />;
+const MARKDOWN_RENDERER: TableCellRenderer = (props) => (
+  <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
+);
 
 const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.Sparkline]: SPARKLINE_RENDERER,

@@ -80,6 +80,7 @@ export function TableNG(props: TableNGProps) {
     cellHeight,
     cellHeightCustom,
     data,
+    disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
@@ -440,6 +441,7 @@ export function TableNG(props: TableNGProps) {
                 cellInspect,
                 showFilters,
                 getActions: getCellActions,
+                disableSanitizeHtml,
               })}
               {showActions && (
                 <TableCellActions
@@ -604,6 +606,7 @@ export function TableNG(props: TableNGProps) {
     data,
     defaultHeaderHeight,
     defaultRowHeight,
+    disableSanitizeHtml,
     enableSharedCrosshair,
     expandedRows,
     filter,
