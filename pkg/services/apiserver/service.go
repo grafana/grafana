@@ -292,6 +292,9 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	// Register authorizers from app installers
+	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
+
 	err = applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
