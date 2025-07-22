@@ -3479,7 +3479,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Annuler",
       "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
       "confirmation-text": "Supprimer",
@@ -3511,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Ce dossier est vide"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
@@ -8912,6 +8927,8 @@
       "no-details": "Aucun champ à afficher.",
       "pin-line": "Épingler ce log",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "Aucun résultat à afficher."
       },
@@ -10519,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10529,6 +10549,25 @@
   "provisioning": {
     "banner": {
       "message": "Cette fonctionnalité est actuellement en cours de développement. Pour une expérience optimale et les dernières améliorations, nous vous recommandons d’utiliser la <2>compilation nocturne</2> de Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Ajoutez un nom clair pour cette connexion de référentiel",
@@ -10551,36 +10590,20 @@
       "button-save": "Enregistrer",
       "button-saving": "Enregistrement en cours...",
       "description-enabled": "Une fois que la fusion automatique est activée, la cible ne peut pas être modifiée.",
-      "description-path": "Chemin d’accès à un sous-répertoire dans le référentiel Git",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
-      "description-repository-url": "Saisir l’URL du référentiel GitHub",
       "description-title": "Un nom lisible par l’utilisateur pour la configuration",
       "error-required": "Ce champ est obligatoire.",
       "error-save-repository": "Échec de l’enregistrement des paramètres du référentiel",
-      "error-valid-github-url": "Veuillez saisir une URL de référentiel GitHub valide",
       "label-automatic-pulling": "Fusion automatique",
-      "label-branch": "Branche",
       "label-enabled": "Activé",
-      "label-github-token": "Jeton GitHub",
       "label-interval-seconds": "Intervalle (secondes)",
-      "label-local-path": "Chemin local",
-      "label-path": "Chemin",
-      "label-pr-workflow": "Activer l’option de demande de fusion lors de l’enregistrement",
       "label-repository-type": "Type de référentiel",
-      "label-repository-url": "URL du référentiel",
       "label-target": "Cible",
       "label-title": "Titre",
       "option-entire-instance": "Instance entière",
-      "option-github": "GitHub",
-      "option-local": "Local",
       "option-managed-folder": "Dossier géré",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Ma configuration",
-      "placeholder-select-repository-type": "Sélectionner un type de référentiel"
+      "placeholder-my-config": "Ma configuration"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Configurez les webhooks</0> pour obtenir des mises à jour instantanées dans Grafana dès que les modifications sont validées. Examinez et approuvez les modifications à l’aide de demandes de fusion avant leur mise en ligne.",
@@ -10594,26 +10617,7 @@
     },
     "connect-repository-button": {
       "configure": "Configurer",
-      "configure-file": "Configurer la mise en service de fichiers",
-      "configure-git-sync": "Configurer la synchronisation Git",
       "repository-limit-info-alert": "Limite du référentiel atteinte ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Branche à utiliser pour le référentiel GitHub",
-      "description-github-path": "Il s’agit du chemin d’accès à un sous-répertoire dans votre référentiel GitHub où les tableaux de bord seront stockés et mis en service à partir de",
-      "description-paste-your-git-hub-personal-access-token": "Collez votre jeton d’accès personnel GitHub",
-      "description-repository-url": "Coller l’URL du référentiel GitHub",
-      "error-field-required": "Ce champ est obligatoire.",
-      "error-invalid-github-url": "Veuillez saisir une URL de référentiel GitHub valide",
-      "label-access-token": "Jeton d’accès à GitHub",
-      "label-branch": "Nom de la branche",
-      "label-local-path": "Chemin local",
-      "label-path": "Chemin d’accès au sous-répertoire dans le référentiel",
-      "label-repository-url": "URL de référentiel GitHub",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Supprimer",
@@ -10655,8 +10659,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Configurer les basculements de fonctionnalité requis"
       },
-      "manage-dashboards-provision-updates-automatically": "Gérez les tableaux de bord sous forme de code dans GitHub et mettez automatiquement les mises à jour en service",
-      "manage-your-dashboards-with-remote-provisioning": "Premiers pas avec GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Stockez les tableaux de bord dans un espace de stockage à gestion des versions pour une meilleure organisation et un meilleur suivi de l’historique"
     },
     "file-history-page": {
@@ -10677,18 +10681,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Ajoute un aperçu des images des modifications apportées au tableau de bord dans les demandes de fusion. Les images de vos tableaux de bord Grafana seront partagées dans votre référentiel Git et visibles par toute personne ayant accès au référentiel.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Nécessite un rendu d’image. <2>Configurer le rendu d’image</2>",
-      "description-often-shall-instance-updates-git-hub": "À quelle fréquence l’instance doit-elle extraire les mises à jour de GitHub ?",
-      "description-pr-enable-description": "Permet aux utilisateurs de choisir d’ouvrir ou non une demande de fusion lors de l’enregistrement des modifications. Si le référentiel n’autorise pas les modifications directes de la branche principale, il est possible qu’une demande de fusion soit nécessaire.",
+      "description-preview-requirements": "",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
-      "description-webhooks-enable": "Permet aux utilisateurs de choisir d’ouvrir ou non une demande de fusion lors de l’enregistrement des modifications. Si le référentiel n’autorise pas les modifications directes de la branche principale, il est possible qu’une demande de fusion soit nécessaire.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Activer les aperçus du tableau de bord dans les demandes de fusion",
-      "label-pr-workflow": "Activer l’option de demande de fusion lors de l’enregistrement",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Lecture seule",
-      "label-update-instance-interval-seconds": "Mettre à jour l’intervalle d’instance (secondes)",
-      "placeholder": "60",
-      "text-setup-later": "Vous pouvez toujours configurer cela plus tard",
-      "title-enhance-github": "Améliorez votre expérience GitHub"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Aucun résultat ne correspond à votre requête",
@@ -10718,6 +10720,57 @@
     "getting-started-page": {
       "header": "Mise en service",
       "subtitle-provisioning-feature": "Afficher et gérer vos connexions de mise en service"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Introuvable"
@@ -10749,6 +10802,11 @@
       },
       "summary": "Synthèse"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Après la configuration, un nouveau dossier Grafana sera créé et synchronisé avec un stockage externe. Si des ressources sont présentes dans le stockage externe, elles seront mises en service dans ce nouveau dossier. Toutes les nouvelles ressources créées dans ce dossier seront stockées et versionnées dans un stockage externe.",
@@ -10773,7 +10831,7 @@
     },
     "repository-actions": {
       "settings": "Paramètres",
-      "source-code": "Code source"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10837,6 +10895,24 @@
       "title": "Statut du référentiel",
       "title-legacy-storage": "Stockage hérité",
       "title-queued-for-deletion": "Mis en attente pour suppression"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Base",
