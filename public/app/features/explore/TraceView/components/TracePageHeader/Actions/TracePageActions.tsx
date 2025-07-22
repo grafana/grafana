@@ -7,7 +7,6 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
 
-
 import { config } from '../../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../../inspector/utils/download';
 
@@ -100,10 +99,12 @@ export default function TracePageActions(props: TracePageActionsProps) {
 
     return (
       <ActionButton
-        onClick={() => openAssistant?.({ 
-          prompt: `Summarize this trace view.`,
-          context,
-        })}
+        onClick={() =>
+          openAssistant?.({
+            prompt: `Summarize this trace view.`,
+            context,
+          })
+        }
         ariaLabel={t('explore.trace-page-actions.ariaLabel-analyze-trace', 'Analyze Trace')}
         label={t('explore.trace-page-actions.label-analyze-trace', 'Analyze Trace')}
         icon={'ai-sparkle'}
