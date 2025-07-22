@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "@types/node": "22.15.0",
+    "@types/node": "22.16.5",
     "typescript": "5.8.3"
   }
 }
