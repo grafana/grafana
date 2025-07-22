@@ -3346,6 +3346,9 @@
       "text-badge-enabled": "已啟用",
       "text-badge-not-enabled": "未啟用"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "您的 IdP 的 .well-known/openid-configuration 端點",
       "title-open-id-connect-discovery-url": "OpenID Connect 探索網址"
@@ -3463,7 +3466,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "取消",
       "cannot-move-folders": "資料夾無法移動",
       "confirmation-text": "刪除",
@@ -3495,6 +3497,20 @@
     },
     "browse-view": {
       "this-folder-is-empty": "此資料夾為空"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_other": "{{count}} 個警報規則",
@@ -3541,6 +3557,7 @@
       "empty-message": "未發現資料夾",
       "error-title": "載入資料夾時發生錯誤",
       "non-folder-item": "非資料夾 {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "搜尋資料夾",
       "unknown-error": "未知錯誤"
     },
@@ -5911,8 +5928,8 @@
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此儀表板",
         "would-still-dashboard": "仍要儲存此儀表板嗎？"
       },
-      "schema-v2-library-panels-export": "動態儀表板功能僅供試驗，並未與目前的儀表板行為具有完全的功能平等性。它以新的模式格式為基礎，不支援資料庫面板。這表示在匯出儀表板以便在另一個執行個體中使用時，我們不會包含資料庫面板。隨著我們在功能<2>生命週期</2>中取得進展，我們計劃為其提供支援。",
-      "schema-v2-library-panels-export-title": "儀表板架構 V2 尚不支援為了在另一個執行個體中使用而匯出資料庫面板",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "已永久變更儀表板"
     },
     "save-dashboard-form-common-options": {
@@ -7933,6 +7950,60 @@
       "previous-label": "上個月",
       "select-placeholder": "選擇日期／時間"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "關閉"
     },
@@ -7979,6 +8050,20 @@
       "description-fields-with-value": "為具有縮減條件的欄位設定屬性",
       "field-name-picker": {
         "placeholder": "選擇欄位"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "名稱與正則表達式相符的欄位",
       "name-fields-by-query": "查詢傳回的欄位",
@@ -8811,6 +8896,8 @@
       "no-details": "沒有要顯示的欄位。",
       "pin-line": "固定紀錄",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "沒有要顯示的結果。"
       },
@@ -9658,7 +9745,9 @@
       "aria-label": "說明"
     },
     "invite-user": {
-      "invite-new-member-button": "邀請新成員"
+      "invite-button": "邀請",
+      "invite-new-member-button": "邀請新成員",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "新增至書籤",
@@ -10413,7 +10502,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10423,6 +10515,25 @@
   "provisioning": {
     "banner": {
       "message": "此功能目前正在積極開發中。為了獲得最佳體驗和最新改進版本，建議使用 Grafana 的<2>夜間版本</2>。"
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "為此儲存庫連線新增一個明確的名稱",
@@ -10444,36 +10555,20 @@
       "button-save": "儲存",
       "button-saving": "正在儲存…",
       "description-enabled": "一旦啟用自動拉取，目標便無法變更。",
-      "description-path": "Git 儲存庫中子目錄的路徑",
       "description-read-only": "無法透過 Grafana 修改資源。",
-      "description-repository-url": "輸入 GitHub 儲存庫網址",
       "description-title": "設定的人類可讀名稱",
       "error-required": "此為必填欄位。",
       "error-save-repository": "無法儲存儲存庫設定",
-      "error-valid-github-url": "請輸入有效的 GitHub 儲存庫網址",
       "label-automatic-pulling": "自動拉取",
-      "label-branch": "分支",
       "label-enabled": "已啟用",
-      "label-github-token": "GitHub 權杖",
       "label-interval-seconds": "間隔（秒）",
-      "label-local-path": "本機路徑",
-      "label-path": "路徑",
-      "label-pr-workflow": "儲存時啟用拉取請求選項",
       "label-repository-type": "儲存庫類型",
-      "label-repository-url": "儲存庫網址",
       "label-target": "目標",
       "label-title": "標題",
       "option-entire-instance": "整個執行個體",
-      "option-github": "GitHub",
-      "option-local": "本機",
       "option-managed-folder": "受管理的資料夾",
-      "placeholder-branch": "主要",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "我的設定",
-      "placeholder-select-repository-type": "選擇儲存庫類型"
+      "placeholder-my-config": "我的設定"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>設定 webhook</0>，以便在提交變更時在 Grafana 中即時取得更新。在變更上線之前，使用拉取請求來檢查並核准變更。",
@@ -10487,26 +10582,7 @@
     },
     "connect-repository-button": {
       "configure": "設定",
-      "configure-file": "設定檔案佈建",
-      "configure-git-sync": "設定 Git 同步",
       "repository-limit-info-alert": "已達到儲存庫限制（{{count}} 個）"
-    },
-    "connect-step": {
-      "description-branch": "用於 GitHub 儲存庫的分支",
-      "description-github-path": "這是 GitHub 儲存庫中的子目錄路徑，儀表板將從中儲存和佈建",
-      "description-paste-your-git-hub-personal-access-token": "貼上您的 GitHub 個人存取權杖",
-      "description-repository-url": "貼上 GitHub 儲存庫的網址",
-      "error-field-required": "此為必填欄位。",
-      "error-invalid-github-url": "請輸入有效的 GitHub 儲存庫網址",
-      "label-access-token": "GitHub 存取權杖",
-      "label-branch": "分支名稱",
-      "label-local-path": "本機路徑",
-      "label-path": "儲存庫中子目錄的路徑",
-      "label-repository-url": "Github 儲存庫網址",
-      "placeholder-branch": "主要",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "刪除",
@@ -10548,8 +10624,8 @@
       "actions": {
         "set-up-required-feature-toggles": "設定所需的功能切換"
       },
-      "manage-dashboards-provision-updates-automatically": "在 GitHub 中將儀表板作為代碼管理，並自動佈建更新",
-      "manage-your-dashboards-with-remote-provisioning": "開始使用 GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "將儀表板儲存在版本控制的儲存空間中，以便更好地組織和追蹤歷史紀錄"
     },
     "file-history-page": {
@@ -10570,18 +10646,16 @@
     },
     "finish-step": {
       "description-enable-previews": "在拉取請求中新增儀表板變更的圖片預覽。您的 Grafana 儀表板圖像將在您的 Git 儲存庫中共用，並且任何具有儲存庫存取權限者都可以看見。",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "需要圖片轉譯。<2>設定圖片轉譯</2>",
-      "description-often-shall-instance-updates-git-hub": "執行個體應多久從 GitHub 拉取一次更新？",
-      "description-pr-enable-description": "允許使用者選擇在儲存變更時是否開啟拉取請求。如果儲存庫不允許直接變更主分支，則可能仍需要拉取請求。",
+      "description-preview-requirements": "",
       "description-read-only": "無法透過 Grafana 修改資源。",
-      "description-webhooks-enable": "允許使用者選擇在儲存變更時是否開啟拉取請求。如果儲存庫不允許直接變更主分支，則可能仍需要拉取請求。",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "在拉取請求中啟用儀表板預覽",
-      "label-pr-workflow": "儲存時啟用拉取請求選項",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "唯讀",
-      "label-update-instance-interval-seconds": "更新執行個體間隔（秒）",
-      "placeholder": "60",
-      "text-setup-later": "您可以稍後再設定",
-      "title-enhance-github": "增強您的 GitHub 體驗"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "沒有符合您查詢的結果",
@@ -10611,6 +10685,57 @@
     "getting-started-page": {
       "header": "佈建",
       "subtitle-provisioning-feature": "檢視及管理您的佈建連線"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "無結果"
@@ -10642,6 +10767,11 @@
       },
       "summary": "摘要"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "設定後，將建立新的 Grafana 資料夾，並與外部儲存空間同步。如果外部儲存空間中存在任何資源，則會將其佈建到此新資料夾。在此資料夾中建立的所有新資源都將儲存在外部儲存空間中，並進行版本控制。",
@@ -10666,7 +10796,7 @@
     },
     "repository-actions": {
       "settings": "設定",
-      "source-code": "原始碼"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10730,6 +10860,24 @@
       "title": "儲存庫狀態",
       "title-legacy-storage": "舊版儲存空間",
       "title-queued-for-deletion": "已排入刪除佇列"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "基數",
@@ -11842,7 +11990,6 @@
       },
       "label-apply-to-entire-row": "套用至整列",
       "label-background-display-mode": "背景顯示模式",
-      "label-wrap-text": "文字自動換行",
       "wrap-text": "文字自動換行"
     },
     "column-alignment-options": {

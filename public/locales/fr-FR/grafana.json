@@ -3359,6 +3359,9 @@
       "text-badge-enabled": "Activé",
       "text-badge-not-enabled": "Non activé"
     },
+    "scim-banner": {
+      "message": ""
+    },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "Le point de terminaison .well-known/openid-configuration pour votre IdP",
       "title-open-id-connect-discovery-url": "URL de découverte de connexion OpenID"
@@ -3476,7 +3479,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Annuler",
       "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
       "confirmation-text": "Supprimer",
@@ -3508,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Ce dossier est vide"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
@@ -3559,6 +3577,7 @@
       "empty-message": "Aucun dossier trouvé",
       "error-title": "Impossible de charger les dossiers",
       "non-folder-item": "Non-dossier {{itemKind}} {{itemUID}}",
+      "root-title": "",
       "search-placeholder": "Rechercher dans les dossiers",
       "unknown-error": "Erreur inconnue"
     },
@@ -5931,8 +5950,8 @@
         "title-someone-else-has-updated-this-dashboard": "Quelqu’un d’autre a mis à jour ce tableau de bord",
         "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
       },
-      "schema-v2-library-panels-export": "La fonctionnalité de tableau de bord dynamique est expérimentale et n’a pas une parité complète de fonctionnalités avec le comportement actuel des tableaux de bord. Elle est basée sur un nouveau format de schéma, qui ne prend pas en charge les panneaux de bibliothèque. Cela signifie que lors de l’exportation du tableau de bord pour l’utiliser dans une autre instance, nous n’inclurons pas les panneaux de la bibliothèque. Nous avons l’intention de les prendre en charge au fur et à mesure de notre progression dans le <2>cycle de vie</2> de la fonctionnalité.",
-      "schema-v2-library-panels-export-title": "Le schéma de tableau de bord V2 ne prend pas encore en charge l’exportation de panneaux de bibliothèque à utiliser dans une autre instance",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "Le tableau de bord a été modifié de manière irréversible"
     },
     "save-dashboard-form-common-options": {
@@ -7954,6 +7973,60 @@
       "previous-label": "Mois précédent",
       "select-placeholder": "Sélectionner la date/l'heure"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Fermer"
     },
@@ -8000,6 +8073,20 @@
       "description-fields-with-value": "Définir les propriétés pour les champs selon une condition de réduction",
       "field-name-picker": {
         "placeholder": "Sélectionner un champ"
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "Champs dont le nom correspond à une expression régulière",
       "name-fields-by-query": "Champs retournés par la requête",
@@ -8840,6 +8927,8 @@
       "no-details": "Aucun champ à afficher.",
       "pin-line": "Épingler ce log",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "Aucun résultat à afficher."
       },
@@ -9687,7 +9776,9 @@
       "aria-label": "Aide"
     },
     "invite-user": {
-      "invite-new-member-button": "Inviter un nouveau membre"
+      "invite-button": "Inviter",
+      "invite-new-member-button": "Inviter un nouveau membre",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Ajouter aux signets",
@@ -10445,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10455,6 +10549,25 @@
   "provisioning": {
     "banner": {
       "message": "Cette fonctionnalité est actuellement en cours de développement. Pour une expérience optimale et les dernières améliorations, nous vous recommandons d’utiliser la <2>compilation nocturne</2> de Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Ajoutez un nom clair pour cette connexion de référentiel",
@@ -10477,36 +10590,20 @@
       "button-save": "Enregistrer",
       "button-saving": "Enregistrement en cours...",
       "description-enabled": "Une fois que la fusion automatique est activée, la cible ne peut pas être modifiée.",
-      "description-path": "Chemin d’accès à un sous-répertoire dans le référentiel Git",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
-      "description-repository-url": "Saisir l’URL du référentiel GitHub",
       "description-title": "Un nom lisible par l’utilisateur pour la configuration",
       "error-required": "Ce champ est obligatoire.",
       "error-save-repository": "Échec de l’enregistrement des paramètres du référentiel",
-      "error-valid-github-url": "Veuillez saisir une URL de référentiel GitHub valide",
       "label-automatic-pulling": "Fusion automatique",
-      "label-branch": "Branche",
       "label-enabled": "Activé",
-      "label-github-token": "Jeton GitHub",
       "label-interval-seconds": "Intervalle (secondes)",
-      "label-local-path": "Chemin local",
-      "label-path": "Chemin",
-      "label-pr-workflow": "Activer l’option de demande de fusion lors de l’enregistrement",
       "label-repository-type": "Type de référentiel",
-      "label-repository-url": "URL du référentiel",
       "label-target": "Cible",
       "label-title": "Titre",
       "option-entire-instance": "Instance entière",
-      "option-github": "GitHub",
-      "option-local": "Local",
       "option-managed-folder": "Dossier géré",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Ma configuration",
-      "placeholder-select-repository-type": "Sélectionner un type de référentiel"
+      "placeholder-my-config": "Ma configuration"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Configurez les webhooks</0> pour obtenir des mises à jour instantanées dans Grafana dès que les modifications sont validées. Examinez et approuvez les modifications à l’aide de demandes de fusion avant leur mise en ligne.",
@@ -10520,26 +10617,7 @@
     },
     "connect-repository-button": {
       "configure": "Configurer",
-      "configure-file": "Configurer la mise en service de fichiers",
-      "configure-git-sync": "Configurer la synchronisation Git",
       "repository-limit-info-alert": "Limite du référentiel atteinte ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Branche à utiliser pour le référentiel GitHub",
-      "description-github-path": "Il s’agit du chemin d’accès à un sous-répertoire dans votre référentiel GitHub où les tableaux de bord seront stockés et mis en service à partir de",
-      "description-paste-your-git-hub-personal-access-token": "Collez votre jeton d’accès personnel GitHub",
-      "description-repository-url": "Coller l’URL du référentiel GitHub",
-      "error-field-required": "Ce champ est obligatoire.",
-      "error-invalid-github-url": "Veuillez saisir une URL de référentiel GitHub valide",
-      "label-access-token": "Jeton d’accès à GitHub",
-      "label-branch": "Nom de la branche",
-      "label-local-path": "Chemin local",
-      "label-path": "Chemin d’accès au sous-répertoire dans le référentiel",
-      "label-repository-url": "URL de référentiel GitHub",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Supprimer",
@@ -10581,8 +10659,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Configurer les basculements de fonctionnalité requis"
       },
-      "manage-dashboards-provision-updates-automatically": "Gérez les tableaux de bord sous forme de code dans GitHub et mettez automatiquement les mises à jour en service",
-      "manage-your-dashboards-with-remote-provisioning": "Premiers pas avec GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Stockez les tableaux de bord dans un espace de stockage à gestion des versions pour une meilleure organisation et un meilleur suivi de l’historique"
     },
     "file-history-page": {
@@ -10603,18 +10681,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Ajoute un aperçu des images des modifications apportées au tableau de bord dans les demandes de fusion. Les images de vos tableaux de bord Grafana seront partagées dans votre référentiel Git et visibles par toute personne ayant accès au référentiel.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Nécessite un rendu d’image. <2>Configurer le rendu d’image</2>",
-      "description-often-shall-instance-updates-git-hub": "À quelle fréquence l’instance doit-elle extraire les mises à jour de GitHub ?",
-      "description-pr-enable-description": "Permet aux utilisateurs de choisir d’ouvrir ou non une demande de fusion lors de l’enregistrement des modifications. Si le référentiel n’autorise pas les modifications directes de la branche principale, il est possible qu’une demande de fusion soit nécessaire.",
+      "description-preview-requirements": "",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
-      "description-webhooks-enable": "Permet aux utilisateurs de choisir d’ouvrir ou non une demande de fusion lors de l’enregistrement des modifications. Si le référentiel n’autorise pas les modifications directes de la branche principale, il est possible qu’une demande de fusion soit nécessaire.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Activer les aperçus du tableau de bord dans les demandes de fusion",
-      "label-pr-workflow": "Activer l’option de demande de fusion lors de l’enregistrement",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Lecture seule",
-      "label-update-instance-interval-seconds": "Mettre à jour l’intervalle d’instance (secondes)",
-      "placeholder": "60",
-      "text-setup-later": "Vous pouvez toujours configurer cela plus tard",
-      "title-enhance-github": "Améliorez votre expérience GitHub"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Aucun résultat ne correspond à votre requête",
@@ -10644,6 +10720,57 @@
     "getting-started-page": {
       "header": "Mise en service",
       "subtitle-provisioning-feature": "Afficher et gérer vos connexions de mise en service"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Introuvable"
@@ -10675,6 +10802,11 @@
       },
       "summary": "Synthèse"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Après la configuration, un nouveau dossier Grafana sera créé et synchronisé avec un stockage externe. Si des ressources sont présentes dans le stockage externe, elles seront mises en service dans ce nouveau dossier. Toutes les nouvelles ressources créées dans ce dossier seront stockées et versionnées dans un stockage externe.",
@@ -10699,7 +10831,7 @@
     },
     "repository-actions": {
       "settings": "Paramètres",
-      "source-code": "Code source"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10763,6 +10895,24 @@
       "title": "Statut du référentiel",
       "title-legacy-storage": "Stockage hérité",
       "title-queued-for-deletion": "Mis en attente pour suppression"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Base",
@@ -11881,7 +12031,6 @@
       },
       "label-apply-to-entire-row": "Appliquer à toute la ligne",
       "label-background-display-mode": "Mode d’affichage de l’arrière-plan",
-      "label-wrap-text": "Renvoyer à la ligne automatiquement",
       "wrap-text": "Renvoyer à la ligne automatiquement"
     },
     "column-alignment-options": {

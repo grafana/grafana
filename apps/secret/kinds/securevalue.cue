@@ -7,7 +7,6 @@ securevalue: {
 	pluralName: "SecureValues"
 	current:    "v1beta1"
 	scope:      "Namespaced"
-	current:    "v1beta1"
 	codegen: {
 		ts: {
 			enabled: false
