@@ -22,9 +22,6 @@ interface SwitchItemProps {
   };
 }
 
-/**
- * Reusable switch item component for consistent styling and behavior
- */
 function SwitchItem({ testId, value, disabled = false, onChange, label, tooltip }: SwitchItemProps) {
   const styles = useStyles2(getStyles);
 
@@ -44,31 +41,27 @@ function SwitchItem({ testId, value, disabled = false, onChange, label, tooltip 
 export function AdditionalSettings() {
   const { settings, updateSettings } = useMetricsModal();
 
-  // Memoize placeholders to avoid recalculating on every render
   const placeholders = useMemo(() => getPlaceholders(), []);
 
-  // Generic toggle function for any boolean setting - eliminates repetition
   const toggleSetting = useCallback(
     <K extends keyof typeof settings>(key: K) => {
       updateSettings({ [key]: !settings[key] });
     },
-    [settings, updateSettings]
+    [settings, updateSettings],
   );
 
-  // Memoize tooltip content to avoid recreation
   const backendTooltipContent = useMemo(
     () =>
       t(
         'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
-        'Filter metric names by regex search, using an additional call on the Prometheus API.'
+        'Filter metric names by regex search, using an additional call on the Prometheus API.',
       ),
-    []
+    [],
   );
 
-  // Memoize disabled states for better performance
   const isMetadataSearchDisabled = useMemo(
     () => settings.useBackend || !settings.hasMetadata,
-    [settings.useBackend, settings.hasMetadata]
+    [settings.useBackend, settings.hasMetadata],
   );
 
   const isNullMetadataDisabled = useMemo(() => !settings.hasMetadata, [settings.hasMetadata]);
@@ -82,14 +75,12 @@ export function AdditionalSettings() {
         onChange={() => toggleSetting('fullMetaSearch')}
         label={placeholders.metadataSearchSwitch}
       />
-
       <SwitchItem
         value={settings.includeNullMetadata}
         disabled={isNullMetadataDisabled}
         onChange={() => toggleSetting('includeNullMetadata')}
         label={placeholders.includeNullMetadata}
       />
-
       <SwitchItem
         value={settings.disableTextWrap}
         onChange={() => toggleSetting('disableTextWrap')}
@@ -99,7 +90,6 @@ export function AdditionalSettings() {
           </Trans>
         }
       />
-
       <SwitchItem
         testId={metricsModaltestIds.setUseBackend}
         value={settings.useBackend}
@@ -114,9 +104,6 @@ export function AdditionalSettings() {
   );
 }
 
-/**
- * Memoized styles function to prevent unnecessary recalculation
- */
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     settingsIcon: css({
