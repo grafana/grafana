@@ -108,7 +108,7 @@
     "@swc/helpers": "0.5.15",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
-    "@testing-library/react": "16.2.0",
+    "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/babel__core": "^7",
     "@types/babel__preset-env": "^7",

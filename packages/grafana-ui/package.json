@@ -155,7 +155,7 @@
     "@storybook/theming": "^8.6.2",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
-    "@testing-library/react": "16.2.0",
+    "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/chance": "^1.1.7",
     "@types/common-tags": "^1.8.0",
