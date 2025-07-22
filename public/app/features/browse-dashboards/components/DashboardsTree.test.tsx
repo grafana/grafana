@@ -39,7 +39,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a dashboard item', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={{ canEditFolders: true, canEditDashboards: true }}
         items={[dashboard]}
         isSelected={isSelected}
         width={WIDTH}
@@ -59,7 +59,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('does not render checkbox when disabled', () => {
     render(
       <DashboardsTree
-        canSelect={false}
+        permissions={{ canEditFolders: false, canEditDashboards: false }}
         items={[dashboard]}
         isSelected={isSelected}
         width={WIDTH}
@@ -79,7 +79,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a folder item', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={{ canEditFolders: true, canEditDashboards: true }}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -98,7 +98,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a folder link', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={{ canEditFolders: true, canEditDashboards: true }}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -119,7 +119,7 @@ describe('browse-dashboards DashboardsTree', () => {
 
     render(
       <DashboardsTree
-        canSelect
+        permissions={{ canEditFolders: true, canEditDashboards: true }}
         items={[sharedWithMe, folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -140,7 +140,7 @@ describe('browse-dashboards DashboardsTree', () => {
 
     render(
       <DashboardsTree
-        canSelect
+        permissions={{ canEditFolders: true, canEditDashboards: true }}
         items={[sharedWithMe, folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -162,7 +162,7 @@ describe('browse-dashboards DashboardsTree', () => {
     const handler = jest.fn();
     render(
       <DashboardsTree
-        canSelect
+        permissions={{ canEditFolders: true, canEditDashboards: true }}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -183,7 +183,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders empty folder indicators', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={{ canEditFolders: true, canEditDashboards: true }}
         items={[emptyFolderIndicator]}
         isSelected={isSelected}
         width={WIDTH}

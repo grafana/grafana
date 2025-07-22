@@ -57,3 +57,13 @@ export function formatFolderName(folderName?: string): string {
 
   return result;
 }
+
+export function canEditItemType(
+  itemKind: string,
+  permissions: {
+    canEditFolders: boolean;
+    canEditDashboards: boolean;
+  }
+): boolean {
+  return itemKind === 'folder' ? permissions.canEditFolders : permissions.canEditDashboards;
+}

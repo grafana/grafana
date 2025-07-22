@@ -26,7 +26,7 @@ const RecentlyDeletedPage = memo(() => {
   const hasSelection = useHasSelection();
 
   const { canEditFolders, canEditDashboards } = getFolderPermissions();
-  const canSelect = canEditFolders || canEditDashboards;
+  const permissions = { canEditFolders, canEditDashboards };
 
   useEffect(() => {
     stateManager.initStateFromUrl(undefined);
@@ -75,7 +75,7 @@ const RecentlyDeletedPage = memo(() => {
           <AutoSizer>
             {({ width, height }) => (
               <SearchView
-                canSelect={canSelect}
+                permissions={permissions}
                 width={width}
                 height={height}
                 searchStateManager={stateManager}

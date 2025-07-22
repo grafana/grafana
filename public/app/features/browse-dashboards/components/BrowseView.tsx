@@ -23,15 +23,19 @@ interface BrowseViewProps {
   height: number;
   width: number;
   folderUID: string | undefined;
-  canSelect: boolean;
+  permissions: {
+    canEditFolders: boolean;
+    canEditDashboards: boolean;
+  };
 }
 
-export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height, permissions }: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
+  const canSelect = permissions.canEditFolders || permissions.canEditDashboards;
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
@@ -156,7 +160,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
   return (
     <DashboardsTree
-      canSelect={canSelect}
+      permissions={permissions}
       items={flatTree}
       width={width}
       height={height}

@@ -49,6 +49,10 @@ interface RendererUserProps {
   onAllSelectionChange?: (newState: boolean) => void;
   onItemSelectionChange?: (item: DashboardViewItem, newState: boolean) => void;
   treeID?: string;
+  permissions?: {
+    canEditFolders: boolean;
+    canEditDashboards: boolean;
+  };
 }
 
 export type DashboardsTreeColumn = Column<DashboardsTreeItem>;

@@ -373,25 +373,24 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('should not show Move and Delete actions when user has dashboards:write but lacks delete permissions', async () => {
       jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
         return {
-          canCreateDashboards: true, // dashboards:create
-          canEditDashboards: true, // dashboards:write
-          canCreateFolders: false, // No folders:create
-          canDeleteFolders: false, // No folders:delete
-          canEditFolders: false, // No folders:write (covers folder deletion)
-          canViewPermissions: false, // No permissions:read
-          canSetPermissions: false, // No permissions:write
+          canCreateDashboards: true,
+          canCreateFolders: false,
+          canDeleteFolders: false,
+          canEditDashboards: true,
+          canEditFolders: false,
+          canSetPermissions: false,
+          canViewPermissions: false,
         };
       });
 
       render(<BrowseDashboardsPage queryParams={{}} />);
 
-      const checkbox = await screen.findByTestId(
-        selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)
-      );
-      await userEvent.click(checkbox);
+      // Wait for the page to load
+      await screen.findByRole('heading', { name: folderA.item.title });
 
-      expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+      const checkbox = screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid));
+
+      expect(checkbox).not.toBeInTheDocument();
     });
   });
 });

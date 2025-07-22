@@ -24,7 +24,10 @@ interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
-  canSelect: boolean;
+  permissions: {
+    canEditFolders: boolean;
+    canEditDashboards: boolean;
+  };
   isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
@@ -48,7 +51,7 @@ export function DashboardsTree({
   onItemSelectionChange,
   isItemLoaded,
   requestLoadMore,
-  canSelect = false,
+  permissions,
 }: DashboardsTreeProps) {
   const treeID = useId();
 
@@ -94,10 +97,11 @@ export function DashboardsTree({
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: TagsCell,
     };
+    const canSelect = permissions.canEditFolders || permissions.canEditDashboards;
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
-  }, [onFolderClick, canSelect]);
+  }, [onFolderClick, permissions]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
@@ -109,10 +113,11 @@ export function DashboardsTree({
       onAllSelectionChange,
       onItemSelectionChange,
       treeID,
+      permissions,
     }),
     // we need this to rerender if items changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID]
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID, permissions]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -156,7 +161,7 @@ export function DashboardsTree({
 
               return (
                 <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
-                  {column.render('Header', { isSelected, onAllSelectionChange })}
+                  {column.render('Header', { isSelected, onAllSelectionChange, permissions })}
                 </div>
               );
             })}
@@ -203,12 +208,16 @@ interface VirtualListRowProps {
     onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
     treeID: string;
+    permissions: {
+      canEditFolders: boolean;
+      canEditDashboards: boolean;
+    };
   };
 }
 
 function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
-  const { table, isSelected, onItemSelectionChange, treeID } = data;
+  const { table, isSelected, onItemSelectionChange, treeID, permissions } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
@@ -240,7 +249,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
         return (
           <div key={key} {...cellProps} className={styles.cell}>
-            {cell.render('Cell', { isSelected, onItemSelectionChange, treeID })}
+            {cell.render('Cell', { isSelected, onItemSelectionChange, treeID, permissions })}
           </div>
         );
       })}
