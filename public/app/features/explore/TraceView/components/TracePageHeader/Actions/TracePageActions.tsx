@@ -73,7 +73,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
   function AssistantButton() {
     const [isAvailable, openAssistant] = useAssistant();
 
-    if (!isAvailable) {
+    if (!isAvailable || !openAssistant) {
       return null;
     }
 
