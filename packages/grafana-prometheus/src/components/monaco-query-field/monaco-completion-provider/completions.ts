@@ -118,7 +118,7 @@ const getFunctionCompletions: () => Completion[] = () => {
 
 // Remove the triggerType parameter and rename the function
 async function getFunctionsOnlyCompletions(): Promise<Completion[]> {
-  return Promise.resolve(FUNCTION_COMPLETIONS);
+  return Promise.resolve(getFunctionCompletions());
 }
 
 async function getAllFunctionsAndMetricNamesCompletions(
@@ -290,7 +290,7 @@ export async function getCompletions(
     }
     case 'EMPTY': {
       if (triggerType === 'partial') {
-        return Promise.resolve(FUNCTION_COMPLETIONS);
+        return Promise.resolve(getFunctionCompletions());
       }
       const metricNames = await getAllMetricNamesCompletions(searchTerm, dataProvider, timeRange);
       const historyCompletions = getAllHistoryCompletions(dataProvider);
