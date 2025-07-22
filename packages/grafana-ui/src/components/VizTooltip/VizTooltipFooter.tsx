@@ -6,7 +6,6 @@ import { Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { ActionButton } from '../Actions/ActionButton';
-import { Button } from '../Button/Button';
 import { DataLinkButton } from '../DataLinks/DataLinkButton';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
@@ -88,13 +87,6 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizToolt
     <div className={styles.wrapper}>
       {!hasOneClickAction && renderDataLinks(dataLinks, styles)}
       {!hasOneClickLink && renderActions(actions, styles)}
-      {!hasOneClickLink && !hasOneClickAction && annotate != null && (
-        <div className={styles.addAnnotations}>
-          <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
-            <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
