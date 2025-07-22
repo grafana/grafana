@@ -1,5 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/AdditionalSettings.tsx
 import { css } from '@emotion/css';
+import { ReactElement, useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -9,78 +10,152 @@ import { useMetricsModal } from './MetricsModalContext';
 import { getPlaceholders } from './helpers';
 import { metricsModaltestIds } from './testIds';
 
-export function AdditionalSettings() {
+interface SwitchItemProps {
+  testId?: string;
+  value: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+  label: string | ReactElement;
+  tooltip?: {
+    content: string;
+    placement?: 'bottom-end' | 'bottom' | 'top' | 'left' | 'right';
+  };
+}
+
+function SwitchItem({ testId, value, disabled = false, onChange, label, tooltip }: SwitchItemProps) {
   const styles = useStyles2(getStyles);
-  const placeholders = getPlaceholders();
-  const { settings, overrideSettings } = useMetricsModal();
 
   return (
-    <>
-      <div className={styles.selectItem}>
-        <Switch
-          data-testid={metricsModaltestIds.searchWithMetadata}
-          value={settings.fullMetaSearch}
-          disabled={settings.useBackend || !settings.hasMetadata}
-          onChange={() => overrideSettings({ fullMetaSearch: !settings.fullMetaSearch })}
-        />
-        <div className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</div>
-      </div>
-      <div className={styles.selectItem}>
-        <Switch
-          value={settings.includeNullMetadata}
-          disabled={!settings.hasMetadata}
-          onChange={() => overrideSettings({ includeNullMetadata: !settings.includeNullMetadata })}
-        />
-        <div className={styles.selectItemLabel}>{placeholders.includeNullMetadata}</div>
-      </div>
-      <div className={styles.selectItem}>
-        <Switch
-          value={settings.disableTextWrap}
-          onChange={() => overrideSettings({ disableTextWrap: !settings.disableTextWrap })}
-        />
-        <div className={styles.selectItemLabel}>
-          <Trans i18nKey="grafana-prometheus.querybuilder.additional-settings.disable-text-wrap">
-            Disable text wrap
-          </Trans>
-        </div>
-      </div>
-      <div className={styles.selectItem}>
-        <Switch
-          data-testid={metricsModaltestIds.setUseBackend}
-          value={settings.useBackend}
-          onChange={() => overrideSettings({ useBackend: !settings.useBackend })}
-        />
-        <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
-        <Tooltip
-          content={t(
-            'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
-            'Filter metric names by regex search, using an additional call on the Prometheus API.'
-          )}
-          placement="bottom-end"
-        >
+    <div className={styles.selectItem}>
+      <Switch data-testid={testId} value={value} disabled={disabled} onChange={onChange} />
+      <div className={styles.selectItemLabel}>{label}</div>
+      {tooltip && (
+        <Tooltip content={tooltip.content} placement={tooltip.placement || 'bottom-end'}>
           <Icon name="info-circle" size="xs" className={styles.settingsIcon} />
         </Tooltip>
-      </div>
-    </>
+      )}
+    </div>
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+export function AdditionalSettings() {
+  const { settings, overrideSettings } = useMetricsModal();
+
+  // Memoize placeholders to avoid recalculating on every render
+  const placeholders = useMemo(() => getPlaceholders(), []);
+
+  // Memoize callback functions to prevent unnecessary re-renders
+  const toggleFullMetaSearch = useCallback(() => {
+    overrideSettings({ fullMetaSearch: !settings.fullMetaSearch });
+  }, [settings.fullMetaSearch, overrideSettings]);
+
+  const toggleIncludeNullMetadata = useCallback(() => {
+    overrideSettings({ includeNullMetadata: !settings.includeNullMetadata });
+  }, [settings.includeNullMetadata, overrideSettings]);
+
+  const toggleDisableTextWrap = useCallback(() => {
+    overrideSettings({ disableTextWrap: !settings.disableTextWrap });
+  }, [settings.disableTextWrap, overrideSettings]);
+
+  const toggleUseBackend = useCallback(() => {
+    overrideSettings({ useBackend: !settings.useBackend });
+  }, [settings.useBackend, overrideSettings]);
+
+  // Memoize tooltip content to avoid recreation
+  const backendTooltipContent = useMemo(
+    () =>
+      t(
+        'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
+        'Filter metric names by regex search, using an additional call on the Prometheus API.'
+      ),
+    []
+  );
+
+  // Memoize disabled states
+  const isMetadataSearchDisabled = useMemo(
+    () => settings.useBackend || !settings.hasMetadata,
+    [settings.useBackend, settings.hasMetadata]
+  );
+
+  const isNullMetadataDisabled = useMemo(() => !settings.hasMetadata, [settings.hasMetadata]);
+
+  return (
+    <div role="group">
+      <SwitchItem
+        testId={metricsModaltestIds.searchWithMetadata}
+        value={settings.fullMetaSearch}
+        disabled={isMetadataSearchDisabled}
+        onChange={toggleFullMetaSearch}
+        label={placeholders.metadataSearchSwitch}
+      />
+
+      <SwitchItem
+        value={settings.includeNullMetadata}
+        disabled={isNullMetadataDisabled}
+        onChange={toggleIncludeNullMetadata}
+        label={placeholders.includeNullMetadata}
+      />
+
+      <SwitchItem
+        value={settings.disableTextWrap}
+        onChange={toggleDisableTextWrap}
+        label={
+          <Trans i18nKey="grafana-prometheus.querybuilder.additional-settings.disable-text-wrap">
+            Disable text wrap
+          </Trans>
+        }
+      />
+
+      <SwitchItem
+        testId={metricsModaltestIds.setUseBackend}
+        value={settings.useBackend}
+        onChange={toggleUseBackend}
+        label={placeholders.setUseBackend}
+        tooltip={{
+          content: backendTooltipContent,
+          placement: 'bottom-end',
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Memoized styles function to prevent unnecessary recalculation
+ */
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     settingsIcon: css({
       color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(0.5),
+      cursor: 'help',
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
     selectItem: css({
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      padding: '4px 0',
+      padding: theme.spacing(0.5, 0),
+      gap: theme.spacing(1),
+      '&:hover': {
+        backgroundColor: theme.colors.background.secondary,
+        borderRadius: theme.shape.radius.default,
+        padding: theme.spacing(0.5, 1),
+        margin: theme.spacing(0, -1),
+      },
     }),
     selectItemLabel: css({
-      margin: `0 0 0 ${theme.spacing(1)}`,
       alignSelf: 'center',
       color: theme.colors.text.secondary,
-      fontSize: '12px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightRegular,
+      userSelect: 'none',
+      cursor: 'pointer',
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
     }),
   };
-}
+};
