@@ -105,7 +105,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
             context,
           })
         }
-        ariaLabel={t('explore.trace-page-actions.ariaLabel-analyze-trace', 'Analyze Trace')}
+        ariaLabel={t('explore.trace-page-actions.label-analyze-trace', 'Analyze Trace')}
         label={t('explore.trace-page-actions.label-analyze-trace', 'Analyze Trace')}
         icon={'ai-sparkle'}
       />

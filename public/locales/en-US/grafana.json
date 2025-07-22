@@ -7191,10 +7191,12 @@
       "ariaLabel-copy-trace-id": "Copy Trace ID",
       "ariaLabel-export-trace": "Export Trace",
       "give-feedback": "Give feedback",
+      "label-analyze-trace": "Analyze Trace",
       "label-copied": "Copied!",
       "label-export": "Export",
       "label-trace-id": "Trace ID",
-      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
+      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana.",
+      "trace-view-query": "Trace View Query"
     },
     "trace-page-header": {
       "text-partial-trace": "Partial trace",
