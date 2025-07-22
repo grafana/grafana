@@ -572,8 +572,6 @@ func (s *Service) getUserBasicRole(ctx context.Context, ns types.NamespaceInfo, 
 	return *basicRole, nil
 }
 
-// TODO: Create for resources that don't have folder support should just check the action
-
 func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, req *CheckRequest) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkPermission", trace.WithAttributes(
 		attribute.Int("scope_count", len(scopeMap))))
@@ -585,19 +583,27 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return len(scopeMap) > 0, nil
 	}
 
-	if req.Verb == utils.VerbCreate && req.ParentFolder == "" {
-		req.ParentFolder = accesscontrol.GeneralFolderUID
+	t, ok := s.mapper.Get(req.Group, req.Resource)
+	if !ok {
+		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
+		return false, status.Error(codes.NotFound, "unsupported resource")
+	}
+
+	// Handle folder support for creation requests
+	if req.Verb == utils.VerbCreate {
+		if t.HasFolderSupport() {
+			if req.ParentFolder == "" {
+				req.ParentFolder = accesscontrol.GeneralFolderUID
+			}
+		} else {
+			// Create without folder, check for any scope (empty included "")
+			return len(scopeMap) > 0, nil
+		}
 	}
 
 	// Wildcard grant, no further checks needed
 	if scopeMap["*"] {
 		return true, nil
-	}
-
-	t, ok := s.mapper.Get(req.Group, req.Resource)
-	if !ok {
-		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
-		return false, status.Error(codes.NotFound, "unsupported resource")
 	}
 
 	if req.Name != "" && scopeMap[t.Scope(req.Name)] {
