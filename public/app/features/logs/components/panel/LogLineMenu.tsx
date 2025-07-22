@@ -101,7 +101,7 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       );
     }
     openMainAssistant({
-      prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line')}:
+      prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
 
       \`\`\`
 ${log.entry.replaceAll('`', '\\`')}
@@ -151,7 +151,8 @@ ${log.entry.replaceAll('`', '\\`')}
         {isAssistantAvailable && (
           <Menu.Item
             onClick={openAssistant}
-            label={t('logs.log-line-menu.open-assistant', '✨ Explain this log line in Assistant')}
+            icon="ai-sparkle"
+            label={t('logs.log-line-menu.open-assistant', 'Explain this log line in Assistant')}
           />
         )}
         {logLineMenuCustomItems.map((item, i) => {
