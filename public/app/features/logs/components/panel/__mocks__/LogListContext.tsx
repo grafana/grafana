@@ -7,6 +7,13 @@ import { LogLineDetailsMode } from '../LogLineDetails';
 import { LogListContextData, Props } from '../LogListContext';
 import { LogListModel } from '../processing';
 
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
+
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   closeDetails: () => {},
