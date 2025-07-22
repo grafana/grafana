@@ -66,18 +66,28 @@ export async function importPluginModule({
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  return SystemJS.import(modulePath).catch((e) => {
-    let error = new Error('Could not load plugin: ' + e);
-    console.error(error);
-    pluginsLogger.logError(error, {
-      path,
-      pluginId,
-      pluginVersion: version ?? '',
-      expectedHash: moduleHash ?? '',
-      loadingStrategy: loadingStrategy.toString(),
-      sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-      newPluginLoadingEnabled: String(Boolean(config.featureToggles.enablePluginImporter)),
+  return SystemJS.import(modulePath)
+    .then((module) => {
+      pluginsLogger.logInfo('Plugin loaded successfully: ', {
+        path,
+        pluginId,
+        pluginVersion: version ?? '',
+        loadingStrategy: loadingStrategy.toString(),
+      });
+      return module;
+    })
+    .catch((e) => {
+      let error = new Error('Could not load plugin: ' + e);
+      console.error(error);
+      pluginsLogger.logError(error, {
+        path,
+        pluginId,
+        pluginVersion: version ?? '',
+        expectedHash: moduleHash ?? '',
+        loadingStrategy: loadingStrategy.toString(),
+        sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
+        newPluginLoadingEnabled: String(Boolean(config.featureToggles.enablePluginImporter)),
+      });
+      throw error;
     });
-    throw error;
-  });
 }
