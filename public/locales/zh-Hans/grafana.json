@@ -3466,7 +3466,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "取消",
       "cannot-move-folders": "文件夹无法移动",
       "confirmation-text": "删除",
@@ -3498,6 +3497,20 @@
     },
     "browse-view": {
       "this-folder-is-empty": "此文件夹为空"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_other": "{{count}} 条警告规则",
@@ -8883,6 +8896,8 @@
       "no-details": "没有要显示的字段。",
       "pin-line": "固定日志",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "没有要显示的结果。"
       },
@@ -10487,7 +10502,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10497,6 +10515,25 @@
   "provisioning": {
     "banner": {
       "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "为此存储库连接添加明确的名称",
@@ -10518,36 +10555,20 @@
       "button-save": "保存",
       "button-saving": "正在保存...",
       "description-enabled": "启用自动拉取后，将无法更改目标。",
-      "description-path": "Git 存储库中子目录的路径",
       "description-read-only": "无法通过 Grafana 修改资源。",
-      "description-repository-url": "输入 GitHub 存储库 URL",
       "description-title": "人类可读的配置名称",
       "error-required": "此字段是必填字段。",
       "error-save-repository": "保存存储库设置失败",
-      "error-valid-github-url": "请输入有效的 GitHub 存储库 URL",
       "label-automatic-pulling": "自动拉取",
-      "label-branch": "分支",
       "label-enabled": "已启用",
-      "label-github-token": "GitHub 令牌",
       "label-interval-seconds": "间隔（秒）",
-      "label-local-path": "本地路径",
-      "label-path": "路径",
-      "label-pr-workflow": "保存时启用拉取请求选项",
       "label-repository-type": "存储库类型",
-      "label-repository-url": "存储库 URL",
       "label-target": "目标",
       "label-title": "标题",
       "option-entire-instance": "整个实例",
-      "option-github": "GitHub",
-      "option-local": "本地",
       "option-managed-folder": "受管理的文件夹",
-      "placeholder-branch": "主要",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "我的配置",
-      "placeholder-select-repository-type": "选择存储库类型"
+      "placeholder-my-config": "我的配置"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>配置 Webhook</0>，以便在提交更改后立即在 Grafana 中获取更新。使用拉取请求审核和批准更改，然后再发布。",
@@ -10561,26 +10582,7 @@
     },
     "connect-repository-button": {
       "configure": "配置",
-      "configure-file": "配置文件预配",
-      "configure-git-sync": "配置 Git 同步",
       "repository-limit-info-alert": "已达到存储库限制 ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "用于 GitHub 存储库的分支",
-      "description-github-path": "这是 GitHub 存储库中子目录的路径，仪表板将在其中存储和预配",
-      "description-paste-your-git-hub-personal-access-token": "粘贴您的 GitHub 个人访问令牌",
-      "description-repository-url": "粘贴您 GitHub 存储库的 URL",
-      "error-field-required": "此字段是必填字段。",
-      "error-invalid-github-url": "请输入有效的 GitHub 存储库 URL",
-      "label-access-token": "GitHub 访问令牌",
-      "label-branch": "分支名称",
-      "label-local-path": "本地路径",
-      "label-path": "存储库中子目录的路径",
-      "label-repository-url": "Github 存储库 URL",
-      "placeholder-branch": "主要",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "删除",
@@ -10622,8 +10624,8 @@
       "actions": {
         "set-up-required-feature-toggles": "设置所需的功能切换"
       },
-      "manage-dashboards-provision-updates-automatically": "在 GitHub 中将数据面板作为代码进行管理，并自动预配更新",
-      "manage-your-dashboards-with-remote-provisioning": "开始使用 GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "将数据面板存储在版本控制的存储中，以便更好地整理内容和跟踪历史记录"
     },
     "file-history-page": {
@@ -10644,18 +10646,16 @@
     },
     "finish-step": {
       "description-enable-previews": "在拉取请求中添加数据面板更改的图像预览。Grafana 数据面板的图像将在 Git 存储库中共享，并对具有存储库访问权限的任何人可见。",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "需要图像渲染。<2>设置图像渲染</2>",
-      "description-often-shall-instance-updates-git-hub": "实例应多久从 GitHub 拉取一次更新？",
-      "description-pr-enable-description": "允许用户选择在保存更改时是否打开拉取请求。如果存储库不允许直接更改主分支，则仍可能需要拉取请求。",
+      "description-preview-requirements": "",
       "description-read-only": "无法通过 Grafana 修改资源。",
-      "description-webhooks-enable": "允许用户选择在保存更改时是否打开拉取请求。如果存储库不允许直接更改主分支，则仍可能需要拉取请求。",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "在拉取请求中启用数据面板预览",
-      "label-pr-workflow": "保存时启用拉取请求选项",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "只读",
-      "label-update-instance-interval-seconds": "更新实例间隔（秒）",
-      "placeholder": "60",
-      "text-setup-later": "您可以稍后再进行设置",
-      "title-enhance-github": "增强您的 GitHub 体验"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "没有找到与您的查询匹配的结果",
@@ -10685,6 +10685,57 @@
     "getting-started-page": {
       "header": "配置",
       "subtitle-provisioning-feature": "查看和管理您的预配连接"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "未找到"
@@ -10716,6 +10767,11 @@
       },
       "summary": "摘要"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "设置后，将创建一个新的 Grafana 文件夹，并与外部存储同步。如果外部存储中存在任何资源，它们将被预配到此新文件夹中。在此文件夹中创建的所有新资源都将存储在外部存储中并进行版本控制。",
@@ -10740,7 +10796,7 @@
     },
     "repository-actions": {
       "settings": "设置",
-      "source-code": "源代码"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10804,6 +10860,24 @@
       "title": "存储库状态",
       "title-legacy-storage": "传统存储",
       "title-queued-for-deletion": "已进入队列等待删除"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "基本",

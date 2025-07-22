@@ -3479,7 +3479,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "İptal",
       "cannot-move-folders": "Klasörler taşınamaz",
       "confirmation-text": "Sil",
@@ -3511,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Klasör boş"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} uyarı kuralı",
@@ -8912,6 +8927,8 @@
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": ""
       },
@@ -10519,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10529,6 +10549,25 @@
   "provisioning": {
     "banner": {
       "message": "Bu özellik şu anda aktif geliştirme aşamasındadır. En iyi deneyim ve en yeni geliştirmeler için Grafana'nın <2>gecelik derleme</2> sürümünü kullanmanızı öneririz."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Bu depo bağlantısı için net bir ad ekleyin",
@@ -10551,36 +10590,20 @@
       "button-save": "Kaydet",
       "button-saving": "Kaydediliyor…",
       "description-enabled": "Otomatik çekme etkinleştirildikten sonra hedef değiştirilemez.",
-      "description-path": "Git deposundaki bir alt dizinin yolu",
       "description-read-only": "Kaynaklar Grafana aracılığıyla değiştirilemez.",
-      "description-repository-url": "GitHub depo URL'sini girin",
       "description-title": "Yapılandırma için okunabilir ad",
       "error-required": "Bu alan gereklidir.",
       "error-save-repository": "Depo ayarları kaydedilemedi",
-      "error-valid-github-url": "Lütfen geçerli bir GitHub depo URL'si girin",
       "label-automatic-pulling": "Otomatik çekme",
-      "label-branch": "Dal",
       "label-enabled": "Etkin",
-      "label-github-token": "GitHub belirteci",
       "label-interval-seconds": "Aralık (saniye)",
-      "label-local-path": "Yerel yol",
-      "label-path": "Yol",
-      "label-pr-workflow": "Kaydederken çekme isteği seçeneğini etkinleştir",
       "label-repository-type": "Depo türü",
-      "label-repository-url": "Depo URL'si",
       "label-target": "Hedef",
       "label-title": "Başlık",
       "option-entire-instance": "Tüm örnek",
-      "option-github": "GitHub",
-      "option-local": "Yerel",
       "option-managed-folder": "Yönetilen klasör",
-      "placeholder-branch": "ana",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Yapılandırmam",
-      "placeholder-select-repository-type": "Depo türü seçin"
+      "placeholder-my-config": "Yapılandırmam"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "Değişiklikler gönderildiği anda Grafana'da anlık güncellemeler almak için <0>web kancalarını yapılandırın</0>. Değişiklikleri kullanıma sunmadan önce çekme isteklerini kullanarak gözden geçirip onaylayın.",
@@ -10594,26 +10617,7 @@
     },
     "connect-repository-button": {
       "configure": "Yapılandır",
-      "configure-file": "Dosya sağlamayı yapılandır",
-      "configure-git-sync": "Git Sync'i Yapılandır",
       "repository-limit-info-alert": "Depo sınırına ulaşıldı ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "GitHub deposunda kullanılacak dal",
-      "description-github-path": "Panoların saklanacağı ve sağlanacağı GitHub deponuzdaki alt dizinin yolu",
-      "description-paste-your-git-hub-personal-access-token": "GitHub kişisel erişim belirtecinizi yapıştırın",
-      "description-repository-url": "GitHub deponuzun URL'sini yapıştırın",
-      "error-field-required": "Bu alan gereklidir.",
-      "error-invalid-github-url": "Lütfen geçerli bir GitHub depo URL'si girin",
-      "label-access-token": "GitHub erişim belirteci",
-      "label-branch": "Dal adı",
-      "label-local-path": "Yerel yol",
-      "label-path": "Depodaki alt dizin yolu",
-      "label-repository-url": "GitHub depo URL'si",
-      "placeholder-branch": "ana",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Sil",
@@ -10655,8 +10659,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Gerekli özellik anahtarlarını ayarla"
       },
-      "manage-dashboards-provision-updates-automatically": "Panoları GitHub'da kod olarak yönetin ve güncellemeleri otomatik sağlayın",
-      "manage-your-dashboards-with-remote-provisioning": "GitSync'i kullanmaya başlayın",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Daha iyi organizasyon ve geçmiş takibi için panoları sürüm kontrollü bir depoda saklayın"
     },
     "file-history-page": {
@@ -10677,18 +10681,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Çekme isteklerinde pano değişikliklerinin görsel ön izlemesini ekler. Grafana panolarınızın görselleri Git deponuzda paylaşılacak ve depo erişimi olan herkes tarafından görülebilecektir.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Görsel oluşturma gerektirir. <2>Görsel oluşturmayı ayarlayın</2>",
-      "description-often-shall-instance-updates-git-hub": "Örnek GitHub'dan ne sıklıkla güncelleme çekecek?",
-      "description-pr-enable-description": "Kullanıcıların değişiklikleri kaydederken bir çekme isteği açıp açmayacaklarını seçmelerine izin verir. Depo ana dala doğrudan değişikliklere izin vermiyorsa bir çekme isteği gerekebilir.",
+      "description-preview-requirements": "",
       "description-read-only": "Kaynaklar Grafana aracılığıyla değiştirilemez.",
-      "description-webhooks-enable": "Kullanıcıların değişiklikleri kaydederken bir çekme isteği açıp açmayacaklarını seçmelerine izin verir. Depo ana dala doğrudan değişikliklere izin vermiyorsa bir çekme isteği gerekebilir.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Çekme isteklerinde pano ön izlemelerini etkinleştir",
-      "label-pr-workflow": "Kaydederken çekme isteği seçeneğini etkinleştir",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Salt okunur",
-      "label-update-instance-interval-seconds": "Örnek güncelleme aralığı (saniye)",
-      "placeholder": "60",
-      "text-setup-later": "Bunu daha sonra istediğiniz zaman ayarlayabilirsiniz",
-      "title-enhance-github": "GitHub deneyiminizi geliştirin"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Sorgunuzla eşleşen sonuç yok",
@@ -10718,6 +10720,57 @@
     "getting-started-page": {
       "header": "Sağlama",
       "subtitle-provisioning-feature": "Sağlama bağlantılarınızı görüntüleyin ve yönetin"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Bulunamadı"
@@ -10749,6 +10802,11 @@
       },
       "summary": "Özet"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Kurulumdan sonra yeni bir Grafana klasörü oluşturulacak ve harici depolama ile senkronize edilecek. Harici depolamada bulunan kaynaklar bu yeni klasöre sağlanacak. Bu klasörde oluşturulan tüm yeni kaynaklar haricî depolamada saklanacak ve sürümlendirilecektir.",
@@ -10773,7 +10831,7 @@
     },
     "repository-actions": {
       "settings": "Ayarlar",
-      "source-code": "Kaynak Kodu"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10837,6 +10895,24 @@
       "title": "Depo Durumu",
       "title-legacy-storage": "Eski Depolama",
       "title-queued-for-deletion": "Silinmek üzere kuyruğa alındı"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Temel",

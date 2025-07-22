@@ -3479,7 +3479,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Annulla",
       "cannot-move-folders": "Non è possibile spostare le cartelle",
       "confirmation-text": "Elimina",
@@ -3511,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Questa cartella è vuota"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} regola di avviso",
@@ -8912,6 +8927,8 @@
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": ""
       },
@@ -10519,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10529,6 +10549,25 @@
   "provisioning": {
     "banner": {
       "message": "Questa funzione è attualmente in fase di sviluppo attivo. Per un'esperienza ottimale e gli ultimi miglioramenti, consigliamo di utilizzare la <2>nightly build</2> di Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Aggiungi un nome semplice per questa connessione al repository",
@@ -10551,36 +10590,20 @@
       "button-save": "Salva",
       "button-saving": "Salvataggio in corso...",
       "description-enabled": "Una volta abilitato il pull automatico, la destinazione non può essere modificata.",
-      "description-path": "Percorso a una directory secondaria nel repository Git",
       "description-read-only": "Le risorse non possono essere modificate tramite Grafana.",
-      "description-repository-url": "Inserisci l'URL del repository GitHub",
       "description-title": "Un nome comprensibile per la configurazione",
       "error-required": "Questo campo è obbligatorio.",
       "error-save-repository": "Impossibile salvare le impostazioni del repository",
-      "error-valid-github-url": "Inserisci un URL di repository GitHub valido",
       "label-automatic-pulling": "Pull automatico",
-      "label-branch": "Ramo",
       "label-enabled": "Abilitato",
-      "label-github-token": "Token GitHub",
       "label-interval-seconds": "Intervallo (secondi)",
-      "label-local-path": "Percorso locale",
-      "label-path": "Percorso",
-      "label-pr-workflow": "Abilita l'opzione di richiesta di pull durante il salvataggio",
       "label-repository-type": "Tipo di repository",
-      "label-repository-url": "URL repository",
       "label-target": "Destinazione",
       "label-title": "Titolo",
       "option-entire-instance": "Intera istanza",
-      "option-github": "GitHub",
-      "option-local": "Locale",
       "option-managed-folder": "Cartella gestita",
-      "placeholder-branch": "principale",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "La mia configurazione",
-      "placeholder-select-repository-type": "Seleziona tipo di repository"
+      "placeholder-my-config": "La mia configurazione"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Configura i webhook</0> per ottenere aggiornamenti istantanei in Grafana non appena vengono apportate le modifiche. Esamina e approva le modifiche utilizzando le richieste di pull prima che vengano pubblicate.",
@@ -10594,26 +10617,7 @@
     },
     "connect-repository-button": {
       "configure": "Configura",
-      "configure-file": "Configura il provisioning dei file",
-      "configure-git-sync": "Configura sincronizzazione Git",
       "repository-limit-info-alert": "Limite del repository raggiunto ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Ramo da utilizzare per il repository GitHub",
-      "description-github-path": "Questo è il percorso a una directory secondaria nel repository GitHub in cui le dashboard verranno archiviate e fornite da",
-      "description-paste-your-git-hub-personal-access-token": "Incolla il tuo token di accesso personale GitHub",
-      "description-repository-url": "Incolla l'URL del tuo repository GitHub",
-      "error-field-required": "Questo campo è obbligatorio.",
-      "error-invalid-github-url": "Inserisci un URL di repository GitHub valido",
-      "label-access-token": "Token di accesso GitHub",
-      "label-branch": "Nome del ramo",
-      "label-local-path": "Percorso locale",
-      "label-path": "Percorso alla directory secondaria nel repository",
-      "label-repository-url": "URL del repository GitHub",
-      "placeholder-branch": "principale",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Elimina",
@@ -10655,8 +10659,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Configura i toggle delle funzionalità necessarie"
       },
-      "manage-dashboards-provision-updates-automatically": "Gestisci le dashboard come codice in GitHub e fornisci automaticamente gli aggiornamenti",
-      "manage-your-dashboards-with-remote-provisioning": "Inizia con GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Archivia le dashboard in una memoria controllata dalla versione per una migliore organizzazione e monitoraggio della cronologia"
     },
     "file-history-page": {
@@ -10677,18 +10681,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Aggiunge un'anteprima dell'immagine delle modifiche alla dashboard nelle richieste di pull. Le immagini delle dashboard Grafana verranno condivise nel repository Git e saranno visibili a chiunque abbia accesso al repository.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Richiede il rendering dell'immagine. <2>Configura il rendering delle immagini</2>",
-      "description-often-shall-instance-updates-git-hub": "Con quale frequenza l'istanza deve eseguire un pull degli aggiornamenti da GitHub?",
-      "description-pr-enable-description": "Consente agli utenti di scegliere se aprire una richiesta di pull durante il salvataggio delle modifiche. Se il repository non consente modifiche dirette al ramo principale, potrebbe essere comunque necessaria una richiesta di pull.",
+      "description-preview-requirements": "",
       "description-read-only": "Le risorse non possono essere modificate tramite Grafana.",
-      "description-webhooks-enable": "Consente agli utenti di scegliere se aprire una richiesta di pull durante il salvataggio delle modifiche. Se il repository non consente modifiche dirette al ramo principale, potrebbe essere comunque necessaria una richiesta di pull.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Abilita le anteprime della dashboard nelle richieste di pull",
-      "label-pr-workflow": "Abilita l'opzione di richiesta di pull durante il salvataggio",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Solo lettura",
-      "label-update-instance-interval-seconds": "Aggiorna intervallo istanza (secondi)",
-      "placeholder": "60",
-      "text-setup-later": "È sempre possibile configurarlo in un secondo momento",
-      "title-enhance-github": "Migliora la tua esperienza GitHub"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nessun risultato corrisponde alla tua query",
@@ -10718,6 +10720,57 @@
     "getting-started-page": {
       "header": "Provisioning",
       "subtitle-provisioning-feature": "Visualizza e gestisci le connessioni di provisioning"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Non trovato"
@@ -10749,6 +10802,11 @@
       },
       "summary": "Indice"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Dopo la configurazione, verrà creata una nuova cartella Grafana, che sarà sincronizzata con la memoria esterna. Se sono presenti risorse nella memoria esterna, verranno fornite a questa nuova cartella. Tutte le nuove risorse create in questa cartella saranno salvate e riceveranno un numero di versione in una memoria esterna.",
@@ -10773,7 +10831,7 @@
     },
     "repository-actions": {
       "settings": "Impostazioni",
-      "source-code": "Codice sorgente"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10837,6 +10895,24 @@
       "title": "Stato del repository",
       "title-legacy-storage": "Memoria esistente",
       "title-queued-for-deletion": "In coda per l'eliminazione"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Base",

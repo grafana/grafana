@@ -3466,7 +3466,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Batalkan",
       "cannot-move-folders": "Folder tidak dapat dipindahkan",
       "confirmation-text": "Hapus",
@@ -3498,6 +3497,20 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Folder ini kosong"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_other": "{{count}} aturan peringatan",
@@ -8883,6 +8896,8 @@
       "no-details": "Tidak ada bidang untuk ditampilkan.",
       "pin-line": "Sematkan log",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "Tidak ada hasil untuk ditampilkan."
       },
@@ -10487,7 +10502,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10497,6 +10515,25 @@
   "provisioning": {
     "banner": {
       "message": "Fitur ini saat ini sedang dalam pengembangan aktif. Untuk pengalaman terbaik dan peningkatan terbaru, kami merekomendasikan Anda untuk menggunakan <2>versi nightly </2> Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Tambahkan nama yang jelas untuk koneksi repositori ini",
@@ -10518,36 +10555,20 @@
       "button-save": "Simpan",
       "button-saving": "Menyimpan...",
       "description-enabled": "Setelah pulling otomatis diaktifkan, target tidak dapat diubah.",
-      "description-path": "Jalur ke subdirektori di repositori Git",
       "description-read-only": "Sumber daya tidak dapat dimodifikasi melalui Grafana.",
-      "description-repository-url": "Masukkan URL repositori GitHub",
       "description-title": "Nama yang dapat dibaca manusia untuk konfigurasi",
       "error-required": "Bidang ini wajib diisi.",
       "error-save-repository": "Gagal menyimpan pengaturan repositori",
-      "error-valid-github-url": "Masukkan URL repositori GitHub yang valid",
       "label-automatic-pulling": "Pulling otomatis",
-      "label-branch": "Cabang",
       "label-enabled": "Aktif",
-      "label-github-token": "Token GitHub",
       "label-interval-seconds": "Interval (detik)",
-      "label-local-path": "Jalur lokal",
-      "label-path": "Jalur",
-      "label-pr-workflow": "Aktifkan opsi permintaan pull saat menyimpan",
       "label-repository-type": "Jenis repositori",
-      "label-repository-url": "URL repositori",
       "label-target": "Target",
       "label-title": "Judul",
       "option-entire-instance": "Seluruh instans",
-      "option-github": "GitHub",
-      "option-local": "Lokal",
       "option-managed-folder": "Folder terkelola",
-      "placeholder-branch": "utama",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Konfigurasi saya",
-      "placeholder-select-repository-type": "Pilih jenis repositori"
+      "placeholder-my-config": "Konfigurasi saya"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Konfigurasikan webhook</0> untuk segera mendapatkan pembaruan instan di Grafana setelah perubahan dilakukan. Tinjau dan setujui perubahan menggunakan permintaan pull sebelum live.",
@@ -10561,26 +10582,7 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurasikan",
-      "configure-file": "Konfigurasikan penyediaan file",
-      "configure-git-sync": "Konfigurasikan Sinkronisasi Git",
       "repository-limit-info-alert": "Batas repositori tercapai ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Cabang yang akan digunakan untuk repositori GitHub",
-      "description-github-path": "Ini adalah jalur ke subdirektori di repositori GitHub Anda tempat dasbor akan disimpan dan disediakan",
-      "description-paste-your-git-hub-personal-access-token": "Tempel token akses pribadi GitHub Anda",
-      "description-repository-url": "Tempel URL repositori GitHub Anda",
-      "error-field-required": "Bidang ini wajib diisi.",
-      "error-invalid-github-url": "Masukkan URL repositori GitHub yang valid",
-      "label-access-token": "Token akses GitHub",
-      "label-branch": "Nama cabang",
-      "label-local-path": "Jalur lokal",
-      "label-path": "Jalur ke subdirektori di repositori",
-      "label-repository-url": "URL repositori GitHub",
-      "placeholder-branch": "utama",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Hapus",
@@ -10622,8 +10624,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Atur tombol fitur yang diwajibkan"
       },
-      "manage-dashboards-provision-updates-automatically": "Kelola dasbor sebagai kode di GitHub dan sediakan pembaruan secara otomatis",
-      "manage-your-dashboards-with-remote-provisioning": "Mulai menggunakan GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Simpan dasbor di penyimpanan yang dikontrol versi untuk organisasi dan pelacakan riwayat yang lebih baik"
     },
     "file-history-page": {
@@ -10644,18 +10646,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Menambahkan pratinjau gambar dari perubahan dasbor di permintaan pull. Gambar dasbor Grafana Anda akan dibagikan di repositori Git Anda dan dapat dilihat oleh siapa saja yang memiliki akses repositori.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Membutuhkan rendering gambar. <2>Atur rendering gambar</2>",
-      "description-often-shall-instance-updates-git-hub": "Seberapa sering instans melakukan pull pada pembaruan dari GitHub?",
-      "description-pr-enable-description": "Memungkinkan pengguna untuk memilih apakah akan membuka permintaan pull saat menyimpan perubahan. Jika repositori tidak mengizinkan perubahan langsung ke cabang utama, permintaan pull mungkin tetap diperlukan.",
+      "description-preview-requirements": "",
       "description-read-only": "Sumber daya tidak dapat dimodifikasi melalui Grafana.",
-      "description-webhooks-enable": "Memungkinkan pengguna untuk memilih apakah akan membuka permintaan pull saat menyimpan perubahan. Jika repositori tidak mengizinkan perubahan langsung ke cabang utama, permintaan pull mungkin tetap diperlukan.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Aktifkan pratinjau dasbor dalam permintaan pull",
-      "label-pr-workflow": "Aktifkan opsi permintaan pull saat menyimpan",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Hanya baca",
-      "label-update-instance-interval-seconds": "Perbarui interval instans (detik)",
-      "placeholder": "60",
-      "text-setup-later": "Anda selalu bisa mengatur ini nanti",
-      "title-enhance-github": "Tingkatkan pengalaman GitHub Anda"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Tidak ada hasil yang cocok dengan kueri Anda",
@@ -10685,6 +10685,57 @@
     "getting-started-page": {
       "header": "Penyediaan",
       "subtitle-provisioning-feature": "Lihat dan kelola koneksi penyediaan Anda"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Tidak ditemukan"
@@ -10716,6 +10767,11 @@
       },
       "summary": "Ringkasan"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Setelah penyiapan, folder Grafana baru akan dibuat dan disinkronkan dengan penyimpanan eksternal. Jika ada sumber daya yang ada di penyimpanan eksternal, sumber daya akan disediakan ke folder baru ini. Semua sumber daya baru yang dibuat dalam folder ini akan disimpan dan diberi versi dalam penyimpanan eksternal.",
@@ -10740,7 +10796,7 @@
     },
     "repository-actions": {
       "settings": "Pengaturan",
-      "source-code": "Kode Sumber"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10804,6 +10860,24 @@
       "title": "Status Repositori",
       "title-legacy-storage": "Penyimpanan Lama",
       "title-queued-for-deletion": "Diantrekan untuk dihapus"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Dasar",

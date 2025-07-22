@@ -3466,7 +3466,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "キャンセル",
       "cannot-move-folders": "フォルダは移動できません",
       "confirmation-text": "削除",
@@ -3498,6 +3497,20 @@
     },
     "browse-view": {
       "this-folder-is-empty": "このフォルダは空です"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_other": "{{count}}件のアラートルール",
@@ -8883,6 +8896,8 @@
       "no-details": "表示するフィールドがありません。",
       "pin-line": "ログをピン留め",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "表示する結果がありません。"
       },
@@ -10487,7 +10502,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10497,6 +10515,25 @@
   "provisioning": {
     "banner": {
       "message": "この機能は現在開発中です。最高の体験と最新の改善を利用するには、Grafanaの<2>ナイトリービルド</2>の使用をお勧めします。"
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "このリポジトリ接続にわかりやすい名前を追加します",
@@ -10518,36 +10555,20 @@
       "button-save": "保存",
       "button-saving": "保存中…",
       "description-enabled": "自動取得を有効にすると、対象を変更できなくなります。",
-      "description-path": "Gitリポジトリ内のサブディレクトリへのパス",
       "description-read-only": "Grafanaではリソースを変更できません。",
-      "description-repository-url": "GitHubリポジトリURLを入力してください",
       "description-title": "わかりやすい設定名",
       "error-required": "このフィールドは必須です。",
       "error-save-repository": "リポジトリ設定の保存に失敗しました",
-      "error-valid-github-url": "有効なGitHubリポジトリURLを入力してください",
       "label-automatic-pulling": "自動取得",
-      "label-branch": "ブランチ",
       "label-enabled": "有効化",
-      "label-github-token": "GitHubトークン",
       "label-interval-seconds": "間隔（秒）",
-      "label-local-path": "ローカルパス",
-      "label-path": "パス",
-      "label-pr-workflow": "保存時にプルリクエストオプションを有効にする",
       "label-repository-type": "リポジトリタイプ",
-      "label-repository-url": "リポジトリURL",
       "label-target": "ターゲット",
       "label-title": "タイトル",
       "option-entire-instance": "インスタンス全体",
-      "option-github": "GitHub",
-      "option-local": "ローカル",
       "option-managed-folder": "管理フォルダ",
-      "placeholder-branch": "メイン",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "私の設定",
-      "placeholder-select-repository-type": "リポジトリタイプを選択"
+      "placeholder-my-config": "私の設定"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "変更がコミットされたらすぐにGrafanaでリアルタイムに更新を受け取れるように、<0>Webhookを設定</0>します。変更が公開される前に、プルリクエストを使用して変更を確認・承認します。",
@@ -10561,26 +10582,7 @@
     },
     "connect-repository-button": {
       "configure": "構成",
-      "configure-file": "ファイルのプロビジョニングを設定",
-      "configure-git-sync": "Git Syncを設定",
       "repository-limit-info-alert": "リポジトリの上限に達しました（{{count}}）"
-    },
-    "connect-step": {
-      "description-branch": "GitHubリポジトリで使用するブランチ",
-      "description-github-path": "これはダッシュボードが保存・プロビジョニングされるGitHubリポジトリ内のサブディレクトリへのパスです",
-      "description-paste-your-git-hub-personal-access-token": "GitHubの個人アクセストークンを貼り付けてください",
-      "description-repository-url": "GitHubリポジトリのURLを貼り付けてください",
-      "error-field-required": "このフィールドは必須です。",
-      "error-invalid-github-url": "有効なGitHubリポジトリURLを入力してください",
-      "label-access-token": "GitHubアクセストークン",
-      "label-branch": "ブランチ名",
-      "label-local-path": "ローカルパス",
-      "label-path": "リポジトリ内のサブディレクトリへのパス",
-      "label-repository-url": "GithubのリポジトリURL",
-      "placeholder-branch": "メイン",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "削除",
@@ -10622,8 +10624,8 @@
       "actions": {
         "set-up-required-feature-toggles": "必要な機能切り替えを設定"
       },
-      "manage-dashboards-provision-updates-automatically": "GitHubでコードとしてダッシュボードを管理し、更新を自動的にプロビジョニング",
-      "manage-your-dashboards-with-remote-provisioning": "GitSyncの利用を開始",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "バージョン管理されたストレージにダッシュボードを保存して、整理と履歴追跡を改善"
     },
     "file-history-page": {
@@ -10644,18 +10646,16 @@
     },
     "finish-step": {
       "description-enable-previews": "プルリクエストによるダッシュボードの変更の画像プレビューを追加します。Grafanaダッシュボードの画像はGitリポジトリで共有され、リポジトリにアクセスできる全ユーザーが閲覧できます。",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "画像レンダリングが必要です。<2>画像レンダリングを設定</2>",
-      "description-often-shall-instance-updates-git-hub": "インスタンスはどのくらいの頻度でGitHubから更新を取得しますか？",
-      "description-pr-enable-description": "ユーザーが変更保存時にプルリクエストを開くかどうかを選択できるようにします。リポジトリがメインブランチへの直接変更を許可していない場合でも、プルリクエストが必要になる可能性があります。",
+      "description-preview-requirements": "",
       "description-read-only": "Grafanaではリソースを変更できません。",
-      "description-webhooks-enable": "ユーザーが変更保存時にプルリクエストを開くかどうかを選択できるようにします。リポジトリがメインブランチへの直接変更を許可していない場合でも、プルリクエストが必要になる可能性があります。",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "プルリクエストでダッシュボードのプレビューを有効にする",
-      "label-pr-workflow": "保存時にプルリクエストオプションを有効にする",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "読み出しのみ",
-      "label-update-instance-interval-seconds": "インスタンス間隔の更新（秒）",
-      "placeholder": "60",
-      "text-setup-later": "こちらは後からいつでも設定できます",
-      "title-enhance-github": "GitHub体験を向上させる"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "クエリに一致する結果なし",
@@ -10685,6 +10685,57 @@
     "getting-started-page": {
       "header": "プロビジョニング",
       "subtitle-provisioning-feature": "プロビジョニング接続を表示・管理"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "見つかりません"
@@ -10716,6 +10767,11 @@
       },
       "summary": "概要"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "セットアップ後、新しいGrafanaフォルダが作成され、外部ストレージと同期されます。外部ストレージにリソースがある場合、それらはこの新しいフォルダにプロビジョニングされます。このフォルダで作成された新しいリソースはすべて、外部ストレージに保存されバージョン管理されます。",
@@ -10740,7 +10796,7 @@
     },
     "repository-actions": {
       "settings": "設定",
-      "source-code": "ソースコード"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10804,6 +10860,24 @@
       "title": "リポジトリの状態",
       "title-legacy-storage": "レガシーストレージ",
       "title-queued-for-deletion": "削除待ちリストに追加されました"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "ベース",

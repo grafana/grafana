@@ -3505,7 +3505,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Zrušit",
       "cannot-move-folders": "Složky nelze přesunout",
       "confirmation-text": "Odstranit",
@@ -3537,6 +3536,26 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Tato složka je prázdná"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_few": "",
+      "failed-alert_many": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_few": "",
+      "api-success_many": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} pravidlo výstrahy",
@@ -8970,6 +8989,8 @@
       "no-details": "Žádná pole k zobrazení.",
       "pin-line": "Připnout protokol",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "Žádné výsledky k zobrazení."
       },
@@ -10583,7 +10604,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10593,6 +10617,25 @@
   "provisioning": {
     "banner": {
       "message": "Tato funkce je v současné době v aktivním vývoji. Pro nejlepší zážitek a nejnovější vylepšení doporučujeme použít <2>noční sestavení</2> Grafany."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Pojmenujte jasně toto připojení k úložišti",
@@ -10617,36 +10660,20 @@
       "button-save": "Uložit",
       "button-saving": "Ukládání…",
       "description-enabled": "Jakmile je povoleno automatické tažení, cíl nelze změnit.",
-      "description-path": "Cesta k dílčímu adresáři v úložišti Git",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
-      "description-repository-url": "Zadejte adresu URL úložiště GitHub",
       "description-title": "Člověkem čitelný název konfigurace",
       "error-required": "Toto pole je povinné.",
       "error-save-repository": "Nastavení úložiště se nepodařilo uložit",
-      "error-valid-github-url": "Zadejte platnou adresu URL úložiště GitHub",
       "label-automatic-pulling": "Automatické vyžádání",
-      "label-branch": "Větev",
       "label-enabled": "Povoleno",
-      "label-github-token": "Token GitHubu",
       "label-interval-seconds": "Interval (sekundy)",
-      "label-local-path": "Místní cesta",
-      "label-path": "Cesta",
-      "label-pr-workflow": "Povolit možnost pull request při ukládání",
       "label-repository-type": "Typ úložiště",
-      "label-repository-url": "Adresa URL úložiště",
       "label-target": "Cíl",
       "label-title": "Název",
       "option-entire-instance": "Celá instance",
-      "option-github": "GitHub",
-      "option-local": "Místní",
       "option-managed-folder": "Spravovaná složka",
-      "placeholder-branch": "hlavní",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Moje konfigurace",
-      "placeholder-select-repository-type": "Vyberte typ úložiště"
+      "placeholder-my-config": "Moje konfigurace"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Nakonfigurujte webhooky</0> a získejte okamžité aktualizace v Grafaně ihned po potvrzení změn. Před zveřejněním zkontrolujte a schvalte změny pomocí pull requestů.",
@@ -10660,26 +10687,7 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurovat",
-      "configure-file": "Konfigurovat zajištění souborů",
-      "configure-git-sync": "Konfigurovat synchronizaci Git",
       "repository-limit-info-alert": "Bylo dosaženo limitu úložiště ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Větev, která bude použita pro úložiště GitHub",
-      "description-github-path": "Toto je cesta k dílčímu adresáři ve vašem úložišti GitHub, kde budou uloženy a zajištěny nástěnky",
-      "description-paste-your-git-hub-personal-access-token": "Vložte svůj osobní přístupový token GitHub",
-      "description-repository-url": "Vložte adresu URL svého úložiště GitHub",
-      "error-field-required": "Toto pole je povinné.",
-      "error-invalid-github-url": "Zadejte platnou adresu URL úložiště GitHub",
-      "label-access-token": "Přístupový token GitHub",
-      "label-branch": "Název pobočky",
-      "label-local-path": "Místní cesta",
-      "label-path": "Cesta k dílčímu adresáři v úložišti",
-      "label-repository-url": "Adresa URL úložiště GitHub",
-      "placeholder-branch": "hlavní",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Odstranit",
@@ -10721,8 +10729,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Nastavit povinné přepínače funkcí"
       },
-      "manage-dashboards-provision-updates-automatically": "Spravuje nástěnky jako kód v GitHubu a automaticky zajišťujte aktualizace",
-      "manage-your-dashboards-with-remote-provisioning": "Začněte s GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Ukládejte nástěnky do úložiště s pevně nastavenou verzí pro lepší organizaci a sledování historie"
     },
     "file-history-page": {
@@ -10743,18 +10751,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Přidá náhled obrázku změn nástěnky v pull requestech. Obrázky nástěnek Grafana budou sdíleny ve vašem úložišti Git a uvidí je každý, kdo má přístup k úložišti.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Vyžaduje vykreslení obrázků. <2>Nastavit vykreslování obrázků</2>",
-      "description-often-shall-instance-updates-git-hub": "Jak často bude instance stahovat aktualizace z GitHubu?",
-      "description-pr-enable-description": "Umožňuje uživatelům zvolit, zda se má při ukládání změn otevřít pull request. Pokud úložiště neumožňuje přímé změny hlavní větve, může být stále vyžadován pull request.",
+      "description-preview-requirements": "",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
-      "description-webhooks-enable": "Umožňuje uživatelům zvolit, zda se má při ukládání změn otevřít pull request. Pokud úložiště neumožňuje přímé změny hlavní větve, může být stále vyžadován pull request.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Povolit náhledy nástěnek v pull requestech",
-      "label-pr-workflow": "Povolit možnost pull request při ukládání",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Jen pro čtení",
-      "label-update-instance-interval-seconds": "Interval aktualizace instance (sekundy)",
-      "placeholder": "60",
-      "text-setup-later": "Toto můžete kdykoli nastavit později",
-      "title-enhance-github": "Vylepšete své zkušenosti s GitHubem"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
@@ -10784,6 +10790,57 @@
     "getting-started-page": {
       "header": "Zajišťování",
       "subtitle-provisioning-feature": "Zobrazujte a spravujte vazby zajištění"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Nenalezeno"
@@ -10815,6 +10872,11 @@
       },
       "summary": "Shrnutí"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Po nastavení bude vytvořena nová složka Grafany a synchronizována s externím úložištěm. Pokud jsou v externím úložišti přítomny nějaké zdroje, budou zajištěny v této nové složce. Všechny nové zdroje vytvořené v této složce budou uloženy a upraveny v externím úložišti.",
@@ -10839,7 +10901,7 @@
     },
     "repository-actions": {
       "settings": "Nastavení",
-      "source-code": "Zdrojový kód"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10903,6 +10965,24 @@
       "title": "Stav úložiště",
       "title-legacy-storage": "Starší verze úložiště",
       "title-queued-for-deletion": "Zařazeno do fronty k odstranění"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Základ",
