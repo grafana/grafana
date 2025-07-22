@@ -33,63 +33,35 @@ dashboard: {
 	kind:       "Dashboard"
 	pluralName: "Dashboards"
 	current:    "v1beta1"
+	codegen: {
+		ts: {
+			enabled: true
+			config: {
+				enumsAsUnionTypes: true
+			}
+		}
+		go: {
+			enabled: true
+			config: {
+				allowMarshalEmptyDisjunctions: true
+			}
+		}
+	}
 
 	versions: {
 		"v0alpha1": {
-			codegen: {
-				ts: {
-					enabled: true
-					config: {
-						enumsAsUnionTypes: true
-					}
-				}
-				go: {
-					enabled: true
-					config: {
-						allowMarshalEmptyDisjunctions: true
-					}
-				}
-			}
 			schema: {
 				spec:   v0.DashboardSpec
 				status: DashboardStatus
 			}
 		}
 		"v1beta1": {
-			codegen: {
-				ts: {
-					enabled: true
-					config: {
-						enumsAsUnionTypes: true
-					}
-				}
-				go: {
-					enabled: true
-					config: {
-						allowMarshalEmptyDisjunctions: true
-					}
-				}
-			}
 			schema: {
 				spec:   v1.DashboardSpec
 				status: DashboardStatus
 			}
 		}
 		"v2alpha1": {
-			codegen: {
-				ts: {
-					enabled: true
-					config: {
-						enumsAsUnionTypes: true
-					}
-				}
-				go: {
-					enabled: true
-					config: {
-						allowMarshalEmptyDisjunctions: true
-					}
-				}
-			}
 			schema: {
 				spec:   v2alpha1.DashboardSpec
 				status: DashboardStatus
