@@ -1,14 +1,10 @@
 import { isNumber, isString } from 'lodash';
 
 import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
+import { DirectionDimensionConfig } from '@grafana/schema/dist/esm/common/common.gen';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
-import {
-  CanvasConnection,
-  CanvasElementItem,
-  CanvasElementOptions,
-  ConnectionDirection,
-} from 'app/features/canvas/element';
+import { CanvasConnection, CanvasElementItem, CanvasElementOptions } from 'app/features/canvas/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -107,6 +103,7 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
 export function isConnectionSource(element: ElementState) {
   return element.options.connections && element.options.connections.length > 0;
 }
+
 export function isConnectionTarget(element: ElementState, sceneByName: Map<string, ElementState>) {
   const connections = getConnections(sceneByName);
   return connections.some((connection) => connection.target === element);
@@ -246,14 +243,16 @@ export const getConnectionStyles = (
   info: CanvasConnection,
   scene: Scene,
   defaultArrowSize: number,
-  defaultArrowDirection: ConnectionDirection
+  defaultArrowDirection: DirectionDimensionConfig
 ) => {
   const defaultArrowColor = config.theme2.colors.text.primary;
   const lastRowIndex = getRowIndex(info.size?.field, scene);
   const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
   const strokeRadius = info.radius ? scene.context.getScale(info.radius).get(lastRowIndex) : 0;
-  const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
+  const arrowDirection = info.direction
+    ? scene.context.getDirection(info.direction).get(lastRowIndex)
+    : defaultArrowDirection;
   const lineStyle = getLineStyle(info.lineStyle?.style);
   const shouldAnimate = info.lineStyle?.animate;
 

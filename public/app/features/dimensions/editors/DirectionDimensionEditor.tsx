@@ -7,11 +7,10 @@ import {
   StandardEditorsRegistryItem,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DirectionDimensionMode, DirectionDimensionConfig } from '@grafana/schema';
+import { DirectionDimensionMode, DirectionDimensionConfig, ConnectionDirection } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { ConnectionDirection } from '../../canvas/element';
 import { DirectionDimensionOptions } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -31,10 +30,7 @@ export const DirectionDimensionEditor = ({ value, context, onChange }: Props) =>
     {
       label: t('dimensions.direction-dimension-editor.label-field', 'Field'),
       value: DirectionDimensionMode.Field,
-      description: t(
-        'dimensions.direction-dimension-editor.description-field',
-        'Direction based on field value (positive = forward, negative = reverse)'
-      ),
+      description: t('dimensions.direction-dimension-editor.description-field', 'Direction based on field value'),
     },
   ];
 
@@ -71,6 +67,7 @@ export const DirectionDimensionEditor = ({ value, context, onChange }: Props) =>
     (selection: SelectableValue<ConnectionDirection>) => {
       onChange({
         ...value,
+        field: undefined,
         fixed: selection.value ?? ConnectionDirection.Forward,
       });
     },

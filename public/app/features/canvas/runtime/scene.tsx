@@ -13,6 +13,7 @@ import {
   ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
+  DirectionDimensionConfig,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -23,6 +24,7 @@ import {
   getScalarDimensionFromData,
   getScaleDimensionFromData,
   getTextDimensionFromData,
+  getDirectionDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
@@ -188,6 +190,7 @@ export class Scene {
     getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.data, scalar),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
+    getDirection: (direction: DirectionDimensionConfig) => getDirectionDimensionFromData(this.data, direction),
     getPanelData: () => this.data,
   };
 

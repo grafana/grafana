@@ -2,9 +2,13 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import {
+  DirectionDimensionConfig,
+  DirectionDimensionMode,
+  ConnectionDirection,
+} from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { ConnectionDirection } from 'app/features/canvas/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { ConnectionCoordinates } from '../../panelcfg.gen';
@@ -47,7 +51,10 @@ export const ConnectionSVG = ({
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = config.theme2.colors.text.primary;
   const defaultArrowSize = 2;
-  const defaultArrowDirection = ConnectionDirection.Forward;
+  const defaultArrowDirection: DirectionDimensionConfig = {
+    mode: DirectionDimensionMode.Fixed,
+    fixed: ConnectionDirection.Forward,
+  };
   const maximumVertices = 10;
 
   const [selectedConnection, setSelectedConnection] = useState<ConnectionState | undefined>(undefined);

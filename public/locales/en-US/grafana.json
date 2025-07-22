@@ -6542,7 +6542,7 @@
       "noOptionsMessage-no-fields-found": "No fields found"
     },
     "direction-dimension-editor": {
-      "description-field": "Direction based on field value (positive = forward, negative = reverse)",
+      "description-field": "Direction based on field value",
       "description-fixed": "Fixed direction value",
       "label-direction": "Direction",
       "label-field": "Field",
