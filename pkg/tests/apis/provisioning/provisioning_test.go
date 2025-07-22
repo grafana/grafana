@@ -528,6 +528,12 @@ spec:
 }
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
+	t.Skip(
+		"Flaky Test",
+		"https://github.com/grafana/grafana-enterprise/actions/runs/16441629279/job/46463665864?pr=9136",
+		"https://github.com/grafana/grafana-enterprise/actions/runs/16441629279/job/46463665904?pr=9136",
+	)
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
