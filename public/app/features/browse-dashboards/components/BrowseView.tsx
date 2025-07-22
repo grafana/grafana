@@ -18,6 +18,7 @@ import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../s
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
+import { canSelectItems } from './utils';
 
 interface BrowseViewProps {
   height: number;
@@ -32,7 +33,7 @@ export function BrowseView({ folderUID, width, height, permissions }: BrowseView
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
-  const canSelect = permissions.canEditFolders || permissions.canEditDashboards;
+  const canSelect = canSelectItems(permissions);
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {

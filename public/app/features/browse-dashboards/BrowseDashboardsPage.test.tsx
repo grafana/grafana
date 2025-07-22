@@ -120,6 +120,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     canEditFolders: true,
     canViewPermissions: true,
     canSetPermissions: true,
+    canDeleteDashboards: true,
   };
 
   beforeAll(() => {
@@ -157,6 +158,17 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
   });
 
   afterEach(() => {
+    // Reset permissions back to defaults
+    Object.assign(mockPermissions, {
+      canCreateDashboards: true,
+      canEditDashboards: true,
+      canCreateFolders: true,
+      canDeleteFolders: true,
+      canEditFolders: true,
+      canViewPermissions: true,
+      canSetPermissions: true,
+      canDeleteDashboards: true,
+    });
     jest.restoreAllMocks();
     server.resetHandlers();
   });
@@ -178,13 +190,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('does not show the "New" button if the user does not have permissions', async () => {
-      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
-        return {
-          ...mockPermissions,
-          canCreateDashboards: false,
-          canCreateFolders: false,
-        };
-      });
+      mockPermissions.canCreateDashboards = false;
+      mockPermissions.canCreateFolders = false;
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
@@ -281,13 +288,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('does not show the "New" button if the user does not have permissions', async () => {
-      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
-        return {
-          ...mockPermissions,
-          canCreateDashboards: false,
-          canCreateFolders: false,
-        };
-      });
+      mockPermissions.canCreateDashboards = false;
+      mockPermissions.canCreateFolders = false;
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
@@ -299,15 +301,10 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('does not show the "Folder actions" button if the user does not have permissions', async () => {
-      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
-        return {
-          ...mockPermissions,
-          canDeleteFolders: false,
-          canEditFolders: false,
-          canSetPermissions: false,
-          canViewPermissions: false,
-        };
-      });
+      mockPermissions.canDeleteFolders = false;
+      mockPermissions.canEditFolders = false;
+      mockPermissions.canSetPermissions = false;
+      mockPermissions.canViewPermissions = false;
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
@@ -319,12 +316,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('does not show the "Edit title" button if the user does not have permissions', async () => {
-      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
-        return {
-          ...mockPermissions,
-          canEditFolders: false,
-        };
-      });
+      mockPermissions.canEditFolders = false;
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
@@ -371,17 +363,12 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('should not show checkbox for folder when user has dashboards:write but lacks folder edit permissions', async () => {
-      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
-        return {
-          canCreateDashboards: true,
-          canEditDashboards: true,
-          canCreateFolders: false,
-          canDeleteFolders: false,
-          canEditFolders: false,
-          canSetPermissions: false,
-          canViewPermissions: false,
-        };
-      });
+      mockPermissions.canCreateFolders = false;
+      mockPermissions.canDeleteFolders = false;
+      mockPermissions.canEditFolders = false;
+      mockPermissions.canSetPermissions = false;
+      mockPermissions.canViewPermissions = false;
+      mockPermissions.canDeleteDashboards = false;
 
       render(<BrowseDashboardsPage queryParams={{}} />);
 
@@ -392,6 +379,42 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
         expect(checkbox).not.toBeInTheDocument();
       });
+    });
+
+    it('should not show checkbox for folder when user has folder:write but lacks folder delete permissions', async () => {
+      mockPermissions.canCreateFolders = false;
+      mockPermissions.canDeleteFolders = false;
+      mockPermissions.canEditFolders = true;
+      mockPermissions.canSetPermissions = false;
+      mockPermissions.canViewPermissions = false;
+
+      render(<BrowseDashboardsPage queryParams={{}} />);
+
+      await waitFor(() => {
+        const checkbox = screen.queryByTestId(
+          selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)
+        );
+
+        expect(checkbox).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show checkbox for folder when user has folder:write and folder delete permissions', async () => {
+      mockPermissions.canCreateFolders = false;
+      mockPermissions.canEditDashboards = false;
+      mockPermissions.canDeleteDashboards = false;
+      mockPermissions.canSetPermissions = false;
+      mockPermissions.canViewPermissions = false;
+      mockPermissions.canDeleteFolders = true;
+      mockPermissions.canEditFolders = true;
+
+      render(<BrowseDashboardsPage queryParams={{}} />);
+
+      const checkbox = await screen.findByTestId(
+        selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)
+      );
+
+      expect(checkbox).toBeInTheDocument();
     });
   });
 });

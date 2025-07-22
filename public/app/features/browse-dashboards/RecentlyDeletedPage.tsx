@@ -25,8 +25,8 @@ const RecentlyDeletedPage = memo(() => {
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const hasSelection = useHasSelection();
 
-  const { canEditFolders, canEditDashboards } = getFolderPermissions();
-  const permissions = { canEditFolders, canEditDashboards };
+  const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();
+  const permissions = { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards };
 
   useEffect(() => {
     stateManager.initStateFromUrl(undefined);

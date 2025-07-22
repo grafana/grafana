@@ -13,7 +13,7 @@ import { useHasSelection } from '../state/hooks';
 import { setAllSelection, setItemSelectionState } from '../state/slice';
 import { BrowseDashboardsPermissions } from '../types';
 
-import { canEditItemType } from './utils';
+import { canEditItemType, canSelectItems } from './utils';
 
 interface SearchViewProps {
   height: number;
@@ -125,7 +125,7 @@ export function SearchView({
     return <div style={{ width }}>{emptyState}</div>;
   }
 
-  const canSelect = permissions.canEditFolders || permissions.canEditDashboards;
+  const canSelect = canSelectItems(permissions);
   const props: SearchResultsProps = {
     response: value,
     selection: canSelect ? selectionChecker : undefined,

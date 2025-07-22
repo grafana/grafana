@@ -42,11 +42,27 @@ jest.mock('app/features/browse-dashboards/api/services', () => {
 describe('browse-dashboards BrowseView', () => {
   const WIDTH = 800;
   const HEIGHT = 600;
+  const mockPermissions = {
+    canEditFolders: true,
+    canEditDashboards: true,
+    canDeleteFolders: true,
+    canDeleteDashboards: true,
+  };
+
+  afterEach(() => {
+    // Reset permissions back to defaults
+    Object.assign(mockPermissions, {
+      canEditFolders: true,
+      canEditDashboards: true,
+      canDeleteFolders: true,
+      canDeleteDashboards: true,
+    });
+  });
 
   it('expands and collapses a folder', async () => {
     render(
       <BrowseView
-        permissions={{ canEditFolders: true, canEditDashboards: true }}
+        permissions={mockPermissions}
         folderUID={undefined}
         width={WIDTH}
         height={HEIGHT}
@@ -64,7 +80,7 @@ describe('browse-dashboards BrowseView', () => {
   it('checks items when selected', async () => {
     render(
       <BrowseView
-        permissions={{ canEditFolders: true, canEditDashboards: true }}
+        permissions={mockPermissions}
         folderUID={undefined}
         width={WIDTH}
         height={HEIGHT}
@@ -81,7 +97,7 @@ describe('browse-dashboards BrowseView', () => {
   it('checks all descendants when a folder is selected', async () => {
     render(
       <BrowseView
-        permissions={{ canEditFolders: true, canEditDashboards: true }}
+        permissions={mockPermissions}
         folderUID={undefined}
         width={WIDTH}
         height={HEIGHT}
@@ -105,7 +121,7 @@ describe('browse-dashboards BrowseView', () => {
   it('checks descendants loaded after a folder is selected', async () => {
     render(
       <BrowseView
-        permissions={{ canEditFolders: true, canEditDashboards: true }}
+        permissions={mockPermissions}
         folderUID={undefined}
         width={WIDTH}
         height={HEIGHT}
@@ -132,7 +148,7 @@ describe('browse-dashboards BrowseView', () => {
   it('unchecks ancestors when unselecting an item', async () => {
     render(
       <BrowseView
-        permissions={{ canEditFolders: true, canEditDashboards: true }}
+        permissions={mockPermissions}
         folderUID={undefined}
         width={WIDTH}
         height={HEIGHT}
@@ -163,7 +179,7 @@ describe('browse-dashboards BrowseView', () => {
   it('shows indeterminate checkboxes when a descendant is selected', async () => {
     render(
       <BrowseView
-        permissions={{ canEditFolders: true, canEditDashboards: true }}
+        permissions={mockPermissions}
         folderUID={undefined}
         width={WIDTH}
         height={HEIGHT}
@@ -191,7 +207,7 @@ describe('browse-dashboards BrowseView', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
       render(
         <BrowseView
-          permissions={{ canEditFolders: true, canEditDashboards: true }}
+          permissions={mockPermissions}
           folderUID={folderB_empty.item.uid}
           width={WIDTH}
           height={HEIGHT}
@@ -201,9 +217,14 @@ describe('browse-dashboards BrowseView', () => {
     });
 
     it('shows a simple message if the user has viewer rights', async () => {
+      mockPermissions.canEditFolders = false;
+      mockPermissions.canEditDashboards = false;
+      mockPermissions.canDeleteFolders = false;
+      mockPermissions.canDeleteDashboards = false;
+      
       render(
         <BrowseView
-          permissions={{ canEditFolders: false, canEditDashboards: false }}
+          permissions={mockPermissions}
           folderUID={folderB_empty.item.uid}
           width={WIDTH}
           height={HEIGHT}

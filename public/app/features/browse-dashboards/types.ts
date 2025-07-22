@@ -65,4 +65,6 @@ export enum SelectionState {
 export interface BrowseDashboardsPermissions {
   canEditFolders: boolean;
   canEditDashboards: boolean;
+  canDeleteFolders?: boolean;
+  canDeleteDashboards?: boolean;
 }

@@ -24,7 +24,7 @@ import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
-import { makeRowID } from './utils';
+import { makeRowID, canSelectItems } from './utils';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
@@ -100,7 +100,7 @@ export function DashboardsTree({
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: TagsCell,
     };
-    const canSelect = permissions.canEditFolders || permissions.canEditDashboards;
+    const canSelect = canSelectItems(permissions);
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
