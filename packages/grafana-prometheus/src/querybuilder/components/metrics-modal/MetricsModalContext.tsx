@@ -38,7 +38,7 @@ type MetricsModalContextValue = {
     queryLabels?: QueryBuilderLabelFilter[]
   ) => Promise<void>;
   settings: Settings;
-  overrideSettings: (settings: Partial<Settings>) => void;
+  updateSettings: (settings: Partial<Settings>) => void;
   pagination: Pagination;
   setPagination: (val: Pagination) => void;
   selectedTypes: Array<SelectableValue<string>>;
@@ -73,27 +73,24 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     fullMetaSearch: false,
   });
 
-  const overrideSettings = useCallback(
-    (override: Partial<Settings>) => {
-      setSettings({
-        ...settings,
-        ...override,
-      });
-    },
-    [settings]
-  );
+  const updateSettings = useCallback((settingsUpdate: Partial<Settings>) => {
+    setSettings((prevSettings) => ({
+      ...prevSettings,
+      ...settingsUpdate,
+    }));
+  }, []);
 
   const fetchMetadata = useCallback(async () => {
     setIsLoading(true);
     const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
     if (Object.keys(metadata).length === 0) {
-      overrideSettings({ hasMetadata: false });
+      updateSettings({ hasMetadata: false });
       return;
     }
 
     setMetricsData(Object.keys(metadata).map((m) => generateMetricData(m, languageProvider)));
     setIsLoading(false);
-  }, [languageProvider, overrideSettings]);
+  }, [languageProvider, updateSettings]);
 
   const debouncedBackendSearch = useMemo(
     () =>
@@ -129,7 +126,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     <MetricsModalContext.Provider
       value={{
         settings,
-        overrideSettings,
+        updateSettings,
         isLoading,
         setIsLoading,
         metricsData,

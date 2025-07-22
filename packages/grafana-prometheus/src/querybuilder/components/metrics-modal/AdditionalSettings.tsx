@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/AdditionalSettings.tsx
 import { css } from '@emotion/css';
-import { ReactElement, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -15,13 +15,16 @@ interface SwitchItemProps {
   value: boolean;
   disabled?: boolean;
   onChange: () => void;
-  label: string | ReactElement;
+  label: string | React.ReactElement;
   tooltip?: {
     content: string;
     placement?: 'bottom-end' | 'bottom' | 'top' | 'left' | 'right';
   };
 }
 
+/**
+ * Reusable switch item component for consistent styling and behavior
+ */
 function SwitchItem({ testId, value, disabled = false, onChange, label, tooltip }: SwitchItemProps) {
   const styles = useStyles2(getStyles);
 
@@ -39,45 +42,34 @@ function SwitchItem({ testId, value, disabled = false, onChange, label, tooltip 
 }
 
 export function AdditionalSettings() {
-  const { settings, overrideSettings } = useMetricsModal();
+  const { settings, updateSettings } = useMetricsModal();
 
   // Memoize placeholders to avoid recalculating on every render
   const placeholders = useMemo(() => getPlaceholders(), []);
 
-  // Memoize callback functions to prevent unnecessary re-renders
-  const toggleFullMetaSearch = useCallback(() => {
-    overrideSettings({ fullMetaSearch: !settings.fullMetaSearch });
-  }, [settings.fullMetaSearch, overrideSettings]);
-
-  const toggleIncludeNullMetadata = useCallback(() => {
-    overrideSettings({ includeNullMetadata: !settings.includeNullMetadata });
-  }, [settings.includeNullMetadata, overrideSettings]);
-
-  const toggleDisableTextWrap = useCallback(() => {
-    overrideSettings({ disableTextWrap: !settings.disableTextWrap });
-  }, [settings.disableTextWrap, overrideSettings]);
-
-  const toggleUseBackend = useCallback(() => {
-    overrideSettings({ useBackend: !settings.useBackend });
-  }, [settings.useBackend, overrideSettings]);
+  // Generic toggle function for any boolean setting - eliminates repetition
+  const toggleSetting = useCallback(<K extends keyof typeof settings>(key: K) => {
+    updateSettings({ [key]: !settings[key] } as any);
+  }, [settings, updateSettings]);
 
   // Memoize tooltip content to avoid recreation
-  const backendTooltipContent = useMemo(
-    () =>
-      t(
-        'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
-        'Filter metric names by regex search, using an additional call on the Prometheus API.'
-      ),
-    []
+  const backendTooltipContent = useMemo(() => 
+    t(
+      'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
+      'Filter metric names by regex search, using an additional call on the Prometheus API.'
+    ), []
   );
 
-  // Memoize disabled states
-  const isMetadataSearchDisabled = useMemo(
-    () => settings.useBackend || !settings.hasMetadata,
+  // Memoize disabled states for better performance
+  const isMetadataSearchDisabled = useMemo(() => 
+    settings.useBackend || !settings.hasMetadata,
     [settings.useBackend, settings.hasMetadata]
   );
 
-  const isNullMetadataDisabled = useMemo(() => !settings.hasMetadata, [settings.hasMetadata]);
+  const isNullMetadataDisabled = useMemo(() => 
+    !settings.hasMetadata,
+    [settings.hasMetadata]
+  );
 
   return (
     <div role="group">
@@ -85,35 +77,35 @@ export function AdditionalSettings() {
         testId={metricsModaltestIds.searchWithMetadata}
         value={settings.fullMetaSearch}
         disabled={isMetadataSearchDisabled}
-        onChange={toggleFullMetaSearch}
+        onChange={() => toggleSetting('fullMetaSearch')}
         label={placeholders.metadataSearchSwitch}
       />
-
+      
       <SwitchItem
         value={settings.includeNullMetadata}
         disabled={isNullMetadataDisabled}
-        onChange={toggleIncludeNullMetadata}
+        onChange={() => toggleSetting('includeNullMetadata')}
         label={placeholders.includeNullMetadata}
       />
-
+      
       <SwitchItem
         value={settings.disableTextWrap}
-        onChange={toggleDisableTextWrap}
+        onChange={() => toggleSetting('disableTextWrap')}
         label={
           <Trans i18nKey="grafana-prometheus.querybuilder.additional-settings.disable-text-wrap">
             Disable text wrap
           </Trans>
         }
       />
-
+      
       <SwitchItem
         testId={metricsModaltestIds.setUseBackend}
         value={settings.useBackend}
-        onChange={toggleUseBackend}
+        onChange={() => toggleSetting('useBackend')}
         label={placeholders.setUseBackend}
         tooltip={{
           content: backendTooltipContent,
-          placement: 'bottom-end',
+          placement: 'bottom-end'
         }}
       />
     </div>
