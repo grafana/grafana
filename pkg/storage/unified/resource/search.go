@@ -404,7 +404,7 @@ func (s *searchSupport) shouldBuildIndex(info ResourceStats) bool {
 		return true
 	}
 
-	rs, err := s.ring.Get(ringHasher.Sum32(), searchOwnerRead, nil, nil, nil)
+	rs, err := s.ring.GetWithOptions(ringHasher.Sum32(), searchOwnerRead, ring.WithReplicationFactor(s.ring.ReplicationFactor()))
 	if err != nil {
 		s.log.Error("error getting replicaset from ring", "namespace", info.Namespace, "err", err)
 		return true
