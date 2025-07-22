@@ -51,6 +51,8 @@ export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIP
             width={25}
           />
         </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
         <InlineField label={t('transformers.grouping-to-matrix-transformer-editor.label-empty-value', 'Empty value')}>
           <Select options={getEmptyOptions()} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
         </InlineField>
