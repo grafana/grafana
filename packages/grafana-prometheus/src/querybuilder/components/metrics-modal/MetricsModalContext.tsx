@@ -10,7 +10,7 @@ import { QueryBuilderLabelFilter } from '../../shared/types';
 import { formatPrometheusLabelFilters } from '../formatter';
 
 import { generateMetricData } from './helpers';
-import { HaystackDictionary, MetricData, MetricsData } from './types';
+import { MetricData, MetricsData } from './types';
 
 export const DEFAULT_RESULTS_PER_PAGE = 25;
 export const MAXIMUM_RESULTS_PER_PAGE = 100;
@@ -28,23 +28,6 @@ type Pagination = {
   resultsPerPage: number;
 };
 
-type TextSearch = {
-  /** Used to display metrics and help with fuzzy order */
-  nameHaystackDictionary: HaystackDictionary;
-  /** Used to sort name fuzzy search by relevance */
-  nameHaystackOrder: string[];
-  /** Used to highlight text in fuzzy matches */
-  nameHaystackMatches: string[];
-  /** Used to display metrics and help with fuzzy order for search across all metadata */
-  metaHaystackDictionary: HaystackDictionary;
-  /** Used to sort meta fuzzy search by relevance */
-  metaHaystackOrder: string[];
-  /** Used to highlight text in fuzzy matches */
-  metaHaystackMatches: string[];
-  /** The text query used to match metrics */
-  fuzzySearchQuery: string;
-};
-
 type MetricsModalContextValue = {
   isLoading: boolean;
   setIsLoading: (val: boolean) => void;
@@ -60,8 +43,8 @@ type MetricsModalContextValue = {
   setPagination: (val: Pagination) => void;
   selectedTypes: Array<SelectableValue<string>>;
   setSelectedTypes: (val: Array<SelectableValue<string>>) => void;
-  textSearch: TextSearch;
-  setTextSearch: (val: TextSearch) => void;
+  searchedText: string;
+  setSearchedText: (val: string) => void;
 };
 
 const MetricsModalContext = createContext<MetricsModalContextValue | undefined>(undefined);
@@ -81,15 +64,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
   });
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
-  const [textSearch, setTextSearch] = useState<TextSearch>({
-    fuzzySearchQuery: '',
-    metaHaystackDictionary: {},
-    metaHaystackMatches: [],
-    metaHaystackOrder: [],
-    nameHaystackDictionary: {},
-    nameHaystackMatches: [],
-    nameHaystackOrder: [],
-  });
+  const [searchedText, setSearchedText] = useState('');
   const [settings, setSettings] = useState<Settings>({
     disableTextWrap: false,
     hasMetadata: true,
@@ -163,8 +138,8 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
         setPagination,
         selectedTypes,
         setSelectedTypes,
-        textSearch,
-        setTextSearch,
+        searchedText,
+        setSearchedText,
       }}
     >
       {children}

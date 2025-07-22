@@ -27,7 +27,7 @@ export function ResultsTable(props: ResultsTableProps) {
     settings: { hasMetadata, fullMetaSearch, disableTextWrap },
     pagination: { pageNum, resultsPerPage },
     selectedTypes,
-    textSearch,
+    searchedText,
   } = useMetricsModal();
 
   const slicedMetrics = useMemo(() => {
@@ -73,7 +73,7 @@ export function ResultsTable(props: ResultsTableProps) {
           <td>
             <Highlighter
               textToHighlight={metric.description ?? ''}
-              searchWords={textSearch.metaHaystackMatches}
+              searchWords={[searchedText]}
               autoEscape
               highlightClassName={styles.matchHighLight}
             />
@@ -133,7 +133,7 @@ export function ResultsTable(props: ResultsTableProps) {
   function noMetricsMessages(): ReactElement {
     let message;
 
-    if (!textSearch.fuzzySearchQuery) {
+    if (!searchedText) {
       message = t(
         'grafana-prometheus.querybuilder.results-table.message-no-metrics-found',
         'There are no metrics found in the data source.'
@@ -147,7 +147,7 @@ export function ResultsTable(props: ResultsTableProps) {
       );
     }
 
-    if (textSearch.fuzzySearchQuery || selectedTypes.length > 0) {
+    if (searchedText || selectedTypes.length > 0) {
       message = t(
         'grafana-prometheus.querybuilder.results-table.message-expand-search',
         'There are no metrics found. Try to expand your search and filters.'
@@ -190,7 +190,7 @@ export function ResultsTable(props: ResultsTableProps) {
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
-                      searchWords={[textSearch.fuzzySearchQuery]}
+                      searchWords={[searchedText]}
                       autoEscape
                       highlightClassName={styles.matchHighLight}
                     />

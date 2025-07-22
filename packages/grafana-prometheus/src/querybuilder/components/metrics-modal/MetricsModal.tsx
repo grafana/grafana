@@ -57,8 +57,8 @@ const MetricsModalContent = (props: MetricsModalProps) => {
     setPagination,
     selectedTypes,
     setSelectedTypes,
-    textSearch,
-    setTextSearch,
+    searchedText,
+    setSearchedText,
   } = useMetricsModal();
 
   const styles = useStyles2(getStyles, disableTextWrap);
@@ -74,7 +74,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
   });
 
   const searchCallback = (query: string, fullMetaSearchVal?: boolean) => {
-    setTextSearch({ ...textSearch, fuzzySearchQuery: query });
+    setSearchedText(query);
     debouncedBackendSearch(timeRange, query);
     console.log('make call to backend with: ', { query, fullMetaSearchVal });
   };
@@ -98,10 +98,10 @@ const MetricsModalContent = (props: MetricsModalProps) => {
             autoFocus={true}
             data-testid={metricsModaltestIds.searchMetric}
             placeholder={placeholders.browse}
-            value={textSearch.fuzzySearchQuery}
+            value={searchedText}
             onInput={(e) => {
               const value = e.currentTarget.value ?? '';
-              setTextSearch({ ...textSearch, fuzzySearchQuery: value });
+              setSearchedText(value);
               setPagination({ ...pagination, pageNum: 1 });
               searchCallback(value);
             }}
