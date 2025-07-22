@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
+
 
 import { config } from '../../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../../inspector/utils/download';
@@ -66,8 +68,23 @@ export default function TracePageActions(props: TracePageActionsProps) {
     });
   };
 
+  function AssistantButton() {
+    const [isAvailable, openAssistant, closeAssistant] = useAssistant();
+
+    if (!isAvailable) {
+      return <div><Trans i18nKey="explore.trace-page-actions.assistant-not-available">Assistant not available</Trans></div>;
+    }
+
+    return (
+      <button onClick={() => openAssistant?.({ prompt: `Help me summarize this trace with id: ${traceId}` })}>
+        <Trans i18nKey="explore.trace-page-actions.open-assistant">Open Assistant</Trans>
+      </button>
+    );
+  }
+
   return (
     <div className={styles.TracePageActions}>
+      <AssistantButton />
       {config.feedbackLinksEnabled && (
         <div className={styles.feedbackContainer}>
           <Icon name="comment-alt-message" />
