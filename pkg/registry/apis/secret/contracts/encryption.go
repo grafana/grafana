@@ -21,9 +21,17 @@ type EncryptedValue struct {
 	Updated       int64
 }
 
+// ListOpts defines pagination options for listing encrypted values.
+type ListOpts struct {
+	Limit  int64
+	Offset int64
+}
+
 type EncryptedValueStorage interface {
 	Create(ctx context.Context, namespace, name string, version int64, encryptedData []byte) (*EncryptedValue, error)
 	Update(ctx context.Context, namespace, name string, version int64, encryptedData []byte) error
 	Get(ctx context.Context, namespace, name string, version int64) (*EncryptedValue, error)
 	Delete(ctx context.Context, namespace, name string, version int64) error
+	ListAll(ctx context.Context, opts ListOpts) ([]*EncryptedValue, error)
+	CountAll(ctx context.Context) (int64, error)
 }

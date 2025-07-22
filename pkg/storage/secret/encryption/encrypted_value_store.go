@@ -206,3 +206,87 @@ func (s *encryptedValStorage) Delete(ctx context.Context, namespace, name string
 
 	return nil
 }
+
+func (s *encryptedValStorage) ListAll(ctx context.Context, opts contracts.ListOpts) ([]*contracts.EncryptedValue, error) {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.ListAll", trace.WithAttributes(
+		attribute.Int64("limit", opts.Limit),
+		attribute.Int64("offset", opts.Offset),
+	))
+	defer span.End()
+
+	req := listAllEncryptedValues{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Limit:       opts.Limit,
+		Offset:      opts.Offset,
+	}
+
+	query, err := sqltemplate.Execute(sqlEncryptedValueListAll, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlEncryptedValueListAll.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("listing encrypted values %q: %w", sqlEncryptedValueListAll.Name(), err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	encryptedValues := make([]*contracts.EncryptedValue, 0)
+	for rows.Next() {
+		var row EncryptedValue
+		err = rows.Scan(
+			&row.Namespace,
+			&row.Name,
+			&row.Version,
+			&row.EncryptedData,
+			&row.Created,
+			&row.Updated,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error reading data key row: %w", err)
+		}
+
+		encryptedValues = append(encryptedValues, &contracts.EncryptedValue{
+			Namespace:     row.Namespace,
+			Name:          row.Name,
+			Version:       row.Version,
+			EncryptedData: row.EncryptedData,
+			Created:       row.Created,
+			Updated:       row.Updated,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+
+	return encryptedValues, nil
+}
+
+func (s *encryptedValStorage) CountAll(ctx context.Context) (int64, error) {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.CountAll")
+	defer span.End()
+
+	var encryptedValue EncryptedValue
+	query := fmt.Sprintf("SELECT COUNT(*) AS COUNT FROM %s;", encryptedValue.TableName())
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("getting row: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	if !rows.Next() {
+		return 0, fmt.Errorf("no rows returned when counting encrypted values")
+	}
+
+	var count int64
+	err = rows.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to scan encrypted value row: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, fmt.Errorf("read rows error: %w", err)
+	}
+
+	return count, nil
+}

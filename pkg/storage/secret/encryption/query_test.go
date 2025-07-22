@@ -64,6 +64,32 @@ func TestEncryptedValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlEncryptedValueListAll: {
+				{
+					Name: "list_limit_10_offset_0",
+					Data: &listAllEncryptedValues{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Limit:       10,
+						Offset:      0,
+					},
+				},
+				{
+					Name: "list_limit_10_offset_2",
+					Data: &listAllEncryptedValues{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Limit:       10,
+						Offset:      2,
+					},
+				},
+				{
+					Name: "list_all",
+					Data: &listAllEncryptedValues{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Limit:       0,
+						Offset:      0,
+					},
+				},
+			},
 		},
 	})
 }

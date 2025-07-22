@@ -123,6 +123,65 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		err := sut.EncryptedValueStorage.Delete(t.Context(), "test-namespace", "test-name", 1)
 		require.NoError(t, err)
 	})
+
+	t.Run("listing encrypted values returns them", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		createdEvA, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-a", "test-name", 1, []byte("test-data"))
+		require.NoError(t, err)
+
+		createdEvB, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-b", "test-name", 1, []byte("test-data"))
+		require.NoError(t, err)
+
+		// List all encrypted values, without pagination
+		obtainedEVs, err := sut.EncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{})
+		require.NoError(t, err)
+		require.NotEmpty(t, obtainedEVs)
+		require.Len(t, obtainedEVs, 2)
+
+		obtainedEvA := obtainedEVs[0]
+		require.Equal(t, createdEvA.Namespace, obtainedEvA.Namespace)
+		require.Equal(t, createdEvA.Name, obtainedEvA.Name)
+		require.Equal(t, createdEvA.EncryptedData, obtainedEvA.EncryptedData)
+
+		// Test pagination by limiting the results to 1, offset by 0
+		obtainedEVs, err = sut.EncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{Limit: 1})
+		require.NoError(t, err)
+		require.NotEmpty(t, obtainedEVs)
+		require.Len(t, obtainedEVs, 1)
+
+		obtainedEvA = obtainedEVs[0]
+		require.Equal(t, createdEvA.Namespace, obtainedEvA.Namespace)
+		require.Equal(t, createdEvA.Name, obtainedEvA.Name)
+		require.Equal(t, createdEvA.EncryptedData, obtainedEvA.EncryptedData)
+
+		// Test pagination by limiting the results to 1, offset by 1
+		obtainedEVs, err = sut.EncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{Limit: 1, Offset: 1})
+		require.NoError(t, err)
+		require.NotEmpty(t, obtainedEVs)
+		require.Len(t, obtainedEVs, 1)
+
+		obtainedEvB := obtainedEVs[0]
+		require.Equal(t, createdEvB.Namespace, obtainedEvB.Namespace)
+		require.Equal(t, createdEvB.Name, obtainedEvB.Name)
+		require.Equal(t, createdEvB.EncryptedData, obtainedEvB.EncryptedData)
+	})
+
+	t.Run("counting encrypted values returns their total", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		_, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-a", "test-name", 1, []byte("test-data"))
+		require.NoError(t, err)
+
+		_, err = sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-b", "test-name", 1, []byte("test-data"))
+		require.NoError(t, err)
+
+		count, err := sut.EncryptedValueStorage.CountAll(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, int64(2), count)
+	})
 }
 
 func TestStateMachine(t *testing.T) {
