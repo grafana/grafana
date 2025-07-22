@@ -106,11 +106,11 @@ function fieldValuesAsStrings(field: Field, values: unknown[], emptyValue: Speci
     case FieldType.number:
     case FieldType.boolean:
     case FieldType.string:
-      return values.map((v) => (v !== null ? `${v}` : getSpecialValue(emptyValue)));
+      return values.map((v) => (v !== undefined && v !== null ? `${v}` : getSpecialValue(emptyValue)));
     case FieldType.enum:
       // @ts-ignore
-      return values.map((v) => (v !== null ? field.config.type!.enum!.text![v] : getSpecialValue(emptyValue)));
+      return values.map((v) => field.config.type!.enum!.text![v] ?? getSpecialValue(emptyValue));
     default:
-      return values.map((v) => (v !== null ? JSON.stringify(v) : getSpecialValue(emptyValue)));
+      return values.map((v) => (v !== undefined && v !== null ? JSON.stringify(v) : getSpecialValue(emptyValue)));
   }
 }

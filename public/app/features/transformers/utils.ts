@@ -143,7 +143,7 @@ export function getEmptyOptions(): Array<SelectableValue<SpecialValue>> {
       value: SpecialValue.Zero,
     },
     {
-      label: t('transformers.utils.special-value-options.label.empty-string', 'Zero'),
+      label: t('transformers.utils.special-value-options.label.empty-string', 'Empty'),
       description: t('transformers.utils.special-value-options.description.empty-string', 'Empty String'),
       value: SpecialValue.Empty,
     },

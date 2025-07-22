@@ -13155,7 +13155,7 @@
         "label": {
           "boolean-false": "False",
           "boolean-true": "True",
-          "empty-string": "Zero",
+          "empty-string": "Empty",
           "null-value": "Null",
           "number-value": "Zero"
         }
