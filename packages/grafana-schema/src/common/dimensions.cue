@@ -47,10 +47,12 @@ ResourceDimensionConfig: {
   fixed?: string
 }@cuetsy(kind="interface")
 
+ConnectionDirection: "forward" | "reverse" | "both" | "none" @cuetsy(kind="enum", memberNames="Forward|Reverse|Both|None")
+
 DirectionDimensionMode: "fixed" | "field" @cuetsy(kind="enum")
 
 DirectionDimensionConfig: {
 	BaseDimensionConfig
 	mode: DirectionDimensionMode
-	fixed?: "forward" | "reverse" | "both" | "none"
+	fixed?: ConnectionDirection
 }@cuetsy(kind="interface")

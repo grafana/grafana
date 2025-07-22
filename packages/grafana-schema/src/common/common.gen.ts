@@ -119,6 +119,13 @@ export interface ResourceDimensionConfig extends BaseDimensionConfig {
   mode: ResourceDimensionMode;
 }
 
+export enum ConnectionDirection {
+  Both = 'both',
+  Forward = 'forward',
+  None = 'none',
+  Reverse = 'reverse',
+}
+
 export enum DirectionDimensionMode {
   Field = 'field',
   Fixed = 'fixed',
@@ -937,7 +944,7 @@ export interface DataSourceRef {
 }
 
 export interface DirectionDimensionConfig extends BaseDimensionConfig {
-  fixed?: ('forward' | 'reverse' | 'both' | 'none');
+  fixed?: ConnectionDirection;
   mode: DirectionDimensionMode;
 }
 
