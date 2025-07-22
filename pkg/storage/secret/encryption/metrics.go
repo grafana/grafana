@@ -11,12 +11,13 @@ const (
 
 // DataKeyMetrics is a struct that contains all the metrics for all operations of encryption storage.
 type DataKeyMetrics struct {
-	CreateDataKeyDuration     prometheus.Histogram
-	GetDataKeyDuration        prometheus.Histogram
-	GetCurrentDataKeyDuration prometheus.Histogram
-	GetAllDataKeysDuration    prometheus.Histogram
-	DisableDataKeysDuration   prometheus.Histogram
-	DeleteDataKeyDuration     prometheus.Histogram
+	CreateDataKeyDuration      prometheus.Histogram
+	GetDataKeyDuration         prometheus.Histogram
+	GetCurrentDataKeyDuration  prometheus.Histogram
+	ListDataKeysDuration       prometheus.Histogram
+	DisableDataKeysDuration    prometheus.Histogram
+	DeleteDataKeyDuration      prometheus.Histogram
+	DisableAllDataKeysDuration prometheus.Histogram
 }
 
 func newDataKeyMetrics() *DataKeyMetrics {
@@ -42,11 +43,11 @@ func newDataKeyMetrics() *DataKeyMetrics {
 			Help:      "Duration of get current data key operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
-		GetAllDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		ListDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "get_all_data_keys_duration_seconds",
-			Help:      "Duration of get all data keys operations",
+			Name:      "list_data_keys_duration_seconds",
+			Help:      "Duration of list data keys operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
 		DisableDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
@@ -63,6 +64,13 @@ func newDataKeyMetrics() *DataKeyMetrics {
 			Help:      "Duration of delete data key operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
+		DisableAllDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "disable_all_data_keys_duration_seconds",
+			Help:      "Duration of disable all data keys operations",
+			Buckets:   prometheus.DefBuckets,
+		}),
 	}
 }
 
@@ -76,9 +84,10 @@ func NewDataKeyMetrics(reg prometheus.Registerer) *DataKeyMetrics {
 			m.CreateDataKeyDuration,
 			m.GetDataKeyDuration,
 			m.GetCurrentDataKeyDuration,
-			m.GetAllDataKeysDuration,
+			m.ListDataKeysDuration,
 			m.DisableDataKeysDuration,
 			m.DeleteDataKeyDuration,
+			m.DisableAllDataKeysDuration,
 		)
 	}
 

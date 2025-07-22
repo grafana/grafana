@@ -161,14 +161,14 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 	}, nil
 }
 
-func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace string) ([]*contracts.SecretDataKey, error) {
+func (ss *encryptionStoreImpl) ListDataKeys(ctx context.Context, namespace string) ([]*contracts.SecretDataKey, error) {
 	start := time.Now()
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.GetAllDataKeys", trace.WithAttributes(
+	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.ListDataKeys", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer func() {
 		span.End()
-		ss.metrics.GetAllDataKeysDuration.Observe(float64(time.Since(start)))
+		ss.metrics.ListDataKeysDuration.Observe(float64(time.Since(start)))
 	}()
 
 	req := listDataKeys{
@@ -344,6 +344,43 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 
 	if rowsAffected != 1 {
 		return fmt.Errorf("bug: deleted more than one row from the data key table, should delete only one at a time: deleted=%v", rowsAffected)
+	}
+
+	return nil
+}
+
+func (ss *encryptionStoreImpl) DisableAllDataKeys(ctx context.Context) error {
+	start := time.Now()
+	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.DisableAllDataKeys", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
+	defer func() {
+		span.End()
+		ss.metrics.DisableAllDataKeysDuration.Observe(float64(time.Since(start)))
+	}()
+
+	req := disableAllDataKeys{
+		SQLTemplate: sqltemplate.New(ss.dialect),
+		Updated:     time.Now(),
+	}
+
+	query, err := sqltemplate.Execute(sqlDataKeyDisableAll, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlDataKeyDisableAll.Name(), err)
+	}
+
+	result, err := ss.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("updating data key row: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	if rowsAffected != 1 {
+		return fmt.Errorf("expected 1 row affected, but affected %d", rowsAffected)
 	}
 
 	return nil
