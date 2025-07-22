@@ -76,7 +76,6 @@ const MetricsModalContent = (props: MetricsModalProps) => {
   const searchCallback = (query: string, fullMetaSearchVal?: boolean) => {
     setSearchedText(query);
     debouncedBackendSearch(timeRange, query);
-    console.log('make call to backend with: ', { query, fullMetaSearchVal });
   };
 
   return (
@@ -126,7 +125,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
           <Toggletip
             aria-label={t(
               'grafana-prometheus.querybuilder.metrics-modal.aria-label-additional-settings',
-              'Additional settings'
+              'Additional settings',
             )}
             content={<AdditionalSettings />}
             placement="bottom-end"
@@ -203,11 +202,11 @@ const MetricsModalContent = (props: MetricsModalProps) => {
             value={calculateResultsPerPage(
               pagination.resultsPerPage,
               DEFAULT_RESULTS_PER_PAGE,
-              MAXIMUM_RESULTS_PER_PAGE
+              MAXIMUM_RESULTS_PER_PAGE,
             )}
             placeholder={t(
               'grafana-prometheus.querybuilder.metrics-modal.placeholder-results-per-page',
-              'results per page'
+              'results per page',
             )}
             width={10}
             title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}

@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
 
@@ -73,6 +73,9 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     fullMetaSearch: false,
   });
 
+  // Track the latest search ID to handle race conditions
+  const latestSearchIdRef = useRef<number>(0);
+
   const updateSettings = useCallback((settingsUpdate: Partial<Settings>) => {
     setSettings((prevSettings) => ({
       ...prevSettings,
@@ -81,37 +84,64 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
   }, []);
 
   const fetchMetadata = useCallback(async () => {
-    setIsLoading(true);
-    const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-    if (Object.keys(metadata).length === 0) {
+    try {
+      setIsLoading(true);
+      const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+      
+      if (Object.keys(metadata).length === 0) {
+        updateSettings({ hasMetadata: false });
+        setMetricsData([]);
+      } else {
+        const processedData = Object.keys(metadata).map((m) => generateMetricData(m, languageProvider));
+        setMetricsData(processedData);
+      }
+    } catch (error) {
+      console.error('Failed to fetch metadata:', error);
       updateSettings({ hasMetadata: false });
-      return;
+      setMetricsData([]);
+    } finally {
+      setIsLoading(false);
     }
-
-    setMetricsData(Object.keys(metadata).map((m) => generateMetricData(m, languageProvider)));
-    setIsLoading(false);
   }, [languageProvider, updateSettings]);
 
   const debouncedBackendSearch = useMemo(
     () =>
       debounce(async (timeRange: TimeRange, metricText: string, queryLabels?: QueryBuilderLabelFilter[]) => {
-        if (metricText === '') {
-          fetchMetadata();
-          return;
+        // Generate unique search ID to handle race conditions
+        const searchId = ++latestSearchIdRef.current;
+        
+        try {
+          if (metricText === '') {
+            await fetchMetadata();
+            return;
+          }
+
+          setIsLoading(true);
+
+          const queryString = regexifyLabelValuesQueryString(metricText);
+          const filterArray = queryLabels ? formatPrometheusLabelFilters(queryLabels) : [];
+          const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
+
+          const results = await languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
+
+          // Check if this is still the most recent search
+          if (searchId !== latestSearchIdRef.current) {
+            return; // Ignore outdated results
+          }
+
+          const resultsOptions: MetricsData = results.map((m) => generateMetricData(m, languageProvider));
+
+          setMetricsData(resultsOptions);
+          setIsLoading(false);
+
+        } catch (error) {
+          // Only update state if this is still the latest search
+          if (searchId === latestSearchIdRef.current) {
+            console.error('Backend search failed:', error);
+            setMetricsData([]); // Clear results on error
+            setIsLoading(false);
+          }
         }
-
-        setIsLoading(true);
-
-        const queryString = regexifyLabelValuesQueryString(metricText);
-        const filterArray = queryLabels ? formatPrometheusLabelFilters(queryLabels) : [];
-        const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
-
-        const results = await languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
-
-        const resultsOptions: MetricsData = results.map((m) => generateMetricData(m, languageProvider));
-
-        setIsLoading(false);
-        setMetricsData(resultsOptions);
       }, 300),
     [fetchMetadata, languageProvider]
   );
