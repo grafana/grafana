@@ -3505,7 +3505,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Отмена",
       "cannot-move-folders": "Папки нельзя перемещать",
       "confirmation-text": "Удалить",
@@ -3537,6 +3536,26 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Папка пуста"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_few": "",
+      "failed-alert_many": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_few": "",
+      "api-success_many": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} правило оповещения",
@@ -8970,6 +8989,8 @@
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": ""
       },
@@ -10583,7 +10604,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10593,6 +10617,25 @@
   "provisioning": {
     "banner": {
       "message": "В настоящее время эта функция находится в стадии активной разработки. Чтобы обеспечить максимальное удобство пользования и получить доступ к последним улучшениям, рекомендуем использовать <2>ночную сборку</2> Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
@@ -10617,36 +10660,20 @@
       "button-save": "Сохранить",
       "button-saving": "Сохранение...",
       "description-enabled": "После включения автоматического внесения изменения целевой элемент невозможно изменить.",
-      "description-path": "Путь к подкаталогу в репозитории Git.",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
-      "description-repository-url": "Введите URL-адрес репозитория GitHub.",
       "description-title": "Понятное название конфигурации",
       "error-required": "Поле является обязательным.",
       "error-save-repository": "Не удалось сохранить параметры репозитория",
-      "error-valid-github-url": "Введите действительный URL-адрес репозитория GitHub",
       "label-automatic-pulling": "Автоматическое включение изменений",
-      "label-branch": "Ветвь",
       "label-enabled": "Включено",
-      "label-github-token": "Токен GitHub",
       "label-interval-seconds": "Интервал (в секундах)",
-      "label-local-path": "Локальный путь",
-      "label-path": "Путь",
-      "label-pr-workflow": "Включить параметр запроса на включение изменений при сохранении",
       "label-repository-type": "Тип репозитория",
-      "label-repository-url": "URL-адрес репозитория",
       "label-target": "Цель",
       "label-title": "Название",
       "option-entire-instance": "Весь экземпляр",
-      "option-github": "GitHub",
-      "option-local": "Локальный",
       "option-managed-folder": "Управляемая папка",
-      "placeholder-branch": "основной",
-      "placeholder-github-token": "ghp_вашТокен1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/имя-пользователя/название-репозитория",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/путь/к/репозиторию",
-      "placeholder-my-config": "Моя конфигурация",
-      "placeholder-select-repository-type": "Выбрать тип репозитория"
+      "placeholder-my-config": "Моя конфигурация"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Настройте веб-перехватчики</0>, чтобы получать мгновенные обновления в Grafana сразу после фиксации изменений. Просматривайте и утверждайте изменения с помощью соответствующих запросов перед их внедрением.",
@@ -10660,26 +10687,7 @@
     },
     "connect-repository-button": {
       "configure": "Настроить",
-      "configure-file": "Настроить подготовку файлов",
-      "configure-git-sync": "Настроить Git Sync",
       "repository-limit-info-alert": "Достигнут лимит репозитория ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Ветвь для использования в репозитории GitHub.",
-      "description-github-path": "Путь к подкаталогу в вашем репозитории GitHub, где будут храниться и подготавливаться дашборды.",
-      "description-paste-your-git-hub-personal-access-token": "Вставьте свой персональный токен доступа GitHub.",
-      "description-repository-url": "Вставьте URL-адрес своего репозитория GitHub.",
-      "error-field-required": "Поле является обязательным.",
-      "error-invalid-github-url": "Введите действительный URL-адрес репозитория GitHub",
-      "label-access-token": "Токен доступа GitHub",
-      "label-branch": "Название ветви",
-      "label-local-path": "Локальный путь",
-      "label-path": "Путь к подкаталогу в репозитории",
-      "label-repository-url": "URL-адрес репозитория GitHub",
-      "placeholder-branch": "основной",
-      "placeholder-github-token": "github_pat_вашТокен1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/путь/к/репозиторию"
     },
     "delete-repository-button": {
       "button-delete": "Удалить",
@@ -10721,8 +10729,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Настроить необходимые переключатели функциональности"
       },
-      "manage-dashboards-provision-updates-automatically": "Управляйте дашбордами как кодом в GitHub и автоматически выполняйте обновления",
-      "manage-your-dashboards-with-remote-provisioning": "Начало работы с GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Храните дашборды в хранилище с контролем версий для лучшей организации и отслеживания журналов"
     },
     "file-history-page": {
@@ -10743,18 +10751,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Обеспечивает возможность просмотра изображений с изменениями дашборда в запросах на включение изменений. Изображения дашбордов Grafana будут публиковаться в вашем репозитории Git и видны всем, у кого есть доступ к репозиторию.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Требует визуализации изображений. <2>Настройте визуализацию изображений</2>.",
-      "description-often-shall-instance-updates-git-hub": "Как часто экземпляр будет извлекать обновления из GitHub?",
-      "description-pr-enable-description": "Позволяет пользователям выбрать, следует ли открывать запрос на включение при сохранении изменений. Если репозиторий не позволяет вносить прямые изменения в основную ветвь, все равно может потребоваться запрос на включение изменений.",
+      "description-preview-requirements": "",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
-      "description-webhooks-enable": "Позволяет пользователям выбрать, следует ли открывать запрос на включение при сохранении изменений. Если репозиторий не позволяет вносить прямые изменения в основную ветвь, все равно может потребоваться запрос на включение изменений.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Включить просмотр дашбордов в запросах на включение изменений",
-      "label-pr-workflow": "Включить параметр запроса на включение изменений при сохранении",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Только для чтения",
-      "label-update-instance-interval-seconds": "Интервал обновления экземпляра (в секундах)",
-      "placeholder": "60",
-      "text-setup-later": "Настройку всегда можно выполнить позже",
-      "title-enhance-github": "Расширение возможностей GitHub"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "По вашему запросу ничего не найдено",
@@ -10784,6 +10790,57 @@
     "getting-started-page": {
       "header": "Подготовка к работе",
       "subtitle-provisioning-feature": "Просмотр подключений для подготовки и управлением ими"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Не найдено"
@@ -10815,6 +10872,11 @@
       },
       "summary": "Сводка"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "После настройки будет создана новая папка Grafana, которая синхронизируется с внешним хранилищем. Если во внешнем хранилище есть ресурсы, они будут перемещены в эту новую папку. Все новые ресурсы, созданные в этой папке, будут храниться с присвоением версии во внешнем хранилище.",
@@ -10839,7 +10901,7 @@
     },
     "repository-actions": {
       "settings": "Параметры",
-      "source-code": "Исходный код"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10903,6 +10965,24 @@
       "title": "Состояние репозитория",
       "title-legacy-storage": "Устаревшее хранилище",
       "title-queued-for-deletion": "В очереди на удаление"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Основа",
