@@ -18,7 +18,7 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/grafana-backend-group
 	github.com/Azure/go-autorest/autorest v0.11.29 // @grafana/grafana-backend-group
 	github.com/Azure/go-autorest/autorest/adal v0.9.24 // @grafana/grafana-backend-group
-	github.com/BurntSushi/toml v1.4.0 // @grafana/identity-access-team
+	github.com/BurntSushi/toml v1.5.0 // @grafana/identity-access-team
 	github.com/DATA-DOG/go-sqlmock v1.5.2 // @grafana/grafana-search-and-storage
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.3.1 // @grafana/grafana-developer-enablement-squad
@@ -44,7 +44,7 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250206012855-c216e59c21a7 // @grafana/grafana-datasources-core-services
 	github.com/dolthub/vitess v0.0.0-20250123002143-3b45b8cacbfa // @grafana/grafana-datasources-core-services
-	github.com/fatih/color v1.17.0 // @grafana/grafana-backend-group
+	github.com/fatih/color v1.18.0 // @grafana/grafana-backend-group
 	github.com/fullstorydev/grpchan v1.1.1 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
 	github.com/getkin/kin-openapi v0.132.0 // @grafana/grafana-app-platform-squad
@@ -135,7 +135,7 @@ require (
 	github.com/prometheus/alertmanager v0.27.0 // @grafana/alerting-backend
 	github.com/prometheus/client_golang v1.22.0 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.1 // @grafana/grafana-backend-group
-	github.com/prometheus/common v0.62.0 // @grafana/alerting-backend
+	github.com/prometheus/common v0.63.0 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v0.301.0 // @grafana/alerting-backend
 	github.com/redis/go-redis/v9 v9.7.3 // @grafana/alerting-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
@@ -566,7 +566,7 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
-	github.com/onsi/ginkgo/v2 v2.22.1 // indirect
+	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.5 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect

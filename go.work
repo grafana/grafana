@@ -4,30 +4,30 @@ go 1.24.4
 // The module at the root of the repo (`.`) is excluded because ./pkg/... is included manually in the `golangci-lint` configuration.
 
 use (
-        . // skip:golangci-lint
-        ./.citools/bra
-        ./.citools/cog
-        ./.citools/cue
-        ./.citools/golangci-lint
-        ./.citools/jb
-        ./.citools/lefthook
-        ./.citools/swagger
-        ./apps/advisor
-        ./apps/alerting/notifications
-        ./apps/investigations
-        ./apps/playlist
-        ./pkg/aggregator
-        ./pkg/apimachinery
-        ./pkg/apiserver
-        ./pkg/build
-        ./pkg/build/wire // skip:golangci-lint
-        ./pkg/codegen
-        ./pkg/plugins/codegen
-        ./pkg/promlib
-        ./pkg/semconv
-        ./pkg/storage/unified/apistore
-        ./pkg/storage/unified/resource
-        ./pkg/util/xorm // skip:golangci-lint
+	. // skip:golangci-lint
+	./.citools/bra
+	./.citools/cog
+	./.citools/cue
+	./.citools/golangci-lint
+	./.citools/jb
+	./.citools/lefthook
+	./.citools/swagger
+	./apps/advisor
+	./apps/alerting/notifications
+	./apps/investigations
+	./apps/playlist
+	./pkg/aggregator
+	./pkg/apimachinery
+	./pkg/apiserver
+	./pkg/build
+	./pkg/build/wire // skip:golangci-lint
+	./pkg/codegen
+	./pkg/plugins/codegen
+	./pkg/promlib
+	./pkg/semconv
+	./pkg/storage/unified/apistore
+	./pkg/storage/unified/resource
+	./pkg/util/xorm // skip:golangci-lint
 )
 
 // when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm

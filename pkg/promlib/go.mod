@@ -7,7 +7,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.267.0
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.22.0
-	github.com/prometheus/common v0.62.0
+	github.com/prometheus/common v0.63.0
 	github.com/prometheus/prometheus v0.301.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.36.0
@@ -18,7 +18,7 @@ require (
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.1 // indirect
-	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/apache/arrow-go/v18 v18.0.1-0.20241212180703-82be143d7c30 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go v1.55.7 // indirect
@@ -34,7 +34,7 @@ require (
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/elazarl/goproxy v1.7.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
-	github.com/fatih/color v1.17.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/getkin/kin-openapi v0.132.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
