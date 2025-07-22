@@ -78,23 +78,31 @@ export default function TracePageActions(props: TracePageActionsProps) {
       return null;
     }
 
+    const context = [
+      createContext(ItemDataType.Structured, {
+        title: t('explore.trace-page-actions.trace-view-query', 'Trace View Query'),
+        data: {
+          query: traceId,
+        },
+      }),
+    ];
+
+    // Only add datasource context if datasource information exists
+    if (datasourceName && datasourceUid && datasourceType) {
+      context.unshift(
+        createContext(ItemDataType.Datasource, {
+          datasourceName,
+          datasourceUid,
+          datasourceType,
+        })
+      );
+    }
+
     return (
       <ActionButton
         onClick={() => openAssistant?.({ 
-          prompt: `Help me summarize this trace view`,
-          context: [
-            createContext(ItemDataType.Datasource, {
-              datasourceName: datasourceName || 'unknown',
-              datasourceUid: datasourceUid || 'unknown',
-              datasourceType: datasourceType || 'unknown',
-            }),
-            createContext(ItemDataType.Structured, {
-              title: t('explore.trace-page-actions.trace-view-query', 'Trace View Query'),
-              data: {
-                query: traceId,
-              },
-            }),
-          ],
+          prompt: `Summarize this trace view.`,
+          context,
         })}
         ariaLabel={t('explore.trace-page-actions.ariaLabel-analyze-trace', 'Analyze Trace')}
         label={t('explore.trace-page-actions.label-analyze-trace', 'Analyze Trace')}
