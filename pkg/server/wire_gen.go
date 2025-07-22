@@ -783,7 +783,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService)
+	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService, cfg)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v2 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
 	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v2)
@@ -1335,7 +1335,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService)
+	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService, cfg)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v2 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
 	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v2)

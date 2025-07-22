@@ -16,8 +16,9 @@ type SecretsManagerSettings struct {
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
 	ConfiguredKMSProviders map[string]map[string]string
 
-	DecryptServerType    string // "local" or "grpc"
-	DecryptServerAddress string // Address for external secrets server (used when storage_type = grpc)
+	DecryptServerType         string // "local" or "grpc"
+	DecryptServerAddress      string // Address for external secrets server (used when storage_type = grpc)
+	DecryptGrafanaServiceName string // Service name to use for background grafana decryption
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
@@ -26,6 +27,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 
 	cfg.SecretsManagement.DecryptServerType = valueAsString(secretsMgmt, "decrypt_server_type", "local")
 	cfg.SecretsManagement.DecryptServerAddress = valueAsString(secretsMgmt, "decrypt_server_address", "")
+	cfg.SecretsManagement.DecryptGrafanaServiceName = valueAsString(secretsMgmt, "decrypt_grafana_service_name", "")
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

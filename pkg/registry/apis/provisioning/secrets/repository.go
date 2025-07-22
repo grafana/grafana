@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideRepositorySecrets(
@@ -18,8 +19,9 @@ func ProvideRepositorySecrets(
 	legacySecretsSvc grafanasecrets.Service,
 	secretsSvc contracts.SecureValueClient,
 	decryptSvc service.DecryptService,
+	cfg *setting.Cfg,
 ) RepositorySecrets {
-	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc), NewSingleTenant(legacySecretsSvc))
+	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc, cfg), NewSingleTenant(legacySecretsSvc))
 }
 
 //go:generate mockery --name RepositorySecrets --structname MockRepositorySecrets --inpackage --filename repository_secrets_mock.go --with-expecter

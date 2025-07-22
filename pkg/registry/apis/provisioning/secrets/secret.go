@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/setting"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -34,12 +35,14 @@ var _ Service = (*secretsService)(nil)
 type secretsService struct {
 	secureValues SecureValueClient
 	decryptSvc   grafanasecrets.DecryptService
+	cfg          *setting.Cfg
 }
 
-func NewSecretsService(secretsSvc SecureValueClient, decryptSvc grafanasecrets.DecryptService) Service {
+func NewSecretsService(secretsSvc SecureValueClient, decryptSvc grafanasecrets.DecryptService, cfg *setting.Cfg) Service {
 	return &secretsService{
 		secureValues: secretsSvc,
 		decryptSvc:   decryptSvc,
+		cfg:          cfg,
 	}
 }
 
@@ -77,6 +80,11 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 		return result.GetName(), nil
 	}
 
+	decrypters := []string{svcName}
+	if s.cfg.SecretsManagement.DecryptGrafanaServiceName != "" {
+		decrypters = append(decrypters, s.cfg.SecretsManagement.DecryptGrafanaServiceName)
+	}
+
 	// Create the secret directly as unstructured
 	secret := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -89,8 +97,7 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 			"spec": map[string]interface{}{
 				"description": "provisioning: " + name,
 				"value":       data,
-				// TODO: Remove after testing!!
-				"decrypters": []string{svcName, "secrets-manager-testing"},
+				"decrypters":  decrypters,
 			},
 		},
 	}
