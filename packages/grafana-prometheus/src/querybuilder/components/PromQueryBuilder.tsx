@@ -8,7 +8,7 @@ import { PromVisualQuery } from '../types';
 
 import { BaseQueryBuilder } from './shared/BaseQueryBuilder';
 
-export interface PromQueryBuilderProps {
+interface PromQueryBuilderProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;

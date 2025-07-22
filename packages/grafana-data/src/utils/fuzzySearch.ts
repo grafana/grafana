@@ -1,5 +1,7 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
+import { escapeRegex } from '../text/string';
+
 // https://catonmat.net/my-favorite-regex :)
 const REGEXP_NON_ASCII = /[^ -~]/m;
 // https://www.asciitable.com/
@@ -36,11 +38,13 @@ export function fuzzySearch(haystack: string[], needle: string): number[] {
     needle.length > maxNeedleLength ||
     uf.split(needle).length > maxFuzzyTerms
   ) {
+    const needleRegex = new RegExp(escapeRegex(needle), 'i');
     const indices: number[] = [];
+
     for (let i = 0; i < haystack.length; i++) {
       let item = haystack[i];
 
-      if (item.includes(needle)) {
+      if (needleRegex.test(item)) {
         indices.push(i);
       }
     }

@@ -12,49 +12,16 @@ import {
   DisplayValueAlignmentFactors,
   DataFrame,
 } from '@grafana/data';
-import {
-  BarGaugeDisplayMode,
-  TableCellBackgroundDisplayMode,
-  TableCellDisplayMode,
-  TableCellHeight,
-} from '@grafana/schema';
+import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
-import { COLUMN, TABLE } from './constants';
+import { COLUMN } from './constants';
 import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellHeightCalculator = (text: string, cellWidth: number) => number;
-
-/**
- * @internal
- * Returns the default row height based on the theme and cell height setting.
- */
-export function getDefaultRowHeight(
-  theme: GrafanaTheme2,
-  cellHeight?: TableCellHeight,
-  customCellHeight?: number
-): number | string {
-  const bodyFontSize = theme.typography.fontSize;
-  const lineHeight = theme.typography.body.lineHeight;
-
-  switch (cellHeight) {
-    case TableCellHeight.Sm:
-      return 36;
-    case TableCellHeight.Md:
-      return 42;
-    case TableCellHeight.Lg:
-      return TABLE.MAX_CELL_HEIGHT;
-    case TableCellHeight.Auto:
-      return 'auto';
-    case TableCellHeight.Custom:
-      return customCellHeight ?? TABLE.MAX_CELL_HEIGHT;
-  }
-
-  return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
-}
 
 /**
  * @internal
@@ -136,13 +103,15 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
-  const cellOptions = getCellOptions(field);
+  let type = getCellOptions(field).type;
+
   return (
     field.type === FieldType.string &&
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensure we don't apply overflow hover states for type image
-    cellOptions.type !== TableCellDisplayMode.Image &&
-    cellOptions.type !== TableCellDisplayMode.Markdown &&
+    type !== TableCellDisplayMode.Image &&
+    type !== TableCellDisplayMode.Pill &&
+    type !== TableCellDisplayMode.Markdown &&
     !shouldTextWrap(field) &&
     !isCellInspectEnabled(field)
   );
@@ -237,7 +206,6 @@ export function getAlignmentFactor(
 
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
-const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
 const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
 
 /**
@@ -255,7 +223,7 @@ export function getCellColors(
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
-  let bgHoverColor: string | undefined = undefined;
+  // let bgHoverColor: string | undefined = undefined;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
@@ -265,23 +233,23 @@ export function getCellColors(
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-      bgHoverColor = tinycolor(displayValue.color)
-        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
-        .toRgbString();
+      // bgHoverColor = tinycolor(displayValue.color)
+      //   .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+      //   .toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const hoverColor = tinycolor(displayValue.color)
-        .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
-        .toRgbString();
+      // const hoverColor = tinycolor(displayValue.color)
+      //   .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
+      //   .toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
         .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
         .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-      bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
+      // bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
     }
   }
 
-  return { textColor, bgColor, bgHoverColor };
+  return { textColor, bgColor };
 }
 
 /**
@@ -520,10 +488,10 @@ export const processNestedTableRows = (
   const childRows: Map<number, TableRow> = new Map();
 
   for (const row of rows) {
-    if (Number(row.__depth) === 0) {
+    if (row.__depth === 0) {
       parentRows.push(row);
     } else {
-      childRows.set(Number(row.__index), row);
+      childRows.set(row.__index, row);
     }
   }
 
@@ -534,7 +502,7 @@ export const processNestedTableRows = (
   const result: TableRow[] = [];
   processedParents.forEach((row) => {
     result.push(row);
-    const childRow = childRows.get(Number(row.__index));
+    const childRow = childRows.get(row.__index);
     if (childRow) {
       result.push(childRow);
     }

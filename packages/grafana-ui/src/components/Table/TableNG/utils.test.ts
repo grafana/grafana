@@ -1,6 +1,5 @@
 import {
   createDataFrame,
-  createTheme,
   DataFrame,
   DataFrameWithValue,
   DisplayValue,
@@ -10,11 +9,10 @@ import {
   LinkModel,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
+import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';
 
-import { TABLE } from './constants';
 import {
   extractPixelValue,
   frameToRecords,
@@ -23,7 +21,6 @@ import {
   getCellLinks,
   getCellOptions,
   getComparator,
-  getDefaultRowHeight,
   getIsNestedTable,
   getTextAlign,
   migrateTableDisplayModeToCellOptions,
@@ -188,7 +185,6 @@ describe('TableNG utils', () => {
       const colors = getCellColors(theme, field, displayValue);
       expect(colors.bgColor).toBe('rgb(255, 0, 0)');
       expect(colors.textColor).toBe('rgb(247, 248, 250)');
-      expect(colors.bgHoverColor).toBe('rgb(255, 36, 36)');
     });
 
     it('should handle color background gradient mode', () => {
@@ -206,7 +202,6 @@ describe('TableNG utils', () => {
       const colors = getCellColors(theme, field, displayValue);
       expect(colors.bgColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
       expect(colors.textColor).toBe('rgb(247, 248, 250)');
-      expect(colors.bgHoverColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), rgb(255, 54, 54))');
     });
   });
 
@@ -972,34 +967,6 @@ describe('TableNG utils', () => {
       expect(extractPixelValue('')).toBe(0);
       expect(extractPixelValue(null as any)).toBe(0);
       expect(extractPixelValue(undefined as any)).toBe(0);
-    });
-  });
-
-  describe('getDefaultRowHeight', () => {
-    const theme = createTheme();
-
-    it('returns correct height for TableCellHeight.Sm', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Sm);
-      expect(result).toBe(36);
-    });
-
-    it('returns correct height for TableCellHeight.Md', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Md);
-      expect(result).toBe(42);
-    });
-
-    it('returns correct height for TableCellHeight.Lg', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Lg);
-      expect(result).toBe(TABLE.MAX_CELL_HEIGHT);
-    });
-
-    it('calculates height based on theme when cellHeight is undefined', () => {
-      const result = getDefaultRowHeight(theme, undefined as unknown as TableCellHeight);
-
-      // Calculate the expected result based on the theme values
-      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
-
-      expect(result).toBe(expected);
     });
   });
 

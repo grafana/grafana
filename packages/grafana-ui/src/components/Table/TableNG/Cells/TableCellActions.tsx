@@ -1,5 +1,5 @@
-import { WKT } from 'ol/format';
-import { Geometry } from 'ol/geom';
+import WKT from 'ol/format/WKT';
+import Geometry from 'ol/geom/Geometry';
 
 import { FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -42,7 +42,8 @@ export function TableCellActions(props: TableCellActionsProps) {
                 dataProjection: 'EPSG:4326',
               });
               mode = TableCellInspectorMode.code;
-            } else if ('cellType' in cellOptions && cellOptions.cellType === TableCellDisplayMode.JSONView) {
+            }
+            if (cellOptions.type === TableCellDisplayMode.JSONView) {
               mode = TableCellInspectorMode.code;
             }
 

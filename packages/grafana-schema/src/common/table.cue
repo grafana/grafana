@@ -120,3 +120,7 @@ TableFieldOptions: {
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
 } @cuetsy(kind="interface")
+
+TablePillCellOptions: {
+  type: TableCellDisplayMode & "pill"
+} @cuetsy(kind="interface")

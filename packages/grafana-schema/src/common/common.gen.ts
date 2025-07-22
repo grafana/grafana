@@ -827,39 +827,6 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 /**
- * Pill options
- */
-export interface TablePillCellOptions {
-  color?: string;
-  colorMode?: ('auto' | 'fixed' | 'mapped');
-  type: TableCellDisplayMode.Pill;
-}
-
-/**
- * Markdown options
- */
-export interface TableMarkdownCellOptions {
-  type: TableCellDisplayMode.Markdown;
-}
-
-/**
- * Height of a table cell
- */
-export enum TableCellHeight {
-  Auto = 'auto',
-  Custom = 'custom',
-  Lg = 'lg',
-  Md = 'md',
-  Sm = 'sm',
-}
-
-/**
- * Table cell options. Each cell has a display mode
- * and other potential options for that display.
- */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
-
-/**
  * Use UTC/GMT timezone
  */
 export type TimeZoneUtc = 'utc';
@@ -875,6 +842,7 @@ export type TimeZoneBrowser = 'browser';
  */
 export enum VariableFormatID {
   CSV = 'csv',
+  CustomQueryParam = 'customqueryparam',
   Date = 'date',
   Distributed = 'distributed',
   DoubleQuote = 'doublequote',
@@ -962,6 +930,39 @@ export enum ComparisonOperation {
   LTE = 'lte',
   NEQ = 'neq',
 }
+
+/**
+ * Pill options
+ */
+export interface TablePillCellOptions {
+  color?: string;
+  colorMode?: ('auto' | 'fixed' | 'mapped');
+  type: TableCellDisplayMode.Pill;
+}
+
+/**
+ * Markdown options
+ */
+export interface TableMarkdownCellOptions {
+  type: TableCellDisplayMode.Markdown;
+}
+
+/**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Auto = 'auto',
+  Custom = 'custom',
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
+
+/**
+ * Table cell options. Each cell has a display mode
+ * and other potential options for that display.
+ */
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

@@ -132,6 +132,7 @@ export interface BaseTableProps {
   cellHeight?: TableCellHeight;
   cellHeightCustom?: number;
   structureRev?: number;
+  transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
@@ -246,9 +247,7 @@ export interface CellColors {
 export interface AutoCellProps {
   field: Field;
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
-  cellOptions: TableCellOptions;
 }
 
 export interface MarkdownCellProps {

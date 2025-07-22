@@ -96,7 +96,7 @@ func ValidateRepository(repo Repository) field.ErrorList {
 	return list
 }
 
-func fromFieldError(err *field.Error) *provisioning.TestResults {
+func FromFieldError(err *field.Error) *provisioning.TestResults {
 	return &provisioning.TestResults{
 		Code:    http.StatusBadRequest,
 		Success: false,
