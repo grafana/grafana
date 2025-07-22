@@ -68,9 +68,11 @@ The first option is to configure the name of your connection.
 - **Default** - Toggle to set as the default data source.
 
 ### URL and Authentication
-![URL and Authentication for InfluxDB configuration](https://grafana.com/media/docs/influxdb/InfluxDB-ConfigV2-URLAuth-Section.png) 
 
-These settings identify the Influx instance and schema the data source is connecting to. 
+![URL and Authentication for InfluxDB configuration](https://grafana.com/media/docs/influxdb/InfluxDB-ConfigV2-URLAuth-Section.png)
+
+These settings identify the Influx instance and schema the data source is connecting to.
+
 - **URL** - The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB’s default API port is `8086`.
 - **Product** - Select the product version of your Influx instance.
 - **Query language** - Select the query language for your InfluxDB instance. This will determine the connection details needed in **Database Settings**. The three options are:
@@ -81,27 +83,34 @@ These settings identify the Influx instance and schema the data source is connec
 {{< admonition type="note" >}}
 _For InfluxQL only._ **Database + Retention Policy (DBRP) Mapping** must be configured before data can be queried for the following product versions: _Influx OSS 1.x_, _Influx OSS 2.x_, _Influx Enterprise 1.x_, _Influx Cloud (TSM)_, _Influx Cloud Serverless_
 
-Refer to [Manage DBRP Mappings](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/) for guidance on setting this up via the CLI or API 
+Refer to [Manage DBRP Mappings](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/) for guidance on setting this up via the CLI or API
 {{< /admonition >}}
 
 #### Advanced HTTP Settings (Optional)
+
 Advanced HTTP Settings are optional settings that can be configured for more control over your data source.
+
 - **Allowed cookies** - Defines which cookies are forwarded to the data source. All other cookies are deleted by default.
 - **Timeout** - Set an HTTP request timeout in seconds.
 
 ##### Custom HTTP Headers
+
 Click **+ Add header** to add one or more HTTP headers. HTTP headers pass additional context and metadata about the request/response.
+
 - **Header** - Add a custom HTTP header. Select an option from the drop-down. Allows custom headers to be passed based on the needs of your InfluxDB instance.
 - **Value** - The value for the header.
 
 #### Auth and TSL/SSL Settings (Optional)
-There are several authentication methods you can choose in the Authentication section. 
+
+There are several authentication methods you can choose in the Authentication section.
+
 - **No Authentication** - Make the data source available without authentication. Grafana recommends using some type of authentication method.
 - **Basic auth** - The most common authentication method. Use your Influx instance username and password to authenticate.
 - **Forward OAuth identity** - Forward the OAuth access token (and also the OIDC ID token if available) of the user querying the data source.
 - **With credentials** - Toggle to enable credentials such as cookies or auth headers to be sent with cross-site requests.
 
 TLS/SSL Certificates are encrypted and stored in the Grafana database.
+
 - **TLS client auth** - When enabled, add the `Server name`, `Client cert` and `Client key`. The client provides a certificate that the server validates to establish the client’s trusted identity. The client key encrypts the data between client and server.
   - **Server name** - Name of the server. Example: `server1.domain.com`
   - **Client cert** - Add the client certificate.
@@ -110,46 +119,51 @@ TLS/SSL Certificates are encrypted and stored in the Grafana database.
 - **Skip TLS verify** - Toggle to bypass TLS certificate validation.
 
 ### Database Settings
+
 ![Database Settings for InfluxDB configuration](https://grafana.com/media/docs/influxdb/InfluxDB-ConfigV2-DBSettings.png)
 
 {{< admonition type="note" >}}
 Setting the database for this data source **does not deny access to other databases**. The InfluxDB query syntax allows switching the database in the query. For example: `SHOW MEASUREMENTS ON _internal` or `SELECT * FROM "_internal".."database" LIMIT 10`
 
-To support data isolation and security, make sure appropriate permissions are configured in InfluxDB. 
+To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
 {{< /admonition >}}
 
-These settings identify the Influx database your data source will connect to. The required information will vary by the query language selected in **URL and Authentication**. Each query language uses a different set of connection details. 
+These settings identify the Influx database your data source will connect to. The required information will vary by the query language selected in **URL and Authentication**. Each query language uses a different set of connection details.
 
 The table below illustrates the details needed for each query language:
 
-| **Setting** | **Flux** | **InfluxQL** | **SQL**      |
-| ---------- | ----------- | ----------- | ----------- |
-| **Bucket** or **Database**   | &#x2713;    | &#x2713;    | &#x2713;   |
-| **Organization**             | &#x2713;    |             |            |
-| **Password** or **Token**    | &#x2713;    | &#x2713;    | &#x2713;   |
-| **User**                     |             | &#x2713;    |            |
-
+| **Setting**                | **Flux** | **InfluxQL** | **SQL**  |
+| -------------------------- | -------- | ------------ | -------- |
+| **Bucket** or **Database** | &#x2713; | &#x2713;     | &#x2713; |
+| **Organization**           | &#x2713; |              |          |
+| **Password** or **Token**  | &#x2713; | &#x2713;     | &#x2713; |
+| **User**                   |          | &#x2713;     |          |
 
 - **Bucket** or **Database** - Sets the ID of the bucket to query. Refer to [View buckets](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) in InfluxData's documentation on how to locate the list of available buckets and their corresponding IDs.
 - **Organization** - Sets the [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) used for Flux queries. Also used for the `v.organization` query macro.
 - **Password** or **Token** - Specify the token used to query the bucket defined in **Database**. Retrieve this from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) in the InfluxDB UI.
--  **User** - Add the username used to sign in to InfluxDB.
+- **User** - Add the username used to sign in to InfluxDB.
 
 ##### For Flux
+
 - **Default bucket** is optional. The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) used for the `v.defaultBucket` macro in Flux queries.
 - With Influx 2.0 products, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/). Token must be set as `Authorization` header with the value `Token <generated-token>`.
 - For Influx 1.8, the token is `username:password`.
 
 #### Advanced Database Settings (Optional)
+
 Advanced Database Settings are optional settings that give you more control over the query experience.
+
 - **Min time interval** - Sets the minimum time interval for auto group-by. Grafana recommends setting this to match the data write frequency. For example, if your data is written every minute, it’s recommended to set this interval to 1 minute, so that each group contains data from each new write. The default is `10s`. Refer to [Min time interval](#min-time-interval) for format examples.
 - **Max series** - Sets a limit on the maximum number of series or tables that Grafana processes. Set a lower limit to prevent system overload, or increase it if you have many small time series and need to display more of them. The default is `1000`.
 
 ##### For InfluxQL
- - **HTTP method** - Sets the HTTP method used to query your data source. The POST method allows for larger queries that would return an error using the GET method. The default method is `POST`.
- - **Autocomplete range** - Sets a time range limit for the query editor's autocomplete to reduce the execution time of tag filter queries. As a result, any tags not present within the defined time range will be filtered out. For example, setting the value to 12h will include only tag keys/values from the past 12 hours. This feature is recommended for use with very large databases, where significant performance improvements can be observed.
+
+- **HTTP method** - Sets the HTTP method used to query your data source. The POST method allows for larger queries that would return an error using the GET method. The default method is `POST`.
+- **Autocomplete range** - Sets a time range limit for the query editor's autocomplete to reduce the execution time of tag filter queries. As a result, any tags not present within the defined time range will be filtered out. For example, setting the value to 12h will include only tag keys/values from the past 12 hours. This feature is recommended for use with very large databases, where significant performance improvements can be observed.
 
 ##### For SQL
+
 - **Insecure Connection** - Toggle to disable gRPC TLS security.
 
 ### Private Data Source Connect
