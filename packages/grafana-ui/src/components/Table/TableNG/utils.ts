@@ -537,7 +537,10 @@ export const processNestedTableRows = (
 
 /**
  * @internal
- * returns the display name of a field
+ * returns the display name of a field.
+ * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
+ * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
+ * before we begin.
  */
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
