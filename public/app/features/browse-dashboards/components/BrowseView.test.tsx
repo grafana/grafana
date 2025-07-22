@@ -60,14 +60,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('expands and collapses a folder', async () => {
-    render(
-      <BrowseView
-        permissions={mockPermissions}
-        folderUID={undefined}
-        width={WIDTH}
-        height={HEIGHT}
-      />
-    );
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
@@ -78,14 +71,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks items when selected', async () => {
-    render(
-      <BrowseView
-        permissions={mockPermissions}
-        folderUID={undefined}
-        width={WIDTH}
-        height={HEIGHT}
-      />
-    );
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
 
     const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
     expect(checkbox).not.toBeChecked();
@@ -95,14 +81,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks all descendants when a folder is selected', async () => {
-    render(
-      <BrowseView
-        permissions={mockPermissions}
-        folderUID={undefined}
-        width={WIDTH}
-        height={HEIGHT}
-      />
-    );
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     // First expand then click folderA
@@ -119,14 +98,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks descendants loaded after a folder is selected', async () => {
-    render(
-      <BrowseView
-        permissions={mockPermissions}
-        folderUID={undefined}
-        width={WIDTH}
-        height={HEIGHT}
-      />
-    );
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     // First expand then click folderA
@@ -146,14 +118,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('unchecks ancestors when unselecting an item', async () => {
-    render(
-      <BrowseView
-        permissions={mockPermissions}
-        folderUID={undefined}
-        width={WIDTH}
-        height={HEIGHT}
-      />
-    );
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
@@ -177,14 +142,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('shows indeterminate checkboxes when a descendant is selected', async () => {
-    render(
-      <BrowseView
-        permissions={mockPermissions}
-        folderUID={undefined}
-        width={WIDTH}
-        height={HEIGHT}
-      />
-    );
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
@@ -206,12 +164,7 @@ describe('browse-dashboards BrowseView', () => {
   describe('when there is no item in the folder', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
       render(
-        <BrowseView
-          permissions={mockPermissions}
-          folderUID={folderB_empty.item.uid}
-          width={WIDTH}
-          height={HEIGHT}
-        />
+        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
       );
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
     });
@@ -221,14 +174,9 @@ describe('browse-dashboards BrowseView', () => {
       mockPermissions.canEditDashboards = false;
       mockPermissions.canDeleteFolders = false;
       mockPermissions.canDeleteDashboards = false;
-      
+
       render(
-        <BrowseView
-          permissions={mockPermissions}
-          folderUID={folderB_empty.item.uid}
-          width={WIDTH}
-          height={HEIGHT}
-        />
+        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
       );
       expect(await screen.findByText('This folder is empty')).toBeInTheDocument();
     });
