@@ -418,14 +418,14 @@ export const handyTestingSchema: Spec = {
     },
     {
       kind: 'GroupByVariable',
+      group: 'prometheus',
+      datasource: {
+        name: 'datasource2',
+      },
       spec: {
         current: {
           text: 'text7',
           value: 'value7',
-        },
-        datasource: {
-          type: 'prometheus',
-          uid: 'datasource2',
         },
         description: 'A group by variable',
         hide: 'dontHide',
@@ -447,6 +447,10 @@ export const handyTestingSchema: Spec = {
     },
     {
       kind: 'AdhocVariable',
+      group: 'prometheus',
+      datasource: {
+        name: 'datasource3',
+      },
       spec: {
         baseFilters: [
           {
@@ -462,10 +466,6 @@ export const handyTestingSchema: Spec = {
             value: 'value2',
           },
         ],
-        datasource: {
-          type: 'prometheus',
-          uid: 'datasource3',
-        },
         defaultKeys: [
           {
             expandable: true,

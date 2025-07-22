@@ -670,10 +670,13 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 
 	if in.GroupByVariableKind != nil {
 		out.GroupByVariableKind = &dashv2alpha2.DashboardGroupByVariableKind{
-			Kind: in.GroupByVariableKind.Kind,
+			Kind:  in.GroupByVariableKind.Kind,
+			Group: *in.GroupByVariableKind.Spec.Datasource.Type,
+			Datasource: &dashv2alpha2.DashboardV2alpha2GroupByVariableKindDatasource{
+				Name: in.GroupByVariableKind.Spec.Datasource.Uid,
+			},
 			Spec: dashv2alpha2.DashboardGroupByVariableSpec{
 				Name:         in.GroupByVariableKind.Spec.Name,
-				Datasource:   (*dashv2alpha2.DashboardDataSourceRef)(in.GroupByVariableKind.Spec.Datasource),
 				DefaultValue: convertVariableOptionPtr_V2alpha1_to_V2alpha2(in.GroupByVariableKind.Spec.DefaultValue),
 				Current:      convertVariableOption_V2alpha1_to_V2alpha2(in.GroupByVariableKind.Spec.Current),
 				Options:      convertVariableOptions_V2alpha1_to_V2alpha2(in.GroupByVariableKind.Spec.Options),
@@ -688,10 +691,13 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 
 	if in.AdhocVariableKind != nil {
 		out.AdhocVariableKind = &dashv2alpha2.DashboardAdhocVariableKind{
-			Kind: in.AdhocVariableKind.Kind,
+			Kind:  in.AdhocVariableKind.Kind,
+			Group: *in.AdhocVariableKind.Spec.Datasource.Type,
+			Datasource: &dashv2alpha2.DashboardV2alpha2AdhocVariableKindDatasource{
+				Name: in.AdhocVariableKind.Spec.Datasource.Uid,
+			},
 			Spec: dashv2alpha2.DashboardAdhocVariableSpec{
 				Name:             in.AdhocVariableKind.Spec.Name,
-				Datasource:       (*dashv2alpha2.DashboardDataSourceRef)(in.AdhocVariableKind.Spec.Datasource),
 				BaseFilters:      convertAdHocFilters_V2alpha1_to_V2alpha2(in.AdhocVariableKind.Spec.BaseFilters),
 				Filters:          convertAdHocFilters_V2alpha1_to_V2alpha2(in.AdhocVariableKind.Spec.Filters),
 				DefaultKeys:      convertMetricFindValues_V2alpha1_to_V2alpha2(in.AdhocVariableKind.Spec.DefaultKeys),

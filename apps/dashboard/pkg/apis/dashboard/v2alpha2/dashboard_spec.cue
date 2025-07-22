@@ -115,16 +115,6 @@ DashboardLink: {
 	keepTime: bool | *false
 }
 
-// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
-// This type is widely used in the codebase and changing it will have a big impact
-DataSourceRef: {
-	// The plugin type-id
-	type?: string
-
-	// Specific datasource instance
-	uid?: string
-}
-
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
 DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames="Series|Annotations|AlertStates")
@@ -870,7 +860,6 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
 	name:        string | *""
-	datasource?: DataSourceRef
 	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
@@ -887,13 +876,16 @@ GroupByVariableSpec: {
 // Group variable kind
 GroupByVariableKind: {
 	kind: "GroupByVariable"
+	group: string
+	datasource?: {
+		name?: string
+	}
 	spec: GroupByVariableSpec
 }
 
 // Adhoc variable specification
 AdhocVariableSpec: {
 	name:        string | *""
-	datasource?: DataSourceRef
 	baseFilters: [...AdHocFilterWithLabels] | *[]
 	filters: [...AdHocFilterWithLabels] | *[]
 	defaultKeys: [...MetricFindValue] | *[]
@@ -929,6 +921,10 @@ AdHocFilterWithLabels: {
 // Adhoc variable kind
 AdhocVariableKind: {
 	kind: "AdhocVariable"
+	group: string
+	datasource?: {
+		name?: string
+	}
 	spec: AdhocVariableSpec
 }
 

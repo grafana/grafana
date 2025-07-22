@@ -1131,7 +1131,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'AdhocVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       // @ts-expect-error
       expect(v2.spec.filters).toEqual(v1.filters);
       // @ts-expect-error
@@ -1160,7 +1161,8 @@ describe('ResponseTransformers', () => {
     }
 
     if (v2.kind === 'GroupByVariable') {
-      expect(v2.spec.datasource).toEqual(v1.datasource);
+      expect(v2.datasource?.name).toEqual(v1.datasource?.uid);
+      expect(v2.group).toEqual(v1.datasource?.type);
       expect(v2.spec.options).toEqual(v1.options);
     }
   }

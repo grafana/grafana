@@ -546,6 +546,9 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
       hide: transformVariableHideToEnum(v.hide),
     };
 
+    let ds: DataSourceRef | undefined;
+    let dsType: string | undefined;
+
     switch (v.type) {
       case 'query':
         let query = v.query || {};
@@ -636,17 +639,27 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         variables.push(cv);
         break;
       case 'adhoc':
+        ds = v.datasource || getDefaultDatasource();
+        dsType = ds.type ?? getDefaultDatasourceType();
+
         const av: AdhocVariableKind = {
           kind: 'AdhocVariable',
+          group: dsType,
           spec: {
             ...commonProperties,
-            datasource: v.datasource || getDefaultDatasource(),
             baseFilters: validateFiltersOrigin(v.baseFilters) || [],
             filters: validateFiltersOrigin(v.filters) || [],
             defaultKeys: v.defaultKeys || [],
             allowCustomValue: v.allowCustomValue ?? true,
           },
         };
+
+        if (ds.uid) {
+          av.datasource = {
+            name: ds.uid,
+          };
+        }
+
         variables.push(av);
         break;
       case 'constant':
@@ -700,11 +713,14 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
         variables.push(tx);
         break;
       case 'groupby':
+        ds = v.datasource || getDefaultDatasource();
+        dsType = ds.type ?? getDefaultDatasourceType();
+
         const gb: GroupByVariableKind = {
           kind: 'GroupByVariable',
+          group: dsType,
           spec: {
             ...commonProperties,
-            datasource: v.datasource || getDefaultDatasource(),
             options: v.options,
             current: {
               value: v.current.value,
@@ -713,6 +729,13 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
           },
         };
+
+        if (ds.uid) {
+          gb.datasource = {
+            name: ds.uid,
+          };
+        }
+
         variables.push(gb);
         break;
       default:
@@ -870,7 +893,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       case 'GroupByVariable':
         const gv: VariableModel = {
           ...commonProperties,
-          datasource: v.spec.datasource,
+          datasource: {
+            uid: v.datasource?.name,
+            type: v.group,
+          },
           current: v.spec.current,
           options: v.spec.options,
         };
@@ -879,7 +905,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
       case 'AdhocVariable':
         const av: VariableModel = {
           ...commonProperties,
-          datasource: v.spec.datasource,
+          datasource: {
+            uid: v.datasource?.name,
+            type: v.group,
+          },
           // @ts-expect-error
           baseFilters: v.spec.baseFilters,
           filters: v.spec.filters,
