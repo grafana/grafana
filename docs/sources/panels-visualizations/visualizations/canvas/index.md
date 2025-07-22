@@ -272,16 +272,11 @@ Infinite panning is an experimental feature that may not work as expected in all
 
 ### Tooltip options
 
-| Option                        | Description                                                               |
-| ----------------------------- | ------------------------------------------------------------------------- |
-| [Tooltip mode](#tooltip-mode) | Configure whether tooltips appear when hovering over the canvas elements. |
+The **Tooltip mode** setting controls the display of tooltips when hovering over elements in a canvas that are connected to data, data links, or actions.
+The options are:
 
-#### Tooltip mode
-
-Controls the display of tooltips when hovering over elements in a canvas that are connected to data, data links, or actions.
-
-- **Enabled -** Show a tooltip when the cursor hovers over the element.
-- **Disabled -** Tooltips are not shown on hover.
+- **Enabled** - Show a tooltip when the cursor hovers over an element.
+- **Disabled** - Tooltips are not shown on hover.
 
 ### Layer options
 
