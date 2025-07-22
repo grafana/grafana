@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { useAssistant } from '@grafana/assistant';
+import { createContext, ItemDataType, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -41,10 +41,13 @@ export type TracePageActionsProps = {
   traceId: string;
   data: DataFrame;
   app?: CoreApp;
+  datasourceName?: string;
+  datasourceUid?: string;
+  datasourceType?: string;
 };
 
 export default function TracePageActions(props: TracePageActionsProps) {
-  const { traceId, data, app } = props;
+  const { traceId, data, app, datasourceName, datasourceUid, datasourceType } = props;
   const theme = useTheme2();
 
   const styles = getStyles(theme);
@@ -69,14 +72,29 @@ export default function TracePageActions(props: TracePageActionsProps) {
   };
 
   function AssistantButton() {
-    const [isAvailable, openAssistant, closeAssistant] = useAssistant();
+    const [isAvailable, openAssistant] = useAssistant();
 
     if (!isAvailable) {
-      return <div><Trans i18nKey="explore.trace-page-actions.assistant-not-available">Assistant not available</Trans></div>;
+      return null;
     }
 
     return (
-      <button onClick={() => openAssistant?.({ prompt: `Help me summarize this trace with id: ${traceId}` })}>
+      <button onClick={() => openAssistant?.({ 
+        prompt: `Help me summarize this trace view`,
+        context: [
+          createContext(ItemDataType.Datasource, {
+            datasourceName: datasourceName || 'unknown',
+            datasourceUid: datasourceUid || 'unknown',
+            datasourceType: datasourceType || 'unknown',
+          }),
+          createContext(ItemDataType.Structured, {
+            title: t('explore.trace-page-actions.trace-view-query', 'Trace View Query'),
+            data: {
+              query: traceId,
+            },
+          }),
+        ],
+      })}>
         <Trans i18nKey="explore.trace-page-actions.open-assistant">Open Assistant</Trans>
       </button>
     );
