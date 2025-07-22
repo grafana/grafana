@@ -3479,7 +3479,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Mégse",
       "cannot-move-folders": "A mappák nem helyezhetők át",
       "confirmation-text": "Törlés",
@@ -3511,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "A mappa üres"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} riasztási szabály",
@@ -8912,6 +8927,8 @@
       "no-details": "Nincs megjeleníthető mező.",
       "pin-line": "Napló kitűzése",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "Nincs megjeleníthető találat."
       },
@@ -10519,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10529,6 +10549,25 @@
   "provisioning": {
     "banner": {
       "message": "Ez a funkció jelenleg aktív fejlesztés alatt áll. A legjobb élmény és a legújabb fejlesztések érdekében javasoljuk a Grafana <2>éjszakai buildjének</2> használatát."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Adjon egy egyértelmű nevet ehhez az adattári kapcsolathoz",
@@ -10551,36 +10590,20 @@
       "button-save": "Mentés",
       "button-saving": "Mentés...",
       "description-enabled": "Az automatikus lekérés engedélyezése után a cél nem módosítható.",
-      "description-path": "Egy alkönyvtár elérési útja a Git-tárban",
       "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
-      "description-repository-url": "Adja meg a GitHub-adattár URL-címét",
       "description-title": "A konfiguráció emberek által olvasható neve",
       "error-required": "A mező kitöltése kötelező.",
       "error-save-repository": "Az adattár beállításainak mentése sikertelen volt",
-      "error-valid-github-url": "Adjon meg egy érvényes GitHub-adattár-URL-címet",
       "label-automatic-pulling": "Automatikus lekérés",
-      "label-branch": "Ág",
       "label-enabled": "Engedélyezve",
-      "label-github-token": "GitHub-token",
       "label-interval-seconds": "Intervallum (másodperc)",
-      "label-local-path": "Helyi elérési út",
-      "label-path": "Útvonal",
-      "label-pr-workflow": "Lekérési kérelemopció engedélyezése mentéskor",
       "label-repository-type": "Adattár típusa",
-      "label-repository-url": "Adattár URL-címe",
       "label-target": "Cél",
       "label-title": "Cím",
       "option-entire-instance": "Teljes példány",
-      "option-github": "GitHub",
-      "option-local": "Helyi",
       "option-managed-folder": "Felügyelt mappa",
-      "placeholder-branch": "fő",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/adattár/elérési/útja",
-      "placeholder-my-config": "Saját konfiguráció",
-      "placeholder-select-repository-type": "Adattár típusának kijelölése"
+      "placeholder-my-config": "Saját konfiguráció"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Konfigurálja a webkapcsokat</0>, hogy azonnali frissítéseket kapjon a Grafanában, amint a változások végrehajtása megtörténik. Tekintse át és hagyja jóvá a módosításokat a lekérések használatával, mielőtt életbe lépnének.",
@@ -10594,26 +10617,7 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurálás",
-      "configure-file": "Fájlkiépítés konfigurálása",
-      "configure-git-sync": "Git-szinkronizálás konfigurálása",
       "repository-limit-info-alert": "Elérte az adattár korlátját ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "A GitHub-adattárhoz használandó ág",
-      "description-github-path": "Ez annak az alkönyvtárnak az elérési útja az Ön GitHub-adattárában, amely az irányítópultok tárolására és kiépítésére szolgál",
-      "description-paste-your-git-hub-personal-access-token": "Illessze be a személyes GitHub-hozzáférési tokent",
-      "description-repository-url": "Illessze be a GitHub-adattár URL-címét",
-      "error-field-required": "A mező kitöltése kötelező.",
-      "error-invalid-github-url": "Adjon meg egy érvényes GitHub-adattár-URL-címet",
-      "label-access-token": "Hozzáférési GitHub-token",
-      "label-branch": "Ág neve",
-      "label-local-path": "Helyi elérési út",
-      "label-path": "Az alkönyvtár elérési útja az adattárban",
-      "label-repository-url": "GitHub-adattár URL-címe",
-      "placeholder-branch": "fő",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/adattár/elérési/útja"
     },
     "delete-repository-button": {
       "button-delete": "Törlés",
@@ -10655,8 +10659,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Kötelező funkcióváltások beállítása"
       },
-      "manage-dashboards-provision-updates-automatically": "Irányítópultok kezelése kódként a GitHubon, és a kiépítés automatikus frissítése",
-      "manage-your-dashboards-with-remote-provisioning": "Használat megkezdése a GitSynckel",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Tárolja az irányítópultokat verziókövetéses tárolóban a jobb rendszerezés és az előzmények nyomon követése érdekében"
     },
     "file-history-page": {
@@ -10677,18 +10681,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Hozzáadja az irányítópult változásainak előnézetét a lekérésekben. A Grafana-irányítópultok képei meg lesznek osztva a Git-tárban, és bárki számára láthatóak lesznek, aki hozzáféréssel rendelkezik az adattárhoz.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Képalkotást igényel. <2>Állítsa be a képalkotást</2>",
-      "description-often-shall-instance-updates-git-hub": "Milyen gyakran kérjen le frissítéseket a példány a GitHubról?",
-      "description-pr-enable-description": "Lehetővé teszi a felhasználók számára, hogy kiválasszák, megnyitják-e a lekérési kérelmet a módosítások mentésekor. Ha az adattár nem teszi lehetővé a főág közvetlen módosítását, akkor is szükség lehet lekérési kérelemre.",
+      "description-preview-requirements": "",
       "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
-      "description-webhooks-enable": "Lehetővé teszi a felhasználók számára, hogy kiválasszák, megnyitják-e a lekérési kérelmet a módosítások mentésekor. Ha az adattár nem teszi lehetővé a főág közvetlen módosítását, akkor is szükség lehet lekérési kérelemre.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Az irányítópult előnézeteinek engedélyezése a lekérésekben",
-      "label-pr-workflow": "Lekérési kérelemopció engedélyezése mentéskor",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Csak olvasható",
-      "label-update-instance-interval-seconds": "Példányfrissítési időköz (másodpercben)",
-      "placeholder": "60",
-      "text-setup-later": "Ez később bármikor beállítható",
-      "title-enhance-github": "Fokozza a GitHub-élményét"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nincs találat a lekérdezésre",
@@ -10718,6 +10720,57 @@
     "getting-started-page": {
       "header": "Kiépítés",
       "subtitle-provisioning-feature": "Kiépítési kapcsolatok megtekintése és kezelése"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Nem található"
@@ -10749,6 +10802,11 @@
       },
       "summary": "Összegzés"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "A beállítás után egy új Grafana-mappa jön létre, és szinkronizálódik a külső tárolóval. Ha vannak erőforrások a külső tárolóban, azok ebbe az új mappába kerülnek. A mappában létrehozott összes új erőforrás külső tárolóban lesz tárolva és verziószámozva.",
@@ -10773,7 +10831,7 @@
     },
     "repository-actions": {
       "settings": "Beállítások",
-      "source-code": "Forráskód"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10837,6 +10895,24 @@
       "title": "Adattár állapota",
       "title-legacy-storage": "Örökölt tárolás",
       "title-queued-for-deletion": "Törlésre vár"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Alap",

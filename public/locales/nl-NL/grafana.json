@@ -3479,7 +3479,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Annuleren",
       "cannot-move-folders": "Mappen kunnen niet worden verplaatst",
       "confirmation-text": "Verwijderen",
@@ -3511,6 +3510,22 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Deze map is leeg"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "api-success_one": "",
+      "api-success_other": ""
+    },
+    "bulk-move-resources-form": {
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} waarschuwingsregel",
@@ -8912,6 +8927,8 @@
       "no-details": "Weer te geven velden.",
       "pin-line": "Logboek vastzetten",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "Geen resultaten om weer te geven."
       },
@@ -10519,7 +10536,10 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch": "",
+      "new-branch": "",
       "not-saved": "",
+      "open-git-hub": "",
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
@@ -10529,6 +10549,25 @@
   "provisioning": {
     "banner": {
       "message": "Er wordt momenteel actief gewerkt aan de ontwikkeling van deze functie. Voor de beste ervaring en de nieuwste verbeteringen raden we je aan om de <2>nachtelijke versie</2> van Grafana te gebruiken."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Voeg een duidelijke naam toe voor deze repository-verbinding",
@@ -10551,36 +10590,20 @@
       "button-save": "Opslaan",
       "button-saving": "Aan het opslaan ...",
       "description-enabled": "Zodra automatische pulling is ingeschakeld, kan het doel niet worden gewijzigd.",
-      "description-path": "Pad naar een submap in de Git-repository",
       "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
-      "description-repository-url": "Voer de GitHub-repository-URL in",
       "description-title": "Een voor mensen leesbare naam voor de configuratie",
       "error-required": "Dit veld is verplicht.",
       "error-save-repository": "Kan de repository-instellingen niet opslaan",
-      "error-valid-github-url": "Voer een geldige GitHub-repository-URL in",
       "label-automatic-pulling": "Automatische pulling",
-      "label-branch": "Vestiging",
       "label-enabled": "Ingeschakeld",
-      "label-github-token": "GitHub-token",
       "label-interval-seconds": "Interval (seconden)",
-      "label-local-path": "Lokaal pad",
-      "label-path": "Path",
-      "label-pr-workflow": "Pull request-optie inschakelen bij opslaan",
       "label-repository-type": "Type repository",
-      "label-repository-url": "Repository-URL",
       "label-target": "Doel",
       "label-title": "Titel",
       "option-entire-instance": "Gehele instantie",
-      "option-github": "GitHub",
-      "option-local": "Lokaal",
       "option-managed-folder": "Beheerde map",
-      "placeholder-branch": "voornaamste",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "Mijn configuratie",
-      "placeholder-select-repository-type": "Type repository selecteren"
+      "placeholder-my-config": "Mijn configuratie"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Configureer webhooks</0> om directe updates in Grafana te krijgen zodra wijzigingen zijn doorgevoerd. Bekijk en keur wijzigingen goed met pull requests voordat ze live gaan.",
@@ -10594,26 +10617,7 @@
     },
     "connect-repository-button": {
       "configure": "Configureren",
-      "configure-file": "Bestandsprovisioning configureren",
-      "configure-git-sync": "Git-synchronisatie configureren",
       "repository-limit-info-alert": "Limiet van repository bereikt ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Te gebruiken tak voor de GitHub-repository",
-      "description-github-path": "Dit is het pad naar een submap in je GitHub-repository waar dashboards worden opgeslagen en ingericht",
-      "description-paste-your-git-hub-personal-access-token": "Plak je persoonlijke GitHub-toegangstoken",
-      "description-repository-url": "Plak de URL van je GitHub-repository",
-      "error-field-required": "Dit veld is verplicht.",
-      "error-invalid-github-url": "Voer een geldige GitHub-repository-URL in",
-      "label-access-token": "GitHub-toegangstoken",
-      "label-branch": "Taknaam",
-      "label-local-path": "Lokaal pad",
-      "label-path": "Pad naar submap in repository",
-      "label-repository-url": "GitHub-repository-link",
-      "placeholder-branch": "voornaamste",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Verwijderen",
@@ -10655,8 +10659,8 @@
       "actions": {
         "set-up-required-feature-toggles": "Vereiste functieschakelaars instellen"
       },
-      "manage-dashboards-provision-updates-automatically": "Beheer dashboards als code in GitHub en verstrek updates automatisch",
-      "manage-your-dashboards-with-remote-provisioning": "Aan de slag met GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Sla dashboards op in versiegecontroleerde opslag voor betere organisatie en het bijhouden van de geschiedenis"
     },
     "file-history-page": {
@@ -10677,18 +10681,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Voegt een afbeeldingsvoorbeeld toe van dashboardwijzigingen in pull requests. Afbeeldingen van je Grafana-dashboards worden gedeeld in je Git-repository en zijn zichtbaar voor iedereen met toegang tot de repository.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Vereist beeldweergave. <2>Beeldweergave instellen</2>",
-      "description-often-shall-instance-updates-git-hub": "Hoe vaak moet de instantie updates van GitHub ophalen?",
-      "description-pr-enable-description": "Stelt gebruikers in staat om te kiezen of ze een pull request willen openen bij het opslaan van wijzigingen. Als de repository geen directe wijzigingen in de hoofdtak toestaat, kan er nog steeds een pull request nodig zijn.",
+      "description-preview-requirements": "",
       "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
-      "description-webhooks-enable": "Stelt gebruikers in staat om te kiezen of ze een pull request willen openen bij het opslaan van wijzigingen. Als de repository geen directe wijzigingen in de hoofdtak toestaat, kan er nog steeds een pull request nodig zijn.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Dashboardvoorbeelden inschakelen in pull requests",
-      "label-pr-workflow": "Pull request-optie inschakelen bij opslaan",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Alleen lezen",
-      "label-update-instance-interval-seconds": "Instantie-interval bijwerken (seconden)",
-      "placeholder": "60",
-      "text-setup-later": "Je kunt dit altijd later instellen",
-      "title-enhance-github": "Verbeter je GitHub-ervaring"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Geen resultaten die overeenkomen met je query",
@@ -10718,6 +10720,57 @@
     "getting-started-page": {
       "header": "Provisioning",
       "subtitle-provisioning-feature": "Je provisioningverbindingen bekijken en beheren"
+    },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "history-view": {
       "not-found": "Niet gevonden"
@@ -10749,6 +10802,11 @@
       },
       "summary": "Samenvatting"
     },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
+    },
     "mode-options": {
       "folder": {
         "description": "Na het instellen wordt een nieuwe Grafana-map gemaakt en gesynchroniseerd met externe opslag. Als er bronnen aanwezig zijn in externe opslag, worden deze in deze nieuwe map ingericht. Alle nieuwe bronnen die in deze map worden gemaakt, worden opgeslagen en in versies beheerd in externe opslag.",
@@ -10773,7 +10831,7 @@
     },
     "repository-actions": {
       "settings": "Instellingen",
-      "source-code": "Broncode"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10837,6 +10895,24 @@
       "title": "Repository-status",
       "title-legacy-storage": "Legacy-opslag",
       "title-queued-for-deletion": "In de wachtrij voor verwijdering"
+    },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
     },
     "resource-view": {
       "base": "Basis",

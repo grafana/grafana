@@ -482,7 +482,7 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 }
 
 func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesLibraryPanels) {
+	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesLibraryPanelConnections) {
 		res, err := dr.k8sclient.Search(ctx, orgID, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
