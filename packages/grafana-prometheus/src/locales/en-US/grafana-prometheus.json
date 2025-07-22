@@ -282,10 +282,6 @@
         "aria-label-browse-metrics": "Browse metrics",
         "currently-selected": "Currently selected: {{selected}}",
         "metrics-pre-filtered": "These metrics have been pre-filtered by labels chosen in the label filters.",
-        "placeholder-results-per-page": "results per page",
-        "results-amount_one": "Showing {{num}} of {{count}} results",
-        "results-amount_other": "Showing {{num}} of {{count}} results",
-        "results-per-page": "Results per page",
         "title-metrics-explorer": "Metrics explorer"
       },
       "nested-query": {
