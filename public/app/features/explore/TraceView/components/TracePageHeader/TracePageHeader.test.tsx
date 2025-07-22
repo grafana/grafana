@@ -21,6 +21,10 @@ import { defaultFilters } from '../../useSearch';
 import { TracePageHeader } from './TracePageHeader';
 import { trace } from './mocks';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(() => [false, null]), // [isAvailable, openAssistant]
+}));
+
 const setup = () => {
   const defaultProps = {
     trace,
