@@ -74,7 +74,7 @@ describe('TraceQL grammar', () => {
 
   describe('TraceQL patterns', () => {
     it('should match span-set patterns', () => {
-      const spanSetRule = (traceqlGrammar as any)['span-set'];
+      const spanSetRule = traceqlGrammar['span-set'];
       expect(spanSetRule).toBeDefined();
       expect(spanSetRule.pattern).toBeDefined();
       const spanSetPattern = spanSetRule.pattern as RegExp;
@@ -84,7 +84,7 @@ describe('TraceQL grammar', () => {
     });
 
     it('should match with-clause patterns', () => {
-      const withClauseRule = (traceqlGrammar as any)['with-clause'];
+      const withClauseRule = traceqlGrammar['with-clause'];
       expect(withClauseRule).toBeDefined();
       expect(withClauseRule.pattern).toBeDefined();
       const withClausePattern = withClauseRule.pattern as RegExp;
@@ -95,7 +95,7 @@ describe('TraceQL grammar', () => {
     });
 
     it('should match comment patterns', () => {
-      const commentRule = (traceqlGrammar as any).comment;
+      const commentRule = traceqlGrammar.comment;
       expect(commentRule).toBeDefined();
       expect(commentRule.pattern).toBeDefined();
       const commentPattern = commentRule.pattern as RegExp;
@@ -104,7 +104,7 @@ describe('TraceQL grammar', () => {
     });
 
     it('should match number patterns', () => {
-      const numberRule = (traceqlGrammar as any).number;
+      const numberRule = traceqlGrammar.number;
       expect(numberRule).toBeDefined();
       const numberPattern = numberRule as RegExp;
       expect(numberPattern.test('123')).toBe(true);
@@ -114,7 +114,7 @@ describe('TraceQL grammar', () => {
     });
 
     it('should match operator patterns', () => {
-      const operatorRule = (traceqlGrammar as any).operator;
+      const operatorRule = traceqlGrammar.operator;
       expect(operatorRule).toBeDefined();
       const operatorPattern = operatorRule as RegExp;
       expect(operatorPattern.test('=')).toBe(true);
@@ -345,7 +345,7 @@ describe('TraceQL grammar', () => {
 
     testCases.forEach(({ name, query, shouldMatch }) => {
       it(`should ${shouldMatch ? 'match' : 'not match'} ${name}`, () => {
-        const grammar = traceqlGrammar as any;
+        const grammar = traceqlGrammar;
         const spanSetPattern = grammar['span-set']?.pattern as RegExp;
         const withClausePattern = grammar['with-clause']?.pattern as RegExp;
         const commentPattern = grammar.comment?.pattern as RegExp;
@@ -367,7 +367,7 @@ describe('TraceQL grammar', () => {
 
   describe('With clause validation', () => {
     it('should validate with clause parameter names', () => {
-      const grammar = traceqlGrammar as any;
+      const grammar = traceqlGrammar;
       const withClause = grammar['with-clause'];
       expect(withClause).toBeDefined();
       expect(withClause.inside).toBeDefined();
@@ -382,7 +382,7 @@ describe('TraceQL grammar', () => {
     });
 
     it('should validate with clause parameter values', () => {
-      const grammar = traceqlGrammar as any;
+      const grammar = traceqlGrammar;
       const withClause = grammar['with-clause'];
       expect(withClause).toBeDefined();
       expect(withClause.inside).toBeDefined();
@@ -400,7 +400,7 @@ describe('TraceQL grammar', () => {
     });
 
     it('should validate with clause keyword', () => {
-      const grammar = traceqlGrammar as any;
+      const grammar = traceqlGrammar;
       const withClause = grammar['with-clause'];
       expect(withClause).toBeDefined();
       expect(withClause.inside).toBeDefined();
@@ -418,7 +418,7 @@ describe('TraceQL grammar', () => {
   describe('Edge cases', () => {
     it('should handle multiple with clauses (invalid but should not crash)', () => {
       const query = '{span.name="test"} with (most_recent=true) with (other=false)';
-      const grammar = traceqlGrammar as any;
+      const grammar = traceqlGrammar;
       const withClausePattern = grammar['with-clause']?.pattern as RegExp;
 
       if (withClausePattern) {
@@ -432,7 +432,7 @@ describe('TraceQL grammar', () => {
 
     it('should handle with clause without parameters', () => {
       const query = '{span.name="test"} with ()';
-      const grammar = traceqlGrammar as any;
+      const grammar = traceqlGrammar;
       const withClausePattern = grammar['with-clause']?.pattern as RegExp;
 
       if (withClausePattern) {
