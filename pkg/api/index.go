@@ -85,8 +85,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		locale = parts[0]
 	}
 
+	// We default the regional format (locale) to the Accept-Language header rather than the language preference
+	// mainly because we want to avoid defaulting to en-US for most users who have not set a preference, and we
+	// don't have more specific English language preferences yet.
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
-		regionalFormat = locale // Default to the Accept-Language header if no other preference is set
+		regionalFormat = locale
 		if urlPrefs.RegionalFormat != "" {
 			regionalFormat = urlPrefs.RegionalFormat
 		} else if prefs.JSONData.RegionalFormat != "" {
