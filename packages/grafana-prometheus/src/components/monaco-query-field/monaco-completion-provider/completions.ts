@@ -114,17 +114,17 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
   documentation: f.documentation,
 }));
 
+// Remove the triggerType parameter and rename the function
+async function getFunctionsOnlyCompletions(): Promise<Completion[]> {
+  return Promise.resolve(FUNCTION_COMPLETIONS);
+}
+
 async function getAllFunctionsAndMetricNamesCompletions(
   searchTerm: string | undefined,
   dataProvider: DataProvider,
-  timeRange: TimeRange,
-  triggerType: TriggerType
+  timeRange: TimeRange
 ): Promise<Completion[]> {
-  let metricNames: Completion[] = [];
-  if (triggerType === 'full') {
-    metricNames = await getAllMetricNamesCompletions(searchTerm, dataProvider, timeRange);
-  }
-
+  const metricNames = await getAllMetricNamesCompletions(searchTerm, dataProvider, timeRange);
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
 
@@ -274,16 +274,22 @@ export async function getCompletions(
   searchTerm?: string,
   triggerType: TriggerType = 'full'
 ): Promise<Completion[]> {
-  console.log(triggerType);
   switch (situation.type) {
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange, triggerType);
+      return triggerType === 'full' 
+        ? getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange)
+        : getFunctionsOnlyCompletions();
     case 'AT_ROOT': {
-      return getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange, triggerType);
+      return triggerType === 'full'
+        ? getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange)
+        : getFunctionsOnlyCompletions();
     }
     case 'EMPTY': {
+      if (triggerType === 'partial') {
+        return Promise.resolve(FUNCTION_COMPLETIONS);
+      }
       const metricNames = await getAllMetricNamesCompletions(searchTerm, dataProvider, timeRange);
       const historyCompletions = getAllHistoryCompletions(dataProvider);
       return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);

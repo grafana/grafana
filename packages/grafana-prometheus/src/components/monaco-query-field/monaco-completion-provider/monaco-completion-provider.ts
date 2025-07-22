@@ -49,56 +49,58 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   }
 }
 
+function shouldUseFull(
+  context: monacoTypes.languages.CompletionContext,
+  word: monacoTypes.editor.IWordAtPosition | null,
+  model: monacoTypes.editor.ITextModel,
+  position: monacoTypes.Position,
+  isManualTrigger: boolean,
+): boolean {
+  // Manual trigger (Ctrl+Space)
+  if (isManualTrigger) {
+    return true;
+  }
+
+  // Trigger characters
+  const triggerChars = ['{', ',', '[', '(', '=', '~', ' ', '"'];
+  const charBeforeCursor = model.getValueInRange({
+    startLineNumber: position.lineNumber,
+    endLineNumber: position.lineNumber,
+    startColumn: Math.max(1, position.column - 1),
+    endColumn: position.column,
+  });
+
+  if (triggerChars.includes(charBeforeCursor)) {
+    return true;
+  }
+
+  // Word length >= 3
+  if (word && word.word.length >= 3) {
+    return true;
+  }
+
+  return false;
+}
+
 export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider,
   timeRange: TimeRange,
 ): { provider: monacoTypes.languages.CompletionItemProvider; state: { isManualTriggerRequested: boolean } } {
-  // Debounce mechanism to delay completions after user stops typing
+  // Short debounce to catch rapid typing
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  const DEBOUNCE_DELAY = 300; // 300ms delay after typing stops
+  const DEBOUNCE_DELAY = 150; // Much shorter delay to catch rapid typing
 
   // Simple local state
   const state = {
     isManualTriggerRequested: false,
-    lastTriggeredWordLength: 0,
-    lastTriggeredWord: '',
   };
-
-  // Track deletion events to reset completion state
-  const setupDeletionTracking = (model: monacoTypes.editor.ITextModel) => {
-    // Listen for content changes to detect deletions
-    model.onDidChangeContent((e) => {
-      // Check if any change was a deletion
-      const hasDeletion = e.changes.some((change) => change.text === '' && change.rangeLength > 0);
-
-      if (hasDeletion) {
-        // Reset completion tracking on deletion
-        state.lastTriggeredWordLength = 0;
-        state.lastTriggeredWord = '';
-
-        // Clear any pending completion timers
-        if (debounceTimer) {
-          clearTimeout(debounceTimer);
-          debounceTimer = null;
-        }
-      }
-    });
-  };
-
-  let isTrackingSetup = false;
 
   const provideCompletionItems = (
     model: monacoTypes.editor.ITextModel,
     position: monacoTypes.Position,
     context: monacoTypes.languages.CompletionContext,
   ): monacoTypes.languages.ProviderResult<monacoTypes.languages.CompletionList> => {
-    // Set up deletion tracking once per model
-    if (!isTrackingSetup) {
-      setupDeletionTracking(model);
-      isTrackingSetup = true;
-    }
-
     const word = model.getWordAtPosition(position);
     const range =
       word != null
@@ -110,64 +112,47 @@ export function getCompletionProvider(
         })
         : monaco.Range.fromPositions(position);
 
-    // Allow completions for trigger characters (like {, [, etc.) regardless of length
-    const triggerChars = ['{', ',', '[', '(', '=', '~', ' ', '"'];
-    const isTriggeredByChar = triggerChars.some(
-      (char) =>
-        model.getValueInRange({
-          startLineNumber: position.lineNumber,
-          endLineNumber: position.lineNumber,
-          startColumn: Math.max(1, position.column - 1),
-          endColumn: position.column,
-        }) === char,
-    );
-
-    // Check if this is a manual trigger (Ctrl+Space) using our custom flag
-    if (state.isManualTriggerRequested) {
+    const isManualTrigger = state.isManualTriggerRequested;
+    if (isManualTrigger) {
       state.isManualTriggerRequested = false;
-      return executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word);
     }
 
-    // For trigger characters, execute immediately without debouncing
-    if (isTriggeredByChar) {
-      return executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word);
+    const triggerType: TriggerType = shouldUseFull(context, word, model, position, isManualTrigger)
+      ? 'full'
+      : 'partial';
+
+    // For immediate triggers (manual, trigger chars, or already 3+ chars), execute immediately
+    const isImmediate = isManualTrigger || triggerType === 'full';
+
+    if (isImmediate) {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+      return executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word, triggerType);
     }
 
-    if (!word) {
-      // If we don't meet the criteria, return empty suggestions
-      return { suggestions: [], incomplete: false };
-    }
-
-    const currentWord = word.word;
-    const currentWordLength = currentWord.length;
-
-    // Reset tracking if word changed (user moved cursor or started typing a different word)
-    if (state.lastTriggeredWord && !currentWord.startsWith(state.lastTriggeredWord)) {
-      state.lastTriggeredWordLength = 0;
-      state.lastTriggeredWord = '';
-    }
-
-    // Check if we should trigger completion based on 3-character increments
-    const threeCharTrigger =
-      (state.lastTriggeredWordLength === 0 && currentWordLength > 3) ||
-      (state.lastTriggeredWordLength > 0 && currentWordLength >= state.lastTriggeredWordLength + 3); // Next 3 characters
-
+    // For typing scenarios, use short debounce to catch rapid typing
     if (debounceTimer) {
       clearTimeout(debounceTimer);
     }
 
     return new Promise((resolve) => {
       debounceTimer = setTimeout(() => {
-        state.lastTriggeredWordLength = currentWordLength;
-        state.lastTriggeredWord = currentWord;
+        // Re-check if we should use full completions after debounce
+        const updatedWord = model.getWordAtPosition(position);
+        const updatedTriggerType: TriggerType = shouldUseFull(context, updatedWord, model, position, false)
+          ? 'full'
+          : 'partial';
+
         executeCompletionLogic(
           model,
           position,
           range,
           dataProvider,
           timeRange,
-          word?.word,
-          threeCharTrigger ? 'full' : 'partial',
+          updatedWord?.word,
+          updatedTriggerType,
         ).then(resolve);
       }, DEBOUNCE_DELAY);
     });
