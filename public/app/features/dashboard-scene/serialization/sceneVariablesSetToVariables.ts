@@ -27,10 +27,12 @@ import {
   defaultDataQueryKind,
   AdHocFilterWithLabels,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
 import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { getDataSourceForQuery } from './layoutSerializers/utils';
 import { getDataQueryKind, getDataQuerySpec, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
 import {
   transformVariableRefreshToEnum,
@@ -456,11 +458,19 @@ export function sceneVariablesSetToSchemaV2Variables(
           }
         : undefined;
 
+      const ds = getDataSourceForQuery(
+        variable.state.datasource,
+        variable.state.datasource?.type || getDefaultDatasource().type!
+      );
+
       const groupVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
+        group: ds.type!,
+        datasource: {
+          name: ds.uid,
+        },
         spec: {
           ...commonProperties,
-          datasource: variable.state.datasource || {}, // FIXME what is the default value?,
           // Only persist the statically defined options
           options:
             variable.state.defaultOptions?.map((option) => ({
@@ -474,12 +484,20 @@ export function sceneVariablesSetToSchemaV2Variables(
       };
       variables.push(groupVariable);
     } else if (sceneUtils.isAdHocVariable(variable)) {
+      const ds = getDataSourceForQuery(
+        variable.state.datasource,
+        variable.state.datasource?.type || getDefaultDatasource().type!
+      );
       const adhocVariable: AdhocVariableKind = {
         kind: 'AdhocVariable',
+        group: ds.type!,
+        datasource: {
+          name: ds.uid,
+        },
         spec: {
           ...commonProperties,
           name: variable.state.name,
-          datasource: variable.state.datasource || {}, //FIXME what is the default value?
+
           baseFilters: validateFiltersOrigin(variable.state.baseFilters) || [],
           filters: [
             ...validateFiltersOrigin(variable.state.originFilters),

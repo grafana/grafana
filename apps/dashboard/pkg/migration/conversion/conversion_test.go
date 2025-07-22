@@ -153,18 +153,18 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 			originalName := strings.TrimSuffix(file.Name(), ".json")
 
 			// Get all Dashboard versions from the manifest
-			for _, kind := range manifest.ManifestData.Kinds {
+			for _, kind := range manifest.ManifestData.Kinds() {
 				if kind.Kind == "Dashboard" {
 					for _, version := range kind.Versions {
 						// Skip converting to the same version
-						if version.Name == sourceVersion {
+						if version.VersionName == sourceVersion {
 							continue
 						}
 
-						filename := fmt.Sprintf("%s.%s.json", originalName, version.Name)
+						filename := fmt.Sprintf("%s.%s.json", originalName, version.VersionName)
 
 						// Create target object based on version
-						switch version.Name {
+						switch version.VersionName {
 						case "v0alpha1":
 							targetVersions[filename] = &dashv0.Dashboard{}
 						case "v1beta1":
@@ -174,7 +174,7 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 						case "v2alpha2":
 							targetVersions[filename] = &dashv2alpha2.Dashboard{}
 						default:
-							t.Logf("Unknown version %s, skipping", version.Name)
+							t.Logf("Unknown version %s, skipping", version.VersionName)
 						}
 					}
 					break
