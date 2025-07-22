@@ -83,6 +83,7 @@ require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
 	github.com/urfave/cli/v3 v3.3.8
+	golang.org/x/mod v0.25.0
 )
 
 require (
