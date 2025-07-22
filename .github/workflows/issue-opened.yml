@@ -117,3 +117,17 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL:  ${{ env.AUTOTRIAGER_SLACK_WEBHOOK_URL }}
+  auto-label-internal-issues:
+    needs: [main]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+        - name: "Auto label internal issues"
+          if: github.repository == 'grafana/grafana' && (github.event.issue.author_association == 'MEMBER' || github.event.issue.author_association == 'OWNER')
+          run: gh issue edit "$NUMBER" --add-label "$LABELS"
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_REPO: ${{ github.repository }}
+            NUMBER: ${{ github.event.issue.number }}
+            LABELS: internal
