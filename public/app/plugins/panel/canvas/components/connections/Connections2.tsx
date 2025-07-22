@@ -159,12 +159,13 @@ export class Connections2 {
       }
     });
 
-    const { top, left, width, height, rotation } = getElementTransformAndDimensions(element.div!);
+    const { top, left, width, height } = getElementTransformAndDimensions(element.div!);
 
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
       this.connectionAnchorDiv.style.display = 'block';
-      this.connectionAnchorDiv.style.transform = `translate(${left}px, ${top}px) rotate(${rotation}deg)`;
+      this.connectionAnchorDiv.style.top = `${top}px`;
+      this.connectionAnchorDiv.style.left = `${left}px`;
       this.connectionAnchorDiv.style.height = `${height}px`;
       this.connectionAnchorDiv.style.width = `${width}px`;
     }
