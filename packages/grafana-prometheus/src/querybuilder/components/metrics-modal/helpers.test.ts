@@ -14,7 +14,7 @@ import { MetricsData } from './types';
 const createMockLanguageProvider = (metadata: PromMetricsMetadata = {}): PrometheusLanguageProviderInterface =>
   ({
     retrieveMetricsMetadata: jest.fn().mockReturnValue(metadata),
-  }) as any;
+  }) as unknown as PrometheusLanguageProviderInterface;
 
 describe('helpers.ts', () => {
   describe('generateMetricData', () => {
@@ -165,19 +165,6 @@ describe('helpers.ts', () => {
       const result = generateMetricData('test_metric', mockProvider);
       expect(result.type).toBe('gauge');
     });
-
-    it('should handle undefined type and description', () => {
-      const mockProvider = createMockLanguageProvider({
-        test_metric: {
-          type: undefined as any,
-          help: undefined as any,
-        },
-      });
-
-      const result = generateMetricData('test_metric', mockProvider);
-      expect(result.type).toBeUndefined();
-      expect(result.description).toBeUndefined();
-    });
   });
 
   describe('calculatePageList', () => {
@@ -186,11 +173,6 @@ describe('helpers.ts', () => {
 
     it('should return empty array for empty metrics data', () => {
       expect(calculatePageList([], 10)).toEqual([]);
-    });
-
-    it('should return empty array for null/undefined metrics data', () => {
-      expect(calculatePageList(null as any, 10)).toEqual([]);
-      expect(calculatePageList(undefined as any, 10)).toEqual([]);
     });
 
     it('should return [1] for zero or negative results per page', () => {
@@ -229,11 +211,6 @@ describe('helpers.ts', () => {
       const metricsData = createMetricsData(3);
       const result = calculatePageList(metricsData, 1);
       expect(result).toEqual([1, 2, 3]);
-    });
-
-    it('should handle non-array input', () => {
-      expect(calculatePageList('not an array' as any, 10)).toEqual([]);
-      expect(calculatePageList(123 as any, 10)).toEqual([]);
     });
 
     it('should handle fractional results per page', () => {

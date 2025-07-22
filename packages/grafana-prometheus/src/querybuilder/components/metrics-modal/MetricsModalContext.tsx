@@ -1,5 +1,15 @@
 import debounce from 'debounce-promise';
-import { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  FC,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
 
@@ -13,7 +23,6 @@ import { generateMetricData } from './helpers';
 import { MetricData, MetricsData } from './types';
 
 export const DEFAULT_RESULTS_PER_PAGE = 25;
-export const MAXIMUM_RESULTS_PER_PAGE = 100;
 
 type Settings = {
   useBackend: boolean;
@@ -87,7 +96,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
     try {
       setIsLoading(true);
       const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-      
+
       if (Object.keys(metadata).length === 0) {
         updateSettings({ hasMetadata: false });
         setMetricsData([]);
@@ -109,7 +118,7 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
       debounce(async (timeRange: TimeRange, metricText: string, queryLabels?: QueryBuilderLabelFilter[]) => {
         // Generate unique search ID to handle race conditions
         const searchId = ++latestSearchIdRef.current;
-        
+
         try {
           if (metricText === '') {
             await fetchMetadata();
@@ -133,7 +142,6 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
 
           setMetricsData(resultsOptions);
           setIsLoading(false);
-
         } catch (error) {
           // Only update state if this is still the latest search
           if (searchId === latestSearchIdRef.current) {

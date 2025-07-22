@@ -48,28 +48,30 @@ export function AdditionalSettings() {
   const placeholders = useMemo(() => getPlaceholders(), []);
 
   // Generic toggle function for any boolean setting - eliminates repetition
-  const toggleSetting = useCallback(<K extends keyof typeof settings>(key: K) => {
-    updateSettings({ [key]: !settings[key] } as any);
-  }, [settings, updateSettings]);
+  const toggleSetting = useCallback(
+    <K extends keyof typeof settings>(key: K) => {
+      updateSettings({ [key]: !settings[key] });
+    },
+    [settings, updateSettings]
+  );
 
   // Memoize tooltip content to avoid recreation
-  const backendTooltipContent = useMemo(() => 
-    t(
-      'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
-      'Filter metric names by regex search, using an additional call on the Prometheus API.'
-    ), []
+  const backendTooltipContent = useMemo(
+    () =>
+      t(
+        'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
+        'Filter metric names by regex search, using an additional call on the Prometheus API.'
+      ),
+    []
   );
 
   // Memoize disabled states for better performance
-  const isMetadataSearchDisabled = useMemo(() => 
-    settings.useBackend || !settings.hasMetadata,
+  const isMetadataSearchDisabled = useMemo(
+    () => settings.useBackend || !settings.hasMetadata,
     [settings.useBackend, settings.hasMetadata]
   );
 
-  const isNullMetadataDisabled = useMemo(() => 
-    !settings.hasMetadata,
-    [settings.hasMetadata]
-  );
+  const isNullMetadataDisabled = useMemo(() => !settings.hasMetadata, [settings.hasMetadata]);
 
   return (
     <div role="group">
@@ -80,14 +82,14 @@ export function AdditionalSettings() {
         onChange={() => toggleSetting('fullMetaSearch')}
         label={placeholders.metadataSearchSwitch}
       />
-      
+
       <SwitchItem
         value={settings.includeNullMetadata}
         disabled={isNullMetadataDisabled}
         onChange={() => toggleSetting('includeNullMetadata')}
         label={placeholders.includeNullMetadata}
       />
-      
+
       <SwitchItem
         value={settings.disableTextWrap}
         onChange={() => toggleSetting('disableTextWrap')}
@@ -97,7 +99,7 @@ export function AdditionalSettings() {
           </Trans>
         }
       />
-      
+
       <SwitchItem
         testId={metricsModaltestIds.setUseBackend}
         value={settings.useBackend}
@@ -105,7 +107,7 @@ export function AdditionalSettings() {
         label={placeholders.setUseBackend}
         tooltip={{
           content: backendTooltipContent,
-          placement: 'bottom-end'
+          placement: 'bottom-end',
         }}
       />
     </div>
