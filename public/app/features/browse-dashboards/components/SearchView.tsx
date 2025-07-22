@@ -11,16 +11,14 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { useHasSelection } from '../state/hooks';
 import { setAllSelection, setItemSelectionState } from '../state/slice';
+import { BrowseDashboardsPermissions } from '../types';
 
 import { canEditItemType } from './utils';
 
 interface SearchViewProps {
   height: number;
   width: number;
-  permissions: {
-    canEditFolders: boolean;
-    canEditDashboards: boolean;
-  };
+  permissions: BrowseDashboardsPermissions;
   searchState: SearchState;
   searchStateManager: SearchStateManager;
   emptyState?: ReactNode;

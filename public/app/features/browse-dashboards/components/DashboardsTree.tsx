@@ -11,7 +11,13 @@ import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardsTreeCellProps, DashboardsTreeColumn, DashboardsTreeItem, SelectionState } from '../types';
+import {
+  DashboardsTreeCellProps,
+  DashboardsTreeColumn,
+  DashboardsTreeItem,
+  SelectionState,
+  BrowseDashboardsPermissions,
+} from '../types';
 
 import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
@@ -24,10 +30,7 @@ interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
-  permissions: {
-    canEditFolders: boolean;
-    canEditDashboards: boolean;
-  };
+  permissions: BrowseDashboardsPermissions;
   isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
@@ -208,10 +211,7 @@ interface VirtualListRowProps {
     onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
     treeID: string;
-    permissions: {
-      canEditFolders: boolean;
-      canEditDashboards: boolean;
-    };
+    permissions: BrowseDashboardsPermissions;
   };
 }
 

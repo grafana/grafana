@@ -15,7 +15,7 @@ import {
   useLoadNextChildrenPage,
 } from '../state/hooks';
 import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
-import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
+import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -23,10 +23,7 @@ interface BrowseViewProps {
   height: number;
   width: number;
   folderUID: string | undefined;
-  permissions: {
-    canEditFolders: boolean;
-    canEditDashboards: boolean;
-  };
+  permissions: BrowseDashboardsPermissions;
 }
 
 export function BrowseView({ folderUID, width, height, permissions }: BrowseViewProps) {

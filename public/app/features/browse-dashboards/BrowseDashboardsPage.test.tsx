@@ -1,4 +1,4 @@
-import { render as rtlRender, screen } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
@@ -370,13 +370,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
     });
 
-    it('should not show Move and Delete actions when user has dashboards:write but lacks delete permissions', async () => {
+    it('should not show checkbox for folder when user has dashboards:write but lacks folder edit permissions', async () => {
       jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
         return {
           canCreateDashboards: true,
+          canEditDashboards: true,
           canCreateFolders: false,
           canDeleteFolders: false,
-          canEditDashboards: true,
           canEditFolders: false,
           canSetPermissions: false,
           canViewPermissions: false,
@@ -385,12 +385,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
       render(<BrowseDashboardsPage queryParams={{}} />);
 
-      // Wait for the page to load
-      await screen.findByRole('heading', { name: folderA.item.title });
+      await waitFor(() => {
+        const checkbox = screen.queryByTestId(
+          selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)
+        );
 
-      const checkbox = screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid));
-
-      expect(checkbox).not.toBeInTheDocument();
+        expect(checkbox).not.toBeInTheDocument();
+      });
     });
   });
 });

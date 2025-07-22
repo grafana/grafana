@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
-import { DashboardViewItemWithUIItems } from '../types';
+import { DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
   return baseId + item.uid;
@@ -58,12 +58,6 @@ export function formatFolderName(folderName?: string): string {
   return result;
 }
 
-export function canEditItemType(
-  itemKind: string,
-  permissions: {
-    canEditFolders: boolean;
-    canEditDashboards: boolean;
-  }
-): boolean {
+export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions): boolean {
   return itemKind === 'folder' ? permissions.canEditFolders : permissions.canEditDashboards;
 }
