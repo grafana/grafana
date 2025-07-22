@@ -7,6 +7,7 @@ on:
       - go.*
     branches:
       - main
+      - release-*.*.*
   pull_request:
 
 permissions:
@@ -22,7 +23,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
-      - run: make gen-go
       - name: golangci-lint
         uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdcfd
         with:

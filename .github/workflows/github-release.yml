@@ -34,6 +34,7 @@ on:
 permissions:
   # contents: write allows the action(s) to create github releases
   contents: write
+  id-token: write
 
 jobs:
   main:
@@ -44,6 +45,5 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
           latest: ${{ inputs.latest }}
           dry_run: ${{ inputs.dry_run }}

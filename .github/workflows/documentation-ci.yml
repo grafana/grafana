@@ -1,14 +1,21 @@
 name: Documentation CI
 on:
   pull_request:
-    branches: ["main"]
+    branches: ["main", "release-*"]
     paths: ["docs/sources/**"]
   workflow_dispatch:
+
+permissions: {}
+
 jobs:
   vale:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      security-events: write
     container:
-      image: grafana/vale:latest
+      image: grafana/vale:latest # zizmor: ignore[unpinned-images]
     steps:
       - uses: actions/checkout@v4
         with:

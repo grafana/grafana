@@ -6,15 +6,31 @@ on:
       - main
       - release-*.*.*
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
+permissions: {}
+
 jobs:
   sqlite:
-    name: Sqlite
+    strategy:
+      matrix:
+        shard: [
+          1/8, 2/8, 3/8, 4/8,
+          5/8, 6/8, 7/8, 8/8,
+        ]
+      fail-fast: false
+
+    name: Sqlite (${{ matrix.shard }})
     runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,12 +41,26 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - run: |
-          make gen-go
-          go test -tags=sqlite -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          go test -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   mysql:
-    name: MySQL
+    strategy:
+      matrix:
+        shard: [
+          1/8, 2/8, 3/8, 4/8,
+          5/8, 6/8, 7/8, 8/8,
+        ]
+      fail-fast: false
+
+    name: MySQL (${{ matrix.shard }})
     runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
@@ -48,19 +78,39 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
-      - run: |
-          sudo apt-get update -yq && sudo apt-get install mariadb-client
-          cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
-          make gen-go
-          go test -tags=mysql -p=1 -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+      - name: Setup MySQL devenv
+        run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   postgres:
-    name: Postgres
+    strategy:
+      matrix:
+        shard: [
+          1/8, 2/8, 3/8, 4/8,
+          5/8, 6/8, 7/8, 8/8,
+        ]
+      fail-fast: false
+
+    name: Postgres (${{ matrix.shard }})
     runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
+    env:
+      GRAFANA_TEST_DB: postgres
+      PGPASSWORD: grafanatest
+      POSTGRES_HOST: 127.0.0.1
     services:
       postgres:
         image: postgres:12.3-alpine
@@ -73,17 +123,46 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
-      - env:
-          GRAFANA_TEST_DB: postgres
-          PGPASSWORD: grafanatest
-          POSTGRES_HOST: 127.0.0.1
+      - name: Setup Postgres devenv
+        run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
-          sudo apt-get update -yq && sudo apt-get install postgresql-client
-          psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-          make gen-go
-          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+
+  # This is the job that is actually required by rulesets.
+  # We want to only require one job instead of all the individual tests and shards.
+  # Future work also allows us to start skipping some tests based on changed files.
+  required-backend-integration-tests:
+    needs:
+      - mysql
+      - postgres
+      - sqlite
+    # always() is the best function here.
+    # success() || failure() will skip this function if any need is also skipped.
+    # That means conditional test suites will fail the entire requirement check.
+    if: always()
+
+    name: All backend integration tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test suites
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        run: |
+          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+          echo "$FAILURES"
+          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+            exit 1
+          fi
+          echo "All OK!"
