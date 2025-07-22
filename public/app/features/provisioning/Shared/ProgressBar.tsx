@@ -21,7 +21,7 @@ const ProgressBar = ({ progress, topBottomSpacing }: ProgressBarProps) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, { topBottomSpacing = 2 }: { topBottomSpacing?: number }) => ({
+const getStyles = (theme: GrafanaTheme2, topBottomSpacing = 2) => ({
   container: css({
     height: '10px',
     width: '400px',
