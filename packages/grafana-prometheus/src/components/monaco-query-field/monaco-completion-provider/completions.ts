@@ -278,7 +278,7 @@ export async function getCompletions(
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
     case 'IN_FUNCTION':
-      return triggerType === 'full' 
+      return triggerType === 'full'
         ? getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange)
         : getFunctionsOnlyCompletions();
     case 'AT_ROOT': {

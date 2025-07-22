@@ -54,7 +54,7 @@ function shouldUseFull(
   word: monacoTypes.editor.IWordAtPosition | null,
   model: monacoTypes.editor.ITextModel,
   position: monacoTypes.Position,
-  isManualTrigger: boolean,
+  isManualTrigger: boolean
 ): boolean {
   // Manual trigger (Ctrl+Space)
   if (isManualTrigger) {
@@ -85,7 +85,7 @@ function shouldUseFull(
 export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider,
-  timeRange: TimeRange,
+  timeRange: TimeRange
 ): { provider: monacoTypes.languages.CompletionItemProvider; state: { isManualTriggerRequested: boolean } } {
   // Short debounce to catch rapid typing
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -99,17 +99,17 @@ export function getCompletionProvider(
   const provideCompletionItems = (
     model: monacoTypes.editor.ITextModel,
     position: monacoTypes.Position,
-    context: monacoTypes.languages.CompletionContext,
+    context: monacoTypes.languages.CompletionContext
   ): monacoTypes.languages.ProviderResult<monacoTypes.languages.CompletionList> => {
     const word = model.getWordAtPosition(position);
     const range =
       word != null
         ? monaco.Range.lift({
-          startLineNumber: position.lineNumber,
-          endLineNumber: position.lineNumber,
-          startColumn: word.startColumn,
-          endColumn: word.endColumn,
-        })
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: word.startColumn,
+            endColumn: word.endColumn,
+          })
         : monaco.Range.fromPositions(position);
 
     const isManualTrigger = state.isManualTriggerRequested;
@@ -152,7 +152,7 @@ export function getCompletionProvider(
           dataProvider,
           timeRange,
           updatedWord?.word,
-          updatedTriggerType,
+          updatedTriggerType
         ).then(resolve);
       }, DEBOUNCE_DELAY);
     });
@@ -165,7 +165,7 @@ export function getCompletionProvider(
     dataProvider: DataProvider,
     timeRange: TimeRange,
     wordText?: string,
-    triggerType: TriggerType = 'full',
+    triggerType: TriggerType = 'full'
   ): Promise<monacoTypes.languages.CompletionList> => {
     // documentation says `position` will be "adjusted" in `getOffsetAt`
     // i don't know what that means, to be sure i clone it
