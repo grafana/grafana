@@ -79,30 +79,32 @@ export default function TracePageActions(props: TracePageActionsProps) {
     }
 
     return (
-      <button onClick={() => openAssistant?.({ 
-        prompt: `Help me summarize this trace view`,
-        context: [
-          createContext(ItemDataType.Datasource, {
-            datasourceName: datasourceName || 'unknown',
-            datasourceUid: datasourceUid || 'unknown',
-            datasourceType: datasourceType || 'unknown',
-          }),
-          createContext(ItemDataType.Structured, {
-            title: t('explore.trace-page-actions.trace-view-query', 'Trace View Query'),
-            data: {
-              query: traceId,
-            },
-          }),
-        ],
-      })}>
-        <Trans i18nKey="explore.trace-page-actions.open-assistant">Analyze trace</Trans>
-      </button>
+      <ActionButton
+        onClick={() => openAssistant?.({ 
+          prompt: `Help me summarize this trace view`,
+          context: [
+            createContext(ItemDataType.Datasource, {
+              datasourceName: datasourceName || 'unknown',
+              datasourceUid: datasourceUid || 'unknown',
+              datasourceType: datasourceType || 'unknown',
+            }),
+            createContext(ItemDataType.Structured, {
+              title: t('explore.trace-page-actions.trace-view-query', 'Trace View Query'),
+              data: {
+                query: traceId,
+              },
+            }),
+          ],
+        })}
+        ariaLabel={t('explore.trace-page-actions.ariaLabel-analyze-trace', 'Analyze Trace')}
+        label={t('explore.trace-page-actions.label-analyze-trace', 'Analyze Trace')}
+        icon={'ai-sparkle'}
+      />
     );
   }
 
   return (
     <div className={styles.TracePageActions}>
-      <AssistantButton />
       {config.feedbackLinksEnabled && (
         <div className={styles.feedbackContainer}>
           <Icon name="comment-alt-message" />
@@ -121,6 +123,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
         </div>
       )}
 
+      <AssistantButton />
       <ActionButton
         onClick={copyTraceId}
         ariaLabel={t('explore.trace-page-actions.ariaLabel-copy-trace-id', 'Copy Trace ID')}
