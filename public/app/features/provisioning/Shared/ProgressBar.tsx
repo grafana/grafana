@@ -8,7 +8,7 @@ interface ProgressBarProps {
   topBottomSpacing?: number;
 }
 const ProgressBar = ({ progress, topBottomSpacing }: ProgressBarProps) => {
-  const styles = useStyles2(getStyles, { topBottomSpacing });
+  const styles = useStyles2(getStyles, topBottomSpacing);
 
   if (progress === undefined) {
     return null;
