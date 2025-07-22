@@ -554,7 +554,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	require.NoError(t, err)
 
 	// Now, we import it, such that it may exist
-	// The sync may not be necesary as the sync may have happened automatically at this point
+	// The sync may not be necessary as the sync may have happened automatically at this point
 	helper.SyncAndWait(t, repo, nil)
 
 	// Make sure the repo can read and validate the file
