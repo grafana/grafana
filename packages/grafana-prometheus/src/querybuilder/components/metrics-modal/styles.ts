@@ -34,19 +34,8 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
         minWidth: '100%',
       },
     }),
-    selectWrapper: css({
-      marginBottom: theme.spacing(1),
-    }),
-    resultsAmount: css({
-      color: theme.colors.text.secondary,
-      fontSize: '0.85rem',
-      padding: '0 0 4px 0',
-    }),
     resultsData: css({
       margin: `4px 0 ${theme.spacing(2)} 0`,
-    }),
-    resultsDataCount: css({
-      margin: 0,
     }),
     resultsDataFiltered: css({
       color: theme.colors.text.secondary,
@@ -87,16 +76,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     }),
     noBorder: css({
       border: 'none',
-    }),
-    resultsPerPageLabel: css({
-      color: theme.colors.text.secondary,
-      opacity: '75%',
-      paddingTop: '5px',
-      fontSize: '0.85rem',
-      marginRight: '8px',
-    }),
-    resultsPerPageWrapper: css({
-      display: 'flex',
     }),
   };
 };

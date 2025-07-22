@@ -23,14 +23,9 @@ import { PromVisualQuery } from '../../types';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
-import {
-  DEFAULT_RESULTS_PER_PAGE,
-  MAXIMUM_RESULTS_PER_PAGE,
-  MetricsModalContextProvider,
-  useMetricsModal,
-} from './MetricsModalContext';
+import { MetricsModalContextProvider, useMetricsModal } from './MetricsModalContext';
 import { ResultsTable } from './ResultsTable';
-import { calculatePageList, calculateResultsPerPage, getPlaceholders, getPromTypes } from './helpers';
+import { calculatePageList, getPlaceholders, getPromTypes } from './helpers';
 import { getStyles } from './styles';
 import { metricsModaltestIds } from './testIds';
 import { PromFilterOption } from './types';
@@ -125,7 +120,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
           <Toggletip
             aria-label={t(
               'grafana-prometheus.querybuilder.metrics-modal.aria-label-additional-settings',
-              'Additional settings',
+              'Additional settings'
             )}
             content={<AdditionalSettings />}
             placement="bottom-end"
@@ -179,49 +174,11 @@ const MetricsModalContent = (props: MetricsModalProps) => {
         {metricsData && <ResultsTable onChange={onChange} onClose={onClose} query={query} />}
       </div>
       <div className={styles.resultsFooter}>
-        {/*<div className={styles.resultsAmount}>
-          <Trans
-            i18nKey="grafana-prometheus.querybuilder.metrics-modal.results-amount"
-            values={{ num: state.filteredMetricCount }}
-            count={state.totalMetricCount}
-          >
-            Showing {'{{num}}'} of {'{{count}}'} results
-          </Trans>
-        </div>*/}
         <Pagination
           currentPage={pagination.pageNum ?? 1}
           numberOfPages={calculatePageList(metricsData, pagination.resultsPerPage).length}
           onNavigate={(val: number) => setPagination({ ...pagination, pageNum: val ?? 1 })}
         />
-        <div className={styles.resultsPerPageWrapper}>
-          <p className={styles.resultsPerPageLabel}>
-            <Trans i18nKey="grafana-prometheus.querybuilder.metrics-modal.results-per-page">Results per page</Trans>
-          </p>
-          <Input
-            data-testid={metricsModaltestIds.resultsPerPage}
-            value={calculateResultsPerPage(
-              pagination.resultsPerPage,
-              DEFAULT_RESULTS_PER_PAGE,
-              MAXIMUM_RESULTS_PER_PAGE,
-            )}
-            placeholder={t(
-              'grafana-prometheus.querybuilder.metrics-modal.placeholder-results-per-page',
-              'results per page',
-            )}
-            width={10}
-            title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
-            type="number"
-            onInput={(e) => {
-              const value = +e.currentTarget.value;
-
-              if (isNaN(value) || value >= MAXIMUM_RESULTS_PER_PAGE) {
-                return;
-              }
-
-              setPagination({ ...pagination, resultsPerPage: value });
-            }}
-          />
-        </div>
       </div>
     </Modal>
   );
