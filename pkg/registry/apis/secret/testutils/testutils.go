@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -70,7 +70,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	// Initialize access client + access control
-	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	accessControl := acimpl.ProvideAccessControl(nil)
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl, accesscontrol.ResourceAuthorizerOptions{
 		Resource: "securevalues",
 		Attr:     "uid",
@@ -132,6 +132,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		EncryptedValueStorage:      encryptedValueStorage,
 		SQLKeeper:                  sqlKeeper,
 		Database:                   database,
+		AccessClient:               accessClient,
 	}
 }
 
@@ -143,6 +144,7 @@ type Sut struct {
 	EncryptedValueStorage      contracts.EncryptedValueStorage
 	SQLKeeper                  *sqlkeeper.SQLKeeper
 	Database                   *database.Database
+	AccessClient               types.AccessClient
 }
 
 type CreateSvConfig struct {

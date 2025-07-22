@@ -51,7 +51,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		Resources: []schema.GroupResource{
 			{Group: folders.GROUP, Resource: folders.RESOURCE},
 			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
-			{Group: dashboard.GROUP, Resource: dashboard.LIBRARY_PANEL_RESOURCE},
 		},
 		LargeObjects: nil, // TODO... from config
 		Progress: func(count int, msg string) {
