@@ -65,6 +65,8 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
   toggleDetails: (log: LogListModel) => void;
+  isAssistantAvailable: boolean;
+  openAssistantByLog: ((log: LogListModel) => void) | undefined;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -182,8 +184,6 @@ export interface Props {
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
-  isAssistantAvailable: boolean;
-  openAssistantByLog: ((log: LogListModel) => void) | undefined;
 }
 
 export const LogListContextProvider = ({

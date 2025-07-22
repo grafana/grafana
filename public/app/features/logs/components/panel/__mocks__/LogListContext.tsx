@@ -131,8 +131,6 @@ export const defaultProps: Props = {
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
   wrapLogMessage: true,
-  isAssistantAvailable: false,
-  openAssistantByLog: () => {},
 };
 
 export const LogListContextProvider = ({
