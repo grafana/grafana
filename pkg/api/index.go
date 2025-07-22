@@ -69,8 +69,18 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	// Locale is used for some number and date/time formatting, whereas language is used just for
 	// translating words in the interface
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
+	acceptLangHeaderFirstValue := ""
+
+	if len(acceptLangHeader) > 0 {
+		parts := strings.Split(acceptLangHeader, ",")
+		acceptLangHeaderFirstValue = parts[0]
+	}
+
 	locale := "en-US" // default to en formatting, but use the accept-lang header or user's preference
-	var regionalFormat string
+	if acceptLangHeaderFirstValue != "" {
+		locale = acceptLangHeaderFirstValue
+	}
+
 	language := "" // frontend will set the default language
 	urlPrefs := getURLPrefs(c)
 
@@ -80,11 +90,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		language = prefs.JSONData.Language
 	}
 
-	if len(acceptLangHeader) > 0 {
-		parts := strings.Split(acceptLangHeader, ",")
-		locale = parts[0]
-	}
-
+	var regionalFormat string
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
 		regionalFormat = "en"
 
@@ -96,14 +102,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		// 1. URL parameter
 		// 2. regionalFormat User preference
 		// 3. Accept-Language header
-		// 4. Default to locale (Accept-Language header)
-		// 5. Language preference
+		// 4. Language preference
 		if urlPrefs.RegionalFormat != "" {
 			regionalFormat = urlPrefs.RegionalFormat
 		} else if prefs.JSONData.RegionalFormat != "" {
 			regionalFormat = prefs.JSONData.RegionalFormat
-		} else if locale != "" {
-			regionalFormat = locale
+		} else if acceptLangHeaderFirstValue != "" {
+			regionalFormat = acceptLangHeaderFirstValue
 		} else if language != "" {
 			regionalFormat = language
 		}
