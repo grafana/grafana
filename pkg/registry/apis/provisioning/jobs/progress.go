@@ -256,8 +256,13 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 
 	// Check for errors during execution
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
-		jobStatus.State = provisioning.JobStateError
-		jobStatus.Message = "completed with errors"
+		if r.TooManyErrors() != nil {
+			jobStatus.Message = "completed with too many errors"
+			jobStatus.State = provisioning.JobStateError
+		} else {
+			jobStatus.Message = "completed with errors"
+			jobStatus.State = provisioning.JobStateWarning
+		}
 	}
 
 	// Override message if progress have a more explicit message
