@@ -455,8 +455,11 @@
 /packages/grafana-data/src/utils/fuzzySearch* @grafana/grafana-search-navigate-organise
 /packages/grafana-data/src/utils/flotPairs* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/location* @grafana/grafana-search-navigate-organise
+/packages/grafana-data/src/utils/LocalStorageValueProvider.tsx @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/namedColorsPalette* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/nodeGraph.ts @grafana/observability-traces-and-profiling
+/packages/grafana-data/src/utils/OptionsUIBuilders.ts @grafana/dashboards-squad
+/packages/grafana-data/src/utils/Registry* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/selectUtils.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/store* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/testdata/ @grafana/dataviz-squad
@@ -517,7 +520,6 @@
 /packages/grafana-runtime/src/components/QueryEditorWithMigration* @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
-/packages/grafana-runtime/src/components/PluginPage.tsx @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/services/pluginExtensions @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/services/CorrelationsService.ts @grafana/datapro
 /packages/grafana-runtime/src/services/LocationService.test.tsx @grafana/grafana-search-navigate-organise
@@ -525,10 +527,14 @@
 /packages/grafana-runtime/src/services/LocationSrv.ts @grafana/grafana-search-navigate-organise
 /packages/grafana-runtime/src/services/live.ts @grafana/dashboards-squad
 /packages/grafana-runtime/src/utils/chromeHeaderHeight.ts @grafana/grafana-search-navigate-organise
+/packages/grafana-runtime/src/utils/licensing.ts @grafana/grafana-operator-experience-squad
+/packages/grafana-runtime/src/utils/logging.ts @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/utils/publicDashboardQueryHandler.ts @grafana/grafana-operator-experience-squad
 /packages/grafana-runtime/src/utils/migrationHandler* @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /packages/grafana-runtime/src/utils/plugin.ts @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/utils/rbac.ts @grafana/identity-access-team
 /packages/grafana-runtime/src/utils/returnToPrevious.ts @grafana/grafana-search-navigate-organise
+/packages/grafana-runtime/src/utils/userStorage* @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
 # @grafana/schema
 /packages/grafana-schema/ @grafana/grafana-app-platform-squad
