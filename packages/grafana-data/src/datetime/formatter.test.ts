@@ -11,6 +11,7 @@ describe('dateTimeFormat (regionalFormatPreference)', () => {
   let mockGetFeatureToggle: jest.SpyInstance;
 
   beforeAll(() => {
+    initRegionalFormatForTests('en-AU');
     mockGetFeatureToggle = jest.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
       return featureName === 'localeFormatPreference';
     });

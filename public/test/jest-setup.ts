@@ -13,7 +13,6 @@ jest.isolateModulesAsync(async () => {
     appEvents: testAppEvents,
   }));
 });
-import { initRegionalFormatForTests } from '@grafana/i18n';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 import 'blob-polyfill';
@@ -24,9 +23,6 @@ import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
 
 const global = window as any;
-
-const regionalFormatPreference = 'en-AU';
-initRegionalFormatForTests(regionalFormatPreference);
 
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {

@@ -1,3 +1,5 @@
+import { initRegionalFormatForTests } from '@grafana/i18n';
+
 import { RawTimeRange, TimeRange } from '../types/time';
 import * as featureToggles from '../utils/featureToggles';
 
@@ -395,11 +397,10 @@ describe('Range Utils', () => {
   });
 
   describe('describeTimeRange - localeFormatPreference enabled', () => {
-    // Tests default to en-AU
-
     let mockGetFeatureToggle: jest.SpyInstance;
 
     beforeAll(() => {
+      initRegionalFormatForTests('en-AU');
       mockGetFeatureToggle = jest.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
         return featureName === 'localeFormatPreference';
       });
