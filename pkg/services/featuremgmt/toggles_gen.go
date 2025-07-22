@@ -767,10 +767,6 @@ const (
 	// Enables the temporary themes for GrafanaCon
 	FlagGrafanaconThemes = "grafanaconThemes"
 
-	// FlagPluginsCDNSyncLoader
-	// Loads plugins from CDN synchronously
-	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
-
 	// FlagAlertingJiraIntegration
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
