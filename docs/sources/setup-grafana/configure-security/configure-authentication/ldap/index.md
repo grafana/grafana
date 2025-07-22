@@ -134,6 +134,10 @@ email =  "email"
 Whenever you modify the ldap.toml file, you must restart Grafana in order for the change(s) to take effect.
 {{< /admonition >}}
 
+### Using the Grafana user interface
+
+You can configure LDAP using the Grafana user interface by navigating to **Administration > Authentication > LDAP**. Please refer to the [LDAP user interface](../ldap-ui/) documentation for more information.
+
 ### Using environment variables
 
 You can interpolate variables in the TOML configuration from environment variables. For instance, you could externalize your `bind_password` that way:
@@ -141,28 +145,6 @@ You can interpolate variables in the TOML configuration from environment variabl
 ```bash
 bind_password = "${LDAP_ADMIN_PASSWORD}"
 ```
-
-## LDAP debug view
-
-Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. Only Grafana admins can use the LDAP debug view.
-
-Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
-
-{{< figure src="/static/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP testing" >}}
-
-To use the debug view, complete the following steps:
-
-1.  Type the username of a user that exists within any of your LDAP server(s)
-1.  Then, press "Run"
-1.  If the user is found within any of your LDAP instances, the mapping information is displayed.
-
-Note that this does not work if you are using the single bind configuration outlined below.
-
-{{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP mapping displayed" >}}
-
-[Grafana Enterprise](../../../../introduction/grafana-enterprise/) users with [enhanced LDAP integration](../enhanced-ldap/) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.
-
-{{< figure src="/static/img/docs/ldap_sync_debug.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP sync status" >}}
 
 ### Bind and bind password
 
