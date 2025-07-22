@@ -140,7 +140,10 @@ jobs:
             permission-members: read
         - name: Check if member of grafana org
           id: check-if-grafana-org-memeber
-          run: gh api https://api.github.com/orgs/grafana/members/${{ github.actor }} >/dev/null 2>&1 && echo "is_grafana_org_member=true" >> "$GITHUB_OUTPUT"
+          run: gh api https://api.github.com/orgs/grafana/members/${{ env.ACTOR }} >/dev/null 2>&1 && echo "is_grafana_org_member=true" >> "$GITHUB_OUTPUT"
+          env:
+              GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+              ACTOR: ${{ github.actor }}
         - name: "Auto label internal issues"
           if: steps.check-if-grafana-org-memeber.outputs.is_grafana_org_member == 'true'
           run: gh issue edit "$NUMBER" --add-label "$LABELS"
