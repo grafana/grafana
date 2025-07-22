@@ -15,3 +15,12 @@ Examples:
 
 - [Backend](https://github.com/grafana/grafana/blob/feb2b5878b3e3ec551d64872c35edec2a0187812/pkg/services/authn/clients/session.go#L57): Use the `IsEnabled` function and pass in your feature toggle.
 - [Frontend](https://github.com/grafana/grafana/blob/feb2b5878b3e3ec551d64872c35edec2a0187812/public/app/features/search/service/folders.ts#L14): Check the config for your feature toggle.
+
+## Enabling toggles in development
+
+Add the feature toggle to the feature_toggle section in your custom.ini, for example:
+
+```
+[feature_toggles]
+localeFormatPreference=true
+```
