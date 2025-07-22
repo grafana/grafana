@@ -11,6 +11,7 @@ import { FUNCTIONS } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
 
 import { DataProvider } from './data_provider';
+import { TriggerType } from './monaco-completion-provider';
 import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
@@ -116,10 +117,11 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
 async function getAllFunctionsAndMetricNamesCompletions(
   searchTerm: string | undefined,
   dataProvider: DataProvider,
-  timeRange: TimeRange
+  timeRange: TimeRange,
+  triggerType: TriggerType
 ): Promise<Completion[]> {
   let metricNames: Completion[] = [];
-  if (searchTerm?.length ?? 0 >= 3) {
+  if (triggerType === 'full') {
     metricNames = await getAllMetricNamesCompletions(searchTerm, dataProvider, timeRange);
   }
 
@@ -269,15 +271,17 @@ export async function getCompletions(
   situation: Situation,
   dataProvider: DataProvider,
   timeRange: TimeRange,
-  searchTerm?: string
+  searchTerm?: string,
+  triggerType: TriggerType = 'full'
 ): Promise<Completion[]> {
+  console.log(triggerType);
   switch (situation.type) {
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange);
+      return getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange, triggerType);
     case 'AT_ROOT': {
-      return getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange);
+      return getAllFunctionsAndMetricNamesCompletions(searchTerm, dataProvider, timeRange, triggerType);
     }
     case 'EMPTY': {
       const metricNames = await getAllMetricNamesCompletions(searchTerm, dataProvider, timeRange);

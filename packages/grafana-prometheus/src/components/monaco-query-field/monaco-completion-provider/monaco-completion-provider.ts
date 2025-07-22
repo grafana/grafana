@@ -7,6 +7,8 @@ import { DataProvider } from './data_provider';
 import { getSituation } from './situation';
 import { NeverCaseError } from './util';
 
+export type TriggerType = 'partial' | 'full';
+
 export function getSuggestOptions(): monacoTypes.editor.ISuggestOptions {
   return {
     // monaco-editor sometimes provides suggestions automatically, i am not
@@ -50,7 +52,7 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
 export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider,
-  timeRange: TimeRange
+  timeRange: TimeRange,
 ): { provider: monacoTypes.languages.CompletionItemProvider; state: { isManualTriggerRequested: boolean } } {
   // Debounce mechanism to delay completions after user stops typing
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -89,7 +91,7 @@ export function getCompletionProvider(
   const provideCompletionItems = (
     model: monacoTypes.editor.ITextModel,
     position: monacoTypes.Position,
-    context: monacoTypes.languages.CompletionContext
+    context: monacoTypes.languages.CompletionContext,
   ): monacoTypes.languages.ProviderResult<monacoTypes.languages.CompletionList> => {
     // Set up deletion tracking once per model
     if (!isTrackingSetup) {
@@ -101,14 +103,13 @@ export function getCompletionProvider(
     const range =
       word != null
         ? monaco.Range.lift({
-            startLineNumber: position.lineNumber,
-            endLineNumber: position.lineNumber,
-            startColumn: word.startColumn,
-            endColumn: word.endColumn,
-          })
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: word.startColumn,
+          endColumn: word.endColumn,
+        })
         : monaco.Range.fromPositions(position);
 
-    // Check if we have at least 3 characters typed for word completion
     // Allow completions for trigger characters (like {, [, etc.) regardless of length
     const triggerChars = ['{', ',', '[', '(', '=', '~', ' ', '"'];
     const isTriggeredByChar = triggerChars.some(
@@ -118,7 +119,7 @@ export function getCompletionProvider(
           endLineNumber: position.lineNumber,
           startColumn: Math.max(1, position.column - 1),
           endColumn: position.column,
-        }) === char
+        }) === char,
     );
 
     // Check if this is a manual trigger (Ctrl+Space) using our custom flag
@@ -132,39 +133,44 @@ export function getCompletionProvider(
       return executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word);
     }
 
-    // For word completions, check if we should trigger based on 3-character increments
-    if (word && word.word.length >= 3) {
-      const currentWord = word.word;
-      const currentWordLength = currentWord.length;
-
-      // Reset tracking if word changed (user moved cursor or started typing a different word)
-      if (state.lastTriggeredWord && !currentWord.startsWith(state.lastTriggeredWord)) {
-        state.lastTriggeredWordLength = 0;
-        state.lastTriggeredWord = '';
-      }
-
-      // Check if we should trigger completion based on 3-character increments
-      const shouldTrigger =
-        (state.lastTriggeredWordLength === 0 && currentWordLength >= 3) || // First 3 characters
-        (state.lastTriggeredWordLength > 0 && currentWordLength >= state.lastTriggeredWordLength + 3); // Next 3 characters
-
-      if (shouldTrigger) {
-        if (debounceTimer) {
-          clearTimeout(debounceTimer);
-        }
-
-        return new Promise((resolve) => {
-          debounceTimer = setTimeout(() => {
-            state.lastTriggeredWordLength = currentWordLength;
-            state.lastTriggeredWord = currentWord;
-            executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word).then(resolve);
-          }, DEBOUNCE_DELAY);
-        });
-      }
+    if (!word) {
+      // If we don't meet the criteria, return empty suggestions
+      return { suggestions: [], incomplete: false };
     }
 
-    // If we don't meet the criteria, return empty suggestions
-    return { suggestions: [], incomplete: false };
+    const currentWord = word.word;
+    const currentWordLength = currentWord.length;
+
+    // Reset tracking if word changed (user moved cursor or started typing a different word)
+    if (state.lastTriggeredWord && !currentWord.startsWith(state.lastTriggeredWord)) {
+      state.lastTriggeredWordLength = 0;
+      state.lastTriggeredWord = '';
+    }
+
+    // Check if we should trigger completion based on 3-character increments
+    const threeCharTrigger =
+      (state.lastTriggeredWordLength === 0 && currentWordLength > 3) ||
+      (state.lastTriggeredWordLength > 0 && currentWordLength >= state.lastTriggeredWordLength + 3); // Next 3 characters
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    return new Promise((resolve) => {
+      debounceTimer = setTimeout(() => {
+        state.lastTriggeredWordLength = currentWordLength;
+        state.lastTriggeredWord = currentWord;
+        executeCompletionLogic(
+          model,
+          position,
+          range,
+          dataProvider,
+          timeRange,
+          word?.word,
+          threeCharTrigger ? 'full' : 'partial',
+        ).then(resolve);
+      }, DEBOUNCE_DELAY);
+    });
   };
 
   const executeCompletionLogic = async (
@@ -173,7 +179,8 @@ export function getCompletionProvider(
     range: monacoTypes.Range,
     dataProvider: DataProvider,
     timeRange: TimeRange,
-    wordText?: string
+    wordText?: string,
+    triggerType: TriggerType = 'full',
   ): Promise<monacoTypes.languages.CompletionList> => {
     // documentation says `position` will be "adjusted" in `getOffsetAt`
     // i don't know what that means, to be sure i clone it
@@ -196,7 +203,9 @@ export function getCompletionProvider(
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
     const completionsPromise =
-      situation != null ? getCompletions(situation, dataProvider, timeRange, wordText) : Promise.resolve([]);
+      situation != null
+        ? getCompletions(situation, dataProvider, timeRange, wordText, triggerType)
+        : Promise.resolve([]);
 
     return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
