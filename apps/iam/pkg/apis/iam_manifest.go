@@ -7,6 +7,7 @@ package apis
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -14,126 +15,82 @@ import (
 	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
-var ()
-
 var appManifestData = app.ManifestData{
 	AppName: "iam",
 	Group:   "iam.grafana.app",
-	Kinds: []app.ManifestKind{
+	Versions: []app.ManifestVersion{
 		{
-			Kind:       "GlobalRole",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
+			Name:   "v0alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
 				{
-					Name: "v0alpha1",
+					Kind:       "GlobalRole",
+					Plural:     "GlobalRoles",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "GlobalRoleBinding",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
+					Kind:       "GlobalRoleBinding",
+					Plural:     "GlobalRoleBindings",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "CoreRole",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
+					Kind:       "CoreRole",
+					Plural:     "CoreRoles",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "Role",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
+					Kind:       "Role",
+					Plural:     "Roles",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "RoleBinding",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
+					Kind:       "RoleBinding",
+					Plural:     "RoleBindings",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "ResourcePermission",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
+					Kind:       "ResourcePermission",
+					Plural:     "ResourcePermissions",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "User",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
-					Admission: &app.AdmissionCapabilities{
-						Validation: &app.ValidationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
-					},
+					Kind:       "User",
+					Plural:     "Users",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "Team",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
+					Kind:       "Team",
+					Plural:     "Teams",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "TeamBinding",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
+					Kind:       "TeamBinding",
+					Plural:     "TeamBindings",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
-			},
-		},
 
-		{
-			Kind:       "ServiceAccount",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v0alpha1",
+					Kind:       "ServiceAccount",
+					Plural:     "ServiceAccounts",
+					Scope:      "Namespaced",
+					Conversion: false,
 				},
 			},
 		},
@@ -165,5 +122,18 @@ var kindVersionToGoType = map[string]resource.Kind{
 // If there is no association for the provided Kind and Version, exists will return false.
 func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exists bool) {
 	goType, exists = kindVersionToGoType[fmt.Sprintf("%s/%s", kind, version)]
+	return goType, exists
+}
+
+var customRouteToGoResponseType = map[string]any{}
+
+// ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
+// kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
+// If there is no association for the provided kind, version, custom route path, and method, exists will return false.
+func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoResponseType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
 	return goType, exists
 }

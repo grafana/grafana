@@ -21,9 +21,8 @@ type DecryptSecureValue struct {
 }
 
 var (
-	ErrSecureValueNotFound            = errors.New("secure value not found")
-	ErrSecureValueAlreadyExists       = errors.New("secure value already exists")
-	ErrSecureValueOperationInProgress = errors.New("an operation is already in progress for the secure value")
+	ErrSecureValueNotFound      = errors.New("secure value not found")
+	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
 )
 
 type ReadOpts struct {

@@ -24,21 +24,14 @@ type DualWriter interface {
 
 func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient resourcepb.ResourceIndexClient,
 	legacyClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles) resourcepb.ResourceIndexClient {
-	if dual.IsEnabled(gr) {
-		return &searchWrapper{
-			dual:          dual,
-			groupResource: gr,
-			unifiedClient: unifiedClient,
-			legacyClient:  legacyClient,
-			features:      features,
-			logger:        log.New("unified-storage.search-client"),
-		}
+	return &searchWrapper{
+		dual:          dual,
+		groupResource: gr,
+		unifiedClient: unifiedClient,
+		legacyClient:  legacyClient,
+		features:      features,
+		logger:        log.New("unified-storage.search-client"),
 	}
-	//nolint:errcheck
-	if ok, _ := dual.ReadFromUnified(context.Background(), gr); ok {
-		return unifiedClient
-	}
-	return legacyClient
 }
 
 type searchWrapper struct {
@@ -76,7 +69,7 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 			if bgErr != nil {
 				s.logger.Error("Background GetStats call to unified failed", "error", bgErr, "timeout", backgroundRequestTimeout)
 			} else {
-				s.logger.Debug("Background GetStats call to unified succeeded", "timeout", backgroundRequestTimeout)
+				s.logger.Debug("Background GetStats call to unified succeeded")
 			}
 		}()
 	}
@@ -109,7 +102,7 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 			if bgErr != nil {
 				s.logger.Error("Background Search call to unified failed", "error", bgErr, "timeout", backgroundRequestTimeout)
 			} else {
-				s.logger.Debug("Background Search call to unified succeeded", "timeout", backgroundRequestTimeout)
+				s.logger.Debug("Background Search call to unified succeeded")
 			}
 		}()
 	}
