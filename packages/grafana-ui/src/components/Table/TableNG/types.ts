@@ -219,12 +219,6 @@ export interface ImageCellProps {
   rowIdx: number;
 }
 
-export interface JSONCellProps {
-  value: TableCellValue;
-  field: Field;
-  rowIdx: number;
-}
-
 export interface DataLinksCellProps {
   field: Field;
   rowIdx: number;
