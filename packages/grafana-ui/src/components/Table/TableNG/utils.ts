@@ -73,10 +73,13 @@ export function shouldTextWrap(field: Field): boolean {
 // matches characters which CSS
 const spaceRegex = /[\s-]/;
 
-export interface GetMaxWrapCellOptions {
+export interface GetRowHeightOptions {
   colWidths: number[];
   avgCharWidth: number;
   wrappedColIdxs: boolean[];
+  calcNumLines: CellNumLinesCalculator;
+  defaultHeight: number;
+  heightOffset?: number;
 }
 
 /**
@@ -84,28 +87,45 @@ export interface GetMaxWrapCellOptions {
  * loop through the fields and their values, determine which cell is going to determine the
  * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
  */
-export function getMaxWrapCell(
+export function getRowHeight(
   fields: Field[],
   rowIdx: number,
-  { colWidths, avgCharWidth, wrappedColIdxs }: GetMaxWrapCellOptions
-): {
-  text: string;
-  idx: number;
-  numLines: number;
-} {
+  { colWidths, avgCharWidth, wrappedColIdxs, calcNumLines, defaultHeight, heightOffset }: GetRowHeightOptions
+): number {
   let maxLines = 1;
-  let maxLinesIdx = -1;
+  let maxLinesIdx = 0;
   let maxLinesText = '';
 
-  // TODO: consider changing how we store this, using a record by column key instead of an array
   for (let i = 0; i < colWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const field = fields[i];
-      // special case: for the header, provide `-1` as the row index.
-      const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
 
+      // if we're not in the header row, handle some special cases for specific cell types
+      if (rowIdx !== -1) {
+        const cellType = getCellOptions(field).type;
+        switch (cellType) {
+          // for data links cells, each link is on its own line in wrap mode.
+          case TableCellDisplayMode.DataLinks: {
+            const linksCount = field.config.links?.length ?? 0;
+            if (linksCount > maxLines) {
+              maxLines = linksCount;
+              maxLinesIdx = i;
+              maxLinesText = '<link titles>';
+            }
+            continue;
+          }
+          default:
+            break;
+        }
+      }
+
+      // special case: for the header, provide `-1` as the row index.
+      let cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellTextRaw != null) {
         const cellText = String(cellTextRaw);
+        if (maxLinesText === '') {
+          maxLinesText = cellText;
+        }
 
         if (spaceRegex.test(cellText)) {
           const charsPerLine = colWidths[i] / avgCharWidth;
@@ -121,7 +141,11 @@ export function getMaxWrapCell(
     }
   }
 
-  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
+  // go with the maximum of either the calculated number of lines from uPlot or from this pass over the data
+  // for non-text-driven heights like DataLinks or Pills. Apply Math.ceil to ensure we round up to the next line.
+  const numLines = Math.ceil(Math.max(calcNumLines(maxLinesText, colWidths[maxLinesIdx]), maxLines));
+
+  return Math.max(defaultHeight, numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING + (heightOffset ?? 0));
 }
 
 /**

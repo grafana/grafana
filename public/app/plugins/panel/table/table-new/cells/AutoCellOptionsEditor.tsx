@@ -1,6 +1,11 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { TableAutoCellOptions, TableColoredBackgroundCellOptions, TableColorTextCellOptions } from '@grafana/schema';
+import {
+  TableAutoCellOptions,
+  TableColoredBackgroundCellOptions,
+  TableColorTextCellOptions,
+  TableDataLinksCellOptions,
+} from '@grafana/schema';
 import { Field, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
@@ -8,7 +13,9 @@ import { TableCellEditorProps } from '../TableCellOptionEditor';
 export const AutoCellOptionsEditor = ({
   cellOptions,
   onChange,
-}: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions | TableColoredBackgroundCellOptions>) => {
+}: TableCellEditorProps<
+  TableAutoCellOptions | TableColorTextCellOptions | TableDataLinksCellOptions | TableColoredBackgroundCellOptions
+>) => {
   // Handle row coloring changes
   const onWrapTextChange = () => {
     cellOptions.wrapText = !cellOptions.wrapText;

@@ -5,10 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksCellProps } from '../types';
-import { getCellLinks } from '../utils';
+import { getCellLinks, shouldTextWrap } from '../utils';
 
 export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
-  const styles = useStyles2(getStyles);
+  const textWrap = shouldTextWrap(field);
+  const styles = useStyles2(getStyles, textWrap);
   const links = useMemo(() => getCellLinks(field, rowIdx!), [field, rowIdx]);
 
   if (!links || links.length === 0) {
@@ -34,20 +35,22 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2 /*, textWrap?: boolean*/) => ({
+const getStyles = (theme: GrafanaTheme2, textWrap?: boolean) => ({
   linkCell: css({
-    display: 'inline', // textWrap ? 'block' : 'inline',
+    display: textWrap ? 'block' : 'inline',
     userSelect: 'text',
     fontWeight: theme.typography.fontWeightMedium,
     whiteSpace: 'nowrap',
-    paddingInline: theme.spacing(1),
-    borderRight: `2px solid ${theme.colors.border.medium}`,
-    '&:first-child': {
-      paddingInlineStart: 0,
-    },
-    '&:last-child': {
-      borderRight: 'none',
-      paddingInlineEnd: 0,
-    },
+    ...(!textWrap && {
+      paddingInline: theme.spacing(1),
+      borderRight: `2px solid ${theme.colors.border.medium}`,
+      '&:first-child': {
+        paddingInlineStart: 0,
+      },
+      '&:last-child': {
+        borderRight: 'none',
+        paddingInlineEnd: 0,
+      },
+    }),
   }),
 });
