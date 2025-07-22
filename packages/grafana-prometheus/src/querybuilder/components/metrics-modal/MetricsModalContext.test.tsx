@@ -1,12 +1,12 @@
-import { act, renderHook, render, waitFor } from '@testing-library/react';
+import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
 import { PrometheusLanguageProviderInterface } from '../../../language_provider';
 
+import { DEFAULT_RESULTS_PER_PAGE, MetricsModalContextProvider, useMetricsModal } from './MetricsModalContext';
 import { generateMetricData } from './helpers';
-import { MetricsModalContextProvider, useMetricsModal, DEFAULT_RESULTS_PER_PAGE } from './MetricsModalContext';
 
 // Mock dependencies
 jest.mock('./helpers', () => ({
