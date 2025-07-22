@@ -91,7 +91,9 @@ export function SaveProvisionedDashboardForm({
   const onBranchSuccess = (ref: string, path: string) => {
     panelEditor?.onDiscard();
     drawer.onClose();
-    navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+    navigate(
+      `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}&repo_type=${request.data?.repository?.type}`
+    );
   };
 
   useProvisionedRequestHandler({

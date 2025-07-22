@@ -1,6 +1,9 @@
+import { capitalize } from 'lodash';
+
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, Stack } from '@grafana/ui';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { commonAlertProps } from './DashboardPreviewBanner';
 
@@ -14,17 +17,28 @@ interface Props {
 }
 
 /**
- * @description This component is used to display a banner when a provisioned dashboard/folder is created or loaded from a new branch in Github.
+ * @description This component is used to display a banner when a provisioned dashboard/folder is created or loaded from a new branch in repo.
  */
 export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }: Props) {
+  const { repoType } = usePullRequestParam();
+
+  // Capitalize the first letter of repoType
+  const capitalizedRepoType = repoType ? capitalize(repoType) : 'repository';
+
   const titleText = isNewPr
     ? t(
         'provisioned-resource-preview-banner.title-created-branch-git-hub',
-        'A new resource has been created in a branch in GitHub.'
+        'A new resource has been created in a branch in {{repoType}}.',
+        {
+          repoType: capitalizedRepoType,
+        }
       )
     : t(
         'provisioned-resource-preview-banner.title-loaded-pull-request-git-hub',
-        'This resource is loaded from a pull request in GitHub.'
+        'This resource is loaded from a pull request in {{repoType}}.',
+        {
+          repoType: capitalizedRepoType,
+        }
       );
 
   if (behindBranch) {
@@ -33,18 +47,23 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
         {...commonAlertProps}
         buttonContent={
           <Stack alignItems="center">
-            {t('provisioned-resource-preview-banner.preview-banner.open-git-hub', 'Open in Github')}
+            {t('provisioned-resource-preview-banner.preview-banner.open-git-hub', 'Open in {{repoType}}', {
+              repoType: capitalizedRepoType,
+            })}
             <Icon name="external-link-alt" />
           </Stack>
         }
         title={t(
           'provisioned-resource-preview-banner.preview-banner.behind-branch',
-          'This resource is behind the branch in GitHub.'
+          'This resource is behind the branch in {{repoType}}.',
+          {
+            repoType: capitalizedRepoType,
+          }
         )}
         onRemove={repoUrl ? () => window.open(textUtil.sanitizeUrl(repoUrl), '_blank') : undefined}
       >
         <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.new-branch">
-          View it in GitHub to see the latest changes.
+          View it in {{ repoType: capitalizedRepoType }} to see the latest changes.
         </Trans>
       </Alert>
     );
@@ -59,11 +78,13 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
           {isNewPr
             ? t(
                 'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-git-hub',
-                'Open pull request in GitHub'
+                'Open pull request in {{repoType}}',
+                { repoType: capitalizedRepoType }
               )
             : t(
                 'provisioned-resource-preview-banner.preview-banner.view-pull-request-in-git-hub',
-                'View pull request in GitHub'
+                'View pull request in {{repoType}}',
+                { repoType: capitalizedRepoType }
               )}
           <Icon name="external-link-alt" />
         </Stack>

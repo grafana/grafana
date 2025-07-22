@@ -83,7 +83,7 @@ export function DeleteProvisionedDashboardForm({
     panelEditor?.onDiscard();
     onDismiss();
     navigate(
-      `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}`
+      `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}&repo_type=${request.data?.repository?.type}`
     );
   };
 

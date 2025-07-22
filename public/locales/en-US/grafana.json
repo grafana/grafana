@@ -10941,15 +10941,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "This resource is behind the branch in GitHub.",
-      "new-branch": "View it in GitHub to see the latest changes.",
+      "behind-branch": "This resource is behind the branch in {{repoType}}.",
+      "new-branch": "View it in {{repoType}} to see the latest changes.",
       "not-saved": "The value is not yet saved in the Grafana database",
-      "open-git-hub": "Open in Github",
-      "open-pull-request-in-git-hub": "Open pull request in GitHub",
-      "view-pull-request-in-git-hub": "View pull request in GitHub"
+      "open-git-hub": "Open in {{repoType}}",
+      "open-pull-request-in-git-hub": "Open pull request in {{repoType}}",
+      "view-pull-request-in-git-hub": "View pull request in {{repoType}}"
     },
-    "title-created-branch-git-hub": "A new resource has been created in a branch in GitHub.",
-    "title-loaded-pull-request-git-hub": "This resource is loaded from a pull request in GitHub."
+    "title-created-branch-git-hub": "A new resource has been created in a branch in {{repoType}}.",
+    "title-loaded-pull-request-git-hub": "This resource is loaded from a pull request in {{repoType}}."
   },
   "provisioning": {
     "banner": {

@@ -98,7 +98,7 @@ function FormContent({
     if (workflow === 'branch') {
       onDismiss?.();
       if (successState.repoUrl) {
-        navigate({ search: `?repo_url=${encodeURIComponent(successState.repoUrl)}` });
+        navigate({ search: `?repo_url=${encodeURIComponent(successState.repoUrl)}&repo_type=${repository.type}` });
         return;
       }
       window.location.reload();

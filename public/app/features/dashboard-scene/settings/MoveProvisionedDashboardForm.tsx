@@ -142,7 +142,9 @@ export function MoveProvisionedDashboardForm({
 
   const onBranchSuccess = () => {
     panelEditor?.onDiscard();
-    navigate(`/dashboards?new_pull_request_url=${createRequest.data?.urls?.newPullRequestURL}`);
+    navigate(
+      `/dashboards?new_pull_request_url=${createRequest.data?.urls?.newPullRequestURL}&repo_type=${createRequest.data?.repository?.type}`
+    );
   };
 
   useProvisionedRequestHandler({
