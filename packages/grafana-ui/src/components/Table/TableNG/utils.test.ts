@@ -29,7 +29,7 @@ import {
   getJustifyContent,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
-  getMaxWrapCell,
+  getRowHeight,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1029,7 +1029,9 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('getMaxWrapCell', () => {
+  describe('getRowHeight', () => {
+    const getHeightForNumLines = (numLines: number) => numLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+
     it('should return the maximum wrap cell length from field state', () => {
       const field1: Field = {
         name: 'field1',
@@ -1055,16 +1057,14 @@ describe('TableNG utils', () => {
 
       const fields = [field1, field2, field3];
 
-      const result = getMaxWrapCell(fields, 0, {
+      const result = getRowHeight(fields, 0, {
         colWidths: [30, 50, 100],
         avgCharWidth: 5,
         wrappedColIdxs: [true, true, true],
+        calcNumLines: jest.fn(() => 2),
+        defaultHeight: 30,
       });
-      expect(result).toEqual({
-        text: 'asdfasdf asdfasdf asdfasdf',
-        idx: 1,
-        numLines: 2.6,
-      });
+      expect(result).toEqual(getHeightForNumLines(3));
     });
 
     it('should take colWidths into account when calculating max wrap cell', () => {
@@ -1093,15 +1093,17 @@ describe('TableNG utils', () => {
       const colWidths = [50, 1000, 30]; // 50px width
       const avgCharWidth = 5; // Assume average character width is 5px
 
-      const result = getMaxWrapCell(fields, 1, { colWidths, avgCharWidth, wrappedColIdxs: [true, true, true] });
+      const result = getRowHeight(fields, 1, {
+        colWidths,
+        avgCharWidth,
+        wrappedColIdxs: [true, true, true],
+        calcNumLines: jest.fn(() => 2),
+        defaultHeight: 30,
+      });
 
       // With a 50px width and 5px per character, we can fit 10 characters per line
       // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
-      expect(result).toEqual({
-        idx: 0,
-        numLines: 1.7,
-        text: 'a bit longer text',
-      });
+      expect(result).toEqual(getHeightForNumLines(2));
     });
 
     it('should use the display name if the rowIdx is -1 (which is used to calc header height in wrapped rows)', () => {
@@ -1130,11 +1132,51 @@ describe('TableNG utils', () => {
       const colWidths = [50, 1000, 30]; // 50px width
       const avgCharWidth = 5; // Assume average character width is 5px
 
-      const result = getMaxWrapCell(fields, -1, { colWidths, avgCharWidth, wrappedColIdxs: [true, true, true] });
+      const result = getRowHeight(fields, -1, {
+        colWidths,
+        avgCharWidth,
+        wrappedColIdxs: [true, true, true],
+        calcNumLines: jest.fn(() => 2),
+        defaultHeight: 30,
+      });
 
       // With a 50px width and 5px per character, we can fit 10 characters per line
       // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
-      expect(result).toEqual({ idx: 0, numLines: 2.7, text: 'Field with a very long name' });
+      expect(result).toEqual(getHeightForNumLines(3));
+    });
+
+    it('should use the datalink titles when calculating the height of a datalink cell', () => {
+      const fields: Field[] = [
+        {
+          name: 'Field with links',
+          type: FieldType.string,
+          config: {
+            links: [
+              { title: 'Link One', url: 'http://example.com/1' },
+              { title: 'Another Link', url: 'http://example.com/2' },
+              { title: 'The longest link title of all', url: 'http://example.com/3' },
+            ],
+            custom: {
+              cellOptions: {
+                type: TableCellDisplayMode.DataLinks,
+              },
+            },
+          },
+          values: ['short', 'a bit longer text'],
+        },
+      ];
+      // Simulate a narrow column width that would cause wrapping
+      const colWidths = [100]; // 100px width
+      const avgCharWidth = 5; // Assume average character width is 5px
+      const result = getRowHeight(fields, 0, {
+        colWidths,
+        avgCharWidth,
+        wrappedColIdxs: [true],
+        calcNumLines: jest.fn(() => 2),
+        defaultHeight: 30,
+      });
+
+      expect(result).toEqual(getHeightForNumLines(3));
     });
 
     it.todo('should ignore columns which are not wrapped');
