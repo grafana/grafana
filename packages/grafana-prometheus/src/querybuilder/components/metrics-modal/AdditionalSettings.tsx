@@ -3,15 +3,14 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useMetricsModal } from './MetricsModalContext';
 import { getPlaceholders } from './helpers';
 import { metricsModaltestIds } from './testIds';
 
 export function AdditionalSettings() {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
   const placeholders = getPlaceholders();
   const { settings, overrideSettings } = useMetricsModal();
 
