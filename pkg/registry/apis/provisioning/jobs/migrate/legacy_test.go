@@ -398,6 +398,8 @@ func TestLegacyMigrator_ProgressScanner(t *testing.T) {
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		// No progress messages expected in current staging implementation
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
 
 		repo := repository.NewMockRepository(t)
 		repo.On("Config").Return(&provisioning.Repository{
