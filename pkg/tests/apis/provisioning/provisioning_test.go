@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,10 +21,50 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
+
+// printFileTree prints the directory structure as a tree for debugging purposes
+func printFileTree(t *testing.T, rootPath string) {
+	t.Helper()
+	t.Logf("File tree for %s:", rootPath)
+
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+
+		if relPath == "." {
+			return nil
+		}
+
+		depth := strings.Count(relPath, string(filepath.Separator))
+		indent := strings.Repeat("  ", depth)
+
+		if d.IsDir() {
+			t.Logf("%s├── %s/", indent, d.Name())
+		} else {
+			info, err := d.Info()
+			if err != nil {
+				t.Logf("%s├── %s (error reading info)", indent, d.Name())
+			} else {
+				t.Logf("%s├── %s (%d bytes)", indent, d.Name(), info.Size())
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Logf("Error walking directory: %v", err)
+	}
+}
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	if testing.Short() {
@@ -83,6 +124,36 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				Suffix("files/").
 				Do(context.Background())
 			require.NoError(t, rsp.Error())
+
+			// Verify that we can list refs
+			rsp = helper.AdminREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(name).
+				Suffix("refs").
+				Do(context.Background())
+
+			if expectedRepo.Spec.Type == provisioning.LocalRepositoryType {
+				require.ErrorContains(t, rsp.Error(), "does not support versioned operations")
+			} else {
+				require.NoError(t, rsp.Error())
+				refs := &provisioning.RefList{}
+				err = rsp.Into(refs)
+				require.NoError(t, err)
+				require.True(t, len(refs.Items) >= 1, "should have at least one ref")
+
+				var foundBranch bool
+				for _, ref := range refs.Items {
+					// FIXME: this assertion should be improved for all git types and take things from config
+					if ref.Name == "integration-test" {
+						require.Equal(t, "0f3370c212b04b9704e00f6926ef339bf91c7a1b", ref.Hash)
+						require.Equal(t, "https://github.com/grafana/grafana-git-sync-demo/tree/integration-test", ref.RefURL)
+						foundBranch = true
+					}
+				}
+
+				require.True(t, foundBranch, "branch should be found")
+			}
 		})
 	}
 
@@ -97,6 +168,22 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		err := rsp.Into(settings)
 		require.NoError(t, err)
 		require.Len(t, settings.Items, len(inputFiles))
+
+		// FIXME: this should be an enterprise integration test
+		if extensions.IsEnterprise {
+			require.ElementsMatch(t, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+				provisioning.GitRepositoryType,
+				provisioning.BitbucketRepositoryType,
+				provisioning.GitLabRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		} else {
+			require.ElementsMatch(t, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		}
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
@@ -562,9 +649,13 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	_, err = helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
-	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2.yaml")
-	_, err = helper.DashboardsV2.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create v2 dashboard")
+	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
+	_, err = helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
+
+	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2alpha2.yaml")
+	_, err = helper.DashboardsV2alpha2.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2alpha2 dashboard")
 
 	// Now for the repository.
 	const repo = "local-repository"
@@ -595,15 +686,19 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		title      string
 		apiVersion string
 		name       string
+		fileName   string
 	}
+
+	printFileTree(t, helper.ProvisioningPath)
 
 	// Check that each file was exported with its stored version
 	for _, test := range []props{
-		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0"},
-		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1"},
-		{title: "Test dashboard. Created at v2", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2"},
+		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
+		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
+		{title: "Test dashboard. Created at v2alpha1", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2alpha1", fileName: "test-dashboard-created-at-v2alpha1.json"},
+		{title: "Test dashboard. Created at v2alpha2", apiVersion: "dashboard.grafana.app/v2alpha2", name: "test-v2alpha2", fileName: "test-dashboard-created-at-v2alpha2.json"},
 	} {
-		fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(test.title)+".json")
+		fpath := filepath.Join(helper.ProvisioningPath, test.fileName)
 		//nolint:gosec // we are ok with reading files in testdata
 		body, err := os.ReadFile(fpath)
 		require.NoError(t, err, "exported file was not created at path %s", fpath)

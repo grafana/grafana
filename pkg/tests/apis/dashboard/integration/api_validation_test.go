@@ -16,7 +16,8 @@ import (
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -58,11 +59,10 @@ type TestContext struct {
 // TestIntegrationValidation tests the dashboard K8s API
 func TestIntegrationValidation(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping integration test2")
+		t.Skip("skipping integration test")
 	}
 
-	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -346,11 +346,29 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				},
 				{
 					name:          "v2alpha1 dashboard with correct spec should not throw on v2",
-					resourceInfo:  dashboardV2.DashboardResourceInfo,
+					resourceInfo:  dashboardV2alpha1.DashboardResourceInfo,
 					expectSpecErr: false,
 					testObject: &unstructured.Unstructured{
 						Object: map[string]interface{}{
-							"apiVersion": dashboardV2.DashboardResourceInfo.TypeMeta().APIVersion,
+							"apiVersion": dashboardV2alpha1.DashboardResourceInfo.TypeMeta().APIVersion,
+							"kind":       "Dashboard",
+							"metadata": map[string]interface{}{
+								"generateName": "test-",
+							},
+							"spec": map[string]interface{}{
+								"title":       "Dashboard Title",
+								"description": "valid description",
+							},
+						},
+					},
+				},
+				{
+					name:          "v2alpha2 dashboard with correct spec should not throw on v2",
+					resourceInfo:  dashboardV2alpha2.DashboardResourceInfo,
+					expectSpecErr: false,
+					testObject: &unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"apiVersion": dashboardV2alpha2.DashboardResourceInfo.TypeMeta().APIVersion,
 							"kind":       "Dashboard",
 							"metadata": map[string]interface{}{
 								"generateName": "test-",

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -18,12 +19,13 @@ import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
+  focusLogLine?: (log: LogListModel) => void;
   log: LogListModel;
   logs: LogListModel[];
 }
 
-export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
+export const LogLineDetailsComponent = memo(({ focusLogLine, log, logs }: LogLineDetailsComponentProps) => {
+  const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -75,8 +77,14 @@ export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentPr
   const handleToggle = useCallback(
     (option: string, isOpen: boolean) => {
       store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
+      if (!noInteractions) {
+        reportInteraction('logs_log_line_details_section_toggled', {
+          section: option.replace('Open', ''),
+          state: isOpen ? 'open' : 'closed',
+        });
+      }
     },
-    [logOptionsStorageKey]
+    [logOptionsStorageKey, noInteractions]
   );
 
   const handleSearch = useCallback((newSearch: string) => {
@@ -94,7 +102,7 @@ export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentPr
 
   return (
     <>
-      <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
+      <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
       <div className={styles.componentWrapper}>
         <ControlledCollapse
           className={styles.collapsable}
@@ -123,7 +131,7 @@ export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentPr
             isOpen={linksOpen}
             onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
           >
-            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks.links} search={search} />
+            <LogLineDetailsFields disableActions log={log} logs={logs} fields={fieldsWithLinks.links} search={search} />
             <LogLineDetailsFields
               disableActions
               log={log}
@@ -175,7 +183,8 @@ export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentPr
       </div>
     </>
   );
-};
+});
+LogLineDetailsComponent.displayName = 'LogLineDetailsComponent';
 
 function groupOptionName(group: string) {
   return `${camelCase(group)}Open`;
