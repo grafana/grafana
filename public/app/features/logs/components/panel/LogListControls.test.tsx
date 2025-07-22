@@ -31,6 +31,8 @@ const contextProps = {
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 };
 
 describe('LogListControls', () => {
