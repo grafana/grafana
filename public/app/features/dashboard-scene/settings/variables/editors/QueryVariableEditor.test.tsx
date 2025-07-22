@@ -123,6 +123,10 @@ describe('QueryVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
+    const staticOptionsToggle = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
+    );
+
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(queryEditor).toBeInTheDocument();
@@ -141,6 +145,7 @@ describe('QueryVariableEditor', () => {
     expect(includeAllSwitch).toBeChecked();
     expect(allValueInput).toBeInTheDocument();
     expect(allValueInput).toHaveValue('custom all value');
+    expect(staticOptionsToggle).toBeInTheDocument();
   });
 
   it('should update the variable with default query for the selected DS', async () => {
@@ -360,6 +365,70 @@ describe('QueryVariableEditor', () => {
     });
 
     expect(variable.state.allValue).toBe('custom all value and another value');
+  });
+
+  it('should update the variable state when adding two static options', async () => {
+    const {
+      variable,
+      renderer: { getByTestId, getAllByTestId },
+      user,
+    } = await setup();
+
+    // Initially no static options
+    expect(variable.state.staticOptions).toBeUndefined();
+
+    // First enable static options
+    const staticOptionsToggle = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
+    );
+    await userEvent.click(staticOptionsToggle);
+
+    // Add first static option
+    const addButton = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsAddButton
+    );
+    await user.click(addButton);
+
+    // Enter label and value for first option
+    const labelInputs = getAllByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+    );
+    const valueInputs = getAllByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+    );
+
+    await user.type(labelInputs[0], 'First Option');
+    await user.type(valueInputs[0], 'first-value');
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.staticOptions).toEqual([{ label: 'First Option', value: 'first-value' }]);
+
+    // Add second static option
+    await user.click(addButton);
+
+    // Get updated inputs (now there should be 2 sets)
+    const updatedLabelInputs = getAllByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+    );
+    const updatedValueInputs = getAllByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+    );
+
+    // Enter label and value for second option
+    await user.type(updatedLabelInputs[1], 'Second Option');
+    await user.type(updatedValueInputs[1], 'second-value');
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.staticOptions).toEqual([
+      { label: 'First Option', value: 'first-value' },
+      { label: 'Second Option', value: 'second-value' },
+    ]);
   });
 
   it('should return an empty array if variable is not a QueryVariable', () => {

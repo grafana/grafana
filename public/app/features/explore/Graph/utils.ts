@@ -1,5 +1,5 @@
 import store from 'app/core/store';
-import { ExploreGraphStyle, EXPLORE_GRAPH_STYLES } from 'app/types';
+import { ExploreGraphStyle, EXPLORE_GRAPH_STYLES } from 'app/types/explore';
 
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {

@@ -23,7 +23,7 @@ const borderRadiusOptions: BorderRadius[] = ['default', 'pill', 'circle'];
 const boxShadowOptions: BoxShadow[] = ['z1', 'z2', 'z3'];
 
 const meta: Meta<typeof Box> = {
-  title: 'General/Layout/Box',
+  title: 'Layout/Box',
   component: Box,
   parameters: {
     docs: {

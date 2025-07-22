@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { Column, DataGridProps, SortColumn } from 'react-data-grid';
+import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
+import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
@@ -440,7 +440,7 @@ interface UseRowHeightOptions {
   hasNestedFrames: boolean;
   defaultHeight: number;
   headerHeight: number;
-  expandedRows: Record<string, boolean>;
+  expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
 
@@ -496,15 +496,19 @@ export function useRowHeight({
 
     return (row: TableRow) => {
       // nested rows
-      if (Number(row.__depth) > 0) {
+      if (row.__depth > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows[row.__index]) {
+        if (!expandedRows.has(row.__index)) {
           return 0;
         }
 
-        // Ensure we have a minimum height (defaultHeight) for the nested table even if data is empty
         const rowCount = row.data?.length ?? 0;
-        return Math.max(defaultHeight, defaultHeight * rowCount + headerHeight);
+        if (rowCount === 0) {
+          return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
+        }
+
+        const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
+        return Math.max(defaultHeight, defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2);
       }
 
       // regular rows
@@ -518,7 +522,6 @@ export function useRowHeight({
     fields,
     hasNestedFrames,
     hasWrappedCols,
-    headerHeight,
     maxWrapCellOptions,
     colWidths,
   ]);
@@ -596,4 +599,18 @@ export function useColumnResize(
   );
 
   return dataGridResizeHandler;
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = ref.current?.element;
+
+    if (el) {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    }
+  }, [ref, height, renderedRows]);
+
+  return scrollbarWidth;
 }

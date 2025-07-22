@@ -15,6 +15,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -273,6 +274,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.MemberlistAdvertisePort = memberlistPort
+	cfg.SearchRingReplicationFactor = 1
 	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
 
@@ -307,6 +309,7 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.MemberlistAdvertisePort = getRandomPort()
+	cfg.SearchRingReplicationFactor = 1
 	cfg.InstanceID = "instance-" + strconv.Itoa(instanceId)
 	cfg.IndexPath = t.TempDir() + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold
@@ -321,7 +324,9 @@ func initModuleServerForTest(
 	opts Options,
 	apiOpts api.ServerOptions,
 ) testModuleServer {
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, nil)
+	tracer := tracing.InitializeTracerForTest()
+
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
