@@ -804,7 +804,7 @@ const getGridStyles = (
     border: 'none',
 
     // add a box shadow on hover and selection for all body cells
-    '& :not(.rdg-summary-row, .rdg-header-row) .rdg-cell': {
+    '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
       '&:hover, &[aria-selected=true]': {
         boxShadow: theme.shadows.z2,
       },
