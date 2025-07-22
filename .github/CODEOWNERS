@@ -443,13 +443,19 @@
 /packages/grafana-data/src/themes/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/transformations/ @grafana/datapro
 /packages/grafana-data/src/types/ @grafana/grafana-frontend-platform
-/packages/grafana-data/src/utils/fuzzySearch @grafana/grafana-search-navigate-organise
-/packages/grafana-data/src/utils/getFlotPairs @grafana/dataviz-squad
-/packages/grafana-data/src/utils/namedColorsPalette @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/anyToNumber.ts @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/arrayUtils* @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/binaryOperators.ts @grafana/datapro
+/packages/grafana-data/src/utils/csv* @grafana/dataviz-squad
+/packages/grafana-data/src/utils/dataLinks* @grafana/dashboards-squad
+/packages/grafana-data/src/utils/deprecationWarning* @grafana/grafana-frontend-platform
+/packages/grafana-data/src/utils/fuzzySearch* @grafana/grafana-search-navigate-organise
+/packages/grafana-data/src/utils/flotPairs* @grafana/dataviz-squad
+/packages/grafana-data/src/utils/namedColorsPalette* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/nodeGraph.ts @grafana/observability-traces-and-profiling
 /packages/grafana-data/src/utils/selectUtils.ts @grafana/grafana-frontend-platform
-/packages/grafana-data/src/utils/url @grafana/grafana-search-navigate-organise
-/packages/grafana-data/src/utils/throwIfAngular @grafana/plugins-platform-frontend
+/packages/grafana-data/src/utils/url* @grafana/grafana-search-navigate-organise
+/packages/grafana-data/src/utils/throwIfAngular* @grafana/plugins-platform-frontend
 /packages/grafana-data/src/valueFormats @grafana/dashboards-squad
 /packages/grafana-data/src/vector @grafana/dataviz-squad
 
