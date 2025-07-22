@@ -87,12 +87,12 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('inherit');
+      expect(getTextAlign(field)).toBeUndefined();
       expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start when no field is specified', () => {
-      expect(getTextAlign(undefined)).toBe('inherit');
+      expect(getTextAlign(undefined)).toBeUndefined();
       expect(getJustifyContent(undefined)).toBe('flex-start');
     });
 
@@ -118,7 +118,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('inherit');
+      expect(getTextAlign(field)).toBeUndefined();
       expect(getJustifyContent(field)).toBe('flex-start');
     });
 
@@ -131,7 +131,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('inherit');
+      expect(getTextAlign(field)).toBeUndefined();
       expect(getJustifyContent(field)).toBe('flex-start');
     });
 
@@ -144,7 +144,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('inherit');
+      expect(getTextAlign(field)).toBeUndefined();
       expect(getJustifyContent(field)).toBe('flex-start');
     });
 
@@ -161,7 +161,7 @@ describe('TableNG utils', () => {
           },
         },
       };
-      expect(getTextAlign(field)).toBe('inherit');
+      expect(getTextAlign(field)).toBeUndefined();
       expect(getJustifyContent(field)).toBe('flex-start');
     });
 
@@ -174,7 +174,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('inherit');
+      expect(getTextAlign(field)).toBeUndefined();
       expect(getJustifyContent(field)).toBe('flex-start');
     });
   });

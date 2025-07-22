@@ -155,7 +155,7 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
  */
 export function getTextAlign(field?: Field): Property.TextAlign | undefined {
   if (!field) {
-    return 'inherit';
+    return;
   }
 
   const custom: TableFieldOptionsType | undefined = field.config.custom;

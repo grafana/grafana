@@ -918,7 +918,7 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
-  textAlign: Property.TextAlign,
+  textAlign: Property.TextAlign | undefined,
   justifyContent: Property.JustifyContent,
   shouldWrap: boolean,
   shouldOverflow: boolean,
