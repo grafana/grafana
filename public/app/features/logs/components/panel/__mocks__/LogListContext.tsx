@@ -43,6 +43,8 @@ export const LogListContext = createContext<LogListContextData>({
   setDetailsMode: function (mode: LogLineDetailsMode): void {
     throw new Error('Function not implemented.');
   },
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -97,6 +99,8 @@ export const defaultValue: LogListContextData = {
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 };
 
 export const defaultProps: Props = {
@@ -120,6 +124,8 @@ export const defaultProps: Props = {
   sortOrder: LogsSortOrder.Descending,
   syntaxHighlighting: true,
   wrapLogMessage: true,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 };
 
 export const LogListContextProvider = ({
