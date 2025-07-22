@@ -1,9 +1,7 @@
-import { useCallback, useMemo, useRef, MouseEvent } from 'react';
+import { MouseEvent, useCallback, useMemo, useRef } from 'react';
 
-import { createContext, ItemDataType } from '@grafana/assistant';
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
