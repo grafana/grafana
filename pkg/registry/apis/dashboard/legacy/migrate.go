@@ -310,6 +310,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 				"dashboard", row.Dash.Name,
 				"uid", row.Dash.UID,
 				"id", id,
+				"namespace", opts.Namespace,
 			)
 			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 		}
