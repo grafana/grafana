@@ -6,7 +6,7 @@ import { TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { escapeLabelValueInExactSelector, prometheusRegularEscape } from '../../../escaping';
-import { FUNCTIONS } from '../../../promql';
+import { getFunctions } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
 
 import { DataProvider } from './data_provider';
@@ -100,18 +100,20 @@ function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] 
   }));
 }
 
-const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
-  type: 'FUNCTION',
-  label: f.label,
-  insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
-  detail: f.detail,
-  documentation: f.documentation,
-}));
+const getFunctionCompletions: () => Completion[] = () => {
+  return getFunctions().map((f) => ({
+    type: 'FUNCTION',
+    label: f.label,
+    insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
+    detail: f.detail,
+    documentation: f.documentation,
+  }));
+};
 
 async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
   const metricNames = getAllMetricNamesCompletions(dataProvider);
 
-  return [...FUNCTION_COMPLETIONS, ...metricNames];
+  return [...getFunctionCompletions(), ...metricNames];
 }
 
 const DURATION_COMPLETIONS: Completion[] = [
@@ -276,7 +278,7 @@ export function getCompletions(
     case 'EMPTY': {
       const metricNames = getAllMetricNamesCompletions(dataProvider);
       const historyCompletions = getAllHistoryCompletions(dataProvider);
-      return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);
+      return Promise.resolve([...historyCompletions, ...getFunctionCompletions(), ...metricNames]);
     }
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
       return getLabelNamesForSelectorCompletions(situation.metricName, situation.otherLabels, dataProvider, timeRange);
