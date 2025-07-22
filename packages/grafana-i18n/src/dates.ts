@@ -46,6 +46,8 @@ export const formatDateRange = (
 };
 
 export const initRegionalFormat = (regionalFormatArg: string) => {
+  // We don't expect this to be called with a different locale during the lifetime of the app,
+  // so this is mostly here so we can change it during tests and clear out previously memoized values.
   clearMemoizedCache(formatDate);
   clearMemoizedCache(formatDuration);
 
