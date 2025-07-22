@@ -451,9 +451,14 @@
 /packages/grafana-data/src/utils/binaryOperators.ts @grafana/datapro
 /packages/grafana-data/src/utils/csv* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/dataLinks* @grafana/dashboards-squad
+/packages/grafana-data/src/utils/datasource.ts @grafana/grafana-datasources-core-services
+/packages/grafana-data/src/utils/docs.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/deprecationWarning* @grafana/grafana-frontend-platform
-/packages/grafana-data/src/utils/fuzzySearch* @grafana/grafana-search-navigate-organise
+/packages/grafana-data/src/utils/fieldParser.ts @grafana/dataviz-squad
 /packages/grafana-data/src/utils/flotPairs* @grafana/dataviz-squad
+/packages/grafana-data/src/utils/fuzzySearch* @grafana/grafana-search-navigate-organise
+/packages/grafana-data/src/utils/labels* @grafana/observability-logs
+/packages/grafana-data/src/utils/legend* @grafana/oss-big-tent
 /packages/grafana-data/src/utils/location* @grafana/grafana-search-navigate-organise
 /packages/grafana-data/src/utils/LocalStorageValueProvider.tsx @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/makeClassES5Compatible.ts @grafana/plugins-platform-frontend
@@ -474,6 +479,7 @@
 /packages/grafana-data/src/utils/url* @grafana/grafana-search-navigate-organise
 /packages/grafana-data/src/utils/valueMappings* @grafana/dashboards-squad
 /packages/grafana-data/src/utils/variables.ts @grafana/plugins-platform-frontend
+/packages/grafana-data/src/utils/withLoadingIndicator.ts @grafana/access-squad @grafana/alerting-frontend
 /packages/grafana-data/src/valueFormats/ @grafana/dashboards-squad
 /packages/grafana-data/src/vector/ @grafana/dataviz-squad
 
