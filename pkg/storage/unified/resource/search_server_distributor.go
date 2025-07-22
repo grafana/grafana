@@ -81,7 +81,7 @@ type distributorServer struct {
 	log        log.Logger
 }
 
-var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+var activeRingOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
 	return s != ring.ACTIVE
 })
 
@@ -128,7 +128,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	rs, err := ds.ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
+	rs, err := ds.ring.GetWithOptions(ringHasher.Sum32(), activeRingOp, ring.WithReplicationFactor(ds.ring.ReplicationFactor()))
 	if err != nil {
 		return ctx, nil, err
 	}
