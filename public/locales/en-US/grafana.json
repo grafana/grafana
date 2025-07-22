@@ -10802,7 +10802,8 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
-        "title-job-completed-successfully": "Job completed successfully"
+        "title-job-completed-successfully": "Job completed successfully",
+        "title-warning-running-job": "Warning running job"
       },
       "summary": "Summary"
     },
