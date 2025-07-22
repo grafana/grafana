@@ -69,16 +69,19 @@ type JiraIntegration struct {
 	Project   string `yaml:"project,omitempty" json:"project,omitempty" hcl:"project"`
 	IssueType string `yaml:"issue_type,omitempty" json:"issue_type,omitempty" hcl:"issue_type"`
 
-	Summary           *string         `yaml:"summary,omitempty" json:"summary,omitempty" hcl:"summary"`
-	Description       *string         `yaml:"description,omitempty" json:"description,omitempty" hcl:"description"`
-	Labels            *[]string       `yaml:"labels,omitempty" json:"labels,omitempty" hcl:"labels"`
-	Priority          *string         `yaml:"priority,omitempty" json:"priority,omitempty" hcl:"priority"`
-	ReopenTransition  *string         `yaml:"reopen_transition,omitempty" json:"reopen_transition,omitempty" hcl:"reopen_transition"`
-	ResolveTransition *string         `yaml:"resolve_transition,omitempty" json:"resolve_transition,omitempty" hcl:"resolve_transition"`
-	WontFixResolution *string         `yaml:"wont_fix_resolution,omitempty" json:"wont_fix_resolution,omitempty" hcl:"wont_fix_resolution"`
-	ReopenDuration    *string         `yaml:"reopen_duration,omitempty" json:"reopen_duration,omitempty" hcl:"reopen_duration"`
-	DedupKeyFieldName *string         `yaml:"dedup_key_field,omitempty" json:"dedup_key_field,omitempty" hcl:"dedup_key_field"`
-	Fields            *map[string]any `yaml:"fields,omitempty" json:"fields,omitempty" hcl:"fields"`
+	Summary           *string   `yaml:"summary,omitempty" json:"summary,omitempty" hcl:"summary"`
+	Description       *string   `yaml:"description,omitempty" json:"description,omitempty" hcl:"description"`
+	Labels            *[]string `yaml:"labels,omitempty" json:"labels,omitempty" hcl:"labels"`
+	Priority          *string   `yaml:"priority,omitempty" json:"priority,omitempty" hcl:"priority"`
+	ReopenTransition  *string   `yaml:"reopen_transition,omitempty" json:"reopen_transition,omitempty" hcl:"reopen_transition"`
+	ResolveTransition *string   `yaml:"resolve_transition,omitempty" json:"resolve_transition,omitempty" hcl:"resolve_transition"`
+	WontFixResolution *string   `yaml:"wont_fix_resolution,omitempty" json:"wont_fix_resolution,omitempty" hcl:"wont_fix_resolution"`
+	ReopenDuration    *string   `yaml:"reopen_duration,omitempty" json:"reopen_duration,omitempty" hcl:"reopen_duration"`
+	DedupKeyFieldName *string   `yaml:"dedup_key_field,omitempty" json:"dedup_key_field,omitempty" hcl:"dedup_key_field"`
+
+	// This should be a map[string]any but gohcl does not support encoding that type. Instead, we force it to a string
+	// using a jsoniter extension `mapToJSONStringCodec` which will be handled in the TF provider.
+	Fields *string `yaml:"fields,omitempty" json:"fields,omitempty" hcl:"fields"`
 
 	User     *Secret `yaml:"user,omitempty" json:"user,omitempty" hcl:"user"`
 	Password *Secret `yaml:"password,omitempty" json:"password,omitempty" hcl:"password"`
