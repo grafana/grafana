@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync, writeFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from 'app/core/config';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -174,7 +175,12 @@ describe('Backend / Frontend result comparison', () => {
       const frontendMigrationResult = frontendModel.getSaveModelClone();
       const backendMigrationResult = backendModel.getSaveModelClone();
 
-      expect(backendMigrationResult).toMatchObject(frontendMigrationResult);
+      // Although getSaveModelClone() runs sortedDeepCloneWithoutNulls() internally,
+      // we run it again to ensure consistent handling of null values (like threshold -Infinity values)
+      // Because Go and TS handle -Infinity differently.
+      const cleanedFrontendResult = sortedDeepCloneWithoutNulls(frontendMigrationResult);
+
+      expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
     });
   });
 });

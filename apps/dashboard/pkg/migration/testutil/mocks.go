@@ -1,6 +1,8 @@
 package testutil
 
-import "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+import (
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+)
 
 type TestDataSourceProvider struct{}
 

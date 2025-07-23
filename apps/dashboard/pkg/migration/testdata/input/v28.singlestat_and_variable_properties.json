@@ -28,7 +28,6 @@
       "colors": ["#FF0000", "green", "orange"],
       "grid": { "min": 1, "max": 10 },
       "targets": [{ "refId": "A" }, {}],
-      "mappingType": 1,
       "mappingTypes": [
         {
           "name": "value to text",

@@ -1,6 +1,7 @@
 package schemaversion
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -190,7 +191,7 @@ func (m *v28Migrator) migrateFromGrafanaSinglestat(panel map[string]interface{},
 		valueMaps, _ := existingOptions["valueMaps"].([]interface{})
 
 		// Use valueMaps if available, otherwise use valueMappings
-		m.migrateValueMappings(defaults, valueMaps)
+		m.migrateValueMappings(panel, defaults, valueMaps)
 
 		// Migrate min/max values
 		if minValue, ok := existingOptions["minValue"]; ok {
@@ -281,7 +282,7 @@ func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{},
 
 	// Migrate value mappings
 	valueMaps, _ := angularOpts["valueMaps"].([]interface{})
-	m.migrateValueMappings(defaults, valueMaps)
+	m.migrateValueMappings(angularOpts, defaults, valueMaps)
 
 	// Migrate sparkline configuration
 	// Based on statPanelChangedHandler lines ~25-35: sparkline migration logic
@@ -319,6 +320,11 @@ func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{},
 	// Based on statPanelChangedHandler lines ~45-47: valueName === 'name' migration
 	if valueName, ok := angularOpts["valueName"].(string); ok && valueName == "name" {
 		options["textMode"] = "name"
+	}
+
+	if angularOpts["gauge"] != nil && angularOpts["gauge"].(map[string]interface{})["show"] == true {
+		defaults["min"] = angularOpts["gauge"].(map[string]interface{})["minValue"]
+		defaults["max"] = angularOpts["gauge"].(map[string]interface{})["maxValue"]
 	}
 
 	// Update panel options
@@ -459,75 +465,170 @@ func (m *v28Migrator) migrateThresholdsArray(defaults map[string]interface{}, th
 	}
 }
 
-func (m *v28Migrator) migrateValueMappings(defaults map[string]interface{}, valueMappings []interface{}) {
+func (m *v28Migrator) migrateValueMappings(panel map[string]interface{}, defaults map[string]interface{}, valueMappings []interface{}) {
 	mappings := []interface{}{}
+	mappingType := panel["mappingType"]
 
-	for _, raw := range valueMappings {
-		mapping, ok := raw.(map[string]interface{})
-		if !ok {
-			continue
+	if mappingType == nil {
+		if panel["valueMaps"] != nil && len(panel["valueMaps"].([]interface{})) > 0 {
+			mappingType = 1
+		} else if panel["rangeMaps"] != nil && len(panel["rangeMaps"].([]interface{})) > 0 {
+			mappingType = 2
 		}
+	}
 
-		// Only handle op="=" style mappings
-		if op, hasOp := mapping["op"].(string); hasOp && op == "=" {
-			valueStr, ok := mapping["value"].(string)
-			if !ok {
-				continue
+	switch mappingType {
+	case 1:
+		for _, valueMap := range valueMappings {
+			valueMapping := valueMap.(map[string]interface{})
+			upgradedMapping := m.upgradeOldAngularValueMapping(valueMapping, defaults["thresholds"])
+			if upgradedMapping != nil {
+				mappings = append(mappings, upgradedMapping)
 			}
-
-			text, hasText := mapping["text"]
-			if !hasText {
-				continue
-			}
-
-			option := map[string]interface{}{
-				"text": text,
-			}
-
-			if color, hasColor := mapping["color"].(string); hasColor {
-				option["color"] = color
-			}
-
-			mappingEntry := map[string]interface{}{
-				"type": "value",
-				"options": map[string]interface{}{
-					valueStr: option,
-				},
-			}
-
-			mappings = append(mappings, mappingEntry)
-			continue
 		}
-
-		// fallback for other mapping formats
-		if typ, hasType := mapping["type"]; hasType {
-			newMapping := map[string]interface{}{
-				"type": typ,
-			}
-
-			switch typ {
-			case 1: // value to text
-				newMapping["options"] = map[string]interface{}{
-					"mappings": []interface{}{
-						map[string]interface{}{
-							"value": mapping["value"],
-							"text":  mapping["text"],
-						},
-					},
-				}
-			case 2: // range to text
-				newMapping["options"] = map[string]interface{}{
-					"from":   mapping["from"],
-					"to":     mapping["to"],
-					"result": map[string]interface{}{"text": mapping["text"]},
+	case 2:
+		// Handle range mappings
+		if rangeMaps, ok := panel["rangeMaps"].([]interface{}); ok {
+			for _, rangeMap := range rangeMaps {
+				rangeMapping := rangeMap.(map[string]interface{})
+				upgradedMapping := m.upgradeOldAngularValueMapping(rangeMapping, defaults["thresholds"])
+				if upgradedMapping != nil {
+					mappings = append(mappings, upgradedMapping)
 				}
 			}
-
-			mappings = append(mappings, newMapping)
 		}
 	}
 
 	defaults["mappings"] = mappings
+}
+
+// upgradeOldAngularValueMapping converts old angular value mappings to new format
+// Based on upgradeOldAngularValueMapping in packages/grafana-data/src/utils/valueMappings.ts
+func (m *v28Migrator) upgradeOldAngularValueMapping(old map[string]interface{}, thresholds interface{}) map[string]interface{} {
+	valueMaps := map[string]interface{}{
+		"type":    "value",
+		"options": map[string]interface{}{},
+	}
+	newMappings := []interface{}{}
+
+	// Use the color we would have picked from thresholds
+	var color interface{}
+	if text, ok := old["text"].(string); ok {
+		if numeric, err := strconv.ParseFloat(text, 64); err == nil {
+			if thresholdsMap, ok := thresholds.(map[string]interface{}); ok {
+				if steps, ok := thresholdsMap["steps"].([]interface{}); ok {
+					level := m.getActiveThreshold(numeric, steps)
+					if level != nil {
+						if levelColor, ok := level["color"]; ok {
+							color = levelColor
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Determine mapping type
+	mappingType := old["type"]
+	if mappingType == nil {
+		// Try to guess from available properties
+		if old["value"] != nil {
+			mappingType = 1 // ValueToText
+		} else if old["from"] != nil || old["to"] != nil {
+			mappingType = 2 // RangeToText
+		}
+	}
+
+	switch mappingType {
+	case 1: // ValueToText
+		if value, ok := old["value"]; ok && value != nil {
+			if valueStr, ok := value.(string); ok && valueStr == "null" {
+				newMappings = append(newMappings, map[string]interface{}{
+					"type": "special",
+					"options": map[string]interface{}{
+						"match":  "null",
+						"result": map[string]interface{}{"text": old["text"], "color": color},
+					},
+				})
+			} else {
+				valueMaps["options"].(map[string]interface{})[fmt.Sprintf("%v", value)] = map[string]interface{}{
+					"text":  old["text"],
+					"color": color,
+				}
+			}
+		}
+	case 2: // RangeToText
+		from := old["from"]
+		to := old["to"]
+		if (from != nil && fmt.Sprintf("%v", from) == "null") || (to != nil && fmt.Sprintf("%v", to) == "null") {
+			newMappings = append(newMappings, map[string]interface{}{
+				"type": "special",
+				"options": map[string]interface{}{
+					"match":  "null",
+					"result": map[string]interface{}{"text": old["text"], "color": color},
+				},
+			})
+		} else {
+			var fromVal, toVal interface{}
+			if from != nil {
+				if fromStr, ok := from.(string); ok {
+					if fromFloat, err := strconv.ParseFloat(fromStr, 64); err == nil {
+						fromVal = fromFloat
+					}
+				} else {
+					fromVal = from
+				}
+			}
+			if to != nil {
+				if toStr, ok := to.(string); ok {
+					if toFloat, err := strconv.ParseFloat(toStr, 64); err == nil {
+						toVal = toFloat
+					}
+				} else {
+					toVal = to
+				}
+			}
+
+			newMappings = append(newMappings, map[string]interface{}{
+				"type": "range",
+				"options": map[string]interface{}{
+					"from":   fromVal,
+					"to":     toVal,
+					"result": map[string]interface{}{"text": old["text"], "color": color},
+				},
+			})
+		}
+	}
+
+	// Add valueMaps if it has options
+	if len(valueMaps["options"].(map[string]interface{})) > 0 {
+		newMappings = append([]interface{}{valueMaps}, newMappings...)
+	}
+
+	if len(newMappings) > 0 {
+		return newMappings[0].(map[string]interface{})
+	}
+
+	return nil
+}
+
+// getActiveThreshold finds the active threshold for a given value
+// Based on getActiveThreshold in packages/grafana-data/src/field/thresholds.ts
+func (m *v28Migrator) getActiveThreshold(value float64, steps []interface{}) map[string]interface{} {
+	for i := len(steps) - 1; i >= 0; i-- {
+		if step, ok := steps[i].(map[string]interface{}); ok {
+			if stepValue, ok := step["value"]; ok {
+				if stepValue == nil {
+					// First step with null value (represents -Infinity)
+					return step
+				}
+				if stepFloat, ok := stepValue.(float64); ok && value >= stepFloat {
+					return step
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // cleanupAngularProperties removes old angular properties after migration

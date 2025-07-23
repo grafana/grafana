@@ -1,20 +1,14 @@
-package schemaversion
+package schemaversion_test
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
 func TestV28(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    map[string]interface{}
-		expected map[string]interface{}
-	}{
+	tests := []migrationTestCase{
 		{
 			name: "migrate angular singlestat to stat panel",
 			input: map[string]interface{}{
@@ -364,64 +358,5 @@ func TestV28(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			panelProvider := &mockPanelProvider{
-				panels: []PanelPluginInfo{
-					{ID: "stat", Version: "1.0.0"},
-				},
-			}
-
-			migration := V28(panelProvider)
-			err := migration(tt.input)
-			require.NoError(t, err)
-
-			assert.Equal(t, tt.expected, tt.input)
-		})
-	}
-}
-
-// Test what our migration actually produces
-func TestV28ActualOutput(t *testing.T) {
-	input := map[string]interface{}{
-		"schemaVersion": 27,
-		"panels": []interface{}{
-			map[string]interface{}{
-				"type":       "singlestat",
-				"legend":     true,
-				"thresholds": "10,20,30",
-				"colors":     []interface{}{"#FF0000", "green", "orange"},
-				"grid":       map[string]interface{}{"min": 1, "max": 10},
-				"targets":    []interface{}{map[string]interface{}{"refId": "A"}},
-			},
-		},
-	}
-
-	panelProvider := &mockPanelProvider{panels: []PanelPluginInfo{}}
-	migration := V28(panelProvider)
-	err := migration(input)
-	require.NoError(t, err)
-
-	// Print the actual output
-	outBytes, err := json.MarshalIndent(input, "", "  ")
-	require.NoError(t, err)
-	fmt.Printf("Actual output:\n%s\n", string(outBytes))
-}
-
-type mockPanelProvider struct {
-	panels []PanelPluginInfo
-}
-
-// GetPanelPlugin implements PanelPluginInfoProvider.
-func (m *mockPanelProvider) GetPanelPlugin(id string) PanelPluginInfo {
-	for _, panel := range m.panels {
-		if panel.ID == id {
-			return panel
-		}
-	}
-	return PanelPluginInfo{}
-}
-
-func (m *mockPanelProvider) GetPanels() []PanelPluginInfo {
-	return m.panels
+	runMigrationTests(t, tests, schemaversion.V28(testutil.GetTestPanelProvider()))
 }

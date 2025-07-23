@@ -80,6 +80,8 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [],
+          "max": null,
+          "min": null,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -146,12 +148,25 @@
             {
               "options": {
                 "20": {
+                  "color": null,
                   "text": "test"
-                },
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
                 "30": {
+                  "color": null,
                   "text": "test1"
-                },
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
                 "40": {
+                  "color": "orange",
                   "text": "50"
                 }
               },
@@ -183,7 +198,6 @@
         "min": 1
       },
       "legend": true,
-      "mappingType": 1,
       "mappingTypes": [
         {
           "name": "value to text",

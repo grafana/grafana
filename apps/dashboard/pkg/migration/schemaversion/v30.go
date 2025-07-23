@@ -186,6 +186,26 @@ func upgradeValueMappings(oldMappings []interface{}, thresholds map[string]inter
 		return oldMappings
 	}
 
+	// Check if all mappings are already in the new format
+	allNewFormat := true
+	for _, mapping := range oldMappings {
+		if mappingMap, ok := mapping.(map[string]interface{}); ok {
+			if mappingType, ok := mappingMap["type"].(string); ok && mappingType != "" {
+				// This is already in new format, keep it as-is
+				continue
+			} else {
+				// Found a legacy format mapping, need to process
+				allNewFormat = false
+				break
+			}
+		}
+	}
+
+	// If all mappings are already in new format, return them as-is
+	if allNewFormat {
+		return oldMappings
+	}
+
 	valueMaps := map[string]interface{}{
 		"type":    "value",
 		"options": map[string]interface{}{},
