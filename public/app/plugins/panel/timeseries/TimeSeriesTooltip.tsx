@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { AdHocFilterItem } from '@grafana/ui';
+import { config } from '@grafana/runtime';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -91,7 +92,9 @@ export const TimeSeriesTooltip = ({
     const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
     // Check if the field supports filtering (similar to table implementation)
-    const showFilters = Boolean(xField.config.filterable && onAddAdHocFilter != null);
+    const showFilters = Boolean(
+      config.featureToggles.adhocFiltersInTooltips && xField.config.filterable && onAddAdHocFilter != null
+    );
 
     // create the filter click handler based on hovered series index and row index:
     const onFilterClick = showFilters
