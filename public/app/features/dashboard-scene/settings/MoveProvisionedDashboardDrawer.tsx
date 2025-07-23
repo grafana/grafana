@@ -18,7 +18,7 @@ export function MoveProvisionedDashboardDrawer({
   onDismiss,
   onSuccess,
 }: Props) {
-  const { defaultValues, loadedFromRef, readOnly, isGitHub, workflowOptions, isNew } =
+  const { defaultValues, loadedFromRef, readOnly, isGitProvider, workflowOptions, isNew } =
     useProvisionedDashboardData(dashboard);
 
   if (!defaultValues) {
@@ -31,7 +31,7 @@ export function MoveProvisionedDashboardDrawer({
       defaultValues={defaultValues}
       loadedFromRef={loadedFromRef}
       readOnly={readOnly}
-      isGitHub={isGitHub}
+      isGitProvider={isGitProvider}
       isNew={isNew}
       workflowOptions={workflowOptions}
       targetFolderUID={targetFolderUID}

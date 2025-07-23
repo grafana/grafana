@@ -23,7 +23,7 @@ export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
-  isGitHub: boolean;
+  isGitProvider: boolean;
   isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
@@ -38,7 +38,7 @@ export function MoveProvisionedDashboardForm({
   defaultValues,
   loadedFromRef,
   readOnly,
-  isGitHub,
+  isGitProvider,
   isNew,
   workflowOptions,
   targetFolderUID,
@@ -213,7 +213,7 @@ export function MoveProvisionedDashboardForm({
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}
-              isGitHub={isGitHub}
+              isGitProvider={isGitProvider}
             />
 
             <Stack gap={2}>

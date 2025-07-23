@@ -107,7 +107,7 @@ function setup(options: SetupOptions = {}) {
     },
     loadedFromRef: 'main',
     readOnly: false,
-    isGitHub: true,
+    isGitProvider: true,
     workflowOptions: [
       { label: 'Branch', value: 'branch' },
       { label: 'Write', value: 'write' },

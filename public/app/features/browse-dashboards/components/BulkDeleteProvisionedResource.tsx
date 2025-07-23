@@ -17,6 +17,7 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-s
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
+import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
@@ -38,7 +39,7 @@ interface FormProps extends BulkDeleteProvisionResourceProps {
   initialValues: BulkDeleteFormData;
   repository: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
-  isGitHub: boolean;
+  isGitProvider: boolean;
   folderPath?: string;
 }
 
@@ -65,7 +66,7 @@ function FormContent({
   repository,
   workflowOptions,
   folderPath,
-  isGitHub,
+  isGitProvider: isGitProviderRepo,
   onDismiss,
 }: FormProps) {
   // States
@@ -233,7 +234,7 @@ function FormContent({
                 isNew={false}
                 workflow={workflow}
                 workflowOptions={workflowOptions}
-                isGitHub={isGitHub}
+                isGitProvider={isGitProviderRepo}
                 hidePath
               />
 
@@ -263,7 +264,7 @@ export function BulkDeleteProvisionedResource({
   const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
-  const isGitHub = repository?.type === 'github';
+  const isGitProviderRepo = repository?.type ? isGitProvider(repository.type) : false;
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();
 
@@ -284,7 +285,7 @@ export function BulkDeleteProvisionedResource({
       initialValues={initialValues}
       repository={repository}
       workflowOptions={workflowOptions}
-      isGitHub={isGitHub}
+      isGitProvider={isGitProviderRepo}
       folderPath={folderPath}
     />
   );

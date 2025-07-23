@@ -19,7 +19,7 @@ interface SetupOptions {
   isNew?: boolean;
   readOnly?: boolean;
   workflow?: 'write' | 'branch';
-  isGitHub?: boolean;
+  isGitProvider?: boolean;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -32,7 +32,7 @@ function setup(options: SetupOptions = {}) {
     isNew,
     readOnly,
     workflow,
-    isGitHub,
+    isGitProvider,
   } = options;
 
   const user = userEvent.setup();
@@ -58,7 +58,7 @@ function setup(options: SetupOptions = {}) {
     isNew,
     readOnly,
     workflow,
-    isGitHub,
+    isGitProvider,
   };
 
   return {
@@ -80,14 +80,14 @@ describe('ResourceEditFormSharedFields', () => {
       expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();
     });
 
-    it('should not render workflow fields when isGitHub is false', () => {
-      setup({ isGitHub: false });
+    it('should not render workflow fields when isGitProvider is false', () => {
+      setup({ isGitProvider: false });
 
       expect(screen.queryByText('Workflow')).not.toBeInTheDocument();
     });
 
-    it('should render workflow fields when isGitHub is true', () => {
-      setup({ isGitHub: true });
+    it('should render workflow fields when isGitProvider is true', () => {
+      setup({ isGitProvider: true });
 
       expect(screen.getByRole('radiogroup')).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'Write directly' })).toBeInTheDocument();
@@ -110,8 +110,8 @@ describe('ResourceEditFormSharedFields', () => {
       expect(commentTextarea).toBeDisabled();
     });
 
-    it('should not render workflow fields when readOnly is true and isGitHub is true', () => {
-      setup({ readOnly: true, isGitHub: true });
+    it('should not render workflow fields when readOnly is true and isGitProvider is true', () => {
+      setup({ readOnly: true, isGitProvider: true });
 
       expect(screen.queryByText('Workflow')).not.toBeInTheDocument();
     });
@@ -119,14 +119,14 @@ describe('ResourceEditFormSharedFields', () => {
 
   describe('Workflow Fields', () => {
     it('should not render branch field when workflow is write', () => {
-      setup({ formDefaultValues: { workflow: 'write' }, isGitHub: true, workflow: 'write' });
+      setup({ formDefaultValues: { workflow: 'write' }, isGitProvider: true, workflow: 'write' });
 
       expect(screen.getByText('Workflow')).toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
     });
 
     it('should render branch field when workflow is branch', () => {
-      setup({ formDefaultValues: { workflow: 'branch' }, isGitHub: true, workflow: 'branch' });
+      setup({ formDefaultValues: { workflow: 'branch' }, isGitProvider: true, workflow: 'branch' });
 
       expect(screen.getByText('Workflow')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('ResourceEditFormSharedFields', () => {
     });
 
     it('should allow selecting workflow options', async () => {
-      const { user } = setup({ isGitHub: true });
+      const { user } = setup({ isGitProvider: true });
 
       const branchOption = screen.getByRole('radio', { name: 'Create branch' });
       await user.click(branchOption);
@@ -163,7 +163,7 @@ describe('ResourceEditFormSharedFields', () => {
     });
 
     it('should allow typing in branch field when workflow is branch', async () => {
-      const { user } = setup({ formDefaultValues: { workflow: 'branch' }, isGitHub: true, workflow: 'branch' });
+      const { user } = setup({ formDefaultValues: { workflow: 'branch' }, isGitProvider: true, workflow: 'branch' });
 
       const branchInput = screen.getByRole('textbox', { name: /branch/i });
       await user.type(branchInput, 'feature-branch');
@@ -214,7 +214,7 @@ describe('ResourceEditFormSharedFields', () => {
 
   describe('Validation', () => {
     it('should show validation error for invalid branch name', async () => {
-      const { user } = setup({ formDefaultValues: { workflow: 'branch' }, isGitHub: true, workflow: 'branch' });
+      const { user } = setup({ formDefaultValues: { workflow: 'branch' }, isGitProvider: true, workflow: 'branch' });
 
       const branchInput = screen.getByRole('textbox', { name: /branch/i });
       await user.type(branchInput, 'invalid//branch'); // Invalid branch name with consecutive slashes
@@ -229,14 +229,14 @@ describe('ResourceEditFormSharedFields', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty workflowOptions', () => {
-      setup({ workflowOptions: [], isGitHub: true });
+      setup({ workflowOptions: [], isGitProvider: true });
 
       expect(screen.getByText('Workflow')).toBeInTheDocument();
       expect(screen.queryByRole('radio')).not.toBeInTheDocument();
     });
 
     it('should handle undefined props', () => {
-      setup({ readOnly: undefined, isGitHub: undefined });
+      setup({ readOnly: undefined, isGitProvider: undefined });
 
       expect(screen.getByRole('textbox', { name: /Path/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();

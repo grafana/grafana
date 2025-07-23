@@ -23,7 +23,7 @@ interface FormProps extends DeleteProvisionedFolderFormProps {
   repository?: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   folder?: Folder;
-  isGitHub: boolean;
+  isGitProvider: boolean;
 }
 
 interface DeleteProvisionedFolderFormProps {
@@ -37,7 +37,7 @@ function FormContent({
   repository,
   workflowOptions,
   folder,
-  isGitHub,
+  isGitProvider,
   onDismiss,
 }: FormProps) {
   const resourceId = parentFolder?.uid || '';
@@ -128,7 +128,7 @@ function FormContent({
             isNew={false}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            isGitProvider={isGitProvider}
           />
 
           {/* Delete / Cancel button */}
@@ -149,7 +149,7 @@ function FormContent({
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, isGitProvider, repository, folder, initialValues } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'delete',
     title: parentFolder?.title,
@@ -167,7 +167,7 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
       repository={repository}
       workflowOptions={workflowOptions}
       folder={folder}
-      isGitHub={isGitHub}
+      isGitProvider={isGitProvider}
     />
   );
 }

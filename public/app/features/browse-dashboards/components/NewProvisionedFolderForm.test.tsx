@@ -146,7 +146,7 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     { label: 'Commit directly', value: 'write' },
     { label: 'Create a branch', value: 'branch' },
   ],
-  isGitHub: true,
+  isGitProvider: true,
   initialValues: {
     title: '',
     comment: '',

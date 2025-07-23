@@ -17,7 +17,7 @@ export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
-  isGitHub: boolean;
+  isGitProvider: boolean;
   isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
@@ -33,7 +33,7 @@ export function DeleteProvisionedDashboardForm({
   defaultValues,
   loadedFromRef,
   readOnly,
-  isGitHub,
+  isGitProvider,
   isNew,
   workflowOptions,
   onDismiss,
@@ -127,7 +127,7 @@ export function DeleteProvisionedDashboardForm({
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}
-              isGitHub={isGitHub}
+              isGitProvider={isGitProvider}
             />
 
             {/* Save / Cancel button */}

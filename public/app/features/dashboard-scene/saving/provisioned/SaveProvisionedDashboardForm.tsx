@@ -26,7 +26,7 @@ import { getProvisionedMeta } from './utils/getProvisionedMeta';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  isGitHub: boolean;
+  isGitProvider: boolean;
   loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   readOnly: boolean;
@@ -39,7 +39,7 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  isGitHub,
+  isGitProvider,
   workflowOptions,
   readOnly,
 }: Props) {
@@ -221,7 +221,7 @@ export function SaveProvisionedDashboardForm({
             readOnly={readOnly}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            isGitProvider={isGitProvider}
             isNew={isNew}
           />
 

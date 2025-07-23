@@ -121,7 +121,7 @@ function setup(props: Partial<Props> = {}) {
       diffs: {},
     },
     isNew: true,
-    isGitHub: true,
+    isGitProvider: true,
     defaultValues: {
       ref: 'dashboard/2023-01-01-abcde',
       path: 'test-dashboard.json',

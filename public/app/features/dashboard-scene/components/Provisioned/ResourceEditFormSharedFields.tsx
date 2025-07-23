@@ -13,12 +13,12 @@ interface DashboardEditFormSharedFieldsProps {
   isNew?: boolean;
   readOnly?: boolean;
   workflow?: WorkflowOption;
-  isGitHub?: boolean;
+  isGitProvider?: boolean;
   hidePath?: boolean;
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType, hidePath = false }) => {
+  ({ readOnly = false, workflow, workflowOptions, isGitProvider, isNew, resourceType, hidePath = false }) => {
     const {
       control,
       register,
@@ -64,7 +64,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         </Field>
 
         {/* Workflow */}
-        {isGitHub && !readOnly && (
+        {isGitProvider && !readOnly && (
           <>
             <Field
               noMargin
