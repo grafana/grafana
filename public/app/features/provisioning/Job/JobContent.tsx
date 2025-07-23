@@ -30,12 +30,14 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
           />
         );
       case 'warning':
-        <Alert
-          severity="warning"
-          title={t('provisioning.job-status.status.title-warning-running-job', 'Warning running job')}
-        >
-          {message ?? errors?.join('\n')}
-        </Alert>;
+        return (
+          <Alert
+            severity="warning"
+            title={t('provisioning.job-status.status.title-warning-running-job', 'Warning running job')}
+          >
+            {message ?? errors?.join('\n')}
+          </Alert>
+        );
       case 'error':
         return (
           <Alert
