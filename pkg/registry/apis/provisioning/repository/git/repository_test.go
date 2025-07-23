@@ -2002,7 +2002,7 @@ func TestGitRepository_resolveRefToHash(t *testing.T) {
 
 			if tt.wantError {
 				require.Error(t, err)
-				require.Equal(t, hash.Hash{}, refHash)
+				require.Equal(t, hash.Zero, refHash)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, refHash)
@@ -3244,7 +3244,7 @@ func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
 	// Verify CompareCommits was called with empty base hash and feature hash
 	require.Equal(t, 1, mockClient.CompareCommitsCallCount())
 	_, baseHash, refHash := mockClient.CompareCommitsArgsForCall(0)
-	require.Equal(t, hash.Hash{}, baseHash) // Empty hash for empty base
+	require.Equal(t, hash.Zero, baseHash)
 	require.Equal(t, hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"), refHash)
 }
 
@@ -4010,218 +4010,218 @@ func TestGitRepository_Move(t *testing.T) {
 }
 
 /* TODO: Add back remaining test cases
-		{
-			name:          "move file to directory type should fail",
-			oldPath:       "file.yaml",
-			newPath:       "directory/",
-			ref:           "main",
-			comment:       "move file to directory",
-			expectedError: "cannot move between file and directory types",
-			setupMock: func(mockClient *mocks.FakeClient) {
-				// No mocks needed as this should fail early
-			},
+	{
+		name:          "move file to directory type should fail",
+		oldPath:       "file.yaml",
+		newPath:       "directory/",
+		ref:           "main",
+		comment:       "move file to directory",
+		expectedError: "cannot move between file and directory types",
+		setupMock: func(mockClient *mocks.FakeClient) {
+			// No mocks needed as this should fail early
 		},
-		{
-			name:    "move non-existent file",
-			oldPath: "nonexistent.yaml",
-			newPath: "new.yaml",
-			ref:     "main",
-			comment: "move missing file",
-			setupMock: func(mockClient *mocks.FakeClient) {
-				// Mock ensureBranchExists behavior
-				mockClient.GetRefReturns(nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}, nil)
+	},
+	{
+		name:    "move non-existent file",
+		oldPath: "nonexistent.yaml",
+		newPath: "new.yaml",
+		ref:     "main",
+		comment: "move missing file",
+		setupMock: func(mockClient *mocks.FakeClient) {
+			// Mock ensureBranchExists behavior
+			mockClient.GetRefReturns(nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}, nil)
 
-				// Mock NewStagedWriter
-				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}).Return(mockWriter, nil)
+			// Mock NewStagedWriter
+			mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}).Return(mockWriter, nil)
 
-				// Mock MoveBlob returning not found error
-				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/nonexistent.yaml", "configs/new.yaml").Return(hash.Hash{}, nanogit.ErrObjectNotFound)
-			},
-			expectedError: "file not found",
+			// Mock MoveBlob returning not found error
+			mockWriter.EXPECT().MoveBlob(context.Background(), "configs/nonexistent.yaml", "configs/new.yaml").Return(hash.Hash{}, nanogit.ErrObjectNotFound)
 		},
-		{
-			name:    "move to existing file",
-			oldPath: "old.yaml",
-			newPath: "existing.yaml",
-			ref:     "main",
-			comment: "move to existing",
-			setupMock: func(mockClient *mocks.FakeClient) {
-				// Mock ensureBranchExists behavior
-				mockClient.GetRefReturns(nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}, nil)
+		expectedError: "file not found",
+	},
+	{
+		name:    "move to existing file",
+		oldPath: "old.yaml",
+		newPath: "existing.yaml",
+		ref:     "main",
+		comment: "move to existing",
+		setupMock: func(mockClient *mocks.FakeClient) {
+			// Mock ensureBranchExists behavior
+			mockClient.GetRefReturns(nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}, nil)
 
-				// Mock NewStagedWriter
-				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}).Return(mockWriter, nil)
+			// Mock NewStagedWriter
+			mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}).Return(mockWriter, nil)
 
-				// Mock MoveBlob returning already exists error
-				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/existing.yaml").Return(hash.Hash{}, nanogit.ErrObjectAlreadyExists)
-			},
-			expectedError: "file already exists",
+			// Mock MoveBlob returning already exists error
+			mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/existing.yaml").Return(hash.Hash{}, nanogit.ErrObjectAlreadyExists)
 		},
-		{
-			name:    "branch creation fails",
-			oldPath: "old.yaml",
-			newPath: "new.yaml",
-			ref:     "nonexistent-branch",
-			comment: "move on nonexistent branch",
-			setupMock: func(mockClient *mocks.FakeClient) {
-				// Mock branch not found
-				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/nonexistent-branch").Return(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+		expectedError: "file already exists",
+	},
+	{
+		name:    "branch creation fails",
+		oldPath: "old.yaml",
+		newPath: "new.yaml",
+		ref:     "nonexistent-branch",
+		comment: "move on nonexistent branch",
+		setupMock: func(mockClient *mocks.FakeClient) {
+			// Mock branch not found
+			mockClient.EXPECT().GetRef(context.Background(), "refs/heads/nonexistent-branch").Return(nanogit.Ref{}, nanogit.ErrObjectNotFound)
 
-				// Mock getting source branch for creation
-				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{}, nanogit.ErrObjectNotFound)
-			},
-			expectedError: "get source branch ref",
+			// Mock getting source branch for creation
+			mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{}, nanogit.ErrObjectNotFound)
 		},
-		{
-			name:    "staged writer creation fails",
-			oldPath: "old.yaml",
-			newPath: "new.yaml",
-			ref:     "main",
-			comment: "move file",
-			setupMock: func(mockClient *mocks.FakeClient) {
-				// Mock ensureBranchExists behavior
-				mockClient.GetRefReturns(nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}, nil)
+		expectedError: "get source branch ref",
+	},
+	{
+		name:    "staged writer creation fails",
+		oldPath: "old.yaml",
+		newPath: "new.yaml",
+		ref:     "main",
+		comment: "move file",
+		setupMock: func(mockClient *mocks.FakeClient) {
+			// Mock ensureBranchExists behavior
+			mockClient.GetRefReturns(nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}, nil)
 
-				// Mock NewStagedWriter failure
-				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}).Return(nil, errors.New("writer creation failed"))
-			},
-			expectedError: "create staged writer",
+			// Mock NewStagedWriter failure
+			mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}).Return(nil, errors.New("writer creation failed"))
 		},
-		{
-			name:    "commit fails",
-			oldPath: "old.yaml",
-			newPath: "new.yaml",
-			ref:     "main",
-			comment: "move file",
-			setupMock: func(mockClient *mocks.FakeClient) {
-				// Mock ensureBranchExists behavior
-				mockClient.GetRefReturns(nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}, nil)
+		expectedError: "create staged writer",
+	},
+	{
+		name:    "commit fails",
+		oldPath: "old.yaml",
+		newPath: "new.yaml",
+		ref:     "main",
+		comment: "move file",
+		setupMock: func(mockClient *mocks.FakeClient) {
+			// Mock ensureBranchExists behavior
+			mockClient.GetRefReturns(nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}, nil)
 
-				// Mock NewStagedWriter
-				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}).Return(mockWriter, nil)
+			// Mock NewStagedWriter
+			mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}).Return(mockWriter, nil)
 
-				// Mock MoveBlob
-				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/new.yaml").Return(hash.Hash{}, nil)
+			// Mock MoveBlob
+			mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/new.yaml").Return(hash.Hash{}, nil)
 
-				// Mock commit failure
-				mockWriter.EXPECT().Commit(context.Background(), "move file", nanogit.Author{
-					Name:  "Grafana",
-					Email: "noreply@grafana.com",
-					Time:  time.Now(),
-				}, nanogit.Committer{
-					Name:  "Grafana",
-					Email: "noreply@grafana.com",
-					Time:  time.Now(),
-				}).Return(hash.Hash{}, errors.New("commit failed"))
-			},
-			expectedError: "commit changes",
+			// Mock commit failure
+			mockWriter.EXPECT().Commit(context.Background(), "move file", nanogit.Author{
+				Name:  "Grafana",
+				Email: "noreply@grafana.com",
+				Time:  time.Now(),
+			}, nanogit.Committer{
+				Name:  "Grafana",
+				Email: "noreply@grafana.com",
+				Time:  time.Now(),
+			}).Return(hash.Hash{}, errors.New("commit failed"))
 		},
-		{
-			name:    "push fails",
-			oldPath: "old.yaml",
-			newPath: "new.yaml",
-			ref:     "main",
-			comment: "move file",
-			setupMock: func(mockClient *mocks.FakeClient) {
-				// Mock ensureBranchExists behavior
-				mockClient.GetRefReturns(nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}, nil)
+		expectedError: "commit changes",
+	},
+	{
+		name:    "push fails",
+		oldPath: "old.yaml",
+		newPath: "new.yaml",
+		ref:     "main",
+		comment: "move file",
+		setupMock: func(mockClient *mocks.FakeClient) {
+			// Mock ensureBranchExists behavior
+			mockClient.GetRefReturns(nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}, nil)
 
-				// Mock NewStagedWriter
-				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
-					Name: "refs/heads/main",
-					Hash: hash.Hash{},
-				}).Return(mockWriter, nil)
+			// Mock NewStagedWriter
+			mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{},
+			}).Return(mockWriter, nil)
 
-				// Mock MoveBlob
-				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/new.yaml").Return(hash.Hash{}, nil)
+			// Mock MoveBlob
+			mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/new.yaml").Return(hash.Hash{}, nil)
 
-				// Mock commit success
-				mockWriter.EXPECT().Commit(context.Background(), "move file", nanogit.Author{
-					Name:  "Grafana",
-					Email: "noreply@grafana.com",
-					Time:  time.Now(),
-				}, nanogit.Committer{
-					Name:  "Grafana",
-					Email: "noreply@grafana.com",
-					Time:  time.Now(),
-				}).Return(hash.Hash{}, nil)
+			// Mock commit success
+			mockWriter.EXPECT().Commit(context.Background(), "move file", nanogit.Author{
+				Name:  "Grafana",
+				Email: "noreply@grafana.com",
+				Time:  time.Now(),
+			}, nanogit.Committer{
+				Name:  "Grafana",
+				Email: "noreply@grafana.com",
+				Time:  time.Now(),
+			}).Return(hash.Hash{}, nil)
 
-				// Mock push failure
-				mockWriter.EXPECT().Push(context.Background()).Return(errors.New("push failed"))
-			},
-			expectedError: "push changes",
+			// Mock push failure
+			mockWriter.EXPECT().Push(context.Background()).Return(errors.New("push failed"))
 		},
-	}
+		expectedError: "push changes",
+	},
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockClient := mocks.NewMockClient(t)
-			mockWriter := mocks.NewMockStagedWriter(t)
-			mockSecrets := &secrets.MockRepositorySecrets{}
+for _, tt := range tests {
+	t.Run(tt.name, func(t *testing.T) {
+		mockClient := mocks.NewMockClient(t)
+		mockWriter := mocks.NewMockStagedWriter(t)
+		mockSecrets := &secrets.MockRepositorySecrets{}
 
-			// Setup mock expectations
-			tt.setupMock(mockClient, mockWriter)
+		// Setup mock expectations
+		tt.setupMock(mockClient, mockWriter)
 
-			// Create repository config
-			config := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitRepositoryType,
-				},
-			}
+		// Create repository config
+		config := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-repo",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+			},
+		}
 
-			gitConfig := RepositoryConfig{
-				URL:    "https://github.com/example/repo.git",
-				Branch: "main",
-				Token:  "token123",
-				Path:   "configs",
-			}
+		gitConfig := RepositoryConfig{
+			URL:    "https://github.com/example/repo.git",
+			Branch: "main",
+			Token:  "token123",
+			Path:   "configs",
+		}
 
-			gitRepo := &gitRepository{
-				config:    config,
-				gitConfig: gitConfig,
-				client:    mockClient,
-				secrets:   mockSecrets,
-			}
+		gitRepo := &gitRepository{
+			config:    config,
+			gitConfig: gitConfig,
+			client:    mockClient,
+			secrets:   mockSecrets,
+		}
 
-			// Execute move operation
-			err := gitRepo.Move(context.Background(), tt.oldPath, tt.newPath, tt.ref, tt.comment)
+		// Execute move operation
+		err := gitRepo.Move(context.Background(), tt.oldPath, tt.newPath, tt.ref, tt.comment)
 
-			// Verify results
-			if tt.expectedError != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.expectedError)
-			} else {
-				require.NoError(t, err)
-			}
-		})
+		// Verify results
+		if tt.expectedError != "" {
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedError)
+		} else {
+			require.NoError(t, err)
+		}
+	})
 */

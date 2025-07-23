@@ -75,7 +75,7 @@ func TestMovePathValidation(t *testing.T) {
 			// Test the path validation logic that would be used in MoveResource
 			sourceIsDir := safepath.IsDir(tt.originalPath)
 			targetIsDir := safepath.IsDir(tt.newPath)
-			
+
 			if tt.expectError {
 				assert.NotEqual(t, sourceIsDir, targetIsDir, "Path types should be different for invalid moves")
 			} else {
@@ -87,11 +87,11 @@ func TestMovePathValidation(t *testing.T) {
 
 func TestMoveOptionsContentHandling(t *testing.T) {
 	tests := []struct {
-		name                   string
-		opts                   DualWriteOptions
-		originalData           []byte
-		expectedContentToUse   []byte
-		expectedUseOriginal    bool
+		name                 string
+		opts                 DualWriteOptions
+		originalData         []byte
+		expectedContentToUse []byte
+		expectedUseOriginal  bool
 	}{
 		{
 			name: "move with new content provided",
@@ -133,7 +133,7 @@ func TestMoveOptionsContentHandling(t *testing.T) {
 			// Simulate the content selection logic from moveFile method
 			var destinationData []byte
 			useOriginal := len(tt.opts.Data) == 0
-			
+
 			if useOriginal {
 				destinationData = tt.originalData
 			} else {

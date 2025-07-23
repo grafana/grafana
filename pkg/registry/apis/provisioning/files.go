@@ -150,8 +150,8 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 						return
 					}
 				}
-				var resource *resources.ParsedResource
-				resource, err = dualReadWriter.MoveResource(ctx, opts)
+
+				resource, err := dualReadWriter.MoveResource(ctx, opts)
 				if err != nil {
 					responder.Error(err)
 					return

@@ -823,6 +823,63 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	})
 }
 
+// postFilesRequest performs a direct HTTP POST request to the files API.
+// This bypasses Kubernetes REST client limitations with '/' characters in subresource names.
+type filesPostOptions struct {
+	targetPath   string // The target file/directory path
+	originalPath string // Source path for move operations (optional)
+	message      string // Commit message (optional)  
+	body         string // Request body content (optional)
+}
+
+func postFilesRequest(t *testing.T, helper *provisioningTestHelper, repo string, opts filesPostOptions) *http.Response {
+	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
+		addr, repo, opts.targetPath)
+	
+	// Build the URL with proper query parameter encoding
+	parsedUrl, err := url.Parse(baseUrl)
+	require.NoError(t, err)
+	params := parsedUrl.Query()
+	
+	if opts.originalPath != "" {
+		params.Set("originalPath", opts.originalPath)
+	}
+	if opts.message != "" {
+		params.Set("message", opts.message)
+	}
+	parsedUrl.RawQuery = params.Encode()
+	
+	req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(opts.body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	
+	return resp
+}
+
+// postFilesMove is a convenience wrapper for move operations
+func postFilesMove(t *testing.T, helper *provisioningTestHelper, repo, targetPath, originalPath, message string) *http.Response {
+	return postFilesRequest(t, helper, repo, filesPostOptions{
+		targetPath:   targetPath,
+		originalPath: originalPath,
+		message:      message,
+		body:         "",
+	})
+}
+
+// postFilesMoveWithContent is a convenience wrapper for move operations with content update
+func postFilesMoveWithContent(t *testing.T, helper *provisioningTestHelper, repo, targetPath, originalPath, message, content string) *http.Response {
+	return postFilesRequest(t, helper, repo, filesPostOptions{
+		targetPath:   targetPath,
+		originalPath: originalPath,
+		message:      message,
+		body:         content,
+	})
+}
+
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -856,15 +913,8 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	t.Run("move file without content change", func(t *testing.T) {
 		const targetPath = "moved/simple-move.json"
 
-		// Perform the move operation using direct HTTP request (since k8s client doesn't handle '/' in subresource names)
-		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s?originalPath=%s&message=move%%20file%%20without%%20content%%20change",
-			addr, repo, targetPath, originalDashboard)
-		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(""))
-		require.NoError(t, err)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
+		// Perform the move operation using helper function
+		resp := postFilesMove(t, helper, repo, targetPath, originalDashboard, "move file without content change")
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
@@ -899,15 +949,8 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		// Use text-options.json content for the update
 		updatedContent := helper.LoadFile("testdata/text-options.json")
 
-		// Perform move with content update using direct HTTP request (since k8s client doesn't handle '/' in subresource names)
-		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s?originalPath=%s&message=move%%20file%%20with%%20content%%20update",
-			addr, repo, targetPath, sourcePath)
-		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(string(updatedContent)))
-		require.NoError(t, err)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
+		// Perform move with content update using helper function
+		resp := postFilesMoveWithContent(t, helper, repo, targetPath, sourcePath, "move file with content update", string(updatedContent))
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update should succeed")
@@ -961,15 +1004,8 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const sourceDir = "source-dir/"
 		const targetDir = "moved-dir/"
 
-		// Move directory using direct HTTP request (since k8s client doesn't handle trailing slashes well)
-		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s?originalPath=%s&message=move%%20directory",
-			addr, repo, targetDir, sourceDir)
-		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(""))
-		require.NoError(t, err)
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
+		// Move directory using helper function
+		resp := postFilesMove(t, helper, repo, targetDir, sourceDir, "move directory")
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move should succeed")
@@ -1010,36 +1046,13 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 				Do(ctx)
 			require.NoError(t, result.Error(), "should create test file")
 			
-			// Now try to move this file to a directory path using direct HTTP request
-			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-			baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/target-dir/",
-				addr, repo)
-			
-			// Build the URL with proper query parameter encoding
-			parsedUrl, err := url.Parse(baseUrl)
-			require.NoError(t, err)
-			params := parsedUrl.Query()
-			params.Set("originalPath", "simple-test.json")
-			params.Set("message", "test move")
-			parsedUrl.RawQuery = params.Encode()
-			
-			t.Logf("Request URL: %s", parsedUrl.String())
-			req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(""))
-			require.NoError(t, err)
-			req.Header.Set("Content-Type", "application/json")
-			resp, err := http.DefaultClient.Do(req)
-			require.NoError(t, err)
+			// Now try to move this file to a directory path using helper function
+			resp := postFilesMove(t, helper, repo, "target-dir/", "simple-test.json", "test move")
 			// nolint:errcheck
 			defer resp.Body.Close()
-			// Read response body to check what happened
+			// Read response body to check error message
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			
-			// If it succeeded, that's unexpected, so let's debug
-			if resp.StatusCode == http.StatusOK {
-				t.Logf("Unexpected success. Response: %s", string(body))
-				t.Logf("Status code: %d", resp.StatusCode)
-			}
 			
 			require.NotEqual(t, http.StatusOK, resp.StatusCode, "should fail when moving file to directory")
 			require.Contains(t, string(body), "cannot move between file and directory types")

@@ -1664,7 +1664,7 @@ func TestLocalRepository_Move(t *testing.T) {
 				subdir := filepath.Join(tempDir, "subdir")
 				err := os.MkdirAll(subdir, 0700)
 				require.NoError(t, err)
-				
+
 				// Add a file inside the directory
 				err = os.WriteFile(filepath.Join(subdir, "file.txt"), []byte("dir content"), 0600)
 				require.NoError(t, err)

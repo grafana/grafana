@@ -513,7 +513,7 @@ func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, write
 		// For directories, trim trailing slashes and use MoveTree
 		oldTrimmed := strings.TrimSuffix(oldFinalPath, "/")
 		newTrimmed := strings.TrimSuffix(newFinalPath, "/")
-		
+
 		if _, err := writer.MoveTree(ctx, oldTrimmed, newTrimmed); err != nil {
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
