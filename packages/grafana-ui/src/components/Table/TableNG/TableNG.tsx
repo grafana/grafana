@@ -982,12 +982,12 @@ const getCellStyles = (
         borderRight: `2px solid ${theme.colors.border.medium}`,
 
         '&:first-of-type': {
-          paddingInlineStart: textAlign !== 'center' ? 0 : undefined,
+          paddingInlineStart: 0,
         },
 
         '&:last-of-type': {
           borderRight: 'none',
-          paddingInlineEnd: textAlign !== 'center' ? 0 : undefined,
+          paddingInlineEnd: 0,
         },
       },
     }),
