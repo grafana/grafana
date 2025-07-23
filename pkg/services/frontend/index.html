@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="fs-loading">
   <head>
     [[ if and .CSPEnabled .IsDevelopmentEnv ]]
     <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
@@ -24,28 +24,92 @@
       performance.mark('frontend_boot_css_time_seconds');
     </script>
 
-    <style>
-      /*
-        Dev indicator that the page was loaded from the FEMT index.html.
-        TODO: Will remove before deploying to staging.
-      */
-      .femt-dev-frame {
-        position: fixed;
-        top: 0;
-        bottom: 1px;
-        left: 0;
-        right: 0;
-        z-index: 99999;
-        pointer-events: none;
-        border: 2px solid white;
-        border-image-source: linear-gradient(to left, #F55F3E, #FF8833);
-        border-image-slice: 1;
-      }
-    </style>
+
   </head>
 
   <body>
-    <div class="femt-dev-frame"></div>
+    <div class="fs-loader fs-loader-starting-up">
+      <style>
+        /**
+          * This style tag is purposefully inside the fs-loader div so
+          * when AppWrapper mounts and removes the div
+          * the styles are taken away with it as well.
+          */
+
+        :root {
+          --fs-loader-bg: #f4f5f5;
+          --fs-loader-text-color: rgb(36, 41, 46);
+        }
+
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --fs-loader-bg: #111217;
+            --fs-loader-text-color: rgb(204, 204, 220);
+          }
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        body {
+          background-color: var(--fs-loader-bg);
+          color: var(--fs-loader-text-color);
+          margin: 0;
+        }
+
+        .fs-loader {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          height: 100dvh;
+          justify-content: center;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+            "Segoe UI Symbol";
+        }
+
+        .fs-spinner {
+          animation: spin 1500ms linear infinite;
+          width: 32px;
+          height: 32px;
+        }
+
+        .fs-spinner-track {
+          stroke: rgba(255,255,255,.15);
+        }
+
+        .fs-spinner-arc {
+          stroke: #F55F3E;
+        }
+        
+        .fs-loader-text {
+          opacity: 0;
+          font-size: 16px;
+          margin-bottom: 0;
+          transition: opacity 300ms ease-in-out;
+        }
+
+        .fs-loader-starting-up .fs-loader-text {
+          opacity: 1;
+        }
+      </style>
+
+      <svg
+        class="fs-spinner"
+        width="32"
+        height="32"
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle class="fs-spinner-track" cx="50" cy="50" r="45" fill="none" stroke-width="10" />
+        <circle class="fs-spinner-arc" cx="50" cy="50" r="45" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="70.7 212.3" stroke-dashoffset="0" />
+      </svg>
+
+      <p class="fs-loader-text">Grafana is starting up...</p>
+    </div>
 
     <div id="reactRoot"></div>
 
@@ -62,25 +126,17 @@
         console.error('Failed to load Grafana', ...args);
       };
 
-      let loadingDiv;
-
+      let hasSetLoading = false;
       function setLoading() {
-        if (loadingDiv) {
-          loadingDiv.textContent += ".";
+        if (hasSetLoading) {
           return;
         }
 
-        loadingDiv = document.createElement("div");
-        loadingDiv.classList.add("loading");
-        loadingDiv.innerHTML = "Loading...";
-        document.body.appendChild(loadingDiv);
+        document.querySelector('.fs-loader').classList.add('fs-loader-starting-up');
+        hasSetLoading = true;
       }
 
-      function removeLoading() {
-        if (loadingDiv) {
-          loadingDiv.remove();
-        }
-      }
+      const CHECK_INTERVAL = 1 * 1000;
 
       async function loadBootData() {
         while (true) {
@@ -89,7 +145,7 @@
 
           if (bootData.status === 503 && rawBootData.code === 'Loading') {
             setLoading();
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, CHECK_INTERVAL));
             continue;
           }
 

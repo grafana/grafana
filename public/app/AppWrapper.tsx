@@ -59,6 +59,13 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     this.setState({ ready: true });
     $('.preloader').remove();
 
+    if (config.featureToggles.multiTenantFrontend) {
+      const fsLoaderEl = document.querySelector('.fs-loader');
+      if (fsLoaderEl) {
+        fsLoaderEl.parentNode?.removeChild(fsLoaderEl);
+      }
+    }
+
     // clear any old icon caches
     const cacheKeys = (await window.caches?.keys()) ?? [];
     for (const key of cacheKeys) {
