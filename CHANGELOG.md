@@ -2,6 +2,10 @@
 
 # 12.0.3 (2025-07-23)
 
+### Bug fixes
+
+- **Security:** Fixes for CVE-2025-6197 and CVE-2025-6023 [#108280](https://github.com/grafana/grafana/pull/108280), [@volcanonoodle](https://github.com/volcanonoodle)
+
 <!-- 12.0.3 END -->
 <!-- 12.0.2 START -->
 
