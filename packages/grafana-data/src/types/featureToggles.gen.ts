@@ -353,6 +353,10 @@ export interface FeatureToggles {
   */
   alertmanagerRemoteSecondary?: boolean;
   /**
+  * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
+  */
+  alertingProvenanceLockWrites?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -748,6 +752,11 @@ export interface FeatureToggles {
   */
   alertingAIGenAlertRules?: boolean;
   /**
+  * Enable AI-generated feedback from the Grafana UI.
+  * @default false
+  */
+  alertingAIFeedback?: boolean;
+  /**
   * Enable AI-improve alert rules labels and annotations.
   * @default false
   */
@@ -846,10 +855,6 @@ export interface FeatureToggles {
   * @default true
   */
   grafanaconThemes?: boolean;
-  /**
-  * Loads plugins from CDN synchronously
-  */
-  pluginsCDNSyncLoader?: boolean;
   /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
@@ -1058,4 +1063,8 @@ export interface FeatureToggles {
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
+  /**
+  * Enables adhoc filtering support for the dashboard datasource
+  */
+  dashboardDsAdHocFiltering?: boolean;
 }
