@@ -26,7 +26,7 @@ func ProvideDecryptService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	decryptAuthorizer contracts.DecryptAuthorizer,
 	reg prometheus.Registerer,
-) (service.DecryptService, error) {
+) (contracts.DecryptService, error) {
 	existingDecryptStorage, err := metadata.ProvideDecryptStorage(
 		tracer,
 		keeperService,
@@ -51,7 +51,7 @@ type DecryptService struct {
 	tokenExchangeClient    authnlib.TokenExchanger
 }
 
-var _ service.DecryptService = &DecryptService{}
+var _ contracts.DecryptService = &DecryptService{}
 
 func NewDecryptService(cfg *setting.Cfg, existingDecryptStorage contracts.DecryptStorage) (*DecryptService, error) {
 	storage := &DecryptService{
@@ -96,7 +96,7 @@ func NewDecryptService(cfg *setting.Cfg, existingDecryptStorage contracts.Decryp
 	return storage, nil
 }
 
-func (c *DecryptService) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]service.DecryptResult, error) {
+func (c *DecryptService) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
 	switch c.cfg.SecretsManagement.DecryptServerType {
 	case "grpc":
 		return c.decryptViaGRPC(ctx, namespace, names...)
@@ -107,7 +107,7 @@ func (c *DecryptService) Decrypt(ctx context.Context, namespace string, names ..
 	}
 }
 
-func (c *DecryptService) decryptViaGRPC(ctx context.Context, namespace string, names ...string) (map[string]service.DecryptResult, error) {
+func (c *DecryptService) decryptViaGRPC(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
 	accessToken, err := c.getAccessToken(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get access token: %w", err)
@@ -118,25 +118,25 @@ func (c *DecryptService) decryptViaGRPC(ctx context.Context, namespace string, n
 		return nil, fmt.Errorf("grpc decrypt failed: %w", err)
 	}
 
-	results := make(map[string]service.DecryptResult, len(names))
+	results := make(map[string]contracts.DecryptResult, len(names))
 	for _, name := range names {
 		value, exists := values[name]
 		switch {
 		case !exists:
-			results[name] = service.NewDecryptResultErr(contracts.ErrDecryptNotFound)
+			results[name] = contracts.NewDecryptResultErr(contracts.ErrDecryptNotFound)
 		case value.GetErrorMessage() != "":
-			results[name] = service.NewDecryptResultErr(errors.New(value.GetErrorMessage()))
+			results[name] = contracts.NewDecryptResultErr(errors.New(value.GetErrorMessage()))
 		default:
 			exposedValue := secretv1beta1.ExposedSecureValue(value.GetValue())
-			results[name] = service.NewDecryptResultValue(&exposedValue)
+			results[name] = contracts.NewDecryptResultValue(&exposedValue)
 		}
 	}
 
 	return results, nil
 }
 
-func (c *DecryptService) decryptViaLocal(ctx context.Context, namespace string, names ...string) (map[string]service.DecryptResult, error) {
-	results := make(map[string]service.DecryptResult, len(names))
+func (c *DecryptService) decryptViaLocal(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
+	results := make(map[string]contracts.DecryptResult, len(names))
 
 	for _, name := range names {
 		exposedSecureValue, err := c.existingDecryptStorage.Decrypt(ctx, xkube.Namespace(namespace), name)
