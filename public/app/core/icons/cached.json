@@ -181,7 +181,6 @@
   "unicons/dollar-alt",
   "unicons/window-grid",
   "unicons/ban",
-  "unicons/git-alt",
-  "unicons/bitbucket-alt",
-  "unicons/gitlab-alt"
+  "unicons/git",
+  "unicons/bitbucket",
 ]

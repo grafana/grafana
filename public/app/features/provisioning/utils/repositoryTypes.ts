@@ -1,5 +1,8 @@
 import { t } from '@grafana/i18n';
 import { IconName } from '@grafana/ui';
+import bitbucketSvg from 'img/provisioning/bitbucket.svg';
+import gitSvg from 'img/provisioning/git.svg';
+import gitlabSvg from 'img/provisioning/gitlab.svg';
 
 import { RepoType } from '../Wizard/types';
 
@@ -8,6 +11,7 @@ export interface RepositoryTypeConfig {
   label: string;
   description: string;
   icon: IconName;
+  logo?: string;
 }
 
 export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
@@ -15,7 +19,8 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     type: 'git',
     label: t('provisioning.repository-types.pure-git', 'Pure Git'),
     description: t('provisioning.repository-types.pure-git-description', 'Connect to any Git repository'),
-    icon: 'code-branch' as const,
+    icon: 'git' as const,
+    logo: gitSvg,
   },
   {
     type: 'github',
@@ -28,12 +33,14 @@ export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     label: t('provisioning.repository-types.gitlab', 'GitLab'),
     description: t('provisioning.repository-types.gitlab-description', 'Connect to GitLab repositories'),
     icon: 'gitlab' as const,
+    logo: gitlabSvg,
   },
   {
     type: 'bitbucket',
     label: t('provisioning.repository-types.bitbucket', 'Bitbucket'),
     description: t('provisioning.repository-types.bitbucket-description', 'Connect to Bitbucket repositories'),
-    icon: 'cloud' as const,
+    icon: 'bitbucket' as const,
+    logo: bitbucketSvg,
   },
   {
     type: 'local',
