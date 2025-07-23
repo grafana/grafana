@@ -28,7 +28,18 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Badge, BadgeColor, Button, Dropdown, Icon, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  Badge,
+  BadgeColor,
+  Button,
+  ButtonGroup,
+  Dropdown,
+  Icon,
+  Menu,
+  Tooltip,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { config } from '../../../../../core/config';
@@ -164,55 +175,51 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         {/* Action buttons */}
         <div className={styles.actions}>
           <div className={styles.shareButtonGroup}>
-            <Tooltip content={t('explore.trace-page-header.share-tooltip', 'Share trace')}>
-              <Button
-                size="sm"
-                variant="secondary"
-                fill="outline"
-                icon="share-alt"
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
-                }}
-              >
-                {t('explore.trace-page-header.share', 'Share')}
-              </Button>
-            </Tooltip>
+            {/* Plugin extension actions */}
+            {extensionLinks.length > 0 && (
+              <div className={styles.actions}>
+                {extensionLinks.map((link) => (
+                  <Tooltip key={link.id} content={link.description || link.title}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      fill="outline"
+                      icon={link.icon}
+                      onClick={(event) => {
+                        if (link.path) {
+                          window.open(link.path, '_blank');
+                        }
+                        link.onClick?.(event);
+                      }}
+                    >
+                      {link.title}
+                    </Button>
+                  </Tooltip>
+                ))}
+              </div>
+            )}
 
-            <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
-              <Button
-                size="sm"
-                variant="secondary"
-                fill="outline"
-                icon="angle-down"
-                className={styles.shareDropdownButton}
-              />
-            </Dropdown>
+            <ButtonGroup>
+              <Tooltip content={t('explore.trace-page-header.share-tooltip', 'Share trace')}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  fill="outline"
+                  icon="share-alt"
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+                  }}
+                >
+                  {t('explore.trace-page-header.share', 'Share')}
+                </Button>
+              </Tooltip>
+
+              <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
+                <Button size="sm" variant="secondary" fill="outline" icon="angle-down" />
+              </Dropdown>
+            </ButtonGroup>
           </div>
-
-          {/* Plugin extension actions */}
-          {extensionLinks.length > 0 && (
-            <div className={styles.actions}>
-              {extensionLinks.map((link) => (
-                <Tooltip key={link.id} content={link.description || link.title}>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    fill="outline"
-                    icon={link.icon}
-                    onClick={(event) => {
-                      if (link.path) {
-                        window.open(link.path, '_blank');
-                      }
-                      link.onClick?.(event);
-                    }}
-                  >
-                    {link.title}
-                  </Button>
-                </Tooltip>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -362,15 +369,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     shareButtonGroup: css({
       display: 'flex',
-    }),
-
-    shareDropdownButton: css({
-      borderLeft: 'none !important',
-      // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderTopLeftRadius: '0 !important',
-      // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderBottomLeftRadius: '0 !important',
-      marginLeft: '-1px',
     }),
 
     metadataRow: css({
