@@ -420,13 +420,13 @@
 /packages/grafana-data/LICENSE_APACHE2 @grafana/grafana-frontend-platform
 /packages/grafana-data/README.md @grafana/grafana-frontend-platform
 /packages/grafana-data/package.json @grafana/grafana-frontend-platform
-/packages/grafana-data/project.json @grafana/frontend-ops
-/packages/grafana-data/rollup.config.ts @grafana/frontend-ops
+/packages/grafana-data/project.json @grafana/grafana-frontend-platform
+/packages/grafana-data/rollup.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-data/src/internal/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-data/src/unstable.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
-/packages/grafana-data/tsconfig.build.json @grafana/frontend-ops
-/packages/grafana-data/tsconfig.json @grafana/frontend-ops
+/packages/grafana-data/tsconfig.build.json @grafana/grafana-frontend-platform
+/packages/grafana-data/tsconfig.json @grafana/grafana-frontend-platform
 /packages/grafana-data/test/ @grafana/grafana-frontend-platform
 /packages/grafana-data/typings/ @grafana/grafana-frontend-platform
 
@@ -490,7 +490,6 @@
 
 # @grafana/eslint-plugin
 /packages/grafana-eslint-rules/ @grafana/grafana-frontend-platform
-/packages/grafana-eslint-rules/tsconfig.json @grafana/frontend-ops
 
 # @grafana/flamegraph
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
@@ -516,13 +515,13 @@
 /packages/grafana-runtime/LICENSE_APACHE2 @grafana/grafana-frontend-platform
 /packages/grafana-runtime/README.md @grafana/grafana-frontend-platform
 /packages/grafana-runtime/package.json @grafana/grafana-frontend-platform
-/packages/grafana-runtime/project.json @grafana/frontend-ops
-/packages/grafana-runtime/rollup.config.ts @grafana/frontend-ops
+/packages/grafana-runtime/project.json @grafana/grafana-frontend-platform
+/packages/grafana-runtime/rollup.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-runtime/src/unstable.ts @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
-/packages/grafana-runtime/tsconfig.build.json @grafana/frontend-ops
-/packages/grafana-runtime/tsconfig.json @grafana/frontend-ops
+/packages/grafana-runtime/tsconfig.build.json @grafana/grafana-frontend-platform
+/packages/grafana-runtime/tsconfig.json @grafana/grafana-frontend-platform
 
 /packages/grafana-runtime/src/analytics @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/analytics/plugins @grafana/plugins-platform-frontend
@@ -556,10 +555,6 @@
 
 # @grafana/schema
 /packages/grafana-schema/ @grafana/grafana-app-platform-squad
-/packages/grafana-schema/project.json @grafana/frontend-ops
-/packages/grafana-schema/rollup.config.ts @grafana/frontend-ops
-/packages/grafana-schema/tsconfig.build.json @grafana/frontend-ops
-/packages/grafana-schema/tsconfig.json @grafana/frontend-ops
 
 /packages/grafana-schema/src/**/annotationslist @grafana/dashboards-squad
 /packages/grafana-schema/src/**/azuremonitor @grafana/partner-datasources
