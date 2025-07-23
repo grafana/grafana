@@ -81,9 +81,14 @@ type distributorServer struct {
 	log        log.Logger
 }
 
-var activeRingOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
-	return s != ring.ACTIVE
-})
+var (
+	// operation used by the distributor to select only ACTIVE instances to handle search-related requests
+	searchRingRead = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+		return s != ring.ACTIVE
+	})
+	// operation used by the search-servers to check if they own the namespace
+	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
+)
 
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Search")
@@ -128,7 +133,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	rs, err := ds.ring.GetWithOptions(ringHasher.Sum32(), activeRingOp, ring.WithReplicationFactor(ds.ring.ReplicationFactor()))
+	rs, err := ds.ring.GetWithOptions(ringHasher.Sum32(), searchRingRead, ring.WithReplicationFactor(ds.ring.ReplicationFactor()))
 	if err != nil {
 		return ctx, nil, err
 	}
