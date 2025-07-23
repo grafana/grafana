@@ -25,7 +25,7 @@ import {
   getComparator,
   getDefaultRowHeight,
   getIsNestedTable,
-  getTextAlign,
+  getAlignment,
   getJustifyContent,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
@@ -33,149 +33,65 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
-  describe('text alignment', () => {
-    it('should map alignment options to flex values', () => {
-      // Test 'left' alignment
-      const leftField = {
-        name: 'Value',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {
-            align: 'left',
-          },
-        },
-      };
-      expect(getTextAlign(leftField)).toBe('left');
-      expect(getJustifyContent(leftField)).toBe('flex-start');
-
-      // Test 'center' alignment
-      const centerField = {
-        name: 'Value',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {
-            align: 'center',
-          },
-        },
-      };
-      expect(getTextAlign(centerField)).toBe('center');
-      expect(getJustifyContent(centerField)).toBe('center');
-
-      // Test 'right' alignment
-      const rightField = {
-        name: 'Value',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {
-            align: 'right',
-          },
-        },
-      };
-      expect(getTextAlign(rightField)).toBe('right');
-      expect(getJustifyContent(rightField)).toBe('flex-end');
-    });
-
-    it('should default to flex-start when no alignment specified', () => {
-      const field = {
-        name: 'Value',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getTextAlign(field)).toBeUndefined();
-      expect(getJustifyContent(field)).toBe('flex-start');
-    });
-
-    it('should default to flex-start when no field is specified', () => {
-      expect(getTextAlign(undefined)).toBeUndefined();
-      expect(getJustifyContent(undefined)).toBe('flex-start');
-    });
-
-    it('should default to flex-end for number types', () => {
-      const field = {
-        name: 'Value',
-        type: FieldType.number,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getTextAlign(field)).toBe('right');
-      expect(getJustifyContent(field)).toBe('flex-end');
-    });
-
-    it('should default to flex-start for string types', () => {
-      const field = {
-        name: 'String',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getTextAlign(field)).toBeUndefined();
-      expect(getJustifyContent(field)).toBe('flex-start');
-    });
-
-    it('should default to flex-start for enum types', () => {
-      const field = {
-        name: 'Enum',
-        type: FieldType.enum,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getTextAlign(field)).toBeUndefined();
-      expect(getJustifyContent(field)).toBe('flex-start');
-    });
-
-    it('should default to flex-start for time types', () => {
-      const field = {
-        name: 'Time',
-        type: FieldType.time,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getTextAlign(field)).toBeUndefined();
-      expect(getJustifyContent(field)).toBe('flex-start');
-    });
-
-    it('should use inherited alignment for DataLinkCell', () => {
-      const field = {
-        name: 'Active',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {
-            cellOptions: {
-              type: TableCellDisplayMode.DataLinks,
+  describe('alignment', () => {
+    it.each(['left', 'center', 'right'] as const)('should return "%s" when configured', (align) => {
+      expect(
+        getAlignment({
+          name: 'Value',
+          type: FieldType.string,
+          values: [],
+          config: {
+            custom: {
+              align,
             },
           },
-        },
-      };
-      expect(getTextAlign(field)).toBeUndefined();
-      expect(getJustifyContent(field)).toBe('flex-start');
+        })
+      ).toBe(align);
     });
 
-    it('should default to flex-start for boolean types', () => {
-      const field = {
-        name: 'Active',
-        type: FieldType.boolean,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getTextAlign(field)).toBeUndefined();
-      expect(getJustifyContent(field)).toBe('flex-start');
+    it.each([
+      { type: FieldType.string, align: 'left' },
+      { type: FieldType.number, align: 'right' },
+      { type: FieldType.boolean, align: 'left' },
+      { type: FieldType.time, align: 'left' },
+    ])('should return "$align" for field type $type by default', ({ type, align }) => {
+      expect(
+        getAlignment({
+          name: 'Test',
+          type,
+          values: [],
+          config: {
+            custom: {},
+          },
+        })
+      ).toBe(align);
+    });
+
+    it('should default to left for non-text cell types contain number type fields', () => {
+      expect(
+        getAlignment({
+          name: 'Value',
+          type: FieldType.number,
+          values: [],
+          config: {
+            custom: {
+              cellOptions: {
+                type: TableCellDisplayMode.Gauge,
+              },
+            },
+          },
+        })
+      ).toBe('left');
+    });
+
+    describe('mapping to getJustifyContent', () => {
+      it.each([
+        { align: 'left', expected: 'flex-start' },
+        { align: 'center', expected: 'center' },
+        { align: 'right', expected: 'flex-end' },
+      ] as const)(`should map align "$align" to justifyContent "$expected"`, ({ align, expected }) => {
+        expect(getJustifyContent(align)).toBe(expected);
+      });
     });
   });
 
