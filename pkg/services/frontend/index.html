@@ -28,7 +28,7 @@
   </head>
 
   <body>
-    <div class="fs-loader fs-loader-starting-up">
+    <div class="fs-loader">
       <style>
         /**
           * This style tag is purposefully inside the fs-loader div so
@@ -36,15 +36,21 @@
           * the styles are taken away with it as well.
           */
 
+        /* Light theme */
         :root {
           --fs-loader-bg: #f4f5f5;
           --fs-loader-text-color: rgb(36, 41, 46);
+          --fs-spinner-arc-color: #F55F3E;
+          --fs-spinner-track-color: rgba(36, 41, 46, 0.12);
         }
 
+        /* Dark theme */
         @media (prefers-color-scheme: dark) {
           :root {
             --fs-loader-bg: #111217;
             --fs-loader-text-color: rgb(204, 204, 220);
+            --fs-spinner-arc-color: #F55F3E;
+            --fs-spinner-track-color: rgba(204, 204, 220, 0.12);
           }
         }
 
