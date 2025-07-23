@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/util/xorm
 
-go 1.24.4
+go 1.24.5
 
 require (
 	cloud.google.com/go/spanner v1.76.1
