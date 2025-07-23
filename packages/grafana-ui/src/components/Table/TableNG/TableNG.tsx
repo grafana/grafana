@@ -985,7 +985,7 @@ const getCellStyles = (
         ':nth-last-child(1 of a,span)': {
           borderRight: 'none',
           paddingInlineEnd: 0,
-        }
+        },
       },
     }),
   });
