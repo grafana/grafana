@@ -28,7 +28,7 @@ jobs:
           self: .github/workflows/storybook-a11y.yml
 
   test-storybook-a11y:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
       id-token: write
@@ -46,4 +46,4 @@ jobs:
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
     - run: yarn storybook &
-    - run: npx wait-on --verbose --timeout 60000 http://localhost:9001 && yarn test:storybook
+    - run: npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
