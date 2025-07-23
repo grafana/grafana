@@ -7,6 +7,7 @@ import {
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { AuthMethod, convertLegacyAuthProps } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import {
   Box,
   CertificationKey,
@@ -42,9 +43,6 @@ export const AuthSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
   const styles = useStyles2(getInlineLabelStyles);
 
-  /**
-   * Derived props from legacy helpers
-   */
   const authProps = useMemo(
     () =>
       convertLegacyAuthProps({
@@ -54,9 +52,6 @@ export const AuthSettings = (props: Props) => {
     [options, onOptionsChange]
   );
 
-  /**
-   * Selected authentication method. Fallback to the most common if the selected one is missing.
-   */
   const isAuthMethod = (v: unknown): v is AuthMethod =>
     v === AuthMethod.NoAuth || v === AuthMethod.BasicAuth || v === AuthMethod.OAuthForward;
 
@@ -67,9 +62,6 @@ export const AuthSettings = (props: Props) => {
     return isAuthMethod(authProps.mostCommonMethod) ? authProps.mostCommonMethod : undefined;
   }, [authProps.selectedMethod, authProps.mostCommonMethod]);
 
-  /**
-   * Local UI state
-   */
   const [authOptions, setAuthOptions] = useState<AuthOptionState>({
     basicAuth: selectedMethod === AuthMethod.BasicAuth,
     tlsClientAuth: authProps.TLS?.TLSClientAuth.enabled ?? false,
@@ -79,9 +71,6 @@ export const AuthSettings = (props: Props) => {
     withCredentials: options.withCredentials ?? false,
   });
 
-  /**
-   * Expand/collapse top–level section
-   */
   const [authenticationSettingsIsOpen, setAuthenticationSettingsIsOpen] = useState(
     Object.values(authOptions).some(Boolean)
   );
@@ -121,7 +110,6 @@ export const AuthSettings = (props: Props) => {
 
   return (
     <Stack direction="column">
-      {/* Header toggle */}
       <Box alignItems="center">
         <InlineField label={<div className={cx(styles.label)}>Auth and TLS/SSL Settings</div>} labelWidth={35}>
           <InlineSwitch
@@ -132,11 +120,9 @@ export const AuthSettings = (props: Props) => {
         </InlineField>
       </Box>
 
-      {/* Collapsible settings body */}
       {authenticationSettingsIsOpen && (
         <Box paddingLeft={1}>
-          {/* Authentication Method */}
-          <Box marginBottom={2}>
+          <Box marginBottom={1}>
             <Field label={<Text element="h5">Authentication Method</Text>} noMargin>
               <Box width="50%" marginY={2}>
                 <RadioButtonGroup
@@ -149,7 +135,6 @@ export const AuthSettings = (props: Props) => {
           </Box>
 
           <Box marginBottom={2}>
-            {/* Basic Auth settings */}
             {authOptions.basicAuth && (
               <>
                 <Box display="flex" direction="column" width="60%" marginBottom={2}>
@@ -160,7 +145,7 @@ export const AuthSettings = (props: Props) => {
                       value={options.basicAuthUser || ''}
                     />
                   </InlineField>
-                  <InlineField label="Password" labelWidth={14} grow>
+                  <InlineField label="Password" labelWidth={14}>
                     <SecretInput
                       placeholder="Password"
                       isConfigured={options.secureJsonFields.basicAuthPassword || false}
@@ -174,7 +159,21 @@ export const AuthSettings = (props: Props) => {
             )}
           </Box>
 
-          {/* TLS Client Auth */}
+                        {/* <InlineField
+                          label={'With Credentials'}
+                          tooltip={'Whether credentials such as cookies or auth headers should be sent with cross-site requests.'}
+                          labelWidth={DB_SETTINGS_LABEL_WIDTH}
+                          disabled={config.readOnly}
+                        >
+                          <InlineSwitch
+                            id="http-settings-with-credentials"
+                            value={dataSourceConfig.withCredentials}
+                            onChange={(event) => {
+                              onUpdateDatasourceOption({ withCredentials: event!.currentTarget.checked });
+                            }}
+                          />
+                        </InlineField> */}
+
           <Box marginBottom={2}>
             <Field noMargin>
               <>
@@ -209,6 +208,7 @@ export const AuthSettings = (props: Props) => {
                       onChange={(e) => authProps.TLS?.TLSClientAuth.onClientCertificateChange(e.currentTarget.value)}
                       hasCert={!!authProps.TLS?.TLSClientAuth.clientCertificateConfigured}
                       onClick={() => authProps.TLS?.TLSClientAuth.onClientCertificateReset()}
+                      useGrow={config.featureToggles.newInfluxDSConfigPageDesign}
                     />
                     <CertificationKey
                       label="Client Key"
@@ -216,6 +216,7 @@ export const AuthSettings = (props: Props) => {
                       onChange={(e) => authProps.TLS?.TLSClientAuth.onClientKeyChange(e.currentTarget.value)}
                       hasCert={!!authProps.TLS?.TLSClientAuth.clientKeyConfigured}
                       onClick={() => authProps.TLS?.TLSClientAuth.onClientKeyReset()}
+                      useGrow={config.featureToggles.newInfluxDSConfigPageDesign}
                     />
                   </Box>
                 )}
@@ -223,7 +224,6 @@ export const AuthSettings = (props: Props) => {
             </Field>
           </Box>
 
-          {/* CA Cert */}
           <Box marginBottom={2}>
             <Field noMargin>
               <>
@@ -244,6 +244,7 @@ export const AuthSettings = (props: Props) => {
                       onChange={(e) => authProps.TLS?.selfSignedCertificate.onCertificateChange(e.currentTarget.value)}
                       hasCert={!!authProps.TLS?.selfSignedCertificate.certificateConfigured}
                       onClick={() => authProps.TLS?.selfSignedCertificate.onCertificateReset()}
+                      useGrow={config.featureToggles.newInfluxDSConfigPageDesign}
                     />
                   </Box>
                 )}
@@ -251,7 +252,6 @@ export const AuthSettings = (props: Props) => {
             </Field>
           </Box>
 
-          {/* Skip TLS verify */}
           <Box display="flex" direction="row" alignItems="center">
             <Label style={{ width: '125px' }}>Skip TLS Verify</Label>
             <InlineSwitch

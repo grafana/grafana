@@ -6,12 +6,12 @@ import { AdvancedDbConnectionSettings } from './AdvancedDBConnectionSettings';
 import { InfluxFluxDBConnection } from './InfluxFluxDBConnection';
 import { InfluxInfluxQLDBConnection } from './InfluxInfluxQLDBConnection';
 import { InfluxSQLDBConnection } from './InfluxSQLDBConnection';
-import { CONFIG_SECTION_HEADERS } from './constants';
+import { CONFIG_SECTION_HEADERS, CONTAINER_MIN_WIDTH } from './constants';
 import { Props } from './types';
 
 export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) => (
   <>
-    <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[1].id}`}>
+    <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[1].id}`} minWidth={CONTAINER_MIN_WIDTH}>
       <CollapsableSection
         label={<Text element="h3">2. {CONFIG_SECTION_HEADERS[1].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[1].isOpen}

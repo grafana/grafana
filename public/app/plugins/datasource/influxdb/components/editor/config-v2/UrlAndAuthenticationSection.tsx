@@ -17,7 +17,7 @@ import { InfluxVersion } from '../../../types';
 
 import { AdvancedHttpSettings } from './AdvancedHttpSettings';
 import { AuthSettings } from './AuthSettings';
-import { CONFIG_SECTION_HEADERS } from './constants';
+import { CONFIG_SECTION_HEADERS, CONTAINER_MIN_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2ProductSelected,
   trackInfluxDBConfigV2QueryLanguageSelected,
@@ -66,7 +66,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => onUpdateDatasourceOption(props, 'url')(event);
 
   return (
-    <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[0].id}`}>
+    <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[0].id}`} minWidth={CONTAINER_MIN_WIDTH}>
       <CollapsableSection
         label={<Text element="h3">1. {CONFIG_SECTION_HEADERS[0].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[0].isOpen}
