@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { ActionButton } from '../Actions/ActionButton';
@@ -89,7 +90,7 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, onFilterCl
     <div className={styles.wrapper}>
       {!hasOneClickAction && renderDataLinks(dataLinks, styles)}
       {!hasOneClickLink && renderActions(actions, styles)}
-      {!hasOneClickLink && !hasOneClickAction && onFilterClick && (
+      {config.featureToggles.adhocFiltersInTooltips && !hasOneClickLink && !hasOneClickAction && onFilterClick && (
         <div className={styles.filterForValue}>
           <Button icon="filter" variant="secondary" size="sm" onClick={onFilterClick}>
             <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">Filter for value</Trans>
