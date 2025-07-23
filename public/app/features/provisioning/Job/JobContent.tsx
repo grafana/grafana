@@ -33,9 +33,9 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
         return (
           <Alert
             severity="warning"
-            title={t('provisioning.job-status.status.title-warning-running-job', 'Warning running job')}
+            title={t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings')}
           >
-            {message ?? errors?.join('\n')}
+            {errors?.length ? errors?.join('\n') : message}
           </Alert>
         );
       case 'error':
@@ -44,7 +44,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
             severity="error"
             title={t('provisioning.job-status.status.title-error-running-job', 'Error running job')}
           >
-            {message ?? errors?.join('\n')}
+            {errors?.length ? errors?.join('\n') : message}
           </Alert>
         );
     }
