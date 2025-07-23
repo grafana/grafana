@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -166,6 +166,7 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 
 	return ctx
 }
+
 func (h *ContextHandler) excludeSensitiveHeadersFromRequest(req *http.Request) {
 	req.Header.Del(authnClients.ExtJWTAuthenticationHeaderName)
 	req.Header.Del(authnClients.ExtJWTAuthorizationHeaderName)
