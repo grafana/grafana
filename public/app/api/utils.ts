@@ -1,8 +1,8 @@
 import { config, isFetchError } from '@grafana/runtime';
+import { ThunkDispatch } from 'app/types/store';
 
 import { notifyApp } from '../core/actions';
 import { createErrorNotification } from '../core/copy/appNotification';
-import { ThunkDispatch } from '../types';
 
 export const getAPINamespace = () => config.namespace;
 
@@ -37,3 +37,15 @@ export const handleError = (e: unknown, dispatch: ThunkDispatch, message: string
     }
   }
 };
+
+export function extractErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object') {
+    if ('data' in error && error.data && typeof error.data === 'object' && 'message' in error.data) {
+      return String(error.data.message);
+    }
+    if ('message' in error) {
+      return String(error.message);
+    }
+  }
+  return String(error);
+}

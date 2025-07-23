@@ -1,14 +1,13 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { store, type ExtensionInfo } from '@grafana/data';
+import { PluginExtensionPoints, store, type ExtensionInfo } from '@grafana/data';
 import { config, getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { OpenExtensionSidebarEvent } from 'app/types/events';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
 
-import { DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
+import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
-export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
@@ -18,7 +17,7 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-grafanadocsplugin-app',
 ];
 
-type ExtensionSidebarContextType = {
+export type ExtensionSidebarContextType = {
   /**
    * Whether the extension sidebar is enabled.
    */
@@ -94,7 +93,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   // `grafana/extension-sidebar/v0-alpha` and the link's `configure` method would control
   // whether the component is rendered or not
   const { links, isLoading } = usePluginLinks({
-    extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
+    extensionPointId: PluginExtensionPoints.ExtensionSidebar,
     context: {
       path: currentPath,
     },
@@ -107,7 +106,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     () =>
       isEnabled
         ? new Map(
-            Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(
+            Array.from(getExtensionPointPluginMeta(PluginExtensionPoints.ExtensionSidebar).entries()).filter(
               ([pluginId, pluginMeta]) =>
                 PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
                 links.some(
@@ -174,7 +173,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       if (
         event.payload.pluginId &&
         event.payload.componentTitle &&
-        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId)
+        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId) &&
+        availableComponents
+          .get(event.payload.pluginId)
+          ?.addedComponents.some((component) => component.title === event.payload.componentTitle)
       ) {
         setDockedComponentWithProps(
           JSON.stringify({ pluginId: event.payload.pluginId, componentTitle: event.payload.componentTitle }),
@@ -183,11 +185,17 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       }
     };
 
-    const subscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
-    return () => {
-      subscription.unsubscribe();
+    const closeSidebarHandler = () => {
+      setDockedComponentId(undefined);
     };
-  }, [isEnabled, setDockedComponentWithProps]);
+
+    const openSubscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
+    const closeSubscription = getAppEvents().subscribe(CloseExtensionSidebarEvent, closeSidebarHandler);
+    return () => {
+      openSubscription.unsubscribe();
+      closeSubscription.unsubscribe();
+    };
+  }, [isEnabled, setDockedComponentWithProps, availableComponents]);
 
   // update the stored docked component id when it changes
   useEffect(() => {
@@ -223,7 +231,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         dockedComponentId,
         setDockedComponentId: (componentId) => setDockedComponentWithProps(componentId, undefined),
         availableComponents,
-        extensionSidebarWidth: extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+        extensionSidebarWidth: Math.min(
+          extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+          MAX_EXTENSION_SIDEBAR_WIDTH
+        ),
         setExtensionSidebarWidth,
         props,
       }}

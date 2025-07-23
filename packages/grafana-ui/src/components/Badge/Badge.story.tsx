@@ -6,7 +6,7 @@ import { Badge } from './Badge';
 import mdx from './Badge.mdx';
 
 const meta: Meta<typeof Badge> = {
-  title: 'Data Display/Badge',
+  title: 'Information/Badge',
   component: Badge,
   parameters: {
     docs: { page: mdx },

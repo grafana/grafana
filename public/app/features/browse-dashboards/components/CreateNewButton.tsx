@@ -12,7 +12,7 @@ import {
   getNewFolderPhrase,
   getNewPhrase,
 } from 'app/features/search/tempI18nPhrases';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 import { ManagerKind } from '../../apiserver/types';
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';
@@ -41,7 +41,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
         parentUid: parentFolder?.uid,
       });
 
-      const depth = parentFolder?.parents ? parentFolder.parents.length + 1 : 0;
+      const depth = parentFolder ? (parentFolder.parents?.length || 0) + 1 : 0;
       reportInteraction('grafana_manage_dashboards_folder_created', {
         is_subfolder: Boolean(parentFolder?.uid),
         folder_depth: depth,
@@ -107,11 +107,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
           size="sm"
         >
           {parentFolder?.managedBy === ManagerKind.Repo || isProvisionedInstance ? (
-            <NewProvisionedFolderForm
-              onSubmit={() => setShowNewFolderDrawer(false)}
-              onCancel={() => setShowNewFolderDrawer(false)}
-              parentFolder={parentFolder}
-            />
+            <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
           ) : (
             <NewFolderForm onConfirm={onCreateFolder} onCancel={() => setShowNewFolderDrawer(false)} />
           )}

@@ -1,36 +1,142 @@
 {
   "__inputs": [
     {
-      "name": "DS_NAME",
+      "name": "datasource",
+      "description": "",
       "type": "datasource",
-      "pluginId": "graphite"
+      "pluginId": "graphite",
+      "pluginName": "Graphite"
     }
   ],
-
-  "revision": "1.0",
-  "title": "Graphite Carbon Metrics",
-  "tags": ["graphite", "carbon"],
-  "timezone": "browser",
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "12.1.0-pre"
+    },
+    {
+      "type": "datasource",
+      "id": "graphite",
+      "name": "Graphite",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "enable": false,
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
+  "links": [],
   "panels": [
     {
-      "aliasColors": {},
-      "annotate": {
-        "enable": false
+      "datasource": {
+        "type": "graphite",
+        "uid": "${datasource}"
       },
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_NAME}",
-      "editable": true,
-      "fill": 0,
-      "fillGradient": 0,
-      "grid": {
-        "max": null,
-        "min": 0
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Points Per Update"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 10,
@@ -38,111 +144,96 @@
         "x": 0,
         "y": 0
       },
-      "hiddenSeries": false,
       "id": 1,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "loadingEditor": false,
-      "nullPointMode": "null as zero",
       "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "resolution": 100,
-      "scale": 1,
-      "seriesOverrides": [
-        {
-          "alias": "Points Per Update",
-          "yaxis": 2
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
         },
-        {
-          "alias": "CPU",
-          "yaxis": 2
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
         }
-      ],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      },
       "targets": [
         {
+          "datasource": {
+            "type": "graphite",
+            "uid": "${datasource}"
+          },
           "refId": "A",
           "target": "alias(sumSeries(carbon.agents.*.updateOperations),\"Updates\") "
         },
         {
+          "datasource": {
+            "type": "graphite",
+            "uid": "${datasource}"
+          },
           "refId": "B",
           "target": "alias(sumSeries(carbon.agents.*.metricsReceived),'Metrics Received')"
         },
         {
+          "datasource": {
+            "type": "graphite",
+            "uid": "${datasource}"
+          },
           "refId": "C",
           "target": "alias(sumSeries(carbon.agents.*.committedPoints),'Committed Points')"
         },
         {
+          "datasource": {
+            "type": "graphite",
+            "uid": "${datasource}"
+          },
           "refId": "D",
           "target": "alias(sumSeries(carbon.agents.*.pointsPerUpdate),'Points Per Update')"
         },
         {
+          "datasource": {
+            "type": "graphite",
+            "uid": "${datasource}"
+          },
           "refId": "E",
           "target": "alias(averageSeries(carbon.agents.*.cpuUsage),'CPU')"
         },
         {
+          "datasource": {
+            "type": "graphite",
+            "uid": "${datasource}"
+          },
           "refId": "F",
           "target": "alias(sumSeries(carbon.agents.*.creates),'Creates')"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
       "title": "Graphite Carbon Metrics",
-      "tooltip": {
-        "query_as_alias": true,
-        "shared": false,
-        "sort": 0,
-        "value_type": "cumulative"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      },
-      "zerofill": true
+      "type": "timeseries"
     }
   ],
+  "refresh": "",
+  "revision": "1.0",
+  "schemaVersion": 41,
+  "tags": ["graphite", "carbon"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "graphite",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
   "time": {
     "from": "now-3h",
     "to": "now"
@@ -156,16 +247,9 @@
     "status": "Stable",
     "type": "timepicker"
   },
-  "templating": {
-    "enable": false,
-    "list": []
-  },
-  "annotations": {
-    "enable": false,
-    "list": []
-  },
-  "refresh": false,
-  "schemaVersion": 22,
-  "version": 3,
-  "links": []
+  "timezone": "browser",
+  "title": "Graphite Carbon Metrics",
+  "uid": "15e2000b-24f6-4831-8993-aea2b84f852b",
+  "version": 4,
+  "weekStart": ""
 }

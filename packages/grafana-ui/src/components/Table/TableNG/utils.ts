@@ -1,7 +1,6 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -12,9 +11,11 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
+  DisplayProcessor,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
+  FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
@@ -24,30 +25,10 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
+import { CellColors, TableRow, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export type CellHeightCalculator = (text: string, cellWidth: number) => number;
-
-/**
- * @internal
- * Returns a function that calculates the height of a cell based on its text content and width.
- */
-export function getCellHeightCalculator(
-  // should be pre-configured with font and letterSpacing
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding = 0
-) {
-  const { count } = varPreLine(ctx);
-
-  return (text: string, cellWidth: number) => {
-    const numLines = count(text, cellWidth);
-    const totalHeight = numLines * lineHeight + 2 * padding;
-    return Math.max(totalHeight, defaultRowHeight);
-  };
-}
+export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
 
 /**
  * @internal
@@ -71,46 +52,129 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
 
 /**
  * @internal
- * Returns true if text overflow handling should be applied to the cell.
+ * Returns true if cell inspection (hover to see full content) is enabled for the field.
  */
-export function shouldTextOverflow(
-  fieldType: FieldType,
-  cellType: TableCellDisplayMode,
-  textWrap: boolean,
-  cellInspect: boolean
-): boolean {
-  // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-  // so we need to ensure we don't apply overflow hover states fo type image
-  return fieldType === FieldType.string && cellType !== TableCellDisplayMode.Image && !textWrap && !cellInspect;
+export function isCellInspectEnabled(field: Field): boolean {
+  return field.config?.custom?.inspect ?? false;
 }
 
 /**
  * @internal
- * Returns the text alignment for a field based on its type and configuration.
+ * Returns true if text wrapping should be applied to the cell.
  */
-export function getTextAlign(field?: Field): Property.JustifyContent {
-  if (!field) {
-    return 'flex-start';
-  }
+export function shouldTextWrap(field: Field): boolean {
+  const cellOptions = getCellOptions(field);
+  // @ts-ignore - a handful of cellTypes have boolean wrapText, but not all of them.
+  // we should be very careful to only use boolean type for cellOptions.wrapText.
+  // TBH we will probably move this up to a field option which is showIf rendered anyway,
+  // but that'll be a migration to do, so it needs to happen post-GA.
+  return Boolean(cellOptions?.wrapText);
+}
 
-  if (field.config.custom) {
-    const custom: TableFieldOptionsType = field.config.custom;
+// matches characters which CSS
+const spaceRegex = /[\s-]/;
 
-    switch (custom.align) {
-      case 'right':
-        return 'flex-end';
-      case 'left':
-        return 'flex-start';
-      case 'center':
-        return 'center';
+export interface GetMaxWrapCellOptions {
+  colWidths: number[];
+  avgCharWidth: number;
+  wrappedColIdxs: boolean[];
+}
+
+/**
+ * @internal
+ * loop through the fields and their values, determine which cell is going to determine the
+ * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
+ */
+export function getMaxWrapCell(
+  fields: Field[],
+  rowIdx: number,
+  { colWidths, avgCharWidth, wrappedColIdxs }: GetMaxWrapCellOptions
+): {
+  text: string;
+  idx: number;
+  numLines: number;
+} {
+  let maxLines = 1;
+  let maxLinesIdx = -1;
+  let maxLinesText = '';
+
+  // TODO: consider changing how we store this, using a record by column key instead of an array
+  for (let i = 0; i < colWidths.length; i++) {
+    if (wrappedColIdxs[i]) {
+      const field = fields[i];
+      // special case: for the header, provide `-1` as the row index.
+      const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
+
+      if (cellTextRaw != null) {
+        const cellText = String(cellTextRaw);
+
+        if (spaceRegex.test(cellText)) {
+          const charsPerLine = colWidths[i] / avgCharWidth;
+          const approxLines = cellText.length / charsPerLine;
+
+          if (approxLines > maxLines) {
+            maxLines = approxLines;
+            maxLinesIdx = i;
+            maxLinesText = cellText;
+          }
+        }
+      }
     }
   }
 
-  if (field.type === FieldType.number) {
-    return 'flex-end';
+  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
+}
+
+/**
+ * @internal
+ * Returns true if text overflow handling should be applied to the cell.
+ */
+export function shouldTextOverflow(field: Field): boolean {
+  const cellOptions = getCellOptions(field);
+  const eligibleCellType =
+    // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
+    // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
+    (field.type === FieldType.string &&
+      cellOptions.type !== TableCellDisplayMode.Image &&
+      cellOptions.type !== TableCellDisplayMode.Pill) ||
+    // regardless of the underlying cell type, data links cells have text overflow.
+    cellOptions.type === TableCellDisplayMode.DataLinks;
+
+  return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
+}
+
+// we only want to infer justifyContent and textAlign for these cellTypes
+const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
+  TableCellDisplayMode.Auto,
+  TableCellDisplayMode.ColorText,
+  TableCellDisplayMode.ColorBackground,
+]);
+
+export type TextAlign = 'left' | 'right' | 'center';
+
+/**
+ * @internal
+ * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
+ */
+export function getAlignment(field: Field): TextAlign {
+  const align: FieldTextAlignment | undefined = field.config.custom?.align;
+
+  if (!align || align === 'auto') {
+    if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
+      return 'right';
+    }
+    return 'left';
   }
 
-  return 'flex-start';
+  return align;
+}
+
+/**
+ * @internal
+ * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
+ */
+export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
+  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
@@ -118,6 +182,7 @@ const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
 /**
  * @internal
  * Returns the cell options for a field, migrating from legacy displayMode if necessary.
+ * TODO: remove live migration in favor of doing it in dashboard or panel migrator
  */
 export function getCellOptions(field: Field): TableCellOptions {
   if (field.config.custom?.displayMode) {
@@ -172,7 +237,6 @@ export function getAlignmentFactor(
 
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
-const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
 const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
 
 /**
@@ -190,7 +254,7 @@ export function getCellColors(
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
-  let bgHoverColor: string | undefined = undefined;
+  // let bgHoverColor: string | undefined = undefined;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
@@ -200,23 +264,23 @@ export function getCellColors(
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-      bgHoverColor = tinycolor(displayValue.color)
-        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
-        .toRgbString();
+      // bgHoverColor = tinycolor(displayValue.color)
+      //   .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+      //   .toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const hoverColor = tinycolor(displayValue.color)
-        .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
-        .toRgbString();
+      // const hoverColor = tinycolor(displayValue.color)
+      //   .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
+      //   .toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
         .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
         .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-      bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
+      // bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
     }
   }
 
-  return { textColor, bgColor, bgHoverColor };
+  return { textColor, bgColor };
 }
 
 /**
@@ -455,10 +519,10 @@ export const processNestedTableRows = (
   const childRows: Map<number, TableRow> = new Map();
 
   for (const row of rows) {
-    if (Number(row.__depth) === 0) {
+    if (row.__depth === 0) {
       parentRows.push(row);
     } else {
-      childRows.set(Number(row.__index), row);
+      childRows.set(row.__index, row);
     }
   }
 
@@ -469,7 +533,7 @@ export const processNestedTableRows = (
   const result: TableRow[] = [];
   processedParents.forEach((row) => {
     result.push(row);
-    const childRow = childRows.get(Number(row.__index));
+    const childRow = childRows.get(row.__index);
     if (childRow) {
       result.push(childRow);
     }
@@ -480,7 +544,10 @@ export const processNestedTableRows = (
 
 /**
  * @internal
- * returns the display name of a field
+ * returns the display name of a field.
+ * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
+ * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
+ * before we begin.
  */
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
@@ -559,3 +626,36 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
     }
   }
 }
+
+/** @internal */
+export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDisplayMode) {
+  return (
+    cellType !== TableCellDisplayMode.DataLinks &&
+    cellType !== TableCellDisplayMode.Actions &&
+    (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
+  );
+}
+
+export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue => {
+  let displayValue: string;
+
+  // Handle string values that might be JSON
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      displayValue = JSON.stringify(parsed, null, ' ');
+    } catch {
+      displayValue = value; // Keep original if not valid JSON
+    }
+  } else {
+    // For non-string values, stringify them
+    try {
+      displayValue = JSON.stringify(value, null, ' ');
+    } catch (error) {
+      // Handle circular references or other stringify errors
+      displayValue = String(value);
+    }
+  }
+
+  return { text: displayValue, numeric: Number.NaN };
+};

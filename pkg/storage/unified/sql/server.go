@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -21,8 +22,8 @@ import (
 
 type QOSEnqueueDequeuer interface {
 	services.Service
-	Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error
-	Dequeue(ctx context.Context) (func(ctx context.Context), error)
+	Enqueue(ctx context.Context, tenantID string, runnable func()) error
+	Dequeue(ctx context.Context) (func(), error)
 }
 
 // ServerOptions contains the options for creating a new ResourceServer
@@ -37,6 +38,8 @@ type ServerOptions struct {
 	IndexMetrics   *resource.BleveIndexMetrics
 	Features       featuremgmt.FeatureToggles
 	QOSQueue       QOSEnqueueDequeuer
+	Ring           *ring.Ring
+	RingLifecycler *ring.BasicLifecycler
 }
 
 // Creates a new ResourceServer
@@ -96,6 +99,8 @@ func NewResourceServer(
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
+	serverOptions.Ring = opts.Ring
+	serverOptions.RingLifecycler = opts.RingLifecycler
 
 	return resource.NewResourceServer(serverOptions)
 }

@@ -10,20 +10,37 @@ import { AutoSizeInput, Select } from '@grafana/ui';
 
 import { LegendFormatMode } from '../../types';
 
-export interface PromQueryLegendEditorProps {
+interface PromQueryLegendEditorProps {
   legendFormat: string | undefined;
   onChange: (legendFormat: string) => void;
   onRunQuery: () => void;
 }
 
-const legendModeOptions = [
+const getLegendModeOptions = () => [
   {
-    label: 'Auto',
+    label: t('grafana-prometheus.prom-query-legend-editor.get-legend-mode-options.label-auto', 'Auto'),
     value: LegendFormatMode.Auto,
-    description: 'Only includes unique labels',
+    description: t(
+      'grafana-prometheus.prom-query-legend-editor.get-legend-mode-options.description-auto',
+      'Only includes unique labels'
+    ),
   },
-  { label: 'Verbose', value: LegendFormatMode.Verbose, description: 'All label names and values' },
-  { label: 'Custom', value: LegendFormatMode.Custom, description: 'Provide a naming template' },
+  {
+    label: t('grafana-prometheus.prom-query-legend-editor.get-legend-mode-options.label-verbose', 'Verbose'),
+    value: LegendFormatMode.Verbose,
+    description: t(
+      'grafana-prometheus.prom-query-legend-editor.get-legend-mode-options.description-verbose',
+      'All label names and values'
+    ),
+  },
+  {
+    label: t('grafana-prometheus.prom-query-legend-editor.get-legend-mode-options.label-custom', 'Custom'),
+    value: LegendFormatMode.Custom,
+    description: t(
+      'grafana-prometheus.prom-query-legend-editor.get-legend-mode-options.description-custom',
+      'Provide a naming template'
+    ),
+  },
 ];
 
 /**
@@ -33,6 +50,7 @@ export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
   ({ legendFormat, onChange, onRunQuery }) => {
     const mode = getLegendMode(legendFormat);
     const inputRef = useRef<HTMLInputElement | null>(null);
+    const legendModeOptions = getLegendModeOptions();
 
     const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
       let newFormat = evt.currentTarget.value;
@@ -124,6 +142,7 @@ function getLegendMode(legendFormat: string | undefined) {
 }
 
 export function getLegendModeLabel(legendFormat: string | undefined) {
+  const legendModeOptions = getLegendModeOptions();
   const mode = getLegendMode(legendFormat);
   if (mode !== LegendFormatMode.Custom) {
     return legendModeOptions.find((x) => x.value === mode)?.label;

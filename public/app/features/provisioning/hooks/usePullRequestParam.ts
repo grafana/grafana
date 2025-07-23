@@ -4,10 +4,12 @@ import { useUrlParams } from 'app/core/navigation/hooks';
 export const usePullRequestParam = () => {
   const [params] = useUrlParams();
   const prParam = params.get('pull_request_url');
+  const newPrParam = params.get('new_pull_request_url');
+  const repoUrl = params.get('repo_url');
 
-  if (!prParam) {
-    return undefined;
-  }
-
-  return textUtil.sanitizeUrl(decodeURIComponent(prParam));
+  return {
+    prURL: prParam ? textUtil.sanitizeUrl(prParam) : undefined,
+    newPrURL: newPrParam ? textUtil.sanitizeUrl(newPrParam) : undefined,
+    repoURL: repoUrl ? textUtil.sanitizeUrl(repoUrl) : undefined,
+  };
 };

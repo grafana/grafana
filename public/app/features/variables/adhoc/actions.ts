@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import { AdHocVariableFilter, AdHocVariableModel, DataSourceRef } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { StoreState, ThunkResult } from 'app/types';
+import { StoreState, ThunkResult } from 'app/types/store';
 
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { isAdHoc } from '../guard';

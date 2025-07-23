@@ -73,7 +73,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardWithAccessInfo } from './types';
 import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource } from './utils';
@@ -423,52 +423,7 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
     return [panelKind, element_identifier];
   } else {
     // PanelKind
-
-    const queries = getPanelQueries(
-      (p.targets as unknown as DataQuery[]) || [],
-      p.datasource || getDefaultDatasource()
-    );
-
-    const transformations = getPanelTransformations(p.transformations || []);
-
-    const panelKind: PanelKind = {
-      kind: 'Panel',
-      spec: {
-        title: p.title || '',
-        description: p.description || '',
-        vizConfig: {
-          kind: p.type,
-          spec: {
-            fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
-            options: p.options as any,
-            pluginVersion: p.pluginVersion!,
-          },
-        },
-        links:
-          p.links?.map<DataLink>((l) => ({
-            title: l.title,
-            url: l.url || '',
-            targetBlank: l.targetBlank,
-          })) || [],
-        id: p.id!,
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries,
-            transformations,
-            queryOptions: {
-              cacheTimeout: p.cacheTimeout,
-              maxDataPoints: p.maxDataPoints,
-              interval: p.interval,
-              hideTimeOverride: p.hideTimeOverride,
-              queryCachingTTL: p.queryCachingTTL,
-              timeFrom: p.timeFrom,
-              timeShift: p.timeShift,
-            },
-          },
-        },
-      },
-    };
+    const panelKind = buildPanelKind(p);
     return [panelKind, element_identifier];
   }
 }
@@ -513,6 +468,52 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
     };
     return q;
   });
+}
+
+export function buildPanelKind(p: Panel): PanelKind {
+  const queries = getPanelQueries((p.targets as unknown as DataQuery[]) || [], p.datasource || getDefaultDatasource());
+
+  const transformations = getPanelTransformations(p.transformations || []);
+
+  const panelKind: PanelKind = {
+    kind: 'Panel',
+    spec: {
+      title: p.title || '',
+      description: p.description || '',
+      vizConfig: {
+        kind: p.type,
+        spec: {
+          fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
+          options: p.options as any,
+          pluginVersion: p.pluginVersion!,
+        },
+      },
+      links:
+        p.links?.map<DataLink>((l) => ({
+          title: l.title,
+          url: l.url || '',
+          targetBlank: l.targetBlank,
+        })) || [],
+      id: p.id!,
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries,
+          transformations,
+          queryOptions: {
+            cacheTimeout: p.cacheTimeout,
+            maxDataPoints: p.maxDataPoints,
+            interval: p.interval,
+            hideTimeOverride: p.hideTimeOverride,
+            queryCachingTTL: p.queryCachingTTL,
+            timeFrom: p.timeFrom,
+            timeShift: p.timeShift,
+          },
+        },
+      },
+    },
+  };
+  return panelKind;
 }
 
 function getPanelTransformations(transformations: DataTransformerConfig[]): TransformationKind[] {

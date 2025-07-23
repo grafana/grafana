@@ -60,6 +60,15 @@ describe('TableNG Cells renderers', () => {
         config: {},
         state: {},
         display: jest.fn(() => ({ text: 'black', color: 'white', numeric: 0 })),
+        // @ts-ignore: this mock works fine for this test.
+        getLinks: jest.fn(() => [
+          {
+            title: 'example',
+            href: 'http://example.com',
+            target: '_blank',
+            origin: {},
+          },
+        ]),
       };
     }
 
@@ -138,6 +147,14 @@ describe('TableNG Cells renderers', () => {
           const field = createField(FieldType.string);
 
           const { container } = renderCell(field, undefined as unknown as TableCellOptions);
+          expect(container).toBeInTheDocument();
+          expect(container.childNodes).toHaveLength(1);
+        });
+
+        it('should return AutoCell when cellOptions is unmapped', () => {
+          const field = createField(FieldType.string);
+
+          const { container } = renderCell(field, { type: 'number' } as unknown as TableCellOptions);
           expect(container).toBeInTheDocument();
           expect(container.childNodes).toHaveLength(1);
         });

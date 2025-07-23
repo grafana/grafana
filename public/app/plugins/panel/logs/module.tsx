@@ -108,6 +108,21 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
               },
             ],
           },
+        })
+        .addRadio({
+          path: 'detailsMode',
+          name: t('logs.name-details-mode', 'Log Details panel mode'),
+          category,
+          description: '',
+          settings: {
+            options: [
+              { value: 'inline', label: t('logs.name-details-options.label-inline', 'Inline') },
+              {
+                value: 'sidebar',
+                label: t('logs.name-details-options.label-sidebar', 'Sidebar'),
+              },
+            ],
+          },
         });
     }
 

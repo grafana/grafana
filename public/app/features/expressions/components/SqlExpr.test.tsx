@@ -19,7 +19,7 @@ describe('SqlExpr', () => {
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
 
-    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} />);
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
     // Verify onChange was called
     expect(onChange).toHaveBeenCalled();
@@ -35,7 +35,7 @@ describe('SqlExpr', () => {
     const existingExpression = 'SELECT 1 AS foo';
     const query = { refId: 'expr1', type: 'sql', expression: existingExpression } as ExpressionQuery;
 
-    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} />);
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
     // Check if onChange was called
     if (onChange.mock.calls.length > 0) {
@@ -53,7 +53,7 @@ describe('SqlExpr', () => {
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql' } as ExpressionQuery;
 
-    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} alerting />);
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} alerting queries={[]} />);
 
     const updatedQuery = onChange.mock.calls[0][0];
     expect(updatedQuery.format).toBe('alerting');
