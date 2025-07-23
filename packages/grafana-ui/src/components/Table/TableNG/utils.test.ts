@@ -947,6 +947,21 @@ describe('TableNG utils', () => {
         expect(onClickHandler).not.toHaveBeenCalled();
       }
     );
+
+    it('should filter out links which contain neither href nor onClick', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        values: ['value1'],
+        getLinks: (): LinkModel[] => [
+          { title: 'Invalid Link', target: '_blank', origin: { datasourceUid: 'test' } } as LinkModel, // No href or onClick
+        ],
+      };
+
+      const links = getCellLinks(field, 0);
+      expect(links).toEqual([]);
+    });
   });
 
   describe('extractPixelValue', () => {

@@ -972,17 +972,17 @@ const getCellStyles = (
     },
 
     ...(isLinkCell && {
-      '> .link-tag': {
+      '> a': {
         // display: 'inline', // textWrap ? 'block' : 'inline',
         whiteSpace: 'nowrap',
         paddingInline: theme.spacing(1),
         borderRight: `2px solid ${theme.colors.border.medium}`,
 
-        ':nth-child(1 of .link-tag)': {
+        '&:first-child': {
           paddingInlineStart: 0,
         },
 
-        ':nth-last-child(1 of .link-tag)': {
+        '&:last-child': {
           borderRight: 'none',
           paddingInlineEnd: 0,
         },

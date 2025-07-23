@@ -8,15 +8,9 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
     return null;
   }
 
-  return links.map((link, idx) =>
-    !link.href && link.onClick == null ? (
-      <span key={idx} className="link-tag">
-        {link.title}
-      </span>
-    ) : (
-      <a key={idx} className="link-tag" onClick={link.onClick} href={link.href} target={link.target}>
-        {link.title}
-      </a>
-    )
-  );
+  return links.map((link, idx) => (
+    <a key={idx} onClick={link.onClick} href={link.href} target={link.target}>
+      {link.title}
+    </a>
+  ));
 };
