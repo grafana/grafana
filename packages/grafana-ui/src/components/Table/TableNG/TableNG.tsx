@@ -73,6 +73,8 @@ import {
   withDataLinksActionsTooltip,
   displayJsonValue,
   getAlignment,
+  getJustifyContent,
+  TextAlign,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -315,8 +317,8 @@ export function TableNG(props: TableNGProps) {
         // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
         // the text-align css property, and for others, we'll use justify-content to align the cell
         // contents with flexbox. We always just get both and provide both when styling the cell.
-        const hzAlignment = getAlignment(field);
-        const justifyContent = getJustifyContent(field);
+        const textAlign = getAlignment(field);
+        const justifyContent = getJustifyContent(textAlign);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent);
@@ -357,7 +359,7 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.JSONView:
             cellClass = getCellStyles(
               theme,
-              hzAlignment,
+              textAlign,
               shouldWrap,
               shouldOverflow,
               canBeColorized,
@@ -920,18 +922,19 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
-  textAlign: FieldTextAlignment,
+  textAlign: TextAlign,
   shouldWrap: boolean,
   shouldOverflow: boolean,
   isColorized: boolean,
   isMonospace: boolean,
+  // TODO: replace this with cellTypeStyles: TemplateStringsArray object
   isLinkCell: boolean
 ) =>
   css({
     display: 'flex',
     alignItems: 'center',
-    textAlign: textAlign === 'auto' ? 'left' : textAlign,
-    justifyContent: textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start',
+    textAlign,
+    justifyContent: getJustifyContent(textAlign),
     paddingInline: TABLE.CELL_PADDING,
     minHeight: '100%',
     backgroundClip: 'padding-box !important', // helps when cells have a bg color

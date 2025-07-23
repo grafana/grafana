@@ -150,21 +150,31 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
   TableCellDisplayMode.ColorBackground,
 ]);
 
+export type TextAlign = 'left' | 'right' | 'center';
+
 /**
  * @internal
  * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
  */
-export function getAlignment(field: Field): FieldTextAlignment {
+export function getAlignment(field: Field): TextAlign {
   const align: FieldTextAlignment | undefined = field.config.custom?.align;
 
   if (!align || align === 'auto') {
     if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
       return 'right';
     }
-    return 'auto';
+    return 'left';
   }
 
   return align;
+}
+
+/**
+ * @internal
+ * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
+ */
+export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
+  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
