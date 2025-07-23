@@ -1,5 +1,3 @@
-import type { MouseEvent } from 'react';
-
 import {
   PluginExtensionPoints,
   type PluginExtensionDataSourceConfigActionsContext,
