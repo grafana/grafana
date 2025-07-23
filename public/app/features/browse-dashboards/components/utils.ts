@@ -6,7 +6,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 
 import { useChildrenByParentUIDState } from '../state/hooks';
 import { findItem } from '../state/utils';
-import { DashboardTreeSelection, DashboardViewItemWithUIItems } from '../types';
+import { DashboardTreeSelection, DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
   return baseId + item.uid;
@@ -104,4 +104,19 @@ export function collectSelectedItems(
   }
 
   return targets;
+}
+
+export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions) {
+  const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
+  return itemKind === 'folder'
+    ? Boolean(canEditFolders || canDeleteFolders)
+    : Boolean(canEditDashboards || canDeleteDashboards);
+}
+
+export function canSelectItems(permissions: BrowseDashboardsPermissions) {
+  const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
+  // Users can select items only if they have both edit and delete permissions for at least one item type
+  const canSelectFolders = canEditFolders || canDeleteFolders;
+  const canSelectDashboards = canEditDashboards || canDeleteDashboards;
+  return Boolean(canSelectFolders || canSelectDashboards);
 }

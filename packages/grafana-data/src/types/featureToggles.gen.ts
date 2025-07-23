@@ -1058,4 +1058,8 @@ export interface FeatureToggles {
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
+  /**
+  * Enables adhoc filtering support for the dashboard datasource
+  */
+  dashboardDsAdHocFiltering?: boolean;
 }

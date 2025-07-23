@@ -149,6 +149,9 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/themes/createColors.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-data/src/themes/registry.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "packages/grafana-data/src/transformations/matchers/valueMatchers/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -601,6 +604,9 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Combobox/useOptions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-ui/src/components/ConfirmModal/ConfirmContent.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -628,6 +634,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-ui/src/components/Icon/Icon.story.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
+    "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -760,7 +773,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "6"]
     ],
     "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -917,6 +931,15 @@ exports[`better eslint`] = {
     "public/app/core/components/Page/EditableTitle.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
+    "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
+    "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "3"]
+    ],
     "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -926,7 +949,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "6"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "7"]
     ],
     "public/app/core/components/Signup/SignupPage.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -968,6 +993,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "0"],
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "1"],
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "2"]
+    ],
+    "public/app/core/reducers/navBarTree.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/core/services/ResponseQueue.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1070,11 +1099,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"]
     ],
+    "public/app/features/actions/ActionVariablesEditor.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/actions/ParamsEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/features/admin/AdminEditOrgPage.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "public/app/features/admin/AdminFeatureTogglesTable.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"]
     ],
     "public/app/features/admin/ServerStatsCard.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -1191,6 +1229,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/contact-points/components/ContactPointsFilter.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
+    "public/app/features/alerting/unified/components/contact-points/utils.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -1288,6 +1329,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
     ],
+    "public/app/features/alerting/unified/components/rule-editor/DashboardPicker.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -1303,7 +1347,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "7"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "8"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "8"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "9"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -1368,6 +1413,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
     ],
+    "public/app/features/alerting/unified/components/rules/RuleListGroupView.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
+    ],
+    "public/app/features/alerting/unified/components/rules/RuleListStateView.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/components/rules/state-history/LokiStateHistory.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -1407,6 +1459,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/hooks/useAlertmanagerConfig.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/alerting/unified/hooks/useCombinedRuleNamespaces.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/hooks/useControlledFieldArray.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1430,8 +1485,15 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/rule-list/FilterViewStatus.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
+    "public/app/features/alerting/unified/rule-list/StateView.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/types/receiver-form.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/alerting/unified/utils/datasource.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/features/alerting/unified/utils/misc.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1453,6 +1515,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+    ],
+    "public/app/features/alerting/unified/utils/rule-id.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
     ],
     "public/app/features/alerting/unified/utils/rules.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1520,6 +1585,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/connections/tabs/ConnectData/index.tsx:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
+    ],
+    "public/app/features/correlations/CorrelationsPage.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
     ],
     "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -1693,7 +1761,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "6"]
     ],
     "public/app/features/dashboard-scene/settings/links/DashboardLinkForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -1822,7 +1891,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "7"]
     ],
     "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2203,7 +2273,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/datasources/state/selectors.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "3"]
     ],
     "public/app/features/dimensions/editors/FileUploader.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -2269,6 +2341,9 @@ exports[`better eslint`] = {
     "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TracePageHeader\`)", "0"]
     ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanLinks.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TimelineHeaderRow\`)", "0"]
     ],
@@ -2300,6 +2375,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./DraggableManagerDemo\`)", "0"]
+    ],
+    "public/app/features/explore/TraceView/components/utils/sort.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
     ],
     "public/app/features/explore/TraceView/createSpanLink.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2503,6 +2581,10 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/components/PluginDetailsPage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/plugins/admin/helpers.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
+    ],
     "public/app/features/plugins/admin/pages/Browse.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
@@ -2681,7 +2763,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/support-bundles/SupportBundlesCreate.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/features/teams/CreateTeam.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -2913,7 +2996,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/variables/query/reducer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"]
     ],
     "public/app/features/variables/shared/formatVariable.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3240,7 +3324,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "5"]
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/components/RandomWalkEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3607,20 +3692,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "public/app/plugins/datasource/tempo/traceql/traceql.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "4"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "5"]
     ],
     "public/app/plugins/datasource/zipkin/QueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3669,9 +3743,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"]
     ],
+    "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
+    ],
+    "public/app/plugins/panel/dashlist/DashList.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/plugins/panel/debug/CursorView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

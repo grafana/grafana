@@ -236,3 +236,4 @@ otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
 alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
 pluginAssetProvider,experimental,@grafana/plugins-platform-backend,false,true,false
 unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
+dashboardDsAdHocFiltering,experimental,@grafana/datapro,false,false,true
