@@ -51,7 +51,7 @@ export function getDataSourceExtensionConfigs(): PluginExtensionAddedLinkConfig[
           }
           return {};
         },
-        path: '/docs/troubleshooting/datasources',
+        path: '/a/grafana/docs/troubleshooting/datasources',
       }),
     ];
   } catch (error) {

@@ -161,7 +161,7 @@ describe('getDataSourceExtensionConfigs', () => {
       const configs = getDataSourceExtensionConfigs();
       const troubleshootingConfig = configs.find((config) => config.title?.includes('Troubleshooting Guide'));
 
-      expect(troubleshootingConfig?.path).toBe('/docs/troubleshooting/datasources');
+      expect(troubleshootingConfig?.path).toBe('/a/grafana/docs/troubleshooting/datasources');
     });
   });
 
