@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { PluginExtensionTypes } from '@grafana/data';
-import { setPluginLinksHook } from '@grafana/runtime';
+import { PluginExtensionTypes, PluginExtensionLink } from '@grafana/data';
+import { setPluginLinksHook, UsePluginLinksOptions } from '@grafana/runtime';
 
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
 
@@ -125,8 +125,8 @@ describe('<DataSourceTestingStatus />', () => {
     });
 
     // Custom mock that can handle different extension points
-    const setupPluginLinksMock = (statusLinks: any[] = [], errorLinks: any[] = []) => {
-      setPluginLinksHook((params: any) => {
+    const setupPluginLinksMock = (statusLinks: PluginExtensionLink[] = [], errorLinks: PluginExtensionLink[] = []) => {
+      setPluginLinksHook((params: UsePluginLinksOptions) => {
         // Return different links based on the extension point ID
         if (params.extensionPointId === 'grafana/datasources/config/status') {
           return { links: statusLinks, isLoading: false };
