@@ -28,9 +28,13 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     columns: {
       resolve: async (t?: TableIdentifier) => {
         if (config.featureToggles.sqlExpressionsColumnAutoComplete) {
-          return await args.getFields({ table: t?.table });
+          try {
+            return await args.getFields({ table: t?.table });
+          } catch {
+            return [];
+          }
         } else {
-          return Promise.resolve([]);
+          return [];
         }
       },
     },
