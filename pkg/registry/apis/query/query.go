@@ -226,7 +226,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
+	instance, err := b.clientSupplier.GetInstance(ctx)
 	if err != nil {
 		b.log.Error("failed to get instance configuration settings", "err", err)
 		responder.Error(err)
@@ -234,12 +234,13 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	}
 
 	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
-		b.clientSupplier,
+		instance,
 		ctx,
 		headers,
-		instanceConfig,
 		b.log,
 	)
+
+	instanceConfig := instance.GetSettings()
 
 	exprService := expr.ProvideService(
 		&setting.Cfg{
