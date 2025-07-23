@@ -167,6 +167,10 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 	return r.gitRepo.Delete(ctx, path, ref, comment)
 }
 
+func (r *githubRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+	return r.gitRepo.Move(ctx, oldPath, newPath, ref, comment)
+}
+
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch

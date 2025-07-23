@@ -3812,3 +3812,302 @@ func TestGitRepository_OnDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestGitRepository_Move(t *testing.T) {
+	tests := []struct {
+		name          string
+		oldPath       string
+		newPath       string
+		ref           string
+		comment       string
+		setupMock     func(*mocks.MockClient, *mocks.MockStagedWriter)
+		expectedError string
+	}{
+		{
+			name:    "successful move",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock ensureBranchExists behavior
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}, nil)
+
+				// Mock NewStagedWriter
+				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}).Return(mockWriter, nil)
+
+				// Mock MoveBlob
+				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/new.yaml").Return(hash.FromHex("def456"), nil)
+
+				// Mock commit and push
+				mockWriter.EXPECT().Commit(context.Background(), "move file", nanogit.Author{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}, nanogit.Committer{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}).Return(hash.FromHex("ghi789"), nil)
+
+				mockWriter.EXPECT().Push(context.Background()).Return(nil)
+			},
+		},
+		{
+			name:    "move with empty ref uses default branch",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "",
+			comment: "move file",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock ensureBranchExists behavior for default branch
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}, nil)
+
+				// Mock NewStagedWriter
+				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}).Return(mockWriter, nil)
+
+				// Mock MoveBlob
+				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/new.yaml").Return(hash.FromHex("def456"), nil)
+
+				// Mock commit and push
+				mockWriter.EXPECT().Commit(context.Background(), "move file", nanogit.Author{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}, nanogit.Committer{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}).Return(hash.FromHex("ghi789"), nil)
+
+				mockWriter.EXPECT().Push(context.Background()).Return(nil)
+			},
+		},
+		{
+			name:          "move directory should fail",
+			oldPath:       "old/",
+			newPath:       "new/",
+			ref:           "main",
+			comment:       "move directory",
+			expectedError: "directory move not supported",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// No mocks needed as this should fail early
+			},
+		},
+		{
+			name:    "move non-existent file",
+			oldPath: "nonexistent.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move missing file",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock ensureBranchExists behavior
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}, nil)
+
+				// Mock NewStagedWriter
+				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}).Return(mockWriter, nil)
+
+				// Mock MoveBlob returning not found error
+				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/nonexistent.yaml", "configs/new.yaml").Return(hash.Zero, nanogit.ErrObjectNotFound)
+			},
+			expectedError: "file not found",
+		},
+		{
+			name:    "move to existing file",
+			oldPath: "old.yaml",
+			newPath: "existing.yaml",
+			ref:     "main",
+			comment: "move to existing",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock ensureBranchExists behavior
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}, nil)
+
+				// Mock NewStagedWriter
+				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}).Return(mockWriter, nil)
+
+				// Mock MoveBlob returning already exists error
+				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/existing.yaml").Return(hash.Zero, nanogit.ErrObjectAlreadyExists)
+			},
+			expectedError: "file already exists",
+		},
+		{
+			name:    "branch creation fails",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "nonexistent-branch",
+			comment: "move on nonexistent branch",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock branch not found
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/nonexistent-branch").Return(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+
+				// Mock getting source branch for creation
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+			},
+			expectedError: "get source branch ref",
+		},
+		{
+			name:    "staged writer creation fails",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock ensureBranchExists behavior
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}, nil)
+
+				// Mock NewStagedWriter failure
+				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}).Return(nil, errors.New("writer creation failed"))
+			},
+			expectedError: "create staged writer",
+		},
+		{
+			name:    "commit fails",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock ensureBranchExists behavior
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}, nil)
+
+				// Mock NewStagedWriter
+				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}).Return(mockWriter, nil)
+
+				// Mock MoveBlob
+				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/new.yaml").Return(hash.FromHex("def456"), nil)
+
+				// Mock commit failure
+				mockWriter.EXPECT().Commit(context.Background(), "move file", nanogit.Author{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}, nanogit.Committer{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}).Return(hash.Zero, errors.New("commit failed"))
+			},
+			expectedError: "commit changes",
+		},
+		{
+			name:    "push fails",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock ensureBranchExists behavior
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}, nil)
+
+				// Mock NewStagedWriter
+				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}).Return(mockWriter, nil)
+
+				// Mock MoveBlob
+				mockWriter.EXPECT().MoveBlob(context.Background(), "configs/old.yaml", "configs/new.yaml").Return(hash.FromHex("def456"), nil)
+
+				// Mock commit success
+				mockWriter.EXPECT().Commit(context.Background(), "move file", nanogit.Author{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}, nanogit.Committer{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}).Return(hash.FromHex("ghi789"), nil)
+
+				// Mock push failure
+				mockWriter.EXPECT().Push(context.Background()).Return(errors.New("push failed"))
+			},
+			expectedError: "push changes",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := mocks.NewMockClient(t)
+			mockWriter := mocks.NewMockStagedWriter(t)
+			mockSecrets := &secrets.MockRepositorySecrets{}
+
+			// Setup mock expectations
+			tt.setupMock(mockClient, mockWriter)
+
+			// Create repository config
+			config := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+				},
+			}
+
+			gitConfig := RepositoryConfig{
+				URL:    "https://github.com/example/repo.git",
+				Branch: "main",
+				Token:  "token123",
+				Path:   "configs",
+			}
+
+			gitRepo := &gitRepository{
+				config:    config,
+				gitConfig: gitConfig,
+				client:    mockClient,
+				secrets:   mockSecrets,
+			}
+
+			// Execute move operation
+			err := gitRepo.Move(context.Background(), tt.oldPath, tt.newPath, tt.ref, tt.comment)
+
+			// Verify results
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

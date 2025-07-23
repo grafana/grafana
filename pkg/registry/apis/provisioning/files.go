@@ -93,9 +93,10 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		opts := resources.DualWriteOptions{
-			Ref:        query.Get("ref"),
-			Message:    query.Get("message"),
-			SkipDryRun: query.Get("skipDryRun") == "true",
+			Ref:          query.Get("ref"),
+			Message:      query.Get("message"),
+			SkipDryRun:   query.Get("skipDryRun") == "true",
+			OriginalPath: query.Get("originalPath"),
 		}
 		logger := logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
 		ctx := logging.Context(r.Context(), logger)
@@ -148,7 +149,13 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 					return
 				}
 
-				resource, err := dualReadWriter.CreateResource(ctx, opts)
+				var resource *resources.ParsedResource
+				// Check if this is a move operation (originalPath query parameter is present)
+				if opts.OriginalPath != "" {
+					resource, err = dualReadWriter.MoveResource(ctx, opts)
+				} else {
+					resource, err = dualReadWriter.CreateResource(ctx, opts)
+				}
 				if err != nil {
 					responder.Error(err)
 					return

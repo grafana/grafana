@@ -372,3 +372,57 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 
 	return os.Remove(fullPath)
 }
+
+func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+	if err := r.validateRequest(ref); err != nil {
+		return err
+	}
+
+	oldFullPath := safepath.Join(r.path, oldPath)
+	newFullPath := safepath.Join(r.path, newPath)
+
+	// Check if source exists
+	sourceInfo, err := os.Stat(oldFullPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return repository.ErrFileNotFound
+	} else if err != nil {
+		return fmt.Errorf("check source: %w", err)
+	}
+
+	// Check if destination already exists
+	if _, err := os.Stat(newFullPath); !errors.Is(err, os.ErrNotExist) {
+		if err != nil {
+			return fmt.Errorf("check destination: %w", err)
+		}
+		return repository.ErrFileAlreadyExists
+	}
+
+	// Validate move types
+	sourceIsDir := sourceInfo.IsDir()
+	targetIsDir := safepath.IsDir(newPath)
+
+	if sourceIsDir != targetIsDir {
+		return apierrors.NewBadRequest("cannot move between file and directory types")
+	}
+
+	// Create destination directory if needed
+	destParent := path.Dir(newFullPath)
+	if sourceIsDir {
+		// For directory moves, create the parent of the destination
+		if err := os.MkdirAll(destParent, 0700); err != nil {
+			return fmt.Errorf("create destination parent directory: %w", err)
+		}
+	} else {
+		// For file moves, create the directory containing the file
+		if err := os.MkdirAll(destParent, 0700); err != nil {
+			return fmt.Errorf("create destination directory: %w", err)
+		}
+	}
+
+	// Move the file or directory
+	if err := os.Rename(oldFullPath, newFullPath); err != nil {
+		return fmt.Errorf("move: %w", err)
+	}
+
+	return nil
+}

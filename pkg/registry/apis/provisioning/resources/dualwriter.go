@@ -28,11 +28,12 @@ type DualReadWriter struct {
 }
 
 type DualWriteOptions struct {
-	Path       string
-	Ref        string
-	Message    string
-	Data       []byte
-	SkipDryRun bool
+	Path         string
+	Ref          string
+	Message      string
+	Data         []byte
+	SkipDryRun   bool
+	OriginalPath string // Used for move operations
 }
 
 func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
@@ -276,6 +277,178 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 	}
 
 	return parsed, err
+}
+
+// MoveResource moves a resource from one path to another in the repository
+func (r *DualReadWriter) MoveResource(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
+	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
+		return nil, err
+	}
+
+	if opts.OriginalPath == "" {
+		return nil, fmt.Errorf("originalPath is required for move operations")
+	}
+
+	// Validate that both paths are either files or directories (consistent types)
+	sourceIsDir := safepath.IsDir(opts.OriginalPath)
+	targetIsDir := safepath.IsDir(opts.Path)
+	if sourceIsDir != targetIsDir {
+		return nil, fmt.Errorf("cannot move between file and directory types")
+	}
+
+	// Handle directory moves separately (no parsing/authorization needed)
+	if sourceIsDir {
+		return r.moveDirectory(ctx, opts)
+	}
+
+	// Handle file moves with parsing and authorization
+	return r.moveFile(ctx, opts)
+}
+
+func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
+	// For directory moves, we just perform the repository move without parsing
+	// Always use the provisioning identity when writing
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, r.repo.Config().Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
+	// Perform the move operation in the repository
+	if err = r.repo.Move(ctx, opts.OriginalPath, opts.Path, opts.Ref, opts.Message); err != nil {
+		return nil, fmt.Errorf("move directory in repository: %w", err)
+	}
+
+	// Create a basic parsed resource response for directories
+	cfg := r.repo.Config()
+	parsed := &ParsedResource{
+		Action: provisioning.ResourceActionMove,
+		Info: &repository.FileInfo{
+			Path: opts.Path,
+			Ref:  opts.Ref,
+		},
+		GVK: schema.GroupVersionKind{
+			Group:   FolderResource.Group,
+			Version: FolderResource.Version,
+			Kind:    "Folder",
+		},
+		GVR: FolderResource,
+		Repo: provisioning.ResourceRepositoryInfo{
+			Type:      cfg.Spec.Type,
+			Namespace: cfg.Namespace,
+			Name:      cfg.Name,
+			Title:     cfg.Spec.Title,
+		},
+	}
+
+	// Handle folder management for main branch
+	if opts.Ref == "" {
+		// Ensure destination folder path exists
+		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
+			return nil, fmt.Errorf("ensure destination folder path exists: %w", err)
+		}
+
+		// Try to delete the old folder structure from grafana (if it exists)
+		// This is best-effort since the old path might not have been tracked
+		oldFolderName, _ := r.folders.EnsureFolderPathExist(ctx, opts.OriginalPath)
+		if oldFolderName != "" {
+			if oldFolder, err := r.folders.GetFolder(ctx, oldFolderName); err == nil {
+				_ = r.folders.Client().Delete(ctx, oldFolder.GetName(), metav1.DeleteOptions{})
+			}
+		}
+	}
+
+	return parsed, nil
+}
+
+func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
+	// Read the original file to get its content for parsing and authorization
+	originalFile, err := r.repo.Read(ctx, opts.OriginalPath, opts.Ref)
+	if err != nil {
+		return nil, fmt.Errorf("read original file: %w", err)
+	}
+
+	// Parse the original file to check permissions
+	parsed, err := r.parser.Parse(ctx, originalFile)
+	if err != nil {
+		return nil, fmt.Errorf("parse original file: %w", err)
+	}
+
+	// Authorize delete on the original path
+	if err = r.authorize(ctx, parsed, utils.VerbDelete); err != nil {
+		return nil, fmt.Errorf("not authorized to delete original file: %w", err)
+	}
+
+	// Create new parsed resource with updated path and data
+	newInfo := &repository.FileInfo{
+		Data: opts.Data,
+		Path: opts.Path,
+		Ref:  opts.Ref,
+	}
+
+	newParsed, err := r.parser.Parse(ctx, newInfo)
+	if err != nil {
+		return nil, fmt.Errorf("parse new file: %w", err)
+	}
+
+	// Make sure the new resource is valid
+	if !opts.SkipDryRun {
+		if err := newParsed.DryRun(ctx); err != nil {
+			logger := logging.FromContext(ctx).With("path", opts.Path, "originalPath", opts.OriginalPath, "name", newParsed.Obj.GetName(), "ref", opts.Ref)
+			logger.Warn("failed to dry run resource on move", "error", err)
+			return nil, fmt.Errorf("error running dryRun on moved resource: %w", err)
+		}
+	}
+
+	if len(newParsed.Errors) > 0 {
+		return nil, fmt.Errorf("errors while parsing moved file [%v]", newParsed.Errors)
+	}
+
+	// Authorize create on the new path
+	verb := utils.VerbCreate
+	if newParsed.Action == provisioning.ResourceActionUpdate {
+		verb = utils.VerbUpdate
+	}
+	if err = r.authorize(ctx, newParsed, verb); err != nil {
+		return nil, fmt.Errorf("not authorized to create new file: %w", err)
+	}
+
+	data, err := newParsed.ToSaveBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
+	if err != nil {
+		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
+	// Perform the move operation in the repository
+	if err = r.repo.Move(ctx, opts.OriginalPath, opts.Path, opts.Ref, opts.Message); err != nil {
+		return nil, fmt.Errorf("move file in repository: %w", err)
+	}
+
+	// Update the grafana database if this is the main branch
+	if opts.Ref == "" && newParsed.Client != nil {
+		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
+			return nil, fmt.Errorf("ensure folder path exists: %w", err)
+		}
+
+		// Delete the old resource from grafana
+		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("delete original resource from storage: %w", err)
+		}
+
+		// Create/update the new resource in grafana
+		err = newParsed.Run(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("create moved resource in storage: %w", err)
+		}
+	}
+
+	newParsed.Action = provisioning.ResourceActionMove
+	return newParsed, nil
 }
 
 func (r *DualReadWriter) authorize(ctx context.Context, parsed *ParsedResource, verb string) error {

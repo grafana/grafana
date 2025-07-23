@@ -1517,3 +1517,246 @@ func TestLocalRepository_Config(t *testing.T) {
 		})
 	}
 }
+
+func TestLocalRepository_Move(t *testing.T) {
+	testCases := []struct {
+		name        string
+		setup       func(t *testing.T) (string, *localRepository)
+		oldPath     string
+		newPath     string
+		ref         string
+		comment     string
+		expectedErr error
+	}{
+		{
+			name: "successful move",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create source file
+				sourceFile := filepath.Join(tempDir, "source.txt")
+				err := os.WriteFile(sourceFile, []byte("source content"), 0600)
+				require.NoError(t, err)
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			oldPath:     "source.txt",
+			newPath:     "destination.txt",
+			ref:         "",
+			comment:     "move file",
+			expectedErr: nil,
+		},
+		{
+			name: "move to subdirectory",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create source file
+				sourceFile := filepath.Join(tempDir, "test.txt")
+				err := os.WriteFile(sourceFile, []byte("test content"), 0600)
+				require.NoError(t, err)
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			oldPath:     "test.txt",
+			newPath:     "newdir/moved.txt",
+			ref:         "",
+			comment:     "move to subdir",
+			expectedErr: nil,
+		},
+		{
+			name: "move non-existent file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			oldPath:     "nonexistent.txt",
+			newPath:     "destination.txt",
+			ref:         "",
+			comment:     "move missing",
+			expectedErr: repository.ErrFileNotFound,
+		},
+		{
+			name: "move to existing file",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create source and destination files
+				sourceFile := filepath.Join(tempDir, "source2.txt")
+				destFile := filepath.Join(tempDir, "dest2.txt")
+
+				err := os.WriteFile(sourceFile, []byte("source"), 0600)
+				require.NoError(t, err)
+				err = os.WriteFile(destFile, []byte("destination"), 0600)
+				require.NoError(t, err)
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			oldPath:     "source2.txt",
+			newPath:     "dest2.txt",
+			ref:         "",
+			comment:     "move to existing",
+			expectedErr: repository.ErrFileAlreadyExists,
+		},
+		{
+			name: "move directory should fail",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create directory
+				subdir := filepath.Join(tempDir, "subdir")
+				err := os.MkdirAll(subdir, 0700)
+				require.NoError(t, err)
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			oldPath:     "subdir/",
+			newPath:     "newsubdir/",
+			ref:         "",
+			comment:     "move directory",
+			expectedErr: apierrors.NewBadRequest("directory move not supported"),
+		},
+		{
+			name: "move with ref should fail",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create test file
+				testFile := filepath.Join(tempDir, "ref_test.txt")
+				err := os.WriteFile(testFile, []byte("ref test content"), 0600)
+				require.NoError(t, err)
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			oldPath:     "ref_test.txt",
+			newPath:     "ref_dest.txt",
+			ref:         "some-ref",
+			comment:     "move with ref",
+			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup test environment
+			tempDir, repo := tc.setup(t)
+
+			// Execute the move operation
+			err := repo.Move(context.Background(), tc.oldPath, tc.newPath, tc.ref, tc.comment)
+
+			// Verify results
+			if tc.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error(), "Error message should match expected")
+			} else {
+				require.NoError(t, err)
+
+				// Verify source file no longer exists
+				sourceFullPath := filepath.Join(tempDir, tc.oldPath)
+				_, err = os.Stat(sourceFullPath)
+				assert.True(t, errors.Is(err, os.ErrNotExist), "Source file should no longer exist")
+
+				// Verify destination file exists
+				destFullPath := filepath.Join(tempDir, tc.newPath)
+				_, err = os.Stat(destFullPath)
+				require.NoError(t, err, "Destination file should exist")
+
+				// Verify content if it was a successful move of an existing file
+				if tc.name == "successful move" {
+					content, err := os.ReadFile(destFullPath)
+					require.NoError(t, err)
+					assert.Equal(t, "source content", string(content), "Content should be preserved")
+				} else if tc.name == "move to subdirectory" {
+					content, err := os.ReadFile(destFullPath)
+					require.NoError(t, err)
+					assert.Equal(t, "test content", string(content), "Content should be preserved")
+				}
+			}
+		})
+	}
+}
