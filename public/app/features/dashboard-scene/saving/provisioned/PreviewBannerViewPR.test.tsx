@@ -57,14 +57,6 @@ describe('PreviewBannerViewPR', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockTextUtil.sanitizeUrl.mockImplementation((url) => url);
-
-    // Set default mock implementation
-    mockUsePullRequestParam.mockReturnValue({
-      prURL: undefined,
-      newPrURL: undefined,
-      repoURL: undefined,
-      repoType: 'github',
-    });
   });
 
   afterEach(() => {
