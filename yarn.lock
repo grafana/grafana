@@ -3064,6 +3064,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/assistant@npm:0.0.7":
+  version: 0.0.7
+  resolution: "@grafana/assistant@npm:0.0.7"
+  peerDependencies:
+    "@grafana/data": ">=12.0.0"
+    "@grafana/runtime": ">=12.0.0"
+    "@grafana/scenes": ">=5.41.0"
+    "@grafana/ui": ">=12.0.0"
+    react: ">=18.0.0"
+    rxjs: ">=7.0.0"
+  checksum: 10/c83523a032cb748867f683e87ad5b00a04bb4918ae5c7aafe5587b418b73b769a92de948335f0d9055d06036004e7a9794722f627cab3111b076eb27423d4344
+  languageName: node
+  linkType: hard
+
 "@grafana/async-query-data@npm:0.4.1":
   version: 0.4.1
   resolution: "@grafana/async-query-data@npm:0.4.1"
@@ -14030,11 +14044,11 @@ __metadata:
   linkType: hard
 
 "cypress-recurse@npm:^1.35.3":
-  version: 1.35.3
-  resolution: "cypress-recurse@npm:1.35.3"
+  version: 1.37.1
+  resolution: "cypress-recurse@npm:1.37.1"
   dependencies:
     humanize-duration: "npm:^3.27.3"
-  checksum: 10/408781ff538c0ac832bf1ce61b3e6628a6ab5832d9c425e06c4d724eed977dcadec03f234d6f90ea1826f21d440d5f7f971738399770b83358918be16da53d75
+  checksum: 10/fd2bbd1613b5cf7dc2127c813f3a700eccad6319ee3d011a61a373591d491eb202fe0113faa5156c1e1d2d9f2663a41ab49240abf842dff217d70854e668316c
   languageName: node
   linkType: hard
 
@@ -17832,6 +17846,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
+    "@grafana/assistant": "npm:0.0.7"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
