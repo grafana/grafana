@@ -60,6 +60,15 @@ describe('TableNG Cells renderers', () => {
         config: {},
         state: {},
         display: jest.fn(() => ({ text: 'black', color: 'white', numeric: 0 })),
+        // @ts-ignore: this mock works fine for this test.
+        getLinks: jest.fn(() => [
+          {
+            title: 'example',
+            href: 'http://example.com',
+            target: '_blank',
+            origin: {},
+          },
+        ]),
       };
     }
 

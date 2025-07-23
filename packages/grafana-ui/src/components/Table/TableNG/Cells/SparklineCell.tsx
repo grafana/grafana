@@ -12,6 +12,7 @@ import {
   isDataFrameWithValue,
   GrafanaTheme2,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   BarAlignment,
   GraphDrawStyle,
@@ -46,10 +47,10 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
 export const SparklineCell = (props: SparklineCellProps) => {
   const { field, value, theme, timeRange, rowIdx, justifyContent, width } = props;
   const styles = useStyles2(getStyles, justifyContent);
-  const sparkline = getSparkline(value);
+  const sparkline = getSparkline(value, field);
 
   if (!sparkline) {
-    return <>{field.config.noValue || 'no data'}</>;
+    return <>{field.config.noValue || t('grafana-ui.table.sparkline.no-data', 'no data')}</>;
   }
 
   // Get the step from the first two values to null-fill the x-axis based on timerange
@@ -117,11 +118,11 @@ export const SparklineCell = (props: SparklineCellProps) => {
   );
 };
 
-function getSparkline(value: unknown): FieldSparkline | undefined {
+function getSparkline(value: unknown, field: Field): FieldSparkline | undefined {
   if (Array.isArray(value)) {
     return {
       y: {
-        name: 'test',
+        name: `${field.name}-sparkline`,
         type: FieldType.number,
         values: value,
         config: {},
