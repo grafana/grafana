@@ -1,12 +1,19 @@
+import { css } from '@emotion/css';
+import { useMemo } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert } from '@grafana/ui';
+import { Alert, Pagination, Stack, useStyles2 } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { prometheusApi } from '../api/prometheusApi';
+import { usePagination } from '../hooks/usePagination';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
+
+const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP_LIST_VIEW_V2 = 100;
 
 const { useGetGrafanaGroupsQuery } = prometheusApi;
 
@@ -31,6 +38,8 @@ export function GrafanaGroupLoader({
   namespaceName,
   expectedRulesCount = 3, // 3 is a random number. Usually we get the number of rules from Prometheus response
 }: GrafanaGroupLoaderProps) {
+  const styles = useStyles2(getStyles);
+
   const { data: promResponse, isLoading: isPromResponseLoading } = useGetGrafanaGroupsQuery(
     {
       folderUid: groupIdentifier.namespace.uid,
@@ -38,6 +47,16 @@ export function GrafanaGroupLoader({
       limitAlerts: 0,
     },
     { pollingInterval: RULE_LIST_POLL_INTERVAL_MS }
+  );
+
+  const rules = useMemo(() => {
+    return promResponse?.data.groups.at(0)?.rules ?? [];
+  }, [promResponse]);
+
+  const { pageItems, page, numberOfPages, onPageChange } = usePagination(
+    rules,
+    1,
+    DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP_LIST_VIEW_V2
   );
 
   if (isPromResponseLoading) {
@@ -63,9 +82,14 @@ export function GrafanaGroupLoader({
     );
   }
 
+  // If no rules found, return early without pagination
+  if (rules.length === 0) {
+    return <Alert title={t('alerting.group-loader.no-rules', 'No rules found in this group')} severity="info" />;
+  }
+
   return (
-    <>
-      {promResponse.data.groups.at(0)?.rules.map((promRule) => {
+    <Stack direction="column" gap={0}>
+      {pageItems.map((promRule) => {
         return (
           <GrafanaRuleListItem
             key={promRule.uid}
@@ -77,6 +101,34 @@ export function GrafanaGroupLoader({
           />
         );
       })}
-    </>
+      <div className={styles.paginationWrapper}>
+        {numberOfPages > 1 && (
+          <Pagination
+            currentPage={page}
+            numberOfPages={numberOfPages}
+            onNavigate={onPageChange}
+            hideWhenSinglePage
+            className={styles.pagination}
+          />
+        )}
+      </div>
+    </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  pagination: css({
+    display: 'flex',
+    margin: 0,
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(0.25),
+    justifyContent: 'center',
+    float: 'none',
+  }),
+  paginationWrapper: css({
+    display: 'flex',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginLeft: theme.spacing(2.5),
+  }),
+});
