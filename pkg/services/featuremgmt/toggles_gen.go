@@ -966,4 +966,8 @@ const (
 	// FlagDashboardDsAdHocFiltering
 	// Enables adhoc filtering support for the dashboard datasource
 	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
+
+	// FlagAdhocFiltersInTooltips
+	// Enable adhoc filter buttons in visualization tooltips
+	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
 )

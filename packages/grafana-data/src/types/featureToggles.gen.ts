@@ -1071,4 +1071,8 @@ export interface FeatureToggles {
   * Enables adhoc filtering support for the dashboard datasource
   */
   dashboardDsAdHocFiltering?: boolean;
+  /**
+  * Enable adhoc filter buttons in visualization tooltips
+  */
+  adhocFiltersInTooltips?: boolean;
 }

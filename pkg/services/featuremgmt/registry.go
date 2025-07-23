@@ -1852,6 +1852,13 @@ var (
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "adhocFiltersInTooltips",
+			Description:  "Enable adhoc filter buttons in visualization tooltips",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
