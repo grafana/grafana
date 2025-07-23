@@ -46,4 +46,4 @@ jobs:
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
     - run: yarn storybook &
-    - run: npx wait-on localhost:9001 && yarn test:storybook
+    - run: npx wait-on --timeout 30000 http://localhost:9001 && yarn test:storybook
