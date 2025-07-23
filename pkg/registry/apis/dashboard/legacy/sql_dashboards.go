@@ -175,8 +175,8 @@ func (r *rowsWrapper) Next() bool {
 
 		r.row, err = r.a.scanRow(r.rows, r.history)
 		if err != nil {
-			r.a.log.Error("error scanning dashboard", "error", err)
-			if len(r.rejected) > 0 || r.row == nil {
+			r.a.log.Error("error scanning dashboard", "error", err, "uid", r.row.Dash.UID, "name", r.row.Dash.Name)
+			if len(r.rejected) > 100 || r.row == nil {
 				r.err = fmt.Errorf("too many rejected rows (%d) %w", len(r.rejected), err)
 				return false
 			}
@@ -331,15 +331,21 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if len(data) > 0 {
-			err = dash.Spec.UnmarshalJSON(data)
-			if err != nil {
-				return row, fmt.Errorf("JSON unmarshal error for: %s // %w", dash.Name, err)
+			if err = dash.Spec.UnmarshalJSON(data); err != nil {
+				a.log.Warn("error unmarshalling dashboard spec", "error", err, "uid", dash.UID, "name", dash.Name, "version", version)
+				dash.Spec = *dashboardV0.NewDashboardSpec()
+				dash.Spec.Set("title", dash.Name)
+				dash.Spec.Set("uid", string(dash.UID))
+				dash.Spec.Set("version", float64(version))
+				dash.Spec.Set("id", dashboard_id)
+				dash.Spec.Object["value"] = data // store the raw value
+			} else {
+				// Ignore any saved values for id/version/uid
+				delete(dash.Spec.Object, "id")
+				delete(dash.Spec.Object, "version")
+				delete(dash.Spec.Object, "uid")
 			}
 		}
-		// Ignore any saved values for id/version/uid
-		delete(dash.Spec.Object, "id")
-		delete(dash.Spec.Object, "version")
-		delete(dash.Spec.Object, "uid")
 	}
 	return row, err
 }

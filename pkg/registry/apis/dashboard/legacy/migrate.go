@@ -307,10 +307,11 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 		for _, row := range rows.rejected {
 			id := row.Dash.Labels[utils.LabelKeyDeprecatedInternalID]
 			a.log.Warn("rejected dashboard",
+				"namespace", opts.Namespace,
 				"dashboard", row.Dash.Name,
 				"uid", row.Dash.UID,
 				"id", id,
-				"namespace", opts.Namespace,
+				"version", row.Dash.Generation,
 			)
 			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 		}
