@@ -350,11 +350,23 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 		}
 
 		// Try to delete the old folder structure from grafana (if it exists)
-		// This is best-effort since the old path might not have been tracked
-		oldFolderName, _ := r.folders.EnsureFolderPathExist(ctx, opts.OriginalPath)
+		// This handles cleanup when folders are moved to new locations
+		oldFolderName, err := r.folders.EnsureFolderPathExist(ctx, opts.OriginalPath)
+		if err != nil {
+			return nil, fmt.Errorf("ensure original folder path exists: %w", err)
+		}
+		
 		if oldFolderName != "" {
-			if oldFolder, err := r.folders.GetFolder(ctx, oldFolderName); err == nil {
-				_ = r.folders.Client().Delete(ctx, oldFolder.GetName(), metav1.DeleteOptions{})
+			oldFolder, err := r.folders.GetFolder(ctx, oldFolderName)
+			if err != nil && !apierrors.IsNotFound(err) {
+				return nil, fmt.Errorf("get old folder for cleanup: %w", err)
+			}
+			
+			if err == nil {
+				err = r.folders.Client().Delete(ctx, oldFolder.GetName(), metav1.DeleteOptions{})
+				if err != nil && !apierrors.IsNotFound(err) {
+					return nil, fmt.Errorf("delete old folder from storage: %w", err)
+				}
 			}
 		}
 	}
