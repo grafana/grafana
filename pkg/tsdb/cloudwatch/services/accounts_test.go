@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"github.com/aws/smithy-go"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -20,14 +20,14 @@ import (
 func TestHandleGetAccounts(t *testing.T) {
 	t.Run("Should return an error in case of insufficient permissions from ListSinks", func(t *testing.T) {
 		fakeOAMClient := &mocks.FakeOAMClient{}
-		fakeOAMClient.On("ListSinks", mock.Anything).Return(&oam.ListSinksOutput{}, errors.New("AccessDeniedException"))
+		fakeOAMClient.On("ListSinks", mock.Anything).Return(&oam.ListSinksOutput{}, fmt.Errorf("%w", &smithy.GenericAPIError{Code: "AccessDeniedException", Message: "this is bad"}))
 		accounts := NewAccountsService(fakeOAMClient)
 
 		resp, err := accounts.GetAccountsForCurrentUserOrRole(context.Background())
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Equal(t, "access denied. please check your IAM policy: AccessDeniedException", err.Error())
+		assert.Equal(t, "access denied. please check your IAM policy: this is bad", err.Error())
 		assert.ErrorIs(t, err, ErrAccessDeniedException)
 	})
 
