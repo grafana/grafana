@@ -798,6 +798,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardDsAdHocFiltering",
+        "resourceVersion": "1752487974435",
+        "creationTimestamp": "2025-07-14T10:12:54Z"
+      },
+      "spec": {
+        "description": "Enables adhoc filtering support for the dashboard datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-10-23T08:55:45Z"
@@ -1250,7 +1263,8 @@
       "metadata": {
         "name": "externalCorePlugins",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-09-22T08:50:13Z"
+        "creationTimestamp": "2023-09-22T08:50:13Z",
+        "deletionTimestamp": "2025-07-21T09:49:02Z"
       },
       "spec": {
         "description": "Allow core plugins to be loaded as external",
@@ -1796,6 +1810,19 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesLibraryPanelConnections",
+        "resourceVersion": "1753100797468",
+        "creationTimestamp": "2025-07-21T12:26:37Z"
+      },
+      "spec": {
+        "description": "Routes library panel connections requests from /api to using search",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {
@@ -2512,7 +2539,8 @@
       "metadata": {
         "name": "pluginsCDNSyncLoader",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-02-07T10:07:08Z"
+        "creationTimestamp": "2025-02-07T10:07:08Z",
+        "deletionTimestamp": "2025-07-21T10:13:07Z"
       },
       "spec": {
         "description": "Loads plugins from CDN synchronously",
