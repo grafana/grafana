@@ -1,5 +1,7 @@
 include ../sdk.mk
 
+OPERATOR_DOCKERIMAGE := "iam"
+
 .PHONY: generate
 generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 	@$(APP_SDK_BIN) generate \
@@ -9,3 +11,10 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 		--defencoding=none \
 		--noschemasinmanifest \
 		--postprocess \
+
+.PHONY: build
+build: build/operator
+
+.PHONY: build/operator
+build/operator:
+	docker build -t $(OPERATOR_DOCKERIMAGE) -f cmd/operator/Dockerfile .
