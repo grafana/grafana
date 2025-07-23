@@ -24,7 +24,7 @@ These lists make it easy to update the variable value and thus change the data b
 For example, if you needed to monitor several servers, you _could_ make a dashboard for each server.
 Or you could create one dashboard and use panels with variables like this one, where you can change the server using the variable selector:
 
-{{< figure src="/static/img/docs/v50/variables_dashboard.png" alt="Variable drop-down open and two values selected" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-selected-variables-v12.png" max-width="750px" alt="Variable drop-down open and two values selected" >}}
 
 Variables allow you to create more interactive dashboards.
 Instead of hard-coding things like server, application, and sensor names in your metric queries, you can use variables in their place.
@@ -38,16 +38,17 @@ This simplifies maintenance and upkeep enormously.
 
 You can use variables in:
 
-- Metric queries
-- Panel repeating options
-- Dashboard and panel links
+- Data source queries
+- [Panel repeating options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels)
+- [Dashboard and panel links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/)
 - Titles
 - Descriptions
+- [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
 
 To see variable settings, navigate to **Dashboard Settings > Variables**.
 Click a variable in the list to see its settings.
 
-{{< docs/play title="Templating - Interactive dashboard" url="https://play.grafana.org/d/000000056/" >}}
+{{< docs/play title="Templating - Interactive dashboard" url="https://play.grafana.org/goto/B9Xog68Hg?orgId=1" >}}
 
 ## Template variables {#templates}
 
@@ -80,8 +81,8 @@ In the preceding example, the variables and values are `var-Server=CCC` and `var
 
 The following dashboards in Grafana Play provide examples of template variables:
 
-- [Templating -  Repeated panels](https://play.grafana.org/d/000000025/) - Using query variables to control how many panels appear in a dashboard.
-- [Templating - Nested variables drill-down](https://play.grafana.org/d/testdata-nested-variables-drilldown/) - Demonstrates how changing one variable value can change the values available in a nested variable.
+- [Templating - Repeated panels](https://play.grafana.org/goto/yfZOReUNR?orgId=1) - Using query variables to control how many panels appear in a dashboard.
+- [Templating - Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/) - Demonstrates how changing one variable value can change the values available in a nested variable.
 - [Templating - Global variables and interpolation](https://play.grafana.org/d/HYaGDGIMk/) - Shows you how the syntax for Grafana variables works.
 
 ## Next steps
