@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
@@ -14,7 +15,6 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';

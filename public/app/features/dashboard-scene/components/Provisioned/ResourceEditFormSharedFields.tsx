@@ -3,11 +3,11 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Field, TextArea, Input, RadioButtonGroup } from '@grafana/ui';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
-import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: 'dashboard' | 'folder';
