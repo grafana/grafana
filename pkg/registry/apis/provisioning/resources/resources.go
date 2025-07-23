@@ -21,6 +21,7 @@ import (
 
 var (
 	ErrAlreadyInRepository = errors.New("already in repository")
+	ErrDuplicateName       = errors.New("duplicate name in repository")
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
 
@@ -152,7 +153,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	existing, found := r.resourcesLookup[id]
 	if found {
-		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s", parsed.Obj.GetName(), path, existing)
+		return "", parsed.GVK, fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, existing, ErrDuplicateName)
 	}
 	r.resourcesLookup[id] = path
 

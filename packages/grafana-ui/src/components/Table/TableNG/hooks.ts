@@ -2,7 +2,16 @@ import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, Ref
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldMatcherID,
+  fieldReducers,
+  FieldType,
+  formattedValueToString,
+  getFieldMatcher,
+  reduceField,
+} from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
@@ -260,7 +269,7 @@ export interface FooterCalcsOptions {
 
 export function useFooterCalcs(
   rows: TableRow[],
-  fields: Field[],
+  data: DataFrame,
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
   return useMemo(() => {
@@ -270,7 +279,11 @@ export function useFooterCalcs(
       return [];
     }
 
-    return fields.map((field, index) => {
+    const fieldNameMatcher = footerOptions.fields
+      ? getFieldMatcher({ id: FieldMatcherID.byNames, options: { names: footerOptions.fields } })
+      : undefined;
+
+    return data.fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
       }
@@ -294,8 +307,9 @@ export function useFooterCalcs(
         return '';
       }
 
-      // If fields array is specified, only show footer for fields included in that array
-      if (footerOptions.fields?.length && !footerOptions.fields?.includes(getDisplayName(field))) {
+      // If fields array is specified, only show footer for fields included in that array.
+      // the array can include either the display name or the field name.
+      if (fieldNameMatcher && !fieldNameMatcher(field, data, [data])) {
         return '';
       }
 
@@ -310,7 +324,7 @@ export function useFooterCalcs(
 
       return formattedValueToString(displayFn(value));
     });
-  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
+  }, [data, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
 interface TypographyCtx {

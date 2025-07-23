@@ -225,7 +225,7 @@ export function TableNG(props: TableNGProps) {
   });
 
   // Create a map of column key to text wrap
-  const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
+  const footerCalcs = useFooterCalcs(sortedRows, data, { enabled: hasFooter, footerOptions, isCountRowsSet });
   const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   const renderRow = useMemo(
