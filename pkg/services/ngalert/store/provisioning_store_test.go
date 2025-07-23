@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -23,114 +24,137 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	store := createProvisioningStoreSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
 
-	t.Run("Default provenance of a known type is None", func(t *testing.T) {
-		rule := models.AlertRule{
-			UID: "asdf",
-		}
+	testCases := []struct {
+		name           string
+		featureEnabled bool
+	}{
+		{
+			name:           "without feature flag",
+			featureEnabled: false,
+		},
+		{
+			name:           "with feature flag",
+			featureEnabled: true,
+		},
+	}
 
-		provenance, err := store.GetProvenance(context.Background(), &rule, 1)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			if tc.featureEnabled {
+				dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
+			}
+			store := createProvisioningStoreSut(ng, dbStore)
 
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceNone, provenance)
-	})
+			t.Run("Default provenance of a known type is None", func(t *testing.T) {
+				rule := models.AlertRule{
+					UID: "asdf",
+				}
 
-	t.Run("Store returns saved provenance type", func(t *testing.T) {
-		rule := models.AlertRule{
-			UID: "123",
-		}
-		err := store.SetProvenance(context.Background(), &rule, 1, models.ProvenanceFile)
-		require.NoError(t, err)
+				provenance, err := store.GetProvenance(context.Background(), &rule, 1)
 
-		p, err := store.GetProvenance(context.Background(), &rule, 1)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceNone, provenance)
+			})
 
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceFile, p)
-	})
+			t.Run("Store returns saved provenance type", func(t *testing.T) {
+				rule := models.AlertRule{
+					UID: "123",
+				}
+				err := store.SetProvenance(context.Background(), &rule, 1, models.ProvenanceFile)
+				require.NoError(t, err)
 
-	t.Run("Store does not get provenance of record with different org ID", func(t *testing.T) {
-		ruleOrg2 := models.AlertRule{
-			UID: "456",
-		}
-		ruleOrg3 := models.AlertRule{
-			UID: "456",
-		}
-		err := store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceFile)
-		require.NoError(t, err)
+				p, err := store.GetProvenance(context.Background(), &rule, 1)
 
-		p, err := store.GetProvenance(context.Background(), &ruleOrg3, 3)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceFile, p)
+			})
 
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceNone, p)
-	})
+			t.Run("Store does not get provenance of record with different org ID", func(t *testing.T) {
+				ruleOrg2 := models.AlertRule{
+					UID: "456",
+				}
+				ruleOrg3 := models.AlertRule{
+					UID: "456",
+				}
+				err := store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceFile)
+				require.NoError(t, err)
 
-	t.Run("Store only updates provenance of record with given org ID", func(t *testing.T) {
-		ruleOrg2 := models.AlertRule{
-			UID:   "789",
-			OrgID: 2,
-		}
-		ruleOrg3 := models.AlertRule{
-			UID:   "789",
-			OrgID: 3,
-		}
-		err := store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceFile)
-		require.NoError(t, err)
-		err = store.SetProvenance(context.Background(), &ruleOrg3, 3, models.ProvenanceFile)
-		require.NoError(t, err)
+				p, err := store.GetProvenance(context.Background(), &ruleOrg3, 3)
 
-		err = store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceAPI)
-		require.NoError(t, err)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceNone, p)
+			})
 
-		p, err := store.GetProvenance(context.Background(), &ruleOrg2, 2)
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceAPI, p)
-		p, err = store.GetProvenance(context.Background(), &ruleOrg3, 3)
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceFile, p)
-	})
+			t.Run("Store only updates provenance of record with given org ID", func(t *testing.T) {
+				ruleOrg2 := models.AlertRule{
+					UID:   "789",
+					OrgID: 2,
+				}
+				ruleOrg3 := models.AlertRule{
+					UID:   "789",
+					OrgID: 3,
+				}
+				err := store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceFile)
+				require.NoError(t, err)
+				err = store.SetProvenance(context.Background(), &ruleOrg3, 3, models.ProvenanceFile)
+				require.NoError(t, err)
 
-	t.Run("Store should return all provenances by type", func(t *testing.T) {
-		const orgID = 123
-		rule1 := models.AlertRule{
-			UID:   "789",
-			OrgID: orgID,
-		}
-		rule2 := models.AlertRule{
-			UID:   "790",
-			OrgID: orgID,
-		}
-		err := store.SetProvenance(context.Background(), &rule1, orgID, models.ProvenanceFile)
-		require.NoError(t, err)
-		err = store.SetProvenance(context.Background(), &rule2, orgID, models.ProvenanceAPI)
-		require.NoError(t, err)
+				err = store.SetProvenance(context.Background(), &ruleOrg2, 2, models.ProvenanceAPI)
+				require.NoError(t, err)
 
-		p, err := store.GetProvenances(context.Background(), orgID, rule1.ResourceType())
-		require.NoError(t, err)
-		require.Len(t, p, 2)
-		require.Equal(t, models.ProvenanceFile, p[rule1.UID])
-		require.Equal(t, models.ProvenanceAPI, p[rule2.UID])
-	})
+				p, err := store.GetProvenance(context.Background(), &ruleOrg2, 2)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceAPI, p)
+				p, err = store.GetProvenance(context.Background(), &ruleOrg3, 3)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceFile, p)
+			})
 
-	t.Run("Store should delete provenance correctly", func(t *testing.T) {
-		const orgID = 1234
-		ruleOrg := models.AlertRule{
-			UID:   "7834539",
-			OrgID: orgID,
-		}
-		err := store.SetProvenance(context.Background(), &ruleOrg, orgID, models.ProvenanceFile)
-		require.NoError(t, err)
-		p, err := store.GetProvenance(context.Background(), &ruleOrg, orgID)
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceFile, p)
+			t.Run("Store should return all provenances by type", func(t *testing.T) {
+				const orgID = 123
+				rule1 := models.AlertRule{
+					UID:   "789",
+					OrgID: orgID,
+				}
+				rule2 := models.AlertRule{
+					UID:   "790",
+					OrgID: orgID,
+				}
+				err := store.SetProvenance(context.Background(), &rule1, orgID, models.ProvenanceFile)
+				require.NoError(t, err)
+				err = store.SetProvenance(context.Background(), &rule2, orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
 
-		err = store.DeleteProvenance(context.Background(), &ruleOrg, orgID)
-		require.NoError(t, err)
+				p, err := store.GetProvenances(context.Background(), orgID, rule1.ResourceType())
+				require.NoError(t, err)
+				require.Len(t, p, 2)
+				require.Equal(t, models.ProvenanceFile, p[rule1.UID])
+				require.Equal(t, models.ProvenanceAPI, p[rule2.UID])
+			})
 
-		p, err = store.GetProvenance(context.Background(), &ruleOrg, orgID)
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceNone, p)
-	})
+			t.Run("Store should delete provenance correctly", func(t *testing.T) {
+				const orgID = 1234
+				ruleOrg := models.AlertRule{
+					UID:   "7834539",
+					OrgID: orgID,
+				}
+				err := store.SetProvenance(context.Background(), &ruleOrg, orgID, models.ProvenanceFile)
+				require.NoError(t, err)
+				p, err := store.GetProvenance(context.Background(), &ruleOrg, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceFile, p)
+
+				err = store.DeleteProvenance(context.Background(), &ruleOrg, orgID)
+				require.NoError(t, err)
+
+				p, err = store.GetProvenance(context.Background(), &ruleOrg, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceNone, p)
+			})
+		})
+	}
 }
 
 func TestSetProvenance_DeadlockScenarios(t *testing.T) {
@@ -138,7 +162,9 @@ func TestSetProvenance_DeadlockScenarios(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	store := createProvisioningStoreSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
+	ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+	dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
+	store := createProvisioningStoreSut(ng, dbStore)
 	concurrency := 20
 
 	t.Run("Same record, different orgs", func(t *testing.T) {
