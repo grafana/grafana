@@ -52,6 +52,7 @@
       "button-use-query": "이 쿼리 사용",
       "label-categories": "범주",
       "label-query-results": "쿼리 결과: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "모든 범주",
       "placeholder-search-logs": "로그 쿼리 검색",
       "text-loading": "로딩 중..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "반환되는 행 수를 제한합니다(기본값은 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "기본 로그 쿼리는 스캔된 데이터 양에 따라 비용이 발생합니다.",
       "label-logs": "로그",
       "title-basic-logs-queries": "기본 로그 쿼리",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 로그 쿼리 시작 버튼",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "쿼리 시작하기",
       "button-run-query": "쿼리 실행",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "서비스",
       "placeholder-service": "서비스...",
       "title-switch-mode": "편집기 모드를 전환하시겠어요?"
@@ -221,6 +231,9 @@
       "text-loading": "로딩 중...",
       "text-no-resources": "리소스를 찾을 수 없음",
       "title-error-occurred": "Azure Monitor에서 리소스를 요청하는 동안 오류가 발생했습니다."
+    },
+    "scope-selector": {
+      "label": ""
     },
     "search": {
       "aria-label-resource-search": "리소스 검색",

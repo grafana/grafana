@@ -58,13 +58,28 @@ func writeTypeFilterSQL(typeFilter []string, builder *db.SQLBuilder) {
 	}
 }
 
-func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder) {
+func writeSearchStringSQL(query model.SearchLibraryElementsQuery, sqlStore db.DB, builder *db.SQLBuilder, foldersWithMatchingTitles []string) {
 	if len(strings.TrimSpace(query.SearchString)) > 0 {
+		// Search element names across all accessible folders
 		sql, param := sqlStore.GetDialect().LikeOperator("le.name", true, query.SearchString, true)
 		builder.Write(" AND ("+sql, param)
 
+		// Search element descriptions across all accessible folders
 		sql, param = sqlStore.GetDialect().LikeOperator("le.description", true, query.SearchString, true)
-		builder.Write(" OR "+sql+")", param)
+		builder.Write(" OR "+sql, param)
+
+		// Include ALL elements from folders whose titles match the search string
+		hasFolderFilter := len(strings.TrimSpace(query.FolderFilterUIDs)) > 0
+		if !hasFolderFilter && len(foldersWithMatchingTitles) > 0 {
+			folderUIDsSQL := "?" + strings.Repeat(",?", len(foldersWithMatchingTitles)-1)
+			params := make([]any, 0, len(foldersWithMatchingTitles))
+			for _, folderUID := range foldersWithMatchingTitles {
+				params = append(params, folderUID)
+			}
+			builder.Write(" OR le.folder_uid IN ("+folderUIDsSQL+")", params...)
+		}
+
+		builder.Write(")")
 	}
 }
 

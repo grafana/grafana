@@ -8,11 +8,11 @@ updates:
     directories:
       - "/"
       - "/apps/playlist"
+      - "/apps/secret"
       - "/apps/investigations"
       - "/pkg/aggregator"
       - "/pkg/apimachinery"
       - "/pkg/apis/folder"
-      - "/pkg/apis/secret"
       - "/pkg/apiserver"
       - "/pkg/build"
       - "/pkg/build/wire"

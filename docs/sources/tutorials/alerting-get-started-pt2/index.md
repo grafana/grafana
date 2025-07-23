@@ -25,6 +25,8 @@ This tutorial is a continuation of the [Grafana Alerting - Create and receive yo
 
 In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
 
+{{< youtube id="nI-_MEnFBQs" >}}
+
 After introducing each component, you will learn how to:
 
 - Configure an alert rule that returns more than one alert instance
@@ -182,6 +184,10 @@ Create a notification policy if you want to handle metrics returned by alert rul
    {{< admonition type="note" >}}
    If you don’t have any contact points, add a [Contact point](https://grafana.com/tutorials/alerting-get-started/#create-a-contact-point).
    {{</ admonition >}}
+1. Enable Continue matching:
+
+   Turn on **Continue matching subsequent sibling nodes** so the evaluation continues even after one or more labels (i.e. `device` label) match.
+
 1. Click **Save Policy**.
 
    This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.

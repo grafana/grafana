@@ -1,6 +1,6 @@
 module lefthook
 
-go 1.24.4
+go 1.24.5
 
 tool github.com/evilmartians/lefthook
 
@@ -18,7 +18,7 @@ require (
 	github.com/evilmartians/lefthook v1.4.8 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

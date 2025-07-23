@@ -53,10 +53,6 @@ type LokiOnDashboardLoadedTrackingEvent = {
   queries_with_changed_legend_count: number;
 };
 
-export type LokiTrackingSettings = {
-  predefinedOperations?: string;
-};
-
 export const onDashboardLoadedHandler = ({
   payload: { dashboardId, orgId, grafanaVersion, queries },
 }: DashboardLoadedEvent<LokiQuery>) => {
@@ -158,7 +154,6 @@ export function trackQuery(
   response: DataQueryResponse,
   request: DataQueryRequest<LokiQuery>,
   startTime: Date,
-  trackingSettings: LokiTrackingSettings = {},
   extraPayload: Record<string, unknown> = {}
 ): void {
   // We only want to track usage for these specific apps
@@ -193,9 +188,6 @@ export function trackQuery(
       time_taken: Date.now() - startTime.getTime(),
       bytes_processed: totalBytes,
       is_split: false,
-      predefined_operations_applied: trackingSettings.predefinedOperations
-        ? query.expr.includes(trackingSettings.predefinedOperations)
-        : 'n/a',
       ...extraPayload,
     });
   }
@@ -205,8 +197,7 @@ export function trackGroupedQueries(
   response: DataQueryResponse,
   groupedRequests: LokiGroupedRequest[],
   originalRequest: DataQueryRequest<LokiQuery>,
-  startTime: Date,
-  trackingSettings: LokiTrackingSettings = {}
+  startTime: Date
 ): void {
   const splittingPayload = {
     split_query_group_count: groupedRequests.length,
@@ -219,7 +210,7 @@ export function trackGroupedQueries(
 
   for (const group of groupedRequests) {
     const split_query_partition_size = group.partition.length;
-    trackQuery(response, group.request, startTime, trackingSettings, {
+    trackQuery(response, group.request, startTime, {
       ...splittingPayload,
       split_query_partition_size,
     });

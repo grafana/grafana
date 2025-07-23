@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,7 +51,6 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		Resources: []schema.GroupResource{
 			{Group: folders.GROUP, Resource: folders.RESOURCE},
 			{Group: dashboard.GROUP, Resource: dashboard.DASHBOARD_RESOURCE},
-			{Group: dashboard.GROUP, Resource: dashboard.LIBRARY_PANEL_RESOURCE},
 		},
 		LargeObjects: nil, // TODO... from config
 		Progress: func(count int, msg string) {
@@ -75,6 +75,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		provisioning,
 		nil, // no librarypanels.Service
 		sort.ProvideService(),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 	)
 
 	client, err := newUnifiedClient(cfg, sqlStore)

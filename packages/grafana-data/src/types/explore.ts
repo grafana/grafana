@@ -18,6 +18,31 @@ export type URLRange = {
   to: URLRangeValue;
 };
 
+/**
+ * @internal
+ */
+export interface TraceSearchProps {
+  serviceName?: string;
+  serviceNameOperator: string;
+  spanName?: string;
+  spanNameOperator: string;
+  from?: string;
+  fromOperator: string;
+  to?: string;
+  toOperator: string;
+  tags: TraceSearchTag[];
+  query?: string;
+  matchesOnly: boolean;
+  criticalPathOnly: boolean;
+}
+
+export interface TraceSearchTag {
+  id: string;
+  key?: string;
+  operator: string;
+  value?: string;
+}
+
 /** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   datasource: string | null;
@@ -45,6 +70,7 @@ export interface ExploreCorrelationHelperData {
 
 export interface ExploreTracePanelState {
   spanId?: string;
+  spanFilters?: TraceSearchProps;
 }
 
 export interface ExploreLogsPanelState {
