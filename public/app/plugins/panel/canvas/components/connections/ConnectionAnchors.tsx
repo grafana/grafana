@@ -40,11 +40,11 @@ export const ANCHORS = [
 export const ANCHOR_PADDING = 3;
 export const HALF_SIZE = 2.5;
 
-enum ZIndices {
-  ROOT = 1000,
-  ANCHOR = 1001,
-  HIGHLIGHT = 1002,
-}
+const zIndex = {
+  ROOT: 1000,
+  ANCHOR: 1001,
+  HIGHLIGHT: 1002,
+};
 
 enum PointerEvents {
   ROOT = 'none',
@@ -136,7 +136,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   root: css({
     position: 'absolute',
     display: 'none',
-    zIndex: `${ZIndices.ROOT} !important`,
+    zIndex: `${zIndex.ROOT} !important`,
     pointerEvents: PointerEvents.ROOT,
   }),
   mouseoutDiv: css({
@@ -152,7 +152,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     cursor: 'cursor',
     width: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
     height: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
-    zIndex: `${ZIndices.ANCHOR} !important`,
+    zIndex: `${zIndex.ANCHOR} !important`,
     pointerEvents: PointerEvents.ANCHOR,
     userSelect: 'none',
   }),
@@ -166,6 +166,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '16px',
     borderRadius: theme.shape.radius.circle,
     display: 'none',
-    zIndex: `${ZIndices.HIGHLIGHT} !important`,
+    zIndex: `${zIndex.HIGHLIGHT} !important`,
   }),
 });
