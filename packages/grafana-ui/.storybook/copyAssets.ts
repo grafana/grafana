@@ -59,7 +59,7 @@ export function copyAssetsSync() {
     const fromPath = resolve(__dirname, asset.from);
     const toPath = resolve(__dirname, asset.to);
     // TODO can we remove this check somehow?
-    if (!existsSync(fromPath)) {
+    if (!existsSync(toPath)) {
       copySync(fromPath, toPath, {
         filter: (src) => !lstatSync(src).isSymbolicLink(),
       });

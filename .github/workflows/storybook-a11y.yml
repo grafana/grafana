@@ -43,7 +43,6 @@ jobs:
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
