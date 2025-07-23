@@ -1,4 +1,11 @@
-import { PluginExtensionPoints } from '@grafana/data';
+import type { MouseEvent } from 'react';
+
+import {
+  PluginExtensionPoints,
+  type PluginExtensionDataSourceConfigActionsContext,
+  type PluginExtensionDataSourceConfigStatusContext,
+  type PluginExtensionEventHelpers
+} from '@grafana/data';
 
 import { getDataSourceExtensionConfigs } from './getDataSourceExtensionConfigs';
 
@@ -113,8 +120,8 @@ describe('getDataSourceExtensionConfigs', () => {
       };
 
       monitoringConfig!.onClick!(
-        undefined as any, // event
-        { context } as any // meta
+        undefined, // event
+        { context } as PluginExtensionEventHelpers<PluginExtensionDataSourceConfigActionsContext> // meta
       );
 
       expect(window.open).toHaveBeenCalledWith(
@@ -253,17 +260,17 @@ describe('getDataSourceExtensionConfigs', () => {
       configs.forEach(config => {
         if (config.configure) {
           // Test with undefined context
-          const result = config.configure(undefined as any);
+          const result = config.configure(undefined);
           expect(result).toBeUndefined();
 
           // Test with missing dataSource
-          const resultNoDS = config.configure({ dataSource: undefined } as any);
+          const resultNoDS = config.configure({ dataSource: undefined } as unknown as PluginExtensionDataSourceConfigActionsContext | PluginExtensionDataSourceConfigStatusContext);
           expect(resultNoDS).toBeUndefined();
 
           // Test with missing datasource type
           const resultNoType = config.configure({
             dataSource: { uid: 'test', name: 'test' }
-          } as any);
+          } as unknown as PluginExtensionDataSourceConfigActionsContext | PluginExtensionDataSourceConfigStatusContext);
           expect(resultNoType).toBeUndefined();
         }
       });
