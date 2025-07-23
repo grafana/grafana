@@ -2,7 +2,7 @@ import {
   PluginExtensionAddedLinkConfig,
   PluginExtensionPoints,
   PluginExtensionDataSourceConfigActionsContext,
-  PluginExtensionDataSourceConfigStatusContext
+  PluginExtensionDataSourceConfigStatusContext,
 } from '@grafana/data';
 
 import { createAddedLinkConfig } from '../../plugins/extensions/utils';
