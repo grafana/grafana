@@ -1,0 +1,31 @@
+{
+  "apiVersion": "k3d.io/v1alpha3",
+  "kind": "Simple",
+  "kubeAPI": {
+    "hostPort": "8556"
+  },
+  "options": {
+    "k3d": {
+      "wait": true
+    },
+    "kubeconfig": {
+      "switchCurrentContext": true,
+      "updateDefaultKubeconfig": true
+    },
+    "k3s": {
+      "extraArgs": [{ "arg": "--kube-apiserver-arg=anonymous-auth=true", "nodeFilters": ["server:*"] }]
+    }
+  },
+  "ports": [
+    {
+      "nodeFilters": ["loadbalancer"],
+      "port": "9999:80"
+    }
+  ],
+  "volumes": [
+    {
+      "nodeFilters": ["server:*"],
+      "volume": "/Users/mihai/src/grafana/apps/iam/local/mounted-files:/tmp/k3d/mounted-files"
+    }
+  ]
+}
