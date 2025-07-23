@@ -822,7 +822,6 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	})
 }
 
-
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -988,7 +987,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 				SetHeader("Content-Type", "application/json").
 				Do(ctx)
 			require.NoError(t, result.Error(), "should create test file")
-			
+
 			// Now try to move this file to a directory path using helper function
 			resp := postFilesMove(t, helper, repo, "target-dir/", "simple-test.json", "test move")
 			// nolint:errcheck
@@ -996,7 +995,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 			// Read response body to check error message
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			
+
 			require.NotEqual(t, http.StatusOK, resp.StatusCode, "should fail when moving file to directory")
 			require.Contains(t, string(body), "cannot move between file and directory types")
 		})

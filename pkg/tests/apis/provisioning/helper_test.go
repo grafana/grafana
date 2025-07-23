@@ -345,7 +345,7 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 type filesPostOptions struct {
 	targetPath   string // The target file/directory path
 	originalPath string // Source path for move operations (optional)
-	message      string // Commit message (optional)  
+	message      string // Commit message (optional)
 	body         string // Request body content (optional)
 }
 
@@ -353,12 +353,12 @@ func postFilesRequest(t *testing.T, helper *provisioningTestHelper, repo string,
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 	baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
 		addr, repo, opts.targetPath)
-	
+
 	// Build the URL with proper query parameter encoding
 	parsedUrl, err := url.Parse(baseUrl)
 	require.NoError(t, err)
 	params := parsedUrl.Query()
-	
+
 	if opts.originalPath != "" {
 		params.Set("originalPath", opts.originalPath)
 	}
@@ -366,14 +366,14 @@ func postFilesRequest(t *testing.T, helper *provisioningTestHelper, repo string,
 		params.Set("message", opts.message)
 	}
 	parsedUrl.RawQuery = params.Encode()
-	
+
 	req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(opts.body))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
-	
+
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	
+
 	return resp
 }
 
