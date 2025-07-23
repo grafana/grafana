@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
+  FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
@@ -153,56 +154,17 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
  * @internal
  * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
  */
-export function getTextAlign(field?: Field): Property.TextAlign | undefined {
-  if (!field) {
-    return;
+export function getAlignment(field: Field): FieldTextAlignment {
+  const align: FieldTextAlignment | undefined = field.config.custom?.align;
+
+  if (!align || align === 'auto') {
+    if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
+      return 'right';
+    }
+    return 'auto';
   }
 
-  const custom: TableFieldOptionsType | undefined = field.config.custom;
-  if (custom?.align && custom.align !== 'auto') {
-    return (
-      {
-        right: 'right',
-        left: 'left',
-        center: 'center',
-      } as const
-    )[custom.align];
-  }
-
-  if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
-    return 'right';
-  }
-
-  return;
-}
-
-/**
- * @internal
- * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
- */
-export function getJustifyContent(field?: Field): Property.JustifyContent {
-  if (!field) {
-    return 'flex-start';
-  }
-
-  const custom: TableFieldOptionsType | undefined = field.config.custom;
-  if (custom?.align && custom.align !== 'auto') {
-    return (
-      (
-        {
-          right: 'flex-end',
-          left: 'flex-start',
-          center: 'center',
-        } as const
-      )[custom.align] ?? 'flex-start'
-    );
-  }
-
-  if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
-    return 'flex-end';
-  }
-
-  return 'flex-start';
+  return align;
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;

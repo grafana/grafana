@@ -26,7 +26,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId, TableCellHeight } from '@grafana/schema';
+import { FieldColorModeId, FieldTextAlignment, TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -60,7 +60,6 @@ import {
   getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
-  getTextAlign,
   getVisibleFields,
   shouldTextOverflow,
   getApplyToRowBgFn,
@@ -72,8 +71,8 @@ import {
   isCellInspectEnabled,
   getCellLinks,
   withDataLinksActionsTooltip,
-  getJustifyContent,
   displayJsonValue,
+  getAlignment,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -316,7 +315,7 @@ export function TableNG(props: TableNGProps) {
         // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
         // the text-align css property, and for others, we'll use justify-content to align the cell
         // contents with flexbox. We always just get both and provide both when styling the cell.
-        const textAlign = getTextAlign(field);
+        const hzAlignment = getAlignment(field);
         const justifyContent = getJustifyContent(field);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
@@ -358,8 +357,7 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.JSONView:
             cellClass = getCellStyles(
               theme,
-              textAlign,
-              justifyContent,
+              hzAlignment,
               shouldWrap,
               shouldOverflow,
               canBeColorized,
@@ -922,8 +920,7 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
-  textAlign: Property.TextAlign | undefined,
-  justifyContent: Property.JustifyContent,
+  textAlign: FieldTextAlignment,
   shouldWrap: boolean,
   shouldOverflow: boolean,
   isColorized: boolean,
@@ -933,8 +930,8 @@ const getCellStyles = (
   css({
     display: 'flex',
     alignItems: 'center',
-    textAlign,
-    justifyContent,
+    textAlign: textAlign === 'auto' ? 'left' : textAlign,
+    justifyContent: textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start',
     paddingInline: TABLE.CELL_PADDING,
     minHeight: '100%',
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
