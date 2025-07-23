@@ -353,6 +353,20 @@
     },
     {
       "metadata": {
+        "name": "alertingProvenanceLockWrites",
+        "resourceVersion": "1753284360846",
+        "creationTimestamp": "2025-07-23T15:26:00Z"
+      },
+      "spec": {
+        "description": "Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-09-26T06:33:14Z"
