@@ -67,21 +67,33 @@ describe('TableNG utils', () => {
       ).toBe(align);
     });
 
-    it('should default to left for non-text cell types contain number type fields', () => {
+    it.each([
+      { cellType: undefined, align: 'right' },
+      { cellType: TableCellDisplayMode.Auto, align: 'right' },
+      { cellType: TableCellDisplayMode.ColorText, align: 'right' },
+      { cellType: TableCellDisplayMode.ColorBackground, align: 'right' },
+      { cellType: TableCellDisplayMode.Gauge, align: 'left' },
+      { cellType: TableCellDisplayMode.JSONView, align: 'left' },
+      { cellType: TableCellDisplayMode.DataLinks, align: 'left' },
+    ])('numeric field should return "$align" for cell type "$cellType"', ({ align, cellType }) => {
       expect(
         getAlignment({
-          name: 'Value',
+          name: 'Test',
           type: FieldType.number,
           values: [],
           config: {
             custom: {
-              cellOptions: {
-                type: TableCellDisplayMode.Gauge,
-              },
+              ...(cellType !== undefined
+                ? {
+                    cellOptions: {
+                      type: cellType,
+                    },
+                  }
+                : {}),
             },
           },
         })
-      ).toBe('left');
+      ).toBe(align);
     });
 
     describe('mapping to getJustifyContent', () => {
