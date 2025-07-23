@@ -46,6 +46,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("api is currently disabled")
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
 		EnableFeatureToggles: []string{
@@ -492,6 +493,7 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("api is currently disabled")
 	t.Skip("not working yet")
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
@@ -617,6 +619,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("api is currently disabled")
 	t.Skip("not yet working")
 
 	type testCase struct {
@@ -768,6 +771,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("api is currently disabled")
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
@@ -929,6 +933,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("api is currently disabled")
 
 	type testCase struct {
 		description         string

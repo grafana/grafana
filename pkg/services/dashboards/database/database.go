@@ -1121,21 +1121,6 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 	})
 }
 
-func (d *dashboardStore) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboards")
-	defer span.End()
-
-	var dashboards = make([]*dashboards.Dashboard, 0)
-	err := d.store.WithDbSession(ctx, func(session *db.Session) error {
-		err := session.Find(&dashboards)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dashboards, nil
-}
-
 func (d *dashboardStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboardsByOrgId")
 	defer span.End()

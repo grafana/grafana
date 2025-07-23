@@ -46,7 +46,7 @@ jobs:
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Create release branch
         id: branch
-        uses: grafana/grafana-github-actions-go/bump-release@main
+        uses: grafana/grafana-github-actions-go/bump-release@main # zizmor: ignore[unpinned-uses]
         with:
           ownerRepo: ${{ inputs.ownerRepo }}
           source: ${{ inputs.source }}

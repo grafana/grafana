@@ -33,6 +33,8 @@ permissions:
 
 jobs:
   build-and-publish:
+    env:
+      PLUGIN_ID: ${{ inputs.plugin_id }}
     name: Build and publish ${{ inputs.plugin_id }}
     runs-on: ubuntu-latest
     outputs:
@@ -42,11 +44,13 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Verify inputs
         run: |
-          if [ -z ${{ inputs.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
+          if [ -z $PLUGIN_ID ]; then echo "Missing plugin ID"; exit 1; fi
       - id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/<repo>/<path> path in Vault
           repo_secrets: |
@@ -54,11 +58,11 @@ jobs:
             PLUGINS_GRAFANA_API_KEY=core-plugins-build-and-release:PLUGINS_GRAFANA_API_KEY
             PLUGINS_GCOM_TOKEN=core-plugins-build-and-release:PLUGINS_GCOM_TOKEN
       - name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v2'
+        uses: 'google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f'
         with:
           credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
+        uses: 'google-github-actions/setup-gcloud@6189d56e4096ee891640bb02ac264be376592d6a'
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -70,7 +74,7 @@ jobs:
         run: |
           dir=$(dirname \
             $(egrep -lir --include=plugin.json --exclude-dir=dist \
-              '"id": "${{ inputs.plugin_id }}"' \
+              '"id": "${PLUGIN_ID}"' \
               public/app/plugins \
             ) \
           )
@@ -85,19 +89,19 @@ jobs:
         working-directory: ${{ steps.get_dir.outputs.dir }}
         run: |
           [ ! -d ./bin ] && mkdir -pv ./bin || true
-          curl -fL -o ./bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
+          curl -fL -o ./bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$GRABPL_VERSION/grabpl
           chmod 0755 ./bin/grabpl
       - name: Check backend
         id: check_backend
         shell: bash
         run: |
-          if egrep -qr --include=main.go 'datasource.Manage\("${{ inputs.plugin_id }}"' pkg/tsdb; then
+          if egrep -qr --include=main.go 'datasource.Manage\("$PLUGIN_ID"' pkg/tsdb; then
             echo "has_backend=true" >> $GITHUB_OUTPUT
           else
             echo "has_backend=false" >> $GITHUB_OUTPUT
           fi
       - name: Setup golang environment
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
         if: steps.check_backend.outputs.has_backend == 'true'
         with:
           go-version-file: go.mod
@@ -151,7 +155,7 @@ jobs:
             # Release branch, do not add commit hash to version
             command="plugin:build"
           fi
-          yarn $command --scope="@grafana-plugins/${{ inputs.plugin_id }}"
+          yarn $command --scope="@grafana-plugins/$PLUGIN_ID"
           version=$(cat ${{ steps.get_dir.outputs.dir }}/dist/plugin.json | jq -r .info.version)
           echo "version=${version}" >> $GITHUB_OUTPUT
       - name: build:backend
@@ -160,7 +164,7 @@ jobs:
         env:
           VERSION: ${{ steps.build_frontend.outputs.version }}  
         run: |
-          make build-plugin-go PLUGIN_ID=${{ inputs.plugin_id }}
+          make build-plugin-go PLUGIN_ID=$PLUGIN_ID
       - name: package
         working-directory: ${{ steps.get_dir.outputs.dir }}
         run: |
@@ -175,7 +179,7 @@ jobs:
           VERSION: ${{ steps.build_frontend.outputs.version }}  
         run: |
           api_res=$(curl -X 'GET' -H "Authorization: Bearer $GCOM_TOKEN" \
-            '${{ env.GCOM_API}}/api/plugins/${{ inputs.plugin_id }}?version=$VERSION' \
+            '${{ env.GCOM_API}}/api/plugins/$PLUGIN_ID?version=$VERSION' \
             -H 'accept: application/json')
           api_res_code=$(echo $api_res | jq -r .code)
           if [ "$api_res_code" = "NotFound" ]; then
@@ -197,10 +201,10 @@ jobs:
         run: |
           echo "Publish release to Google Cloud Storage:"
           touch ci/packages/windows ci/packages/darwin ci/packages/linux ci/packages/any
-          gsutil -m cp -r ci/packages/*windows* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/windows
-          gsutil -m cp -r ci/packages/*linux* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux 
-          gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin
-          gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any
+          gsutil -m cp -r ci/packages/*windows* gs://${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/windows
+          gsutil -m cp -r ci/packages/*linux* gs://${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/linux 
+          gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/darwin
+          gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/any
       - name: Publish new plugin version on grafana.com
         if: steps.check_backend.outputs.has_backend == 'true'
         working-directory: ${{ steps.get_dir.outputs.dir }}
@@ -214,27 +218,27 @@ jobs:
             \"url\": \"https://github.com/grafana/grafana/tree/main/${{ steps.get_dir.outputs.dir }}\",
             \"download\": {
               \"linux-amd64\": {
-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux/${{ inputs.plugin_id }}-${VERSION}.linux_amd64.zip\",
+                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/linux/$PLUGIN_ID-${VERSION}.linux_amd64.zip\",
                 \"md5\": \"$(cat ci/packages/info-linux_amd64.json | jq -r .plugin.md5)\"
               },
               \"linux-arm64\": {
-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux/${{ inputs.plugin_id }}-${VERSION}.linux_arm64.zip\",
+                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/linux/$PLUGIN_ID-${VERSION}.linux_arm64.zip\",
                 \"md5\": \"$(cat ci/packages/info-linux_arm64.json | jq -r .plugin.md5)\"
               },
               \"linux-arm\": {
-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux/${{ inputs.plugin_id }}-${VERSION}.linux_arm.zip\",
+                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/linux/$PLUGIN_ID-${VERSION}.linux_arm.zip\",
                 \"md5\": \"$(cat ci/packages/info-linux_arm.json | jq -r .plugin.md5)\"
               },
               \"windows-amd64\": {
-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/windows/${{ inputs.plugin_id }}-${VERSION}.windows_amd64.zip\",
+                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/windows/$PLUGIN_ID-${VERSION}.windows_amd64.zip\",
                 \"md5\": \"$(cat ci/packages/info-windows_amd64.json | jq -r .plugin.md5)\"
               },
               \"darwin-amd64\": {
-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin/${{ inputs.plugin_id }}-${VERSION}.darwin_amd64.zip\",
+                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/darwin/$PLUGIN_ID-${VERSION}.darwin_amd64.zip\",
                 \"md5\": \"$(cat ci/packages/info-darwin_amd64.json | jq -r .plugin.md5)\"
               },
               \"darwin-arm64\": {
-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin/${{ inputs.plugin_id }}-${VERSION}.darwin_arm64.zip\",
+                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/darwin/$PLUGIN_ID-${VERSION}.darwin_arm64.zip\",
                 \"md5\": \"$(cat ci/packages/info-darwin_arm64.json | jq -r .plugin.md5)\"
               }
             }
@@ -257,7 +261,7 @@ jobs:
             \"url\": \"https://github.com/grafana/grafana/tree/main/${{ steps.get_dir.outputs.dir }}\",
             \"download\": {
               \"any\": {
-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any/${{ inputs.plugin_id }}-${VERSION}.any.zip\",
+                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/$PLUGIN_ID/release/${VERSION}/any/$PLUGIN_ID-${VERSION}.any.zip\",
                 \"md5\": \"$(cat ci/packages/info-any.json | jq -r .plugin.md5)\"
               }
             }

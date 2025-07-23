@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
@@ -38,11 +38,13 @@ jobs:
       - name: Check if issue is in target project
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          TARGET_PROJECT: ${{ env.TARGET_PROJECT }}
         run: |
           gh api graphql -f query='
             query($org: String!, $repo: String!) {
               repository(name: $repo, owner: $org) {
-                issue (number: ${{ github.event.issue.number }}) {
+                issue (number: $ISSUE_NUMBER) {
                   id
                   projectItems(first:20) {
                     nodes {
@@ -55,12 +57,14 @@ jobs:
               }
             }' -f org=$ORGANIZATION -f repo=$REPO > projects_data.json
 
-            echo 'IN_TARGET_PROJ='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.TARGET_PROJECT }}) | .project != null' projects_data.json) >> $GITHUB_ENV
+            echo 'IN_TARGET_PROJ='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number=='"$TARGET_PROJECT"') | .project != null' projects_data.json) >> $GITHUB_ENV
             echo 'ITEM_ID='$(jq '.data.repository.issue.id' projects_data.json) >> $GITHUB_ENV
       - name: Set up label array
         if: env.IN_TARGET_PROJ
+        env:
+          LABEL_IDS: ${{ env.LABEL_IDS }}
         run: |
-          IFS=',' read -ra LABEL_IDs <<< "${{ env.LABEL_IDs }}"
+          IFS=',' read -ra LABEL_IDs <<< "$LABEL_IDS"
           for item in "${LABEL_IDs[@]}"; do
             echo "Item: $item"
           done
@@ -68,6 +72,7 @@ jobs:
         if: env.IN_TARGET_PROJ
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          LABEL_IDS: ${{ env.LABEL_IDS }}
         run: |
           gh api graphql -f query='
             mutation ($labelableId: ID!, $labelIds: [ID!]!) {
@@ -76,4 +81,4 @@ jobs:
               ) {
                   clientMutationId
               }
-            }' -f labelableId=$ITEM_ID -f labelIds=${{ env.LABEL_IDs }}
+            }' -f labelableId=$ITEM_ID -f labelIds=$LABEL_IDS

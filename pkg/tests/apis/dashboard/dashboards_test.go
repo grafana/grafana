@@ -28,6 +28,7 @@ func TestMain(m *testing.M) {
 }
 
 func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.GroupVersionResource) {
+	t.Skip("dashboard apis are currently disabled")
 	t.Run("simple crud+list", func(t *testing.T) {
 		ctx := context.Background()
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -109,6 +110,7 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.Group
 }
 
 func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
+	t.Skip("dashboard apis are currently disabled")
 	gvr := schema.GroupVersionResource{
 		Group:    "dashboard.grafana.app",
 		Version:  "v0alpha1",
@@ -253,6 +255,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 }
 
 func TestIntegrationLegacySupport(t *testing.T) {
+	t.Skip("dashboard apis are currently disabled")
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{

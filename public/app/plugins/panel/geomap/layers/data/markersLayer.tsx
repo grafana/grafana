@@ -81,10 +81,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
     const symbolLayer = new WebGLPointsLayer({ source, style: webGLStyle });
-    const textLayer = new VectorImage({ source, declutter: true });
+    const vectorLayer = new VectorImage({ source, declutter: true });
+    // Initialize hasVector with just text check, will be updated when features are available
+    let hasVector = hasText;
+
     const layers = new LayerGroup({
       // If text and no symbol, only show text - fall back on default symbol
-      layers: hasText && symbol ? [symbolLayer, textLayer] : hasText && !symbol ? [textLayer] : [symbolLayer],
+      layers: hasVector && symbol ? [symbolLayer, vectorLayer] : hasVector && !symbol ? [vectorLayer] : [symbolLayer],
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
@@ -116,7 +119,15 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           }
 
           source.update(frame);
+
+          // Track if we find any line strings during feature processing
+          let hasLineString = false;
+
           source.forEachFeature((feature) => {
+            const isLineString = feature.getGeometry()?.getType() === 'LineString';
+            if (isLineString) {
+              hasLineString = true;
+            }
             const idx: number = feature.get('rowIndex');
             const dims = style.dims;
             const values = { ...style.base };
@@ -133,28 +144,51 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (dims?.rotation) {
               values.rotation = dims.rotation.get(idx);
             }
-            const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
-            const colorValues = getRGBValues(colorString);
+            if (!isLineString) {
+              const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
+              const colorValues = getRGBValues(colorString);
 
-            const radius = values.size ?? DEFAULT_SIZE;
-            const displacement = getDisplacement(values.symbolAlign ?? defaultStyleConfig.symbolAlign, radius);
+              const radius = values.size ?? DEFAULT_SIZE;
+              const displacement = getDisplacement(values.symbolAlign ?? defaultStyleConfig.symbolAlign, radius);
 
-            // WebGLPointsLayer uses style expressions instead of style functions
-            feature.setProperties({ red: colorValues?.r ?? 255 });
-            feature.setProperties({ green: colorValues?.g ?? 255 });
-            feature.setProperties({ blue: colorValues?.b ?? 255 });
-            feature.setProperties({ size: (values.size ?? 1) * 2 }); // TODO unify sizing across all source types
-            feature.setProperties({ rotation: ((values.rotation ?? 0) * Math.PI) / 180 });
-            feature.setProperties({ opacity: (values.opacity ?? 1) * (colorValues?.a ?? 1) });
-            feature.setProperties({ offsetX: displacement[0] });
-            feature.setProperties({ offsetY: displacement[1] });
+              // WebGLPointsLayer uses style expressions instead of style functions
+              feature.setProperties({ red: colorValues?.r ?? 255 });
+              feature.setProperties({ green: colorValues?.g ?? 255 });
+              feature.setProperties({ blue: colorValues?.b ?? 255 });
+              feature.setProperties({ size: (values.size ?? 1) * 2 }); // TODO unify sizing across all source types
+              feature.setProperties({ rotation: ((values.rotation ?? 0) * Math.PI) / 180 });
+              feature.setProperties({ opacity: (values.opacity ?? 1) * (colorValues?.a ?? 1) });
+              feature.setProperties({ offsetX: displacement[0] });
+              feature.setProperties({ offsetY: displacement[1] });
+            }
 
             // Set style to be used by VectorLayer (text only)
             if (hasText) {
               const textStyle = textMarker(values);
               feature.setStyle(textStyle);
             }
+
+            // Set style to be used by LineString
+            if (isLineString) {
+              const lineStringStyle = style.maker(values);
+              feature.setStyle(lineStringStyle);
+            }
           });
+
+          // Update hasVector state after processing all features
+          hasVector = hasText || hasLineString;
+
+          // Update layer visibility based on current hasVector state
+          const layersArray = layers.getLayers();
+          layersArray.clear();
+          if (hasVector && symbol) {
+            layersArray.extend([symbolLayer, vectorLayer]);
+          } else if (hasVector && !symbol) {
+            layersArray.extend([vectorLayer]);
+          } else {
+            layersArray.extend([symbolLayer]);
+          }
+
           break; // Only the first frame for now!
         }
       },

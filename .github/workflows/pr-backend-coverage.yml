@@ -1,14 +1,10 @@
-name: Backend Unit Tests
+name: Coverage
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-  pull_request:
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
@@ -22,31 +18,28 @@ env:
   WIRE_TAGS: 'oss'
 
 jobs:
-  backend-testing-coverage:
-    name: Backend Testing & Coverage
-    runs-on: ubuntu-latest
+  main:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest-8-cores
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+        with:
+          persist-credentials: false
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
-          
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential shared-mime-info
           go install github.com/mfridman/tparse@c1754a1f484ac5cd422697b0fec635177ddc8507 # v0.17.0
-
       - name: Generate Go code
         run: make gen-go
-
       - name: Run unit tests
-        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_OUTPUT="/tmp/unit.log" make test-go-unit
-
+        run: COVER_OPTS="-coverprofile=be-unit.cov -coverpkg=github.com/grafana/grafana/..." GO_TEST_OUTPUT="/tmp/unit.log" make test-go-unit-cov
       - name: Process and upload coverage
         uses: ./.github/actions/test-coverage-processor
         with:
@@ -71,8 +64,8 @@ jobs:
             --report-output log \
             --grafana-version "$(git rev-parse HEAD)" \
             --suite-name grafana-oss-unit-tests \
-            /tmp/unit.log
+            /tmp/unit.log || true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false

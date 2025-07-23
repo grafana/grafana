@@ -39,6 +39,9 @@ const alwaysMonoIcons: IconName[] = [
   'percona-database-haproxy',
   'percona-asterisk',
   'pmm-logo',
+  'pmm-logo-light',
+  'percona-bell',
+  'percona-bell-slash',
   'qan-logo',
 ];
 

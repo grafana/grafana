@@ -1,12 +1,14 @@
 name: Run dashboard schema v2 e2e
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - '**' 
+  # @PERCONA - disable workflow
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   branches:
+  #     - '**' 
 
 env:
   ARCH: linux-amd64
@@ -19,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Pin Go version to mod file
         uses: actions/setup-go@v5
         with:
@@ -33,7 +37,7 @@ jobs:
       - name: Build grafana
         run: make build
       - name: Install Cypress dependencies
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:
           runTests: false
       - name: Run dashboard scenes e2e

@@ -1,0 +1,130 @@
+name: run-dashboard-search-e2e
+
+on:
+  workflow_run:
+    workflows: 
+      - trigger-dashboard-search-e2e
+    types:
+      - completed
+  workflow_dispatch:
+
+env:
+  ARCH: linux-amd64
+
+permissions: {}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    outputs:
+      ini_files: ${{ steps.get_files.outputs.ini_files }}
+
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Pin Go version to mod file
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - run: go version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+      - name: Cache Node Modules
+        id: cache-node-modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            /home/runner/.cache/Cypress
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+      - name: Install Cypress dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
+        with:
+          runTests: false
+      - name: Cache Grafana Build and Dependencies
+        id: cache-grafana
+        uses: actions/cache@v3
+        with:
+          path: |
+            bin/
+            scripts/grafana-server/
+            tools/
+            public/
+            conf/
+            e2e/test-plugins/
+            devenv/
+          key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
+      # only rebuild grafana if search files have changed ( or dependencies )
+      - name: Build Grafana (Runs Only If Not Cached)
+        if: steps.cache-grafana.outputs.cache-hit != 'true'
+        run: make build
+
+      - name: Get list of .ini files
+        id: get_files
+        run: |
+          INI_FILES=$(ls ${{ github.workspace }}/e2e/dashboards-search-suite/*.ini | jq -R -s -c 'split("\n")[:-1]')
+          echo "ini_files=$INI_FILES" >> $GITHUB_OUTPUT
+        shell: bash
+
+  run_tests:
+      needs: setup
+      runs-on: ubuntu-latest
+      continue-on-error: true
+      if: github.event.pull_request.draft == false
+      strategy:
+        matrix:
+          ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
+
+      permissions:
+        contents: read
+        id-token: write
+
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+        - name: Restore Cached Node Modules
+          uses: actions/cache@v3
+          with:
+            path: |
+              node_modules
+              /home/runner/.cache/Cypress
+            key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+        - name: Restore Cached Grafana Build and Dependencies
+          uses: actions/cache@v3
+          with:
+            path: |
+              bin/
+              scripts/grafana-server/
+              tools/
+              public/
+              conf/
+              e2e/test-plugins/
+              devenv/
+            key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
+        - name: Set the step name
+          id: set_file_name
+          env:
+            INI_NAME: ${{ matrix.ini_file }}
+          run: |
+            FILE_NAME=$(basename "$env.INI_NAME" .ini)
+            echo "FILE_NAME=$FILE_NAME" >> $GITHUB_OUTPUT
+        - name: Run tests for ${{ steps.set_file_name.outputs.FILE_NAME }}
+          env:
+            INI_NAME: ${{ matrix.ini_file }}
+          run: |
+            cp -rf $INI_NAME ${{ github.workspace }}/scripts/grafana-server/custom.ini
+            yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"

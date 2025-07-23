@@ -1,0 +1,39 @@
+name: e2e suite
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        type: string
+        required: true
+      suite:
+        type: string
+        required: true
+
+jobs:
+  main:
+    runs-on: ubuntu-latest-8-cores
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.package }}
+      - uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          args: go run ./pkg/build/e2e --package=grafana.tar.gz --suite=${{ inputs.suite }}
+      - name: Set suite name
+        id: set-suite-name
+        if: always()
+        env:
+          SUITE: ${{ inputs.suite }}
+        run: |
+          echo "suite=$(echo $SUITE | sed 's/\//-/g')" >> $GITHUB_OUTPUT
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-${{ steps.set-suite-name.outputs.suite }}-${{github.run_number}}
+          path: videos
+          retention-days: 1

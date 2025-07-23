@@ -26,6 +26,11 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
+  alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
   sns:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-amazon-sns/
@@ -138,7 +143,7 @@ Each contact point integration has its own configuration options and setup proce
 
 {{< column-list >}}
 
-- Alertmanager
+- [Alertmanager](ref:alertmanager)
 - [AWS SNS](ref:sns)
 - Cisco Webex Teams
 - DingDing
