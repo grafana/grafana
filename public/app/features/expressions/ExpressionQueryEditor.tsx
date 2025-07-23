@@ -1,17 +1,17 @@
-import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef } from 'react';
 
-import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { DataSourceApi, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, InlineField, PopoverContent, Stack } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
 import { Math } from './components/Math';
 import { Reduce } from './components/Reduce';
 import { Resample } from './components/Resample';
-import { SqlExpr } from './components/SqlExpr';
+import { SqlExpressionEditor } from './components/SqlExpressionEditor/SqlExpressionEditor';
 import { Threshold } from './components/Threshold';
+import { useExpressionActions } from './hooks/useExpressionActions';
 import { ExpressionQuery, ExpressionQueryType, expressionTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
 
@@ -82,7 +82,8 @@ export function ExpressionQueryEditor(props: Props) {
   const { query, queries, onRunQuery, onChange, app } = props;
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
 
-  const styles = useStyles2(getStyles);
+  // Generic action button interface for all expression types
+  const { actionButton, setActionButton, clearActionButton } = useExpressionActions();
 
   useEffect(() => {
     setCachedExpression(query.type, query.expression);
@@ -94,8 +95,11 @@ export function ExpressionQueryEditor(props: Props) {
       const defaults = getDefaults({ ...query, type: value! });
 
       onChange({ ...defaults, expression: cachedExpression ?? defaults.expression });
+
+      // Clear any existing action button when switching expression types
+      clearActionButton();
     },
-    [query, onChange, getCachedExpression]
+    [query, onChange, getCachedExpression, clearActionButton]
   );
 
   const renderExpressionType = () => {
@@ -118,39 +122,45 @@ export function ExpressionQueryEditor(props: Props) {
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
 
       case ExpressionQueryType.sql:
-        return <SqlExpr onChange={onChange} query={query} refIds={refIds} />;
+        return (
+          <SqlExpressionEditor
+            onChange={onChange}
+            queries={queries}
+            query={query}
+            refIds={refIds}
+            setActionButton={setActionButton}
+          />
+        );
     }
   };
 
   const helperText = getExpressionHelpText(query.type);
 
   return (
-    <div>
-      <div className={styles.operationRow}>
-        <InlineField
-          label={t('expressions.expression-query-editor.label-operation', 'Operation')}
-          labelWidth={labelWidth}
-        >
-          <ExpressionTypeDropdown handleOnSelect={onSelectExpressionType}>
-            <Button fill="outline" icon="angle-down" iconPlacement="right" variant="secondary">
-              {expressionTypes.find(({ value }) => value === query.type)?.label}
-            </Button>
-          </ExpressionTypeDropdown>
-        </InlineField>
-        {helperText && <IconButton className={styles.infoIcon} name="info-circle" tooltip={helperText} />}
-      </div>
+    <Stack direction="column" gap={1}>
+      <Stack direction="row" alignItems="center">
+        <Stack direction="row" alignItems="center" grow={1}>
+          <InlineField
+            label={t('expressions.expression-query-editor.label-operation', 'Operation')}
+            labelWidth={labelWidth}
+          >
+            <Stack direction="row" alignItems="center" gap={1}>
+              <ExpressionTypeDropdown handleOnSelect={onSelectExpressionType}>
+                <Button fill="outline" icon="angle-down" iconPlacement="right" variant="secondary">
+                  {expressionTypes.find(({ value }) => value === query.type)?.label}
+                </Button>
+              </ExpressionTypeDropdown>
+              {helperText && <IconButton name="info-circle" tooltip={helperText} />}
+            </Stack>
+          </InlineField>
+        </Stack>
+        {actionButton && (
+          <Button tooltip={actionButton.tooltip} icon={actionButton.icon} size="sm" onClick={actionButton.onClick}>
+            {actionButton.label}
+          </Button>
+        )}
+      </Stack>
       {renderExpressionType()}
-    </div>
+    </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  operationRow: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  infoIcon: css({
-    marginBottom: theme.spacing(0.5), // Align with the select field
-  }),
-});
