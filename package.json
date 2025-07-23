@@ -30,6 +30,7 @@
     "e2e:plugin:build:dev": "nx run-many -t dev --projects='@test-plugins/*' --maxParallel=100",
     "test": "jest --notify --watch",
     "test:coverage": "jest --coverage",
+    "test:storybook": "yarn workspace @grafana/ui storybook:test",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",
     "test:accessibility-report": "./scripts/generate-a11y-report.sh",
     "test:ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%} --shard=${TEST_SHARD:-1}/${TEST_SHARD_TOTAL:-1}",
