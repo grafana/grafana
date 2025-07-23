@@ -272,7 +272,7 @@ Infinite panning is an experimental feature that may not work as expected in all
 
 ### Tooltip options
 
-The **Tooltip mode** setting controls the display of tooltips when hovering over elements in a canvas that are connected to data, data links, or actions.
+The **Tooltip mode** setting controls the display of tooltips when hovering over canvas elements that are connected to data, data links, or actions.
 The options are:
 
 - **Enabled** - Show a tooltip when the cursor hovers over an element.
