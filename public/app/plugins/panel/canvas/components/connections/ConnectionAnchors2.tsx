@@ -37,9 +37,21 @@ export const ANCHORS = [
   { x: -1, y: 0 },
   { x: -1, y: 0.5 },
 ];
-
 export const ANCHOR_PADDING = 3;
 export const HALF_SIZE = 2.5;
+
+const zIndex = {
+  ROOT: 1000,
+  ANCHOR: 1001,
+  HIGHLIGHT: 1002,
+};
+
+enum PointerEvents {
+  ROOT = 'none',
+  MOUSEOUT_DIV = 'none',
+  ANCHOR = 'auto',
+  HIGHLIGHT = 'auto',
+}
 
 export const ConnectionAnchors = ({ setRef, setAnchorsRef, handleMouseLeave }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
@@ -92,7 +104,7 @@ export const ConnectionAnchors = ({ setRef, setAnchorsRef, handleMouseLeave }: P
           ref={(element) => {
             if (element) {
               // After React 15+, inline styles no longer support !important
-              element.style.setProperty('pointer-events', 'auto', 'important');
+              element.style.setProperty('pointer-events', PointerEvents.ANCHOR, 'important');
             }
           }}
           key={id}
@@ -124,12 +136,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   root: css({
     position: 'absolute',
     display: 'none',
+    zIndex: `${zIndex.ROOT} !important`,
+    pointerEvents: PointerEvents.ROOT,
   }),
   mouseoutDiv: css({
     position: 'absolute',
     margin: '-30px',
     width: 'calc(100% + 60px)',
     height: 'calc(100% + 60px)',
+    pointerEvents: PointerEvents.MOUSEOUT_DIV,
   }),
   anchor: css({
     padding: `${ANCHOR_PADDING}px`,
@@ -137,18 +152,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     cursor: 'cursor',
     width: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
     height: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
-    zIndex: 100,
+    zIndex: `${zIndex.ANCHOR} !important`,
+    pointerEvents: PointerEvents.ANCHOR,
+    userSelect: 'none',
   }),
   highlightElement: css({
     backgroundColor: '#00ff00',
     opacity: 0.3,
     position: 'absolute',
     cursor: 'cursor',
-    pointerEvents: 'auto',
+    pointerEvents: PointerEvents.HIGHLIGHT,
     width: '16px',
     height: '16px',
     borderRadius: theme.shape.radius.circle,
     display: 'none',
-    zIndex: 110,
+    zIndex: `${zIndex.HIGHLIGHT} !important`,
   }),
 });

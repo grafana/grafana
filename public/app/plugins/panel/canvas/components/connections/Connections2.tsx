@@ -21,12 +21,12 @@ import {
 
 import {
   CONNECTION_ANCHOR_ALT,
-  ConnectionAnchors,
   CONNECTION_ANCHOR_HIGHLIGHT_OFFSET,
   ANCHORS,
   ANCHOR_PADDING,
   HALF_SIZE,
 } from './ConnectionAnchors';
+import { ConnectionAnchors } from './ConnectionAnchors2';
 import { ConnectionSVG } from './ConnectionSVG2';
 
 export const CONNECTION_VERTEX_ID = 'vertex';
