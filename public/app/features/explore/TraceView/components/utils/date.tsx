@@ -98,6 +98,11 @@ export function formatDuration(duration: number): string {
   const primaryValue = Math.floor(duration / primaryUnit.microseconds);
   const primaryUnitString = `${primaryValue}${primaryUnit.unit}`;
   const secondaryValue = Math.round((duration / secondaryUnit.microseconds) % primaryUnit.ofPrevious);
+
+  if (secondaryValue === 0) {
+    return primaryUnitString;
+  }
+
   const secondaryUnitString = `${secondaryValue}${secondaryUnit.unit}`;
-  return secondaryValue === 0 ? primaryUnitString : `${primaryUnitString} ${secondaryUnitString}`;
+  return `${primaryUnitString} ${secondaryUnitString}`;
 }
