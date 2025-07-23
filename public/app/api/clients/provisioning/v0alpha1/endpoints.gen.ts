@@ -161,6 +161,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -177,6 +178,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -192,6 +194,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -527,6 +530,8 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
   body: {
     [key: string]: any;
   };
@@ -543,6 +548,8 @@ export type CreateRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
   body: {
     [key: string]: any;
   };
@@ -559,6 +566,8 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {
@@ -1117,8 +1126,9 @@ export type ResourceObjects = {
     Possible enum values:
      - `"create"`
      - `"delete"`
+     - `"move"`
      - `"update"` */
-  action?: 'create' | 'delete' | 'update';
+  action?: 'create' | 'delete' | 'move' | 'update';
   /** The value returned from a dryRun request */
   dryRun?: Unstructured;
   /** The same value, currently saved in the grafana database */

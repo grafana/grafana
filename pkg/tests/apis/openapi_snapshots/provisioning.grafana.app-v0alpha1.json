@@ -1281,6 +1281,14 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "name": "originalPath",
+            "in": "query",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003e 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003e 'new/')",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1385,6 +1393,14 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "name": "originalPath",
+            "in": "query",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003e 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003e 'new/')",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1488,6 +1504,14 @@
             "description": "do not pro-actively verify the payload",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "originalPath",
+            "in": "query",
+            "description": "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -\u003e 'c/d.json') or folder-to-folder (e.g., 'some/' -\u003e 'new/')",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -3706,11 +3730,12 @@
         ],
         "properties": {
           "action": {
-            "description": "The action required/used for dryRun\n\nPossible enum values:\n - `\"create\"`\n - `\"delete\"`\n - `\"update\"`",
+            "description": "The action required/used for dryRun\n\nPossible enum values:\n - `\"create\"`\n - `\"delete\"`\n - `\"move\"`\n - `\"update\"`",
             "type": "string",
             "enum": [
               "create",
               "delete",
+              "move",
               "update"
             ]
           },

@@ -290,10 +290,12 @@ func (r *DualReadWriter) MoveResource(ctx context.Context, opts DualWriteOptions
 	}
 
 	// Validate that both paths are either files or directories (consistent types)
+	// Files should end without '/', directories should end with '/'
 	sourceIsDir := safepath.IsDir(opts.OriginalPath)
 	targetIsDir := safepath.IsDir(opts.Path)
 	if sourceIsDir != targetIsDir {
-		return nil, fmt.Errorf("cannot move between file and directory types")
+		return nil, fmt.Errorf("cannot move between file and directory types - source is %s, target is %s", 
+			getPathType(sourceIsDir), getPathType(targetIsDir))
 	}
 
 	// Handle directory moves separately (no parsing/authorization needed)
@@ -378,9 +380,18 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("not authorized to delete original file: %w", err)
 	}
 
-	// Create new parsed resource with updated path and data
+	// Determine the content to use for the destination
+	// If new content is provided in opts.Data, use it; otherwise use original content
+	var destinationData []byte
+	if len(opts.Data) > 0 {
+		destinationData = opts.Data
+	} else {
+		destinationData = originalFile.Data
+	}
+
+	// Create new parsed resource with updated path and content
 	newInfo := &repository.FileInfo{
-		Data: opts.Data,
+		Data: destinationData,
 		Path: opts.Path,
 		Ref:  opts.Ref,
 	}
@@ -412,7 +423,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("not authorized to create new file: %w", err)
 	}
 
-	data, err := newParsed.ToSaveBytes()
+	_, err = newParsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -424,8 +435,20 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Perform the move operation in the repository
-	if err = r.repo.Move(ctx, opts.OriginalPath, opts.Path, opts.Ref, opts.Message); err != nil {
-		return nil, fmt.Errorf("move file in repository: %w", err)
+	// If we have new content, we need to update the file content as part of the move
+	if len(opts.Data) > 0 {
+		// For moves with content updates, we need to delete the old file and create the new one
+		if err = r.repo.Delete(ctx, opts.OriginalPath, opts.Ref, opts.Message); err != nil {
+			return nil, fmt.Errorf("delete original file in repository: %w", err)
+		}
+		if err = r.repo.Create(ctx, opts.Path, opts.Ref, destinationData, opts.Message); err != nil {
+			return nil, fmt.Errorf("create moved file with new content in repository: %w", err)
+		}
+	} else {
+		// For simple moves without content changes, use the move operation
+		if err = r.repo.Move(ctx, opts.OriginalPath, opts.Path, opts.Ref, opts.Message); err != nil {
+			return nil, fmt.Errorf("move file in repository: %w", err)
+		}
 	}
 
 	// Update the grafana database if this is the main branch
@@ -547,6 +570,14 @@ func getFolderURLs(ctx context.Context, path, ref string, repo repository.Reposi
 		return urls, nil
 	}
 	return nil, nil
+}
+
+// getPathType returns a human-readable description of the path type
+func getPathType(isDir bool) string {
+	if isDir {
+		return "directory (ends with '/')"
+	}
+	return "file (no trailing '/')"
 }
 
 func folderDeleteResponse(ctx context.Context, path, ref string, repo repository.Repository) (*ParsedResource, error) {
