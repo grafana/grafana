@@ -301,7 +301,7 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 			}
 
 			repo := &githubRepository{
-				config:  tt.config,
+				config:        tt.config,
 				GitRepository: mockGitRepo,
 			}
 
@@ -388,10 +388,10 @@ func TestGitHubRepositoryTest(t *testing.T) {
 			}
 
 			repo := &githubRepository{
-				config:  tt.config,
+				config:        tt.config,
 				GitRepository: mockGitRepo,
-				owner:   "grafana",
-				repo:    "grafana",
+				owner:         "grafana",
+				repo:          "grafana",
 			}
 
 			result, err := repo.Test(context.Background())
@@ -802,7 +802,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Config").Return(config)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -822,7 +822,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Read", ctx, "test.yaml", "main").Return(expectedFileInfo, nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -840,7 +840,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("ReadTree", ctx, "main").Return(expectedEntries, nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -856,7 +856,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Create", ctx, "new-file.yaml", "main", data, "Create new file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -871,7 +871,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Update", ctx, "existing-file.yaml", "main", data, "Update file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -886,7 +886,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Write", ctx, "file.yaml", "main", data, "Write file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -900,7 +900,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Delete", ctx, "file.yaml", "main", "Delete file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -915,7 +915,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("LatestRef", ctx).Return(expectedRef, nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -935,7 +935,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("ListRefs", ctx).Return(gitRepoRefs, nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -971,7 +971,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("CompareFiles", ctx, "main", "feature-branch").Return(expectedChanges, nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -991,7 +991,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Stage", ctx, opts).Return(mockStagedRepo, nil)
 
 		repo := &githubRepository{
-			config:  config,
+			config:        config,
 			GitRepository: mockGitRepo,
 		}
 
@@ -1195,11 +1195,11 @@ func TestGithubRepository_Move(t *testing.T) {
 			}
 
 			githubRepo := &githubRepository{
-				config:  config,
+				config:        config,
 				GitRepository: mockGitRepo,
-				owner:   "example",
-				repo:    "repo",
-				secrets: mockSecrets,
+				owner:         "example",
+				repo:          "repo",
+				secrets:       mockSecrets,
 			}
 
 			// Execute move operation
