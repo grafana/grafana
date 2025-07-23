@@ -1,3 +1,18 @@
+<!-- 11.5.7 START -->
+
+# 11.5.7 (2025-07-23)
+
+### Features and enhancements
+
+- **Dependencies:** Bump github.com/go-viper/mapstructure/v2 from 2.2.1 to 2.3.0 [#107556](https://github.com/grafana/grafana/pull/107556), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Azure:** Fix legend formatting [#106933](https://github.com/grafana/grafana/pull/106933), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix resource name determination in template variable queries [#106938](https://github.com/grafana/grafana/pull/106938), [@aangelisc](https://github.com/aangelisc)
+- **Security:** Fixes for CVE-2025-6197 and CVE-2025-6023 [#108280](https://github.com/grafana/grafana/pull/108280), [@volcanonoodle](https://github.com/volcanonoodle)
+
+<!-- 11.5.7 END -->
 <!-- 11.4.7 START -->
 
 # 11.4.7 (2025-07-23)
