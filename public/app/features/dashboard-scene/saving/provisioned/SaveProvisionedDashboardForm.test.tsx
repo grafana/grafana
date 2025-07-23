@@ -121,7 +121,13 @@ function setup(props: Partial<Props> = {}) {
       diffs: {},
     },
     isNew: true,
-    repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['branch', 'write'], target: 'folder' },
+    repository: {
+      type: 'github',
+      name: 'test-repo',
+      title: 'Test Repo',
+      workflows: ['branch', 'write'],
+      target: 'folder',
+    },
     defaultValues: {
       ref: 'dashboard/2023-01-01-abcde',
       path: 'test-dashboard.json',
