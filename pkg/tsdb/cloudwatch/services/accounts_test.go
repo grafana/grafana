@@ -3,12 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/aws/smithy-go"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/oam"
 	oamtypes "github.com/aws/aws-sdk-go-v2/service/oam/types"
+	"github.com/aws/smithy-go"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
