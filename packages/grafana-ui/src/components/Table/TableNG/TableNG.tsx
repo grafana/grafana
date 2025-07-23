@@ -313,6 +313,9 @@ export function TableNG(props: TableNGProps) {
           field.display = displayJsonValue;
         }
 
+        // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
+        // the text-align css property, and for others, we'll use justify-content to align the cell
+        // contents with flexbox. We always just get both and provide both when styling the cell.
         const textAlign = getTextAlign(field);
         const justifyContent = getJustifyContent(field);
         const footerStyles = getFooterStyles(justifyContent);
@@ -978,11 +981,11 @@ const getCellStyles = (
         paddingInline: theme.spacing(1),
         borderRight: `2px solid ${theme.colors.border.medium}`,
 
-        '&:first-child': {
+        '&:first-of-type': {
           paddingInlineStart: 0,
         },
 
-        '&:last-child': {
+        '&:last-of-type': {
           borderRight: 'none',
           paddingInlineEnd: 0,
         },
