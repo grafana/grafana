@@ -683,6 +683,10 @@ const (
 	// Enable AI-generated alert rules.
 	FlagAlertingAIGenAlertRules = "alertingAIGenAlertRules"
 
+	// FlagAlertingAIFeedback
+	// Enable AI-generated feedback from the Grafana UI.
+	FlagAlertingAIFeedback = "alertingAIFeedback"
+
 	// FlagAlertingAIImproveAlertRules
 	// Enable AI-improve alert rules labels and annotations.
 	FlagAlertingAIImproveAlertRules = "alertingAIImproveAlertRules"
@@ -770,10 +774,6 @@ const (
 	// FlagGrafanaconThemes
 	// Enables the temporary themes for GrafanaCon
 	FlagGrafanaconThemes = "grafanaconThemes"
-
-	// FlagPluginsCDNSyncLoader
-	// Loads plugins from CDN synchronously
-	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 
 	// FlagAlertingJiraIntegration
 	// Enables the new Jira integration for contact points in cloud alert managers.
@@ -958,4 +958,8 @@ const (
 	// FlagUnifiedStorageSearchDualReaderEnabled
 	// Enable dual reader for unified storage search
 	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
+
+	// FlagDashboardDsAdHocFiltering
+	// Enables adhoc filtering support for the dashboard datasource
+	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
 )
