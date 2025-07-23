@@ -820,3 +820,208 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		require.Error(t, result.Error())
 	})
 }
+
+func TestIntegrationProvisioning_MoveResources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "move-test-repo"
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+		"SyncTarget":  "instance",
+	})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Copy test dashboards to the repository path for initial setup
+	const originalDashboard = "all-panels.json"
+	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", originalDashboard)
+
+	// Wait for sync to ensure the dashboard is created in Grafana
+	helper.SyncAndWait(t, repo, nil)
+
+	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
+	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
+	obj, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	require.NoError(t, err, "original dashboard should exist in Grafana")
+	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+
+	t.Run("move file without content change", func(t *testing.T) {
+		const targetPath = "moved/simple-move.json"
+
+		// Perform the move operation using POST with originalPath query parameter
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Param("originalPath", originalDashboard).
+			Param("message", "move file without content change").
+			Body([]byte("")). // Empty body means no content update
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "move operation should succeed")
+
+		// Verify the file moved in the repository
+		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
+		require.NoError(t, err, "moved file should exist in repository")
+
+		// Check the content is preserved (verify it's still the all-panels dashboard)
+		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
+		require.NoError(t, err)
+		dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
+		require.NoError(t, err)
+		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, "Panel Tests - All", title, "content should be preserved")
+
+		// Verify original file no longer exists
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", originalDashboard)
+		require.Error(t, err, "original file should no longer exist")
+
+		// Verify dashboard still exists in Grafana with same content but may have updated path references
+		helper.SyncAndWait(t, repo, nil)
+		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.NoError(t, err, "dashboard should still exist in Grafana after move")
+	})
+
+	t.Run("move file with content update", func(t *testing.T) {
+		const sourcePath = "moved/simple-move.json" // Use the file from previous test
+		const targetPath = "updated/content-updated.json"
+
+		// Use text-options.json content for the update
+		updatedContent := helper.LoadFile("testdata/text-options.json")
+
+		// Perform move with content update
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", targetPath).
+			Param("originalPath", sourcePath).
+			Param("message", "move file with content update").
+			Body(updatedContent).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "move with content update should succeed")
+
+		// Verify the moved file has updated content (should now be text-options dashboard)
+		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
+		require.NoError(t, err, "moved file should exist in repository")
+
+		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
+		require.NoError(t, err)
+		dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
+		require.NoError(t, err)
+		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, "Panel Tests - Text", title, "content should be updated to text-options dashboard")
+
+		// Check it has the expected UID from text-options.json
+		name, _, err := unstructured.NestedString(dryRun, "metadata", "name")
+		require.NoError(t, err)
+		require.Equal(t, "aduVRqBnz", name, "should have the UID from text-options.json")
+
+		// Verify source file no longer exists
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourcePath)
+		require.Error(t, err, "source file should no longer exist")
+
+		// Sync and verify the updated dashboard exists in Grafana
+		helper.SyncAndWait(t, repo, nil)
+		const textOptionsUID = "aduVRqBnz" // UID from text-options.json
+		updatedDashboard, err := helper.DashboardsV1.Resource.Get(ctx, textOptionsUID, metav1.GetOptions{})
+		require.NoError(t, err, "updated dashboard should exist in Grafana")
+
+		// Verify the original dashboard was deleted from Grafana
+		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.Error(t, err, "original dashboard should be deleted from Grafana")
+		require.True(t, apierrors.IsNotFound(err))
+
+		// Verify the new dashboard has the updated content
+		updatedTitle, _, err := unstructured.NestedString(updatedDashboard.Object, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, "Panel Tests - Text", updatedTitle)
+	})
+
+	t.Run("move directory", func(t *testing.T) {
+		// Create some files in a directory first using existing testdata files
+		helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "source-dir/timeline-demo.json")
+		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "source-dir/text-options.json")
+
+		// Sync to ensure files are recognized
+		helper.SyncAndWait(t, repo, nil)
+
+		const sourceDir = "source-dir/"
+		const targetDir = "moved-dir/"
+
+		// Move directory using direct HTTP request (since k8s client doesn't handle trailing slashes well)
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s?originalPath=%s&message=move%%20directory",
+			addr, repo, targetDir, sourceDir)
+		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(""))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move should succeed")
+
+		// Verify source directory no longer exists
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "source-dir")
+		require.Error(t, err, "source directory should no longer exist")
+
+		// Verify target directory and files exist
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved-dir", "timeline-demo.json")
+		require.NoError(t, err, "moved timeline-demo.json should exist")
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved-dir", "text-options.json")
+		require.NoError(t, err, "moved text-options.json should exist")
+	})
+
+	t.Run("error cases", func(t *testing.T) {
+		t.Run("missing originalPath parameter", func(t *testing.T) {
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "target.json").
+				Body([]byte(`{"test": "content"}`)).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.Error(t, result.Error(), "should fail without originalPath")
+		})
+
+		t.Run("file to directory type mismatch", func(t *testing.T) {
+			// Try to move a file to a directory path
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "target-dir/").                   // Directory target
+				Param("originalPath", "updated/content-updated.json"). // File source
+				Body([]byte("")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.Error(t, result.Error(), "should fail when moving file to directory")
+			require.Contains(t, result.Error().Error(), "cannot move between file and directory types")
+		})
+
+		t.Run("non-existent source file", func(t *testing.T) {
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "target.json").
+				Param("originalPath", "non-existent.json").
+				Body([]byte("")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.Error(t, result.Error(), "should fail when source file doesn't exist")
+		})
+	})
+}
