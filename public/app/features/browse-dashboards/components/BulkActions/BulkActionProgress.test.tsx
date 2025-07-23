@@ -27,14 +27,6 @@ describe('BulkActionProgress', () => {
     expect(screen.getByText(/Progress: 3 of 8/)).toBeInTheDocument();
   });
 
-  it('should render spinning icon', () => {
-    const { container } = setup();
-
-    const spinnerIcon = container.querySelector('.fa-spin');
-    expect(spinnerIcon).toBeInTheDocument();
-    expect(spinnerIcon).toHaveClass('fa-spin');
-  });
-
   it('should render current item being deleted', () => {
     setup({ item: 'My Test Dashboard' });
 
@@ -55,13 +47,13 @@ describe('BulkActionProgress', () => {
   });
 
   it('should render all required elements together', () => {
-    const { container } = setup({ current: 7, total: 15, item: 'Complex Dashboard Name' });
+    setup({ current: 7, total: 15, item: 'Complex Dashboard Name' });
 
     // Progress text
     expect(screen.getByText(/Progress: 7 of 15/)).toBeInTheDocument();
 
     // Spinner icon
-    expect(container.querySelector('.fa-spin')).toBeInTheDocument();
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
 
     // Current item text
     expect(screen.getByText(/Deleting:/)).toBeInTheDocument();
