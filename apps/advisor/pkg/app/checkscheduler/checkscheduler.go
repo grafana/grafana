@@ -214,6 +214,8 @@ func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error
 		return err
 	}
 
+	logger.Debug("Cleaning up checks", "numChecks", len(list.GetItems()))
+
 	// organize checks by type
 	checksByType := map[string][]resource.Object{}
 	for _, check := range list.GetItems() {
@@ -227,7 +229,9 @@ func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error
 	}
 
 	for _, checks := range checksByType {
+		logger.Debug("Checking checks", "checkType", checks[0].GetStaticMetadata().Identifier(), "numChecks", len(checks))
 		if len(checks) > r.maxHistory {
+			logger.Debug("Deleting old checks", "checkType", checks[0].GetStaticMetadata().Identifier(), "maxHistory", r.maxHistory, "numChecks", len(checks))
 			// Sort checks by creation time
 			sort.Slice(checks, func(i, j int) bool {
 				ti := checks[i].GetCreationTimestamp().Time
@@ -242,6 +246,7 @@ func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error
 				if err != nil {
 					return fmt.Errorf("error deleting check: %w", err)
 				}
+				logger.Debug("Deleted check", "check", check.GetStaticMetadata().Identifier())
 			}
 		}
 	}

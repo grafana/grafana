@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
 
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -46,41 +46,12 @@ type ContextHandler struct {
 
 type reqContextKey = ctxkey.Key
 
-// FromContext returns a copy of the ReqContext value stored in a context.Context, if any.
-// The returned ReqContext has a cloned HTTP request to prevent concurrent access issues.
+// FromContext returns the ReqContext value stored in a context.Context, if any.
 func FromContext(c context.Context) *contextmodel.ReqContext {
-	if origReqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
-		return origReqCtx
-		// // Return a copy with cloned HTTP request to prevent concurrent access to headers
-		// var req *http.Request
-		// if origReqCtx.Req != nil {
-		// 	req = origReqCtx.Req.Clone(c)
-		// }
-		// webCtx := &web.Context{
-		// 	Req:  req,
-		// 	Resp: origReqCtx.Resp,
-		// }
-		// return copyReqContext(webCtx, origReqCtx)
+	if reqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
+		return reqCtx
 	}
 	return nil
-}
-
-func copyReqContext(webCtx *web.Context, origReqCtx *contextmodel.ReqContext) *contextmodel.ReqContext {
-	return &contextmodel.ReqContext{
-		Context:                    webCtx,
-		SignedInUser:               origReqCtx.SignedInUser,
-		UserToken:                  origReqCtx.UserToken,
-		IsSignedIn:                 origReqCtx.IsSignedIn,
-		IsRenderCall:               origReqCtx.IsRenderCall,
-		AllowAnonymous:             origReqCtx.AllowAnonymous,
-		SkipDSCache:                origReqCtx.SkipDSCache,
-		SkipQueryCache:             origReqCtx.SkipQueryCache,
-		Logger:                     origReqCtx.Logger,
-		Error:                      origReqCtx.Error,
-		RequestNonce:               origReqCtx.RequestNonce,
-		PublicDashboardAccessToken: origReqCtx.PublicDashboardAccessToken,
-		LookupTokenErr:             origReqCtx.LookupTokenErr,
-	}
 }
 
 // CopyWithReqContext returns a copy of the parent context with a semi-shallow copy of the ReqContext as a value.
@@ -95,7 +66,21 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 		Req:  origReqCtx.Req.Clone(ctx),
 		Resp: web.NewResponseWriter(origReqCtx.Req.Method, response.CreateNormalResponse(http.Header{}, []byte{}, 0)),
 	}
-	reqCtx := copyReqContext(webCtx, origReqCtx)
+	reqCtx := &contextmodel.ReqContext{
+		Context:                    webCtx,
+		SignedInUser:               origReqCtx.SignedInUser,
+		UserToken:                  origReqCtx.UserToken,
+		IsSignedIn:                 origReqCtx.IsSignedIn,
+		IsRenderCall:               origReqCtx.IsRenderCall,
+		AllowAnonymous:             origReqCtx.AllowAnonymous,
+		SkipDSCache:                origReqCtx.SkipDSCache,
+		SkipQueryCache:             origReqCtx.SkipQueryCache,
+		Logger:                     origReqCtx.Logger,
+		Error:                      origReqCtx.Error,
+		RequestNonce:               origReqCtx.RequestNonce,
+		PublicDashboardAccessToken: origReqCtx.PublicDashboardAccessToken,
+		LookupTokenErr:             origReqCtx.LookupTokenErr,
+	}
 	return context.WithValue(ctx, reqContextKey{}, reqCtx)
 }
 
@@ -181,7 +166,6 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 
 	return ctx
 }
-
 func (h *ContextHandler) excludeSensitiveHeadersFromRequest(req *http.Request) {
 	req.Header.Del(authnClients.ExtJWTAuthenticationHeaderName)
 	req.Header.Del(authnClients.ExtJWTAuthorizationHeaderName)
