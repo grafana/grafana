@@ -23,7 +23,7 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	config := simple.AppConfig{
-		Name:       "iam",
+		Name:       cfg.ManifestData.AppName,
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			ErrorHandler: func(ctx context.Context, err error) {
@@ -33,8 +33,35 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
+				Kind: v0alpha1.GlobalRoleKind(),
+			},
+			{
+				Kind: v0alpha1.GlobalRoleBindingKind(),
+			},
+			{
 				Kind:    v0alpha1.CoreRoleKind(),
 				Watcher: coreroleWatcher,
+			},
+			{
+				Kind: v0alpha1.RoleKind(),
+			},
+			{
+				Kind: v0alpha1.RoleBindingKind(),
+			},
+			{
+				Kind: v0alpha1.ResourcePermissionKind(),
+			},
+			{
+				Kind: v0alpha1.UserKind(),
+			},
+			{
+				Kind: v0alpha1.TeamKind(),
+			},
+			{
+				Kind: v0alpha1.TeamBindingKind(),
+			},
+			{
+				Kind: v0alpha1.ServiceAccountKind(),
 			},
 		},
 	}
