@@ -25,7 +25,7 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
+import { CellColors, TableRow, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;

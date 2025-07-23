@@ -26,7 +26,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId, FieldTextAlignment, TableCellHeight } from '@grafana/schema';
+import { FieldColorModeId, TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -982,12 +982,12 @@ const getCellStyles = (
         borderRight: `2px solid ${theme.colors.border.medium}`,
 
         '&:first-of-type': {
-          paddingInlineStart: 0,
+          paddingInlineStart: textAlign !== 'center' ? 0 : undefined,
         },
 
         '&:last-of-type': {
           borderRight: 'none',
-          paddingInlineEnd: 0,
+          paddingInlineEnd: textAlign !== 'center' ? 0 : undefined,
         },
       },
     }),
