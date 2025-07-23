@@ -459,7 +459,7 @@ interface UseRowHeightOptions {
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
-  defaultHeight: number;
+  defaultHeight: number | string;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
