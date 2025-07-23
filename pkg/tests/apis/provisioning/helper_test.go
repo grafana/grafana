@@ -185,7 +185,7 @@ func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 // The from path is relative to test file's directory.
 func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
 	fullPath := path.Join(h.ProvisioningPath, to)
-	err := os.MkdirAll(path.Dir(fullPath), 0755)
+	err := os.MkdirAll(path.Dir(fullPath), 0750)
 	require.NoError(t, err, "failed to create directories for provisioning path")
 
 	file := h.LoadFile(from)
