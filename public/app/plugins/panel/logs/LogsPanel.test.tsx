@@ -57,6 +57,13 @@ jest.mock('@grafana/data', () => ({
   hasLogsContextSupport: (ds: MockDataSourceApi) => hasLogsContextSupport(ds),
 }));
 
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
+
 const defaultProps = {
   data: {
     error: undefined,

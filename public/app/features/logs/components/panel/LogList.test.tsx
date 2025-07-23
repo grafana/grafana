@@ -9,6 +9,11 @@ import { createLogRow } from '../mocks/logRow';
 
 import { LogList, Props } from './LogList';
 
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn(() => [true, jest.fn()]),
+}));
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
