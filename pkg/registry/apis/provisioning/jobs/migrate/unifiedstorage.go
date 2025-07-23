@@ -33,6 +33,8 @@ func NewUnifiedStorageMigrator(
 func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := repo.Config().GetNamespace()
 	progress.SetMessage(ctx, "export resources")
+	progress.StrictMaxErrors(1) // strict as we want the entire instance to be managed
+
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Push: &provisioning.ExportJobOptions{},

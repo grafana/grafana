@@ -29,13 +29,22 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
             title={t('provisioning.job-status.status.title-job-completed-successfully', 'Job completed successfully')}
           />
         );
+      case 'warning':
+        return (
+          <Alert
+            severity="warning"
+            title={t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings')}
+          >
+            {errors?.length ? errors?.join('\n') : message}
+          </Alert>
+        );
       case 'error':
         return (
           <Alert
             severity="error"
             title={t('provisioning.job-status.status.title-error-running-job', 'Error running job')}
           >
-            {message ?? errors?.join('\n')}
+            {errors?.length ? errors?.join('\n') : message}
           </Alert>
         );
     }

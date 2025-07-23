@@ -34,6 +34,8 @@ func TestWrapWithStageFn(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -67,6 +69,8 @@ func TestWrapWithCloneFn_Error(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
 		// Execute
 		repo := repository.NewMockRepository(t)
 		repo.On("Config").Return(&provisioning.Repository{
@@ -109,6 +113,8 @@ func TestLegacyMigrator_MigrateFails(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -158,7 +164,9 @@ func TestLegacyMigrator_ResetUnifiedStorageFails(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
+		progress.On("SetMessage", mock.Anything, "resetting unified storage").Return()
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -213,8 +221,12 @@ func TestLegacyMigrator_SyncFails(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
+		progress.On("SetMessage", mock.Anything, "resetting unified storage").Return()
 		progress.On("ResetResults").Return()
+		progress.On("SetMessage", mock.Anything, "pulling resources").Return()
+		progress.On("SetMessage", mock.Anything, "error importing resources, reverting").Return()
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -268,8 +280,12 @@ func TestLegacyMigrator_SyncFails(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
+		progress.On("SetMessage", mock.Anything, "resetting unified storage").Return()
 		progress.On("ResetResults").Return()
+		progress.On("SetMessage", mock.Anything, "pulling resources").Return()
+		progress.On("SetMessage", mock.Anything, "error importing resources, reverting").Return()
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -321,8 +337,11 @@ func TestLegacyMigrator_Success(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
+		progress.On("SetMessage", mock.Anything, "resetting unified storage").Return()
 		progress.On("ResetResults").Return()
+		progress.On("SetMessage", mock.Anything, "pulling resources").Return()
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -364,6 +383,8 @@ func TestLegacyMigrator_BeforeFnExecution(t *testing.T) {
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		// No progress messages expected in current staging implementation
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -398,6 +419,8 @@ func TestLegacyMigrator_ProgressScanner(t *testing.T) {
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		// No progress messages expected in current staging implementation
+		progress.On("StrictMaxErrors", 1).Return()
+		progress.On("SetMessage", mock.Anything, "migrating legacy resources").Return()
 
 		repo := repository.NewMockRepository(t)
 		repo.On("Config").Return(&provisioning.Repository{

@@ -60,8 +60,7 @@ type jobProgressRecorder struct {
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 	return &jobProgressRecorder{
-		maxErrors: 20,
-		started:   time.Now(),
+		started: time.Now(),
 		// Have a faster notifier for messages and total
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
@@ -126,9 +125,9 @@ func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	r.notifyImmediately(ctx)
 }
 
-func (r *jobProgressRecorder) Strict() {
+func (r *jobProgressRecorder) StrictMaxErrors(maxErrors int) {
 	r.mu.Lock()
-	r.maxErrors = 1
+	r.maxErrors = maxErrors
 	r.mu.Unlock()
 }
 
@@ -136,7 +135,7 @@ func (r *jobProgressRecorder) TooManyErrors() error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if r.errorCount >= r.maxErrors {
+	if r.maxErrors > 0 && r.errorCount >= r.maxErrors {
 		return fmt.Errorf("too many errors: %d", r.errorCount)
 	}
 
@@ -256,8 +255,13 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 
 	// Check for errors during execution
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
-		jobStatus.State = provisioning.JobStateError
-		jobStatus.Message = "completed with errors"
+		if r.TooManyErrors() != nil {
+			jobStatus.Message = "completed with too many errors"
+			jobStatus.State = provisioning.JobStateError
+		} else {
+			jobStatus.Message = "completed with errors"
+			jobStatus.State = provisioning.JobStateWarning
+		}
 	}
 
 	// Override message if progress have a more explicit message

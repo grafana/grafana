@@ -42,6 +42,9 @@ export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) 
         });
       } else if (job.status.state === 'success') {
         setStepStatusInfo({ status: 'success' });
+      } else if (job.status.state === 'warning') {
+        // We treat warnings as success for now, but this could be changed later
+        setStepStatusInfo({ status: 'success' });
       }
     }
 
