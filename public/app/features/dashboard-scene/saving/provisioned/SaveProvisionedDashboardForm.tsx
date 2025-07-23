@@ -14,6 +14,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
@@ -26,10 +27,10 @@ import { getProvisionedMeta } from './utils/getProvisionedMeta';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  isGitProvider: boolean;
   loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   readOnly: boolean;
+  repository?: RepositoryView;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -39,9 +40,9 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  isGitProvider,
   workflowOptions,
   readOnly,
+  repository,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -221,7 +222,7 @@ export function SaveProvisionedDashboardForm({
             readOnly={readOnly}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitProvider={isGitProvider}
+            repository={repository}
             isNew={isNew}
           />
 

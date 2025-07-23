@@ -6,7 +6,6 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
 import { BaseProvisionedFormData } from '../../dashboard-scene/saving/shared';
 
@@ -20,7 +19,6 @@ export interface ProvisionedFolderFormDataResult {
   repository?: RepositoryView;
   folder?: Folder;
   workflowOptions: Array<{ label: string; value: string }>;
-  isGitProvider: boolean;
   initialValues?: BaseProvisionedFormData;
 }
 
@@ -35,7 +33,6 @@ export function useProvisionedFolderFormData({
   const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
-  const isGitProviderRepo = repository?.type ? isGitProvider(repository.type) : false;
   const timestamp = generateTimestamp();
 
   const initialValues = useMemo(() => {
@@ -58,7 +55,6 @@ export function useProvisionedFolderFormData({
     repository,
     folder,
     workflowOptions,
-    isGitProvider: isGitProviderRepo,
     initialValues,
   };
 }

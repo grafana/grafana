@@ -4,7 +4,6 @@ import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -60,7 +59,6 @@ export function useDefaultValues({ meta, defaultTitle, defaultDescription, loade
       workflow: getDefaultWorkflow(repository, loadedFromRef),
     },
     isNew: !meta.k8s?.name,
-    isGitProvider: repository?.type ? isGitProvider(repository.type) : false,
     repository,
   };
 }
@@ -74,7 +72,6 @@ export interface ProvisionedDashboardData {
   loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   isNew: boolean;
-  isGitProvider: boolean;
   readOnly: boolean;
 }
 
@@ -106,12 +103,11 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
       loadedFromRef,
       workflowOptions: [],
       isNew: false,
-      isGitProvider: false,
       readOnly: true,
     };
   }
 
-  const { values, isNew, isGitProvider, repository } = defaultValuesResult;
+  const { values, isNew, repository } = defaultValuesResult;
   const workflowOptions = getWorkflowOptions(repository, loadedFromRef);
 
   const readOnly = !repository?.workflows?.length;
@@ -123,7 +119,6 @@ export function useProvisionedDashboardData(dashboard: DashboardScene): Provisio
     loadedFromRef,
     workflowOptions,
     isNew,
-    isGitProvider,
     readOnly,
     isLoading,
     setIsLoading,

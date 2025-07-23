@@ -70,7 +70,7 @@ function setup(props: Partial<Props> = {}) {
       folder: { uid: '', title: '' },
     },
     readOnly: false,
-    isGitProvider: true,
+    repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['branch', 'write'], target: 'folder' },
     workflowOptions: [
       { label: 'Write', value: 'write' },
       { label: 'Branch', value: 'branch' },

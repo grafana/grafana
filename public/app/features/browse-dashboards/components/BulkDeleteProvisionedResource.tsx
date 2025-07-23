@@ -17,7 +17,6 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-s
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
-import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
@@ -39,7 +38,6 @@ interface FormProps extends BulkDeleteProvisionResourceProps {
   initialValues: BulkDeleteFormData;
   repository: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
-  isGitProvider: boolean;
   folderPath?: string;
 }
 
@@ -60,15 +58,7 @@ type MoveResultSuccessState = {
   repoUrl?: string;
 };
 
-function FormContent({
-  initialValues,
-  selectedItems,
-  repository,
-  workflowOptions,
-  folderPath,
-  isGitProvider: isGitProviderRepo,
-  onDismiss,
-}: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
   // States
   const [progress, setProgress] = useState<ProgressState | null>(null);
   const [failureResults, setFailureResults] = useState<MoveResultFailed[] | undefined>();
@@ -234,7 +224,7 @@ function FormContent({
                 isNew={false}
                 workflow={workflow}
                 workflowOptions={workflowOptions}
-                isGitProvider={isGitProviderRepo}
+                repository={repository}
                 hidePath
               />
 
@@ -264,7 +254,6 @@ export function BulkDeleteProvisionedResource({
   const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
-  const isGitProviderRepo = repository?.type ? isGitProvider(repository.type) : false;
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();
 
@@ -285,7 +274,6 @@ export function BulkDeleteProvisionedResource({
       initialValues={initialValues}
       repository={repository}
       workflowOptions={workflowOptions}
-      isGitProvider={isGitProviderRepo}
       folderPath={folderPath}
     />
   );

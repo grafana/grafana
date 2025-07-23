@@ -8,6 +8,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
+  RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
@@ -23,12 +24,12 @@ export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
-  isGitProvider: boolean;
   isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
   targetFolderUID?: string;
   targetFolderTitle?: string;
+  repository?: RepositoryView;
   onDismiss: () => void;
   onSuccess: (folderUID: string, folderTitle: string) => void;
 }
@@ -38,16 +39,17 @@ export function MoveProvisionedDashboardForm({
   defaultValues,
   loadedFromRef,
   readOnly,
-  isGitProvider,
   isNew,
   workflowOptions,
   targetFolderUID,
   targetFolderTitle,
+  repository,
   onDismiss,
   onSuccess,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { editPanel: panelEditor } = dashboard.useState();
+
   const { handleSubmit, watch } = methods;
   const appEvents = getAppEvents();
 
@@ -213,7 +215,7 @@ export function MoveProvisionedDashboardForm({
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}
-              isGitProvider={isGitProvider}
+              repository={repository}
             />
 
             <Stack gap={2}>
