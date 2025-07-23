@@ -1,9 +1,9 @@
 import { ReactNode } from 'react';
 
 import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { AdHocFilterItem } from '@grafana/ui';
-import { config } from '@grafana/runtime';
 import {
   VizTooltipContent,
   VizTooltipFooter,
