@@ -123,6 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      id-token: write
     steps:
         - name: "Get vault secrets"
           id: vault-secrets
