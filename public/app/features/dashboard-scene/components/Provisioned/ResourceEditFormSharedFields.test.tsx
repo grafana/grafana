@@ -3,14 +3,32 @@ import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { RepositoryView } from '../../../../api/clients/provisioning/v0alpha1';
 import { ProvisionedDashboardFormData } from '../../saving/shared';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
+const mockRepo: { github: RepositoryView; local: RepositoryView } = {
+  github: {
+    type: 'github',
+    name: 'test-repo',
+    title: 'Test Repo',
+    workflows: ['branch', 'write'],
+    target: 'folder',
+  },
+  local: {
+    type: 'local',
+    name: 'local-repo',
+    title: 'Local Repo',
+    workflows: [],
+    target: 'folder',
+  },
+};
+
 // Mock the i18n hook since it's used in the component
 jest.mock('@grafana/i18n', () => ({
   t: (_: string, defaultValue: string) => defaultValue,
-  Trans: ({ children }: { children: React.ReactNode }) => children,
+  Trans: ({ children }: { children: ReactNode }) => children,
 }));
 
 interface SetupOptions {
@@ -19,7 +37,7 @@ interface SetupOptions {
   isNew?: boolean;
   readOnly?: boolean;
   workflow?: 'write' | 'branch';
-  repository?: any;
+  repository?: RepositoryView;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -81,13 +99,13 @@ describe('ResourceEditFormSharedFields', () => {
     });
 
     it('should not render workflow fields when repository is false', () => {
-      setup({ repository: { type: 'local' } });
+      setup({ repository: mockRepo.local });
 
       expect(screen.queryByText('Workflow')).not.toBeInTheDocument();
     });
 
     it('should render workflow fields when repository is true', () => {
-      setup({ repository: { type: 'github' } });
+      setup({ repository: mockRepo.github });
 
       expect(screen.getByRole('radiogroup')).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'Write directly' })).toBeInTheDocument();
@@ -111,7 +129,7 @@ describe('ResourceEditFormSharedFields', () => {
     });
 
     it('should not render workflow fields when readOnly is true and repository is true', () => {
-      setup({ readOnly: true, repository: { type: 'github' } });
+      setup({ readOnly: true, repository: mockRepo.github });
 
       expect(screen.queryByText('Workflow')).not.toBeInTheDocument();
     });
@@ -119,14 +137,14 @@ describe('ResourceEditFormSharedFields', () => {
 
   describe('Workflow Fields', () => {
     it('should not render branch field when workflow is write', () => {
-      setup({ formDefaultValues: { workflow: 'write' }, repository: { type: 'github' }, workflow: 'write' });
+      setup({ formDefaultValues: { workflow: 'write' }, repository: mockRepo.github, workflow: 'write' });
 
       expect(screen.getByText('Workflow')).toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
     });
 
     it('should render branch field when workflow is branch', () => {
-      setup({ formDefaultValues: { workflow: 'branch' }, repository: { type: 'github' }, workflow: 'branch' });
+      setup({ formDefaultValues: { workflow: 'branch' }, repository: mockRepo.github, workflow: 'branch' });
 
       expect(screen.getByText('Workflow')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
@@ -154,7 +172,7 @@ describe('ResourceEditFormSharedFields', () => {
     });
 
     it('should allow selecting workflow options', async () => {
-      const { user } = setup({ repository: { type: 'github' } });
+      const { user } = setup({ repository: mockRepo.github });
 
       const branchOption = screen.getByRole('radio', { name: 'Create branch' });
       await user.click(branchOption);
@@ -165,7 +183,7 @@ describe('ResourceEditFormSharedFields', () => {
     it('should allow typing in branch field when workflow is branch', async () => {
       const { user } = setup({
         formDefaultValues: { workflow: 'branch' },
-        repository: { type: 'github' },
+        repository: mockRepo.github,
         workflow: 'branch',
       });
 
@@ -220,7 +238,7 @@ describe('ResourceEditFormSharedFields', () => {
     it('should show validation error for invalid branch name', async () => {
       const { user } = setup({
         formDefaultValues: { workflow: 'branch' },
-        repository: { type: 'github' },
+        repository: mockRepo.github,
         workflow: 'branch',
       });
 
@@ -237,14 +255,14 @@ describe('ResourceEditFormSharedFields', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty workflowOptions', () => {
-      setup({ workflowOptions: [], repository: { type: 'github' } });
+      setup({ workflowOptions: [], repository: mockRepo.github });
 
       expect(screen.getByText('Workflow')).toBeInTheDocument();
       expect(screen.queryByRole('radio')).not.toBeInTheDocument();
     });
 
     it('should handle undefined props', () => {
-      setup({ readOnly: undefined, repository: { type: 'local' } });
+      setup({ readOnly: undefined, repository: mockRepo.local });
 
       expect(screen.getByRole('textbox', { name: /Path/ })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();
