@@ -1,37 +1,37 @@
 name: grafana-fs-dev
 
 services:
-  proxy:
-    image: grafana-proxy
-    build:
-      context: .
-      dockerfile: proxy.dockerfile
-    volumes:
-      - ../../public/build:/cdn/public/build
-      - ../../public/fonts:/cdn/public/fonts
-    ports:
-      - '3000:80' # Gateway
-      - '3010:81' # CDN
+  # proxy:
+  #   image: grafana-proxy
+  #   build:
+  #     context: .
+  #     dockerfile: proxy.dockerfile
+  #   volumes:
+  #     - ../../public/build:/cdn/public/build
+  #     - ../../public/fonts:/cdn/public/fonts
+  #   ports:
+  #     - '3000:80' # Gateway
+  #     - '3010:81' # CDN
 
-  backend:
-    image: grafana-backend
-    build:
-      context: .
-      dockerfile: backend.dockerfile
-    entrypoint: ['bin/grafana', 'server']
-    volumes:
-      - backend-data:/grafana/data
-      - ../../public/app/plugins:/grafana/public/app/plugins
-    environment:
-      GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
-      GF_SERVER_CDN_URL: http://localhost:3010
-    ports:
-      - '3011:3000'
+  # backend:
+  #   image: grafana-backend-api
+  #   build:
+  #     context: .
+  #     dockerfile: backend-native.dockerfile
+  #   entrypoint: ['bin/grafana', 'server']
+  #   volumes:
+  #     - backend-data:/grafana/data
+  #   environment:
+  #     GF_SERVER_CDN_URL: http://localhost:3010
+  #     GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
+  #   ports:
+  #     - '3011:3000'
 
   frontend-service:
-    image: grafana-backend
+    image: grafana-frontend-service
     build:
-      dockerfile: backend.dockerfile
+      context: .
+      dockerfile: backend-native.dockerfile
     entrypoint: ['bin/grafana', 'server', 'target']
     ports:
       - '3012:3000'

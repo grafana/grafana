@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd ../../
+
 echo "Go mod cache: $(go env GOMODCACHE), $(ls -1 $(go env GOMODCACHE) | wc -l) items"
 echo "Go build cache: $(go env GOCACHE), $(ls -1 $(go env GOCACHE) | wc -l) items"
 

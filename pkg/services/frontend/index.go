@@ -55,7 +55,7 @@ var (
 func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
-		return nil, fmt.Errorf("missing index template")
+		return nil, fmt.Errorf("missing index template!")
 	}
 
 	return &IndexProvider{
