@@ -25,4 +25,4 @@ To simulate the `/bootdata` endpoint being available, there are special control 
  - `/-/down/:seconds` - Simulates the endpoint being unavailable for a custom number of seconds.
  - `/-/up` - Restores the endpoint to being available.
 
-To simulate the `/bootdata` being unavailable, visit the url `/-/down` in your browser. This will set a cookie that the proxy uses to return the 503 for a default of 60 seconds. To set a custom duration, visit `/-/down/:seconds`. Visit `/-/up` to remove the cookie and restore the endpoint.
+When unavailable, the API will return `HTTP 503 Service Unavailable` with a JSON payload.
