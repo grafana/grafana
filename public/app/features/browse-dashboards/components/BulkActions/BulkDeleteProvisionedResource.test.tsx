@@ -1,10 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { SetupServer, setupServer } from 'msw/node';
 import { render } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -12,11 +11,7 @@ import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 
 // Set up backendSrv as recommended in the PR comment
 setBackendSrv(backendSrv);
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-}));
+setupMockServer();
 
 jest.mock('../utils', () => ({
   collectSelectedItems: jest.fn().mockReturnValue([
@@ -60,9 +55,6 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
 }));
 
 describe('BulkDeleteProvisionedResource', () => {
-  let server: SetupServer;
-  let user: ReturnType<typeof userEvent.setup>;
-
   const defaultRepository: RepositoryView = {
     name: 'test-folder', // This must match the folderUid passed to the component
     type: 'github',
@@ -76,23 +68,15 @@ describe('BulkDeleteProvisionedResource', () => {
     dashboard: { 'dashboard-1': true },
   };
 
-  beforeAll(() => {
-    server = setupServer(
+  beforeEach(() => {
+    server.use(
       http.delete('/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/:name/files/*', () => {
         return HttpResponse.json({
           urls: { repositoryURL: 'https://github.com/test/repo' },
         });
       })
     );
-
-    server.listen();
-  });
-
-  beforeEach(() => {
-    user = userEvent.setup();
     jest.clearAllMocks();
-    // Suppress console errors from RTK Query infrastructure
-    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const { useGetResourceRepositoryView } = jest.requireMock(
       'app/features/provisioning/hooks/useGetResourceRepositoryView'
@@ -112,10 +96,6 @@ describe('BulkDeleteProvisionedResource', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    server.close();
   });
 
   function setup(repository: RepositoryView | null = defaultRepository) {
@@ -157,7 +137,7 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('calls onDismiss when Cancel is clicked', async () => {
-    const { onDismiss } = setup();
+    const { onDismiss, user } = setup();
 
     await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
@@ -165,7 +145,7 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('handles successful deletion', async () => {
-    setup();
+    const { user } = setup();
 
     await user.click(screen.getByRole('button', { name: /Delete/i }));
 
@@ -173,7 +153,7 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('handles deletion errors', async () => {
-    setup();
+    const { user } = setup();
 
     // Mock API to return error for this test
     server.use(
@@ -196,7 +176,7 @@ describe('BulkDeleteProvisionedResource', () => {
   });
 
   it('shows loading state during deletion', async () => {
-    setup();
+    const { user } = setup();
 
     // Mock slow API response
     server.use(
