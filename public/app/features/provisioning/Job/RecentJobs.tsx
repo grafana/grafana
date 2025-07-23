@@ -26,8 +26,11 @@ const getStatusColor = (state?: SyncStatus['state']) => {
     case 'success':
       return 'green';
     case 'working':
-    case 'pending':
+      return 'blue';
+    case 'warning':
       return 'orange';
+    case 'pending':
+      return 'darkgrey';
     case 'error':
       return 'red';
     default:

@@ -679,6 +679,10 @@ const (
 	// Enable AI-generated alert rules.
 	FlagAlertingAIGenAlertRules = "alertingAIGenAlertRules"
 
+	// FlagAlertingAIFeedback
+	// Enable AI-generated feedback from the Grafana UI.
+	FlagAlertingAIFeedback = "alertingAIFeedback"
+
 	// FlagAlertingAIImproveAlertRules
 	// Enable AI-improve alert rules labels and annotations.
 	FlagAlertingAIImproveAlertRules = "alertingAIImproveAlertRules"
@@ -950,4 +954,8 @@ const (
 	// FlagUnifiedStorageSearchDualReaderEnabled
 	// Enable dual reader for unified storage search
 	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
+
+	// FlagDashboardDsAdHocFiltering
+	// Enables adhoc filtering support for the dashboard datasource
+	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
 )
