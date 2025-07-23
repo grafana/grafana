@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "AI Alert Rule Button failed to load",
+        "feedback-button": "AI Feedback Button failed to load",
         "improve-annotations-button": "AI Improve Annotations Button failed to load",
         "improve-labels-button": "AI Improve Labels Button failed to load",
         "template-button": "AI Template Button failed to load",
@@ -1551,7 +1552,8 @@
       "title": "Edit evaluation group"
     },
     "group-loader": {
-      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
+      "no-rules": "No rules found in this group"
     },
     "group-status": {
       "content-the-group-is-being-deleted": "The group is being deleted"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Refresh preview",
+      "empty-state": "Add template content to see preview",
       "label-preview": "Preview",
       "refresh": "Refresh"
     },
@@ -9330,6 +9333,7 @@
       "move-displayed-field-down": "Move down",
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
@@ -9348,6 +9352,9 @@
       "copy-log": "Copy log line",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
+      "log-line": "Log line",
+      "log-line-explainer": "Explain this log line in a concise way",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
       "show-details": "Hide log details",
@@ -11207,7 +11214,8 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
-        "title-job-completed-successfully": "Job completed successfully"
+        "title-job-completed-successfully": "Job completed successfully",
+        "title-warning-running-job": "Job completed with warnings"
       },
       "summary": "Summary"
     },
