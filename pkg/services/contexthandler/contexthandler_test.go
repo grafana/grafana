@@ -1,8 +1,10 @@
 package contexthandler_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -16,11 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -256,5 +260,70 @@ func TestContextHandler(t *testing.T) {
 		res, err := server.Send(server.NewGetRequest("/api/handler"))
 		require.NoError(t, err)
 		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("concurrent header access should not panic", func(t *testing.T) {
+		// Create an HTTP request with headers
+		req, err := http.NewRequest("GET", "/test", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Test-Header", "test-value")
+		req.Header.Set("X-Panel-Id", "123")
+		req.Header.Set("Cookie", "session=abc123")
+
+		// Create a context with ReqContext
+		webCtx := &web.Context{
+			Req: req,
+		}
+		reqCtx := &contextmodel.ReqContext{
+			Context:      webCtx,
+			SignedInUser: &user.SignedInUser{},
+		}
+
+		ctx := context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+
+		// Test concurrent access to headers
+		const numGoroutines = 50
+		const numIterations = 100
+
+		var wg sync.WaitGroup
+		panics := make(chan interface{}, numGoroutines*numIterations)
+
+		// Launch multiple goroutines that concurrently access headers
+		for i := 0; i < numGoroutines; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				defer func() {
+					if r := recover(); r != nil {
+						panics <- r
+					}
+				}()
+
+				for j := 0; j < numIterations; j++ {
+					// Get ReqContext from context (this should return a copy with cloned request)
+					gotReqCtx := contexthandler.FromContext(ctx)
+					// if gotReqCtx != nil && gotReqCtx.Req != nil {
+					// Access headers concurrently - this used to panic
+					_ = gotReqCtx.Req.Header.Get("X-Test-Header")
+					_ = gotReqCtx.Req.Header.Get("X-Panel-Id")
+					_ = gotReqCtx.Req.Header.Get("Cookie")
+					_ = gotReqCtx.Req.Header.Get("Non-Existent-Header")
+					// }
+				}
+			}()
+		}
+
+		// Wait for all goroutines to complete
+		wg.Wait()
+		close(panics)
+
+		// Verify no panics occurred
+		var panicCount int
+		for panic := range panics {
+			t.Errorf("Unexpected panic during concurrent header access: %v", panic)
+			panicCount++
+		}
+
+		require.Equal(t, 0, panicCount, "Expected no panics during concurrent header access")
 	})
 }

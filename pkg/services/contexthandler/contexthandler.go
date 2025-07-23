@@ -46,27 +46,22 @@ type ContextHandler struct {
 
 type reqContextKey = ctxkey.Key
 
-// FromContext returns the ReqContext value stored in a context.Context, if any.
+// FromContext returns a copy of the ReqContext value stored in a context.Context, if any.
+// The returned ReqContext has a cloned HTTP request to prevent concurrent access issues.
 func FromContext(c context.Context) *contextmodel.ReqContext {
-	if reqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
-		return reqCtx
+	if origReqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
+		// Return a copy with cloned HTTP request to prevent concurrent access to headers
+		webCtx := &web.Context{
+			Req:  origReqCtx.Req.Clone(c),
+			Resp: origReqCtx.Resp,
+		}
+		return copyReqContext(webCtx, origReqCtx)
 	}
 	return nil
 }
 
-// CopyWithReqContext returns a copy of the parent context with a semi-shallow copy of the ReqContext as a value.
-// The ReqContexts's *web.Context is deep copied so that headers are thread-safe; additional properties are shallow copied and should be treated as read-only.
-func CopyWithReqContext(ctx context.Context) context.Context {
-	origReqCtx := FromContext(ctx)
-	if origReqCtx == nil {
-		return ctx
-	}
-
-	webCtx := &web.Context{
-		Req:  origReqCtx.Req.Clone(ctx),
-		Resp: web.NewResponseWriter(origReqCtx.Req.Method, response.CreateNormalResponse(http.Header{}, []byte{}, 0)),
-	}
-	reqCtx := &contextmodel.ReqContext{
+func copyReqContext(webCtx *web.Context, origReqCtx *contextmodel.ReqContext) *contextmodel.ReqContext {
+	return &contextmodel.ReqContext{
 		Context:                    webCtx,
 		SignedInUser:               origReqCtx.SignedInUser,
 		UserToken:                  origReqCtx.UserToken,
@@ -81,6 +76,21 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 		PublicDashboardAccessToken: origReqCtx.PublicDashboardAccessToken,
 		LookupTokenErr:             origReqCtx.LookupTokenErr,
 	}
+}
+
+// CopyWithReqContext returns a copy of the parent context with a semi-shallow copy of the ReqContext as a value.
+// The ReqContexts's *web.Context is deep copied so that headers are thread-safe; additional properties are shallow copied and should be treated as read-only.
+func CopyWithReqContext(ctx context.Context) context.Context {
+	origReqCtx := FromContext(ctx)
+	if origReqCtx == nil {
+		return ctx
+	}
+
+	webCtx := &web.Context{
+		Req:  origReqCtx.Req.Clone(ctx),
+		Resp: web.NewResponseWriter(origReqCtx.Req.Method, response.CreateNormalResponse(http.Header{}, []byte{}, 0)),
+	}
+	reqCtx := copyReqContext(webCtx, origReqCtx)
 	return context.WithValue(ctx, reqContextKey{}, reqCtx)
 }
 
