@@ -20,10 +20,10 @@
   "devDependencies": {
     "@grafana/plugin-configs": "12.1.0-pre",
     "@testing-library/dom": "10.4.0",
-    "@testing-library/react": "16.2.0",
+    "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/lodash": "4.17.20",
-    "@types/node": "22.15.0",
+    "@types/node": "22.16.5",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "jest": "29.7.0",
