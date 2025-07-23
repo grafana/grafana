@@ -19,14 +19,14 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { useSelector } from 'app/types/store';
 
-import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
-import { findItem } from '../state/utils';
-import { DashboardTreeSelection } from '../types';
+import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
+import { findItem } from '../../state/utils';
+import { DashboardTreeSelection } from '../../types';
+import { DescendantCount } from '../BrowseActions/DescendantCount';
+import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 
-import { DescendantCount } from './BrowseActions/DescendantCount';
 import { BulkActionFailureBanner, MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionProgress, ProgressState } from './BulkActionProgress';
-import { collectSelectedItems, fetchProvisionedDashboardPath } from './utils';
 
 interface BulkDeleteFormData {
   comment: string;
