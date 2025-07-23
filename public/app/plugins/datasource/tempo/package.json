@@ -2,7 +2,7 @@
   "name": "@grafana-plugins/tempo",
   "description": "Grafana plugin for the Tempo data source.",
   "private": true,
-  "version": "12.0.3",
+  "version": "12.0.4",
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/data": "workspace:*",
@@ -39,7 +39,7 @@
     "uuid": "11.0.5"
   },
   "devDependencies": {
-    "@grafana/plugin-configs": "12.0.3",
+    "@grafana/plugin-configs": "12.0.4",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.2.0",
