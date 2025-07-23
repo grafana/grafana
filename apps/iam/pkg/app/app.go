@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/simple"
-
 	"github.com/grafana/grafana/apps/iam/pkg/apis"
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/apps/iam/pkg/watchers"
@@ -18,9 +17,9 @@ func Provider(appCfg app.SpecificConfig) app.Provider {
 }
 
 func New(cfg app.Config) (app.App, error) {
-	resourcepermissionWatcher, err := watchers.NewResourcePermissionWatcher()
+	coreroleWatcher, err := watchers.NewCoreRoleWatcher()
 	if err != nil {
-		return nil, fmt.Errorf("unable to create ResourcePermissionWatcher: %w", err)
+		return nil, fmt.Errorf("unable to create CoreRoleWatcher: %w", err)
 	}
 
 	config := simple.AppConfig{
@@ -34,8 +33,8 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind:    v0alpha1.ResourcePermissionKind(),
-				Watcher: resourcepermissionWatcher,
+				Kind:    v0alpha1.CoreRoleKind(),
+				Watcher: coreroleWatcher,
 			},
 		},
 	}
