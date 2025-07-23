@@ -978,13 +978,14 @@ const getCellStyles = (
         paddingInline: theme.spacing(1),
         borderRight: `2px solid ${theme.colors.border.medium}`,
 
-        '&:first-child': {
+        ':nth-child(1 of a,span)': {
           paddingInlineStart: 0,
         },
-        '&:last-child': {
+
+        ':nth-last-child(1 of a,span)': {
           borderRight: 'none',
           paddingInlineEnd: 0,
-        },
+        }
       },
     }),
   });
