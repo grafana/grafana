@@ -8576,8 +8576,6 @@
       "group-tooltip": "Name of the stacking group"
     },
     "table": {
-      "cell-filter-on": "Filter for value",
-      "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",

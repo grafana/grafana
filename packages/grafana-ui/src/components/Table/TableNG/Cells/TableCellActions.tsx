@@ -7,21 +7,10 @@ import { t } from '@grafana/i18n';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TableCellInspectorMode } from '../../TableCellInspector';
 import { TableCellDisplayMode } from '../../types';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellActionsProps } from '../types';
+import { TableCellActionsProps } from '../types';
 
 export function TableCellActions(props: TableCellActionsProps) {
-  const {
-    field,
-    value,
-    cellOptions,
-    displayName,
-    setIsInspecting,
-    setContextMenuProps,
-    onCellFilterAdded,
-    className,
-    cellInspect,
-    showFilters,
-  } = props;
+  const { field, value, cellOptions, setIsInspecting, setContextMenuProps, className, cellInspect } = props;
 
   return (
     // stopping propagation to prevent clicks within the actions menu from triggering the cell click events
@@ -54,32 +43,6 @@ export function TableCellActions(props: TableCellActionsProps) {
             setIsInspecting(true);
           }}
         />
-      )}
-      {showFilters && (
-        <>
-          <IconButton
-            name={'search-plus'}
-            aria-label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
-            onClick={() => {
-              onCellFilterAdded?.({
-                key: displayName,
-                operator: FILTER_FOR_OPERATOR,
-                value: String(value ?? ''),
-              });
-            }}
-          />
-          <IconButton
-            name={'search-minus'}
-            aria-label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
-            onClick={() => {
-              onCellFilterAdded?.({
-                key: displayName,
-                operator: FILTER_OUT_OPERATOR,
-                value: String(value ?? ''),
-              });
-            }}
-          />
-        </>
       )}
     </div>
   );
