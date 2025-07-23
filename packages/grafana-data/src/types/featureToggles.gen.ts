@@ -852,10 +852,6 @@ export interface FeatureToggles {
   */
   grafanaconThemes?: boolean;
   /**
-  * Loads plugins from CDN synchronously
-  */
-  pluginsCDNSyncLoader?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
   alertingJiraIntegration?: boolean;
