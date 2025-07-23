@@ -265,6 +265,7 @@ export interface FooterCalcsOptions {
 export function useFooterCalcs(
   rows: TableRow[],
   data: DataFrame,
+  fields: Field[], // this is visibleFields, so that footer calcs are only applied to visible fields and the indices match
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
   return useMemo(() => {
@@ -278,7 +279,7 @@ export function useFooterCalcs(
       ? getFieldMatcher({ id: FieldMatcherID.byNames, options: { names: footerOptions.fields } })
       : undefined;
 
-    return data.fields.map((field, index) => {
+    return fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
       }
@@ -320,7 +321,7 @@ export function useFooterCalcs(
 
       return formattedValueToString(displayFn(value));
     });
-  }, [data, enabled, footerOptions, isCountRowsSet, rows]);
+  }, [fields, data, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
 interface TypographyCtx {
