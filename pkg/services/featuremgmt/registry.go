@@ -421,13 +421,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "externalCorePlugins",
-			Description: "Allow core plugins to be loaded as external",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
@@ -480,6 +473,13 @@ var (
 		{
 			Name:            "kubernetesLibraryPanels",
 			Description:     "Routes library panel requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
+			Name:            "kubernetesLibraryPanelConnections",
+			Description:     "Routes library panel connections requests from /api to using search",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
@@ -1279,6 +1279,15 @@ var (
 			Expression:        "false",
 		},
 		{
+			Name:              "alertingAIFeedback",
+			Description:       "Enable AI-generated feedback from the Grafana UI.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
 			Name:              "alertingAIImproveAlertRules",
 			Description:       "Enable AI-improve alert rules labels and annotations.",
 			Stage:             FeatureStageExperimental,
@@ -1448,12 +1457,6 @@ var (
 			Expression:        "true",
 		},
 		{
-			Name:        "pluginsCDNSyncLoader",
-			Description: "Loads plugins from CDN synchronously",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "alertingJiraIntegration",
 			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
 			Stage:        FeatureStageExperimental,
@@ -1570,7 +1573,7 @@ var (
 		{
 			Name:        "localeFormatPreference",
 			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
@@ -1808,6 +1811,31 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",
+		},
+		{
+			Name:              "pluginAssetProvider",
+			Description:       "Allows decoupled core plugins to load from the Grafana CDN",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+			RequiresRestart:   true,
+		},
+		{
+			Name:              "unifiedStorageSearchDualReaderEnabled",
+			Description:       "Enable dual reader for unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:         "dashboardDsAdHocFiltering",
+			Description:  "Enables adhoc filtering support for the dashboard datasource",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
 		},
 		{
 			Name:              "alertmanagerRemoteSecondaryWithRemoteState",

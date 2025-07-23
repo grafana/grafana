@@ -257,11 +257,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Allow core plugins to be loaded as external
-  * @default true
-  */
-  externalCorePlugins?: boolean;
-  /**
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;
@@ -291,6 +286,10 @@ export interface FeatureToggles {
   * Routes library panel requests from /api to the /apis endpoint
   */
   kubernetesLibraryPanels?: boolean;
+  /**
+  * Routes library panel connections requests from /api to using search
+  */
+  kubernetesLibraryPanelConnections?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
   */
@@ -749,6 +748,11 @@ export interface FeatureToggles {
   */
   alertingAIGenAlertRules?: boolean;
   /**
+  * Enable AI-generated feedback from the Grafana UI.
+  * @default false
+  */
+  alertingAIFeedback?: boolean;
+  /**
   * Enable AI-improve alert rules labels and annotations.
   * @default false
   */
@@ -847,10 +851,6 @@ export interface FeatureToggles {
   * @default true
   */
   grafanaconThemes?: boolean;
-  /**
-  * Loads plugins from CDN synchronously
-  */
-  pluginsCDNSyncLoader?: boolean;
   /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
@@ -1050,6 +1050,19 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistory?: boolean;
+  /**
+  * Allows decoupled core plugins to load from the Grafana CDN
+  * @default false
+  */
+  pluginAssetProvider?: boolean;
+  /**
+  * Enable dual reader for unified storage search
+  */
+  unifiedStorageSearchDualReaderEnabled?: boolean;
+  /**
+  * Enables adhoc filtering support for the dashboard datasource
+  */
+  dashboardDsAdHocFiltering?: boolean;
   /**
   * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
   * @default false

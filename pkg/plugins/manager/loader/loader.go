@@ -93,10 +93,8 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	}
 	validateResults := make(chan validateResult, len(bootstrappedPlugins))
 
-	// If the PluginsCDNSyncLoaderEnabled feature is enabled, validate plugins in parallel.
-	// Otherwise, validate plugins sequentially.
 	var limitSize int
-	if l.cfg.Features.PluginsCDNSyncLoaderEnabled && src.PluginClass(ctx) == plugins.ClassCDN {
+	if src.PluginClass(ctx) == plugins.ClassCDN {
 		limitSize = min(len(bootstrappedPlugins), concurrencyLimit)
 	} else {
 		limitSize = 1
