@@ -62,13 +62,23 @@ func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceI
 func (m *TestPanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
 	return []schemaversion.PanelPluginInfo{
 		{
-			ID: "gauge",
+			ID:      "gauge",
+			Version: "1.0.0",
 		},
 		{
-			ID: "stat",
+			ID:      "stat",
+			Version: "1.0.0",
 		},
 		// Note: grafana-singlestat-panel is not included to match frontend test environment
 		// This ensures both frontend and backend migrations produce the same result
+	}
+}
+
+func (m *TestPanelProvider) GetPanelPlugin(id string) schemaversion.PanelPluginInfo {
+
+	return schemaversion.PanelPluginInfo{
+		ID:      id,
+		Version: "1.0.0",
 	}
 }
 

@@ -52,16 +52,22 @@ func TestV28(t *testing.T) {
 				"schemaVersion": 28,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"id":              1,
-						"type":            "stat",
-						"autoMigrateFrom": "singlestat",
+						"id":   1,
+						"type": "stat",
 						"options": map[string]interface{}{
 							"reduceOptions": map[string]interface{}{
-								"calcs": []string{"mean"},
+								"calcs":  []string{"mean"},
+								"fields": "",
+								"values": false,
 							},
-							"orientation": "horizontal",
-							"colorMode":   "none",
-							"graphMode":   "none",
+							"orientation":            "horizontal",
+							"colorMode":              "none",
+							"graphMode":              "none",
+							"justifyMode":            "auto",
+							"percentChangeColorMode": "standard",
+							"showPercentChange":      false,
+							"textMode":               "auto",
+							"wideLayout":             true,
 						},
 						"fieldConfig": map[string]interface{}{
 							"defaults": map[string]interface{}{
@@ -84,9 +90,11 @@ func TestV28(t *testing.T) {
 										},
 									},
 								},
+								"mappings": []interface{}{},
 							},
 							"overrides": []interface{}{},
 						},
+						"pluginVersion": "1.0.0",
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -131,16 +139,22 @@ func TestV28(t *testing.T) {
 				"schemaVersion": 28,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"id":              1,
-						"type":            "stat",
-						"autoMigrateFrom": "singlestat",
+						"id":   1,
+						"type": "stat",
 						"options": map[string]interface{}{
 							"reduceOptions": map[string]interface{}{
-								"calcs": []string{"lastNotNull"},
+								"calcs":  []string{"lastNotNull"},
+								"fields": "",
+								"values": false,
 							},
-							"orientation": "horizontal",
-							"colorMode":   "background",
-							"graphMode":   "area",
+							"orientation":            "horizontal",
+							"colorMode":              "background",
+							"graphMode":              "area",
+							"justifyMode":            "auto",
+							"percentChangeColorMode": "standard",
+							"showPercentChange":      false,
+							"textMode":               "auto",
+							"wideLayout":             true,
 						},
 						"fieldConfig": map[string]interface{}{
 							"defaults": map[string]interface{}{
@@ -151,9 +165,11 @@ func TestV28(t *testing.T) {
 									"mode":       "fixed",
 									"fixedColor": "#ff0000",
 								},
+								"mappings": []interface{}{},
 							},
 							"overrides": []interface{}{},
 						},
+						"pluginVersion": "1.0.0",
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -198,19 +214,26 @@ func TestV28(t *testing.T) {
 				"schemaVersion": 28,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"id":              1,
-						"type":            "stat",
-						"autoMigrateFrom": "grafana-singlestat-panel",
+						"id":   1,
+						"type": "stat",
 						"options": map[string]interface{}{
+							"justifyMode":            "auto",
+							"orientation":            "horizontal",
+							"percentChangeColorMode": "standard",
+							"showPercentChange":      false,
+							"textMode":               "auto",
+							"wideLayout":             true,
 							"reduceOptions": map[string]interface{}{
-								"calcs": []string{"max"},
+								"calcs":  []string{"max"},
+								"fields": "",
+								"values": false,
 							},
-							"orientation": "horizontal",
 						},
 						"fieldConfig": map[string]interface{}{
 							"defaults": map[string]interface{}{
 								"unit":     "short",
 								"decimals": 1,
+								"mappings": []interface{}{},
 								"min":      0,
 								"max":      100,
 								"thresholds": map[string]interface{}{
@@ -229,6 +252,7 @@ func TestV28(t *testing.T) {
 							},
 							"overrides": []interface{}{},
 						},
+						"pluginVersion": "1.0.0",
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -266,23 +290,31 @@ func TestV28(t *testing.T) {
 						"type": "row",
 						"panels": []interface{}{
 							map[string]interface{}{
-								"id":              2,
-								"type":            "stat",
-								"autoMigrateFrom": "singlestat",
+								"id":   2,
+								"type": "stat",
 								"options": map[string]interface{}{
 									"reduceOptions": map[string]interface{}{
-										"calcs": []string{"sum"},
+										"calcs":  []string{"sum"},
+										"fields": "",
+										"values": false,
 									},
-									"orientation": "horizontal",
-									"colorMode":   "none",
-									"graphMode":   "none",
+									"orientation":            "horizontal",
+									"colorMode":              "none",
+									"graphMode":              "none",
+									"justifyMode":            "auto",
+									"percentChangeColorMode": "standard",
+									"showPercentChange":      false,
+									"textMode":               "auto",
+									"wideLayout":             true,
 								},
 								"fieldConfig": map[string]interface{}{
 									"defaults": map[string]interface{}{
-										"unit": "bytes",
+										"unit":     "bytes",
+										"mappings": []interface{}{},
 									},
 									"overrides": []interface{}{},
 								},
+								"pluginVersion": "1.0.0",
 								"targets": []interface{}{
 									map[string]interface{}{"refId": "A"},
 								},
@@ -334,18 +366,10 @@ func TestV28(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock panel provider that includes grafana-singlestat-panel for the specific test
-			var panelProvider PanelPluginInfoProvider
-			if tt.name == "keep grafana-singlestat-panel if plugin exists" {
-				panelProvider = &mockPanelProvider{
-					panels: []PanelPluginInfo{
-						{ID: "grafana-singlestat-panel"},
-					},
-				}
-			} else {
-				panelProvider = &mockPanelProvider{
-					panels: []PanelPluginInfo{},
-				}
+			panelProvider := &mockPanelProvider{
+				panels: []PanelPluginInfo{
+					{ID: "stat", Version: "1.0.0"},
+				},
 			}
 
 			migration := V28(panelProvider)
@@ -367,7 +391,6 @@ func TestV28ActualOutput(t *testing.T) {
 				"legend":     true,
 				"thresholds": "10,20,30",
 				"colors":     []interface{}{"#FF0000", "green", "orange"},
-				"aliasYAxis": map[string]interface{}{"test": 2},
 				"grid":       map[string]interface{}{"min": 1, "max": 10},
 				"targets":    []interface{}{map[string]interface{}{"refId": "A"}},
 			},
@@ -387,6 +410,16 @@ func TestV28ActualOutput(t *testing.T) {
 
 type mockPanelProvider struct {
 	panels []PanelPluginInfo
+}
+
+// GetPanelPlugin implements PanelPluginInfoProvider.
+func (m *mockPanelProvider) GetPanelPlugin(id string) PanelPluginInfo {
+	for _, panel := range m.panels {
+		if panel.ID == id {
+			return panel
+		}
+	}
+	return PanelPluginInfo{}
 }
 
 func (m *mockPanelProvider) GetPanels() []PanelPluginInfo {

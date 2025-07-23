@@ -25,13 +25,15 @@ type DataSourceInfoProvider interface {
 }
 
 type PanelPluginInfo struct {
-	ID string
+	ID      string
+	Version string
 }
 
 type PanelPluginInfoProvider interface {
 	// Gets all the panels from the plugin store.
 	// Equivalent to grafanaBootData.settings.panels on the frontend.
 	GetPanels() []PanelPluginInfo
+	GetPanelPlugin(id string) PanelPluginInfo
 }
 
 func GetMigrations(dsInfoProvider DataSourceInfoProvider, panelProvider PanelPluginInfoProvider) map[int]SchemaVersionMigrationFunc {
