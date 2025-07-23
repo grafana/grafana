@@ -130,7 +130,6 @@ export interface BaseTableProps {
   footerValues?: FooterItem[];
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
-  cellHeightCustom?: number;
   structureRev?: number;
   transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */

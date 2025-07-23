@@ -79,7 +79,6 @@ export function TablePanel(props: Props) {
       footerOptions={options.footer}
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
-      cellHeightCustom={options.cellHeightCustom}
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}

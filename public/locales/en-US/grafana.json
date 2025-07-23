@@ -12040,8 +12040,6 @@
     "category-table": "Table",
     "category-table-footer": "Table footer",
     "cell-height-options": {
-      "label-auto": "Auto",
-      "label-custom": "Custom",
       "label-large": "Large",
       "label-medium": "Medium",
       "label-small": "Small"
@@ -12103,6 +12101,7 @@
     "category-table": "Table",
     "category-table-footer": "Table footer",
     "cell-height-options": {
+      "label-auto": "Auto",
       "label-large": "Large",
       "label-medium": "Medium",
       "label-small": "Small"
@@ -12121,7 +12120,6 @@
     "description-min-column-width": "The minimum width for column auto resizing",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
-    "name-cell-height-custom": "Custom cell height",
     "name-cell-type": "Cell type",
     "name-cell-value-inspect": "Cell value inspect",
     "name-column-alignment": "Column alignment",
@@ -12134,7 +12132,6 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
-    "placeholder-cell-height": "none",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },

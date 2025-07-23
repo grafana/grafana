@@ -78,7 +78,6 @@ type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, Tabl
 export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
-    cellHeightCustom,
     data,
     disableSanitizeHtml,
     enablePagination = false,
@@ -167,8 +166,6 @@ export function TableNG(props: TableNGProps) {
         return TABLE.MAX_CELL_HEIGHT;
       case TableCellHeight.Auto:
         return 'auto';
-      case TableCellHeight.Custom:
-        return cellHeightCustom ?? TABLE.MAX_CELL_HEIGHT;
       default: {
         const bodyFontSize = theme.typography.fontSize;
         const lineHeight = theme.typography.body.lineHeight;
