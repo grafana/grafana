@@ -77,7 +77,6 @@ func (m *TestPanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
 }
 
 func (m *TestPanelProvider) GetPanelPlugin(id string) schemaversion.PanelPluginInfo {
-
 	return schemaversion.PanelPluginInfo{
 		ID:      id,
 		Version: "1.0.0",

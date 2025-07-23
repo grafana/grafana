@@ -634,7 +634,6 @@ func (m *v28Migrator) getActiveThreshold(value float64, steps []interface{}) map
 // cleanupAngularProperties removes old angular properties after migration
 // Based on PanelModel.clearPropertiesBeforePluginChange in public/app/features/dashboard/state/PanelModel.ts
 func (m *v28Migrator) cleanupAngularProperties(panel map[string]interface{}) {
-
 	// Remove PanelModel's autoMigrateFrom property
 	delete(panel, "autoMigrateFrom")
 
