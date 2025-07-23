@@ -748,6 +748,11 @@ export interface FeatureToggles {
   */
   alertingAIGenAlertRules?: boolean;
   /**
+  * Enable AI-generated feedback from the Grafana UI.
+  * @default false
+  */
+  alertingAIFeedback?: boolean;
+  /**
   * Enable AI-improve alert rules labels and annotations.
   * @default false
   */
