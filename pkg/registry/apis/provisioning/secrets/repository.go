@@ -7,17 +7,17 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
+	legacysecrets "github.com/grafana/grafana/pkg/services/secrets"
 )
 
 func ProvideRepositorySecrets(
 	features featuremgmt.FeatureToggles,
-	legacySecretsSvc grafanasecrets.Service,
+	legacySecretsSvc legacysecrets.Service,
 	secretsSvc contracts.SecureValueClient,
-	decryptSvc service.DecryptService,
+	decryptSvc secret.DecryptService,
 ) RepositorySecrets {
 	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc), NewSingleTenant(legacySecretsSvc))
 }

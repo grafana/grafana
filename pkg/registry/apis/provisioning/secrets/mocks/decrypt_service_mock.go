@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	service "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	contracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -23,7 +23,7 @@ func (_m *MockDecryptService) EXPECT() *MockDecryptService_Expecter {
 }
 
 // Decrypt provides a mock function with given fields: ctx, namespace, names
-func (_m *MockDecryptService) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]service.DecryptResult, error) {
+func (_m *MockDecryptService) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
 	_va := make([]interface{}, len(names))
 	for _i := range names {
 		_va[_i] = names[_i]
@@ -37,16 +37,16 @@ func (_m *MockDecryptService) Decrypt(ctx context.Context, namespace string, nam
 		panic("no return value specified for Decrypt")
 	}
 
-	var r0 map[string]service.DecryptResult
+	var r0 map[string]contracts.DecryptResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) (map[string]service.DecryptResult, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) (map[string]contracts.DecryptResult, error)); ok {
 		return rf(ctx, namespace, names...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) map[string]service.DecryptResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) map[string]contracts.DecryptResult); ok {
 		r0 = rf(ctx, namespace, names...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]service.DecryptResult)
+			r0 = ret.Get(0).(map[string]contracts.DecryptResult)
 		}
 	}
 
@@ -86,12 +86,12 @@ func (_c *MockDecryptService_Decrypt_Call) Run(run func(ctx context.Context, nam
 	return _c
 }
 
-func (_c *MockDecryptService_Decrypt_Call) Return(_a0 map[string]service.DecryptResult, _a1 error) *MockDecryptService_Decrypt_Call {
+func (_c *MockDecryptService_Decrypt_Call) Return(_a0 map[string]contracts.DecryptResult, _a1 error) *MockDecryptService_Decrypt_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockDecryptService_Decrypt_Call) RunAndReturn(run func(context.Context, string, ...string) (map[string]service.DecryptResult, error)) *MockDecryptService_Decrypt_Call {
+func (_c *MockDecryptService_Decrypt_Call) RunAndReturn(run func(context.Context, string, ...string) (map[string]contracts.DecryptResult, error)) *MockDecryptService_Decrypt_Call {
 	_c.Call.Return(run)
 	return _c
 }
