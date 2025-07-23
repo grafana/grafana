@@ -1792,6 +1792,7 @@ func TestLocalRepository_Move(t *testing.T) {
 
 				// Verify content if expectedContent is specified
 				if tc.expectedContent != "" {
+					//nolint:gosec // G304: is only for tests
 					content, err := os.ReadFile(destFullPath)
 					require.NoError(t, err)
 					assert.Equal(t, tc.expectedContent, string(content), "Content should be preserved")
