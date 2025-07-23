@@ -381,6 +381,17 @@ describe('TableNG hooks', () => {
 
       expect(result.current).toEqual(['Total', '6', '13']);
     });
+
+    it('should not return the reducer label in the first column if there is a calc to render', () => {
+      const { result } = renderHook(() =>
+        useFooterCalcs(rows, [numericField, numericField2], {
+          enabled: true,
+          footerOptions: { show: true, reducer: ['sum'], fields: [] },
+        })
+      );
+
+      expect(result.current).toEqual(['6', '13']);
+    });
   });
 
   describe('useHeaderHeight', () => {
