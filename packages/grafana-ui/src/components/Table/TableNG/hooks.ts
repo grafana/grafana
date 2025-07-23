@@ -2,16 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, Ref
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
-import {
-  DataFrame,
-  Field,
-  FieldMatcherID,
-  fieldReducers,
-  FieldType,
-  formattedValueToString,
-  getFieldMatcher,
-  reduceField,
-} from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
@@ -269,7 +260,8 @@ export interface FooterCalcsOptions {
 
 export function useFooterCalcs(
   rows: TableRow[],
-  data: DataFrame,
+  // it's very important that this is the _visible_ fields.
+  fields: Field[],
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
   return useMemo(() => {
@@ -279,11 +271,9 @@ export function useFooterCalcs(
       return [];
     }
 
-    const fieldNameMatcher = footerOptions.fields
-      ? getFieldMatcher({ id: FieldMatcherID.byNames, options: { names: footerOptions.fields } })
-      : undefined;
+    const fieldNameSet = footerOptions.fields?.length ? new Set(footerOptions.fields) : null;
 
-    return data.fields.map((field, index) => {
+    return fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
       }
@@ -292,25 +282,27 @@ export function useFooterCalcs(
         return index === 0 ? `${rows.length}` : '';
       }
 
+      let emptyValue = '';
       if (index === 0) {
         const footerCalcReducer = footerReducers[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
+        emptyValue = footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
 
       if (field.type !== FieldType.number) {
-        return '';
+        return emptyValue;
       }
 
       // if field.display is undefined, don't throw
       const displayFn = field.display;
       if (!displayFn) {
-        return '';
+        return emptyValue;
       }
 
       // If fields array is specified, only show footer for fields included in that array.
-      // the array can include either the display name or the field name.
-      if (fieldNameMatcher && !fieldNameMatcher(field, data, [data])) {
-        return '';
+      // the array can include either the display name or the field name. we don't use a field matcher
+      // because that requires us to drill the data frame down here.
+      if (fieldNameSet && !fieldNameSet.has(getDisplayName(field)) && !fieldNameSet.has(field.name)) {
+        return emptyValue;
       }
 
       const calc = footerReducers[0];
@@ -324,7 +316,7 @@ export function useFooterCalcs(
 
       return formattedValueToString(displayFn(value));
     });
-  }, [data, enabled, footerOptions, isCountRowsSet, rows]);
+  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
 interface TypographyCtx {

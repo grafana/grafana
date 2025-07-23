@@ -227,7 +227,11 @@ export function TableNG(props: TableNGProps) {
   });
 
   // Create a map of column key to text wrap
-  const footerCalcs = useFooterCalcs(sortedRows, data, { enabled: hasFooter, footerOptions, isCountRowsSet });
+  const footerCalcs = useFooterCalcs(sortedRows, visibleFields, {
+    enabled: hasFooter,
+    footerOptions,
+    isCountRowsSet,
+  });
   const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   const renderRow = useMemo(
@@ -819,6 +823,8 @@ const getGridStyles = (
     '--rdg-header-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
     '--rdg-border-color': theme.colors.border.weak,
     '--rdg-color': theme.colors.text.primary,
+    '--rdg-summary-border-color': theme.colors.border.weak,
+    '--rdg-summary-border-width': '1px',
 
     // note: this cannot have any transparency since default cells that
     // overlay/overflow on hover inherit this background and need to occlude cells below
@@ -834,6 +840,12 @@ const getGridStyles = (
     scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
     border: 'none',
+
+    '.rdg-cell': {
+      '&:last-child': {
+        borderInlineEnd: 'none',
+      },
+    },
 
     // add a box shadow on hover and selection for all body cells
     '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
@@ -968,10 +980,6 @@ const getCellStyles = (
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
     ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
     ...(isMonospace && { fontFamily: 'monospace' }),
-
-    '&:last-child': {
-      borderInlineEnd: 'none',
-    },
 
     // should omit if no cell actions, and no shouldOverflow
     '&:hover, &[aria-selected=true]': {
