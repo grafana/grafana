@@ -126,11 +126,11 @@ func (m *v28Migrator) migrateSinglestatPanel(panel map[string]interface{}) {
 	panel["pluginVersion"] = statPanelPlugin.Version
 
 	// Migrate panel options and field config
-	m.migrateSinglestatOptions(panel, targetType)
+	m.migrateSinglestatOptions(panel)
 }
 
 // migrateSinglestatOptions handles the complete migration of singlestat panel options and field config
-func (m *v28Migrator) migrateSinglestatOptions(panel map[string]interface{}, targetType string) {
+func (m *v28Migrator) migrateSinglestatOptions(panel map[string]interface{}) {
 	// Initialize field config if not present
 	if panel["fieldConfig"] == nil {
 		panel["fieldConfig"] = map[string]interface{}{
@@ -147,7 +147,7 @@ func (m *v28Migrator) migrateSinglestatOptions(panel map[string]interface{}, tar
 	switch originalType {
 	case "singlestat":
 		// Migrate from angular singlestat configuration
-		m.migrateFromAngularSinglestat(panel, defaults, targetType)
+		m.migrateFromAngularSinglestat(panel, defaults)
 	case "grafana-singlestat-panel":
 		// Migrate from grafana-singlestat-panel
 		m.migrateFromGrafanaSinglestat(panel, defaults)
@@ -229,7 +229,7 @@ func (m *v28Migrator) getDefaultStatOptions() map[string]interface{} {
 // migrateFromAngularSinglestat handles migration from angular singlestat panels
 // Based on sharedSingleStatPanelChangedHandler in packages/grafana-ui/src/components/SingleStatShared/SingleStatBaseOptions.ts
 // and statPanelChangedHandler in public/app/plugins/panel/stat/StatMigrations.ts
-func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{}, defaults map[string]interface{}, targetType string) {
+func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{}, defaults map[string]interface{}) {
 	// Extract angular options
 	angularOpts := m.extractAngularOptions(panel)
 	if angularOpts == nil {
