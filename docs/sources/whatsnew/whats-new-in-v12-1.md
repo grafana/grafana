@@ -17,7 +17,7 @@ posts:
     items:
       - whats-new/2025-06-11-logicmonitor-enterprise-data-source-for-grafana.md
       - whats-new/2025-06-20-support-for-service-account-impersonation-in-bigquery.md
-      - whats-new/2025-07-22-keep-instances-running-smoothly-with-grafana-advisor.md
+      - whats-new/2025-07-08-keep-instances-running-smoothly-with-grafana-advisor.md
   - title: Alerting
     items:
       - whats-new/2025-07-11-alert-rule-list-page-updates.md
