@@ -88,7 +88,7 @@ function splitQueriesByStreamShard(
 
     const nextRequest = () => {
       const nextGroup =
-        groups[group + 1] && groupHasPendingRequests(groups[group + 1])
+        groups[group + 1] && (groups[group + 1].shards === undefined || groupHasPendingRequests(groups[group + 1]))
           ? groups[group + 1]
           : groups.find((shardGroup) => groupHasPendingRequests(shardGroup));
 
