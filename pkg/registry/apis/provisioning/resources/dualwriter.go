@@ -355,13 +355,13 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 		if err != nil {
 			return nil, fmt.Errorf("ensure original folder path exists: %w", err)
 		}
-		
+
 		if oldFolderName != "" {
 			oldFolder, err := r.folders.GetFolder(ctx, oldFolderName)
 			if err != nil && !apierrors.IsNotFound(err) {
 				return nil, fmt.Errorf("get old folder for cleanup: %w", err)
 			}
-			
+
 			if err == nil {
 				err = r.folders.Client().Delete(ctx, oldFolder.GetName(), metav1.DeleteOptions{})
 				if err != nil && !apierrors.IsNotFound(err) {
