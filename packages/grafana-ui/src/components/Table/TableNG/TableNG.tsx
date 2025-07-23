@@ -360,7 +360,8 @@ export function TableNG(props: TableNGProps) {
               shouldWrap,
               shouldOverflow,
               canBeColorized,
-              isMonospace
+              isMonospace,
+              cellType === TableCellDisplayMode.DataLinks
             );
             break;
         }
@@ -923,7 +924,8 @@ const getCellStyles = (
   shouldWrap: boolean,
   shouldOverflow: boolean,
   isColorized: boolean,
-  isMonospace: boolean
+  isMonospace: boolean,
+  isLinkCell: boolean
 ) =>
   css({
     display: 'flex',
@@ -968,4 +970,21 @@ const getCellStyles = (
             },
           }),
     },
+
+    ...(isLinkCell && {
+      '> a, > span': {
+        // display: 'inline', // textWrap ? 'block' : 'inline',
+        whiteSpace: 'nowrap',
+        paddingInline: theme.spacing(1),
+        borderRight: `2px solid ${theme.colors.border.medium}`,
+
+        '&:first-child': {
+          paddingInlineStart: 0,
+        },
+        '&:last-child': {
+          borderRight: 'none',
+          paddingInlineEnd: 0,
+        },
+      },
+    }),
   });
