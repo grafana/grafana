@@ -6,7 +6,7 @@ import { LokiDatasource } from './datasource';
 import { createLokiDatasource } from './mocks/datasource';
 import { getMockFrames } from './mocks/frames';
 import { runShardSplitQuery } from './shardQuerySplitting';
-import { LokiQuery, LokiQueryDirection } from './types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
@@ -97,6 +97,26 @@ describe('runShardSplitQuery()', () => {
         'count_over_time({a="b", __stream_shard__=~"20|10"} | drop __stream_shard__[5m])'
       );
       expect(jest.mocked(datasource.runQuery).mock.calls[0][0].targets[0].step).toBe('5m');
+    });
+  });
+
+  test('Runs multiple non-sharded queries', async () => {
+    const request = createRequest([
+      { expr: 'count_over_time({a="b"}[$__auto])', refId: 'A' },
+      { expr: 'count_over_time({a="b"}[$__auto])', refId: 'B', queryType: LokiQueryType.Instant },
+    ]);
+    datasource = createLokiDatasource({
+      replace: (input = '') => {
+        return input.replace('$__auto', '5m').replace('$step', '5m');
+      },
+      getVariables: () => [],
+    });
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [] }));
+    datasource.languageProvider.fetchLabelValues = jest.fn();
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue([]);
+    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      // 5 shards, 3 groups + empty shard group, 4 requests
+      expect(datasource.runQuery).toHaveBeenCalledTimes(2);
     });
   });
 
