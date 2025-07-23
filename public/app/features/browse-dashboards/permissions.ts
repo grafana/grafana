@@ -20,6 +20,7 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
   const canCreateDashboards = checkFolderPermission(AccessControlAction.DashboardsCreate, folderDTO);
   const canCreateFolders = checkCanCreateFolders(folderDTO);
   const canDeleteFolders = checkFolderPermission(AccessControlAction.FoldersDelete, folderDTO);
+  const canDeleteDashboards = checkFolderPermission(AccessControlAction.DashboardsDelete, folderDTO);
   const canEditDashboards = checkFolderPermission(AccessControlAction.DashboardsWrite, folderDTO);
   const canEditFolders = checkFolderPermission(AccessControlAction.FoldersWrite, folderDTO);
   const canSetPermissions = checkFolderPermission(AccessControlAction.FoldersPermissionsWrite, folderDTO);
@@ -33,5 +34,6 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
     canEditFolders,
     canSetPermissions,
     canViewPermissions,
+    canDeleteDashboards,
   };
 }

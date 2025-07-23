@@ -32,6 +32,7 @@ describe('browse-dashboards FolderActionsButton', () => {
     canEditFolders: true,
     canViewPermissions: true,
     canSetPermissions: true,
+    canDeleteDashboards: true,
   };
 
   beforeEach(() => {

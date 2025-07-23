@@ -42,9 +42,25 @@ jest.mock('app/features/browse-dashboards/api/services', () => {
 describe('browse-dashboards BrowseView', () => {
   const WIDTH = 800;
   const HEIGHT = 600;
+  const mockPermissions = {
+    canEditFolders: true,
+    canEditDashboards: true,
+    canDeleteFolders: true,
+    canDeleteDashboards: true,
+  };
+
+  afterEach(() => {
+    // Reset permissions back to defaults
+    Object.assign(mockPermissions, {
+      canEditFolders: true,
+      canEditDashboards: true,
+      canDeleteFolders: true,
+      canDeleteDashboards: true,
+    });
+  });
 
   it('expands and collapses a folder', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
@@ -55,7 +71,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks items when selected', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
 
     const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
     expect(checkbox).not.toBeChecked();
@@ -65,7 +81,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks all descendants when a folder is selected', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     // First expand then click folderA
@@ -82,7 +98,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks descendants loaded after a folder is selected', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     // First expand then click folderA
@@ -102,7 +118,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('unchecks ancestors when unselecting an item', async () => {
-    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
@@ -126,7 +142,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('shows indeterminate checkboxes when a descendant is selected', async () => {
-    render(<BrowseView canSelect={true} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item);
@@ -147,12 +163,21 @@ describe('browse-dashboards BrowseView', () => {
 
   describe('when there is no item in the folder', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
-      render(<BrowseView canSelect={true} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />);
+      render(
+        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
+      );
       expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
     });
 
     it('shows a simple message if the user has viewer rights', async () => {
-      render(<BrowseView canSelect={false} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />);
+      mockPermissions.canEditFolders = false;
+      mockPermissions.canEditDashboards = false;
+      mockPermissions.canDeleteFolders = false;
+      mockPermissions.canDeleteDashboards = false;
+
+      render(
+        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
+      );
       expect(await screen.findByText('This folder is empty')).toBeInTheDocument();
     });
   });

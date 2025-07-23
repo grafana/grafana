@@ -15,23 +15,25 @@ import {
   useLoadNextChildrenPage,
 } from '../state/hooks';
 import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
-import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
+import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
+import { canSelectItems } from './utils';
 
 interface BrowseViewProps {
   height: number;
   width: number;
   folderUID: string | undefined;
-  canSelect: boolean;
+  permissions: BrowseDashboardsPermissions;
 }
 
-export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height, permissions }: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
+  const canSelect = canSelectItems(permissions);
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
@@ -156,7 +158,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
   return (
     <DashboardsTree
-      canSelect={canSelect}
+      permissions={permissions}
       items={flatTree}
       width={width}
       height={height}
