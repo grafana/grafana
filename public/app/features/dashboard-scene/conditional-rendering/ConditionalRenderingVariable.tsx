@@ -13,6 +13,7 @@ import {
   VariableConditionValue,
   VariableConditionValueOperator,
 } from './types';
+import { translatedItemType } from './utils';
 
 type ConditionalRenderingVariableState = ConditionalRenderingBaseState<VariableConditionValue>;
 
@@ -33,7 +34,7 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     return t(
       'dashboard.conditional-rendering.conditions.variable.info',
       'Show or hide the {{type}} dynamically based on the variable value.',
-      { type: this.getItemType() }
+      { type: translatedItemType(this.getItemType()) }
     );
   }
 

@@ -11,6 +11,7 @@ import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingSerializerRegistryItem, DataConditionValue, ItemsWithConditionalRendering } from './types';
+import { translatedItemType } from './utils';
 
 type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
 
@@ -33,7 +34,7 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     return t(
       'dashboard.conditional-rendering.conditions.data.info',
       'Show or hide the {{type}} based on query results.',
-      { type: this.getItemType() }
+      { type: translatedItemType(this.getItemType()) }
     );
   }
 

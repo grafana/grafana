@@ -25,6 +25,7 @@ import {
   GroupConditionValue,
   ConditionalRenderingConditions,
 } from './types';
+import { translatedItemType } from './utils';
 
 export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
   visibility: GroupConditionVisibility;
@@ -159,7 +160,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         onChange={(value) => {
           dashboardEditActions.edit({
             description: t('dashboard.conditional-rendering.conditions.group.visibility.label', '{{type}} visibility', {
-              type: capitalize(itemType),
+              type: capitalize(translatedItemType(itemType)),
             }),
             source: model,
             perform: () => model.changeVisibility(value),

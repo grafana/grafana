@@ -11,6 +11,7 @@ import { dashboardEditActions } from '../edit-pane/shared';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingSerializerRegistryItem, TimeRangeSizeConditionValue } from './types';
+import { translatedItemType } from './utils';
 
 type ConditionalRenderingTimeRangeSizeState = ConditionalRenderingBaseState<TimeRangeSizeConditionValue>;
 
@@ -31,7 +32,7 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
     return t(
       'dashboard.conditional-rendering.conditions.time-range-size.info',
       'Show or hide the {{type}} if the dashboard time range is shorter than the selected time frame.',
-      { type: this.getItemType() }
+      { type: translatedItemType(this.getItemType()) }
     );
   }
 
