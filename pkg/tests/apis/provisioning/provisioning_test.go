@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -823,62 +822,6 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	})
 }
 
-// postFilesRequest performs a direct HTTP POST request to the files API.
-// This bypasses Kubernetes REST client limitations with '/' characters in subresource names.
-type filesPostOptions struct {
-	targetPath   string // The target file/directory path
-	originalPath string // Source path for move operations (optional)
-	message      string // Commit message (optional)  
-	body         string // Request body content (optional)
-}
-
-func postFilesRequest(t *testing.T, helper *provisioningTestHelper, repo string, opts filesPostOptions) *http.Response {
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-	baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
-		addr, repo, opts.targetPath)
-	
-	// Build the URL with proper query parameter encoding
-	parsedUrl, err := url.Parse(baseUrl)
-	require.NoError(t, err)
-	params := parsedUrl.Query()
-	
-	if opts.originalPath != "" {
-		params.Set("originalPath", opts.originalPath)
-	}
-	if opts.message != "" {
-		params.Set("message", opts.message)
-	}
-	parsedUrl.RawQuery = params.Encode()
-	
-	req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(opts.body))
-	require.NoError(t, err)
-	req.Header.Set("Content-Type", "application/json")
-	
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	
-	return resp
-}
-
-// postFilesMove is a convenience wrapper for move operations
-func postFilesMove(t *testing.T, helper *provisioningTestHelper, repo, targetPath, originalPath, message string) *http.Response {
-	return postFilesRequest(t, helper, repo, filesPostOptions{
-		targetPath:   targetPath,
-		originalPath: originalPath,
-		message:      message,
-		body:         "",
-	})
-}
-
-// postFilesMoveWithContent is a convenience wrapper for move operations with content update
-func postFilesMoveWithContent(t *testing.T, helper *provisioningTestHelper, repo, targetPath, originalPath, message, content string) *http.Response {
-	return postFilesRequest(t, helper, repo, filesPostOptions{
-		targetPath:   targetPath,
-		originalPath: originalPath,
-		message:      message,
-		body:         content,
-	})
-}
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	if testing.Short() {
