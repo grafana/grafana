@@ -44,6 +44,8 @@ export type TracePageHeaderProps = {
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
+  datasourceName?: string;
+  datasourceUid?: string;
   setHeaderHeight: (height: number) => void;
 };
 
@@ -60,6 +62,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
+    datasourceName,
+    datasourceUid,
     setHeaderHeight,
   } = props;
   const styles = useStyles2(getNewStyles);
@@ -135,7 +139,14 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       <div className={styles.titleRow}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {title}
-        <TracePageActions traceId={trace.traceID} data={data} app={app} />
+        <TracePageActions
+          traceId={trace.traceID}
+          data={data}
+          app={app}
+          datasourceType={datasourceType}
+          datasourceName={datasourceName}
+          datasourceUid={datasourceUid}
+        />
       </div>
 
       <div className={styles.subtitle}>

@@ -12,6 +12,10 @@ import { TraceView } from './TraceView';
 import { TraceData, TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(() => [false, null]), // [isAvailable, openAssistant]
+}));
+
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
   const topOfViewRef = createRef<HTMLDivElement>();

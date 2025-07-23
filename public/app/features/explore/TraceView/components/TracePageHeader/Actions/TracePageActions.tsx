@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { createContext, ItemDataType, useAssistant } from '@grafana/assistant';
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -39,10 +40,13 @@ export type TracePageActionsProps = {
   traceId: string;
   data: DataFrame;
   app?: CoreApp;
+  datasourceName?: string;
+  datasourceUid?: string;
+  datasourceType?: string;
 };
 
 export default function TracePageActions(props: TracePageActionsProps) {
-  const { traceId, data, app } = props;
+  const { traceId, data, app, datasourceName, datasourceUid, datasourceType } = props;
   const theme = useTheme2();
 
   const styles = getStyles(theme);
@@ -66,6 +70,48 @@ export default function TracePageActions(props: TracePageActionsProps) {
     });
   };
 
+  function AssistantButton() {
+    const [isAvailable, openAssistant] = useAssistant();
+
+    if (!isAvailable || !openAssistant) {
+      return null;
+    }
+
+    const context = [
+      createContext(ItemDataType.Structured, {
+        title: t('explore.trace-page-actions.trace-view-query', 'Trace View Query'),
+        data: {
+          query: traceId,
+        },
+      }),
+    ];
+
+    // Only add datasource context if datasource information exists
+    if (datasourceName && datasourceUid && datasourceType) {
+      context.unshift(
+        createContext(ItemDataType.Datasource, {
+          datasourceName,
+          datasourceUid,
+          datasourceType,
+        })
+      );
+    }
+
+    return (
+      <ActionButton
+        onClick={() =>
+          openAssistant?.({
+            prompt: `Summarize this trace view.`,
+            context,
+          })
+        }
+        ariaLabel={t('explore.trace-page-actions.label-analyze-trace', 'Analyze Trace')}
+        label={t('explore.trace-page-actions.label-analyze-trace', 'Analyze Trace')}
+        icon={'ai-sparkle'}
+      />
+    );
+  }
+
   return (
     <div className={styles.TracePageActions}>
       {config.feedbackLinksEnabled && (
@@ -86,6 +132,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
         </div>
       )}
 
+      <AssistantButton />
       <ActionButton
         onClick={copyTraceId}
         ariaLabel={t('explore.trace-page-actions.ariaLabel-copy-trace-id', 'Copy Trace ID')}

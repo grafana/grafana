@@ -168,6 +168,7 @@ export function TraceView(props: Props) {
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
   const datasourceUid = datasource ? datasource?.uid : '';
+  const datasourceName = datasource ? datasource?.name : '';
   const scrollElement = props.scrollElement
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
@@ -189,6 +190,8 @@ export function TraceView(props: Props) {
             setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             spanFilterMatches={spanFilterMatches}
             datasourceType={datasourceType}
+            datasourceName={datasourceName}
+            datasourceUid={datasourceUid}
             setHeaderHeight={setHeaderHeight}
             app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
           />
