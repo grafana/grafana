@@ -4,6 +4,7 @@ import (
 	"context"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -18,7 +19,17 @@ type singleTenantClientSupplier struct {
 	cfg      *setting.Cfg
 }
 
-func NewSingleTenantClientSupplier(cfg *setting.Cfg, features featuremgmt.FeatureToggles, p plugins.Client, ctxProv *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.DataSourceClientSupplier {
+type singleTenantInstance struct {
+	client   clientapi.QueryDataClient
+	features featuremgmt.FeatureToggles
+	cfg      *setting.Cfg
+}
+
+func (t *singleTenantInstance) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, _ map[string]string) (clientapi.QueryDataClient, error) {
+	return t.client, nil
+}
+
+func NewSingleTenantClientSupplier(cfg *setting.Cfg, features featuremgmt.FeatureToggles, p plugins.Client, ctxProv *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.InstanceProvider {
 	return &singleTenantClientSupplier{
 		cfg:      cfg,
 		features: features,
@@ -26,19 +37,29 @@ func NewSingleTenantClientSupplier(cfg *setting.Cfg, features featuremgmt.Featur
 	}
 }
 
-func (s *singleTenantClientSupplier) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, _ map[string]string, _ clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
+func (s *singleTenantClientSupplier) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, _ map[string]string) (clientapi.QueryDataClient, error) {
 	return s.client, nil
 }
 
-func (s *singleTenantClientSupplier) GetInstanceConfigurationSettings(ctx context.Context) (clientapi.InstanceConfigurationSettings, error) {
+func (s *singleTenantClientSupplier) GetInstance(_ context.Context) (clientapi.Instance, error) {
+	return &singleTenantInstance{
+		client:   s.client,
+		features: s.features,
+		cfg:      s.cfg,
+	}, nil
+}
+
+func (s *singleTenantInstance) GetSettings() clientapi.InstanceConfigurationSettings {
 	return clientapi.InstanceConfigurationSettings{
-		StackID:                      0,
 		FeatureToggles:               s.features,
-		FullConfig:                   nil,
-		Options:                      nil,
 		SQLExpressionCellLimit:       s.cfg.SQLExpressionCellLimit,
 		SQLExpressionOutputCellLimit: s.cfg.SQLExpressionOutputCellLimit,
 		SQLExpressionTimeout:         s.cfg.SQLExpressionTimeout,
 		ExpressionsEnabled:           s.cfg.ExpressionsEnabled,
-	}, nil
+	}
+}
+
+func (s *singleTenantInstance) GetLogger(parent log.Logger) log.Logger {
+	// currently we do not add any extra info
+	return parent.New()
 }
