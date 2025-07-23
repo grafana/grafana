@@ -65,6 +65,7 @@ func RegisterAPIService(
 		display:            user.NewLegacyDisplayREST(store),
 		reg:                reg,
 		enableAuthZApis:    features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		enableDualWriter:   true,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -127,21 +128,24 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	userResource := legacyiamv0.UserResourceInfo
 	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient)
-
-	// TODO: Figure out what's missing for the DualWriter setup in a MT setup
-	// MT app is unable to start if DW is configured
-	// store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// storage[userResource.StoragePath()] = dw
 	storage[userResource.StoragePath()] = legacyStore
+
+	// We only need dual writer in single-tenant mode
+	if b.enableDualWriter {
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
+		if err != nil {
+			return err
+		}
+
+		storage[userResource.StoragePath()] = dw
+	}
+
+	// TODO: figure out when teams is ready for dual writer
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo
