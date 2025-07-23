@@ -154,6 +154,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
     zIndex: `${ZIndices.ANCHOR} !important`,
     pointerEvents: PointerEvents.ANCHOR,
+    userSelect: 'none',
   }),
   highlightElement: css({
     backgroundColor: '#00ff00',
