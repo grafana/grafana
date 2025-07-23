@@ -28,7 +28,7 @@ export function ShareSpanButton(props: Props) {
         }}
       >
         <Button variant="secondary" size="sm" icon="share-alt" fill="outline">
-          <Trans i18nKey="explore.span-detals.share-span">Share</Trans>
+          <Trans i18nKey="explore.span-detail.share-span">Share</Trans>
         </Button>
       </a>
     </span>
