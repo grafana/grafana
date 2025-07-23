@@ -109,8 +109,8 @@ export function collectSelectedItems(
 export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions) {
   const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
   return itemKind === 'folder'
-    ? Boolean(canEditFolders && canDeleteFolders)
-    : Boolean(canEditDashboards && canDeleteDashboards);
+    ? Boolean(canEditFolders || canDeleteFolders)
+    : Boolean(canEditDashboards || canDeleteDashboards);
 }
 
 export function canSelectItems(permissions: BrowseDashboardsPermissions) {
