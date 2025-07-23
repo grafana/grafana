@@ -227,10 +227,6 @@ const (
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
 
-	// FlagExternalCorePlugins
-	// Allow core plugins to be loaded as external
-	FlagExternalCorePlugins = "externalCorePlugins"
-
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
@@ -258,6 +254,10 @@ const (
 	// FlagKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
+
+	// FlagKubernetesLibraryPanelConnections
+	// Routes library panel connections requests from /api to using search
+	FlagKubernetesLibraryPanelConnections = "kubernetesLibraryPanelConnections"
 
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
@@ -767,10 +767,6 @@ const (
 	// Enables the temporary themes for GrafanaCon
 	FlagGrafanaconThemes = "grafanaconThemes"
 
-	// FlagPluginsCDNSyncLoader
-	// Loads plugins from CDN synchronously
-	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
-
 	// FlagAlertingJiraIntegration
 	// Enables the new Jira integration for contact points in cloud alert managers.
 	FlagAlertingJiraIntegration = "alertingJiraIntegration"
@@ -954,4 +950,8 @@ const (
 	// FlagUnifiedStorageSearchDualReaderEnabled
 	// Enable dual reader for unified storage search
 	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
+
+	// FlagDashboardDsAdHocFiltering
+	// Enables adhoc filtering support for the dashboard datasource
+	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
 )

@@ -13,7 +13,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaTemplateGroup = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", &TemplateGroup{}, &TemplateGroupList{}, resource.WithKind("TemplateGroup"),
-		resource.WithPlural("templategroups"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+		resource.WithPlural("templategroups"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
 			FieldSelector: "spec.title",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*TemplateGroup)

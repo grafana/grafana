@@ -7,8 +7,8 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets/mocks"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -259,7 +259,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 			secretName: "test-secret",
 			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService) {
 				exposedValue := secretv1beta1.NewExposedSecureValue("decrypted-data")
-				mockResult := service.NewDecryptResultValue(&exposedValue)
+				mockResult := secret.NewDecryptResultValue(&exposedValue)
 
 				mockDecryptSvc.EXPECT().Decrypt(
 					mock.MatchedBy(func(ctx context.Context) bool {
@@ -268,7 +268,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 					}),
 					"test-namespace",
 					"test-secret",
-				).Return(map[string]service.DecryptResult{
+				).Return(map[string]secret.DecryptResult{
 					"test-secret": mockResult,
 				}, nil)
 			},
@@ -300,16 +300,16 @@ func TestSecretsService_Decrypt(t *testing.T) {
 					}),
 					"test-namespace",
 					"test-secret",
-				).Return(map[string]service.DecryptResult{}, nil)
+				).Return(map[string]secret.DecryptResult{}, nil)
 			},
-			expectedError: contracts.ErrDecryptNotFound.Error(),
+			expectedError: secret.ErrDecryptNotFound.Error(),
 		},
 		{
 			name:       "decrypt result has error",
 			namespace:  "test-namespace",
 			secretName: "test-secret",
 			setupMocks: func(mockSecretsSvc *MockSecureValueClient, mockDecryptSvc *mocks.MockDecryptService) {
-				mockResult := service.NewDecryptResultErr(errors.New("decryption failed"))
+				mockResult := secret.NewDecryptResultErr(errors.New("decryption failed"))
 
 				mockDecryptSvc.EXPECT().Decrypt(
 					mock.MatchedBy(func(ctx context.Context) bool {
@@ -317,7 +317,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 					}),
 					"test-namespace",
 					"test-secret",
-				).Return(map[string]service.DecryptResult{
+				).Return(map[string]secret.DecryptResult{
 					"test-secret": mockResult,
 				}, nil)
 			},
@@ -355,7 +355,7 @@ func TestSecretsService_Decrypt_ServiceIdentityContext(t *testing.T) {
 	mockDecryptSvc := &mocks.MockDecryptService{}
 
 	exposedValue := secretv1beta1.NewExposedSecureValue("test-data")
-	mockResult := service.NewDecryptResultValue(&exposedValue)
+	mockResult := secret.NewDecryptResultValue(&exposedValue)
 
 	// Create a more detailed context matcher to verify the service identity context is created correctly
 	mockDecryptSvc.EXPECT().Decrypt(
@@ -365,7 +365,7 @@ func TestSecretsService_Decrypt_ServiceIdentityContext(t *testing.T) {
 		}),
 		"test-namespace",
 		"test-secret",
-	).Return(map[string]service.DecryptResult{
+	).Return(map[string]secret.DecryptResult{
 		"test-secret": mockResult,
 	}, nil)
 

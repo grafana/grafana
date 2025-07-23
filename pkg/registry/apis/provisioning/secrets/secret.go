@@ -6,21 +6,18 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/setting"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
 )
 
 const svcName = "provisioning"
 
 //go:generate mockery --name SecureValueClient --structname MockSecureValueClient --inpackage --filename secure_value_client_mock.go --with-expecter
-type SecureValueClient interface {
-	Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error)
-}
+type SecureValueClient = secret.SecureValueClient
 
 //go:generate mockery --name Service --structname MockService --inpackage --filename secret_mock.go --with-expecter
 type Service interface {
@@ -31,14 +28,14 @@ type Service interface {
 
 var _ Service = (*secretsService)(nil)
 
-//go:generate mockery --name DecryptService --structname MockDecryptService --srcpkg=github.com/grafana/grafana/pkg/registry/apis/secret/service --filename decrypt_service_mock.go --with-expecter
+//go:generate mockery --name DecryptService --structname MockDecryptService --srcpkg=github.com/grafana/grafana/pkg/registry/apis/secret --filename decrypt_service_mock.go --with-expecter
 type secretsService struct {
 	secureValues SecureValueClient
-	decryptSvc   grafanasecrets.DecryptService
+	decryptSvc   secret.DecryptService
 	cfg          *setting.Cfg
 }
 
-func NewSecretsService(secretsSvc SecureValueClient, decryptSvc grafanasecrets.DecryptService, cfg *setting.Cfg) Service {
+func NewSecretsService(secretsSvc SecureValueClient, decryptSvc secret.DecryptService, cfg *setting.Cfg) Service {
 	return &secretsService{
 		secureValues: secretsSvc,
 		decryptSvc:   decryptSvc,

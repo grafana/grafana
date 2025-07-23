@@ -12,7 +12,6 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -142,9 +141,9 @@ func (c *DecryptService) decryptViaLocal(ctx context.Context, namespace string, 
 	for _, name := range names {
 		exposedSecureValue, err := c.existingDecryptStorage.Decrypt(ctx, xkube.Namespace(namespace), name)
 		if err != nil {
-			results[name] = service.NewDecryptResultErr(err)
+			results[name] = contracts.NewDecryptResultErr(err)
 		} else {
-			results[name] = service.NewDecryptResultValue(&exposedSecureValue)
+			results[name] = contracts.NewDecryptResultValue(&exposedSecureValue)
 		}
 	}
 
