@@ -294,7 +294,7 @@ func (r *DualReadWriter) MoveResource(ctx context.Context, opts DualWriteOptions
 	sourceIsDir := safepath.IsDir(opts.OriginalPath)
 	targetIsDir := safepath.IsDir(opts.Path)
 	if sourceIsDir != targetIsDir {
-		return nil, fmt.Errorf("cannot move between file and directory types - source is %s, target is %s", 
+		return nil, fmt.Errorf("cannot move between file and directory types - source is %s, target is %s",
 			getPathType(sourceIsDir), getPathType(targetIsDir))
 	}
 
@@ -423,7 +423,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("not authorized to create new file: %w", err)
 	}
 
-	_, err = newParsed.ToSaveBytes()
+	data, err := newParsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -441,7 +441,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		if err = r.repo.Delete(ctx, opts.OriginalPath, opts.Ref, opts.Message); err != nil {
 			return nil, fmt.Errorf("delete original file in repository: %w", err)
 		}
-		if err = r.repo.Create(ctx, opts.Path, opts.Ref, destinationData, opts.Message); err != nil {
+		if err = r.repo.Create(ctx, opts.Path, opts.Ref, data, opts.Message); err != nil {
 			return nil, fmt.Errorf("create moved file with new content in repository: %w", err)
 		}
 	} else {
