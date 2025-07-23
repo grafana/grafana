@@ -18,6 +18,7 @@ import * as React from 'react';
 
 import {
   CoreApp,
+  TraceSearchProps,
   DataFrame,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
@@ -32,7 +33,6 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { config } from '../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
-import { SearchProps } from '../../useSearch';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types/trace';
 import { formatDuration } from '../utils/date';
@@ -44,8 +44,8 @@ export type TracePageHeaderProps = {
   data: DataFrame;
   app?: CoreApp;
   timeZone: TimeZone;
-  search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
+  search: TraceSearchProps;
+  setSearch: (newSearch: TraceSearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;

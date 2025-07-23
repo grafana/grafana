@@ -23,8 +23,7 @@ import {
   PluginExtensionTypes,
 } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-
-import { defaultFilters } from '../../useSearch';
+import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { TracePageHeader } from './TracePageHeader';
 import { trace } from './mocks';
@@ -87,7 +86,7 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
   const defaultProps = {
     trace,
     timeZone: '',
-    search: defaultFilters,
+    search: DEFAULT_SPAN_FILTERS,
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),

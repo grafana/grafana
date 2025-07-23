@@ -7,6 +7,13 @@ import { LogLineDetailsMode } from '../LogLineDetails';
 import { LogListContextData, Props } from '../LogListContext';
 import { LogListModel } from '../processing';
 
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
+
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   closeDetails: () => {},
@@ -18,6 +25,7 @@ export const LogListContext = createContext<LogListContextData>({
   enableLogDetails: false,
   filterLevels: [],
   fontSize: 'default',
+  forceEscape: false,
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
   setDetailsWidth: () => {},
@@ -42,6 +50,8 @@ export const LogListContext = createContext<LogListContextData>({
   setDetailsMode: function (mode: LogLineDetailsMode): void {
     throw new Error('Function not implemented.');
   },
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -85,6 +95,8 @@ export const defaultValue: LogListContextData = {
   enableLogDetails: false,
   filterLevels: [],
   fontSize: 'default',
+  forceEscape: false,
+  hasUnescapedContent: false,
   setDetailsWidth: jest.fn(),
   showDetails: [],
   toggleDetails: jest.fn(),
@@ -94,6 +106,8 @@ export const defaultValue: LogListContextData = {
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 };
 
 export const defaultProps: Props = {
