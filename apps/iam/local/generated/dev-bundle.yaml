@@ -1,0 +1,2621 @@
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: coreroles.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            description:
+                                type: string
+                            group:
+                                type: string
+                            permissions:
+                                description: |-
+                                    TODO:
+                                    delegatable?: bool
+                                    created?
+                                    updated?
+                                items:
+                                    properties:
+                                        action:
+                                            description: 'RBAC action (e.g: "dashbaords:read")'
+                                            type: string
+                                        scope:
+                                            description: 'RBAC scope (e.g: "dashboards:uid:dash1")'
+                                            type: string
+                                    required:
+                                        - action
+                                        - scope
+                                    type: object
+                                type: array
+                            title:
+                                description: Display name of the role
+                                type: string
+                            version:
+                                type: integer
+                        required:
+                            - title
+                            - description
+                            - version
+                            - group
+                            - permissions
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: CoreRole
+        plural: coreroles
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: globalroles.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            description:
+                                type: string
+                            group:
+                                type: string
+                            permissions:
+                                description: |-
+                                    TODO:
+                                    delegatable?: bool
+                                    created?
+                                    updated?
+                                items:
+                                    properties:
+                                        action:
+                                            description: 'RBAC action (e.g: "dashbaords:read")'
+                                            type: string
+                                        scope:
+                                            description: 'RBAC scope (e.g: "dashboards:uid:dash1")'
+                                            type: string
+                                    required:
+                                        - action
+                                        - scope
+                                    type: object
+                                type: array
+                            title:
+                                description: Display name of the role
+                                type: string
+                            version:
+                                type: integer
+                        required:
+                            - title
+                            - description
+                            - version
+                            - group
+                            - permissions
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: GlobalRole
+        plural: globalroles
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: globalrolebindings.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            roleRef:
+                                properties:
+                                    kind:
+                                        description: kind of role
+                                        enum:
+                                            - CoreRole
+                                            - GlobalRole
+                                        type: string
+                                    name:
+                                        description: uid of the role
+                                        type: string
+                                required:
+                                    - kind
+                                    - name
+                                type: object
+                            subjects:
+                                items:
+                                    properties:
+                                        kind:
+                                            description: kind of the identity getting the permission
+                                            enum:
+                                                - User
+                                                - ServiceAccount
+                                                - Team
+                                                - BasicRole
+                                            type: string
+                                        name:
+                                            description: uid of the identity
+                                            type: string
+                                    required:
+                                        - kind
+                                        - name
+                                    type: object
+                                type: array
+                        required:
+                            - subjects
+                            - roleRef
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: GlobalRoleBinding
+        plural: globalrolebindings
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: resourcepermissions.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            permissions:
+                                items:
+                                    properties:
+                                        kind:
+                                            description: kind of the identity getting the permission
+                                            enum:
+                                                - User
+                                                - ServiceAccount
+                                                - Team
+                                                - BasicRole
+                                            type: string
+                                        name:
+                                            description: uid of the identity getting the permission
+                                            type: string
+                                        verbs:
+                                            description: list of actions granted to the user (e.g. "admin" or "get", "update")
+                                            items:
+                                                type: string
+                                            type: array
+                                    required:
+                                        - kind
+                                        - name
+                                        - verbs
+                                    type: object
+                                type: array
+                            resource:
+                                properties:
+                                    apiGroup:
+                                        description: 'api group of the resource (e.g: "folder.grafana.app")'
+                                        type: string
+                                    name:
+                                        description: 'uid of the resource (e.g: "fold1")'
+                                        type: string
+                                    resource:
+                                        description: 'kind of the resource (e.g: "folders")'
+                                        type: string
+                                required:
+                                    - apiGroup
+                                    - resource
+                                    - name
+                                type: object
+                        required:
+                            - resource
+                            - permissions
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: ResourcePermission
+        plural: resourcepermissions
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: roles.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            description:
+                                type: string
+                            group:
+                                type: string
+                            permissions:
+                                description: |-
+                                    TODO:
+                                    delegatable?: bool
+                                    created?
+                                    updated?
+                                items:
+                                    properties:
+                                        action:
+                                            description: 'RBAC action (e.g: "dashbaords:read")'
+                                            type: string
+                                        scope:
+                                            description: 'RBAC scope (e.g: "dashboards:uid:dash1")'
+                                            type: string
+                                    required:
+                                        - action
+                                        - scope
+                                    type: object
+                                type: array
+                            title:
+                                description: Display name of the role
+                                type: string
+                            version:
+                                type: integer
+                        required:
+                            - title
+                            - description
+                            - version
+                            - group
+                            - permissions
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: Role
+        plural: roles
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: rolebindings.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            roleRef:
+                                properties:
+                                    kind:
+                                        description: kind of role
+                                        enum:
+                                            - Role
+                                            - CoreRole
+                                            - GlobalRole
+                                        type: string
+                                    name:
+                                        description: uid of the role
+                                        type: string
+                                required:
+                                    - kind
+                                    - name
+                                type: object
+                            subjects:
+                                items:
+                                    properties:
+                                        kind:
+                                            description: kind of the identity getting the permission
+                                            enum:
+                                                - User
+                                                - ServiceAccount
+                                                - Team
+                                                - BasicRole
+                                            type: string
+                                        name:
+                                            description: uid of the identity
+                                            type: string
+                                    required:
+                                        - kind
+                                        - name
+                                    type: object
+                                type: array
+                        required:
+                            - subjects
+                            - roleRef
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: RoleBinding
+        plural: rolebindings
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: serviceaccounts.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            disabled:
+                                type: boolean
+                            title:
+                                type: string
+                        required:
+                            - title
+                            - disabled
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: ServiceAccount
+        plural: serviceaccounts
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: teams.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            email:
+                                type: string
+                            title:
+                                type: string
+                        required:
+                            - title
+                            - email
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: Team
+        plural: teams
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: teambindings.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            subjects:
+                                items:
+                                    properties:
+                                        name:
+                                            description: uid of the identity
+                                            type: string
+                                        permission:
+                                            description: permission of the identity in the team
+                                            enum:
+                                                - admin
+                                                - member
+                                            type: string
+                                    required:
+                                        - name
+                                        - permission
+                                    type: object
+                                type: array
+                            teamRef:
+                                properties:
+                                    name:
+                                        description: Name is the unique identifier for a team.
+                                        type: string
+                                required:
+                                    - name
+                                type: object
+                        required:
+                            - subjects
+                            - teamRef
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: TeamBinding
+        plural: teambindings
+    scope: Namespaced
+
+---
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: users.iam.grafana.app
+spec:
+    group: iam.grafana.app
+    versions:
+        - name: v0alpha1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            disabled:
+                                type: boolean
+                            email:
+                                type: string
+                            emailVerified:
+                                type: boolean
+                            grafanaAdmin:
+                                type: boolean
+                            login:
+                                type: string
+                            name:
+                                type: string
+                            provisioned:
+                                description: What to do with salt, rands and password?
+                                type: boolean
+                        required:
+                            - disabled
+                            - email
+                            - emailVerified
+                            - grafanaAdmin
+                            - login
+                            - name
+                            - provisioned
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: User
+        plural: users
+    scope: Namespaced
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: corerole-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - coreroles
+      - coreroles/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: corerole-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - coreroles
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: globalrole-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - globalroles
+      - globalroles/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: globalrole-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - globalroles
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: globalrolebinding-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - globalrolebindings
+      - globalrolebindings/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: globalrolebinding-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - globalrolebindings
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: resourcepermission-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - resourcepermissions
+      - resourcepermissions/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: resourcepermission-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - resourcepermissions
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: role-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - roles
+      - roles/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: role-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - roles
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rolebinding-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - rolebindings
+      - rolebindings/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rolebinding-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - rolebindings
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: serviceaccount-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - serviceaccounts
+      - serviceaccounts/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: serviceaccount-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - serviceaccounts
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: team-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - teams
+      - teams/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: team-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - teams
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: teambinding-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - teambindings
+      - teambindings/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: teambinding-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - teambindings
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: user-user
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - users
+      - users/status
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - deletecollection
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: user-lister
+rules:
+  - apiGroups:
+      - iam.grafana.app
+    resources:
+      - users
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: aggregator-access
+rules:
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["iam.grafana.app"]
+    resources: ["*"]
+    verbs: ["*"]
+  - nonResourceURLs:
+      - "/openapi/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+      - "/apis/iam.grafana.app/*"
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: aggregator-unauth-access-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: aggregator-access
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: system:unauthenticated
+---
+﻿apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: minio
+  name: minio
+  namespace: default
+spec:
+  ports:
+    - name: minio-minio
+      port: 9000
+      targetPort: 9000
+  selector:
+    name: minio
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: minio
+  template:
+    metadata:
+      labels:
+        name: minio
+    spec:
+      containers:
+        - args:
+            - mkdir -p /data/cortex && mkdir -p /data/loki && /usr/bin/minio server /data
+          command:
+            - /bin/bash
+            - -c
+          env:
+            - name: MINIO_ACCESS_KEY
+              value: minio
+            - name: MINIO_SECRET_KEY
+              value: minio123
+            - name: MINIO_PROMETHEUS_AUTH_TYPE
+              value: public
+          image: minio/minio:RELEASE.2025-05-24T17-08-30Z
+          imagePullPolicy: IfNotPresent
+          name: minio
+          ports:
+            - containerPort: 9000
+              name: minio
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-config
+  namespace: default
+data:
+  config.yaml: |
+    # Configuration for running Cortex in single-process mode.
+    # This configuration should not be used in production.
+    # It is only for getting started and development.
+
+    # Disable the requirement that every request to Cortex has a
+    # X-Scope-OrgID header. `fake` will be substituted in instead.
+    auth_enabled: false
+
+    server:
+      http_listen_port: 9009
+      grpc_listen_port: 9095
+
+      # Configure the server to allow messages up to 100MB.
+      grpc_server_max_recv_msg_size: 104857600
+      grpc_server_max_send_msg_size: 104857600
+      grpc_server_max_concurrent_streams: 1000
+
+    distributor:
+      shard_by_all_labels: true
+      pool:
+        health_check_ingesters: true
+
+    ingester_client:
+      grpc_client_config:
+        # Configure the client to allow messages up to 100MB.
+        max_recv_msg_size: 104857600
+        max_send_msg_size: 104857600
+        grpc_compression: gzip
+
+    ingester:
+      # We want our ingesters to flush chunks at the same time to optimise
+      # deduplication opportunities.
+      spread_flushes: true
+      chunk_age_jitter: 0
+
+      walconfig:
+        wal_enabled: true
+        recover_from_wal: true
+        wal_dir: /tmp/cortex/wal
+
+      lifecycler:
+        # The address to advertise for this ingester.  Will be autodiscovered by
+        # looking up address on eth0 or en0; can be specified if this fails.
+        # address: 127.0.0.1
+
+        # We want to start immediately and flush on shutdown.
+        join_after: 0
+        min_ready_duration: 0s
+        final_sleep: 0s
+        num_tokens: 512
+        tokens_file_path: /tmp/cortex/wal/tokens
+
+        # Use an in memory ring store, so we don't need to launch a Consul.
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+
+    storage:
+      engine: blocks
+
+    blocks_storage:
+      tsdb:
+        dir: /tmp/cortex/tsdb
+      bucket_store:
+        sync_dir: /tmp/cortex/tsdb-sync
+
+      backend: filesystem
+      filesystem:
+        dir: /tmp/cortex/blocks
+
+    purger:
+      object_store_type: filesystem
+
+    frontend_worker:
+      # Configure the frontend worker in the querier to match worker count
+      # to max_concurrent on the queriers.
+      match_max_concurrent: true
+
+    # Configure the ruler to scan the /tmp/cortex/rules directory for prometheus
+    # rules: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules
+    ruler:
+      enable_api: true
+      enable_sharding: false
+      storage:
+        type: s3
+        s3:
+          s3: http://minio:minio123@minio.default.svc.cluster.local:9000
+          bucketnames: cortex
+          s3forcepathstyle: true
+
+    querier:
+      at_modifier_enabled: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: cortex
+  name: cortex
+  namespace: default
+spec:
+  ports:
+    - name: cortex-http
+      port: 9009
+      targetPort: 9009
+    - name: cortex-grpc
+      port: 9095
+      targetPort: 9095
+  selector:
+    name: cortex
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: cortex
+  template:
+    metadata:
+      annotations:
+        cortex-config-hash: 128d9bf6025033e3552baff9d5bb7715
+      labels:
+        name: cortex
+    spec:
+      containers:
+        - args:
+            - -config.file=/etc/cortex/config.yaml
+          env:
+            - name: JAEGER_AGENT_HOST
+              value: tempo
+            - name: JAEGER_ENDPOINT
+              value: http://agent.default.svc.cluster.local:14268/api/traces
+            - name: JAEGER_SAMPLER_TYPE
+              value: const
+            - name: JAEGER_SAMPLER_PARAM
+              value: "1"
+          image: cortexproject/cortex:v1.9.0
+          imagePullPolicy: IfNotPresent
+          name: cortex
+          ports:
+            - containerPort: 9009
+              name: http
+            - containerPort: 9095
+              name: grpc
+          volumeMounts:
+            - mountPath: /etc/cortex
+              name: cortex-config
+      volumes:
+        - configMap:
+            name: cortex-config
+          name: cortex-config
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cortex-ingress
+  namespace: default
+spec:
+  rules:
+    - host: cortex.k3d.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: cortex
+                port:
+                  number: 9009
+            path: /
+            pathType: Prefix
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: default
+data:
+  overrides.yaml: |
+    overrides: 
+  tempo.yaml: |
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+    compactor:
+      compaction:
+        compacted_block_retention: 24h
+    distributor:
+      receivers:
+        jaeger:
+          protocols:
+            thrift_compact:
+              endpoint: 0.0.0.0:6831
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+    ingester: {}
+    storage:
+      trace:
+        backend: local
+        search:
+        local:
+          path: /tmp/tempo/traces
+        wal:
+          path: /tmp/tempo/wal 
+          v2_encoding: none
+          search_encoding: none
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempo
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: tempo
+  template:
+    metadata:
+      annotations:
+        tempo-config-hash: 1a64b8ef2f49f5c9e8057582936f2f7b
+      labels:
+        name: tempo
+    spec:
+      containers:
+      - args:
+        - -config.file=/conf/tempo.yaml
+        - -mem-ballast-size-mbs=1024
+        image: grafana/tempo:2.2.0
+        imagePullPolicy: IfNotPresent
+        name: tempo
+        ports:
+        - containerPort: 3100
+          name: http
+        - containerPort: 4317
+          name: otlp-http
+        volumeMounts:
+        - mountPath: /conf
+          name: tempo-config
+      volumes:
+      - configMap:
+          name: tempo-config
+        name: tempo-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: tempo
+  name: tempo
+  namespace: default
+spec:
+  ports:
+  - name: tempo-http
+    port: 3100
+    targetPort: 3100
+  - name: tempo-otlp-http
+    port: 4317
+    targetPort: 4317
+  selector:
+    name: tempo
+---
+apiVersion: v1
+data:
+  agent.yml: |
+    logs:
+      configs:
+        - name: k8sevents
+          clients:
+          - url: http://loki.default.svc.cluster.local:3100/loki/api/v1/push
+            external_labels:
+              cluster: my-cluster
+              job: integrations/kubernetes/eventhandler
+          positions:
+            filename: /tmp/k8seventspositions.yaml
+        - name: agent
+          clients:
+            - url: http://loki.default.svc.cluster.local:3100/loki/api/v1/push
+              external_labels:
+                cluster: my-cluster
+          positions:
+            filename: /tmp/positions.yaml
+          target_config:
+            sync_period: 10s
+          scrape_configs:
+          - job_name: integrations/kubernetes/pod-logs
+            kubernetes_sd_configs:
+              - role: pod
+            pipeline_stages:
+              - cri: {}
+            relabel_configs:
+              - source_labels:
+                  - __meta_kubernetes_pod_label_name
+                  - __meta_kubernetes_pod_label_app_kubernetes_io_name # also
+                target_label: __service__
+                separator: ""
+              - source_labels:
+                  - __meta_kubernetes_pod_node_name
+                target_label: __host__
+              - action: drop
+                regex: ""
+                source_labels:
+                  - __service__
+              - action: labelmap
+                regex: __meta_kubernetes_pod_label_(.+)
+              - action: replace
+                replacement: $1
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_namespace
+                  - __service__
+                target_label: job
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_container_name
+                target_label: container
+              - replacement: /var/log/pods/*$1/*.log
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_pod_uid
+                  - __meta_kubernetes_pod_container_name
+                target_label: __path__
+              - action: replace # `cluster` label is required for the mimir integration, so set a default value
+                regex: ""
+                replacement: k8s-cluster
+                separator: ""
+                source_labels:
+                  - cluster
+                target_label: cluster
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_container_name
+                target_label: name
+    metrics:
+      global:
+        scrape_interval: 15s
+        remote_write:
+        - url: "http://cortex.default.svc.cluster.local:9009/api/v1/push"
+      configs:
+        - name: default
+          scrape_configs:
+          - job_name: grafana
+            static_configs:
+              - targets: ['grafana.default.svc.cluster.local']
+          - job_name: plugin
+            metrics_path: '/api/plugins/iam-app/metrics'
+            static_configs:
+              - targets: ['grafana.default.svc.cluster.local']
+          - job_name: operator
+            static_configs:
+              - targets: ['iam-app-operator.default.svc.cluster.local:9090']
+      wal_directory: /var/lib/agent/data
+    server:
+        log_level: info
+    traces:
+        configs:
+            - batch:
+                send_batch_size: 1000
+                timeout: 5s
+              name: traces_default
+              receivers:
+                otlp:
+                  protocols:
+                    grpc:
+                jaeger:
+                    protocols:
+                        thrift_compact: null
+                        thrift_http: null
+              remote_write:
+                - endpoint: tempo.default.svc.cluster.local:4317
+                  insecure: true
+                  retry_on_failure:
+                    enabled: true
+                    initial_interval: 500ms
+                    max_elapsed_time: 1s
+kind: ConfigMap
+metadata:
+  name: grafana-agent-config
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafana-agent
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: grafana-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: grafana-agent
+subjects:
+- kind: ServiceAccount
+  name: grafana-agent
+  namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-agent
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-agent
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: grafana-agent
+  template:
+    metadata:
+      annotations:
+        grafana-agent-config-hash: ea051677fc887c7c7d9894f7d450fdb1
+      labels:
+        name: grafana-agent
+    spec:
+      containers:
+      - args:
+        - -config.file=/etc/agent/agent.yml
+        - -server.http.address=0.0.0.0:80
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: grafana/agent:v0.35.2
+        imagePullPolicy: IfNotPresent
+        name: agent
+        ports:
+        - containerPort: 6831
+          name: thrift-compact
+          protocol: UDP
+        - containerPort: 14268
+          name: thrift-http
+          protocol: TCP
+        - containerPort: 4317
+          name: otlp-grpc
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /etc/agent
+          name: grafana-agent-config
+        - mountPath: /var/log
+          name: varlogs
+          readOnly: true
+      serviceAccount: grafana-agent
+      volumes:
+      - configMap:
+          name: grafana-agent-config
+        name: grafana-agent-config
+      - hostPath:
+          path: /var/log
+        name: varlogs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: grafana-agent
+  name: grafana-agent
+  namespace: default
+spec:
+  ports:
+  - name: agent-thrift-compact
+    port: 6831
+    protocol: UDP
+    targetPort: 6831
+  - name: agent-thrift-http
+    port: 14268
+    protocol: TCP
+    targetPort: 14268
+  - name: agent-otel-grpc
+    port: 4317
+    protocol: TCP
+    targetPort: 4317
+  selector:
+    name: grafana-agent
+
+---
+﻿apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-config
+  namespace: default
+data:
+  config.yaml: | 
+    auth_enabled: false
+    server:
+      http_listen_port: 3100
+    common:
+      path_prefix: /tmp/loki
+      storage:
+        filesystem:
+          chunks_directory: /tmp/loki/chunks
+          rules_directory: /tmp/loki/rules
+      replication_factor: 1
+      ring:
+        instance_addr: 127.0.0.1
+        kvstore:
+          store: inmemory
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+    ruler:
+      alertmanager_url: http://localhost:9093
+      storage:
+        type: s3
+        s3:
+          s3: http://minio:minio123@minio.default.svc.cluster.local:9000
+          bucketnames: loki
+          s3forcepathstyle: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: loki
+  template:
+    metadata:
+      annotations:
+        loki-config-hash: 3ea717a076077bf16353d56e9f79510d
+      labels:
+        name: loki
+    spec:
+      containers:
+      - args:
+        - -config.file=/etc/loki/config.yaml
+        env:
+        - name: JAEGER_AGENT_HOST
+          value: tempo
+        - name: JAEGER_ENDPOINT
+          value: http://agent.default.svc.cluster.local:14268/api/traces
+        - name: JAEGER_SAMPLER_TYPE
+          value: const
+        - name: JAEGER_SAMPLER_PARAM
+          value: "1"
+        image: grafana/loki:2.8.4
+        imagePullPolicy: IfNotPresent
+        name: loki
+        ports:
+        - containerPort: 3100
+          name: http
+        - containerPort: 9095
+          name: grpc
+        volumeMounts:
+        - mountPath: /etc/loki
+          name: loki-config
+      volumes:
+      - configMap:
+          name: loki-config
+        name: loki-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: loki
+  name: loki
+  namespace: default
+spec:
+  ports:
+  - name: loki-http
+    port: 3100
+    targetPort: 3100
+  - name: loki-grpc
+    port: 9095
+    targetPort: 9095
+  selector:
+    name: loki
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loki-ingress
+  namespace: default
+spec:
+  rules:
+  - host: loki.k3d.localhost
+    http:
+      paths:
+      - backend:
+          service:
+            name: loki
+            port:
+              number: 3100
+        path: /
+        pathType: Prefix
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:corerole-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: corerole-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:globalrole-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: globalrole-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:globalrolebinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: globalrolebinding-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:resourcepermission-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: resourcepermission-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:role-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: role-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:rolebinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rolebinding-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:serviceaccount-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: serviceaccount-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:team-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: team-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:teambinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: teambinding-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana:user-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: user-user
+subjects:
+  - kind: ServiceAccount
+    name: grafana
+    namespace: default
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iam-app-provisioning
+  namespace: default
+  labels:
+    name: grafana
+data:
+  gas-local-env-app-app.yaml: |
+    apiVersion: 1
+    apps:
+      - type: iam-app
+        org_id: 1
+        org_name: Main Org.
+        disabled: false
+        jsonData:
+          foo: bar
+        secureJsonData:
+          baz: foo
+          kubeconfig: cluster
+          kubenamespace: default
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-apiserver-provisioning
+  namespace: default
+  labels:
+    name: grafana
+data:
+  apiservices.yaml: |
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    - group: iam.grafana.app
+      version: v0alpha1
+      host: kubernetes.default.svc
+      port: 443
+    
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+  namespace: default
+  labels:
+    name: grafana
+data:
+  grafana.ini: |
+    app_mode = development
+    [analytics]
+    reporting_enabled = false
+    [tracing.opentelemetry.otlp]
+    address = tempo.default.svc:4317
+    [auth.anonymous]
+    enabled = false
+    [log.frontend]
+    enabled = true
+    [plugins]
+    allow_loading_unsigned_plugins = iam-app
+    [plugin.iam-app]
+    tracing = true
+    [server]
+    http_port = 3000
+    root_url = 
+    router_logging = true
+    [unified_alerting]
+    enabled = true
+    [users]
+    default_theme = dark
+    [feature_toggles]
+    grafanaAPIServerEnsureKubectlAccess = true
+    ; disable the experimental APIs flag to disable bundling of the example service locally
+    grafanaAPIServerWithExperimentalAPIs = false
+    kubernetesAggregator = true
+    [grafana-apiserver]
+    remote_services_file = /app-aggregator/apiservices.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: default
+  labels:
+    name: grafana
+spec:
+  ports:
+    - name: grafana-grafana-metrics
+      port: 3000
+      targetPort: 3000
+    - name: http
+      port: 80
+      targetPort: 3000
+  selector:
+    name: grafana
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: grafana
+  template:
+    metadata:
+      labels:
+        name: grafana
+    spec:
+      containers:
+        - env:
+            - name: GF_INSTALL_PLUGINS
+              value: ""
+            - name: GF_PATHS_CONFIG
+              value: /etc/grafana-config/grafana.ini
+          image: grafana/grafana-enterprise:main
+          imagePullPolicy: IfNotPresent
+          name: grafana
+          ports:
+            - containerPort: 3000
+              name: grafana-metrics
+          resources:
+            requests:
+              cpu: 10m
+              memory: 40Mi
+          volumeMounts:
+            - mountPath: /etc/grafana-config
+              name: grafana-config
+            - mountPath: /etc/grafana/provisioning/plugins
+              name: iam-app-provisioning
+            - mountPath: /var/lib/grafana/plugins/iam-app
+              name: iam-app
+              readOnly: true
+            - mountPath: /etc/grafana/provisioning/datasources
+              name: grafana-datasources
+            - mountPath: /app-aggregator
+              name: grafana-apiserver-provisioning
+              readOnly: true
+      serviceAccount: grafana
+      volumes:
+        - configMap:
+            name: grafana-config
+          name: grafana-config
+        - configMap:
+            name: iam-app-provisioning
+          name: iam-app-provisioning
+        - hostPath:
+            path: /tmp/k3d/mounted-files/plugin/dist
+          name: iam-app
+        - configMap:
+            name: grafana-datasources
+          name: grafana-datasources
+        - configMap:
+            name: grafana-apiserver-provisioning
+          name: grafana-apiserver-provisioning
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: default
+spec:
+  rules:
+    - host: grafana.k3d.localhost
+      http:
+        paths:
+          - backend:
+              service:
+                name: grafana
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    name: grafana
+  name: grafana-datasources
+  namespace: default
+data:
+  Cortex.yml: |
+    apiVersion: 1
+    datasources:
+        - access: proxy
+          editable: false
+          isDefault: true
+          name: grafana-k3d-cortex-prom
+          type: prometheus
+          uid: grafana-prom-cortex
+          url: http://cortex.default.svc.cluster.local:9009/api/prom
+          version: 1
+        - access: proxy
+          editable: false
+          isDefault: false
+          name: grafana-k3d-tempo
+          type: tempo
+          uid: grafana-traces-tempo
+          url: http://tempo.default.svc.cluster.local:3100
+          version: 1
+        - access: proxy
+          editable: false
+          isDefault: false
+          name: grafana-k3d-loki
+          type: loki
+          uid: grafana-logs-loki
+          url: http://loki.default.svc.cluster.local:3100
+          version: 1
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: operator
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:corerole-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: corerole-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:globalrole-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: globalrole-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:globalrolebinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: globalrolebinding-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:resourcepermission-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: resourcepermission-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:role-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: role-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:rolebinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rolebinding-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:serviceaccount-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: serviceaccount-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:team-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: team-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:teambinding-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: teambinding-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: operator:user-user-rolebinding
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: user-user
+subjects:
+  - kind: ServiceAccount
+    name: operator
+    namespace: default
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iam-app-operator
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: iam-app-operator
+  template:
+    metadata:
+      labels:
+        name: iam-app-operator
+    spec:
+      serviceAccount: operator
+      containers:
+        - image: localhost/github.com/grafana/grafana/apps/iam/operator:latest
+          imagePullPolicy: IfNotPresent
+          name: iam-app-operator
+          env:
+            - name: OTEL_HOST
+              value: tempo.default.svc
+            - name: OTEL_PORT
+              value: "4317"
+            - name: OTEL_CONN_TYPE
+              value: grpc
+            - name: OTEL_SERVICE_NAME
+              value: "iam-app-operator"
+
+          ports:
+            - containerPort: 9090
+              name: metrics
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iam-app-operator
+  namespace: default
+spec:
+  selector:
+    name: iam-app-operator
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: metrics
