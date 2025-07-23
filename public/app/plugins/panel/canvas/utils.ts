@@ -1,7 +1,7 @@
 import { isNumber, isString } from 'lodash';
 
 import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
-import { DirectionDimensionConfig } from '@grafana/schema/dist/esm/common/common.gen';
+import { ConnectionDirection } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import { CanvasConnection, CanvasElementItem, CanvasElementOptions } from 'app/features/canvas/element';
@@ -243,7 +243,7 @@ export const getConnectionStyles = (
   info: CanvasConnection,
   scene: Scene,
   defaultArrowSize: number,
-  defaultArrowDirection: DirectionDimensionConfig
+  defaultArrowDirection: ConnectionDirection
 ) => {
   const defaultArrowColor = config.theme2.colors.text.primary;
   const lastRowIndex = getRowIndex(info.size?.field, scene);

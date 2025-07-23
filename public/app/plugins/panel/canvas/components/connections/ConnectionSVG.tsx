@@ -2,11 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  DirectionDimensionConfig,
-  DirectionDimensionMode,
-  ConnectionDirection,
-} from '@grafana/schema/dist/esm/common/common.gen';
+import { DirectionDimensionConfig, DirectionDimensionMode, ConnectionDirection } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -169,7 +165,12 @@ export const ConnectionSVG = ({
           const yDist = yEnd - yStart;
 
           const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle, shouldAnimate } =
-            getConnectionStyles(info, scene, defaultArrowSize, defaultArrowDirection);
+            getConnectionStyles(
+              info,
+              scene,
+              defaultArrowSize,
+              defaultArrowDirection.fixed ?? ConnectionDirection.Forward
+            );
 
           const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
