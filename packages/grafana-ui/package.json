@@ -108,7 +108,7 @@
     "react-calendar": "^6.0.0",
     "react-colorful": "5.6.1",
     "react-custom-scrollbars-2": "4.5.0",
-    "react-data-grid": "grafana/react-data-grid#1e5c72109d4680de52f976c861621221a82e00a8",
+    "react-data-grid": "grafana/react-data-grid#11c36a39b08039fda0b3786b8bbab13a5f907084",
     "react-dropzone": "14.3.8",
     "react-highlight-words": "0.21.0",
     "react-hook-form": "^7.49.2",
