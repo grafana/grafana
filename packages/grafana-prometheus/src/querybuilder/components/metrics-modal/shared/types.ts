@@ -3,7 +3,7 @@ import { TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from '../../../../datasource';
 import { PromVisualQuery } from '../../../types';
 
-export interface MetricsModalState {
+interface MetricsModalState {
   useBackend: boolean;
   disableTextWrap: boolean;
   includeNullMetadata: boolean;

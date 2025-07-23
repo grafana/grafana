@@ -2,7 +2,16 @@ import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, Ref
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldMatcherID,
+  fieldReducers,
+  FieldType,
+  formattedValueToString,
+  getFieldMatcher,
+  reduceField,
+} from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
@@ -17,7 +26,6 @@ import {
   getColumnTypes,
   GetMaxWrapCellOptions,
   getMaxWrapCell,
-  getCellLinks,
 } from './utils';
 
 // Helper function to get displayed value
@@ -256,7 +264,7 @@ export interface FooterCalcsOptions {
 
 export function useFooterCalcs(
   rows: TableRow[],
-  fields: Field[],
+  data: DataFrame,
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
   return useMemo(() => {
@@ -266,7 +274,11 @@ export function useFooterCalcs(
       return [];
     }
 
-    return fields.map((field, index) => {
+    const fieldNameMatcher = footerOptions.fields
+      ? getFieldMatcher({ id: FieldMatcherID.byNames, options: { names: footerOptions.fields } })
+      : undefined;
+
+    return data.fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
       }
@@ -290,8 +302,9 @@ export function useFooterCalcs(
         return '';
       }
 
-      // If fields array is specified, only show footer for fields included in that array
-      if (footerOptions.fields?.length && !footerOptions.fields?.includes(getDisplayName(field))) {
+      // If fields array is specified, only show footer for fields included in that array.
+      // the array can include either the display name or the field name.
+      if (fieldNameMatcher && !fieldNameMatcher(field, data, [data])) {
         return '';
       }
 
@@ -306,7 +319,7 @@ export function useFooterCalcs(
 
       return formattedValueToString(displayFn(value));
     });
-  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
+  }, [data, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
 interface TypographyCtx {
@@ -441,7 +454,7 @@ interface UseRowHeightOptions {
   hasNestedFrames: boolean;
   defaultHeight: number;
   headerHeight: number;
-  expandedRows: Record<string, boolean>;
+  expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
 
@@ -497,9 +510,9 @@ export function useRowHeight({
 
     return (row: TableRow) => {
       // nested rows
-      if (Number(row.__depth) > 0) {
+      if (row.__depth > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows[row.__index]) {
+        if (!expandedRows.has(row.__index)) {
           return 0;
         }
 
@@ -600,13 +613,6 @@ export function useColumnResize(
   );
 
   return dataGridResizeHandler;
-}
-
-export function useSingleLink(field: Field, rowIdx: number): LinkModel | undefined {
-  const linksCount = field.config.links?.length ?? 0;
-  const actionsCount = field.config.actions?.length ?? 0;
-  const shouldShowLink = linksCount === 1 && actionsCount === 0;
-  return useMemo(() => (shouldShowLink ? (getCellLinks(field, rowIdx) ?? []) : [])[0], [field, shouldShowLink, rowIdx]);
 }
 
 export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {

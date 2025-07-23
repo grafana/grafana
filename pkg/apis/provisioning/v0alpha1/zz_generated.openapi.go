@@ -115,6 +115,13 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref common.
 							Format:      "",
 						},
 					},
+					"tokenUser": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.",
@@ -443,6 +450,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 						SchemaProps: spec.SchemaProps{
 							Description: "The branch to use in the repository.",
 							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tokenUser": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TokenUser is the user that will be used to access the repository if it's a personal access token.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -876,10 +890,10 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 				Properties: map[string]spec.Schema{
 					"state": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
+							Description: "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"error", "pending", "success", "working"},
+							Enum:        []interface{}{"error", "pending", "success", "warning", "working"},
 						},
 					},
 					"started": {
@@ -2121,11 +2135,11 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"state": {
 						SchemaProps: spec.SchemaProps{
-							Description: "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
+							Description: "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"error", "pending", "success", "working"},
+							Enum:        []interface{}{"error", "pending", "success", "warning", "working"},
 						},
 					},
 					"job": {

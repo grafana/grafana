@@ -1,0 +1,80 @@
+# --- Frontend processes
+local_resource(
+  'yarn install',
+  cmd='yarn install',
+  deps=[
+    'yarn.lock',
+  ],
+  labels=["frontend"]
+)
+
+local_resource(
+  'yarn start',
+  cmd='rm -rf public/build/assets-manifest.json',
+  serve_cmd='yarn start:noLint',
+  resource_deps=['yarn install'],
+  readiness_probe=probe(
+    initial_delay_secs=5, # wait for the assets-manifest.json to first be deleted
+    period_secs=1,
+    exec=exec_action(["bash", "-c", "cat public/build/assets-manifest.json | grep entrypoints"])
+  ),
+  allow_parallel=True,
+  labels=["frontend"]
+)
+
+# --- Docker Compose
+docker_compose("./docker-compose.yaml")
+
+# First argument is the name of the service from the docker-compose file.
+dc_resource("backend", resource_deps=["yarn start"], labels=["backend"])
+dc_resource("frontend-service", resource_deps=["yarn start"], labels=["backend"])
+dc_resource("proxy", resource_deps=["backend", "frontend-service"], labels=["ingress"])
+
+docker_build('grafana-backend', '../..',
+  dockerfile='backend.dockerfile',
+
+  # Only these paths will be in the docker context, and will trigger a rebuild.
+  # This must include all the files that are COPY'd in backend.dockerfile
+  only=[
+    "./Makefile",
+    "./devenv/frontend-service/build-grafana.sh",
+
+    "./apps",
+    "./pkg",
+    "./scripts",
+
+    "./go.sum",
+    "./go.mod",
+    "./go.work",
+    "./go.work.sum",
+
+    "./kinds",
+    "./kindsv2",
+    "./public/api-merged.json",
+    "./package.json",
+
+    "./conf/defaults.ini",
+    "./conf/ldap.toml",
+    "./conf/ldap_multiple.toml",
+    "./public/emails",
+    "./public/views",
+    "./public/dashboards",
+    "./public/build/assets-manifest.json",
+  ],
+  live_update = [
+    sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    restart_container()
+  ]
+)
+
+
+docker_build('grafana-proxy', '.',
+  dockerfile='proxy.dockerfile',
+  only=[
+    "./nginx.conf",
+  ],
+  live_update = [
+    sync('./nginx.conf', '/etc/nginx/conf.d/default.conf'),
+    restart_container()
+  ]
+)
