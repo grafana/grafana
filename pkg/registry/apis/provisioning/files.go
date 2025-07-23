@@ -140,7 +140,24 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			}
 			obj = resource.AsResourceWrapper()
 		case http.MethodPost:
-			if isDir {
+			// Check if this is a move operation first (originalPath query parameter is present)
+			if opts.OriginalPath != "" {
+				// For move operations, only read body for file moves (not directory moves)
+				if !isDir {
+					opts.Data, err = readBody(r, filesMaxBodySize)
+					if err != nil {
+						responder.Error(err)
+						return
+					}
+				}
+				var resource *resources.ParsedResource
+				resource, err = dualReadWriter.MoveResource(ctx, opts)
+				if err != nil {
+					responder.Error(err)
+					return
+				}
+				obj = resource.AsResourceWrapper()
+			} else if isDir {
 				obj, err = dualReadWriter.CreateFolder(ctx, opts)
 			} else {
 				opts.Data, err = readBody(r, filesMaxBodySize)
@@ -150,12 +167,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				}
 
 				var resource *resources.ParsedResource
-				// Check if this is a move operation (originalPath query parameter is present)
-				if opts.OriginalPath != "" {
-					resource, err = dualReadWriter.MoveResource(ctx, opts)
-				} else {
-					resource, err = dualReadWriter.CreateResource(ctx, opts)
-				}
+				resource, err = dualReadWriter.CreateResource(ctx, opts)
 				if err != nil {
 					responder.Error(err)
 					return

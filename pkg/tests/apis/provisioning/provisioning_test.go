@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -854,21 +856,21 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	t.Run("move file without content change", func(t *testing.T) {
 		const targetPath = "moved/simple-move.json"
 
-		// Perform the move operation using POST with originalPath query parameter
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("files", targetPath).
-			Param("originalPath", originalDashboard).
-			Param("message", "move file without content change").
-			Body([]byte("")). // Empty body means no content update
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "move operation should succeed")
+		// Perform the move operation using direct HTTP request (since k8s client doesn't handle '/' in subresource names)
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s?originalPath=%s&message=move%%20file%%20without%%20content%%20change",
+			addr, repo, targetPath, originalDashboard)
+		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(""))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
 
 		// Verify the file moved in the repository
-		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
+		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
 		require.NoError(t, err, "moved file should exist in repository")
 
 		// Check the content is preserved (verify it's still the all-panels dashboard)
@@ -878,7 +880,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.NoError(t, err)
 		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
 		require.NoError(t, err)
-		require.Equal(t, "Panel Tests - All", title, "content should be preserved")
+		require.Equal(t, "Panel tests - All panels", title, "content should be preserved")
 
 		// Verify original file no longer exists
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", originalDashboard)
@@ -897,21 +899,21 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		// Use text-options.json content for the update
 		updatedContent := helper.LoadFile("testdata/text-options.json")
 
-		// Perform move with content update
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("files", targetPath).
-			Param("originalPath", sourcePath).
-			Param("message", "move file with content update").
-			Body(updatedContent).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx)
-		require.NoError(t, result.Error(), "move with content update should succeed")
+		// Perform move with content update using direct HTTP request (since k8s client doesn't handle '/' in subresource names)
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s?originalPath=%s&message=move%%20file%%20with%%20content%%20update",
+			addr, repo, targetPath, sourcePath)
+		req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(string(updatedContent)))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update should succeed")
 
 		// Verify the moved file has updated content (should now be text-options dashboard)
-		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", targetPath)
+		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "updated", "content-updated.json")
 		require.NoError(t, err, "moved file should exist in repository")
 
 		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
@@ -920,20 +922,20 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.NoError(t, err)
 		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
 		require.NoError(t, err)
-		require.Equal(t, "Panel Tests - Text", title, "content should be updated to text-options dashboard")
+		require.Equal(t, "Text options", title, "content should be updated to text-options dashboard")
 
 		// Check it has the expected UID from text-options.json
 		name, _, err := unstructured.NestedString(dryRun, "metadata", "name")
 		require.NoError(t, err)
-		require.Equal(t, "aduVRqBnz", name, "should have the UID from text-options.json")
+		require.Equal(t, "WZ7AhQiVz", name, "should have the UID from text-options.json")
 
 		// Verify source file no longer exists
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourcePath)
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
 		require.Error(t, err, "source file should no longer exist")
 
 		// Sync and verify the updated dashboard exists in Grafana
 		helper.SyncAndWait(t, repo, nil)
-		const textOptionsUID = "aduVRqBnz" // UID from text-options.json
+		const textOptionsUID = "WZ7AhQiVz" // UID from text-options.json
 		updatedDashboard, err := helper.DashboardsV1.Resource.Get(ctx, textOptionsUID, metav1.GetOptions{})
 		require.NoError(t, err, "updated dashboard should exist in Grafana")
 
@@ -945,7 +947,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		// Verify the new dashboard has the updated content
 		updatedTitle, _, err := unstructured.NestedString(updatedDashboard.Object, "spec", "title")
 		require.NoError(t, err)
-		require.Equal(t, "Panel Tests - Text", updatedTitle)
+		require.Equal(t, "Text options", updatedTitle)
 	})
 
 	t.Run("move directory", func(t *testing.T) {
@@ -997,18 +999,50 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		})
 
 		t.Run("file to directory type mismatch", func(t *testing.T) {
-			// Try to move a file to a directory path
+			// First create a simple test file without slashes in the path
 			result := helper.AdminREST.Post().
 				Namespace("default").
 				Resource("repositories").
 				Name(repo).
-				SubResource("files", "target-dir/").                   // Directory target
-				Param("originalPath", "updated/content-updated.json"). // File source
-				Body([]byte("")).
+				SubResource("files", "simple-test.json").
+				Body(helper.LoadFile("testdata/all-panels.json")).
 				SetHeader("Content-Type", "application/json").
 				Do(ctx)
-			require.Error(t, result.Error(), "should fail when moving file to directory")
-			require.Contains(t, result.Error().Error(), "cannot move between file and directory types")
+			require.NoError(t, result.Error(), "should create test file")
+			
+			// Now try to move this file to a directory path using direct HTTP request
+			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+			baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/target-dir/",
+				addr, repo)
+			
+			// Build the URL with proper query parameter encoding
+			parsedUrl, err := url.Parse(baseUrl)
+			require.NoError(t, err)
+			params := parsedUrl.Query()
+			params.Set("originalPath", "simple-test.json")
+			params.Set("message", "test move")
+			parsedUrl.RawQuery = params.Encode()
+			
+			t.Logf("Request URL: %s", parsedUrl.String())
+			req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(""))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			// nolint:errcheck
+			defer resp.Body.Close()
+			// Read response body to check what happened
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			
+			// If it succeeded, that's unexpected, so let's debug
+			if resp.StatusCode == http.StatusOK {
+				t.Logf("Unexpected success. Response: %s", string(body))
+				t.Logf("Status code: %d", resp.StatusCode)
+			}
+			
+			require.NotEqual(t, http.StatusOK, resp.StatusCode, "should fail when moving file to directory")
+			require.Contains(t, string(body), "cannot move between file and directory types")
 		})
 
 		t.Run("non-existent source file", func(t *testing.T) {
