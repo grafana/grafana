@@ -148,7 +148,7 @@ describe('<DataSourceTestingStatus />', () => {
           id: 'status-link1',
           path: 'http://example.com/help',
           title: 'Help Documentation',
-          pluginId: 'grafana-monitoring-app'
+          pluginId: 'grafana-monitoring-app',
         }),
       ];
 
@@ -157,7 +157,7 @@ describe('<DataSourceTestingStatus />', () => {
           id: 'error-link1',
           path: 'http://example.com/troubleshoot',
           title: 'Troubleshooting Guide',
-          pluginId: 'grafana-troubleshooting-app'
+          pluginId: 'grafana-troubleshooting-app',
         }),
       ];
 
@@ -190,7 +190,7 @@ describe('<DataSourceTestingStatus />', () => {
           path: 'http://example.com/help',
           onClick: mockOnClick,
           title: 'Help Documentation',
-          pluginId: 'grafana-monitoring-app'
+          pluginId: 'grafana-monitoring-app',
         }),
       ];
 
@@ -217,7 +217,7 @@ describe('<DataSourceTestingStatus />', () => {
           id: 'status-link1',
           path: 'http://example.com/help',
           title: 'Status Help Documentation',
-          pluginId: 'grafana-monitoring-app'
+          pluginId: 'grafana-monitoring-app',
         }),
       ];
 
@@ -226,7 +226,7 @@ describe('<DataSourceTestingStatus />', () => {
           id: 'error-link1',
           path: 'http://example.com/error-help',
           title: 'Error Help Documentation',
-          pluginId: 'grafana-troubleshooting-app'
+          pluginId: 'grafana-troubleshooting-app',
         }),
       ];
 
@@ -253,7 +253,7 @@ describe('<DataSourceTestingStatus />', () => {
           id: 'status-link1',
           path: 'http://example.com/help',
           title: 'Help Documentation',
-          pluginId: 'not-allowed-plugin' // This should be filtered out
+          pluginId: 'not-allowed-plugin', // This should be filtered out
         }),
       ];
 
