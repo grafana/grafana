@@ -342,7 +342,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                   <span className={styles.labelText}>
                     <Trans i18nKey="shared-preferences.fields.locale-preference-label">Region format</Trans>
                   </span>
-                  <FeatureBadge featureState={FeatureState.experimental} />
+                  <FeatureBadge featureState={FeatureState.preview} />
                 </Label>
               }
               description={t(
