@@ -7,17 +7,17 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
+	legacysecrets "github.com/grafana/grafana/pkg/services/secrets"
 )
 
 func ProvideRepositorySecrets(
 	features featuremgmt.FeatureToggles,
-	legacySecretsSvc grafanasecrets.Service,
+	legacySecretsSvc legacysecrets.Service,
 	secretsSvc contracts.SecureValueClient,
-	decryptSvc service.DecryptService,
+	decryptSvc secret.DecryptService,
 ) RepositorySecrets {
 	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc), NewSingleTenant(legacySecretsSvc))
 }
@@ -56,7 +56,9 @@ func NewRepositorySecrets(features featuremgmt.FeatureToggles, secretsSvc Servic
 // If the feature flag is disabled, it uses the legacy secrets service
 // If the feature flag is enabled, it uses the secrets service
 func (s *repositorySecrets) Encrypt(ctx context.Context, r *provisioning.Repository, name string, data string) (nameOrValue []byte, err error) {
+	logger := logging.FromContext(ctx).With("name", name, "namespace", r.GetNamespace())
 	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+		logger.Info("Encrypting secret with new secrets service")
 		encrypted, err := s.secretsSvc.Encrypt(ctx, r.GetNamespace(), name, data)
 		if err != nil {
 			return nil, err
@@ -64,6 +66,7 @@ func (s *repositorySecrets) Encrypt(ctx context.Context, r *provisioning.Reposit
 		return []byte(encrypted), err
 	}
 
+	logger.Info("Encrypting secret with legacy secrets service")
 	encrypted, err := s.legacySecrets.Encrypt(ctx, []byte(data))
 	if err != nil {
 		return nil, err
@@ -87,10 +90,10 @@ func (s *repositorySecrets) Decrypt(ctx context.Context, r *provisioning.Reposit
 	logger := logging.FromContext(ctx)
 	// HACK: this is a hack to identify if the name is a potential Kubernetes name for a secret.
 	if strings.HasPrefix(nameOrValue, r.GetName()) {
-		logger.Info("Decrypting secret with new secrets service", "name", nameOrValue)
+		logger.Info("Decrypting secret with new secrets service")
 		return s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
 	} else {
-		logger.Info("Decrypting secret with legacy secrets service", "name", nameOrValue)
+		logger.Info("Decrypting secret with legacy secrets service")
 		return s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
 	}
 }
