@@ -3099,6 +3099,7 @@ __metadata:
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": "npm:7.0.1"
+    "@grafana/i18n": "npm:12.1.0-pre"
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.18"
@@ -14029,11 +14030,11 @@ __metadata:
   linkType: hard
 
 "cypress-recurse@npm:^1.35.3":
-  version: 1.35.3
-  resolution: "cypress-recurse@npm:1.35.3"
+  version: 1.37.1
+  resolution: "cypress-recurse@npm:1.37.1"
   dependencies:
     humanize-duration: "npm:^3.27.3"
-  checksum: 10/408781ff538c0ac832bf1ce61b3e6628a6ab5832d9c425e06c4d724eed977dcadec03f234d6f90ea1826f21d440d5f7f971738399770b83358918be16da53d75
+  checksum: 10/fd2bbd1613b5cf7dc2127c813f3a700eccad6319ee3d011a61a373591d491eb202fe0113faa5156c1e1d2d9f2663a41ab49240abf842dff217d70854e668316c
   languageName: node
   linkType: hard
 
