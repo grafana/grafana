@@ -154,6 +154,7 @@ func RegisterAPIService(
 		datasourceService: datasourceService,
 	}, &PluginStorePanelProvider{
 		pluginStore: pluginStore,
+		setting:     cfg,
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
