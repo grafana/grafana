@@ -19,6 +19,19 @@
     },
     {
       "metadata": {
+        "name": "adhocFiltersInTooltips",
+        "resourceVersion": "1753712755564",
+        "creationTimestamp": "2025-07-28T14:25:55Z"
+      },
+      "spec": {
+        "description": "Enable adhoc filter buttons in visualization tooltips",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-03-05T12:01:31Z"
