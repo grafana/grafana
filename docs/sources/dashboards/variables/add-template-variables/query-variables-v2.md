@@ -62,7 +62,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#filter-dashboard-data
 ---
 
-# Add query variables - version 1
+# Add query variables - version 2
 
 <!-- vale Grafana.Spelling = NO -->
 
@@ -75,36 +75,27 @@ To create a query variable, follow these steps:
 1. Go to the **Variables** tab.
 1. Click **Add variable**, or if there are already existing variables, **+ New variable**.
 1. Select **Query** in the **Variable type** drop-down list.
-1. Enter a **Name** for the variable.
-1. In the **Label** field, enter the display name for the variable drop-down list.
-
-   If you don't enter a display name, then the drop-down list label is the variable name.
-
-1. Enter a **Description** for the query.
-1. Choose a **Hide** option to control how the variable selector is displayed:
-
-   - **Nothing** The variable name or label and values are displayed in the drop-down list. This is the default selection.
-   - **Variable** - The variable drop-down list isn't displayed.
-   - **Label** The variable drop-down list only displays the variable values.
-  
-1. Select a **Data source** for the query.
-1. Depending on the data source you've chosen, make a selection in the **Query type** drop-down list or type a query into the **Query** field.
-1. Enter an expression in the **Regex** field to extract part of a series name or metric node segment.
-
-   For examples, refer to [Filter variables with regular expressions](#filter-variables-with-regex).
-
-1. Select an option in the **Sort** drop-down list to set how the values are ordered in the variable drop-down.
-1. Choose a **Refresh** option to control when the values of the variable are updated:
-
-   - **On dashboard load**
-   - **On time range change**
-
-1. Toggle the **Use static options** switch to add custom options.
-1. If you enabled static options, use the **Static options sort** to control how they're ordered with query values.
-1. Select the **Multi-value** checkbox to allow multiple values to be selected at the same time.
-1. Select the **Allow custom values** checkbox to allow for custom values to be added to the list.
-1. Select the **Include All option** to enable an option to include all values.
-1. To give a the "All" value a custom name, enter a name in **Custom all value** text field. This field is only displayed if you enabled **Include All option**.
+1. Set the following options:
+   <!-- prettier-ignore-start -->
+   | Option | Description |
+   | ------ | ----------- |
+   | Name | Required |
+   | Label | the display name for the variable drop-down list. If you don't enter a display name, then the drop-down list label is the variable name. |
+   | Description |  |
+   | Hide | Choose a **** option to control how the variable selector is displayed:<ul><li>**Nothing** The variable name or label and values are displayed in the drop-down list. This is the default selection.</li><li>- **Variable** - The variable drop-down list isn't displayed.</li><li>**Label** The variable drop-down list only displays the variable values.</li></ul> |
+   | Data source | Select a **** for the query. |
+   | Query type | Depending on the data source you've chosen, make a selection in the **** drop-down list | 
+   | Query | type a query into the **** field. | 
+   | [Regex] | Enter an expression in the **** field to extract part of a series name or metric node segment. For examples, refer to [Filter variables with regular expressions] (#filter-variables-with-regex) section of this page. | 
+   | Sort | set how the values are ordered in the variable drop-down list. | 
+   | Refresh | Choose a **** option to control when the values of the variable are updated:<ul><li>On dashboard load</li><li>On time range change</li></ul> | 
+   | Use static options | Toggle the **** switch to add custom options. | 
+   | Static options sort | If you enabled static options, use the **** to control how they're ordered with query values. |
+   | [Multi-value] | allow multiple values to be selected at the same time. For more information about multi-value variables, refer to the [x](#multi-value-variables) section of this page. |
+   | Allow custom values | allow for custom values to be added to the list.|
+   | [Include All option] | enable an option to include all values. |
+   | [Custom all value] | To give a the "All" value a custom name, enter a name in **** text field. This field is only displayed if you enabled **Include All option**. There'll be a preview. |
+   <!-- prettier-ignore-end -->
 1. Click **Run query** (should something happen here??).
 
 <!-- vale Grafana.Spelling = YES -->
@@ -250,7 +241,7 @@ If you do not want Grafana to do this automatic regular expression escaping and 
 
 Grafana adds an `All` option to the variable dropdown list. If a user selects this option, then all variable options are selected.
 
-## Custom all value
+### Custom all value
 
 This option is only visible if the **Include All option** is selected.
 
