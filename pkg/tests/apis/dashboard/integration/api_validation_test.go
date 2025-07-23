@@ -163,7 +163,7 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 			})
 
 			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, true)
+				runDashboardPermissionTests(t, org1Ctx, false)
 			})
 
 			t.Run("Cross-organization tests", func(t *testing.T) {
@@ -193,6 +193,7 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
+					featuremgmt.FlagKubernetesDashboards,
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
