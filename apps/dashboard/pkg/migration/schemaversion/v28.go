@@ -187,15 +187,10 @@ func (m *v28Migrator) migrateFromGrafanaSinglestat(panel map[string]interface{},
 		}
 
 		// Migrate value mappings
-		valueMappings, _ := existingOptions["valueMappings"].([]interface{})
 		valueMaps, _ := existingOptions["valueMaps"].([]interface{})
 
 		// Use valueMaps if available, otherwise use valueMappings
-		if len(valueMaps) > 0 {
-			m.migrateValueMappings(defaults, valueMaps)
-		} else {
-			m.migrateValueMappings(defaults, valueMappings)
-		}
+		m.migrateValueMappings(defaults, valueMaps)
 
 		// Migrate min/max values
 		if minValue, ok := existingOptions["minValue"]; ok {
@@ -285,15 +280,8 @@ func (m *v28Migrator) migrateFromAngularSinglestat(panel map[string]interface{},
 	}
 
 	// Migrate value mappings
-	valueMappings, _ := angularOpts["valueMappings"].([]interface{})
 	valueMaps, _ := angularOpts["valueMaps"].([]interface{})
-
-	// Use valueMaps if available, otherwise use valueMappings
-	if len(valueMaps) > 0 {
-		m.migrateValueMappings(defaults, valueMaps)
-	} else {
-		m.migrateValueMappings(defaults, valueMappings)
-	}
+	m.migrateValueMappings(defaults, valueMaps)
 
 	// Migrate sparkline configuration
 	// Based on statPanelChangedHandler lines ~25-35: sparkline migration logic
@@ -561,14 +549,14 @@ func (m *v28Migrator) cleanupAngularProperties(panel map[string]interface{}) {
 	delete(panel, "colorValue")
 	delete(panel, "nullPointMode")
 	delete(panel, "nullText")
-	delete(panel, "valueMappings")
+	delete(panel, "valueMaps")
 	delete(panel, "tableColumn")
 	delete(panel, "angular")
 	// Remove legacy options properties
 	if options, ok := panel["options"].(map[string]interface{}); ok {
 		delete(options, "valueOptions")
 		delete(options, "thresholds")
-		delete(options, "valueMappings")
+		delete(options, "valueMaps")
 		delete(options, "minValue")
 		delete(options, "maxValue")
 	}

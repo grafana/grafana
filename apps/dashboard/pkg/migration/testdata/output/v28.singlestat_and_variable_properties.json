@@ -225,24 +225,7 @@
           }
         }
       ],
-      "type": "stat",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "test",
-          "value": "20"
-        },
-        {
-          "op": "=",
-          "text": "test1",
-          "value": "30"
-        },
-        {
-          "op": "=",
-          "text": "50",
-          "value": "40"
-        }
-      ]
+      "type": "stat"
     },
     {
       "datasource": {
