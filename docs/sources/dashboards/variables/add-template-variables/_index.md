@@ -91,6 +91,8 @@ refs:
 
 <!-- vale Grafana.Spelling = NO -->
 
+## Variable types
+
 The following table lists the types of variables shipped with Grafana.
 
 | Variable type     | Description                                                                                                                                                                             |
@@ -105,6 +107,7 @@ The following table lists the types of variables shipped with Grafana.
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables](#global-variables).                                                                 |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables](#chained-variables).                                                                                         |
 
+<!--
 ## Enter General options
 
 You must enter general options for any type of variable that you create.
@@ -136,7 +139,7 @@ To create a variable, follow these steps:
    - [Interval](#add-an-interval-variable)
    - [Ad hoc filters](#add-ad-hoc-filters)
 
-<!-- vale Grafana.Spelling = YES -->
+
 
 ## Add a query variable
 
@@ -293,8 +296,8 @@ The following example shows a more complex Graphite example, from the [Graphite 
 groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5), '$interval', 'sum', false), 2, 'sum')
 ```
 
-<!-- vale Grafana.WordList = NO -->
-<!-- vale Grafana.Spelling = NO -->
+vale Grafana.WordList = NO
+vale Grafana.Spelling = NO
 
 ## Add ad hoc filters
 
@@ -325,8 +328,8 @@ To create an ad hoc filter, follow these steps:
 
 Now you can [filter data on the dashboard](ref:filter-dashboard).
 
-<!-- vale Grafana.Spelling = YES -->
-<!-- vale Grafana.WordList = YES -->
+vale Grafana.Spelling = YES
+vale Grafana.WordList = YES
 
 ## Configure variable selection options
 
@@ -373,7 +376,7 @@ Enter regular expressions, globs, or Lucene syntax in the **Custom all value** f
 
 By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regular expression.
 
-In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it is never escaped so you have to think about what is a valid value for your data source.
+In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it is never escaped so you have to think about what is a valid value for your data source. -->
 
 ## Global variables
 
@@ -639,9 +642,11 @@ For example, if you have a series of four linked variables (country, region, ser
 
 <!-- vale Grafana.WordList = NO -->
 
+<!--
+
 ## Filter variables with regular expressions {#filter-variables-with-regex}
 
-<!-- vale Grafana.WordList = NO -->
+vale Grafana.WordList = NO
 
 Using the **Regex** query option, you filter the list of options returned by the variable query or modify the options returned.
 
@@ -745,3 +750,4 @@ enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 {{< admonition type="note" >}}
 Only `text` and `value` capture group names are supported.
 {{< /admonition >}}
+-->
