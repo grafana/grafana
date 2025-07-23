@@ -50,16 +50,17 @@ type reqContextKey = ctxkey.Key
 // The returned ReqContext has a cloned HTTP request to prevent concurrent access issues.
 func FromContext(c context.Context) *contextmodel.ReqContext {
 	if origReqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
-		// Return a copy with cloned HTTP request to prevent concurrent access to headers
-		var req *http.Request
-		if origReqCtx.Req != nil {
-			req = origReqCtx.Req.Clone(c)
-		}
-		webCtx := &web.Context{
-			Req:  req,
-			Resp: origReqCtx.Resp,
-		}
-		return copyReqContext(webCtx, origReqCtx)
+		return origReqCtx
+		// // Return a copy with cloned HTTP request to prevent concurrent access to headers
+		// var req *http.Request
+		// if origReqCtx.Req != nil {
+		// 	req = origReqCtx.Req.Clone(c)
+		// }
+		// webCtx := &web.Context{
+		// 	Req:  req,
+		// 	Resp: origReqCtx.Resp,
+		// }
+		// return copyReqContext(webCtx, origReqCtx)
 	}
 	return nil
 }
