@@ -794,6 +794,15 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 					Required:    false,
 				},
 			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "originalPath",
+					In:          "query",
+					Description: "path of file to move (used with POST method for move operations)",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
 		}
 		sub.Delete.Parameters = comment
 		sub.Post.Parameters = comment

@@ -1656,13 +1656,17 @@ func TestLocalRepository_Move(t *testing.T) {
 			expectedErr: repository.ErrFileAlreadyExists,
 		},
 		{
-			name: "move directory should fail",
+			name: "successful directory move",
 			setup: func(t *testing.T) (string, *localRepository) {
 				tempDir := t.TempDir()
 
-				// Create directory
+				// Create directory with files
 				subdir := filepath.Join(tempDir, "subdir")
 				err := os.MkdirAll(subdir, 0700)
+				require.NoError(t, err)
+				
+				// Add a file inside the directory
+				err = os.WriteFile(filepath.Join(subdir, "file.txt"), []byte("dir content"), 0600)
 				require.NoError(t, err)
 
 				repo := &localRepository{
@@ -1685,7 +1689,39 @@ func TestLocalRepository_Move(t *testing.T) {
 			newPath:     "newsubdir/",
 			ref:         "",
 			comment:     "move directory",
-			expectedErr: apierrors.NewBadRequest("directory move not supported"),
+			expectedErr: nil,
+		},
+		{
+			name: "move file to directory type should fail",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+
+				// Create source file
+				sourceFile := filepath.Join(tempDir, "file.txt")
+				err := os.WriteFile(sourceFile, []byte("content"), 0600)
+				require.NoError(t, err)
+
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			oldPath:     "file.txt",
+			newPath:     "directory/",
+			ref:         "",
+			comment:     "move file to directory",
+			expectedErr: apierrors.NewBadRequest("cannot move between file and directory types"),
 		},
 		{
 			name: "move with ref should fail",

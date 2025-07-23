@@ -1126,3 +1126,92 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		})
 	}
 }
+
+func TestGithubRepository_Move(t *testing.T) {
+	tests := []struct {
+		name        string
+		oldPath     string
+		newPath     string
+		ref         string
+		comment     string
+		setupMock   func(*git.MockGitRepository)
+		expectedErr error
+	}{
+		{
+			name:    "successful move delegates to git repository",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old.yaml", "new.yaml", "main", "move file").Return(nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			name:    "move error from git repository",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old.yaml", "new.yaml", "main", "move file").Return(errors.New("git move failed"))
+			},
+			expectedErr: errors.New("git move failed"),
+		},
+		{
+			name:    "successful directory move",
+			oldPath: "old/",
+			newPath: "new/",
+			ref:     "main",
+			comment: "move directory",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old/", "new/", "main", "move directory").Return(nil)
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock git repository
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockSecrets := &secrets.MockRepositorySecrets{}
+
+			// Setup mock expectations
+			tt.setupMock(mockGitRepo)
+
+			// Create GitHub repository
+			config := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/example/repo",
+					},
+				},
+			}
+
+			githubRepo := &githubRepository{
+				config:  config,
+				gitRepo: mockGitRepo,
+				owner:   "example",
+				repo:    "repo",
+				secrets: mockSecrets,
+			}
+
+			// Execute move operation
+			err := githubRepo.Move(context.Background(), tt.oldPath, tt.newPath, tt.ref, tt.comment)
+
+			// Verify results
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tt.expectedErr.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

@@ -3896,12 +3896,48 @@ func TestGitRepository_Move(t *testing.T) {
 			},
 		},
 		{
-			name:          "move directory should fail",
-			oldPath:       "old/",
-			newPath:       "new/",
+			name:    "successful directory move",
+			oldPath: "old/",
+			newPath: "new/",
+			ref:     "main",
+			comment: "move directory",
+			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
+				// Mock ensureBranchExists behavior
+				mockClient.EXPECT().GetRef(context.Background(), "refs/heads/main").Return(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}, nil)
+
+				// Mock NewStagedWriter
+				mockClient.EXPECT().NewStagedWriter(context.Background(), nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.FromHex("abc123"),
+				}).Return(mockWriter, nil)
+
+				// Mock MoveTree (for directories, we trim trailing slashes)
+				mockWriter.EXPECT().MoveTree(context.Background(), "configs/old", "configs/new").Return(hash.FromHex("def456"), nil)
+
+				// Mock commit and push
+				mockWriter.EXPECT().Commit(context.Background(), "move directory", nanogit.Author{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}, nanogit.Committer{
+					Name:  "Grafana",
+					Email: "noreply@grafana.com",
+					Time:  time.Now(),
+				}).Return(hash.FromHex("ghi789"), nil)
+
+				mockWriter.EXPECT().Push(context.Background()).Return(nil)
+			},
+		},
+		{
+			name:          "move file to directory type should fail",
+			oldPath:       "file.yaml",
+			newPath:       "directory/",
 			ref:           "main",
-			comment:       "move directory",
-			expectedError: "directory move not supported",
+			comment:       "move file to directory",
+			expectedError: "cannot move between file and directory types",
 			setupMock: func(mockClient *mocks.MockClient, mockWriter *mocks.MockStagedWriter) {
 				// No mocks needed as this should fail early
 			},
