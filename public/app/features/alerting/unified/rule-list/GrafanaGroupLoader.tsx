@@ -88,7 +88,7 @@ export function GrafanaGroupLoader({
   }
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={0}>
       {pageItems.map((promRule) => {
         return (
           <GrafanaRuleListItem
