@@ -174,18 +174,6 @@ describe('Backend / Frontend result comparison', () => {
       const frontendMigrationResult = frontendModel.getSaveModelClone();
       const backendMigrationResult = backendModel.getSaveModelClone();
 
-      if (jsonInput.schemaVersion === 27) {
-        // create files in the current directory
-        writeFileSync(
-          path.join(__dirname, 'frontendMigrationResult.json'),
-          JSON.stringify(frontendMigrationResult, null, 2)
-        );
-        writeFileSync(
-          path.join(__dirname, 'backendMigrationResult.json'),
-          JSON.stringify(backendMigrationResult, null, 2)
-        );
-      }
-
       expect(backendMigrationResult).toMatchObject(frontendMigrationResult);
     });
   });
