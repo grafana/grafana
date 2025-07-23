@@ -1,0 +1,51 @@
+name: Run Storybook a11y tests
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+permissions: {}
+
+jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/storybook-a11y.yml
+
+  test-storybook-a11y:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    name: "Run Storybook a11y tests"
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+    - run: yarn storybook &
+    - run: npx wait-on localhost:9001 && yarn test:storybook
