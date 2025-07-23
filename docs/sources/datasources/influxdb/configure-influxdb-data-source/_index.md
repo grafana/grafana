@@ -93,7 +93,7 @@ Advanced HTTP Settings are optional settings that can be configured for more con
 - **Allowed cookies** - Defines which cookies are forwarded to the data source. All other cookies are deleted by default.
 - **Timeout** - Set an HTTP request timeout in seconds.
 
-##### Custom HTTP Headers
+**Custom HTTP Headers**
 
 Click **+ Add header** to add one or more HTTP headers. HTTP headers pass additional context and metadata about the request/response.
 
@@ -144,7 +144,7 @@ The table below illustrates the details needed for each query language:
 - **Password** or **Token** - Specify the token used to query the bucket defined in **Database**. Retrieve this from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) in the InfluxDB UI.
 - **User** - Add the username used to sign in to InfluxDB.
 
-##### For Flux
+**For Flux**
 
 - **Default bucket** is optional. The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) used for the `v.defaultBucket` macro in Flux queries.
 - With Influx 2.0 products, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/). Token must be set as `Authorization` header with the value `Token <generated-token>`.
@@ -157,12 +157,12 @@ Advanced Database Settings are optional settings that give you more control over
 - **Min time interval** - Sets the minimum time interval for auto group-by. Grafana recommends setting this to match the data write frequency. For example, if your data is written every minute, it’s recommended to set this interval to 1 minute, so that each group contains data from each new write. The default is `10s`. Refer to [Min time interval](#min-time-interval) for format examples.
 - **Max series** - Sets a limit on the maximum number of series or tables that Grafana processes. Set a lower limit to prevent system overload, or increase it if you have many small time series and need to display more of them. The default is `1000`.
 
-##### For InfluxQL
+**For InfluxQL**
 
 - **HTTP method** - Sets the HTTP method used to query your data source. The POST method allows for larger queries that would return an error using the GET method. The default method is `POST`.
 - **Autocomplete range** - Sets a time range limit for the query editor's autocomplete to reduce the execution time of tag filter queries. As a result, any tags not present within the defined time range will be filtered out. For example, setting the value to 12h will include only tag keys/values from the past 12 hours. This feature is recommended for use with very large databases, where significant performance improvements can be observed.
 
-##### For SQL
+**For SQL**
 
 - **Insecure Connection** - Toggle to disable gRPC TLS security.
 
