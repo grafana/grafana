@@ -3244,7 +3244,7 @@ func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
 	// Verify CompareCommits was called with empty base hash and feature hash
 	require.Equal(t, 1, mockClient.CompareCommitsCallCount())
 	_, baseHash, refHash := mockClient.CompareCommitsArgsForCall(0)
-	require.Equal(t, hash.Zero, baseHash)
+	require.Equal(t, hash.Zero, baseHash) // Empty base should be zero hash
 	require.Equal(t, hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"), refHash)
 }
 
@@ -4095,6 +4095,243 @@ func TestGitRepository_Move(t *testing.T) {
 				require.Contains(t, err.Error(), tt.expectedError)
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGitRepository_Move_ErrorConditions(t *testing.T) {
+	tests := []struct {
+		name          string
+		oldPath       string
+		newPath       string
+		ref           string
+		comment       string
+		setupMock     func(*mocks.FakeClient)
+		expectedError string
+		errorType     error
+	}{
+		{
+			name:    "MoveBlob - ErrObjectNotFound",
+			oldPath: "missing.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move missing file",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				refHash, _ := hash.FromHex("1234567890abcdef1234567890abcdef12345678")
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: refHash,
+				}, nil)
+
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+				mockWriter.MoveBlobReturns(hash.Hash{}, nanogit.ErrObjectNotFound)
+			},
+			expectedError: "file not found",
+			errorType:     repository.ErrFileNotFound,
+		},
+		{
+			name:    "MoveBlob - ErrObjectAlreadyExists",
+			oldPath: "old.yaml",
+			newPath: "existing.yaml",
+			ref:     "main",
+			comment: "move to existing file",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				refHash, _ := hash.FromHex("abcdef1234567890abcdef1234567890abcdef12")
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: refHash,
+				}, nil)
+
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+				mockWriter.MoveBlobReturns(hash.Hash{}, nanogit.ErrObjectAlreadyExists)
+			},
+			expectedError: "file already exists",
+			errorType:     repository.ErrFileAlreadyExists,
+		},
+		{
+			name:    "MoveBlob - generic error",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file with generic error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				refHash, _ := hash.FromHex("fedcba0987654321fedcba0987654321fedcba09")
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: refHash,
+				}, nil)
+
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+				mockWriter.MoveBlobReturns(hash.Hash{}, errors.New("network error"))
+			},
+			expectedError: "move blob: network error",
+		},
+		{
+			name:    "MoveTree - ErrObjectNotFound",
+			oldPath: "missing-dir/",
+			newPath: "new-dir/",
+			ref:     "main",
+			comment: "move missing directory",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				refHash, _ := hash.FromHex("1111222233334444555566667777888899990000")
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: refHash,
+				}, nil)
+
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+				mockWriter.MoveTreeReturns(hash.Hash{}, nanogit.ErrObjectNotFound)
+			},
+			expectedError: "file not found",
+			errorType:     repository.ErrFileNotFound,
+		},
+		{
+			name:    "MoveTree - ErrObjectAlreadyExists",
+			oldPath: "old-dir/",
+			newPath: "existing-dir/",
+			ref:     "main",
+			comment: "move to existing directory",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				refHash, _ := hash.FromHex("aaaa1111bbbb2222cccc3333dddd4444eeee5555")
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: refHash,
+				}, nil)
+
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+				mockWriter.MoveTreeReturns(hash.Hash{}, nanogit.ErrObjectAlreadyExists)
+			},
+			expectedError: "file already exists",
+			errorType:     repository.ErrFileAlreadyExists,
+		},
+		{
+			name:    "MoveTree - generic error",
+			oldPath: "old-dir/",
+			newPath: "new-dir/",
+			ref:     "main",
+			comment: "move directory with generic error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				refHash, _ := hash.FromHex("ffff6666eeee5555dddd4444cccc3333bbbb2222")
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: refHash,
+				}, nil)
+
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+				mockWriter.MoveTreeReturns(hash.Hash{}, errors.New("permission denied"))
+			},
+			expectedError: "move tree: permission denied",
+		},
+		{
+			name:    "invalid branch name",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "invalid//branch",
+			comment: "move with invalid branch",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// No mock setup needed as error is caught during branch validation
+			},
+			expectedError: "invalid branch name",
+		},
+		{
+			name:    "ensure branch exists fails - source branch not found",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "new-branch",
+			comment: "move to new branch when source doesn't exist",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// First call - new branch doesn't exist
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				// Second call - source branch also doesn't exist
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{}, nanogit.ErrObjectNotFound)
+			},
+			expectedError: "get source branch ref",
+		},
+		{
+			name:    "ensure branch exists fails - branch creation error",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "new-branch",
+			comment: "move to new branch with creation failure",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// First call - new branch doesn't exist
+				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				// Second call - get source branch succeeds
+				refHash, _ := hash.FromHex("7777aaaa8888bbbb9999cccc0000dddd1111eeee")
+				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: refHash,
+				}, nil)
+				// CreateRef fails
+				mockClient.CreateRefReturns(errors.New("create ref failed"))
+			},
+			expectedError: "create branch",
+		},
+		{
+			name:    "directory to file move type mismatch",
+			oldPath: "directory/",
+			newPath: "file.yaml",
+			ref:     "main",
+			comment: "move directory to file",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// No mock setup needed as error is caught during validation
+			},
+			expectedError: "cannot move between file and directory types",
+		},
+		{
+			name:    "file to directory move type mismatch",
+			oldPath: "file.yaml",
+			newPath: "directory/",
+			ref:     "main",
+			comment: "move file to directory",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				// No mock setup needed as error is caught during validation
+			},
+			expectedError: "cannot move between file and directory types",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			config := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+				},
+			}
+
+			gitConfig := RepositoryConfig{
+				URL:    "https://github.com/example/repo.git",
+				Branch: "main",
+				Token:  "token123",
+				Path:   "configs",
+			}
+
+			gitRepo := &gitRepository{
+				config:    config,
+				gitConfig: gitConfig,
+				client:    mockClient,
+			}
+
+			err := gitRepo.Move(context.Background(), tt.oldPath, tt.newPath, tt.ref, tt.comment)
+
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedError)
+
+			if tt.errorType != nil {
+				require.ErrorIs(t, err, tt.errorType)
 			}
 		})
 	}
