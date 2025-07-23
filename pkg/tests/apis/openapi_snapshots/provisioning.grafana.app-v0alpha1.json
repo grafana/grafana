@@ -3096,12 +3096,13 @@
             "format": "int64"
           },
           "state": {
-            "description": "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
+            "description": "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
             "type": "string",
             "enum": [
               "error",
               "pending",
               "success",
+              "warning",
               "working"
             ]
           },
@@ -4048,13 +4049,14 @@
             "format": "int64"
           },
           "state": {
-            "description": "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"working\"` The job is running",
+            "description": "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
             "type": "string",
             "default": "",
             "enum": [
               "error",
               "pending",
               "success",
+              "warning",
               "working"
             ]
           }
