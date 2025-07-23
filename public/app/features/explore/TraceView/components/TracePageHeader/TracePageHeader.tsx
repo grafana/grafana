@@ -109,7 +109,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const { links: extensionLinks } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
     context: trace,
-    limitPerPlugin: 5,
+    limitPerPlugin: 2,
   });
 
   let statusColor: BadgeColor = 'green';
