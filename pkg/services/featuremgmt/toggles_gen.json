@@ -91,6 +91,21 @@
     },
     {
       "metadata": {
+        "name": "alertingAIFeedback",
+        "resourceVersion": "1752820131286",
+        "creationTimestamp": "2025-07-18T06:28:51Z"
+      },
+      "spec": {
+        "description": "Enable AI-generated feedback from the Grafana UI.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAIGenAlertRules",
         "resourceVersion": "1752215431801",
         "creationTimestamp": "2025-07-07T14:40:14Z",
@@ -794,6 +809,19 @@
         "description": "Disable schema validation for dashboards/v2",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardDsAdHocFiltering",
+        "resourceVersion": "1752487974435",
+        "creationTimestamp": "2025-07-14T10:12:54Z"
+      },
+      "spec": {
+        "description": "Enables adhoc filtering support for the dashboard datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
       }
     },
     {
@@ -1841,12 +1869,15 @@
     {
       "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-03-31T13:59:07Z"
+        "resourceVersion": "1753261256848",
+        "creationTimestamp": "2025-03-31T13:59:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-23 09:00:56.848352786 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Specifies the locale so the correct format for numbers and dates can be shown",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
@@ -2526,7 +2557,8 @@
       "metadata": {
         "name": "pluginsCDNSyncLoader",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-02-07T10:07:08Z"
+        "creationTimestamp": "2025-02-07T10:07:08Z",
+        "deletionTimestamp": "2025-07-21T10:13:07Z"
       },
       "spec": {
         "description": "Loads plugins from CDN synchronously",

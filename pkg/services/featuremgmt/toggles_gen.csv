@@ -167,6 +167,7 @@ crashDetection,experimental,@grafana/observability-traces-and-profiling,false,fa
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingAIGenAlertRules,experimental,@grafana/alerting-squad,false,false,false
+alertingAIFeedback,experimental,@grafana/alerting-squad,false,false,false
 alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
 alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
@@ -189,7 +190,6 @@ datasourceConnectionsTab,privatePreview,@grafana/plugins-platform-backend,false,
 fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 newLogsPanel,experimental,@grafana/observability-logs,false,false,true
 grafanaconThemes,GA,@grafana/grafana-frontend-platform,false,true,false
-pluginsCDNSyncLoader,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 useScopesNavigationEndpoint,experimental,@grafana/grafana-frontend-platform,false,false,true
 scopeSearchAllLevels,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -204,7 +204,7 @@ alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true
 alertingImportYAMLUI,GA,@grafana/alerting-squad,false,false,true
 unifiedStorageHistoryPruner,GA,@grafana/search-and-storage,false,false,false
 azureMonitorLogsBuilderEditor,preview,@grafana/partner-datasources,false,false,false
-localeFormatPreference,experimental,@grafana/grafana-frontend-platform,false,false,false
+localeFormatPreference,preview,@grafana/grafana-frontend-platform,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
 extensionSidebar,experimental,@grafana/observability-logs,false,false,true
 alertingRulePermanentlyDelete,GA,@grafana/alerting-squad,false,false,true
@@ -236,3 +236,4 @@ otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
 alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
 pluginAssetProvider,experimental,@grafana/plugins-platform-backend,false,true,false
 unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
+dashboardDsAdHocFiltering,experimental,@grafana/datapro,false,false,true
