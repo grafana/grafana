@@ -84,7 +84,10 @@ describe('EditDataSourceActions', () => {
 
       const exploreLink = screen.getByText('Explore data').closest('a');
       // The explore URL uses the datasource name, not uid, and includes context
-      expect(exploreLink).toHaveAttribute('href', '/explore?left=%7B%22datasource%22:%22Test%20Prometheus%22,%22context%22:%22explore%22%7D');
+      expect(exploreLink).toHaveAttribute(
+        'href',
+        '/explore?left=%7B%22datasource%22:%22Test%20Prometheus%22,%22context%22:%22explore%22%7D'
+      );
     });
 
     it('should have correct href for build dashboard action', () => {

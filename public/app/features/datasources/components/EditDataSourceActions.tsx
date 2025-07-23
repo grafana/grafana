@@ -18,7 +18,7 @@ const allowedPluginIds = [
   'grafana-metricsdrilldown-app',
   'grafana-pyroscope-app',
   'grafana-monitoring-app',
-  'grafana-troubleshooting-app'
+  'grafana-troubleshooting-app',
 ];
 
 export function EditDataSourceActions({ uid }: Props) {
@@ -39,7 +39,7 @@ export function EditDataSourceActions({ uid }: Props) {
     limitPerPlugin: 1,
   });
 
-  const links = allLinks.filter(link => allowedPluginIds.includes(link.pluginId));
+  const links = allLinks.filter((link) => allowedPluginIds.includes(link.pluginId));
 
   return (
     <>
@@ -78,19 +78,20 @@ export function EditDataSourceActions({ uid }: Props) {
         <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
       </LinkButton>
 
-      {!isLoading && links.map((link) => (
-        <LinkButton
-          key={link.id}
-          size="sm"
-          variant="secondary"
-          href={link.path}
-          onClick={link.onClick}
-          icon={link.icon}
-          tooltip={link.description}
-        >
-          {link.title}
-        </LinkButton>
-      ))}
+      {!isLoading &&
+        links.map((link) => (
+          <LinkButton
+            key={link.id}
+            size="sm"
+            variant="secondary"
+            href={link.path}
+            onClick={link.onClick}
+            icon={link.icon}
+            tooltip={link.description}
+          >
+            {link.title}
+          </LinkButton>
+        ))}
     </>
   );
 }

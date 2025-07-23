@@ -24,7 +24,7 @@ const allowedPlugins = [
   'grafana-metricsdrilldown-app',
   'grafana-pyroscope-app',
   'grafana-monitoring-app',
-  'grafana-troubleshooting-app'
+  'grafana-troubleshooting-app',
 ];
 interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -188,13 +188,11 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   });
 
   // Filter to only allow grafana-owned plugins
-  const statusLinks = allStatusLinks.filter(link => allowedPlugins.includes(link.pluginId));
-  const errorLinks = allErrorLinks.filter(link => allowedPlugins.includes(link.pluginId));
+  const statusLinks = allStatusLinks.filter((link) => allowedPlugins.includes(link.pluginId));
+  const errorLinks = allErrorLinks.filter((link) => allowedPlugins.includes(link.pluginId));
 
   // Combine links: show error-specific only for errors, status-general for all
-  const extensionLinks = severity === 'error'
-    ? [...statusLinks, ...errorLinks]
-    : statusLinks;
+  const extensionLinks = severity === 'error' ? [...statusLinks, ...errorLinks] : statusLinks;
 
   if (message) {
     return (

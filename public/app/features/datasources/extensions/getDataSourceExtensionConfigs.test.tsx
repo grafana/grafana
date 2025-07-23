@@ -2,7 +2,7 @@ import {
   PluginExtensionPoints,
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
-  type PluginExtensionEventHelpers
+  type PluginExtensionEventHelpers,
 } from '@grafana/data';
 
 import { getDataSourceExtensionConfigs } from './getDataSourceExtensionConfigs';
@@ -31,9 +31,7 @@ describe('getDataSourceExtensionConfigs', () => {
   it('should include monitoring tool extension for DataSourceConfigActions', () => {
     const configs = getDataSourceExtensionConfigs();
 
-    const monitoringConfig = configs.find(config =>
-      config.title?.includes('Monitoring Tool')
-    );
+    const monitoringConfig = configs.find((config) => config.title?.includes('Monitoring Tool'));
 
     expect(monitoringConfig).toBeDefined();
     expect(monitoringConfig?.targets).toContain(PluginExtensionPoints.DataSourceConfigActions);
@@ -46,9 +44,7 @@ describe('getDataSourceExtensionConfigs', () => {
   it('should include troubleshooting guide extension for DataSourceConfigStatus', () => {
     const configs = getDataSourceExtensionConfigs();
 
-    const troubleshootingConfig = configs.find(config =>
-      config.title?.includes('Troubleshooting Guide')
-    );
+    const troubleshootingConfig = configs.find((config) => config.title?.includes('Troubleshooting Guide'));
 
     expect(troubleshootingConfig).toBeDefined();
     expect(troubleshootingConfig?.targets).toContain(PluginExtensionPoints.DataSourceConfigStatus);
@@ -61,9 +57,7 @@ describe('getDataSourceExtensionConfigs', () => {
   describe('Monitoring Tool Extension', () => {
     it('should have a configure function that filters by datasource type', () => {
       const configs = getDataSourceExtensionConfigs();
-      const monitoringConfig = configs.find(config =>
-        config.title?.includes('Monitoring Tool')
-      );
+      const monitoringConfig = configs.find((config) => config.title?.includes('Monitoring Tool'));
 
       expect(monitoringConfig?.configure).toBeDefined();
       expect(typeof monitoringConfig?.configure).toBe('function');
@@ -97,9 +91,7 @@ describe('getDataSourceExtensionConfigs', () => {
 
     it('should have an onClick function that opens external URL', () => {
       const configs = getDataSourceExtensionConfigs();
-      const monitoringConfig = configs.find(config =>
-        config.title?.includes('Monitoring Tool')
-      );
+      const monitoringConfig = configs.find((config) => config.title?.includes('Monitoring Tool'));
 
       expect(monitoringConfig?.onClick).toBeDefined();
       expect(typeof monitoringConfig?.onClick).toBe('function');
@@ -122,10 +114,7 @@ describe('getDataSourceExtensionConfigs', () => {
         { context } as PluginExtensionEventHelpers<PluginExtensionDataSourceConfigActionsContext> // meta
       );
 
-      expect(window.open).toHaveBeenCalledWith(
-        'https://monitoring-tool.com/datasource/test-datasource-uid',
-        '_blank'
-      );
+      expect(window.open).toHaveBeenCalledWith('https://monitoring-tool.com/datasource/test-datasource-uid', '_blank');
 
       // Restore original window.open
       window.open = originalOpen;
@@ -135,9 +124,7 @@ describe('getDataSourceExtensionConfigs', () => {
   describe('Troubleshooting Guide Extension', () => {
     it('should have a configure function that filters by severity', () => {
       const configs = getDataSourceExtensionConfigs();
-      const troubleshootingConfig = configs.find(config =>
-        config.title?.includes('Troubleshooting Guide')
-      );
+      const troubleshootingConfig = configs.find((config) => config.title?.includes('Troubleshooting Guide'));
 
       expect(troubleshootingConfig?.configure).toBeDefined();
       expect(typeof troubleshootingConfig?.configure).toBe('function');
@@ -172,9 +159,7 @@ describe('getDataSourceExtensionConfigs', () => {
 
     it('should have a path to troubleshooting documentation', () => {
       const configs = getDataSourceExtensionConfigs();
-      const troubleshootingConfig = configs.find(config =>
-        config.title?.includes('Troubleshooting Guide')
-      );
+      const troubleshootingConfig = configs.find((config) => config.title?.includes('Troubleshooting Guide'));
 
       expect(troubleshootingConfig?.path).toBe('/docs/troubleshooting/datasources');
     });
@@ -195,9 +180,7 @@ describe('getDataSourceExtensionConfigs', () => {
       const configs = getDataSourceExtensionConfigs();
 
       expect(configs).toEqual([]);
-      expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Could not configure datasource extensions')
-      );
+      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('Could not configure datasource extensions'));
 
       // Restore original console.warn
       console.warn = originalWarn;
@@ -208,10 +191,10 @@ describe('getDataSourceExtensionConfigs', () => {
     it('should use correct extension points', () => {
       const configs = getDataSourceExtensionConfigs();
 
-      const actionExtensions = configs.filter(config =>
+      const actionExtensions = configs.filter((config) =>
         config.targets?.includes(PluginExtensionPoints.DataSourceConfigActions)
       );
-      const statusExtensions = configs.filter(config =>
+      const statusExtensions = configs.filter((config) =>
         config.targets?.includes(PluginExtensionPoints.DataSourceConfigStatus)
       );
 
@@ -222,7 +205,7 @@ describe('getDataSourceExtensionConfigs', () => {
     it('should have proper translation comments for all text', () => {
       const configs = getDataSourceExtensionConfigs();
 
-      configs.forEach(config => {
+      configs.forEach((config) => {
         // All configurations should follow the pattern of not using translations
         // as documented in the specs (cannot use t() at top level)
         expect(config.title).toBeDefined();
@@ -234,7 +217,7 @@ describe('getDataSourceExtensionConfigs', () => {
     it('should have valid icons for all extensions', () => {
       const configs = getDataSourceExtensionConfigs();
 
-      configs.forEach(config => {
+      configs.forEach((config) => {
         expect(config.icon).toBeDefined();
         expect(typeof config.icon).toBe('string');
       });
@@ -243,10 +226,8 @@ describe('getDataSourceExtensionConfigs', () => {
     it('should have either path or onClick for all extensions', () => {
       const configs = getDataSourceExtensionConfigs();
 
-      configs.forEach(config => {
-        expect(
-          config.path !== undefined || config.onClick !== undefined
-        ).toBe(true);
+      configs.forEach((config) => {
+        expect(config.path !== undefined || config.onClick !== undefined).toBe(true);
       });
     });
   });
@@ -255,19 +236,21 @@ describe('getDataSourceExtensionConfigs', () => {
     it('should handle missing context gracefully in configure functions', () => {
       const configs = getDataSourceExtensionConfigs();
 
-      configs.forEach(config => {
+      configs.forEach((config) => {
         if (config.configure) {
           // Test with undefined context
           const result = config.configure(undefined);
           expect(result).toBeUndefined();
 
           // Test with missing dataSource
-          const resultNoDS = config.configure({ dataSource: undefined } as unknown as PluginExtensionDataSourceConfigActionsContext | PluginExtensionDataSourceConfigStatusContext);
+          const resultNoDS = config.configure({ dataSource: undefined } as unknown as
+            | PluginExtensionDataSourceConfigActionsContext
+            | PluginExtensionDataSourceConfigStatusContext);
           expect(resultNoDS).toBeUndefined();
 
           // Test with missing datasource type
           const resultNoType = config.configure({
-            dataSource: { uid: 'test', name: 'test' }
+            dataSource: { uid: 'test', name: 'test' },
           } as unknown as PluginExtensionDataSourceConfigActionsContext | PluginExtensionDataSourceConfigStatusContext);
           expect(resultNoType).toBeUndefined();
         }
@@ -277,13 +260,9 @@ describe('getDataSourceExtensionConfigs', () => {
     it('should validate context properties used in configure functions', () => {
       const configs = getDataSourceExtensionConfigs();
 
-      const monitoringConfig = configs.find(config =>
-        config.title?.includes('Monitoring Tool')
-      );
+      const monitoringConfig = configs.find((config) => config.title?.includes('Monitoring Tool'));
 
-      const troubleshootingConfig = configs.find(config =>
-        config.title?.includes('Troubleshooting Guide')
-      );
+      const troubleshootingConfig = configs.find((config) => config.title?.includes('Troubleshooting Guide'));
 
       // Monitoring config should check dataSource.type
       expect(monitoringConfig?.configure).toBeDefined();
