@@ -231,6 +231,10 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 				return "", err
 			}
 			_, handler, err = newPostgresPGX(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
+			if err != nil {
+				logger.Error("Failed connecting to Postgres", "err", err)
+				return nil, err
+			}
 		} else {
 			tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
 			if err != nil {
@@ -241,11 +245,10 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 				return nil, err
 			}
 			_, handler, err = newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
-		}
-
-		if err != nil {
-			logger.Error("Failed connecting to Postgres", "err", err)
-			return nil, err
+			if err != nil {
+				logger.Error("Failed connecting to Postgres", "err", err)
+				return nil, err
+			}
 		}
 
 		logger.Debug("Successfully connected to Postgres")
