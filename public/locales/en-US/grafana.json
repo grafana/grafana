@@ -1551,7 +1551,8 @@
       "title": "Edit evaluation group"
     },
     "group-loader": {
-      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
+      "no-rules": "No rules found in this group"
     },
     "group-status": {
       "content-the-group-is-being-deleted": "The group is being deleted"
