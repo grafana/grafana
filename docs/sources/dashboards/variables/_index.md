@@ -71,7 +71,7 @@ In our documentation and in the application, we typically simply refer to a _tem
 Variable values are always synced to the URL using [query parameter syntax](https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#query-parameters), `var-<varname>=value`.
 For example:
 
-``` text
+```text
 https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&from=now-6h&to=now&timezone=utc&var-Server=CCC&var-MyCustomDashboardVariable=Hello%20World%21
 ```
 
