@@ -406,16 +406,22 @@ func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comme
 	}
 
 	// Create destination directory if needed
-	destParent := path.Dir(newFullPath)
-	if sourceIsDir {
-		// For directory moves, create the parent of the destination
-		if err := os.MkdirAll(destParent, 0700); err != nil {
-			return fmt.Errorf("create destination parent directory: %w", err)
-		}
-	} else {
+	if !sourceIsDir {
 		// For file moves, create the directory containing the file
+		destParent := path.Dir(newFullPath)
 		if err := os.MkdirAll(destParent, 0700); err != nil {
 			return fmt.Errorf("create destination directory: %w", err)
+		}
+	} else {
+		// For directory moves, create the parent directory of the destination
+		// but not the destination directory itself (os.Rename will create it)
+		// We need to be careful with trailing slashes in directory paths
+		cleanNewPath := strings.TrimSuffix(newFullPath, "/")
+		destParent := path.Dir(cleanNewPath)
+		if destParent != "." && destParent != "/" && destParent != r.path {
+			if err := os.MkdirAll(destParent, 0700); err != nil {
+				return fmt.Errorf("create destination parent directory: %w", err)
+			}
 		}
 	}
 
