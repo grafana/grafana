@@ -11,6 +11,7 @@ import {
   useState,
 } from 'react';
 
+import { createContext as createAssistantContext, ItemDataType, useAssistant } from '@grafana/assistant';
 import {
   CoreApp,
   DataFrame,
@@ -22,10 +23,11 @@ import {
   shallowCompare,
   store,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
-import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
+import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { LogLineDetailsMode } from './LogLineDetails';
@@ -63,6 +65,8 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setWrapLogMessage: (showTime: boolean) => void;
   showDetails: LogListModel[];
   toggleDetails: (log: LogListModel) => void;
+  isAssistantAvailable: boolean;
+  openAssistantByLog: ((log: LogListModel) => void) | undefined;
 }
 
 export const LogListContext = createContext<LogListContextData>({
@@ -100,6 +104,8 @@ export const LogListContext = createContext<LogListContextData>({
   syntaxHighlighting: true,
   toggleDetails: () => {},
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -239,6 +245,47 @@ export const LogListContextProvider = ({
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
   const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
+  const [isAssistantAvailable, openAssistant] = useAssistant();
+
+  const openAssistantByLog = useCallback(
+    async (log: LogListModel) => {
+      if (!openAssistant) {
+        return;
+      }
+
+      const datasource = await getDataSourceSrv().get(log.datasourceUid);
+      const context = [];
+      if (datasource) {
+        context.push(
+          createAssistantContext(ItemDataType.Datasource, {
+            datasourceUid: datasource.uid,
+            datasourceName: datasource.name,
+            datasourceType: datasource.type,
+          })
+        );
+      }
+      openAssistant({
+        prompt: `${t('logs.log-line-menu.log-line-explainer', 'Explain this log line in a concise way')}:
+
+      \`\`\`
+${log.entry.replaceAll('`', '\\`')}
+      \`\`\`
+      `,
+        context: [
+          ...context,
+          createAssistantContext(ItemDataType.Structured, {
+            title: t('logs.log-line-menu.log-line', 'Log line'),
+            data: {
+              labels: log.labels,
+              value: log.entry,
+              timestamp: log.timestamp,
+            },
+          }),
+        ],
+      });
+    },
+    [openAssistant]
+  );
 
   useEffect(() => {
     if (noInteractions) {
@@ -569,6 +616,8 @@ export const LogListContextProvider = ({
         syntaxHighlighting: logListState.syntaxHighlighting,
         toggleDetails,
         wrapLogMessage: logListState.wrapLogMessage,
+        isAssistantAvailable,
+        openAssistantByLog,
       }}
     >
       {children}
