@@ -2,16 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, Ref
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
-import {
-  DataFrame,
-  Field,
-  FieldMatcherID,
-  fieldReducers,
-  FieldType,
-  formattedValueToString,
-  getFieldMatcher,
-  reduceField,
-} from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
@@ -264,8 +255,8 @@ export interface FooterCalcsOptions {
 
 export function useFooterCalcs(
   rows: TableRow[],
-  data: DataFrame,
-  fields: Field[], // this is visibleFields, so that footer calcs are only applied to visible fields and the indices match
+  // it's very important that this is the _visible_ fields.
+  fields: Field[],
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
   return useMemo(() => {
@@ -275,9 +266,7 @@ export function useFooterCalcs(
       return [];
     }
 
-    const fieldNameMatcher = footerOptions.fields?.length
-      ? getFieldMatcher({ id: FieldMatcherID.byNames, options: { names: footerOptions.fields } })
-      : undefined;
+    const fieldNameSet = footerOptions.fields?.length ? new Set(footerOptions.fields) : null;
 
     return fields.map((field, index) => {
       if (field.state?.calcs) {
@@ -305,8 +294,9 @@ export function useFooterCalcs(
       }
 
       // If fields array is specified, only show footer for fields included in that array.
-      // the array can include either the display name or the field name.
-      if (fieldNameMatcher && !fieldNameMatcher(field, data, [data])) {
+      // the array can include either the display name or the field name. we don't use a field matcher
+      // because that requires us to drill the data frame down here.
+      if (fieldNameSet && !fieldNameSet.has(getDisplayName(field)) && !fieldNameSet.has(field.name)) {
         return emptyValue;
       }
 
@@ -321,7 +311,7 @@ export function useFooterCalcs(
 
       return formattedValueToString(displayFn(value));
     });
-  }, [fields, data, enabled, footerOptions, isCountRowsSet, rows]);
+  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
 interface TypographyCtx {
