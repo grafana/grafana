@@ -2,34 +2,44 @@ import { css } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
+import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { useStyles2 } from '@grafana/ui';
 
 import { SqlExpressionQuery } from '../types';
+import { fetchSQLFields } from '../utils/metaSqlExpr';
+
+import { getSqlCompletionProvider } from './sqlCompletionProvider';
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
 
-// Define the language definition for MySQL syntax highlighting and autocomplete
-const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
-  id: 'mysql',
-  // Additional properties could be added here in the future if needed
-  // eg:
-  // completionProvider: to autocomplete field (ie column) names when given
-  // a table name (dataframe reference)
-  // formatter: to format the SQL query and dashboard variables
-};
-
 interface Props {
   refIds: Array<SelectableValue<string>>;
   query: SqlExpressionQuery;
+  queries: DataQuery[] | undefined;
   onChange: (query: SqlExpressionQuery) => void;
   /** Should the `format` property be set to `alerting`? */
   alerting?: boolean;
 }
 
-export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) => {
+export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries }: Props) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
+  const completionProvider = useMemo(
+    () =>
+      getSqlCompletionProvider({
+        getFields: (identifier: TableIdentifier) => fetchFields(identifier, queries || []),
+        refIds,
+      }),
+    [queries, refIds]
+  );
+
+  // Define the language definition for MySQL syntax highlighting and autocomplete
+  const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
+    id: 'mysql',
+    completionProvider,
+  };
+
   const initialQuery = `SELECT *
   FROM ${vars[0]}
   LIMIT 10`;
@@ -90,3 +100,8 @@ const getStyles = () => ({
     minHeight: '100px',
   }),
 });
+
+async function fetchFields(identifier: TableIdentifier, queries: DataQuery[]) {
+  const fields = await fetchSQLFields({ table: identifier.table }, queries);
+  return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
+}

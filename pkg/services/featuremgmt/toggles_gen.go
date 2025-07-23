@@ -431,6 +431,10 @@ const (
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
+	// FlagSqlExpressionsColumnAutoComplete
+	// Enables column autocomplete for SQL Expressions
+	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
+
 	// FlagGroupToNestedTableTransformation
 	// Enables the group to nested table transformation
 	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
