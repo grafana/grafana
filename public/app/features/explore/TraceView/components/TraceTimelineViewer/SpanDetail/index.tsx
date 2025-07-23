@@ -113,6 +113,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+      maxWidth: '50%',
       flexGrow: 0,
       flexShrink: 0,
     }),
