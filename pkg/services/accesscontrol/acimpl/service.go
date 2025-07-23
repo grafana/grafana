@@ -436,8 +436,8 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 			if basicRole, ok := s.roles[br]; ok {
 				for _, p := range registration.Role.Permissions {
 					if p.Action == pluginaccesscontrol.ActionAppAccess {
-						s.log.Warn("Plugin %s is attempting to grant %s permission to %s role, but this permission is already granted by default and will be ignored",
-							registration.Role.Name, p.Action, br)
+						s.log.Warn("Plugin is attempting to grant access permission, but this permission is already granted by default and will be ignored",
+							"role", registration.Role.Name, "permission", p.Action, "scope", p.Scope)
 						continue
 					}
 					perm := accesscontrol.Permission{
