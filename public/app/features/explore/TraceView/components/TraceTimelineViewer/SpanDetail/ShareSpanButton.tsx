@@ -12,6 +12,7 @@ export function ShareSpanButton(props: Props) {
     <span>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <a
+        data-testid="share-span-button"
         {...focusSpanLink}
         onClick={(e) => {
           // click handling logic copied from react router:
