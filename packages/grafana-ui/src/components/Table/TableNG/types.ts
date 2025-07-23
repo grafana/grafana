@@ -222,13 +222,6 @@ export interface ImageCellProps {
   rowIdx: number;
 }
 
-export interface JSONCellProps {
-  justifyContent: Property.JustifyContent;
-  value: TableCellValue;
-  field: Field;
-  rowIdx: number;
-}
-
 export interface DataLinksCellProps {
   field: Field;
   rowIdx: number;
