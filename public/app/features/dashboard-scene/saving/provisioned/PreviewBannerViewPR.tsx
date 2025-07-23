@@ -1,8 +1,7 @@
-import { capitalize } from 'lodash';
-
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, Stack } from '@grafana/ui';
+import { RepoTypeDisplay, RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { commonAlertProps } from './DashboardPreviewBanner';
@@ -22,8 +21,7 @@ interface Props {
 export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }: Props) {
   const { repoType } = usePullRequestParam();
 
-  // Capitalize the first letter of repoType
-  const capitalizedRepoType = repoType ? capitalize(repoType) : 'repository';
+  const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
 
   const titleText = isNewPr
     ? t(
@@ -96,4 +94,8 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
       </Trans>
     </Alert>
   );
+}
+
+function isValidRepoType(repoType: string | undefined): repoType is RepoType {
+  return repoType != null && repoType in RepoTypeDisplay;
 }
