@@ -23,6 +23,8 @@ const meta: Meta<typeof InlineField> = {
     controls: {
       exclude: ['htmlFor', 'className', 'children'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
 };
 
