@@ -41,6 +41,7 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
       onFocus={() => setIsMouseOver(true)}
       onMouseOver={() => setIsMouseOver(true)}
       onMouseOut={() => setIsMouseOver(false)}
+      style={{ height: '100%' }}
     >
       <Stack gap={0} alignItems={'baseline'}>
         <FunctionEditor
