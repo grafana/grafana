@@ -12491,6 +12491,10 @@
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
+    "pill-cell-options-editor": {
+      "description-wrap-text": "If selected, pills will be wrapped onto multiple lines",
+      "label-wrap-text": "Wrap text"
+    },
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },

@@ -111,4 +111,5 @@ TableFieldOptions: {
 
 TablePillCellOptions: {
   type: TableCellDisplayMode & "pill"
+  wrapText?: bool
 } @cuetsy(kind="interface")

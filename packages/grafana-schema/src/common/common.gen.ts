@@ -979,6 +979,7 @@ export enum ComparisonOperation {
 
 export interface TablePillCellOptions {
   type: TableCellDisplayMode.Pill;
+  wrapText?: boolean;
 }
 
 /**
