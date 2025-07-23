@@ -814,14 +814,14 @@ const getGridStyles = (
       },
       // selected cells should appear below hovered cells.
       '&:hover': {
-        zIndex: theme.zIndex.tooltip - 1,
+        zIndex: theme.zIndex.tooltip - 2,
       },
       '&[aria-selected=true]': {
-        zIndex: theme.zIndex.tooltip - 2,
+        zIndex: theme.zIndex.tooltip - 3,
       },
     },
 
-    '.rdg-summary-row': {
+    '.rdg-header-row, .rdg-summary-row': {
       '.rdg-cell': {
         zIndex: theme.zIndex.tooltip - 1,
         paddingInline: TABLE.CELL_PADDING,
