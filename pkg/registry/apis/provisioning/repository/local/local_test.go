@@ -1520,13 +1520,14 @@ func TestLocalRepository_Config(t *testing.T) {
 
 func TestLocalRepository_Move(t *testing.T) {
 	testCases := []struct {
-		name        string
-		setup       func(t *testing.T) (string, *localRepository)
-		oldPath     string
-		newPath     string
-		ref         string
-		comment     string
-		expectedErr error
+		name            string
+		setup           func(t *testing.T) (string, *localRepository)
+		oldPath         string
+		newPath         string
+		ref             string
+		comment         string
+		expectedErr     error
+		expectedContent string // Expected content of moved file (empty string means don't verify content)
 	}{
 		{
 			name: "successful move",
@@ -1554,11 +1555,12 @@ func TestLocalRepository_Move(t *testing.T) {
 
 				return tempDir, repo
 			},
-			oldPath:     "source.txt",
-			newPath:     "destination.txt",
-			ref:         "",
-			comment:     "move file",
-			expectedErr: nil,
+			oldPath:         "source.txt",
+			newPath:         "destination.txt",
+			ref:             "",
+			comment:         "move file",
+			expectedErr:     nil,
+			expectedContent: "source content",
 		},
 		{
 			name: "move to subdirectory",
@@ -1586,11 +1588,12 @@ func TestLocalRepository_Move(t *testing.T) {
 
 				return tempDir, repo
 			},
-			oldPath:     "test.txt",
-			newPath:     "newdir/moved.txt",
-			ref:         "",
-			comment:     "move to subdir",
-			expectedErr: nil,
+			oldPath:         "test.txt",
+			newPath:         "newdir/moved.txt",
+			ref:             "",
+			comment:         "move to subdir",
+			expectedErr:     nil,
+			expectedContent: "test content",
 		},
 		{
 			name: "move non-existent file",
@@ -1613,11 +1616,12 @@ func TestLocalRepository_Move(t *testing.T) {
 
 				return tempDir, repo
 			},
-			oldPath:     "nonexistent.txt",
-			newPath:     "destination.txt",
-			ref:         "",
-			comment:     "move missing",
-			expectedErr: repository.ErrFileNotFound,
+			oldPath:         "nonexistent.txt",
+			newPath:         "destination.txt",
+			ref:             "",
+			comment:         "move missing",
+			expectedErr:     repository.ErrFileNotFound,
+			expectedContent: "", // No content verification for error cases
 		},
 		{
 			name: "move to existing file",
@@ -1649,11 +1653,12 @@ func TestLocalRepository_Move(t *testing.T) {
 
 				return tempDir, repo
 			},
-			oldPath:     "source2.txt",
-			newPath:     "dest2.txt",
-			ref:         "",
-			comment:     "move to existing",
-			expectedErr: repository.ErrFileAlreadyExists,
+			oldPath:         "source2.txt",
+			newPath:         "dest2.txt",
+			ref:             "",
+			comment:         "move to existing",
+			expectedErr:     repository.ErrFileAlreadyExists,
+			expectedContent: "", // No content verification for error cases
 		},
 		{
 			name: "successful directory move",
@@ -1685,11 +1690,12 @@ func TestLocalRepository_Move(t *testing.T) {
 
 				return tempDir, repo
 			},
-			oldPath:     "subdir/",
-			newPath:     "newsubdir/",
-			ref:         "",
-			comment:     "move directory",
-			expectedErr: nil,
+			oldPath:         "subdir/",
+			newPath:         "newsubdir/",
+			ref:             "",
+			comment:         "move directory",
+			expectedErr:     nil,
+			expectedContent: "", // No content verification for directory moves
 		},
 		{
 			name: "move file to directory type should fail",
@@ -1717,11 +1723,12 @@ func TestLocalRepository_Move(t *testing.T) {
 
 				return tempDir, repo
 			},
-			oldPath:     "file.txt",
-			newPath:     "directory/",
-			ref:         "",
-			comment:     "move file to directory",
-			expectedErr: apierrors.NewBadRequest("cannot move between file and directory types"),
+			oldPath:         "file.txt",
+			newPath:         "directory/",
+			ref:             "",
+			comment:         "move file to directory",
+			expectedErr:     apierrors.NewBadRequest("cannot move between file and directory types"),
+			expectedContent: "", // No content verification for error cases
 		},
 		{
 			name: "move with ref should fail",
@@ -1749,11 +1756,12 @@ func TestLocalRepository_Move(t *testing.T) {
 
 				return tempDir, repo
 			},
-			oldPath:     "ref_test.txt",
-			newPath:     "ref_dest.txt",
-			ref:         "some-ref",
-			comment:     "move with ref",
-			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+			oldPath:         "ref_test.txt",
+			newPath:         "ref_dest.txt",
+			ref:             "some-ref",
+			comment:         "move with ref",
+			expectedErr:     apierrors.NewBadRequest("local repository does not support ref"),
+			expectedContent: "", // No content verification for error cases
 		},
 	}
 
@@ -1782,15 +1790,11 @@ func TestLocalRepository_Move(t *testing.T) {
 				_, err = os.Stat(destFullPath)
 				require.NoError(t, err, "Destination file should exist")
 
-				// Verify content if it was a successful move of an existing file
-				if tc.name == "successful move" {
+				// Verify content if expectedContent is specified
+				if tc.expectedContent != "" {
 					content, err := os.ReadFile(destFullPath)
 					require.NoError(t, err)
-					assert.Equal(t, "source content", string(content), "Content should be preserved")
-				} else if tc.name == "move to subdirectory" {
-					content, err := os.ReadFile(destFullPath)
-					require.NoError(t, err)
-					assert.Equal(t, "test content", string(content), "Content should be preserved")
+					assert.Equal(t, tc.expectedContent, string(content), "Content should be preserved")
 				}
 			}
 		})
