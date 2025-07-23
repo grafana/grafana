@@ -3810,10 +3810,10 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/geomap/layers/basemaps/esri.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/panel/geomap/layers/data/geojsonDynamic.ts:5381": [
+    "public/app/plugins/panel/geomap/layersgeojsonDynamic.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/panel/geomap/layers/data/routeLayer.tsx:5381": [
+    "public/app/plugins/panel/geomap/layersrouteLayer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/geomap/layers/registry.ts:5381": [

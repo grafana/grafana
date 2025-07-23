@@ -18,7 +18,7 @@ export enum FormatStringOutput {
   KebabCase = 'Kebab Case',
   Trim = 'Trim',
   Substring = 'Substring',
-  Affix = 'Affix'
+  Affix = 'Affix',
 }
 
 export interface FormatStringTransformerOptions {
@@ -39,8 +39,8 @@ const splitToCapitalWords = (input: string) => {
 };
 
 export const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
-  return (field: Field) =>
-    field.values.map((value: string) => {
+  return (field: Field, allFields: Field[]) =>
+    field.values.map((value: string, index: number) => {
       switch (options.outputFormat) {
         case FormatStringOutput.UpperCase:
           return value.toUpperCase();
@@ -64,7 +64,19 @@ export const getFormatStringFunction = (options: FormatStringTransformerOptions)
         case FormatStringOutput.Substring:
           return value.substring(options.substringStart, options.substringEnd);
         case FormatStringOutput.Affix:
-          return (options.stringPrefix ?? "") + value + (options.stringSuffix ?? "");          
+          let prefix = { value: options.stringPrefix ?? '' };
+          let suffix = { value: options.stringSuffix ?? '' };
+          [prefix, suffix].map((affix) => {
+            const matches = [...affix.value.matchAll(/\{([\w\d\._-]+)\}/g)];
+            matches.forEach((match) => {
+              const fieldName = match[1];
+              const matchingField = allFields.find((field) => field.name === fieldName);
+              if (matchingField) {
+                affix.value = affix.value.replace(`{${fieldName}}`, matchingField.values[index]);
+              }
+            });
+          });
+          return prefix.value + value + suffix.value;
       }
     });
 };
@@ -111,12 +123,12 @@ export const formatStringTransformer: DataTransformerInfo<FormatStringTransforme
  * @internal
  */
 export const createStringFormatter =
-  (fieldMatches: FieldMatcher, formatStringFunction: (field: Field) => string[]) =>
+  (fieldMatches: FieldMatcher, formatStringFunction: (field: Field, allFields: Field[]) => string[]) =>
   (frame: DataFrame, allFrames: DataFrame[]) => {
     return frame.fields.map((field) => {
       // Find the configured field
       if (fieldMatches(field, frame, allFrames)) {
-        const newVals = formatStringFunction(field);
+        const newVals = formatStringFunction(field, frame.fields);
 
         return {
           ...field,
