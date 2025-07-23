@@ -27,6 +27,7 @@ type DecryptAuthorizer interface {
 // DecryptService is the inferface for the decrypt service.
 type DecryptService interface {
 	Decrypt(ctx context.Context, namespace string, names ...string) (map[string]DecryptResult, error)
+	Close() error
 }
 
 // DecryptResult is the (union) result of a decryption operation.

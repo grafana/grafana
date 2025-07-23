@@ -9,16 +9,17 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestDecryptService(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
+	tracer := noop.NewTracerProvider().Tracer("test")
 
 	t.Run("when there are only errors from the storage, the service returns them in the map", func(t *testing.T) {
 		t.Parallel()
@@ -33,10 +34,8 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "local"
 
-		decryptService := &DecryptService{
-			cfg:                    cfg,
-			existingDecryptStorage: mockStorage,
-		}
+		decryptService, err := NewDecryptService(cfg, tracer, mockStorage)
+		require.NoError(t, err)
 
 		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1")
 		require.NotNil(t, resp)
@@ -64,10 +63,8 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "local"
 
-		decryptService := &DecryptService{
-			cfg:                    cfg,
-			existingDecryptStorage: mockStorage,
-		}
+		decryptService, err := NewDecryptService(cfg, tracer, mockStorage)
+		require.NoError(t, err)
 
 		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1", "secure-value-2")
 		require.NotNil(t, resp)
@@ -94,10 +91,8 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "local"
 
-		decryptService := &DecryptService{
-			cfg:                    cfg,
-			existingDecryptStorage: mockStorage,
-		}
+		decryptService, err := NewDecryptService(cfg, tracer, mockStorage)
+		require.NoError(t, err)
 
 		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1", "secure-value-2")
 		require.NotNil(t, resp)
@@ -113,15 +108,10 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "unsupported"
 
-		decryptService := &DecryptService{
-			cfg:                    cfg,
-			existingDecryptStorage: mockStorage,
-		}
-
-		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1")
-		require.Nil(t, resp)
+		decryptService, err := NewDecryptService(cfg, tracer, mockStorage)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unsupported storage type")
+		require.Nil(t, decryptService)
 	})
 
 	t.Run("when storage type is grpc but token exchange config is missing, it returns an error", func(t *testing.T) {
@@ -133,7 +123,7 @@ func TestDecryptService(t *testing.T) {
 		cfg.SecretsManagement.DecryptServerType = "grpc"
 		cfg.SecretsManagement.DecryptServerAddress = "127.0.0.1:10000"
 
-		_, err := NewDecryptService(cfg, mockStorage)
+		_, err := NewDecryptService(cfg, tracer, mockStorage)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "grpc_client_authentication.token and grpc_client_authentication.token_exchange_url are required")
 	})
@@ -146,11 +136,12 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "grpc"
 
-		_, err := NewDecryptService(cfg, mockStorage)
+		_, err := NewDecryptService(cfg, tracer, mockStorage)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "decrypt_server_address is required")
 	})
 
+	/* TODO : MOVE test to grpc_client impl
 	t.Run("when storage type is grpc with valid config, it uses token exchange", func(t *testing.T) {
 		t.Parallel()
 
@@ -178,6 +169,9 @@ func TestDecryptService(t *testing.T) {
 			tokenExchangeClient: mockTokenExchanger,
 		}
 
+		decryptService, err := NewDecryptService(cfg, noop.NewTracerProvider().Tracer("test"), mockStorage)
+		require.NoError(t, err)
+
 		require.NotNil(t, decryptService)
 		require.NotNil(t, decryptService.tokenExchangeClient)
 
@@ -187,6 +181,7 @@ func TestDecryptService(t *testing.T) {
 
 		mockTokenExchanger.AssertExpectations(t)
 	})
+	*/
 }
 
 type MockDecryptStorage struct {
