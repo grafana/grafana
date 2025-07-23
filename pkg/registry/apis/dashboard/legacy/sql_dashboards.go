@@ -175,7 +175,7 @@ func (r *rowsWrapper) Next() bool {
 
 		r.row, err = r.a.scanRow(r.rows, r.history)
 		if err != nil {
-			r.a.log.Error("error scanning dashboard", "error", err, "uid", r.row.Dash.UID, "name", r.row.Dash.Name)
+			r.a.log.Error("error scanning dashboard", "error", err)
 			if len(r.rejected) > 100 || r.row == nil {
 				r.err = fmt.Errorf("too many rejected rows (%d) %w", len(r.rejected), err)
 				return false
@@ -286,6 +286,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		dash.SetCreationTimestamp(metav1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)
 		if err != nil {
+			a.log.Warn("failed to get meta accessor for dashboard", "error", err, "uid", dash.UID, "name", dash.Name, "version", version)
 			return nil, err
 		}
 		meta.SetUpdatedTimestamp(&updated)
