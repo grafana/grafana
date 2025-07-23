@@ -23,13 +23,13 @@ export async function fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuer
   );
   const frame = new DataFrameView<string[]>(queryResponse);
 
-  const fields = Object.entries(frame.fields).map((field) => {
+  const fields = Object.values(frame.fields).map(({ name, type }) => {
     return {
-      name: field[1].name,
-      text: field[1].name,
-      label: field[1].name,
-      value: quoteIdentifierIfNecessary(field[1].name),
-      type: field[1].type,
+      name,
+      text: name,
+      label: name,
+      value: quoteIdentifierIfNecessary(name),
+      type,
     };
   });
 
