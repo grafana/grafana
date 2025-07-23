@@ -1,10 +1,10 @@
 import { t } from '@grafana/i18n';
 import { IconName } from '@grafana/ui';
-import bitbucketSvg from 'img/provisioning/bitbucket.svg';
-import gitSvg from 'img/provisioning/git.svg';
-import gitlabSvg from 'img/provisioning/gitlab.svg';
 
 import { RepoType } from '../Wizard/types';
+import bitbucketSvg from '../img/bitbucket.svg';
+import gitSvg from '../img/git.svg';
+import gitlabSvg from '../img/gitlab.svg';
 
 export interface RepositoryTypeConfig {
   type: RepoType;
