@@ -87,6 +87,7 @@ function splitQueriesByStreamShard(
     }
 
     const nextRequest = () => {
+      // Find the next group to execute, which can be queries with pending shards to execute, or the next query with no shards.
       const nextGroup =
         groups[group + 1] && (groups[group + 1].shards === undefined || groupHasPendingRequests(groups[group + 1]))
           ? groups[group + 1]
