@@ -40,6 +40,8 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
         inputMinWidth={150}
         allowCustomValue={true}
         allowEmptyValue={true}
+        // We set this to ensure any long text wraps
+        labelStyles={{ overflowWrap: 'anywhere', height: '100%' }}
       ></Segment>
     );
   } else {
@@ -55,7 +57,15 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
         }}
         onExpandedChange={onExpandedChange}
         // input style
-        style={{ height: '25px', paddingTop: '2px', marginTop: '2px', paddingLeft: '4px', minWidth: '100px' }}
+        style={{
+          height: '25px',
+          paddingTop: '2px',
+          marginTop: '2px',
+          paddingLeft: '4px',
+          minWidth: '100px',
+        }}
+        // We set this to ensure any long text wraps
+        labelStyles={{ overflowWrap: 'anywhere', height: '100%' }}
       ></SegmentInput>
     );
   }
