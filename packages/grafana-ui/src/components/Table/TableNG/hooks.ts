@@ -274,7 +274,7 @@ export function useFooterCalcs(
       return [];
     }
 
-    const fieldNameMatcher = footerOptions.fields
+    const fieldNameMatcher = footerOptions.fields?.length
       ? getFieldMatcher({ id: FieldMatcherID.byNames, options: { names: footerOptions.fields } })
       : undefined;
 

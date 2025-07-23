@@ -415,12 +415,14 @@ describe('TableNG hooks', () => {
     });
 
     it('should not return the reducer label in the first column if there is a calc to render', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [numericField, numericField2], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: [] },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual(['6', '13']);
     });
