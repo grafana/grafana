@@ -62,7 +62,7 @@ Object.defineProperty(window, 'open', {
 const createMockExtension = (
   id: string,
   title: string,
-  description: string = '',
+  description = '',
   options: {
     icon?: string;
     path?: string;
