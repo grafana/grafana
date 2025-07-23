@@ -743,45 +743,15 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// create the structure:
-	// dashboard1.json
-	// folder/
-	//  dashboard2.json
-	// 	nested/
-	// 	  dashboard3.json
-	dashboard1 := helper.LoadFile("testdata/all-panels.json")
-	result := helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", "dashboard1.json").
-		Body(dashboard1).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error())
-	dashboard2 := helper.LoadFile("testdata/text-options.json")
-	result = helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", "folder", "dashboard2.json").
-		Body(dashboard2).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error())
-	dashboard3 := helper.LoadFile("testdata/timeline-demo.json")
-	result = helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", "folder", "nested", "dashboard3.json").
-		Body(dashboard3).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error())
-
+	// Copy the dashboards to the repository path
+	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
+	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "folder/dashboard2.json")
+	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/nested/dashboard3.json")
 	// make sure we don't fail when there is a .keep file in a folder
 	helper.CopyToProvisioningPath(t, "testdata/.keep", "folder/nested/.keep")
+
+	// Trigger and wait for a sync job to finish
+	helper.SyncAndWait(t, repo, nil)
 
 	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
