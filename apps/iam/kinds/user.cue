@@ -11,12 +11,6 @@ userKind: {
 		ts: { enabled: false }
 		go: { enabled: true }
 	}
-	validation: {
-		operations: [
-			"CREATE",
-			"UPDATE",
-		]
-	}
 }
 
 userv0alpha1: userKind & {
