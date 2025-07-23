@@ -58,7 +58,7 @@ Queries with text that starts with `$` are templates.
 For example, if you were administering a dashboard to monitor several servers, you _could_ make a dashboard for each server.
 Or you could create one dashboard and use panels with template queries like this one:
 
-```
+```text
 wmi_system_threads{instance=~"$server"}
 ```
 
