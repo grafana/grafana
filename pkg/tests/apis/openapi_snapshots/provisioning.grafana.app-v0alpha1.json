@@ -2607,6 +2607,9 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.DeleteJobOptions": {
+        "type": "object"
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails": {
         "type": "object",
         "required": [
@@ -3021,13 +3024,22 @@
         "type": "object",
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
+            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
             "type": "string",
             "enum": [
+              "delete",
               "migrate",
               "pr",
               "pull",
               "push"
+            ]
+          },
+          "delete": {
+            "description": "Delete when the action is `delete`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.DeleteJobOptions"
+              }
             ]
           },
           "migrate": {

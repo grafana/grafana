@@ -37,6 +37,9 @@ const (
 
 	// JobActionMigrate acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
 	JobActionMigrate JobAction = "migrate"
+
+	// JobActionDelete deletes files in the remote repository
+	JobActionDelete JobAction = "delete"
 )
 
 // +enum
@@ -81,6 +84,9 @@ type JobSpec struct {
 
 	// Required when the action is `migrate`
 	Migrate *MigrateJobOptions `json:"migrate,omitempty"`
+
+	// Delete when the action is `delete`
+	Delete *DeleteJobOptions `json:"delete,omitempty"`
 }
 
 type PullRequestJobOptions struct {
@@ -117,6 +123,8 @@ type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
 }
+
+type DeleteJobOptions struct{}
 
 // The job status
 type JobStatus struct {
