@@ -94,8 +94,8 @@ export abstract class ConditionalRenderingBase<
   }
 
   private getRenderingGroup(): ConditionalRenderingGroup {
-    // using sceneGraph.getAncestor() creates a circular dependency so type casting instead
-    return this.parent as ConditionalRenderingGroup;
+    // TODO: Adjust once nested rules are introduced to get relevant ConditionalRenderingGroup
+    return this._getConditionalLogicRoot().state.rootGroup;
   }
 
   private _getConditionalLogicRoot(): ConditionalRendering {
