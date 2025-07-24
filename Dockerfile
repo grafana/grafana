@@ -60,13 +60,13 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
-COPY .citools/bra/go.* .citools/bra
-COPY .citools/cog/go.* .citools/cog
-COPY .citools/cue/go.* .citools/cue
-COPY .citools/golangci-lint/go.* .citools/golangci-lint
-COPY .citools/jb/go.* .citools/jb
-COPY .citools/lefthook/go.* .citools/lefthook
-COPY .citools/swagger/go.* .citools/swagger
+COPY .citools/bra .citools/bra
+COPY .citools/cue .citools/cue
+COPY .citools/cog .citools/cog
+COPY .citools/lefthook .citools/lefthook
+COPY .citools/jb .citools/jb
+COPY .citools/golangci-lint .citools/golangci-lint
+COPY .citools/swagger .citools/swagger
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
