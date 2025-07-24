@@ -947,7 +947,6 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const timelineUID = "mIJjFy8Kz"
 		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
 		require.NoError(t, err, "dashboard should exist in Grafana after moving never-synced file")
-		title, _, _ = unstructured.NestedString(dashboard.Object, "spec", "title")
 		dashboardFolder, _, _ := unstructured.NestedString(dashboard.Object, "metadata", "annotations", "grafana.app/folder")
 
 		// Validate dashboard is in the correct nested folder
