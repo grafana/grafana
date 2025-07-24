@@ -645,7 +645,7 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("return no snapshots if limit is set to 0", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 0})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 0})
 		require.NoError(t, err)
 		assert.Empty(t, snapshots)
 	})
@@ -677,7 +677,7 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("only the snapshots that belong to a specific session are returned", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: "session-uid-that-doesnt-exist", Page: 1, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: "session-uid-that-doesnt-exist", OrgID: 1, Page: 1, Limit: 100})
 		require.NoError(t, err)
 		assert.Empty(t, snapshots)
 	})
@@ -688,7 +688,7 @@ func TestGetSnapshotList(t *testing.T) {
 		require.NoError(t, err)
 
 		// Fetch the snapshots that belong to the deleted session.
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, OrgID: 1, Page: 1, Limit: 100})
 		require.NoError(t, err)
 
 		// No snapshots should be returned because the session that
