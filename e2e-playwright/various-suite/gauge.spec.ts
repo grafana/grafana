@@ -19,6 +19,8 @@ test.describe(
       const gaugeElements = page.locator('.flot-base');
       await expect(gaugeElements).toHaveCount(16);
 
+      await expect(gaugeElements).toHaveText('wowee this is going to fail!');
+
       // check that no panel errors exist
       const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
       await expect(errorInfo).toBeHidden();
