@@ -34,7 +34,7 @@ export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) =
               <p>
                 Setting the database for this datasource does not deny access to other databases. The InfluxDB query
                 syntax allows switching the database in the query. For more information, refer to the{' '}
-                <TextLink href="">InfluxDB docs.</TextLink>             
+                <TextLink href="">InfluxDB docs.</TextLink>
               </p>
             </Alert>
           </>

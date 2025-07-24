@@ -23,7 +23,12 @@ import {
   Stack,
 } from '@grafana/ui';
 
-import { AUTH_RADIO_BUTTON_OPTIONS, DB_SETTINGS_LABEL_WIDTH, getInlineLabelStyles, RADIO_BUTTON_OPTIONS } from './constants';
+import {
+  AUTH_RADIO_BUTTON_OPTIONS,
+  DB_SETTINGS_LABEL_WIDTH,
+  getInlineLabelStyles,
+  RADIO_BUTTON_OPTIONS,
+} from './constants';
 import {
   trackInfluxDBConfigV2AuthSettingsAuthMethodSelected,
   trackInfluxDBConfigV2AuthSettingsToggleClicked,
