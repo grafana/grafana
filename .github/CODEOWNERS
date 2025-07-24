@@ -159,7 +159,7 @@
 /pkg/services/preference/ @grafana/grafana-backend-group
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/provisioning/alerting/ @grafana/alerting-backend
-/pkg/services/query/ @grafana/grafana-app-platform-squad
+/pkg/services/query/ @grafana/grafana-datasources-core-services
 /pkg/services/queryhistory/ @grafana/observability-traces-and-profiling
 /pkg/services/quota/ @grafana/grafana-search-and-storage
 /pkg/services/screenshot/ @grafana/grafana-backend-group
