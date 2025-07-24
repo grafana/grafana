@@ -62,10 +62,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	cloneOptions := repository.StageOptions{
-		CommitOnlyOnce:        true,
+		Mode:                  repository.StageModeCommitOnlyOnce,
 		CommitOnlyOnceMessage: msg,
 		Timeout:               10 * time.Minute,
-		PushOnWrites:          false,
 	}
 
 	fn := func(repo repository.Repository, _ bool) error {
