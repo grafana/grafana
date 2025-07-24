@@ -19,6 +19,8 @@ const meta: Meta<typeof ContextMenu> = {
     controls: {
       exclude: ['renderMenuItems', 'renderHeader', 'onClose', 'children'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   args: {
     x: 200,

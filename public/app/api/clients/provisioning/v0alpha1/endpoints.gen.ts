@@ -758,6 +758,8 @@ export type DeleteJobOptions = {
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
 };
 export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
@@ -778,7 +780,10 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
+  /** Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {
