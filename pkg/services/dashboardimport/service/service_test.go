@@ -46,14 +46,9 @@ func TestImportDashboardService(t *testing.T) {
 		}
 
 		importLibraryPanelsForDashboard := false
-		connectLibraryPanelsForDashboardCalled := false
 		libraryPanelService := &libraryPanelServiceMock{
 			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
 				importLibraryPanelsForDashboard = true
-				return nil
-			},
-			connectLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error {
-				connectLibraryPanelsForDashboardCalled = true
 				return nil
 			},
 		}
@@ -98,7 +93,6 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, "prom", panel.Get("datasource").MustString())
 
 		require.True(t, importLibraryPanelsForDashboard)
-		require.True(t, connectLibraryPanelsForDashboardCalled)
 	})
 
 	t.Run("When importing a non-plugin dashboard should save dashboard and sync library panels", func(t *testing.T) {

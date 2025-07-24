@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-openapi-client-go/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
@@ -13,24 +12,9 @@ import (
 )
 
 func TestIntegrationUpdateFolder(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testUpdateFolder(t, []string{})
-}
-
-func TestIntegrationUpdateFolderK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testUpdateFolder(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testUpdateFolder(t *testing.T, featureToggles []string) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
+		EnableQuota:      true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -54,24 +38,9 @@ func testUpdateFolder(t *testing.T, featureToggles []string) {
 }
 
 func TestIntegrationCreateFolder(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testCreateFolder(t, []string{})
-}
-
-func TestIntegrationCreateFolderK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testCreateFolder(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testCreateFolder(t *testing.T, featureToggles []string) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
+		EnableQuota:      true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -95,25 +64,10 @@ func testCreateFolder(t *testing.T, featureToggles []string) {
 	})
 }
 
-func TestIntegrationNestedFoldersOn(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testNestedFoldersOn(t, []string{})
-}
-
-func TestIntegrationNestedFoldersOnK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testNestedFoldersOn(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testNestedFoldersOn(t *testing.T, featureToggles []string) {
+func TestIntegrationNestedFoldersOn(t *testing.T, featureToggles []string) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
+		EnableQuota:      true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)

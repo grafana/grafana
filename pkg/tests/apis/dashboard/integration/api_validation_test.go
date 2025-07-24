@@ -69,7 +69,6 @@ func TestIntegrationValidation(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
 					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
 				},
@@ -89,7 +88,6 @@ func TestIntegrationValidation(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
 				},
 				DisableFeatureToggles: []string{

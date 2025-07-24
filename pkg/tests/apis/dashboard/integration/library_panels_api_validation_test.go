@@ -28,7 +28,6 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
 					"unifiedStorageSearch",
-					"kubernetesClientDashboardsFolders",
 					"kubernetesLibraryPanels",
 				},
 			})
@@ -91,7 +90,6 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
 					"unifiedStorageSearch",
-					"kubernetesClientDashboardsFolders",
 					"kubernetesLibraryPanels",
 					"grafanaAPIServerWithExperimentalAPIs", // needed until we move it to v0beta1 at least (currently v0alpha1)
 				},

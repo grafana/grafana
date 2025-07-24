@@ -742,6 +742,7 @@ func TestIntegrationNestedFolderServiceFeatureToggle(t *testing.T) {
 		log:                  slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		db:                   db,
 		dashboardStore:       &dashStore,
+		unifiedStore:         nestedFolderStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		accessControl:        actest.FakeAccessControl{ExpectedEvaluate: true},

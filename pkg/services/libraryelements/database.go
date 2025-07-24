@@ -893,39 +893,20 @@ func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, s
 		return nil, nil
 	}
 
-	if l.features.IsEnabled(c, featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		searchQuery := folder.SearchFoldersQuery{
-			OrgID:        signedInUser.GetOrgID(),
-			Title:        query.SearchString,
-			SignedInUser: signedInUser,
-		}
-
-		folderHits, err := l.folderService.SearchFolders(c, searchQuery)
-		if err != nil {
-			return nil, err
-		}
-
-		foldersWithMatchingTitles := make([]string, 0, len(folderHits))
-		for _, hit := range folderHits {
-			foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
-		}
-		return foldersWithMatchingTitles, nil
+	searchQuery := folder.SearchFoldersQuery{
+		OrgID:        signedInUser.GetOrgID(),
+		Title:        query.SearchString,
+		SignedInUser: signedInUser,
 	}
 
-	// Fallback to GetFolders
-	fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
-		OrgID:        signedInUser.GetOrgID(),
-		SignedInUser: signedInUser,
-	})
+	folderHits, err := l.folderService.SearchFolders(c, searchQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	foldersWithMatchingTitles := make([]string, 0, len(fs))
-	for _, f := range fs {
-		if strings.Contains(strings.ToLower(f.Title), strings.ToLower(query.SearchString)) {
-			foldersWithMatchingTitles = append(foldersWithMatchingTitles, f.UID)
-		}
+	foldersWithMatchingTitles := make([]string, 0, len(folderHits))
+	for _, hit := range folderHits {
+		foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
 	}
 	return foldersWithMatchingTitles, nil
 }
