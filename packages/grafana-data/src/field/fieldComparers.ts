@@ -17,9 +17,9 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
       return booleanIndexComparer(values, reverse);
     case FieldType.time:
       if (typeof field.values[0] === 'number') {
-        return timestampIndexComparer(values, reverse, field?.nanos);
+        return timestampIndexComparer(values, reverse, field.nanos);
       }
-      return timeIndexComparer(values, reverse, field?.nanos);
+      return timeIndexComparer(values, reverse, field.nanos);
     default:
       return naturalIndexComparer(reverse);
   }
