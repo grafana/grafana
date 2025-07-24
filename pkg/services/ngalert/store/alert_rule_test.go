@@ -1780,17 +1780,26 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	numFolders := 10
 	numRules := 50
 	rulesPerGroup := 5
+	totalGroups := numRules / rulesPerGroup // 10
 
 	// create rules with different group names
-	_, _ = createManyRules(t,
+	rules, _ := createManyRules(t,
 		store,
 		ruleGen,
 		numFolders,
 		numRules,
 		rulesPerGroup,
 	)
-
-	totalGroups := numRules / rulesPerGroup
+	// sort rules by folder, then group, then group index
+	slices.SortStableFunc(rules, func(a, b *models.AlertRule) int {
+		if a.NamespaceUID != b.NamespaceUID {
+			return strings.Compare(a.NamespaceUID, b.NamespaceUID)
+		}
+		if a.RuleGroup != b.RuleGroup {
+			return strings.Compare(a.RuleGroup, b.RuleGroup)
+		}
+		return a.RuleGroupIndex - b.RuleGroupIndex
+	})
 
 	t.Run("should return all rules when no limit passed", func(t *testing.T) {
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
@@ -1812,6 +1821,41 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		expectedRuleCount := groupLimit * int64(rulesPerGroup)
 		require.Len(t, result, int(expectedRuleCount), fmt.Sprintf("should return %d rules when group limit is set", expectedRuleCount))
 		require.NotEmpty(t, continueToken, "continue token should not be empty when limit is set")
+	})
+
+	t.Run("pagination should all for continuation", func(t *testing.T) {
+		groupLimit := int64(2) // fixed group limit for this test
+		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+			OrgID:      orgID,
+			GroupLimit: groupLimit,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, int(groupLimit*int64(rulesPerGroup)), "should return rules for the first two groups")
+		require.NotEmpty(t, continueToken, "continue token should not be empty")
+
+		for i, rule := range result {
+			expected := rules[i].RuleGroup
+			actual := rule.RuleGroup
+			require.Equal(t, expected, actual, "rules should be ordered by group name")
+		}
+
+		resultRules := make([]*models.AlertRule, 0, len(result))
+		resultRules = append(resultRules, result...)
+
+		// Continue from previous, fetching the rest of the rules
+		result, continueToken, err = store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesByGroupQuery{
+			OrgID:              orgID,
+			GroupContinueToken: continueToken,
+		})
+		require.NoError(t, err)
+		resultRules = append(resultRules, result...)
+		require.Len(t, resultRules, numRules, "should return all rules when continuing from the last token")
+		require.Empty(t, continueToken, "continue token should be empty when all rules are fetched")
+		for i, rule := range resultRules {
+			expected := rules[i].RuleGroup
+			actual := rule.RuleGroup
+			require.Equal(t, expected, actual, "rules should be ordered by group name")
+		}
 	})
 }
 
