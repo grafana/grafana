@@ -140,10 +140,6 @@ module.exports = [
               message:
                 'Do not import test files. If you require reuse of constants/mocks across files, create a separate file with no tests',
             },
-            {
-              group: ['app/extensions', 'app/extensions/*'],
-              message: 'Importing from app/extensions is not allowed',
-            },
           ],
           paths: [
             {
