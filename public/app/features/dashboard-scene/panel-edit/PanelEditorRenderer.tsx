@@ -195,6 +195,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       width: '100%',
       height: '100%',
+      overflow: 'unset',
     }),
     body: css({
       label: 'body',
