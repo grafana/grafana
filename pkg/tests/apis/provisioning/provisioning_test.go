@@ -889,7 +889,6 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	})
 
 	t.Run("move file to nested path without ref", func(t *testing.T) {
-		t.Skip("Found an issue with nested in dual writer affecting also other operations")
 		// Test a different scenario: Move a file that was never synced to Grafana
 		// This might reveal the issue if dashboard creation fails during move
 		const sourceFile = "never-synced.json"
@@ -908,29 +907,59 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
 
+		// Check folders were created and validate hierarchy
+		folderList, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "should be able to list folders")
+
+		// Build a map of folder names to their objects for easier lookup
+		folders := make(map[string]*unstructured.Unstructured)
+		for _, folder := range folderList.Items {
+			title, _, _ := unstructured.NestedString(folder.Object, "spec", "title")
+			folders[title] = &folder
+			parent, _, _ := unstructured.NestedString(folder.Object, "metadata", "annotations", "grafana.app/folder")
+			t.Logf("  - %s: %s (parent: %s)", folder.GetName(), title, parent)
+		}
+
+		// Validate expected folders exist with proper hierarchy
+		// Expected structure: deep -> deep/nested
+		deepFolderTitle := "deep"
+		nestedFolderTitle := "nested"
+
+		// Validate "deep" folder exists and has no parent (is top-level)
+		require.Contains(t, folders, deepFolderTitle, "deep folder should exist")
+		f := folders[deepFolderTitle]
+		deepFolderName := f.GetName()
+		title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
+		require.Equal(t, deepFolderTitle, title, "deep folder should have correct title")
+		parent, found, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/folder")
+		require.True(t, !found || parent == "", "deep folder should be top-level (no parent)")
+
+		// Validate "deep/nested" folder exists and has "deep" as parent
+		require.Contains(t, folders, nestedFolderTitle, "nested folder should exist")
+		f = folders[nestedFolderTitle]
+		nestedFolderName := f.GetName()
+		title, _, _ = unstructured.NestedString(f.Object, "spec", "title")
+		require.Equal(t, nestedFolderTitle, title, "nested folder should have correct title")
+		parent, _, _ = unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, deepFolderName, parent, "nested folder should have deep folder as parent")
+
+		// The key test: Check if dashboard was created in Grafana during move
+		const timelineUID = "mIJjFy8Kz"
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		require.NoError(t, err, "dashboard should exist in Grafana after moving never-synced file")
+		title, _, _ = unstructured.NestedString(dashboard.Object, "spec", "title")
+		dashboardFolder, _, _ := unstructured.NestedString(dashboard.Object, "metadata", "annotations", "grafana.app/folder")
+
+		// Validate dashboard is in the correct nested folder
+		require.Equal(t, nestedFolderName, dashboardFolder, "dashboard should be in the nested folder")
+
 		// Verify the file moved in the repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
 		require.NoError(t, err, "moved file should exist in nested repository path")
 
-		// Check folders were created
-		folderList, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err, "should be able to list folders")
-
-		t.Logf("Folders after moving never-synced file: %d", len(folderList.Items))
-		for _, folder := range folderList.Items {
-			title, _, _ := unstructured.NestedString(folder.Object, "spec", "title")
-			t.Logf("  - %s: %s", folder.GetName(), title)
-		}
-
-		// The key test: Check if dashboard was created in Grafana during move
-		// The timeline-demo.json has UID "c0s0aPp4z"
-		const timelineUID = "c0s0aPp4z"
-		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
-		require.NoError(t, err, "dashboard should exist in Grafana after moving never-synced file")
-		t.Logf("Dashboard WAS created during move operation")
-		title, _, _ := unstructured.NestedString(dashboard.Object, "spec", "title")
-		folder, _, _ := unstructured.NestedString(dashboard.Object, "metadata", "annotations", "grafana.app/folder")
-		t.Logf("  - Title: %s, Folder: %s", title, folder)
+		// Verify the original file no longer exists in the repository
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourceFile)
+		require.Error(t, err, "original file should no longer exist in repository")
 	})
 
 	t.Run("move file with content update", func(t *testing.T) {
