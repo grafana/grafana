@@ -4,20 +4,17 @@ import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
-resourcepermission: {
+resourcepermissionKind: {
 	kind:       "ResourcePermission"
 	pluralName: "ResourcePermissions"
-	current:    "v0alpha1"
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
+	}
+}
 
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			schema: {
-				spec:   v0alpha1.ResourcePermission
-			}
-		}
+resourcepermissionv0alpha1: resourcepermissionKind & {
+	schema: {
+		spec:   v0alpha1.ResourcePermission
 	}
 }

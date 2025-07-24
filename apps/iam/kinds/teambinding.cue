@@ -4,20 +4,17 @@ import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
-teambinding: {
+teambindingKind: {
 	kind:       "TeamBinding"
 	pluralName: "TeamBindings"
-	current:    "v0alpha1"
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
+	}
+}
 
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			schema: {
-				spec: v0alpha1.TeamBindingSpec
-			}
-		}
+teambindingv0alpha1: teambindingKind & {
+	schema: {
+		spec: v0alpha1.TeamBindingSpec
 	}
 }
