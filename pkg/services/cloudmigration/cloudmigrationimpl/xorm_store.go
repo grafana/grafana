@@ -121,6 +121,7 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, orgID int64
 		SessionUID: uid,
 		Page:       1,
 		Limit:      GetAllSnapshots,
+		OrgID:      orgID,
 	}
 	snapshots, err := ss.GetSnapshotList(ctx, q)
 	if err != nil {
@@ -129,12 +130,13 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, orgID int64
 
 	err = ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		for _, snapshot := range snapshots {
-			err := ss.deleteSnapshotResources(ctx, snapshot.UID)
-			if err != nil {
+			if err := ss.deleteSnapshotResources(ctx, snapshot.UID); err != nil {
 				return fmt.Errorf("deleting snapshot resource from db: %w", err)
 			}
-			err = ss.deleteSnapshot(ctx, snapshot.UID)
-			if err != nil {
+			if err := ss.deleteSnapshotPartitions(ctx, snapshot.UID); err != nil {
+				return fmt.Errorf("deleting snapshot partitions: %w", err)
+			}
+			if err := ss.deleteSnapshot(ctx, snapshot.UID); err != nil {
 				return fmt.Errorf("deleting snapshot from db: %w", err)
 			}
 		}
@@ -248,7 +250,6 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 }
 
 func (ss *sqlStore) StorePartition(ctx context.Context, snapshotUID string, resourceType string, partitionNumber int, data []byte) error {
-
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			_, err := sess.Insert(cloudmigration.CloudMigrationSnapshotPartition{
@@ -269,7 +270,7 @@ func (ss *sqlStore) GetIndex(ctx context.Context, orgID int64, sessionUID string
 	var snap *cloudmigration.CloudMigrationSnapshot
 	partitions := make([]cloudmigration.CloudMigrationSnapshotPartition, 0)
 
-	ss.db.InTransaction(ctx, func(ctx context.Context) error {
+	if err := ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			s, err := ss.getSnapshotByUID(ctx, orgID, sessionUID, snapshotUID)
 			if err != nil {
@@ -290,7 +291,9 @@ func (ss *sqlStore) GetIndex(ctx context.Context, orgID int64, sessionUID string
 
 			return nil
 		})
-	})
+	}); err != nil {
+		return cloudmigration.CloudMigrationSnapshotIndex{}, err
+	}
 
 	partitionsByResourceType := make(map[string][]int)
 	for _, partition := range partitions {
@@ -323,11 +326,15 @@ func (ss *sqlStore) GetPartition(ctx context.Context, snapshotUID string, resour
 }
 
 func (ss *sqlStore) deleteSnapshot(ctx context.Context, snapshotUid string) error {
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
-			UID: snapshotUid,
+	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if _, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
+				UID: snapshotUid,
+			}); err != nil {
+				return fmt.Errorf("deleting snapshot: %w", err)
+			}
+			return nil
 		})
-		return err
 	})
 }
 
@@ -402,6 +409,12 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUi
 // GetSnapshotList returns snapshots without resources included. Use GetSnapshotByUID to get individual snapshot results.
 // passing GetAllSnapshots will return all the elements regardless of the page
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("org id is required")
+	}
+	if query.SessionUID == "" {
+		return nil, fmt.Errorf("session uid is required")
+	}
 	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Join("INNER", "cloud_migration_session",
@@ -421,6 +434,7 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	if err != nil {
 		return nil, err
 	}
+
 	for i, snapshot := range snapshots {
 		if secret, found, err := ss.secretsStore.Get(ctx, secretskv.AllOrganizations, snapshot.UID, secretType); err != nil {
 			return nil, err
@@ -639,6 +653,17 @@ func (ss *sqlStore) deleteSnapshotResources(ctx context.Context, snapshotUid str
 			SnapshotUID: snapshotUid,
 		})
 		return err
+	})
+}
+
+func (ss *sqlStore) deleteSnapshotPartitions(ctx context.Context, snapshotUid string) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if _, err := sess.Delete(cloudmigration.CloudMigrationSnapshotPartition{
+			SnapshotUID: snapshotUid,
+		}); err != nil {
+			return fmt.Errorf("deleting snapshot partitions: %w", err)
+		}
+		return nil
 	})
 }
 

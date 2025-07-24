@@ -898,10 +898,12 @@ func (s *Service) deleteLocalFiles(snapshots []cloudmigration.CloudMigrationSnap
 
 	var err error
 	for _, snapshot := range snapshots {
-		err = os.RemoveAll(snapshot.LocalDir)
-		if err != nil {
-			// in this case we only log the error, don't return it to continue with the process
-			s.log.Error("deleting migration snapshot files", "err", err)
+		if snapshot.LocalDir != "" {
+			err = os.RemoveAll(snapshot.LocalDir)
+			if err != nil {
+				// in this case we only log the error, don't return it to continue with the process
+				s.log.Error("deleting migration snapshot files", "err", err)
+			}
 		}
 	}
 	return err

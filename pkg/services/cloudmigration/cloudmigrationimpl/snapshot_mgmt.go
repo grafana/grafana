@@ -609,41 +609,16 @@ func (s *Service) buildSnapshot(
 
 	switch s.cfg.CloudMigration.ResourceStorageType {
 	case cloudmigration.ResourceStorageTypeDb:
-		// TODO: tx?
-		for _, resourceType := range currentMigrationTypes {
-			i := 0
-			for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
-				encoded, err := snapshotWriter.EncodePartition(chunk)
-				if err != nil {
-					return fmt.Errorf("encoding snapshot partition: %w", err)
-				}
-				if err := s.store.StorePartition(ctx, snapshotMeta.UID, string(resourceType), i, encoded); err != nil {
-					return fmt.Errorf("storing partition into database: %w", err)
-				}
-				i += 1
-			}
+		if err := s.buildSnapshotWithDBStorage(ctx, snapshotMeta.UID, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
+			return fmt.Errorf("buidling snapshot with database storage: %w", err)
 		}
+		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with database storage in %d ms", time.Since(start).Milliseconds()))
 
 	case cloudmigration.ResourceStorageTypeFs:
-		for _, resourceType := range currentMigrationTypes {
-			for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
-				if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
-					return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
-				}
-			}
+		if err := s.buildSnapshotWithFSStorage(publicKey[:], metadata, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
+			return fmt.Errorf("buidling snapshot with file system storage: %w", err)
 		}
-
-		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data files in %d ms", time.Since(start).Milliseconds()))
-
-		// Add the grafana generated public key to the index file so gms can use it to decrypt the snapshot files later.
-		// This works because the snapshot files are being encrypted with
-		// the grafana generated private key + the gms public key.
-		if _, err := snapshotWriter.Finish(snapshot.FinishInput{
-			SenderPublicKey: publicKey[:],
-			Metadata:        metadata,
-		}); err != nil {
-			return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
-		}
+		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with file system storage in %d ms", time.Since(start).Milliseconds()))
 
 	default:
 		return fmt.Errorf("unknown resource storage type, check your configuration and try again: %q", s.cfg.CloudMigration.ResourceStorageType)
@@ -665,6 +640,47 @@ func (s *Service) buildSnapshot(
 	return nil
 }
 
+func (s *Service) buildSnapshotWithDBStorage(ctx context.Context, snapshotUID string, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
+	maxItemsPerPartition = 1
+	for _, resourceType := range currentMigrationTypes {
+		i := 0
+		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
+			encoded, err := snapshotWriter.EncodePartition(chunk)
+			if err != nil {
+				return fmt.Errorf("encoding snapshot partition: %w", err)
+			}
+			if err := s.store.StorePartition(ctx, snapshotUID, string(resourceType), i, encoded); err != nil {
+				return fmt.Errorf("storing partition into database: %w", err)
+			}
+			i += 1
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) buildSnapshotWithFSStorage(publicKey, metadata []byte, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
+	for _, resourceType := range currentMigrationTypes {
+		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
+			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
+				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
+			}
+		}
+	}
+
+	// Add the grafana generated public key to the index file so gms can use it to decrypt the snapshot files later.
+	// This works because the snapshot files are being encrypted with
+	// the grafana generated private key + the gms public key.
+	if _, err := snapshotWriter.Finish(snapshot.FinishInput{
+		SenderPublicKey: publicKey[:],
+		Metadata:        metadata,
+	}); err != nil {
+		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
+	}
+
+	return nil
+}
+
 // asynchronous process for and updating the snapshot status
 func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshotMeta *cloudmigration.CloudMigrationSnapshot, uploadUrl string) (err error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot")
@@ -681,125 +697,14 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 
 	switch s.cfg.CloudMigration.ResourceStorageType {
 	case cloudmigration.ResourceStorageTypeDb:
-		// TODO: read partitions from db
-		// TODO: upload index
-		index, err := s.store.GetIndex(ctx, session.OrgID, snapshotMeta.SessionUID, snapshotMeta.UID)
-		if err != nil {
-			return fmt.Errorf("fetching index from database: %w", err)
-		}
-
-		snapshotIndex := snapshot.Index{
-			Version:        1,
-			EncryptionAlgo: index.EncryptionAlgo,
-			PublicKey:      index.PublicKey,
-			Metadata:       index.Metadata,
-			Items:          make(map[string][]string),
-		}
-
-		var partitionToFileName = func(resourceType string, partitionNumber int) string {
-			return fmt.Sprintf("%+v_%+v", resourceType, partitionNumber)
-		}
-
-		for resourceType, partitionsNumbers := range index.Items {
-			for _, partitionNumber := range partitionsNumbers {
-				fileName := partitionToFileName(resourceType, partitionNumber)
-				snapshotIndex.Items[resourceType] = append(snapshotIndex.Items[resourceType], fileName)
-
-				key := fmt.Sprintf("%d/snapshots/%s/%+v", session.StackID, snapshotMeta.GMSSnapshotUID, fileName)
-
-				partition, err := s.store.GetPartition(ctx, snapshotMeta.UID, resourceType, partitionNumber)
-				if err != nil {
-					return fmt.Errorf("fetching partition from database: %w", err)
-				}
-				if err = s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, bytes.NewReader(partition.Data)); err != nil {
-					return fmt.Errorf("uploading file using presigned url: %w", err)
-				}
-			}
-		}
-
-		key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, "index.json")
-
-		buffer, err := snapshot.EncodeIndex(snapshotIndex)
-
-		if err != nil {
-			return fmt.Errorf("encoding snapshot index for upload: %w", err)
-		}
-
-		if err = s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, bytes.NewReader(buffer)); err != nil {
-			return fmt.Errorf("uploading index file using presigned url: %w", err)
+		if err := s.uploadSnapshotWithDBStorage(ctx, session, snapshotMeta, uploadUrl); err != nil {
+			return fmt.Errorf("uploading snapshot with database storage: %w", err)
 		}
 
 	case cloudmigration.ResourceStorageTypeFs:
-		indexFilePath := filepath.Join(snapshotMeta.LocalDir, "index.json")
-		// LocalDir can be set in the configuration, therefore the file path can be set to any path.
-		// nolint:gosec
-		indexFile, err := os.Open(indexFilePath)
-		if err != nil {
-			// TODO: Clean this notice once we've fixed the HA bug
-			return fmt.Errorf("opening index files: %w. If you are running Grafana in a highly-available setup, try scaling down to one replica to avoid a known bug: https://github.com/grafana/grafana/issues/107264", err)
+		if err := s.uploadSnapshotWithFSStorage(ctx, session, snapshotMeta, uploadUrl); err != nil {
+			return fmt.Errorf("uploading snapshot with file system storage: %w", err)
 		}
-		defer func() {
-			if closeErr := indexFile.Close(); closeErr != nil {
-				s.log.Error("closing index file", "err", closeErr.Error())
-			}
-		}()
-
-		_, readIndexSpan := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.readIndex")
-		index, err := snapshot.ReadIndex(indexFile)
-		if err != nil {
-			readIndexSpan.SetStatus(codes.Error, "reading index from file")
-			readIndexSpan.RecordError(err)
-			readIndexSpan.End()
-
-			return fmt.Errorf("reading index from file: %w", err)
-		}
-		readIndexSpan.End()
-
-		s.log.Debug(fmt.Sprintf("uploadSnapshot: read index file in %d ms", time.Since(start).Milliseconds()))
-
-		uploadCtx, uploadSpan := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.uploadDataFiles")
-		// Upload the data files.
-		for _, fileNames := range index.Items {
-			for _, fileName := range fileNames {
-				filePath := filepath.Join(snapshotMeta.LocalDir, fileName)
-				key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, fileName)
-				if err := s.uploadUsingPresignedURL(uploadCtx, uploadUrl, key, filePath); err != nil {
-					uploadSpan.SetStatus(codes.Error, "uploading snapshot data file using presigned url")
-					uploadSpan.RecordError(err)
-					uploadSpan.End()
-
-					return fmt.Errorf("uploading snapshot file using presigned url: %w", err)
-				}
-				s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded %s in %d ms", fileName, time.Since(start).Milliseconds()))
-			}
-		}
-		uploadSpan.End()
-
-		s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded all data files in %d ms", time.Since(start).Milliseconds()))
-
-		uploadCtx, uploadSpan = s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.uploadIndex")
-
-		// Upload the index file. Must be done after uploading the data files.
-		key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, "index.json")
-		if _, err := indexFile.Seek(0, 0); err != nil {
-			uploadSpan.SetStatus(codes.Error, "seeking to beginning of index file")
-			uploadSpan.RecordError(err)
-			uploadSpan.End()
-
-			return fmt.Errorf("seeking to beginning of index file: %w", err)
-		}
-
-		if err := s.objectStorage.PresignedURLUpload(uploadCtx, uploadUrl, key, indexFile); err != nil {
-			uploadSpan.SetStatus(codes.Error, "uploading index file using presigned url")
-			uploadSpan.RecordError(err)
-			uploadSpan.End()
-
-			return fmt.Errorf("uploading file using presigned url: %w", err)
-		}
-
-		uploadSpan.End()
-
-		s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded index file in %d ms", time.Since(start).Milliseconds()))
 
 	default:
 		return fmt.Errorf("unknown resource storage type, check your configuration and try again: %q", s.cfg.CloudMigration.ResourceStorageType)
@@ -815,6 +720,131 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	}); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *Service) uploadSnapshotWithDBStorage(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshotMeta *cloudmigration.CloudMigrationSnapshot, uploadUrl string) error {
+	index, err := s.store.GetIndex(ctx, session.OrgID, snapshotMeta.SessionUID, snapshotMeta.UID)
+	if err != nil {
+		return fmt.Errorf("fetching index from database: %w", err)
+	}
+
+	snapshotIndex := snapshot.Index{
+		Version:        1,
+		EncryptionAlgo: index.EncryptionAlgo,
+		PublicKey:      index.PublicKey,
+		Metadata:       index.Metadata,
+		Items:          make(map[string][]string),
+	}
+
+	var partitionToFileName = func(resourceType string, partitionNumber int) string {
+		return fmt.Sprintf("%+v_%+v", resourceType, partitionNumber)
+	}
+
+	for resourceType, partitionsNumbers := range index.Items {
+		for _, partitionNumber := range partitionsNumbers {
+			fileName := partitionToFileName(resourceType, partitionNumber)
+			snapshotIndex.Items[resourceType] = append(snapshotIndex.Items[resourceType], fileName)
+
+			key := fmt.Sprintf("%d/snapshots/%s/%+v", session.StackID, snapshotMeta.GMSSnapshotUID, fileName)
+
+			partition, err := s.store.GetPartition(ctx, snapshotMeta.UID, resourceType, partitionNumber)
+			if err != nil {
+				return fmt.Errorf("fetching partition from database: %w", err)
+			}
+			if err = s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, bytes.NewReader(partition.Data)); err != nil {
+				return fmt.Errorf("uploading file using presigned url: %w", err)
+			}
+		}
+	}
+
+	key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, "index.json")
+
+	buffer, err := snapshot.EncodeIndex(snapshotIndex)
+
+	if err != nil {
+		return fmt.Errorf("encoding snapshot index for upload: %w", err)
+	}
+
+	if err = s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, bytes.NewReader(buffer)); err != nil {
+		return fmt.Errorf("uploading index file using presigned url: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) uploadSnapshotWithFSStorage(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshotMeta *cloudmigration.CloudMigrationSnapshot, uploadUrl string) error {
+	indexFilePath := filepath.Join(snapshotMeta.LocalDir, "index.json")
+
+	start := time.Now()
+	// LocalDir can be set in the configuration, therefore the file path can be set to any path.
+	// nolint:gosec
+	indexFile, err := os.Open(indexFilePath)
+	if err != nil {
+		// TODO: Clean this notice once we've fixed the HA bug
+		return fmt.Errorf("opening index files: %w. If you are running Grafana in a highly-available setup, try setting cloud_migration.resource_storage_type to 'db' or scaling down to one replica to avoid a known bug: https://github.com/grafana/grafana/issues/107264", err)
+	}
+	defer func() {
+		if closeErr := indexFile.Close(); closeErr != nil {
+			s.log.Error("closing index file", "err", closeErr.Error())
+		}
+	}()
+
+	_, readIndexSpan := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.readIndex")
+	index, err := snapshot.ReadIndex(indexFile)
+	if err != nil {
+		readIndexSpan.SetStatus(codes.Error, "reading index from file")
+		readIndexSpan.RecordError(err)
+		readIndexSpan.End()
+
+		return fmt.Errorf("reading index from file: %w", err)
+	}
+	readIndexSpan.End()
+
+	uploadCtx, uploadSpan := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.uploadDataFiles")
+	// Upload the data files.
+	for _, fileNames := range index.Items {
+		for _, fileName := range fileNames {
+			filePath := filepath.Join(snapshotMeta.LocalDir, fileName)
+			key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, fileName)
+			if err := s.uploadUsingPresignedURL(uploadCtx, uploadUrl, key, filePath); err != nil {
+				uploadSpan.SetStatus(codes.Error, "uploading snapshot data file using presigned url")
+				uploadSpan.RecordError(err)
+				uploadSpan.End()
+
+				return fmt.Errorf("uploading snapshot file using presigned url: %w", err)
+			}
+			s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded %s in %d ms", fileName, time.Since(start).Milliseconds()))
+		}
+	}
+	uploadSpan.End()
+
+	s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded all data files in %d ms", time.Since(start).Milliseconds()))
+
+	uploadCtx, uploadSpan = s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.uploadIndex")
+
+	// Upload the index file. Must be done after uploading the data files.
+	key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, "index.json")
+	if _, err := indexFile.Seek(0, 0); err != nil {
+		uploadSpan.SetStatus(codes.Error, "seeking to beginning of index file")
+		uploadSpan.RecordError(err)
+		uploadSpan.End()
+
+		return fmt.Errorf("seeking to beginning of index file: %w", err)
+	}
+
+	if err := s.objectStorage.PresignedURLUpload(uploadCtx, uploadUrl, key, indexFile); err != nil {
+		uploadSpan.SetStatus(codes.Error, "uploading index file using presigned url")
+		uploadSpan.RecordError(err)
+		uploadSpan.End()
+
+		return fmt.Errorf("uploading file using presigned url: %w", err)
+	}
+
+	uploadSpan.End()
+
+	s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded index file in %d ms", time.Since(start).Milliseconds()))
 
 	return nil
 }
