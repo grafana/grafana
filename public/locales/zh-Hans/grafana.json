@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "编辑评估组"
     },
     "group-loader": {
-      "group-load-failed": "从 {{ namespaceName }} 的组 {{ groupName }} 中加载规则失败"
+      "group-load-failed": "从 {{ namespaceName }} 的组 {{ groupName }} 中加载规则失败",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "正在删除组"
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "刷新预览",
+      "empty-state": "",
       "label-preview": "预览",
       "refresh": "刷新"
     },
@@ -8575,7 +8578,10 @@
         "no-data": ""
       },
       "no-values-label": "没有值",
-      "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行"
+      "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "标签"
@@ -9300,6 +9306,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "没有要显示的字段。",
+      "open-assistant": "",
       "pin-line": "固定日志",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9318,6 +9325,9 @@
       "copy-log": "复制日志行",
       "hide-details": "显示日志详情",
       "icon-label": "日志菜单",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "固定日志",
       "show-context": "显示上下文",
       "show-details": "隐藏日志详情",
@@ -11171,7 +11181,8 @@
       "starting": "正在启动...",
       "status": {
         "title-error-running-job": "运行作业时出错",
-        "title-job-completed-successfully": "作业已成功完成"
+        "title-job-completed-successfully": "作业已成功完成",
+        "title-warning-running-job": ""
       },
       "summary": "摘要"
     },

@@ -111,7 +111,6 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
     { label: 'Write directly', value: 'write' },
     { label: 'Create branch', value: 'branch' },
   ],
-  isGitHub: true,
   repository: mockRepository,
   folder: mockFolder,
   initialValues: mockFormData,

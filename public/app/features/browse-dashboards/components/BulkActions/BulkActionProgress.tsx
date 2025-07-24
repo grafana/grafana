@@ -1,5 +1,5 @@
 import { Trans } from '@grafana/i18n';
-import { Box, Icon, Text, Stack } from '@grafana/ui';
+import { Box, Text, Stack, Spinner } from '@grafana/ui';
 import ProgressBar from 'app/features/provisioning/Shared/ProgressBar';
 
 export interface ProgressState {
@@ -21,7 +21,7 @@ export function BulkActionProgress({ progress }: { progress: ProgressState }) {
             values={{ current: progress.current, total: progress.total }}
           />
         </Text>
-        <Icon name="spinner" className="fa-spin" size="sm" />
+        <Spinner size="sm" />
       </Stack>
       <ProgressBar progress={progressPercentage} topBottomSpacing={1} />
       <Text variant="bodySmall" color="secondary">
