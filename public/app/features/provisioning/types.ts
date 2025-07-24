@@ -89,3 +89,8 @@ export type HistoryListResponse = {
   metadata?: Record<string, unknown>;
   items?: HistoryItem[];
 };
+
+export interface ProvisioningErrorInfo {
+  title?: string;
+  message?: string | string[];
+}

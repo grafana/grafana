@@ -6,11 +6,12 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
-import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { getDefaultValues } from '../Config/defaults';
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { dataToSpec } from '../utils/data';
@@ -64,7 +65,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError } = useStepStatus();
+  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
+    useStepStatus();
 
   const { data } = useGetFrontendSettingsQuery();
   const isLegacyStorage = Boolean(data?.legacyStorage);
@@ -250,8 +252,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         setIsSubmitting(false);
       }
     } else {
-      // only proceed if the job was successful
-      if (isStepSuccess) {
+      // proceed if the job was successful or had warnings
+      if (isStepSuccess || hasStepWarning) {
         handleNext();
       }
     }
@@ -262,9 +264,9 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     if (activeStep !== 'connection' && hasStepError) {
       return true;
     }
-    // Synchronize step requires success to proceed
+    // Synchronize step requires success or warning to proceed
     if (activeStep === 'synchronize') {
-      return !isStepSuccess; // Disable next button if the step is not successful
+      return !(isStepSuccess || hasStepWarning); // Disable next button if the step is not successful or has warnings
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   };
@@ -283,9 +285,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               </Text>
             </Box>
 
-            {hasStepError && 'error' in stepStatusInfo && stepStatusInfo.error && (
-              <Alert severity="error" title={stepStatusInfo.error} />
-            )}
+            {hasStepError && 'error' in stepStatusInfo && <ProvisioningAlert error={stepStatusInfo.error} />}
+            {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}

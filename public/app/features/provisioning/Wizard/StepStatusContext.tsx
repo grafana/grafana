@@ -11,6 +11,7 @@ interface StepStatusContextData {
 
   // Computed status checks
   hasStepError: boolean;
+  hasStepWarning: boolean;
   isStepRunning: boolean;
   isStepSuccess: boolean;
   isStepIdle: boolean;
@@ -29,6 +30,7 @@ export const StepStatusProvider = ({ children }: PropsWithChildren) => {
     stepStatusInfo,
     setStepStatusInfo,
     hasStepError: stepStatusInfo.status === 'error',
+    hasStepWarning: stepStatusInfo.status === 'warning',
     isStepRunning: stepStatusInfo.status === 'running',
     isStepSuccess: stepStatusInfo.status === 'success',
     isStepIdle: stepStatusInfo.status === 'idle',
