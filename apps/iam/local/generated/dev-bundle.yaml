@@ -1747,10 +1747,6 @@ data:
           - job_name: grafana
             static_configs:
               - targets: ['grafana.default.svc.cluster.local']
-          - job_name: plugin
-            metrics_path: '/api/plugins/iam-app/metrics'
-            static_configs:
-              - targets: ['grafana.default.svc.cluster.local']
           - job_name: operator
             static_configs:
               - targets: ['iam-app-operator.default.svc.cluster.local:9090']
@@ -2173,30 +2169,6 @@ subjects:
     name: grafana
     namespace: default
 ---
-
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: iam-app-provisioning
-  namespace: default
-  labels:
-    name: grafana
-data:
-  gas-local-env-app-app.yaml: |
-    apiVersion: 1
-    apps:
-      - type: iam-app
-        org_id: 1
-        org_name: Main Org.
-        disabled: false
-        jsonData:
-          foo: bar
-        secureJsonData:
-          baz: foo
-          kubeconfig: cluster
-          kubenamespace: default
-
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2266,10 +2238,6 @@ data:
     enabled = false
     [log.frontend]
     enabled = true
-    [plugins]
-    allow_loading_unsigned_plugins = iam-app
-    [plugin.iam-app]
-    tracing = true
     [server]
     http_port = 3000
     root_url = 
@@ -2327,7 +2295,7 @@ spec:
               value: ""
             - name: GF_PATHS_CONFIG
               value: /etc/grafana-config/grafana.ini
-          image: grafana/grafana-enterprise:main
+          image: grafana/grafana-enterprise:12.0.0
           imagePullPolicy: IfNotPresent
           name: grafana
           ports:
@@ -2340,11 +2308,6 @@ spec:
           volumeMounts:
             - mountPath: /etc/grafana-config
               name: grafana-config
-            - mountPath: /etc/grafana/provisioning/plugins
-              name: iam-app-provisioning
-            - mountPath: /var/lib/grafana/plugins/iam-app
-              name: iam-app
-              readOnly: true
             - mountPath: /etc/grafana/provisioning/datasources
               name: grafana-datasources
             - mountPath: /app-aggregator
@@ -2355,12 +2318,6 @@ spec:
         - configMap:
             name: grafana-config
           name: grafana-config
-        - configMap:
-            name: iam-app-provisioning
-          name: iam-app-provisioning
-        - hostPath:
-            path: /tmp/k3d/mounted-files/plugin/dist
-          name: iam-app
         - configMap:
             name: grafana-datasources
           name: grafana-datasources
