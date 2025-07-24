@@ -14,9 +14,7 @@ export function MessageList({ messages, variant }: MessageListProps) {
   return (
     <ul className={styles.messageList}>
       {messages.map((msg, index) => (
-        <li key={index}>
-          {variant ? <Text variant={variant}>{msg}</Text> : msg}
-        </li>
+        <li key={index}>{variant ? <Text variant={variant}>{msg}</Text> : msg}</li>
       ))}
     </ul>
   );
