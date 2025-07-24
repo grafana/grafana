@@ -270,7 +270,7 @@ func (ng *AlertNG) init() error {
 					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
 					if err != nil {
 						if remoteSecondaryWithRemoteState {
-							// We can't start the internal Alertmanger without the remote state.
+							// We can't start the internal Alertmanager without the remote state.
 							return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
 						}
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
