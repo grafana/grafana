@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Editar grupo de avaliação"
     },
     "group-loader": {
-      "group-load-failed": "Falha ao carregar regras do grupo {{ groupName }} em {{ namespaceName }}"
+      "group-load-failed": "Falha ao carregar regras do grupo {{ groupName }} em {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "O grupo está a ser eliminado"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Recarregar a pré-visualização",
+      "empty-state": "",
       "label-preview": "Pré-visualizar",
       "refresh": "Atualizar"
     },
@@ -8597,7 +8600,10 @@
         "no-data": ""
       },
       "no-values-label": "Nenhum valor",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Etiquetas"
@@ -9330,6 +9336,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9355,9 @@
       "copy-log": "Copiar linha de registo",
       "hide-details": "Mostrar detalhes do registo",
       "icon-label": "Menu de registo",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Afixar registo",
       "show-context": "Mostrar contexto",
       "show-details": "Ocultar detalhes do registo",
@@ -11207,7 +11217,8 @@
       "starting": "A iniciar...",
       "status": {
         "title-error-running-job": "Erro ao executar tarefa",
-        "title-job-completed-successfully": "Trabalho concluído com sucesso"
+        "title-job-completed-successfully": "Trabalho concluído com sucesso",
+        "title-warning-running-job": ""
       },
       "summary": "Resumo"
     },

@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1563,7 +1564,8 @@
       "title": "Upravit hodnotící skupinu"
     },
     "group-loader": {
-      "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}"
+      "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Probíhá odstranění skupiny"
@@ -2828,6 +2830,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Obnovit náhled",
+      "empty-state": "",
       "label-preview": "Náhled",
       "refresh": "Obnovit"
     },
@@ -8641,7 +8644,10 @@
         "no-data": ""
       },
       "no-values-label": "Žádné hodnoty",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tagy"
@@ -9390,6 +9396,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Žádná pole k zobrazení.",
+      "open-assistant": "",
       "pin-line": "Připnout protokol",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9408,6 +9415,9 @@
       "copy-log": "Kopírovat řádek protokolu",
       "hide-details": "Zobrazit podrobnosti protokolu",
       "icon-label": "Nabídka protokolu",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Připnout protokol",
       "show-context": "Zobrazit kontext",
       "show-details": "Skrýt podrobnosti protokolu",
@@ -11279,7 +11289,8 @@
       "starting": "Spouštění…",
       "status": {
         "title-error-running-job": "Chyba při spouštění úlohy",
-        "title-job-completed-successfully": "Úloha byla úspěšně dokončena"
+        "title-job-completed-successfully": "Úloha byla úspěšně dokončena",
+        "title-warning-running-job": ""
       },
       "summary": "Shrnutí"
     },

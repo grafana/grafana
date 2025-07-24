@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Evaluatiegroep bewerken"
     },
     "group-loader": {
-      "group-load-failed": "Kan regels uit groep {{ groupName }} in {{ namespaceName }} niet laden"
+      "group-load-failed": "Kan regels uit groep {{ groupName }} in {{ namespaceName }} niet laden",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "De groep wordt verwijderd"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Voorbeeld vernieuwen",
+      "empty-state": "",
       "label-preview": "Voorbeeld",
       "refresh": "Vernieuwen"
     },
@@ -8597,7 +8600,10 @@
         "no-data": ""
       },
       "no-values-label": "Geen waarden",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tags"
@@ -9330,6 +9336,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Weer te geven velden.",
+      "open-assistant": "",
       "pin-line": "Logboek vastzetten",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9355,9 @@
       "copy-log": "Logboekregel kopiëren",
       "hide-details": "Logboekdetails weergeven",
       "icon-label": "Logboekmenu",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Logboek vastzetten",
       "show-context": "Context tonen",
       "show-details": "Logboekdetails verbergen",
@@ -11207,7 +11217,8 @@
       "starting": "Starten...",
       "status": {
         "title-error-running-job": "Er is een fout opgetreden bij het uitvoeren van de taak",
-        "title-job-completed-successfully": "Taak is voltooid"
+        "title-job-completed-successfully": "Taak is voltooid",
+        "title-warning-running-job": ""
       },
       "summary": "Samenvatting"
     },

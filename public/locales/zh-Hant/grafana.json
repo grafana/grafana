@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "編輯評估群組"
     },
     "group-loader": {
-      "group-load-failed": "無法從「{{ namespaceName }}」中的群組「{{ groupName }}」載入規則"
+      "group-load-failed": "無法從「{{ namespaceName }}」中的群組「{{ groupName }}」載入規則",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "正在刪除群組"
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "重新整理預覽",
+      "empty-state": "",
       "label-preview": "預覽",
       "refresh": "更新"
     },
@@ -8575,7 +8578,10 @@
         "no-data": ""
       },
       "no-values-label": "沒有數值",
-      "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列"
+      "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "標籤"
@@ -9300,6 +9306,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "沒有要顯示的欄位。",
+      "open-assistant": "",
       "pin-line": "固定紀錄",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9318,6 +9325,9 @@
       "copy-log": "複製日誌行",
       "hide-details": "顯示紀錄詳細資料",
       "icon-label": "日誌功能表",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "釘選日誌",
       "show-context": "顯示內容",
       "show-details": "隱藏紀錄詳細資料",
@@ -11171,7 +11181,8 @@
       "starting": "正在開始…",
       "status": {
         "title-error-running-job": "執行作業時發生錯誤",
-        "title-job-completed-successfully": "作業已成功完成"
+        "title-job-completed-successfully": "作業已成功完成",
+        "title-warning-running-job": ""
       },
       "summary": "摘要"
     },
