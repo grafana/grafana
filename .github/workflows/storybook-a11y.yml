@@ -45,9 +45,13 @@ jobs:
     - run: yarn install --immutable --check-cache
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
+    - name: Start Storybook
+      run: yarn storybook &
     - name: Run tests
+      # the chromium browser used by Playwright sets its locale to "en_US@posix" by default
+      # this is not a valid language code, and causes some stories to fail to load!
+      # instead, we set the LANG environment variable to en_US to override this
+      # see https://github.com/microsoft/playwright/issues/34046
       env:
         LANG: en_US
-      run: |
-        yarn storybook &
-        npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
+      run: npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
