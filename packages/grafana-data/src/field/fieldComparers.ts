@@ -17,7 +17,7 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
       return booleanIndexComparer(values, reverse);
     case FieldType.time:
       if (typeof field.values[0] === 'number') {
-        return timestampIndexComparer(values, reverse);
+        return timestampIndexComparer(values, reverse, field?.nanos);
       }
       return timeIndexComparer(values, reverse);
     default:
@@ -79,9 +79,14 @@ const falsyComparer = (a: unknown, b: unknown): number => {
   return 0;
 };
 
-const timestampIndexComparer = (values: number[], reverse: boolean): IndexComparer => {
+const timestampIndexComparer = (values: number[], reverse: boolean, nanos?: number[]): IndexComparer => {
   let mult = reverse ? -1 : 1;
-  return (a: number, b: number): number => mult * (values[a] - values[b]);
+  return (a: number, b: number): number => {
+    if (values[a] === values[b] && nanos?.[a] !== undefined && nanos?.[b] !== undefined) {
+      return mult * (nanos[a] - nanos[b]);
+    }
+    return mult * (values[a] - values[b]);
+  };
 };
 
 const timeIndexComparer = (values: unknown[], reverse: boolean): IndexComparer => {
