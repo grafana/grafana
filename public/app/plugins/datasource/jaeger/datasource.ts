@@ -6,10 +6,7 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourceJsonData,
-  dateMath,
-  DateTime,
   FieldType,
-  getDefaultTimeRange,
   MutableDataFrame,
   ScopedVars,
   toDataFrame,
@@ -118,23 +115,9 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     return await super.testDatasource();
   }
 
-  getTimeRange(range = getDefaultTimeRange()): { start: number; end: number } {
-    return {
-      start: getTime(range.from, false),
-      end: getTime(range.to, true),
-    };
-  }
-
   getQueryDisplayText(query: JaegerQuery) {
     return query.query || '';
   }
-}
-
-function getTime(date: string | DateTime, roundUp: boolean) {
-  if (typeof date === 'string') {
-    date = dateMath.parse(date, roundUp)!;
-  }
-  return date.valueOf() * 1000;
 }
 
 const emptyTraceDataFrame = new MutableDataFrame({
