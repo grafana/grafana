@@ -165,6 +165,7 @@ describe('isValidRepoType', () => {
     expect(isValidRepoType('apple')).toBe(false);
     expect(isValidRepoType('')).toBe(false);
     expect(isValidRepoType(undefined)).toBe(false);
+    // @ts-expect-error testing invalid type
     expect(isValidRepoType(null)).toBe(false);
   });
 });

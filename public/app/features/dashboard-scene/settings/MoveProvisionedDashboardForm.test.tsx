@@ -27,6 +27,13 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
   useCreateRepositoryFilesWithPathMutation: jest.fn(),
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
+  provisioningAPIv0alpha1: {
+    endpoints: {
+      listRepository: {
+        select: jest.fn(() => () => ({ data: { items: [] } })),
+      },
+    },
+  },
 }));
 
 jest.mock('app/api/clients/folder/v1beta1', () => ({
