@@ -316,6 +316,8 @@ func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
 	}
 }
 
+// parseConfiguration takes a raw Alertmanager configuration and returns a config that the remote Alertmanager can use.
+// It parses the initial configuration, adds auto-generated routes, decrypts receivers, and merges the extra configs.
 func (am *Alertmanager) parseConfiguration(ctx context.Context, raw []byte) (remoteClient.GrafanaAlertmanagerConfig, error) {
 	c, err := notifier.Load(raw)
 	if err != nil {
