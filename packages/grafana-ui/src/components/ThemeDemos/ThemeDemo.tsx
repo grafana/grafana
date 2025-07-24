@@ -1,10 +1,9 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import * as React from 'react';
-import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { allButtonVariants, Button } from '../Button/Button';
@@ -65,6 +64,15 @@ export const ThemeDemo = () => {
   const [boolValue, setBoolValue] = useState(false);
   const [selectValue, setSelectValue] = useState('Item 2');
   const t = useTheme2();
+  const inputId = useId();
+  const disabledInputId = useId();
+  const comboboxId = useId();
+  const radioId = useId();
+  const switchId = useId();
+  const switchTrueId = useId();
+  const switchDisabledId = useId();
+  const inlineId = useId();
+  const inlineDisabledId = useId();
 
   const richColors = [
     t.colors.primary,
@@ -169,36 +177,41 @@ export const ThemeDemo = () => {
         <CollapsableSection label="Forms" isOpen={true}>
           <DemoBox bg="primary">
             <Field label="Input label" description="Field description">
-              <Input placeholder="Placeholder" />
+              <Input id={inputId} placeholder="Placeholder" />
             </Field>
             <Field label="Input disabled" disabled>
-              <Input placeholder="Placeholder" value="Disabled value" />
+              <Input id={disabledInputId} placeholder="Placeholder" value="Disabled value" />
             </Field>
             <Field label="Combobox">
-              <Combobox options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
+              <Combobox
+                id={comboboxId}
+                options={selectOptions}
+                value={selectValue}
+                onChange={(v) => setSelectValue(v?.value!)}
+              />
             </Field>
             <Field label="Radio label">
-              <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />
+              <RadioButtonGroup id={radioId} options={radioOptions} value={radioValue} onChange={setRadioValue} />
             </Field>
             <Stack>
               <Field label="Switch">
-                <Switch value={boolValue} onChange={(e) => setBoolValue(e.currentTarget.checked)} />
+                <Switch id={switchId} value={boolValue} onChange={(e) => setBoolValue(e.currentTarget.checked)} />
               </Field>
               <Field label="Switch true">
-                <Switch value={true} />
+                <Switch id={switchTrueId} value={true} />
               </Field>
               <Field label="Switch false disabled" disabled={true}>
-                <Switch value={false} />
+                <Switch id={switchDisabledId} value={false} />
               </Field>
             </Stack>
             <Stack direction="column">
               <div>Inline forms</div>
               <InlineFieldRow>
                 <InlineField label="Label">
-                  <Input placeholder="Placeholder" />
+                  <Input id={inlineId} placeholder="Placeholder" />
                 </InlineField>
                 <InlineField label="Another Label" disabled>
-                  <Input placeholder="Disabled" />
+                  <Input id={inlineDisabledId} placeholder="Disabled" />
                 </InlineField>
               </InlineFieldRow>
             </Stack>
@@ -265,7 +278,7 @@ export function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
             className={css({
               background: shade.color,
               borderRadius: theme.shape.radius.default,
-              color: tinycolor(shade.color).isLight() ? 'black' : 'white',
+              color: colorManipulator.getContrastRatio('#FFFFFF', shade.color) >= 4.5 ? '#FFFFFF' : '#000000',
               padding: theme.spacing(1),
             })}
           >
