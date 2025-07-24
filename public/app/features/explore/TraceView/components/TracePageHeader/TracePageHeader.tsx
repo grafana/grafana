@@ -112,10 +112,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   // Get plugin extensions for trace view header actions
   const { links: extensionLinks } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
-<<<<<<< Updated upstream
-    context: trace,
-    limitPerPlugin: 2,
-=======
     context: {
       ...trace,
       datasource: {
@@ -124,8 +120,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         type: datasourceType,
       },
     },
-    limitPerPlugin: 5,
->>>>>>> Stashed changes
+    limitPerPlugin: 2,
   });
 
   let statusColor: BadgeColor = 'green';
