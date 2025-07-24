@@ -86,7 +86,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 				Mode:    repository.StageModeCommitOnEach,
 				Timeout: time.Second * 5,
 			},
-			wantError: nil,
+			expectedRef: "refs/heads/main",
+			wantError:   nil,
 		},
 		{
 			name: "succeeds with CommitOnlyOnce option",
@@ -102,7 +103,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 				Mode:                  repository.StageModeCommitOnlyOnce,
 				CommitOnlyOnceMessage: "Custom commit message",
 			},
-			wantError: nil,
+			expectedRef: "refs/heads/main",
+			wantError:   nil,
 		},
 		{
 			name: "succeeds with CommitAndPushOnEach option",
