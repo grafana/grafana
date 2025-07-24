@@ -469,10 +469,12 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
-		// Delete the old resource from grafana
-		err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, fmt.Errorf("delete original resource from storage: %w", err)
+		// Delete the old resource from grafana if name changed
+		if newParsed.Obj.GetName() != parsed.Obj.GetName() {
+			err = parsed.Client.Delete(ctx, parsed.Obj.GetName(), metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				return nil, fmt.Errorf("delete original resource from storage: %w", err)
+			}
 		}
 
 		// Create/update the new resource in grafana
