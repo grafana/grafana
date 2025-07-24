@@ -9,7 +9,9 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
@@ -52,6 +54,47 @@ func (c *RemoteSecondaryConfig) Validate() error {
 		return fmt.Errorf("logger cannot be nil")
 	}
 	return nil
+}
+
+// RemoteSecondaryFactory can be used to override the default factory function in the multi-org Alertmanager
+// when starting Grafana in remote secondary mode.
+func RemoteSecondaryFactory(
+	cfg AlertmanagerConfig,
+	stateStore stateStore,
+	cfgStore configStore,
+	syncInterval time.Duration,
+	crypto Crypto,
+	autogenFn AutogenFn,
+	m *metrics.RemoteAlertmanager,
+	t tracing.Tracer,
+	l log.Logger,
+) func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+	return func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+			// Create the internal Alertmanager.
+			internalAM, err := factoryFn(ctx, orgID)
+			if err != nil {
+				return nil, err
+			}
+
+			// Create the remote Alertmanager.
+			cfg.OrgID = orgID
+			remoteAM, err := NewAlertmanager(ctx, cfg, stateStore, crypto, autogenFn, m, t)
+			if err != nil {
+				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+				return internalAM, nil
+			}
+
+			// Use both implementations in the forked Alertmanager.
+			rsCfg := RemoteSecondaryConfig{
+				Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
+				OrgID:        orgID,
+				Store:        cfgStore,
+				SyncInterval: syncInterval,
+			}
+			return NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
+		}
+	}
 }
 
 func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal notifier.Alertmanager, remote remoteAlertmanager) (*RemoteSecondaryForkedAlertmanager, error) {

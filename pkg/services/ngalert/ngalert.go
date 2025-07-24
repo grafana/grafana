@@ -188,7 +188,7 @@ func (ng *AlertNG) init() error {
 
 	// Configure the remote Alertmanager.
 	// If toggles for both modes are enabled, remote primary takes precedence.
-	var overrides []notifier.Option
+	var opts []notifier.Option
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
@@ -224,66 +224,31 @@ func (ng *AlertNG) init() error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
 		}
 
-		var override notifier.Option
+		// This function will be used by the MOA to create new Alertmanagers.
+		var override func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory
+
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
 			ng.Cfg.UnifiedAlerting.SkipClustering = true
-			// This function will be used by the MOA to create new Alertmanagers.
-			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
-				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-					// Create internal Alertmanager.
-					internalAM, err := factoryFn(ctx, orgID)
-					if err != nil {
-						return nil, err
-					}
 
-					// Create remote Alertmanager.
-					cfg.OrgID = orgID
-					cfg.PromoteConfig = true
-					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
-					if err != nil {
-						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
-						return internalAM, nil
-					}
-
-					// Use both Alertmanager implementations in the forked Alertmanager.
-					return remote.NewRemotePrimaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-primary"), internalAM, remoteAM), nil
-				}
-			})
+			override = remote.RemotePrimaryFactory(cfg, notifier.NewFileStore(cfg.OrgID, ng.KVStore), crypto, autogenFn, m, ng.tracer, moaLogger)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
-
-			// This function will be used by the MOA to create new Alertmanagers.
-			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
-				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-					// Create internal Alertmanager.
-					internalAM, err := factoryFn(ctx, orgID)
-					if err != nil {
-						return nil, err
-					}
-
-					// Create remote Alertmanager.
-					cfg.OrgID = orgID
-					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
-					if err != nil {
-						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
-						return internalAM, nil
-					}
-
-					// Use both Alertmanager implementations in the forked Alertmanager.
-					rsCfg := remote.RemoteSecondaryConfig{
-						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
-						OrgID:        orgID,
-						Store:        ng.store,
-						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
-					}
-					return remote.NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
-				}
-			})
+			override = remote.RemoteSecondaryFactory(cfg,
+				notifier.NewFileStore(cfg.OrgID, ng.KVStore),
+				ng.store,
+				ng.store.Cfg.RemoteAlertmanager.SyncInterval,
+				crypto,
+				autogenFn,
+				m,
+				ng.tracer,
+				moaLogger,
+			)
 		}
-		overrides = append(overrides, override)
+
+		opts = append(opts, notifier.WithAlertmanagerOverride(override))
 	}
 
 	notificationHistorian, err := configureNotificationHistorian(
@@ -314,7 +279,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.FeatureToggles,
 		notificationHistorian,
-		overrides...,
+		opts...,
 	)
 	if err != nil {
 		return err
