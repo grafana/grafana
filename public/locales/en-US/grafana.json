@@ -12441,7 +12441,13 @@
   "table": {
     "auto-cell-options-editor": {
       "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
-      "label-wrap-text": "Wrap text"
+      "label-wrap-text": "Wrap text",
+      "max-wrapped-lines": {
+        "description": "Limits the number of lines displayed when wrapping text in a cell.",
+        "label": "Wrapped line limit",
+        "text-alpha": "Alpha"
+      },
+      "max-wrapped-lines-placeholder": "none"
     },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Gauge display mode",

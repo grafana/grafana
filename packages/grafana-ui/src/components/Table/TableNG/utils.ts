@@ -36,6 +36,7 @@ import {
   LineCounter,
   LineCounterEntry,
 } from './types';
+import { max } from 'lodash';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
@@ -82,6 +83,16 @@ export function shouldTextWrap(field: Field): boolean {
 }
 
 /**
+ * @internal
+ * Returns the limit of number of lines that should be shown for wrapped text if set.
+ */
+export function getMaxWrappedLines(field: Field): number | undefined {
+  const cellOptions = getCellOptions(field);
+  // @ts-ignore - same rationale as shouldWrapText above.
+  return cellOptions?.maxWrappedLines;
+}
+
+/**
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
  */
@@ -124,7 +135,7 @@ export function wrapUwrapCount(count: Count): LineCounter {
  * @internal returns a line counter which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
  */
 export function getTextLineEstimator(avgCharWidth: number): LineCounter {
-  return (value, width) => {
+  return (value, width, field) => {
     if (!value) {
       return -1;
     }
@@ -137,7 +148,14 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
     }
 
     const charsPerLine = width / avgCharWidth;
-    return strValue.length / charsPerLine;
+    const estimate = strValue.length / charsPerLine;
+
+    // limit the number of lines to the maxWrappedLines if set.
+    const maxWrappedLines = getMaxWrappedLines(field);
+    if (maxWrappedLines !== undefined && estimate > maxWrappedLines) {
+      return maxWrappedLines;
+    }
+    return estimate;
   };
 }
 
@@ -224,6 +242,7 @@ export function getRowHeight(
   let maxLines = -1;
   let maxValue = '';
   let maxWidth = 0;
+  let maxField: Field | undefined;
   let preciseCounter: LineCounter | undefined;
 
   for (const { estimate, counter, fieldIdxs } of lineCounters) {
@@ -239,11 +258,13 @@ export function getRowHeight(
       const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellValueRaw != null) {
         const colWidth = columnWidths[fieldIdx];
-        const approxLines = count(cellValueRaw, colWidth);
+        const approxLines = count(cellValueRaw, colWidth, field);
+
         if (approxLines > maxLines) {
           maxLines = approxLines;
           maxValue = cellValueRaw;
           maxWidth = colWidth;
+          maxField = field;
           preciseCounter = isEstimating ? counter : undefined;
         }
       }
@@ -252,14 +273,14 @@ export function getRowHeight(
 
   // if the value is -1 or the estimate for the max cell was less than the SINGLE_LINE_ESTIMATE_THRESHOLD, we trust
   // that the estimator correctly identified that no text wrapping is needed for this row, skipping the preciseCounter.
-  if (maxLines < SINGLE_LINE_ESTIMATE_THRESHOLD) {
+  if (maxField === undefined || maxLines < SINGLE_LINE_ESTIMATE_THRESHOLD) {
     return defaultHeight;
   }
 
   // if we finished this row height loop with an estimate, we need to call
   // the `preciseCounter` method to get the exact line count.
   if (preciseCounter !== undefined) {
-    maxLines = preciseCounter(maxValue, maxWidth);
+    maxLines = preciseCounter(maxValue, maxWidth, maxField);
   }
 
   // we want a round number of lines for rendering

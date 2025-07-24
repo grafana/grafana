@@ -32,12 +32,14 @@ TableFooterOptions: {
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
 	wrapText?: bool
+  maxWrappedLines?: number
 } @cuetsy(kind="interface")
 
 // Colored text cell options
 TableColorTextCellOptions: {
 	type: TableCellDisplayMode & "color-text"
 	wrapText?: bool
+  maxWrappedLines?: number
 } @cuetsy(kind="interface")
 
 // Json view cell options
@@ -82,6 +84,7 @@ TableColoredBackgroundCellOptions: {
 	mode?: TableCellBackgroundDisplayMode
 	applyToRow?: bool
 	wrapText?: bool
+  maxWrappedLines?: number
 } @cuetsy(kind="interface")
 
 // Height of a table cell
