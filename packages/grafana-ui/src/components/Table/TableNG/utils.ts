@@ -356,8 +356,12 @@ export function applySort(
 
       result = sortDir * compare(a[columnKey], b[columnKey]);
 
-      if (result === 0 && sortNanos[i] !== undefined) {
-        result = sortDir * (sortNanos[i]![a.__index] - sortNanos[i]![b.__index]);
+      if (result === 0) {
+        const nanos = sortNanos[i];
+
+        if (nanos !== undefined) {
+          result = sortDir * (nanos[a.__index] - nanos[b.__index]);
+        }
       }
 
       if (result !== 0) {
