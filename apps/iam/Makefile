@@ -25,7 +25,7 @@ build/operator:
 	docker build -t $(OPERATOR_DOCKERIMAGE) -f cmd/operator/Dockerfile .
 
 .PHONY: local/up
-local/up:
+local/up: 
 	@./local/scripts/cluster.sh create "local/generated/k3d-config.json"
 	@cd local && tilt up
 
