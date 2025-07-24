@@ -411,10 +411,9 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, 4, configSyncs)
 	require.Equal(t, am.smtp, configSent.SmtpConfig)
 
-	// Failing to add the auto-generated routes should result in an error.
+	// Failing to add the auto-generated routes should not result in an error.
 	_, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), errAutogenFn, m, tracing.InitializeTracerForTest())
-	require.ErrorIs(t, err, errTest)
-	require.Equal(t, 4, configSyncs)
+	require.NoError(t, err, errTest)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {

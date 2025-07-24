@@ -2256,7 +2256,7 @@ func TestGitRepository_Stage(t *testing.T) {
 	t.Run("calls NewStagedGitRepository", func(t *testing.T) {
 		ctx := context.Background()
 		opts := repository.StageOptions{
-			PushOnWrites: true,
+			Mode: repository.StageModeCommitAndPushOnEach,
 		}
 
 		// Since NewStagedGitRepository is not mocked and may panic, we expect this to fail
