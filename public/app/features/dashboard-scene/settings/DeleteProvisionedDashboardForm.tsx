@@ -5,7 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Drawer, Stack } from '@grafana/ui';
-import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
@@ -17,10 +17,10 @@ export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
-  isGitHub: boolean;
   isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
+  repository?: RepositoryView;
   onDismiss: () => void;
 }
 
@@ -33,9 +33,9 @@ export function DeleteProvisionedDashboardForm({
   defaultValues,
   loadedFromRef,
   readOnly,
-  isGitHub,
   isNew,
   workflowOptions,
+  repository,
   onDismiss,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
@@ -127,7 +127,7 @@ export function DeleteProvisionedDashboardForm({
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}
-              isGitHub={isGitHub}
+              repository={repository}
             />
 
             {/* Save / Cancel button */}

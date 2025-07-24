@@ -43,4 +43,7 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Toggle for enabling authz management apis
 	enableAuthZApis bool
+
+	// Toggle for enabling dual writer
+	enableDualWriter bool
 }

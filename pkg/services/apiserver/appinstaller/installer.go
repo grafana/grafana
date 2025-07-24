@@ -86,6 +86,27 @@ func RegisterAdmissionPlugins(
 	return nil
 }
 
+type AuthorizerRegistrar interface {
+	Register(gv schema.GroupVersion, authorizer authorizer.Authorizer)
+}
+
+func RegisterAuthorizers(
+	ctx context.Context,
+	appInstallers []appsdkapiserver.AppInstaller,
+	registrar AuthorizerRegistrar,
+) {
+	logger := logging.FromContext(ctx)
+	for _, installer := range appInstallers {
+		if authorizerProvider, ok := installer.(AuthorizerProvider); ok {
+			authorizer := authorizerProvider.GetAuthorizer()
+			for _, gv := range installer.GroupVersions() {
+				registrar.Register(gv, authorizer)
+				logger.Debug("Registered authorizer", "group", gv.Group, "version", gv.Version, "app")
+			}
+		}
+	}
+}
+
 func BuildOpenAPIDefGetter(
 	appInstallers []appsdkapiserver.AppInstaller,
 ) func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
