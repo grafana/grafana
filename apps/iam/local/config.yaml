@@ -1,25 +1,23 @@
 # Port used to bind services to localhost, for example, grafana will be available at http://grafana.k3d.localhost:9999
 port: 9999
+
 # Port used for the kubernetes APIServer on localhost
 kubePort: 8556
+
 # Pre-configured datasources to install on grafana. For custom-configuration datasources, use `datasourceConfigs`
 datasources:
   - cortex
   - tempo
   - loki
-# Plugin JSON data, as key/value pairs
-pluginJson:
-  foo: bar
-# Plugin Secure JSON data. By default, the `kubeconfig` and `kubenamespace` values will be added in the generated YAML.
-# You can overwrite those values by specifying them here instead.
-pluginSecureJson:
-  baz: foo
+
 # Standalone operator docker image. Leave this empty to not deploy an operator
 operatorImage: "github.com/grafana/grafana/apps/iam/operator:latest"
+
 # Governs whether the local setup generates kubernetes manifests for varying kinds of webhooks attached to your operator and each CRD
 webhooks:
   # The port the operator exposes an HTTPS server with the webhook endpoint(s) on
   port: 8443
+
 # Non-standard or additional datasources you want to automatically include in grafana's provisioned list
 # The actual datasources need to be set up manually (arbitrary kubernetes yamls can be added to the local setup via the 'additional' folder),
 # but you can predefine the connection details so they'll be added to the local grafana.
@@ -31,12 +29,12 @@ datasourceConfigs:
 #    type: prometheus
 #    uid: "my-cortex-datasource"
 #    url: "http://cortex.default.svc.cluster.local:9009/api/prom"
-#
+
 # Toggle the generating of the grafana deployments, if you want to control these elsewhere
 generateGrafanaDeployment: true
 
 # which grafana image to use
-grafanaImage: grafana/grafana-enterprise:main
+grafanaImage: grafana/grafana-enterprise:12.0.0
 
 # Install plugins from other sources (URLS). See https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/#install-plugins-from-other-sources
 grafanaInstallPlugins: ""

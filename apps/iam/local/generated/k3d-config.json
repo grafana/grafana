@@ -21,11 +21,5 @@
       "nodeFilters": ["loadbalancer"],
       "port": "9999:80"
     }
-  ],
-  "volumes": [
-    {
-      "nodeFilters": ["server:*"],
-      "volume": "/Users/mihai/src/grafana/apps/iam/local/mounted-files:/tmp/k3d/mounted-files"
-    }
   ]
 }
