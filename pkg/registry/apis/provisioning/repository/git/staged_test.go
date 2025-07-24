@@ -17,10 +17,11 @@ import (
 
 func TestNewStagedGitRepository(t *testing.T) {
 	tests := []struct {
-		name      string
-		setupMock func(*mocks.FakeClient)
-		opts      repository.StageOptions
-		wantError error
+		name        string
+		setupMock   func(*mocks.FakeClient)
+		opts        repository.StageOptions
+		wantError   error
+		expectedRef string
 	}{
 		{
 			name: "succeeds with default options",
@@ -32,8 +33,26 @@ func TestNewStagedGitRepository(t *testing.T) {
 				mockWriter := &mocks.FakeStagedWriter{}
 				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},
+			expectedRef: "refs/heads/main",
 			opts: repository.StageOptions{
 				Mode: repository.StageModeCommitOnEach,
+			},
+			wantError: nil,
+		},
+		{
+			name: "succeeds with custom ref option",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/custom",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			expectedRef: "refs/heads/custom",
+			opts: repository.StageOptions{
+				Ref:          "custom",
+				PushOnWrites: false,
 			},
 			wantError: nil,
 		},
@@ -50,7 +69,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 			opts: repository.StageOptions{
 				Mode: repository.StageModeCommitOnEach,
 			},
-			wantError: nil,
+			wantError:   nil,
+			expectedRef: "refs/heads/main",
 		},
 		{
 			name: "succeeds with timeout",
@@ -66,7 +86,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 				Mode:    repository.StageModeCommitOnEach,
 				Timeout: time.Second * 5,
 			},
-			wantError: nil,
+			expectedRef: "refs/heads/main",
+			wantError:   nil,
 		},
 		{
 			name: "succeeds with CommitOnlyOnce option",
@@ -82,7 +103,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 				Mode:                  repository.StageModeCommitOnlyOnce,
 				CommitOnlyOnceMessage: "Custom commit message",
 			},
-			wantError: nil,
+			expectedRef: "refs/heads/main",
+			wantError:   nil,
 		},
 		{
 			name: "succeeds with CommitAndPushOnEach option",
@@ -97,7 +119,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 			opts: repository.StageOptions{
 				Mode: repository.StageModeCommitAndPushOnEach,
 			},
-			wantError: nil,
+			expectedRef: "refs/heads/main",
+			wantError:   nil,
 		},
 		{
 			name: "fails with GetRef error",
@@ -121,7 +144,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 			opts: repository.StageOptions{
 				Mode: repository.StageModeCommitOnEach,
 			},
-			wantError: errors.New("build staged writer: failed to create writer"),
+			wantError:   errors.New("build staged writer: failed to create writer"),
+			expectedRef: "refs/heads/main",
 		},
 	}
 
@@ -156,6 +180,10 @@ func TestNewStagedGitRepository(t *testing.T) {
 				require.Equal(t, tt.opts.Mode, actualOpts.Mode)
 				require.Equal(t, tt.opts.Timeout, actualOpts.Timeout)
 				require.Equal(t, tt.opts.CommitOnlyOnceMessage, actualOpts.CommitOnlyOnceMessage)
+
+				// Verify the expected ref
+				_, ref := mockClient.GetRefArgsForCall(0)
+				require.Equal(t, tt.expectedRef, ref)
 			}
 		})
 	}
@@ -208,6 +236,25 @@ func TestStagedGitRepository_Read(t *testing.T) {
 			wantError: nil,
 		},
 		{
+			name: "succeeds with ref matching stage options",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetCommitReturns(&nanogit.Commit{
+					Tree: hash.Hash{4, 5, 6},
+				}, nil)
+				mockClient.GetBlobByPathReturns(&nanogit.Blob{
+					Content: []byte("file content"),
+					Hash:    hash.Hash{7, 8, 9},
+				}, nil)
+			},
+			path:      "test.yaml",
+			ref:       "feature",
+			wantError: nil,
+		},
+		{
 			name: "fails with unsupported ref",
 			setupMock: func(_ *mocks.FakeClient) {
 				// No setup needed as error occurs before client calls
@@ -223,7 +270,13 @@ func TestStagedGitRepository_Read(t *testing.T) {
 			mockClient := &mocks.FakeClient{}
 			tt.setupMock(mockClient)
 
-			stagedRepo := createTestStagedRepository(mockClient)
+			// Use stage options with ref "feature" for the specific test case
+			opts := repository.StageOptions{}
+			if tt.ref == "feature" {
+				opts.Ref = "feature"
+			}
+
+			stagedRepo := createTestStagedRepositoryWithWriter(&mocks.FakeStagedWriter{}, opts, mockClient)
 			fileInfo, err := stagedRepo.Read(context.Background(), tt.path, tt.ref)
 			if tt.wantError != nil {
 				require.EqualError(t, err, tt.wantError.Error())
@@ -984,6 +1037,75 @@ func TestStagedGitRepository_Remove(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, mockWriter.CleanupCallCount())
 	})
+}
+
+func TestStagedGitRepository_isRefSupported(t *testing.T) {
+	tests := []struct {
+		name      string
+		stageOpts repository.StageOptions
+		gitBranch string
+		ref       string
+		expected  bool
+	}{
+		{
+			name:      "empty ref is supported",
+			stageOpts: repository.StageOptions{},
+			gitBranch: "main",
+			ref:       "",
+			expected:  true,
+		},
+		{
+			name:      "ref matches git config branch",
+			stageOpts: repository.StageOptions{},
+			gitBranch: "main",
+			ref:       "main",
+			expected:  true,
+		},
+		{
+			name:      "ref matches stage options ref",
+			stageOpts: repository.StageOptions{Ref: "feature"},
+			gitBranch: "main",
+			ref:       "feature",
+			expected:  true,
+		},
+		{
+			name:      "ref matches stage options ref when empty defaults to git branch",
+			stageOpts: repository.StageOptions{Ref: ""},
+			gitBranch: "main",
+			ref:       "main",
+			expected:  true,
+		},
+		{
+			name:      "unsupported ref",
+			stageOpts: repository.StageOptions{Ref: "feature"},
+			gitBranch: "main",
+			ref:       "other-branch",
+			expected:  false,
+		},
+		{
+			name:      "unsupported ref with empty stage options",
+			stageOpts: repository.StageOptions{},
+			gitBranch: "main",
+			ref:       "feature",
+			expected:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stagedRepo := &stagedGitRepository{
+				gitRepository: &gitRepository{
+					gitConfig: RepositoryConfig{
+						Branch: tt.gitBranch,
+					},
+				},
+				opts: tt.stageOpts,
+			}
+
+			result := stagedRepo.isRefSupported(tt.ref)
+			require.Equal(t, tt.expected, result)
+		})
+	}
 }
 
 // Helper functions for creating test instances

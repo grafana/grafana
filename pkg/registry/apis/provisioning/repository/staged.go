@@ -23,6 +23,10 @@ const (
 )
 
 type StageOptions struct {
+	// Ref custom ref
+	Ref string
+	// Push on every write
+	PushOnWrites bool
 	// Mode defines the staging and commit behavior
 	Mode StageMode
 	// Maximum time allowed for clone operation in seconds (0 means no limit)
