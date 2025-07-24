@@ -27,7 +27,6 @@ posts:
     items:
       - whats-new/2025-06-30-transformations-regression-analysis.md
       - whats-new/2025-07-14-custom-variable-support-in-visualization-actions.md
-      - whats-new/2025-07-14-static-options-for-query-variable.md
       - whats-new/2025-07-10-server-configurable-quick-time-ranges-for-dashboards.md
       - whats-new/2025-07-14-enhanced-custom-currency-format-display-exact-financial-values.md
   - title: Authentication and authorization
