@@ -1,6 +1,6 @@
 import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryFormData } from '../types';
+import { ProvisioningErrorInfo, RepositoryFormData } from '../types';
 
 export type WizardStep = 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
@@ -36,3 +36,8 @@ export const RepoTypeDisplay: { [key in RepoType]: string } = {
   git: 'Git',
   local: 'Local',
 };
+
+export type StepStatusInfo =
+  | { status: 'idle' | 'running' | 'success' }
+  | { status: 'error'; error: string | ProvisioningErrorInfo }
+  | { status: 'warning'; warning: string | ProvisioningErrorInfo };

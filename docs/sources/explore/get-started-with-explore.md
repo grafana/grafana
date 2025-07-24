@@ -204,5 +204,5 @@ Now that you are familiar with Explore you can:
 - [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/)
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
 - [Work with logs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/)
-- [Work with traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>)
+- [Work with traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/)
 - [Create and use correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/correlations-editor-in-explore/)

@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "評価グループを編集"
     },
     "group-loader": {
-      "group-load-failed": "{{ namespaceName }}の{{ groupName }}グループからルールを読み込めませんでした"
+      "group-load-failed": "{{ namespaceName }}の{{ groupName }}グループからルールを読み込めませんでした",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "グループを削除中です"
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "プレビューを更新",
+      "empty-state": "",
       "label-preview": "プレビュー",
       "refresh": "更新"
     },
@@ -8575,7 +8578,10 @@
         "no-data": ""
       },
       "no-values-label": "値がありません",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "タグ"
@@ -9300,6 +9306,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "表示するフィールドがありません。",
+      "open-assistant": "",
       "pin-line": "ログをピン留め",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9318,6 +9325,9 @@
       "copy-log": "ログ行をコピー",
       "hide-details": "ログの詳細を表示",
       "icon-label": "ログメニュー",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "ログをピン留めする",
       "show-context": "コンテキストを表示",
       "show-details": "ログの詳細を非表示",
@@ -11171,7 +11181,8 @@
       "starting": "開始中...",
       "status": {
         "title-error-running-job": "実行エラー",
-        "title-job-completed-successfully": "ジョブが正常に完了しました"
+        "title-job-completed-successfully": "ジョブが正常に完了しました",
+        "title-warning-running-job": ""
       },
       "summary": "概要"
     },

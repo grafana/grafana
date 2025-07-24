@@ -1477,10 +1477,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:7.27.6, @babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.25.7, @babel/runtime@npm:^7.26.7, @babel/runtime@npm:^7.27.0, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.7":
-  version: 7.27.6
-  resolution: "@babel/runtime@npm:7.27.6"
-  checksum: 10/cc957a12ba3781241b83d528eb69ddeb86ca5ac43179a825e83aa81263a6b3eb88c57bed8a937cdeacfc3192e07ec24c73acdfea4507d0c0428c8e23d6322bfe
+"@babel/runtime@npm:7.28.2, @babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.25.0, @babel/runtime@npm:^7.25.6, @babel/runtime@npm:^7.25.7, @babel/runtime@npm:^7.26.7, @babel/runtime@npm:^7.27.0, @babel/runtime@npm:^7.27.6, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.7":
+  version: 7.28.2
+  resolution: "@babel/runtime@npm:7.28.2"
+  checksum: 10/a0965fbdd6aaa40709290923bbe05e1c4314021f0cef608eb1d69f04f717c41829e50a53d79c4a0f461512b4be9b3c0190dc19387b219bcdaacdd793b2fe1b8a
   languageName: node
   linkType: hard
 
@@ -3073,17 +3073,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.0.7":
-  version: 0.0.7
-  resolution: "@grafana/assistant@npm:0.0.7"
+"@grafana/assistant@npm:0.0.8":
+  version: 0.0.8
+  resolution: "@grafana/assistant@npm:0.0.8"
   peerDependencies:
-    "@grafana/data": ">=12.0.0"
-    "@grafana/runtime": ">=12.0.0"
+    "@grafana/data": ">=12.1.0"
+    "@grafana/runtime": ">=12.1.0"
     "@grafana/scenes": ">=5.41.0"
-    "@grafana/ui": ">=12.0.0"
+    "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/c83523a032cb748867f683e87ad5b00a04bb4918ae5c7aafe5587b418b73b769a92de948335f0d9055d06036004e7a9794722f627cab3111b076eb27423d4344
+  checksum: 10/2fd503b727716cb5bd3d25f16a50e177e58c9ea96712b66e785f1f2348e4f211b2d2250d8542420458ac2fb2f4f474f403850326bef9a99895990f63d009c640
   languageName: node
   linkType: hard
 
@@ -3610,10 +3610,10 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes-react@npm:^6.27.2":
-  version: 6.27.2
-  resolution: "@grafana/scenes-react@npm:6.27.2"
+  version: 6.28.1
+  resolution: "@grafana/scenes-react@npm:6.28.1"
   dependencies:
-    "@grafana/scenes": "npm:6.27.2"
+    "@grafana/scenes": "npm:6.28.1"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3625,13 +3625,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/415186350304d999a13fa1e66f8bb7675cb28d5174a9449b8cb3d6a25efaecfc74a0e2e69cde9513f6fd9cac9bd2891c12e93a974ec15cfa0d6d04e5b95b5306
+  checksum: 10/03278682a8ff7ebb399d522b3f54aee820cb34ab85f79d321ee44c4fbb1a490b6d62a8f03cae68187a70cc4345715d41441a72ae3915e6bebfe20fbfb61f9108
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.27.2, @grafana/scenes@npm:^6.27.2":
-  version: 6.27.2
-  resolution: "@grafana/scenes@npm:6.27.2"
+"@grafana/scenes@npm:6.28.1, @grafana/scenes@npm:^6.27.2":
+  version: 6.28.1
+  resolution: "@grafana/scenes@npm:6.28.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3651,7 +3651,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/8ba3d6c9b29de32a943a4a53511822f27eb51b35270368f0b9d80208eab50ae8767c6b372a7c7779a213618eab24bbb3e441dde42b038fc0a2078989879e0d14
+  checksum: 10/603cb2b421e59a51ee36af6f1d6554e6f328db3aea42da7960e33c14de4ce298b2c261affa6dd651fe8d4ffb4a58e7825958a3b66d00daa3410e91f5f1fb185f
   languageName: node
   linkType: hard
 
@@ -17050,14 +17050,15 @@ __metadata:
   linkType: hard
 
 "form-data@npm:^4.0.0, form-data@npm:~4.0.0":
-  version: 4.0.2
-  resolution: "form-data@npm:4.0.2"
+  version: 4.0.4
+  resolution: "form-data@npm:4.0.4"
   dependencies:
     asynckit: "npm:^0.4.0"
     combined-stream: "npm:^1.0.8"
     es-set-tostringtag: "npm:^2.1.0"
+    hasown: "npm:^2.0.2"
     mime-types: "npm:^2.1.12"
-  checksum: 10/82c65b426af4a40090e517a1bc9057f76970b4c6043e37aa49859c447d88553e77d4cc5626395079a53d2b0889ba5f2a49f3900db3ad3f3f1bf76613532572fb
+  checksum: 10/a4b62e21932f48702bc468cc26fb276d186e6b07b557e3dd7cc455872bdbb82db7db066844a64ad3cf40eaf3a753c830538183570462d3649fdfd705601cbcfb
   languageName: node
   linkType: hard
 
@@ -17847,7 +17848,7 @@ __metadata:
     "@arethetypeswrong/cli": "npm:^0.18.2"
     "@babel/core": "npm:7.28.0"
     "@babel/preset-env": "npm:7.28.0"
-    "@babel/runtime": "npm:7.27.6"
+    "@babel/runtime": "npm:7.28.2"
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
     "@bsull/augurs": "npm:^0.10.0"
@@ -17861,7 +17862,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/assistant": "npm:0.0.7"
+    "@grafana/assistant": "npm:0.0.8"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
@@ -26333,11 +26334,11 @@ __metadata:
   linkType: hard
 
 "react-hook-form@npm:^7.49.2":
-  version: 7.60.0
-  resolution: "react-hook-form@npm:7.60.0"
+  version: 7.61.1
+  resolution: "react-hook-form@npm:7.61.1"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10/cc86ef4029f7b06f82dff919c8933156683b70669a6306d2471706443192b8916afaa07bc64452b590ecb18ea94f3d156f3fb38d59ada3462f5b108e89e186c9
+  checksum: 10/961c5ad1f6fe694a66c1aa9934e5cd7ef014a8fd0d4ed15ac6d97d31d8d53b9e6196cb8b66d119883f49508c11589bc4b1478e1080790eb2e91c476551c82186
   languageName: node
   linkType: hard
 
@@ -28090,17 +28091,6 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: 10/1ef3a85bd02a760c6ef76a45b8c1ce18226de40831e02a00bad78485390b98b6ccaa31046245fc63bba4a47a6a592b6c7eedc65cc47126e60489f9cc1ce3ed7e
-  languageName: node
-  linkType: hard
-
-"semver@npm:~7.3.5":
-  version: 7.3.8
-  resolution: "semver@npm:7.3.8"
-  dependencies:
-    lru-cache: "npm:^6.0.0"
-  bin:
-    semver: bin/semver.js
-  checksum: 10/c8c04a4d41d30cffa7277904e0ad6998623dd61e36bca9578b0128d8c683b705a3924beada55eae7fa004fb30a9359a53a4ead2b68468d778b602f3b1a28f8e3
   languageName: node
   linkType: hard
 

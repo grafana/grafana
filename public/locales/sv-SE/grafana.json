@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Redigera utvärderingsgrupp"
     },
     "group-loader": {
-      "group-load-failed": "Det gick inte att ladda reglerna från gruppen {{ groupName }} i {{ namespaceName }}"
+      "group-load-failed": "Det gick inte att ladda reglerna från gruppen {{ groupName }} i {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Gruppen raderas"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Uppdatera förhandsgranskning",
+      "empty-state": "",
       "label-preview": "Förhandsgranska",
       "refresh": "Uppdatera"
     },
@@ -8597,7 +8600,10 @@
         "no-data": ""
       },
       "no-values-label": "Inga värden",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Taggar"
@@ -9330,6 +9336,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9355,9 @@
       "copy-log": "Kopiera loggrad",
       "hide-details": "Visa loggdetaljer",
       "icon-label": "Loggmeny",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Fäst logg",
       "show-context": "Visa sammanhang",
       "show-details": "Dölj loggdetaljer",
@@ -11207,7 +11217,8 @@
       "starting": "Startar …",
       "status": {
         "title-error-running-job": "Ett fel uppstod när ett jobb kördes",
-        "title-job-completed-successfully": "Jobbet har slutförts"
+        "title-job-completed-successfully": "Jobbet har slutförts",
+        "title-warning-running-job": ""
       },
       "summary": "Sammanfattning"
     },

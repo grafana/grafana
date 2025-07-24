@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
@@ -27,10 +28,10 @@ import { getProvisionedMeta } from './utils/getProvisionedMeta';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  isGitHub: boolean;
   loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   readOnly: boolean;
+  repository?: RepositoryView;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -40,9 +41,9 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  isGitHub,
   workflowOptions,
   readOnly,
+  repository,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -229,7 +230,7 @@ export function SaveProvisionedDashboardForm({
             readOnly={readOnly}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            repository={repository}
             isNew={isNew}
           />
 

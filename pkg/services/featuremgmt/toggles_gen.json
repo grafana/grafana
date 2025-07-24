@@ -353,6 +353,20 @@
     },
     {
       "metadata": {
+        "name": "alertingProvenanceLockWrites",
+        "resourceVersion": "1753284360846",
+        "creationTimestamp": "2025-07-23T15:26:00Z"
+      },
+      "spec": {
+        "description": "Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-09-26T06:33:14Z"
@@ -3095,6 +3109,19 @@
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
         "stage": "privatePreview",
         "codeowner": "@grafana/grafana-datasources-core-services"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sqlExpressionsColumnAutoComplete",
+        "resourceVersion": "1751471729972",
+        "creationTimestamp": "2025-07-02T15:55:29Z"
+      },
+      "spec": {
+        "description": "Enables column autocomplete for SQL Expressions",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
       }
     },
     {
