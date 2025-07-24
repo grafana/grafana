@@ -589,6 +589,8 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return false, status.Error(codes.NotFound, "unsupported resource")
 	}
 
+	// TODO: potentially revert that change to submit in another PR
+
 	// Handle folder support for creation requests
 	if req.Verb == utils.VerbCreate {
 		if t.HasFolderSupport() {
