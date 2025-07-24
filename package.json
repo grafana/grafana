@@ -433,8 +433,7 @@
   "resolutions": {
     "underscore": "1.13.7",
     "@types/slate": "0.47.11",
-    "semver@~7.0.0": "7.5.4",
-    "semver@7.3.4": "7.5.4",
+    "semver@npm:~7.3.5": "^7.3.5",
     "debug@npm:^0.7.2": "2.6.9",
     "debug@npm:^0.7.4": "2.6.9",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
