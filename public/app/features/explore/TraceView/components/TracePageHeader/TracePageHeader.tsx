@@ -62,6 +62,8 @@ export type TracePageHeaderProps = {
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
+  datasourceName: string;
+  datasourceUid: string;
   setHeaderHeight: (height: number) => void;
 };
 
@@ -78,6 +80,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
+    datasourceName,
+    datasourceUid,
     setHeaderHeight,
   } = props;
 
@@ -108,8 +112,20 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   // Get plugin extensions for trace view header actions
   const { links: extensionLinks } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
+<<<<<<< Updated upstream
     context: trace,
     limitPerPlugin: 2,
+=======
+    context: {
+      ...trace,
+      datasource: {
+        name: datasourceName,
+        uid: datasourceUid,
+        type: datasourceType,
+      },
+    },
+    limitPerPlugin: 5,
+>>>>>>> Stashed changes
   });
 
   let statusColor: BadgeColor = 'green';
