@@ -12,7 +12,7 @@ const getTitle = (alert: string | ProvisioningErrorInfo, isWarning = false) => {
   if (typeof alert === 'string') {
     return alert;
   }
-  
+
   if (isWarning) {
     return alert.title || t('provisioning.warning-title-default', 'Warning');
   } else {
@@ -42,11 +42,11 @@ export function ProvisioningAlert({ error, warning }: ProvisioningAlertProps) {
   const alertData = error || warning;
   const isWarning = Boolean(warning);
   const severity = isWarning ? 'warning' : 'error';
-  
+
   if (!alertData) {
     return null;
   }
-  
+
   return (
     <Alert severity={severity} title={getTitle(alertData, isWarning)}>
       {getMessage(alertData)}
