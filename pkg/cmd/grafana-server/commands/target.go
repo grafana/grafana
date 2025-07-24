@@ -92,7 +92,6 @@ func RunTargetServer(opts standalone.BuildInfo, cli *cli.Context) error {
 
 	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
-	// TODO: not sure if it's needed here
 	// Initialize the OpenFeature client with the configuration
 	if err := featuremgmt.InitOpenFeatureWithCfg(cfg); err != nil {
 		return err
