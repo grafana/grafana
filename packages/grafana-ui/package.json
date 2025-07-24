@@ -51,9 +51,9 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
-    "storybook": "storybook dev -p 9001 -c .storybook --no-open",
+    "storybook": "storybook dev -p 9001 -c .storybook --no-open --loglevel verbose",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
-    "storybook:test": "test-storybook --url http://localhost:9001 --maxWorkers 2",
+    "storybook:test": "test-storybook --url http://localhost:9001",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json && rimraf ./unstable"

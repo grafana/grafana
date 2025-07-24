@@ -45,5 +45,6 @@ jobs:
     - run: yarn install --immutable --check-cache
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
-    - run: yarn storybook &
-    - run: npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
+    - run: |
+        yarn storybook &
+        npx wait-on --timeout 120000 http://localhost:9001 && yarn test:storybook
