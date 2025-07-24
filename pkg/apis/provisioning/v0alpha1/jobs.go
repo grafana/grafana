@@ -134,7 +134,7 @@ type DeleteJobOptions struct {
 	// - a/b/c/other-dashboard.json (for a file)
 	// - nested/deep/ (for a directory)
 	// FIXME: we should validate this in admission hooks
-	Paths []string
+	Paths []string `json:"paths,omitempty"`
 }
 
 // The job status

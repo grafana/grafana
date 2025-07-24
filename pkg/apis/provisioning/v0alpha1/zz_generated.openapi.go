@@ -169,7 +169,7 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 							Format:      "",
 						},
 					},
-					"Paths": {
+					"paths": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
 							Type:        []string{"array"},
@@ -185,7 +185,6 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"Paths"},
 			},
 		},
 	}

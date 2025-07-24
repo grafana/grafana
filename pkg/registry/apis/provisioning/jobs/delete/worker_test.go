@@ -200,7 +200,7 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 	mockRepo.On("Delete", mock.Anything, "test/path1", "main", "Delete test/path1").Return(deleteError)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path1" && result.Action == repository.FileActionDeleted && result.Error == deleteError
+		return result.Path == "test/path1" && result.Action == repository.FileActionDeleted && errors.Is(result.Error, deleteError)
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
@@ -295,12 +295,12 @@ func TestDeleteWorker_ProcessSyncWorkerError(t *testing.T) {
 
 func TestDeleteWorker_deleteFiles(t *testing.T) {
 	tests := []struct {
-		name           string
-		paths          []string
-		deleteResults  []error
-		tooManyErrors  error
-		expectedError  string
-		expectedCalls  int
+		name          string
+		paths         []string
+		deleteResults []error
+		tooManyErrors error
+		expectedError string
+		expectedCalls int
 	}{
 		{
 			name:          "single file success",
