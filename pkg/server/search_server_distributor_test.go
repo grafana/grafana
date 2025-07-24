@@ -274,6 +274,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.MemberlistAdvertisePort = memberlistPort
+	cfg.SearchRingReplicationFactor = 1
 	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
 
@@ -308,6 +309,7 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.MemberlistAdvertisePort = getRandomPort()
+	cfg.SearchRingReplicationFactor = 1
 	cfg.InstanceID = "instance-" + strconv.Itoa(instanceId)
 	cfg.IndexPath = t.TempDir() + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold

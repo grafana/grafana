@@ -140,7 +140,7 @@ type Sut struct {
 	SecureValueService         contracts.SecureValueService
 	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
 	DecryptStorage             contracts.DecryptStorage
-	DecryptService             service.DecryptService
+	DecryptService             contracts.DecryptService
 	EncryptedValueStorage      contracts.EncryptedValueStorage
 	SQLKeeper                  *sqlkeeper.SQLKeeper
 	Database                   *database.Database

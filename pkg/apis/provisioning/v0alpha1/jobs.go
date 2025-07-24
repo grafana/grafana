@@ -54,10 +54,13 @@ const (
 
 	// Finished with errors
 	JobStateError JobState = "error"
+
+	// Finished with some non-critical errors
+	JobStateWarning JobState = "warning"
 )
 
 func (j JobState) Finished() bool {
-	return j == JobStateSuccess || j == JobStateError
+	return j == JobStateSuccess || j == JobStateError || j == JobStateWarning
 }
 
 type JobSpec struct {
@@ -100,6 +103,9 @@ type SyncJobOptions struct {
 }
 
 type ExportJobOptions struct {
+	// Message to use when committing the changes in a single commit
+	Message string `json:"message,omitempty"`
+
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
 
@@ -113,6 +119,9 @@ type ExportJobOptions struct {
 type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
+
+	// Message to use when committing the changes in a single commit
+	Message string `json:"message,omitempty"`
 }
 
 // The job status

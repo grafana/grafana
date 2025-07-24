@@ -30,6 +30,13 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
       },
     },
   },
+  provisioningAPIv0alpha1: {
+    endpoints: {
+      listRepository: {
+        select: jest.fn(() => () => ({ data: { items: [] } })),
+      },
+    },
+  },
 }));
 
 jest.mock('../hooks/useProvisionedFolderFormData');
@@ -104,7 +111,6 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
     { label: 'Write directly', value: 'write' },
     { label: 'Create branch', value: 'branch' },
   ],
-  isGitHub: true,
   repository: mockRepository,
   folder: mockFolder,
   initialValues: mockFormData,
