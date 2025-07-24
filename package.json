@@ -81,7 +81,7 @@
     "@arethetypeswrong/cli": "^0.18.2",
     "@babel/core": "7.28.0",
     "@babel/preset-env": "7.28.0",
-    "@babel/runtime": "7.27.6",
+    "@babel/runtime": "7.28.2",
     "@betterer/betterer": "5.4.0",
     "@betterer/cli": "5.4.0",
     "@crowdin/crowdin-api-client": "^1.42.0",
