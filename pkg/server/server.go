@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/prometheus/client_golang/prometheus"
