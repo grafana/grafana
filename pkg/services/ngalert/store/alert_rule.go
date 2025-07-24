@@ -679,11 +679,14 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		}()
 
 		// Process rules and implement per-group pagination
-		currentGroup := ""
+		currentCursor := groupCursor{}
 		groupsFetched := 0
 
 		if cursor.NamespaceUID != "" {
-			currentGroup = cursor.NamespaceUID + ":" + cursor.RuleGroup
+			currentCursor = groupCursor{
+				NamespaceUID: cursor.NamespaceUID,
+				RuleGroup:    cursor.RuleGroup,
+			}
 		}
 
 		for rows.Next() {
@@ -701,21 +704,20 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			}
 
 			// Check if we've moved to a new group
-			groupKey := converted.NamespaceUID + ":" + converted.RuleGroup
-			if groupKey != currentGroup {
+			key := groupCursor{
+				NamespaceUID: converted.NamespaceUID,
+				RuleGroup:    converted.RuleGroup,
+			}
+			if key != currentCursor {
 				// Check if we've reached the group limit
-				if query.GroupLimit > 0 && groupsFetched >= int(query.GroupLimit) {
+				if query.GroupLimit > 0 && groupsFetched == int(query.GroupLimit) {
 					// Generate next token for the next group
-					nextCursor := groupCursor{
-						NamespaceUID: converted.NamespaceUID,
-						RuleGroup:    converted.RuleGroup,
-					}
-					nextToken = encodeGroupCursor(nextCursor)
+					nextToken = encodeGroupCursor(currentCursor)
 					break
 				}
 
 				// Reset for new group
-				currentGroup = groupKey
+				currentCursor = key
 				groupsFetched++
 			}
 
