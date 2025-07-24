@@ -10960,15 +10960,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "This resource is behind the branch in GitHub.",
-      "new-branch": "View it in GitHub to see the latest changes.",
-      "not-saved": "The value is not yet saved in the Grafana database",
-      "open-git-hub": "Open in Github",
-      "open-pull-request-in-git-hub": "Open pull request in GitHub",
-      "view-pull-request-in-git-hub": "View pull request in GitHub"
+      "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
+      "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
+      "open-in-repo-button": "Open in {{repoType}}",
+      "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
+      "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
-    "title-created-branch-git-hub": "A new resource has been created in a branch in GitHub.",
-    "title-loaded-pull-request-git-hub": "This resource is loaded from a pull request in GitHub."
+    "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
     "banner": {
