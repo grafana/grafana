@@ -82,6 +82,18 @@ export function shouldTextWrap(field: Field): boolean {
 }
 
 /**
+ * @internal
+ * Returns the limit of number of lines that should be shown for wrapped text if set.
+ */
+export function getMaxWrappedLines(field: Field): number | undefined {
+  const cellOptions = getCellOptions(field);
+  // @ts-ignore - a handful of cellTypes have maxWrappedLines, but not all of them.
+  // it's likely that this will be better in the future once some of the cell types fold into
+  // AutoCell, so we opt to just ts-ignore this.
+  return cellOptions?.maxWrappedLines;
+}
+
+/**
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
  */
@@ -178,7 +190,14 @@ export function getRowHeight(
       // special case: for the header, provide `-1` as the row index.
       const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellValueRaw != null) {
-        const approxLines = counter(cellValueRaw, columnWidths[fieldIdx]);
+        let approxLines = counter(cellValueRaw, columnWidths[fieldIdx]);
+
+        // clamp the number of lines to the max wrapped lines per-field
+        const maxWrappedLines = getMaxWrappedLines(field);
+        if (maxWrappedLines !== undefined && approxLines > maxWrappedLines) {
+          approxLines = maxWrappedLines;
+        }
+
         if (approxLines > maxLines) {
           maxLines = approxLines;
         }

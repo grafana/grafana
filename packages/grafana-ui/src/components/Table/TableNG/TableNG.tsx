@@ -69,6 +69,7 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
+  getMaxWrappedLines,
   getVisibleFields,
   isCellInspectEnabled,
   shouldTextOverflow,
@@ -344,6 +345,7 @@ export function TableNG(props: TableNGProps) {
 
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
+        const maxWrappedLines = shouldWrap ? getMaxWrappedLines(field) : undefined;
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
@@ -368,7 +370,8 @@ export function TableNG(props: TableNGProps) {
               shouldOverflow,
               canBeColorized,
               isMonospace,
-              cellType === TableCellDisplayMode.DataLinks
+              cellType === TableCellDisplayMode.DataLinks,
+              maxWrappedLines
             );
             break;
         }
@@ -941,7 +944,8 @@ const getCellStyles = (
   isColorized: boolean,
   isMonospace: boolean,
   // TODO: replace this with cellTypeStyles: TemplateStringsArray object
-  isLinkCell: boolean
+  isLinkCell: boolean,
+  maxWrappedLines?: number
 ) =>
   css({
     display: 'flex',
@@ -953,17 +957,31 @@ const getCellStyles = (
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
     ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
     ...(isMonospace && { fontFamily: 'monospace' }),
+    ...(maxWrappedLines && {
+      // height properties need to override the default settings.
+      height: 'auto',
+      maxHeight: maxWrappedLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2,
+      minHeight: 'none',
+      // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
+      display: '-webkit-box',
+      '-webkit-line-clamp': String(maxWrappedLines),
+      '-webkit-box-orient': 'vertical',
+      overflowY: 'hidden',
+    }),
 
     // should omit if no cell actions, and no shouldOverflow
     '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': {
         display: 'flex',
       },
-      ...(shouldOverflow && {
-        whiteSpace: 'pre-line',
+      ...((shouldOverflow || maxWrappedLines) && {
+        zIndex: theme.zIndex.tooltip - 2,
+        whiteSpace: isMonospace ? 'pre' : 'pre-line',
         height: 'fit-content',
+        maxHeight: 'none',
         minWidth: 'fit-content',
-        ...(isMonospace && { whiteSpace: 'pre' }),
+        paddingBlock: TABLE.CELL_PADDING,
+        '-webkit-line-clamp': 'none',
       }),
     },
 
