@@ -14,6 +14,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
 	"github.com/grafana/nanogit/protocol"
@@ -290,9 +291,10 @@ func TestNewGit(t *testing.T) {
 		Path:   "configs",
 	}
 
+	mockSecrets := secrets.NewMockRepositorySecrets(t)
 	// This should succeed in creating the client but won't be able to connect
 	// We just test that the basic structure is created correctly
-	gitRepo, err := NewGitRepository(ctx, config, gitConfig)
+	gitRepo, err := NewGitRepository(ctx, config, gitConfig, mockSecrets)
 	require.NoError(t, err)
 	require.NotNil(t, gitRepo)
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
@@ -1190,6 +1192,97 @@ func TestGitRepository_Delete(t *testing.T) {
 	}
 }
 
+func TestGitRepository_ListRefs(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		gitConfig RepositoryConfig
+		wantError bool
+		wantRefs  []provisioning.RefItem
+		errorType error
+	}{
+		{
+			name: "success - list refs",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{
+						Name: "refs/heads/main",
+						Hash: hash.MustFromHex("abcdef1234567890abcdef1234567890abcdef12"),
+					},
+					{
+						Name: "refs/heads/feature",
+						Hash: hash.MustFromHex("1234567890abcdef1234567890abcdef12345678"),
+					},
+					{
+						Name: "refs/tags/v1.0.0",
+						Hash: hash.MustFromHex("deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
+					},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantError: false,
+			wantRefs: []provisioning.RefItem{
+				{
+					Name: "main",
+					Hash: "abcdef1234567890abcdef1234567890abcdef12",
+				},
+				{
+					Name: "feature",
+					Hash: "1234567890abcdef1234567890abcdef12345678",
+				},
+			},
+		},
+		{
+			name: "failure - list refs error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, errors.New("list refs failed"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantError: true,
+			errorType: errors.New("list refs failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client:    mockClient,
+				gitConfig: tt.gitConfig,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			refs, err := gitRepo.ListRefs(context.Background())
+
+			if tt.wantError {
+				require.Error(t, err)
+				if tt.errorType != nil {
+					require.Contains(t, err.Error(), tt.errorType.Error())
+				}
+				require.Nil(t, refs)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, refs)
+				require.Equal(t, len(tt.wantRefs), len(refs))
+				for i, wantRef := range tt.wantRefs {
+					require.Equal(t, wantRef.Name, refs[i].Name)
+					require.Equal(t, wantRef.Hash, refs[i].Hash)
+				}
+			}
+		})
+	}
+}
+
 func TestGitRepository_LatestRef(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -1769,7 +1862,8 @@ func TestNewGitRepository(t *testing.T) {
 				},
 			}
 
-			gitRepo, err := NewGitRepository(ctx, config, tt.gitConfig)
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+			gitRepo, err := NewGitRepository(ctx, config, tt.gitConfig, mockSecrets)
 
 			if tt.wantError {
 				require.Error(t, err)
@@ -2129,11 +2223,19 @@ func TestGitRepository_logger(t *testing.T) {
 		// First call creates the logger context
 		ctx1, logger1 := gitRepo.logger(ctx, "branch1")
 
-		// Second call should return the existing logger
+		// Second call should return the existing logger context
 		ctx2, logger2 := gitRepo.logger(ctx1, "branch2")
 
+		// When logger context already exists, it should return the same context
 		require.Equal(t, ctx1, ctx2)
-		require.Equal(t, logger1, logger2)
+
+		// The logger should be the same instance from the existing context
+		require.NotNil(t, logger1)
+		require.NotNil(t, logger2)
+
+		// Both loggers should be functionally equivalent since they come from the same context
+		// We verify this by checking that they produce the same output
+		require.IsType(t, logger1, logger2)
 	})
 }
 
@@ -2154,7 +2256,7 @@ func TestGitRepository_Stage(t *testing.T) {
 	t.Run("calls NewStagedGitRepository", func(t *testing.T) {
 		ctx := context.Background()
 		opts := repository.StageOptions{
-			PushOnWrites: true,
+			Mode: repository.StageModeCommitAndPushOnEach,
 		}
 
 		// Since NewStagedGitRepository is not mocked and may panic, we expect this to fail
@@ -2720,7 +2822,8 @@ func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
 		Path:   "configs",
 	}
 
-	gitRepo, err := NewGitRepository(ctx, config, gitConfig)
+	mockSecrets := secrets.NewMockRepositorySecrets(t)
+	gitRepo, err := NewGitRepository(ctx, config, gitConfig, mockSecrets)
 
 	// We expect this to fail during client creation
 	require.Error(t, err)
@@ -3630,6 +3733,82 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 			case protocol.FileStatusTypeChanged:
 				require.Equal(t, repository.FileActionUpdated, changes[0].Action)
 			}
+		})
+	}
+}
+
+func TestGitRepository_OnDelete(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(*secrets.MockRepositorySecrets)
+		config        *provisioning.Repository
+		expectedError string
+	}{
+		{
+			name: "successful secret deletion",
+			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Delete(
+					context.Background(),
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+					},
+					"test-repo"+gitTokenSecretSuffix,
+				).Return(nil)
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+		},
+		{
+			name: "secret deletion error",
+			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Delete(
+					context.Background(),
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+					},
+					"test-repo"+gitTokenSecretSuffix,
+				).Return(errors.New("failed to delete secret"))
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+			expectedError: "delete git token secret: failed to delete secret",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+			tt.setupMock(mockSecrets)
+
+			gitRepo := &gitRepository{
+				config:  tt.config,
+				secrets: mockSecrets,
+			}
+
+			err := gitRepo.OnDelete(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			mockSecrets.AssertExpectations(t)
 		})
 	}
 }

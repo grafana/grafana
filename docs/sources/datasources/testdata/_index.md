@@ -126,13 +126,9 @@ This feature is experimental and requires Grafana version 10.3.0 or later.
 
 If you want to use a version of TestData different from the one shipped with Grafana, follow these steps:
 
-1. Enable the [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) `externalCorePlugins`.
 1. Set the configuration field `as_external` for the plugin to `true`. An example configuration would be:
 
    ```ini
-   [feature_toggles]
-   externalCorePlugins = true
-
    [plugin.grafana-testdata-datasource]
    as_external = true
    ```

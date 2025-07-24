@@ -27,6 +27,10 @@ type DashboardQuery struct {
 	GetHistory bool
 	Version    int64
 
+	// Allow fallback to dashboard table when version data is missing
+	// Used during migration to handle dashboards without version entries
+	AllowFallback bool
+
 	// Only folders
 	GetFolders bool
 

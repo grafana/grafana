@@ -7,7 +7,7 @@ import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { metricsModaltestIds } from './shared/testIds';
 import { AdditionalSettingsProps } from './shared/types';
-import { placeholders } from './state/helpers';
+import { getPlaceholders } from './state/helpers';
 
 export function AdditionalSettings(props: AdditionalSettingsProps) {
   const { state, onChangeFullMetaSearch, onChangeIncludeNullMetadata, onChangeDisableTextWrap, onChangeUseBackend } =
@@ -15,6 +15,8 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
 
   const theme = useTheme2();
   const styles = getStyles(theme);
+
+  const placeholders = getPlaceholders();
 
   return (
     <>
