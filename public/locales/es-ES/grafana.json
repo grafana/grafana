@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Editar grupo de evaluación"
     },
     "group-loader": {
-      "group-load-failed": "Error al cargar las reglas del grupo {{ groupName }} en {{ namespaceName }}"
+      "group-load-failed": "Error al cargar las reglas del grupo {{ groupName }} en {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "El grupo se está eliminando"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Actualizar vista previa",
+      "empty-state": "",
       "label-preview": "Vista previa",
       "refresh": "Actualizar"
     },
@@ -8597,7 +8600,10 @@
         "no-data": ""
       },
       "no-values-label": "Sin valores",
-      "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas"
+      "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Etiquetas"
@@ -9330,6 +9336,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9355,9 @@
       "copy-log": "Copiar línea de registro",
       "hide-details": "Mostrar detalles del log",
       "icon-label": "Menú de registro",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Anclar registro",
       "show-context": "Mostrar contexto",
       "show-details": "Ocultar detalles del log",
@@ -11207,7 +11217,8 @@
       "starting": "Empezando...",
       "status": {
         "title-error-running-job": "Error al ejecutar el trabajo",
-        "title-job-completed-successfully": "Trabajo completado con éxito"
+        "title-job-completed-successfully": "Trabajo completado con éxito",
+        "title-warning-running-job": ""
       },
       "summary": "Resumen"
     },
