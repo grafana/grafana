@@ -33,7 +33,7 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
       )
     : t(
         'provisioned-resource-preview-banner.title-loaded-pull-request-in-repo',
-        'This resource is loaded from a pull request in {{repoType}}.',
+        'This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you',
         {
           repoType: capitalizedRepoType,
         }
@@ -93,7 +93,8 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
       onRemove={prParam ? () => window.open(textUtil.sanitizeUrl(prParam), '_blank') : undefined}
     >
       <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-saved">
-        The value is not yet saved in the Grafana database
+        The rest of Grafana users in your organization will still see the current version saved to main until this
+        branch is merged
       </Trans>
     </Alert>
   );

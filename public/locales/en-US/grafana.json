@@ -10949,14 +10949,14 @@
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
-      "not-saved": "The value is not yet saved in the Grafana database",
+      "not-saved": "The rest of Grafana users in your organization will still see the current version saved to main until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
       "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
       "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
-    "title-loaded-pull-request-in-repo": "This resource is loaded from a pull request in {{repoType}}."
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
     "banner": {
