@@ -851,11 +851,11 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 
 func TestStagedGitRepository_Push(t *testing.T) {
 	tests := []struct {
-		name            string
-		opts            repository.StageOptions
-		setupMock       func(*mocks.FakeStagedWriter)
-		wantError       error
-		expectPushCalls int
+		name              string
+		opts              repository.StageOptions
+		setupMock         func(*mocks.FakeStagedWriter)
+		wantError         error
+		expectPushCalls   int
 		expectCommitCalls int
 	}{
 		{
