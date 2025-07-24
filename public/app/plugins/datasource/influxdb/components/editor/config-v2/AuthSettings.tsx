@@ -48,6 +48,8 @@ export const AuthSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
   const styles = useStyles2(getInlineLabelStyles);
 
+  console.log(options)
+
   const authProps = useMemo(
     () =>
       convertLegacyAuthProps({
@@ -90,10 +92,12 @@ export const AuthSettings = (props: Props) => {
   const handleAuthMethodChange = useCallback(
     (option: AuthMethod) => {
       authProps.onAuthMethodSelect(option);
+      console.log("auth option", option)
       setAuthOptions((prev) => ({
         ...prev,
         basicAuth: option === AuthMethod.BasicAuth,
         oAuthForward: option === AuthMethod.OAuthForward,
+        withCredentials: option === AuthMethod.CrossSiteCredentials
       }));
       trackInfluxDBConfigV2AuthSettingsAuthMethodSelected({ authMethod: option });
     },
@@ -134,6 +138,7 @@ export const AuthSettings = (props: Props) => {
                   options={AUTH_RADIO_BUTTON_OPTIONS}
                   value={selectedMethod}
                   onChange={handleAuthMethodChange}
+                  size="sm"
                 />
               </Box>
             </Field>
