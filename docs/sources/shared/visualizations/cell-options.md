@@ -1,6 +1,7 @@
 ---
 title: Cell options
 ---
+
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
