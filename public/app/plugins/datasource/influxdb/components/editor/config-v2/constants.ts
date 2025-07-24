@@ -56,5 +56,5 @@ export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, 
   };
 };
 
-export const DB_SETTINGS_LABEL_WIDTH = 27.5;
-export const CONTAINER_MIN_WIDTH = "440px"
+export const DB_SETTINGS_LABEL_WIDTH = 18;
+export const CONTAINER_MIN_WIDTH = '440px';

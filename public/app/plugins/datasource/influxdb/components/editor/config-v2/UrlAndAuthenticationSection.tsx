@@ -66,7 +66,14 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => onUpdateDatasourceOption(props, 'url')(event);
 
   return (
-    <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[0].id}`} minWidth={CONTAINER_MIN_WIDTH}>
+    <Box
+      borderStyle="solid"
+      borderColor="weak"
+      padding={2}
+      marginBottom={4}
+      id={`${CONFIG_SECTION_HEADERS[0].id}`}
+      minWidth={CONTAINER_MIN_WIDTH}
+    >
       <CollapsableSection
         label={<Text element="h3">1. {CONFIG_SECTION_HEADERS[0].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[0].isOpen}
@@ -76,7 +83,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           available settings and authentication methods in the next steps. If you are unsure what product you are using,
           view the{' '}
           <TextLink href="https://docs.influxdata.com/" external>
-            InfluxDB Docs.
+            InfluxDB Docs
           </TextLink>
           .
         </Text>

@@ -19,14 +19,14 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
         <Stack direction="column">
           <Alert severity="info" title="You are viewing a new design for the InfluxDB configuration settings.">
             <>
-              Zoe to tell me what to write here!{' '}
               <TextLink
                 href="https://docs.google.com/forms/d/e/1FAIpQLSdi-zyX3c51vh937UKhNYYxhljUnFi6dQSlZv50mES9NrK-ig/viewform"
                 external
                 onClick={trackInfluxDBConfigV2FeedbackButtonClicked}
               >
-                Submit feedback.
-              </TextLink>
+                Share your thoughts
+              </TextLink>{' '}
+              to help us make it even better.
             </>
           </Alert>
           <UrlAndAuthenticationSection options={options} onOptionsChange={onOptionsChange} />

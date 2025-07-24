@@ -23,7 +23,7 @@ import {
   Stack,
 } from '@grafana/ui';
 
-import { AUTH_RADIO_BUTTON_OPTIONS, getInlineLabelStyles, RADIO_BUTTON_OPTIONS } from './constants';
+import { AUTH_RADIO_BUTTON_OPTIONS, DB_SETTINGS_LABEL_WIDTH, getInlineLabelStyles, RADIO_BUTTON_OPTIONS } from './constants';
 import {
   trackInfluxDBConfigV2AuthSettingsAuthMethodSelected,
   trackInfluxDBConfigV2AuthSettingsToggleClicked,
@@ -137,15 +137,15 @@ export const AuthSettings = (props: Props) => {
           <Box marginBottom={2}>
             {authOptions.basicAuth && (
               <>
-                <Box display="flex" direction="column" width="60%" marginBottom={2}>
-                  <InlineField label="User" labelWidth={14} grow>
+                <Box display="flex" direction="column" marginBottom={2}>
+                  <InlineField label="User" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
                     <Input
                       placeholder="User"
                       onChange={onUpdateDatasourceOption(props, 'basicAuthUser')}
                       value={options.basicAuthUser || ''}
                     />
                   </InlineField>
-                  <InlineField label="Password" labelWidth={14}>
+                  <InlineField label="Password" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow>
                     <SecretInput
                       placeholder="Password"
                       isConfigured={options.secureJsonFields.basicAuthPassword || false}
@@ -158,22 +158,6 @@ export const AuthSettings = (props: Props) => {
               </>
             )}
           </Box>
-
-                        {/* <InlineField
-                          label={'With Credentials'}
-                          tooltip={'Whether credentials such as cookies or auth headers should be sent with cross-site requests.'}
-                          labelWidth={DB_SETTINGS_LABEL_WIDTH}
-                          disabled={config.readOnly}
-                        >
-                          <InlineSwitch
-                            id="http-settings-with-credentials"
-                            value={dataSourceConfig.withCredentials}
-                            onChange={(event) => {
-                              onUpdateDatasourceOption({ withCredentials: event!.currentTarget.checked });
-                            }}
-                          />
-                        </InlineField> */}
-
           <Box marginBottom={2}>
             <Field noMargin>
               <>

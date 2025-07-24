@@ -27,6 +27,8 @@ export interface InfluxOptions extends DataSourceJsonData {
   // With SQL
   metadata?: Array<Record<string, string>>;
   insecureGrpc?: boolean;
+
+  oauthPassThru?: boolean;
 }
 
 /**

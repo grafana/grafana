@@ -1,4 +1,4 @@
-import { Box, CollapsableSection, Alert, Space, Text } from '@grafana/ui';
+import { Box, CollapsableSection, Alert, Space, Text, TextLink } from '@grafana/ui';
 
 import { InfluxVersion } from '../../../types';
 
@@ -11,7 +11,14 @@ import { Props } from './types';
 
 export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) => (
   <>
-    <Box borderStyle="solid" borderColor="weak" padding={2} marginBottom={4} id={`${CONFIG_SECTION_HEADERS[1].id}`} minWidth={CONTAINER_MIN_WIDTH}>
+    <Box
+      borderStyle="solid"
+      borderColor="weak"
+      padding={2}
+      marginBottom={4}
+      id={`${CONFIG_SECTION_HEADERS[1].id}`}
+      minWidth={CONTAINER_MIN_WIDTH}
+    >
       <CollapsableSection
         label={<Text element="h3">2. {CONFIG_SECTION_HEADERS[1].label}</Text>}
         isOpen={CONFIG_SECTION_HEADERS[1].isOpen}
@@ -26,12 +33,8 @@ export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) =
             <Alert severity="info" title="Database Access">
               <p>
                 Setting the database for this datasource does not deny access to other databases. The InfluxDB query
-                syntax allows switching the database in the query. For example:
-                <code>SHOW MEASUREMENTS ON _internal</code> or
-                <code>SELECT * FROM &quot;_internal&quot;..&quot;database&quot; LIMIT 10</code>
-                <br />
-                <br />
-                To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+                syntax allows switching the database in the query. For more information, refer to the{' '}
+                <TextLink href="">InfluxDB docs.</TextLink>             
               </p>
             </Alert>
           </>
