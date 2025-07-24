@@ -6,6 +6,7 @@ import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
+import { parseTemplateTokens, processTemplateTokens } from './utils';
 
 export enum FormatStringOutput {
   UpperCase = 'Upper Case',
@@ -64,18 +65,14 @@ export const getFormatStringFunction = (options: FormatStringTransformerOptions)
         case FormatStringOutput.Substring:
           return value.substring(options.substringStart, options.substringEnd);
         case FormatStringOutput.Affix:
-          let prefix = { value: options.stringPrefix ?? '' };
-          let suffix = { value: options.stringSuffix ?? '' };
-          [prefix, suffix].map((affix) => {
-            const matches = [...affix.value.matchAll(/\{([\w\d\._-]+)\}/g)];
-            matches.forEach((match) => {
-              const fieldName = match[1];
-              const matchingField = allFields.find((field) => field.name === fieldName);
-              if (matchingField) {
-                affix.value = affix.value.replace(`{${fieldName}}`, matchingField.values[index]);
-              }
-            });
+          const prefix = { value: options.stringPrefix ?? '' };
+          const suffix = { value: options.stringSuffix ?? '' };
+
+          [prefix, suffix].forEach((affix) => {
+            const parsedTemplateTokens = parseTemplateTokens(affix.value);
+            affix.value = processTemplateTokens(affix.value, parsedTemplateTokens, allFields, index);
           });
+
           return prefix.value + value + suffix.value;
       }
     });

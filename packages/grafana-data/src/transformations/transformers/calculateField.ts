@@ -15,6 +15,7 @@ import { FieldMatcherID } from '../matchers/ids';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
+import { parseTemplateTokens, processTemplateTokens } from './utils';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -119,6 +120,7 @@ export interface CalculateFieldTransformerOptions {
   // Output field properties
   alias?: string; // The output field name
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
+  returnType?: FieldType;
 }
 
 type ValuesCreator = (data: DataFrame) => unknown[] | undefined;
@@ -257,30 +259,12 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             });
           case CalculateFieldMode.TemplateExpression:
             const expression = options.template?.expression ?? '';
-            const exprFieldNames = [
-              ...new Set([...expression.matchAll(/\{([\w\d\._-]+)\}/g)].map((match) => match[1])),
-            ];
-            type FieldData = { fieldName: string; values: any[] };
-
+            const parsedTemplateTokens = parseTemplateTokens(expression);
+            options.returnType = FieldType.string;
             creator = (frame: DataFrame) => {
-              if (!options.template) {
-                return undefined;
-              }
-              const exprFieldValues: FieldData[] = exprFieldNames.reduce((values: FieldData[], fieldName: string) => {
-                const field = frame.fields.find((f) => f.name === fieldName);
-                if (field) {
-                  values.push({ fieldName, values: field.values });
-                }
-                return values;
-              }, []);
-
-              const outValues = [];
+              const outValues: string[] = [];
               for (let i = 0; i < frame.length; i++) {
-                let rowValue = expression;
-                exprFieldValues.map(({ fieldName, values }) => {
-                  rowValue = rowValue.replaceAll(`{${fieldName}}`, values[i]);
-                });
-                outValues.push(rowValue);
+                outValues.push(processTemplateTokens(expression, parsedTemplateTokens, frame.fields, i));
               }
               return outValues;
             };
@@ -305,7 +289,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
           const field: Field = {
             name: getNameFromOptions(options),
-            type: FieldType.number,
+            type: options.returnType ?? FieldType.number,
             config: {},
             values,
           };
