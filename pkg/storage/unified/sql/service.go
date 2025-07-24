@@ -155,6 +155,8 @@ func ProvideUnifiedStorageGrpcService(
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
 		}
+
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
 		subservices = append(subservices, s.ringLifecycler)
 	}
 
