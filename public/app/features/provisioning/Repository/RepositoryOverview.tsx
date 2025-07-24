@@ -51,7 +51,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
       <Stack direction="column" gap={2}>
         <Grid columns={columns} gap={2}>
           <div className={styles.cardContainer}>
-            <Card className={styles.card}>
+            <Card noMargin className={styles.card}>
               <Card.Heading>
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
@@ -73,7 +73,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           </div>
           {repo.status?.health && (
             <div className={styles.cardContainer}>
-              <Card className={styles.card}>
+              <Card noMargin className={styles.card}>
                 <Card.Heading>
                   <Trans i18nKey="provisioning.repository-overview.health">Health</Trans>
                 </Card.Heading>
@@ -129,7 +129,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             </div>
           )}
           <div className={styles.cardContainer}>
-            <Card className={styles.card}>
+            <Card className={styles.card} noMargin>
               <Card.Heading>
                 <Trans i18nKey="provisioning.repository-overview.pull-status">Pull status</Trans>
               </Card.Heading>
@@ -193,11 +193,13 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </div>
                       <div className={styles.valueColumn}>
                         <Stack gap={1}>
-                          {status.sync.message.map((msg, idx) => (
-                            <Text key={idx} variant="body">
-                              {msg}
-                            </Text>
-                          ))}
+                          <ul style={{ margin: 0, paddingLeft: '1.2em' }}>
+                            {status.sync.message.map((msg, idx) => (
+                              <li key={idx}>
+                                <Text variant="body">{msg}</Text>
+                              </li>
+                            ))}
+                          </ul>
                         </Stack>
                       </div>
                     </>
@@ -211,7 +213,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           </div>
           {repo.status?.webhook && (
             <div className={styles.cardContainer}>
-              <Card className={styles.card}>
+              <Card noMargin className={styles.card}>
                 <Card.Heading>
                   <Trans i18nKey="provisioning.repository-overview.webhook">Webhook</Trans>
                 </Card.Heading>
