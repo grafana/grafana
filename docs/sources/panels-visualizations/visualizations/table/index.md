@@ -243,8 +243,8 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | [Auto](#auto)                             | A basic text and number cell. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
-| [Colored text](#colored-text)             | If thresholds are set, then the field text is displayed in the appropriate threshold color. |
-| [Colored background](#colored-background) | If thresholds are set, then the field background is displayed in the appropriate threshold color. |
+| [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the field text is displayed in the appropriate color. |
+| [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the field background is displayed in the appropriate color. |
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
@@ -293,7 +293,7 @@ For more detailed information about all of the sparkline styling options (except
 
 #### Colored text
 
-If thresholds are set, with this cell type, the field text is displayed in the appropriate threshold color.
+If thresholds, value mappings, or color schemes are set, with this cell type, the field text is displayed in the appropriate color.
 
 ![Table with colored text cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-text-v11.3-2.png)
 
@@ -308,7 +308,7 @@ The colored text cell type has the following options:
 
 #### Colored background
 
-If thresholds are set, with this cell type, the field background is displayed in the appropriate threshold color.
+If thresholds, value mappings, or color schemes are set, with this cell type, the field background is displayed in the appropriate color.
 
 ![Table with colored background cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-bkgrnd-v11.3-2.png)
 
