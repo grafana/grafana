@@ -65,5 +65,5 @@ jobs:
         if ! git diff --exit-code --quiet; then
           echo "Committing and pushing workspace changes"
           git commit -a -m "update workspace"
-          git push origin $BRANCH_NAME
+          git push origin "$BRANCH_NAME"
         fi
