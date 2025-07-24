@@ -263,9 +263,9 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify all stage options including Ref (branch), Timeout, and PushOnWrites
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-		return opts.Ref == "feature-branch" && 
-			   opts.Timeout == 10*time.Minute && 
-			   !opts.PushOnWrites
+		return opts.Ref == "feature-branch" &&
+			opts.Timeout == 10*time.Minute &&
+			!opts.PushOnWrites
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
@@ -277,11 +277,11 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 
 func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 	tests := []struct {
-		name           string
-		branch         string
-		expectedRef    string
-		workflows      []v0alpha1.Workflow
-		repoType       v0alpha1.RepositoryType
+		name        string
+		branch      string
+		expectedRef string
+		workflows   []v0alpha1.Workflow
+		repoType    v0alpha1.RepositoryType
 	}{
 		{
 			name:        "branch specified",
@@ -344,9 +344,9 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 			mockStageFn := NewMockWrapWithStageFn(t)
 			// Verify that the stage options contain the correct branch reference and other parameters
 			mockStageFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-				return opts.Ref == tt.expectedRef && 
-					   opts.Timeout == 10*time.Minute && 
-					   !opts.PushOnWrites
+				return opts.Ref == tt.expectedRef &&
+					opts.Timeout == 10*time.Minute &&
+					!opts.PushOnWrites
 			}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 				return fn(repo, true)
 			})

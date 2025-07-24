@@ -240,7 +240,7 @@ func TestStagedGitRepository_Read(t *testing.T) {
 			if tt.ref == "feature" {
 				opts.Ref = "feature"
 			}
-			
+
 			stagedRepo := createTestStagedRepositoryWithWriter(&mocks.FakeStagedWriter{}, opts, mockClient)
 			fileInfo, err := stagedRepo.Read(context.Background(), tt.path, tt.ref)
 			if tt.wantError != nil {
@@ -904,11 +904,11 @@ func TestStagedGitRepository_Remove(t *testing.T) {
 
 func TestStagedGitRepository_isRefSupported(t *testing.T) {
 	tests := []struct {
-		name        string
-		stageOpts   repository.StageOptions
-		gitBranch   string
-		ref         string
-		expected    bool
+		name      string
+		stageOpts repository.StageOptions
+		gitBranch string
+		ref       string
+		expected  bool
 	}{
 		{
 			name:      "empty ref is supported",
