@@ -321,7 +321,6 @@ func (ss *sqlStore) GetPartition(ctx context.Context, snapshotUID string, resour
 	})
 
 	return partition, err
-
 }
 
 func (ss *sqlStore) deleteSnapshot(ctx context.Context, snapshotUid string) error {
