@@ -661,6 +661,13 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "timeComparison",
+			Description:  "Enables time comparison option in supported panels",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:         "logsInfiniteScrolling",
 			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
 			Stage:        FeatureStageGeneralAvailability,

@@ -396,6 +396,10 @@ export interface FeatureToggles {
   */
   canvasPanelPanZoom?: boolean;
   /**
+  * Enables time comparison option in supported panels
+  */
+  timeComparison?: boolean;
+  /**
   * Enables infinite scrolling for the Logs panel in Explore and Dashboards
   * @default true
   */
