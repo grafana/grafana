@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "Edit grup evaluasi"
     },
     "group-loader": {
-      "group-load-failed": "Gagal memuat aturan dari grup {{ groupName }} di {{ namespaceName }}"
+      "group-load-failed": "Gagal memuat aturan dari grup {{ groupName }} di {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Grup sedang dihapus"
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Refresh pratinjau",
+      "empty-state": "",
       "label-preview": "Pratinjau",
       "refresh": "Muat ulang"
     },
@@ -8575,7 +8578,10 @@
         "no-data": ""
       },
       "no-values-label": "Tidak ada nilai",
-      "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris"
+      "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tag"
@@ -9300,6 +9306,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Tidak ada bidang untuk ditampilkan.",
+      "open-assistant": "",
       "pin-line": "Sematkan log",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9318,6 +9325,9 @@
       "copy-log": "Salin baris log",
       "hide-details": "Tampilkan detail log",
       "icon-label": "Menu log",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Sematkan log",
       "show-context": "Tampilkan konteks",
       "show-details": "Sembunyikan detail log",
@@ -11171,7 +11181,8 @@
       "starting": "Memulai...",
       "status": {
         "title-error-running-job": "Kesalahan saat menjalankan pekerjaan",
-        "title-job-completed-successfully": "Pekerjaan berhasil diselesaikan"
+        "title-job-completed-successfully": "Pekerjaan berhasil diselesaikan",
+        "title-warning-running-job": ""
       },
       "summary": "Ringkasan"
     },
