@@ -26,7 +26,12 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 		defer cancel()
 	}
 
-	ref, err := repo.client.GetRef(ctx, "refs/heads/"+repo.gitConfig.Branch)
+	branch := opts.Ref
+	if branch == "" {
+		branch = repo.gitConfig.Branch
+	}
+
+	ref, err := repo.client.GetRef(ctx, "refs/heads/"+branch)
 	if err != nil {
 		// TODO: opts.CreateIfNotExists doesn't make sense in the context of the staged repository
 		// because we only support the branch that is passed in.

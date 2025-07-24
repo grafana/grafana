@@ -11,6 +11,8 @@ import (
 )
 
 type StageOptions struct {
+	// Ref custom ref
+	Ref string
 	// Push on every write
 	PushOnWrites bool
 	// Maximum time allowed for clone operation in seconds (0 means no limit)

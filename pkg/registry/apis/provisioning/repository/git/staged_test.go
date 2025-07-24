@@ -16,10 +16,11 @@ import (
 
 func TestNewStagedGitRepository(t *testing.T) {
 	tests := []struct {
-		name      string
-		setupMock func(*mocks.FakeClient)
-		opts      repository.StageOptions
-		wantError error
+		name        string
+		setupMock   func(*mocks.FakeClient)
+		opts        repository.StageOptions
+		wantError   error
+		expectedRef string
 	}{
 		{
 			name: "succeeds with default options",
@@ -31,7 +32,25 @@ func TestNewStagedGitRepository(t *testing.T) {
 				mockWriter := &mocks.FakeStagedWriter{}
 				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},
+			expectedRef: "refs/heads/main",
 			opts: repository.StageOptions{
+				PushOnWrites: false,
+			},
+			wantError: nil,
+		},
+		{
+			name: "succeeds with custom ref option",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/custom",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			expectedRef: "refs/heads/custom",
+			opts: repository.StageOptions{
+				Ref:          "custom",
 				PushOnWrites: false,
 			},
 			wantError: nil,
@@ -49,7 +68,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 			opts: repository.StageOptions{
 				PushOnWrites: false,
 			},
-			wantError: nil,
+			wantError:   nil,
+			expectedRef: "refs/heads/main",
 		},
 		{
 			name: "succeeds with timeout",
@@ -65,7 +85,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 				PushOnWrites: false,
 				Timeout:      time.Second * 5,
 			},
-			wantError: nil,
+			expectedRef: "refs/heads/main",
+			wantError:   nil,
 		},
 		{
 			name: "fails with GetRef error",
@@ -89,7 +110,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 			opts: repository.StageOptions{
 				PushOnWrites: false,
 			},
-			wantError: errors.New("build staged writer: failed to create writer"),
+			wantError:   errors.New("build staged writer: failed to create writer"),
+			expectedRef: "refs/heads/main",
 		},
 	}
 
@@ -123,6 +145,10 @@ func TestNewStagedGitRepository(t *testing.T) {
 				actualOpts := stagedRepo.(*stagedGitRepository).opts
 				require.Equal(t, tt.opts.PushOnWrites, actualOpts.PushOnWrites)
 				require.Equal(t, tt.opts.Timeout, actualOpts.Timeout)
+
+				// Verify the expected ref
+				_, ref := mockClient.GetRefArgsForCall(0)
+				require.Equal(t, tt.expectedRef, ref)
 			}
 		})
 	}
