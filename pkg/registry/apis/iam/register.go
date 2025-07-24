@@ -130,7 +130,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[userResource.StoragePath()] = legacyStore
 
-	// We only need dual writer in single-tenant mode
 	if b.enableDualWriter {
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
 		if err != nil {
@@ -145,9 +144,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[userResource.StoragePath()] = dw
 	}
 
-	// TODO: figure out when teams is ready for dual writer
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
-
 	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo
 	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
