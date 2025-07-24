@@ -1,0 +1,68 @@
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1
+metadata:
+    name: folders.folder.grafana.app
+spec:
+    group: folder.grafana.app
+    versions:
+        - name: v1beta1
+          served: true
+          storage: true
+          schema:
+            openAPIV3Schema:
+                properties:
+                    spec:
+                        properties:
+                            description:
+                                type: string
+                            title:
+                                type: string
+                        required:
+                            - title
+                        type: object
+                    status:
+                        properties:
+                            additionalFields:
+                                description: additionalFields is reserved for future use
+                                type: object
+                                x-kubernetes-preserve-unknown-fields: true
+                            operatorStates:
+                                additionalProperties:
+                                    properties:
+                                        descriptiveState:
+                                            description: descriptiveState is an optional more descriptive state field which has no requirements on format
+                                            type: string
+                                        details:
+                                            description: details contains any extra information that is operator-specific
+                                            type: object
+                                            x-kubernetes-preserve-unknown-fields: true
+                                        lastEvaluation:
+                                            description: lastEvaluation is the ResourceVersion last evaluated
+                                            type: string
+                                        state:
+                                            description: |-
+                                                state describes the state of the lastEvaluation.
+                                                It is limited to three possible states for machine evaluation.
+                                            enum:
+                                                - success
+                                                - in_progress
+                                                - failed
+                                            type: string
+                                    required:
+                                        - lastEvaluation
+                                        - state
+                                    type: object
+                                description: |-
+                                    operatorStates is a map of operator ID to operator state evaluations.
+                                    Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                                type: object
+                        type: object
+                required:
+                    - spec
+                type: object
+          subresources:
+            status: {}
+    names:
+        kind: Folder
+        plural: folders
+    scope: Namespaced

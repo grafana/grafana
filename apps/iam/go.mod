@@ -6,6 +6,7 @@ require (
 	github.com/grafana/grafana-app-sdk v0.40.0
 	github.com/grafana/grafana-app-sdk/logging v0.39.3
 	github.com/grafana/grafana-app-sdk/plugin v0.40.0
+	github.com/grafana/grafana/apps/folder v0.0.0-20250724194522-d3b6d7c45e1e
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	go.opentelemetry.io/otel v1.37.0
 	k8s.io/apimachinery v0.33.3
@@ -36,7 +37,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/go-test/deep v1.1.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
