@@ -4,38 +4,32 @@ import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
-rolebinding: {
+rolebindingKind: {
 	kind:       "RoleBinding"
 	pluralName: "RoleBindings"
-	current:    "v0alpha1"
-
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			schema: {
-				spec:   v0alpha1.RoleBindingSpec
-			}
-		}
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
 	}
 }
 
-globalrolebinding: {
+globalrolebindingKind: {
 	kind:       "GlobalRoleBinding"
 	pluralName: "GlobalRoleBindings"
-	current:    "v0alpha1"
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
+	}
+}
 
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			schema: {
-				spec:   v0alpha1.GlobalRoleBindingSpec
-			}
-		}
+rolebindingv0alpha1: rolebindingKind & {
+	schema: {
+		spec:   v0alpha1.RoleBindingSpec
+	}
+}
+
+globalrolebindingv0alpha1: globalrolebindingKind & {
+	schema: {
+		spec:   v0alpha1.GlobalRoleBindingSpec
 	}
 }
