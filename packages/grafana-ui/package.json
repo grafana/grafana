@@ -53,7 +53,7 @@
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "storybook": "storybook dev -p 9001 -c .storybook --no-open",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
-    "storybook:test": "test-storybook --url http://localhost:9001",
+    "storybook:test": "test-storybook --url http://localhost:9001 --maxWorkers 2",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json && rimraf ./unstable"
