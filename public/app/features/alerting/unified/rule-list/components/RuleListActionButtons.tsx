@@ -41,7 +41,7 @@ function CreateAlertButtons() {
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
       <Stack direction="row" gap={1}>
-        <AIAlertRuleButtonComponent />
+        {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
         <LinkButton
           href={createRelativeUrl('/alerting/new/alerting', { returnTo })}
           icon="plus"
