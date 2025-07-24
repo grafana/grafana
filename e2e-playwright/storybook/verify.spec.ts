@@ -8,11 +8,11 @@ test.describe(
   },
   () => {
     test('Loads the button story correctly', async ({ page }) => {
-      await page.goto('?path=/story/inputs-button--basic');
+      await page.goto('?path=/story/inputs-filedropzone--basic');
       const iframe = page.locator('#storybook-preview-iframe');
       await expect(iframe).toBeVisible();
       const iframeBody = iframe.contentFrame();
-      await expect(iframeBody.getByText('Example button')).toBeVisible();
+      await expect(iframeBody.getByText('Upload file')).toBeVisible();
     });
   }
 );
