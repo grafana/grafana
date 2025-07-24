@@ -114,9 +114,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
             </Box>
 
             {advancedHttpSettingsIsOpen && (
-              <Box display="flex" width="440px">
-                <CustomHeadersSettings dataSourceConfig={options} onChange={onOptionsChange} />
-              </Box>
+              <CustomHeadersSettings dataSourceConfig={options} onChange={onOptionsChange} />
             )}
           </Box>
         </>

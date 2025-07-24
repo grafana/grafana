@@ -15,10 +15,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
   const styles = useStyles2(getStyles);
   return (
     <Stack justifyContent="space-between">
-      <div
-        className={styles.hideOnSmallScreen}
-        style={{ width: '250px', flex: '0 0 250px' }}
-      >
+      <div className={styles.hideOnSmallScreen} style={{ width: '250px', flex: '0 0 250px' }}>
         <Box width="100%" flex="1 1 auto">
           <LeftSideBar pdcInjected={options?.jsonData?.pdcInjected!!} />
         </Box>
@@ -59,4 +56,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
