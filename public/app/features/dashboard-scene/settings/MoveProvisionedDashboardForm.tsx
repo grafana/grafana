@@ -19,6 +19,8 @@ import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
 
+import { buildResourceBranchRedirectUrl } from './utils';
+
 export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
@@ -142,9 +144,12 @@ export function MoveProvisionedDashboardForm({
 
   const onBranchSuccess = () => {
     panelEditor?.onDiscard();
-    navigate(
-      `/dashboards?new_pull_request_url=${createRequest.data?.urls?.newPullRequestURL}&repo_type=${createRequest.data?.repository?.type}`
-    );
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'new_pull_request_url',
+      paramValue: createRequest?.data?.urls?.newPullRequestURL,
+      repoType: createRequest?.data?.repository?.type,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({

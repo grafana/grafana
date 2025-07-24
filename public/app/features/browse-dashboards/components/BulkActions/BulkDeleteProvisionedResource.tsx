@@ -15,6 +15,7 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
+import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { useSelector } from 'app/types/store';
@@ -98,7 +99,13 @@ function FormContent({
     if (workflow === 'branch') {
       onDismiss?.();
       if (successState.repoUrl) {
-        navigate({ search: `?repo_url=${encodeURIComponent(successState.repoUrl)}&repo_type=${repository.type}` });
+        const url = buildResourceBranchRedirectUrl({
+          paramName: 'repo_url',
+          paramValue: successState.repoUrl,
+          repoType: repository.type,
+        });
+
+        navigate(url);
         return;
       }
       window.location.reload();

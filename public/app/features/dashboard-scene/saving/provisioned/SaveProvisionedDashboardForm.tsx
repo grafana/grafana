@@ -22,6 +22,7 @@ import { ProvisionedDashboardFormData } from '../shared';
 
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 import { getProvisionedMeta } from './utils/getProvisionedMeta';
+import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
@@ -91,9 +92,14 @@ export function SaveProvisionedDashboardForm({
   const onBranchSuccess = (ref: string, path: string) => {
     panelEditor?.onDiscard();
     drawer.onClose();
-    navigate(
-      `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}&repo_type=${request.data?.repository?.type}`
-    );
+
+    const url = buildResourceBranchRedirectUrl({
+      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+      paramName: 'ref',
+      paramValue: ref,
+      repoType: request.data?.repository?.type,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({
