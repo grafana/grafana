@@ -9,4 +9,3 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 		--defencoding=none \
 		--noschemasinmanifest \
 		--postprocess \
-		--useoldmanifestkinds
