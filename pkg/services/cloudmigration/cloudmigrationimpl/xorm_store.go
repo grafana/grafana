@@ -313,7 +313,6 @@ func (ss *sqlStore) GetPartition(ctx context.Context, snapshotUID string, resour
 
 	err := ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-
 			if _, err := sess.Where("snapshot_uid = ? AND resource_type = ?  AND partition_number = ?", snapshotUID, resourceType, partitionNumber).Get(&partition); err != nil {
 				return fmt.Errorf("fetching partition from database: %w", err)
 			}

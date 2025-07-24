@@ -610,13 +610,13 @@ func (s *Service) buildSnapshot(
 	switch s.cfg.CloudMigration.ResourceStorageType {
 	case cloudmigration.ResourceStorageTypeDb:
 		if err := s.buildSnapshotWithDBStorage(ctx, snapshotMeta.UID, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
-			return fmt.Errorf("buidling snapshot with database storage: %w", err)
+			return fmt.Errorf("building snapshot with database storage: %w", err)
 		}
 		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with database storage in %d ms", time.Since(start).Milliseconds()))
 
 	case cloudmigration.ResourceStorageTypeFs:
 		if err := s.buildSnapshotWithFSStorage(publicKey[:], metadata, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
-			return fmt.Errorf("buidling snapshot with file system storage: %w", err)
+			return fmt.Errorf("building snapshot with file system storage: %w", err)
 		}
 		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with file system storage in %d ms", time.Since(start).Milliseconds()))
 
