@@ -98,7 +98,7 @@ const timeIndexComparer = (values: unknown[], reverse: boolean, nanos?: number[]
     if (nanos !== undefined) {
       return mult * (timeComparer(vA, vB) || numericComparer(nanos[a], nanos[b]));
     }
-    return mult * timeComparer(vB, vA);
+    return mult * timeComparer(vA, vB);
   };
 };
 
