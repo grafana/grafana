@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-aws-sdk-frankenstein/pkg/awsds"
+	frankenbackend "github.com/grafana/grafana-aws-sdk-frankenstein/pkg/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -23,6 +24,24 @@ type CloudWatchSettings struct {
 	GrafanaSettings awsds.AuthSettings `json:"-"`
 }
 
+func convertSettings(orig backend.DataSourceInstanceSettings) frankenbackend.DataSourceInstanceSettings {
+	return frankenbackend.DataSourceInstanceSettings{
+		ID:                      orig.ID,
+		UID:                     orig.UID,
+		Type:                    orig.Type,
+		Name:                    orig.Name,
+		URL:                     orig.URL,
+		User:                    orig.User,
+		Database:                orig.Database,
+		BasicAuthEnabled:        orig.BasicAuthEnabled,
+		BasicAuthUser:           orig.BasicAuthUser,
+		JSONData:                orig.JSONData,
+		DecryptedSecureJSONData: orig.DecryptedSecureJSONData,
+		Updated:                 orig.Updated,
+		APIVersion:              orig.APIVersion,
+	}
+}
+
 func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstanceSettings) (CloudWatchSettings, error) {
 	instance := CloudWatchSettings{}
 
@@ -33,7 +52,7 @@ func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstan
 	}
 
 	// load the instance using the loader for the wrapped awsds.AWSDatasourceSettings
-	if err := instance.Load(config); err != nil {
+	if err := instance.Load(convertSettings(config)); err != nil {
 		return CloudWatchSettings{}, err
 	}
 
@@ -61,13 +80,16 @@ func (duration *Duration) UnmarshalJSON(b []byte) error {
 	case float64:
 		*duration = Duration{time.Duration(value)}
 	case string:
+		if value == "" {
+			return nil
+		}
 		dur, err := time.ParseDuration(value)
 		if err != nil {
-			return err
+			return backend.DownstreamError(err)
 		}
 		*duration = Duration{dur}
 	default:
-		return fmt.Errorf("invalid duration: %#v", unmarshalledJson)
+		return backend.DownstreamError(fmt.Errorf("invalid duration: %#v", unmarshalledJson))
 	}
 
 	return nil

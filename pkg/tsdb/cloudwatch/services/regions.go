@@ -4,7 +4,9 @@ import (
 	"context"
 	"sort"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -16,14 +18,14 @@ type RegionsService struct {
 	log.Logger
 }
 
-func NewRegionsService(ec2client models.EC2APIProvider, logger log.Logger) models.RegionsAPIProvider {
+var NewRegionsService = func(ec2client models.EC2APIProvider, logger log.Logger) models.RegionsAPIProvider {
 	return &RegionsService{
 		ec2client,
 		logger,
 	}
 }
 
-func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions []*ec2.Region) {
+func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions []ec2types.Region) {
 	for _, region := range ec2Regions {
 		if _, ok := regions[*region.RegionName]; !ok {
 			regions[*region.RegionName] = struct{}{}
@@ -36,7 +38,7 @@ func (r *RegionsService) GetRegions(ctx context.Context) ([]resources.ResourceRe
 
 	result := make([]resources.ResourceResponse[resources.Region], 0)
 
-	ec2Regions, err := r.DescribeRegionsWithContext(ctx, &ec2.DescribeRegionsInput{})
+	ec2Regions, err := r.DescribeRegions(ctx, &ec2.DescribeRegionsInput{})
 	// we ignore this error and always send default regions
 	// we only fetch incase a user has enabled additional regions
 	// but we still log it in case the user is expecting to fetch regions specific to their account and are unable to
@@ -44,7 +46,9 @@ func (r *RegionsService) GetRegions(ctx context.Context) ([]resources.ResourceRe
 		r.Error("Failed to get regions: ", "error", err)
 	}
 
-	mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
+	if ec2Regions != nil {
+		mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
+	}
 
 	for region := range regions {
 		result = append(result, resources.ResourceResponse[resources.Region]{
