@@ -288,18 +288,18 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	if err != nil {
 		return fmt.Errorf("unable to marshal decrypted configuration: %w", err)
 	}
-	configHash := md5.Sum(rawPayload)
+	configHash := fmt.Sprintf("%x", md5.Sum(rawPayload))
 
 	// Send the configuration only if we need to.
 	if !am.shouldSendConfig(ctx, configHash) {
 		return nil
 	}
 
-	return am.sendConfiguration(ctx, payload, fmt.Sprintf("%x", configHash), config.CreatedAt, am.isDefaultConfiguration(configHash))
+	return am.sendConfiguration(ctx, payload, configHash, config.CreatedAt, am.isDefaultConfiguration(configHash))
 }
 
-func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
-	return fmt.Sprintf("%x", configHash) == am.defaultConfigHash
+func (am *Alertmanager) isDefaultConfiguration(configHash string) bool {
+	return configHash == am.defaultConfigHash
 }
 
 func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
@@ -710,7 +710,7 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) bool {
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
@@ -749,11 +749,5 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 		}
 	}
 
-	// Hash and compare Alertmanager configs.
-	rawRemote, err := json.Marshal(rc.GrafanaAlertmanagerConfig)
-	if err != nil {
-		am.log.Error("Unable to marshal the remote Alertmanager configuration for comparison", "err", err)
-		return true
-	}
-	return md5.Sum(rawRemote) != hash
+	return rc.Hash != hash
 }

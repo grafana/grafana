@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Modifica il gruppo di valutazione"
     },
     "group-loader": {
-      "group-load-failed": "Impossibile caricare le regole dal gruppo {{ groupName }} in {{ namespaceName }}"
+      "group-load-failed": "Impossibile caricare le regole dal gruppo {{ groupName }} in {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Il gruppo è in fase di eliminazione"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Aggiorna anteprima",
+      "empty-state": "",
       "label-preview": "Anteprima",
       "refresh": "Aggiorna"
     },
@@ -8597,7 +8600,10 @@
         "no-data": ""
       },
       "no-values-label": "Nessun valore",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tag"
@@ -9330,6 +9336,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9355,9 @@
       "copy-log": "Copia la riga del registro",
       "hide-details": "Mostra i dettagli del registro",
       "icon-label": "Menu registro",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Fissa registro",
       "show-context": "Mostra contesto",
       "show-details": "Nascondi i dettagli del registro",
@@ -11207,7 +11217,8 @@
       "starting": "Avvio in corso...",
       "status": {
         "title-error-running-job": "Errore durante l'esecuzione dell'attività",
-        "title-job-completed-successfully": "Attività completata con successo"
+        "title-job-completed-successfully": "Attività completata con successo",
+        "title-warning-running-job": ""
       },
       "summary": "Indice"
     },
