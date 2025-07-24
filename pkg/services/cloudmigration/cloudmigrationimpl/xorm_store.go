@@ -283,7 +283,7 @@ func (ss *sqlStore) GetIndex(ctx context.Context, orgID int64, sessionUID string
 			if secret, found, err := ss.secretsStore.Get(ctx, secretskv.AllOrganizations, snap.UID, secretType); err != nil {
 				return err
 			} else if !found {
-				fmt.Errorf("encryption key not found for snapshot with UID %s", snap.UID)
+				return fmt.Errorf("encryption key not found for snapshot with UID %s", snap.UID)
 			} else {
 				snap.GMSPublicKey = []byte(secret)
 			}
