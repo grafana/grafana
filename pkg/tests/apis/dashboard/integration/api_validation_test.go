@@ -254,15 +254,15 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		t.Run("reject dashboard with existing UID", func(t *testing.T) {
 			// Create a dashboard with a specific UID
 			specificUID := "existing-uid-dash"
-			createdDash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard with Specific UID", nil, &specificUID)
+			createdDash, err := createDashboard(t, adminClient, "Dashboard with Specific UID", nil, &specificUID)
 			require.NoError(t, err)
 
 			// Try to create another dashboard with the same UID
-			_, err = createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Another Dashboard with Same UID", nil, &specificUID)
+			_, err = createDashboard(t, adminClient, "Another Dashboard with Same UID", nil, &specificUID)
 			require.Error(t, err)
 
 			// Clean up
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), createdDash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), createdDash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
@@ -270,14 +270,14 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		t.Run("reject dashboard with too long UID", func(t *testing.T) {
 			// Create a dashboard with a long UID (over 40 chars)
 			longUID := "this-uid-is-way-too-long-for-a-dashboard-uid-12345678901234567890"
-			_, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard with Long UID", nil, &longUID)
+			_, err := createDashboard(t, adminClient, "Dashboard with Long UID", nil, &longUID)
 			require.Error(t, err)
 		})
 
 		// Test creating dashboard with invalid UID characters
 		t.Run("reject dashboard with invalid UID characters", func(t *testing.T) {
 			invalidUID := "invalid/uid/with/slashes"
-			_, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard with Invalid UID", nil, &invalidUID)
+			_, err := createDashboard(t, adminClient, "Dashboard with Invalid UID", nil, &invalidUID)
 			require.Error(t, err)
 		})
 	})
@@ -286,47 +286,47 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	t.Run("Dashboard title validations", func(t *testing.T) {
 		// Test empty title
 		t.Run("reject dashboard with empty title", func(t *testing.T) {
-			_, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "", nil, nil)
+			_, err := createDashboard(t, adminClient, "", nil, nil)
 			require.Error(t, err)
 		})
 
 		// Test long title
 		t.Run("reject dashboard with excessively long title", func(t *testing.T) {
 			veryLongTitle := strings.Repeat("a", 10000)
-			_, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), veryLongTitle, nil, nil)
+			_, err := createDashboard(t, adminClient, veryLongTitle, nil, nil)
 			require.Error(t, err)
 		})
 
 		// Test updating dashboard with empty title
 		t.Run("reject dashboard update with empty title", func(t *testing.T) {
 			// First create a valid dashboard
-			dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Valid Dashboard Title", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Valid Dashboard Title", nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, dash)
 
 			// Try to update with empty title
-			_, err = updateDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), dash, "", nil)
+			_, err = updateDashboard(t, adminClient, dash, "", nil)
 			require.Error(t, err)
 
 			// Clean up
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
 		// Test updating dashboard with excessively long title
 		t.Run("reject dashboard update with excessively long title", func(t *testing.T) {
 			// First create a valid dashboard
-			dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Valid Dashboard Title", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Valid Dashboard Title", nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, dash)
 
 			// Try to update with excessively long title
 			veryLongTitle := strings.Repeat("a", 10000)
-			_, err = updateDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), dash, veryLongTitle, nil)
+			_, err = updateDashboard(t, adminClient, dash, veryLongTitle, nil)
 			require.Error(t, err)
 
 			// Clean up
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -334,15 +334,15 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	t.Run("Dashboard message validations", func(t *testing.T) {
 		// Test long message
 		t.Run("reject dashboard with excessively long update message", func(t *testing.T) {
-			dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Regular dashboard", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Regular dashboard", nil, nil)
 			require.NoError(t, err)
 
 			veryLongMessage := strings.Repeat("a", 600)
-			_, err = updateDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), dash, "Dashboard updated with a long message", &veryLongMessage)
+			_, err = updateDashboard(t, adminClient, dash, "Dashboard updated with a long message", &veryLongMessage)
 			require.Error(t, err)
 
 			// Clean up
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -351,21 +351,21 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		// Test non-existent folder UID
 		t.Run("reject dashboard with non-existent folder UID", func(t *testing.T) {
 			nonExistentFolderUID := "non-existent-folder-uid"
-			_, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
+			_, err := createDashboard(t, adminClient, "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
 			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folders.folder.grafana.app \"non-existent-folder-uid\" not found")
 		})
 
 		t.Run("allow moving folder to general folder", func(t *testing.T) {
 			folder1 := createFolderObject(t, "folder1", "default", "")
 			folder1UID := folder1.GetName()
-			dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard in a Folder", &folder1UID, nil)
+			dash, err := createDashboard(t, adminClient, "Dashboard in a Folder", &folder1UID, nil)
 			require.NoError(t, err)
 
 			generalFolderUID := ""
-			_, err = updateDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), dash, "Move dashboard into the General Folder", &generalFolderUID)
+			_, err = updateDashboard(t, adminClient, dash, "Move dashboard into the General Folder", &generalFolderUID)
 			require.NoError(t, err)
 
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -480,7 +480,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		// Test version increment on update
 		t.Run("version increments on dashboard update", func(t *testing.T) {
 			// Create a dashboard with admin
-			dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard for Version Test", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Dashboard for Version Test", nil, nil)
 			require.NoError(t, err, "Failed to create dashboard for version test")
 			dashUID := dash.GetName()
 
@@ -490,7 +490,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			initialRV := meta.GetResourceVersion()
 
 			// Update the dashboard
-			updatedDash, err := updateDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), dash, "Updated Dashboard for Version Test", nil)
+			updatedDash, err := updateDashboard(t, adminClient, dash, "Updated Dashboard for Version Test", nil)
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash)
 
@@ -507,18 +507,18 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		// Test generation conflict when updating concurrently
 		t.Run("reject update with version conflict", func(t *testing.T) {
 			// Create a dashboard with admin
-			dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard for Version Conflict Test", nil, nil)
+			dash, err := createDashboard(t, adminClient, "Dashboard for Version Conflict Test", nil, nil)
 			require.NoError(t, err, "Failed to create dashboard for version conflict test")
 			dashUID := dash.GetName()
 
 			// Get the dashboard twice (simulating two users getting it)
-			dash1, err := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Get(context.Background(), dashUID, v1.GetOptions{})
+			dash1, err := adminClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
 			require.NoError(t, err)
 			dash2, err := editorClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
 			require.NoError(t, err)
 
 			// Update with the first copy
-			updatedDash1, err := updateDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), dash1, "Updated by first user", nil)
+			updatedDash1, err := updateDashboard(t, adminClient, dash1, "Updated by first user", nil)
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash1)
 
@@ -528,7 +528,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
 
 			// Clean up
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
@@ -541,12 +541,12 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			meta.SetGeneration(5)
 
 			// Create the dashboard
-			createdDash, err := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
+			createdDash, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
 			require.NoError(t, err)
 			dashUID := createdDash.GetName()
 
 			// Fetch the created dashboard
-			fetchedDash, err := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Get(context.Background(), dashUID, v1.GetOptions{})
+			fetchedDash, err := adminClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
 			require.NoError(t, err)
 
 			// Verify the generation was handled properly
@@ -554,22 +554,22 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.Equal(t, 5, meta.GetGeneration(), "Generation should be 5")
 
 			// Clean up
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 
 		t.Run("dashboard version history available, even for UIDs ending in hyphen", func(t *testing.T) {
 			dashboardUID := "test-dashboard-"
-			dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard with uid ending in hyphen", nil, &dashboardUID)
+			dash, err := createDashboard(t, adminClient, "Dashboard with uid ending in hyphen", nil, &dashboardUID)
 			require.NoError(t, err)
 
-			updatedDash, err := updateDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), dash, "Updated dashboard with uid ending in hyphen", nil)
+			updatedDash, err := updateDashboard(t, adminClient, dash, "Updated dashboard with uid ending in hyphen", nil)
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash)
 
 			labelSelector := utils.LabelKeyGetHistory + "=true"
 			fieldSelector := "metadata.name=" + dashboardUID
-			versions, err := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.List(context.Background(), v1.ListOptions{
+			versions, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
 				LabelSelector: labelSelector,
 				FieldSelector: fieldSelector,
 				Limit:         10,
@@ -579,7 +579,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			// one from initial save, one from update
 			require.Equal(t, len(versions.Items), 2)
 
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -607,12 +607,12 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				// Create a dashboard with admin
-				dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard for Provisioning Test", nil, nil)
+				dash, err := createDashboard(t, adminClient, "Dashboard for Provisioning Test", nil, nil)
 				require.NoError(t, err, "Failed to create dashboard for provisioning test")
 				dashUID := dash.GetName()
 
 				// Fetch the created dashboard
-				fetchedDash, err := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Get(context.Background(), dashUID, v1.GetOptions{})
+				fetchedDash, err := adminClient.Resource.Get(context.Background(), dashUID, v1.GetOptions{})
 				require.NoError(t, err)
 				require.NotNil(t, fetchedDash)
 
@@ -620,7 +620,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				provisionedDash := markDashboardObjectAsProvisioned(t, fetchedDash, "test-provider", "test-external-id", "test-checksum", tc.allowsEdits)
 
 				// Update the dashboard to apply the provisioning annotations
-				updatedDash, err := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Update(context.Background(), provisionedDash, v1.UpdateOptions{})
+				updatedDash, err := adminClient.Resource.Update(context.Background(), provisionedDash, v1.UpdateOptions{})
 				require.NoError(t, err)
 				require.NotNil(t, updatedDash)
 
@@ -647,7 +647,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 				}
 
 				// Clean up
-				err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+				err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 				require.NoError(t, err)
 			})
 		}
@@ -655,7 +655,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 	t.Run("Dashboard refresh interval validations", func(t *testing.T) {
 		// Create test client
-		// adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
+		adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 
 		// Store original settings to restore after test
 		origCfg := ctx.Helper.GetEnv().Cfg
@@ -716,14 +716,14 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 				_ = meta.SetSpec(specMap)
 
-				dash, err := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
+				dash, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
 
 				if tc.shouldSucceed {
 					require.NoError(t, err)
 					require.NotNil(t, dash)
 
 					// Clean up
-					err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+					err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 					require.NoError(t, err)
 				} else {
 					require.Error(t, err)
@@ -741,7 +741,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 			// Create a dashboard with a specific UID to make it easier to manage
 			specificUID := "size-limit-test-dash"
-			dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard Exceeding Size Limit", nil, &specificUID)
+			dash, err := createDashboard(t, adminClient, "Dashboard Exceeding Size Limit", nil, &specificUID)
 			require.NoError(t, err)
 
 			meta, _ := utils.MetaAccessor(dash)
@@ -781,12 +781,12 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err, "Failed to set spec")
 
 			// Try to update with too many panels
-			_, err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Update(context.Background(), dash, v1.UpdateOptions{})
+			_, err = adminClient.Resource.Update(context.Background(), dash, v1.UpdateOptions{})
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "exceeds", "Error should mention size or limit exceeded")
 
 			// Clean up
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), specificUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -1070,7 +1070,6 @@ func markDashboardObjectAsProvisioned(t *testing.T, dashboard *unstructured.Unst
 
 // Create a dashboard
 func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string, folderUID *string, uid *string) (*unstructured.Unstructured, error) {
-	//t.Logf("createDASHBO-Entrou: %v\n", title)
 	t.Helper()
 
 	var folderUIDStr string
@@ -1088,19 +1087,14 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 		delete(dashObj.Object["metadata"].(map[string]interface{}), "generateName")
 	}
 
-	//st := time.Now()
-
 	// Create the dashboard
 	createdDash, err := client.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
-	//t.Logf("createDASHBO-A %v: %v\n", title, time.Since(st))
 	if err != nil {
 		return nil, err
 	}
-	//st = time.Now()
 
 	// Fetch the generated object to ensure we're not running into any caching or UID mismatch issues
 	databaseDash, err := client.Resource.Get(context.Background(), createdDash.GetName(), v1.GetOptions{})
-	//t.Logf("createDASHBO-B %v: %v\n", title, time.Since(st))
 	if err != nil {
 		t.Errorf("Potential caching issue: Unable to retrieve newly created dashboard: %v", err)
 		return nil, err
@@ -1114,7 +1108,6 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 	require.Equal(t, createdDash.GetResourceVersion(), databaseDash.GetResourceVersion(), "Created and retrieved resource version mismatch")
 	require.Equal(t, createdMeta.FindTitle("A"), databaseMeta.FindTitle("B"), "Created and retrieved title mismatch")
 
-	//	time.Sleep(150 * time.Millisecond)
 	return createdDash, nil
 }
 
@@ -1149,9 +1142,6 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 
 	// Get clients for each identity type and role
 	adminUserClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
-	adminUserClient2 := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
-	adminUserClient3 := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
-	adminUserClient4 := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 	editorUserClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getDashboardGVR())
 	viewerUserClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getDashboardGVR())
 
@@ -1269,7 +1259,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 			// Test dashboard updates
 			t.Run("dashboard update", func(t *testing.T) {
 				// Create a dashboard with admin
-				dash, err := createDashboard(t, adminUserClient2, "Dashboard to Update by "+identity.Name, nil, nil)
+				dash, err := createDashboard(t, adminClient, "Dashboard to Update by "+identity.Name, nil, nil)
 				require.NoError(t, err)
 				require.NotNil(t, dash)
 
@@ -1289,14 +1279,14 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 				}
 
 				// Clean up
-				err = adminUserClient2.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+				err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 				require.NoError(t, err)
 			})
 
 			// Test dashboard deletion permissions
 			t.Run("dashboard deletion", func(t *testing.T) {
 				// Create a dashboard with admin
-				dash, err := createDashboard(t, adminUserClient3, "Dashboard for deletion test by "+identity.Name, nil, nil)
+				dash, err := createDashboard(t, adminClient, "Dashboard for deletion test by "+identity.Name, nil, nil)
 				require.NoError(t, err)
 				require.NotNil(t, dash)
 
@@ -1307,7 +1297,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 				} else {
 					require.Error(t, err, "Should not be able to delete dashboard")
 					// Clean up with admin if the test identity couldn't delete
-					err = adminUserClient3.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+					err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 					require.NoError(t, err)
 				}
 			})
@@ -1316,7 +1306,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 			// Test dashboard viewing for all roles
 			t.Run("dashboard viewing", func(t *testing.T) {
 				// Create a dashboard with admin
-				dash, err := createDashboard(t, adminUserClient4, "Dashboard for "+identity.Name+" to view", nil, nil)
+				dash, err := createDashboard(t, adminClient, "Dashboard for "+identity.Name+" to view", nil, nil)
 				require.NoError(t, err)
 				require.NotNil(t, dash)
 
@@ -1326,7 +1316,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 				require.NotNil(t, viewedDash)
 
 				// Clean up
-				err = adminUserClient4.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+				err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 				require.NoError(t, err)
 			})
 		})
@@ -1338,7 +1328,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 	t.Helper()
 
 	// Get clients for each user
-	//adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
+	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getDashboardGVR())
 	viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getDashboardGVR())
 
@@ -1348,7 +1338,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 	// Test custom dashboard permissions
 	t.Run("Dashboard with custom permissions", func(t *testing.T) {
 		// Create a dashboard with admin
-		dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard with Custom Permissions", nil, nil)
+		dash, err := createDashboard(t, adminClient, "Dashboard with Custom Permissions", nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, dash)
 
@@ -1372,19 +1362,19 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		require.Equal(t, "Updated by Viewer with Permission", meta.FindTitle(""))
 
 		// Clean up
-		err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+		err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
 	// Test dashboard-specific permission overrides (new test case)
 	t.Run("Dashboard-specific permission overrides", func(t *testing.T) {
 		// Create multiple dashboards with admin
-		dash1, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard with No Custom Permissions", nil, nil)
+		dash1, err := createDashboard(t, adminClient, "Dashboard with No Custom Permissions", nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, dash1)
 		dash1UID := dash1.GetName()
 
-		dash2, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard with Viewer Edit Permission", nil, nil)
+		dash2, err := createDashboard(t, adminClient, "Dashboard with Viewer Edit Permission", nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, dash2)
 		dash2UID := dash2.GetName()
@@ -1413,7 +1403,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		require.NoError(t, err, "Viewer should be able to delete dashboard with EDIT permission")
 
 		// Clean up the other dashboard
-		err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dash1UID, v1.DeleteOptions{})
+		err = adminClient.Resource.Delete(context.Background(), dash1UID, v1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
@@ -1428,7 +1418,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		setResourceUserPermission(t, ctx, ctx.AdminUser, false, folderUID, addUserPermission(t, nil, ctx.ViewerUser, ResourcePermissionLevelEdit))
 
 		// Create a dashboard in the folder with admin
-		dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard in Custom Permission Folder", &folderUID, nil)
+		dash, err := createDashboard(t, adminClient, "Dashboard in Custom Permission Folder", &folderUID, nil)
 		require.NoError(t, err)
 		require.NotNil(t, dash)
 
@@ -1455,7 +1445,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		setResourceUserPermission(t, ctx, ctx.AdminUser, false, folderUID, generateDefaultResourcePermissions(t))
 
 		// Clean up dashboard
-		err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+		err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 		require.NoError(t, err)
 
 		if kubernetesDashboardsEnabled {
@@ -1464,7 +1454,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 			// This means that the viewer will not be able to delete the dashboard.
 			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
 			require.Error(t, err)
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			err = adminClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
 			require.NoError(t, err)
 		} else {
 			// In case kubernetesDashboards feature flag is set to false,
@@ -1515,10 +1505,10 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		meta.SetFolder("non-existent-folder-uid")
 		_, err = viewerClient.Resource.Update(context.Background(), viewerDash, v1.UpdateOptions{})
 		require.Error(t, err, "Viewer should not be able to move dashboard to non-existent folder")
-		_, err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Update(context.Background(), viewerDash, v1.UpdateOptions{})
+		_, err = adminClient.Resource.Update(context.Background(), viewerDash, v1.UpdateOptions{})
 		require.Error(t, err, "Admin should not be able to move dashboard to non-existent folder")
 
-		err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+		err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 		require.NoError(t, err, "Failed to delete dashboard")
 		err = adminFolderClient.Resource.Delete(context.Background(), folder1UID, v1.DeleteOptions{})
 		require.NoError(t, err, "Failed to delete folder1")
@@ -1589,7 +1579,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		require.Error(t, err, "Editor should not be able to delete dashboard after admin restricts permissions")
 
 		// Admin should be able to delete it
-		err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+		err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
 		require.NoError(t, err, "Admin should always be able to delete dashboards")
 	})
 
@@ -1599,7 +1589,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		otherOrgClient := getResourceClient(t, ctx.Helper, ctx.Helper.OrgB.Viewer, getDashboardGVR())
 
 		// Create a dashboard with admin in the current org
-		dash, err := createDashboard(t, getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()), "Dashboard for Cross-Org Permissions Test", nil, nil)
+		dash, err := createDashboard(t, adminClient, "Dashboard for Cross-Org Permissions Test", nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, dash)
 		org1DashUID := dash.GetName()
@@ -1623,7 +1613,7 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		// an error on the server (\"Internal Server Error: \\\"/apis/dashboard.grafana.app/v1beta1/namespaces/org-3/dashboards/test-cs6xk\\\": Dashboard not found\") has prevented the request from succeeding"
 
 		// Clean up
-		err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), org1DashUID, v1.DeleteOptions{})
+		err = adminClient.Resource.Delete(context.Background(), org1DashUID, v1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 }
