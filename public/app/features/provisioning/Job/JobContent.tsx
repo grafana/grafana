@@ -76,7 +76,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
           <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
             <Spinner size={24} />
             <Text element="h4" color="secondary">
-              {message ?? state ?? ''}
+              {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
             </Text>
           </Stack>
         )}
