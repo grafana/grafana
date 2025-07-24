@@ -13,7 +13,7 @@ import {
   setupLoadDashboardMockReject,
   setupLoadDashboardRuntimeErrorMock,
 } from 'app/features/dashboard-scene/utils/test-utils';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+import { DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
 
@@ -33,6 +33,7 @@ const dashMock: DashboardDTO = {
   },
   meta: {
     canEdit: false,
+    created: 'Friday, 4 July 2025 07:56:41 GMT+05:30',
   },
 };
 
@@ -113,6 +114,7 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
 describe('DashboardPageProxy', () => {
   describe('when dashboardSceneForViewers feature toggle disabled', () => {
     beforeEach(() => {
+      jest.clearAllMocks();
       config.featureToggles.dashboardSceneForViewers = false;
     });
 
@@ -147,6 +149,7 @@ describe('DashboardPageProxy', () => {
 
   describe('when dashboardSceneForViewers feature toggle enabled', () => {
     beforeEach(() => {
+      jest.clearAllMocks();
       config.featureToggles.dashboardSceneForViewers = true;
     });
 

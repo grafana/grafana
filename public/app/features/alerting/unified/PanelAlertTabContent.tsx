@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -27,13 +27,24 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
     panelId: panel.id,
     poll: true,
   });
+
   const permissions = getRulesPermissions('grafana');
   const canCreateRules = config.unifiedAlertingEnabled && contextSrv.hasPermission(permissions.create);
 
   const alert = errors.length ? (
-    <Alert title="Errors loading rules" severity="error">
+    <Alert
+      title={t('alerting.panel-alert-tab-content.alert.title-errors-loading-rules', 'Errors loading rules')}
+      severity="error"
+    >
       {errors.map((error, index) => (
-        <div key={index}>Failed to load Grafana rules state: {stringifyErrorLike(error)}</div>
+        <div key={index}>
+          <Trans
+            i18nKey="alerting.panel-alert-tab-content.failed-to-load-error"
+            values={{ error: stringifyErrorLike(error) }}
+          >
+            Failed to load Grafana rules state: {'{{error}}'}
+          </Trans>
+        </div>
       ))}
     </Alert>
   ) : null;
@@ -42,7 +53,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
     return (
       <div className={styles.innerWrapper}>
         {alert}
-        <LoadingPlaceholder text="Loading rules..." />
+        <LoadingPlaceholder text={t('alerting.panel-alert-tab-content.text-loading-rules', 'Loading rules...')} />
       </div>
     );
   }
@@ -77,7 +88,10 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
         </>
       )}
       {isNew && !!dashboard.meta.canSave && (
-        <Alert severity="info" title="Dashboard not saved">
+        <Alert
+          severity="info"
+          title={t('alerting.panel-alert-tab-content.title-dashboard-not-saved', 'Dashboard not saved')}
+        >
           <Trans i18nKey="dashboard.panel-edit.alerting-tab.dashboard-not-saved">
             Dashboard must be saved before alerts can be added.
           </Trans>

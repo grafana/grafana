@@ -315,14 +315,16 @@ def store_storybook_step(ver_mode, trigger = None):
     return step
 
 def e2e_tests_artifacts():
+    # Note: This function is kept for backward compatibility but now only handles
+    # artifacts from the remaining E2E tests that haven't been migrated to GitHub Actions
     return {
         "name": "e2e-tests-artifacts-upload",
         "image": images["cloudsdk"],
         "depends_on": [
-            "end-to-end-tests-dashboards-suite",
-            "end-to-end-tests-panels-suite",
-            "end-to-end-tests-smoke-tests-suite",
-            "end-to-end-tests-various-suite",
+            # Note: Main E2E tests have been migrated to GitHub Actions
+            # Only depend on remaining Drone E2E tests
+            "end-to-end-tests-cloud-plugins-suite-azure",
+            "playwright-plugin-e2e",
             github_app_generate_token_step()["name"],
         ],
         "failure": "ignore",
@@ -338,8 +340,8 @@ def e2e_tests_artifacts():
         },
         "commands": [
             "export GITHUB_TOKEN=$(cat /github-app/token)",
-            # if no videos found do nothing
-            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
+            # if no videos found do nothing (may be fewer videos now that main tests are in GitHub Actions)
+            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'no e2e videos found from remaining tests'; exit 0; fi",
             "apt-get update",
             "apt-get install -yq zip",
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
@@ -568,34 +570,6 @@ def build_plugins_step(ver_mode):
         ],
     }
 
-def test_backend_step():
-    return {
-        "name": "test-backend",
-        "image": images["go"],
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
-            # mime.TypeByExtension function.
-            "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m",
-        ],
-    }
-
-def test_backend_integration_step():
-    return {
-        "name": "test-backend-integration",
-        "image": images["go"],
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            "apk add --update build-base",
-            "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
-        ],
-    }
-
 def betterer_frontend_step():
     """Run betterer on frontend code.
 
@@ -612,44 +586,6 @@ def betterer_frontend_step():
         "commands": [
             "apk add --update git bash",
             "yarn betterer:ci",
-        ],
-    }
-
-def test_frontend_step():
-    """Runs tests on frontend code.
-
-    Returns:
-      Drone step.
-    """
-
-    return {
-        "name": "test-frontend",
-        "image": images["node"],
-        "environment": {
-            "TEST_MAX_WORKERS": "50%",
-        },
-        "depends_on": [
-            "yarn-install",
-        ],
-        "commands": [
-            "yarn run ci:test-frontend",
-        ],
-    }
-
-def lint_frontend_step():
-    return {
-        "name": "lint-frontend",
-        "image": images["node"],
-        "environment": {
-            "TEST_MAX_WORKERS": "50%",
-        },
-        "depends_on": [
-            "yarn-install",
-        ],
-        "commands": [
-            "yarn run prettier:check",
-            "yarn run lint",
-            "yarn run typecheck",
         ],
     }
 
@@ -713,21 +649,13 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
     commands = [
         # Note - this runs in a container running node 14, which does not support the -y option to npx
         "npx wait-on@7.0.1 http://$HOST:$PORT",
+        "pa11y-ci --config e2e/pa11yci.conf.js",
     ]
     failure = "ignore"
+    no_thresholds = "true"
     if ver_mode == "pr":
-        commands.extend(
-            [
-                "pa11y-ci --config .pa11yci-pr.conf.js",
-            ],
-        )
         failure = "always"
-    else:
-        commands.extend(
-            [
-                "pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json",
-            ],
-        )
+        no_thresholds = "false"
 
     return {
         "name": "test-a11y-frontend",
@@ -740,6 +668,7 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
             "GRAFANA_MISC_STATS_API_KEY": from_secret("grafana_misc_stats_api_key"),
             "HOST": "grafana-server",
             "PORT": port,
+            "NO_THRESHOLDS": no_thresholds,
         },
         "failure": failure,
         "commands": commands,
@@ -835,23 +764,6 @@ def start_storybook_step():
         "detach": True,
     }
 
-def e2e_storybook_step():
-    return {
-        "name": "end-to-end-tests-storybook-suite",
-        "image": images["cypress"],
-        "depends_on": [
-            "start-storybook",
-        ],
-        "environment": {
-            "HOST": "start-storybook",
-            "PORT": "9001",
-        },
-        "commands": [
-            "npx wait-on@7.2.0 -t 1m http://$HOST:$PORT",
-            "yarn e2e:storybook",
-        ],
-    }
-
 def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     """Run cloud plugins end-to-end tests.
 
@@ -890,7 +802,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/docker-oss-plugin-partnerships-dev/e2e-14.3.2:1.0.0",
         "depends_on": [
             "grafana-server",
             github_app_generate_token_step()["name"],
@@ -922,7 +834,7 @@ def playwright_e2e_tests_step():
         "commands": [
             "npx wait-on@7.0.1 http://$HOST:$PORT",
             "yarn playwright install --with-deps chromium",
-            "yarn e2e:playwright",
+            "GRAFANA_URL=http://$HOST:$PORT yarn e2e:playwright --grep @plugins",
         ],
     }
 
@@ -976,8 +888,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         "GCP_KEY": from_secret(gcp_grafanauploads),
         "DOCKER_USER": from_secret("docker_username"),
         "DOCKER_PASSWORD": from_secret("docker_password"),
-        "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
-        "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+        "GITHUB_APP_ID": "329617",
+        "GITHUB_APP_INSTALLATION_ID": "37346161",
         "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
     }
 
@@ -994,8 +906,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         environment = {
             "DOCKER_USER": from_secret("docker_username"),
             "DOCKER_PASSWORD": from_secret("docker_password"),
-            "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
-            "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+            "GITHUB_APP_ID": "329617",
+            "GITHUB_APP_INSTALLATION_ID": "37346161",
             "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
         }
 
@@ -1013,129 +925,6 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         step = dict(step, failure = "ignore")
 
     return step
-
-def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None, canFail = False):
-    """Integration test steps
-
-    Args:
-      name: the name of the step.
-      cmds: the commands to run to perform the integration tests.
-      hostname: the hostname where the remote server is available.
-      port: the port where the remote server is available.
-      environment: Any extra environment variables needed to run the integration tests.
-      canFail: controls whether the step can fail.
-
-    Returns:
-      A list of drone steps. If a hostname / port were provided, then a step to wait for the remove server to be
-      available is also returned.
-    """
-    dockerize_name = "wait-for-{}".format(name)
-
-    depends = [
-        "wire-install",
-    ]
-
-    step = {
-        "name": "{}-integration-tests".format(name),
-        "image": images["go"],
-        "depends_on": depends,
-        "commands": [
-            "apk add --update build-base",
-        ] + cmds,
-    }
-
-    if canFail:
-        step["failure"] = "ignore"
-
-    if environment:
-        step["environment"] = environment
-
-    if hostname == None:
-        return [step]
-
-    depends = depends.append(dockerize_name)
-
-    return [
-        dockerize_step(dockerize_name, hostname, port),
-        step,
-    ]
-
-def integration_benchmarks_step(name, environment = None):
-    cmds = [
-        "if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi",
-        "go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}",
-    ]
-
-    return integration_tests_steps("{}-benchmark".format(name), cmds, environment = environment)
-
-def postgres_integration_tests_steps():
-    cmds = [
-        "apk add --update postgresql-client",
-        "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f " +
-        "devenv/docker/blocks/postgres_tests/setup.sql",
-        "go clean -testcache",
-        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
-    ]
-
-    environment = {
-        "PGPASSWORD": "grafanatest",
-        "GRAFANA_TEST_DB": "postgres",
-        "POSTGRES_HOST": "postgres",
-    }
-
-    return integration_tests_steps("postgres", cmds, "postgres", "5432", environment)
-
-def mysql_integration_tests_steps(hostname, version):
-    cmds = [
-        "apk add --update mariadb-client",  # alpine doesn't package mysql anymore; more info: https://wiki.alpinelinux.org/wiki/MySQL
-        "cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h {} -P 3306 -u root -prootpass --disable-ssl-verify-server-cert".format(hostname),
-        "go clean -testcache",
-        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
-    ]
-
-    environment = {
-        "GRAFANA_TEST_DB": "mysql",
-        "MYSQL_HOST": hostname,
-    }
-
-    return integration_tests_steps("mysql-{}".format(version), cmds, hostname, "3306", environment)
-
-def redis_integration_tests_steps():
-    cmds = [
-        "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
-    ]
-
-    environment = {
-        "REDIS_URL": "redis://redis:6379/0",
-    }
-
-    return integration_tests_steps("redis", cmds, "redis", "6379", environment = environment)
-
-def remote_alertmanager_integration_tests_steps():
-    cmds = [
-        "go clean -testcache",
-        "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...",
-    ]
-
-    environment = {
-        "AM_TENANT_ID": "test",
-        "AM_URL": "http://mimir_backend:8080",
-    }
-
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
-
-def memcached_integration_tests_steps():
-    cmds = [
-        "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
-    ]
-
-    environment = {
-        "MEMCACHED_HOSTS": "memcached:11211",
-    }
-
-    return integration_tests_steps("memcached", cmds, "memcached", "11211", environment)
 
 def release_canary_npm_packages_step(trigger = None):
     """Releases canary NPM packages.
@@ -1175,12 +964,15 @@ def release_canary_npm_packages_step(trigger = None):
 
     return step
 
-def upload_packages_step(ver_mode, trigger = None, depends_on = [
-    "end-to-end-tests-dashboards-suite",
-    "end-to-end-tests-panels-suite",
-    "end-to-end-tests-smoke-tests-suite",
-    "end-to-end-tests-various-suite",
-]):
+def upload_packages_step(
+        ver_mode,
+        trigger = None,
+        depends_on = [
+            # Note: Main E2E tests have been migrated to GitHub Actions
+            # Updated dependencies to only include remaining Drone E2E tests
+            "end-to-end-tests-cloud-plugins-suite-azure",
+            "playwright-plugin-e2e",
+        ]):
     """Upload packages to object storage.
 
     Args:
@@ -1341,11 +1133,11 @@ def verify_gen_jsonnet_step():
     }
 
 def end_to_end_tests_deps():
+    # Note: Main E2E tests have been migrated to GitHub Actions
+    # Only return dependencies for E2E tests that still run in Drone
     return [
-        "end-to-end-tests-dashboards-suite",
-        "end-to-end-tests-panels-suite",
-        "end-to-end-tests-smoke-tests-suite",
-        "end-to-end-tests-various-suite",
+        "end-to-end-tests-cloud-plugins-suite-azure",
+        "playwright-plugin-e2e",
     ]
 
 def compile_build_cmd():

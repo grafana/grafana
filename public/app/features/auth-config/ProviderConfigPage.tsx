@@ -2,10 +2,11 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { ProviderConfigForm } from './ProviderConfigForm';
 import { UIMap } from './constants';
@@ -15,8 +16,11 @@ import { SSOProvider } from './types';
 const getPageNav = (config?: SSOProvider): NavModelItem => {
   if (!config) {
     return {
-      text: 'Authentication',
-      subTitle: 'Configure authentication providers',
+      text: t('auth-config.get-page-nav.text.authentication', 'Authentication'),
+      subTitle: t(
+        'auth-config.get-page-nav.subTitle.configure-authentication-providers',
+        'Configure authentication providers'
+      ),
       icon: 'shield',
       id: 'authentication',
     };
@@ -59,7 +63,11 @@ export const ProviderConfigPage = () => {
         <Stack gap={2} alignItems="center">
           <Text variant={'h1'}>{title}</Text>
           <Badge
-            text={config.settings.enabled ? 'Enabled' : 'Not enabled'}
+            text={
+              config.settings.enabled
+                ? t('auth-config.provider-config-page.text-badge-enabled', 'Enabled')
+                : t('auth-config.provider-config-page.text-badge-not-enabled', 'Not enabled')
+            }
             color={config.settings.enabled ? 'green' : 'blue'}
             icon={config.settings.enabled ? 'check' : undefined}
           />

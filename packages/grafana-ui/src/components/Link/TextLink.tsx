@@ -3,8 +3,8 @@ import { AnchorHTMLAttributes, forwardRef } from 'react';
 
 import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
-import { IconName, IconSize } from '../../types';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { IconName, IconSize } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { customWeight } from '../Text/utils';
 

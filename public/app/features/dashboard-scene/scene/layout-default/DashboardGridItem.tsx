@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -20,6 +21,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
+import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -47,24 +49,45 @@ export class DashboardGridItem
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
   public readonly isDashboardLayoutItem = true;
+  public containerRef = React.createRef<HTMLDivElement>();
 
   private _prevRepeatValues?: VariableValueSingle[];
-
   private _gridSizeSub: Unsubscribable | undefined;
 
   public constructor(state: DashboardGridItemState) {
     super(state);
 
-    this.addActivationHandler(() => this.handleVariableName());
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    this.handleVariableName();
+
+    return () => {
+      this._handleGridSizeUnsubscribe();
+    };
+  }
+
+  private _handleGridSizeSubscribe() {
+    if (!this._gridSizeSub) {
+      this._gridSizeSub = this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState));
+    }
+  }
+
+  private _handleGridSizeUnsubscribe() {
+    if (this._gridSizeSub) {
+      this._gridSizeSub.unsubscribe();
+      this._gridSizeSub = undefined;
+    }
   }
 
   private _handleGridResize(newState: DashboardGridItemState, prevState: DashboardGridItemState) {
-    const itemCount = this.state.repeatedPanels?.length ?? 1;
-    const stateChange: Partial<DashboardGridItemState> = {};
-
     if (newState.height === prevState.height) {
       return;
     }
+
+    const itemCount = this.state.repeatedPanels?.length ?? 1;
+    const stateChange: Partial<DashboardGridItemState> = {};
 
     if (this.getRepeatDirection() === 'v') {
       stateChange.itemHeight = Math.ceil(newState.height! / itemCount);
@@ -82,8 +105,12 @@ export class DashboardGridItem
     return this.state.variableName ? 'panel-repeater-grid-item' : '';
   }
 
-  public getOptions(): OptionsPaneCategoryDescriptor {
+  public getOptions(): OptionsPaneCategoryDescriptor[] {
     return getDashboardGridItemOptions(this);
+  }
+
+  public setElementBody(body: VizPanel): void {
+    this.setState({ body });
   }
 
   public editingStarted() {
@@ -197,16 +224,9 @@ export class DashboardGridItem
 
   public handleVariableName() {
     if (this.state.variableName) {
-      if (!this._gridSizeSub) {
-        this._gridSizeSub = this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState));
-        this._subs.add(this._gridSizeSub);
-      }
+      this._handleGridSizeSubscribe();
     } else {
-      if (this._gridSizeSub) {
-        this._gridSizeSub.unsubscribe();
-        this._subs.remove(this._gridSizeSub);
-        this._gridSizeSub = undefined;
-      }
+      this._handleGridSizeUnsubscribe();
     }
 
     this.performRepeat();
@@ -244,5 +264,14 @@ export class DashboardGridItem
 
   public isRepeated(): boolean {
     return this.state.variableName !== undefined;
+  }
+
+  public scrollIntoView() {
+    const gridItemEl = document.querySelector(`[data-griditem-key="${this.state.key}"`);
+    if (gridItemEl instanceof HTMLElement) {
+      scrollIntoView(gridItemEl);
+    } else {
+      scrollCanvasElementIntoView(this, this.containerRef);
+    }
   }
 }

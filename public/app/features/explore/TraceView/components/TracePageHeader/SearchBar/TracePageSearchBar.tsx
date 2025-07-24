@@ -15,19 +15,19 @@
 import { css } from '@emotion/css';
 import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TraceSearchProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
 
-import { SearchProps } from '../../../useSearch';
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 import { convertTimeFilter } from '../../utils/filter-spans';
 
 import NextPrevResult from './NextPrevResult';
 
 export type TracePageSearchBarProps = {
   trace: Trace;
-  search: SearchProps;
+  search: TraceSearchProps;
   spanFilterMatches: Set<string> | undefined;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   setShowCriticalPathSpansOnly: (showCriticalPath: boolean) => void;
@@ -80,16 +80,16 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
               disabled={!clearEnabled}
               type="button"
               fill="outline"
-              aria-label="Clear filters button"
+              aria-label={t('explore.trace-page-search-bar.aria-label-clear-filters', 'Clear filters button')}
               onClick={clear}
             >
-              Clear
+              <Trans i18nKey="explore.clear">Clear</Trans>
             </Button>
             <div className={styles.matchesOnly}>
               <Switch
                 value={search.matchesOnly}
                 onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
-                label="Show matches only switch"
+                label={t('explore.trace-page-search-bar.label-show-matches', 'Show matches only switch')}
                 disabled={!spanFilterMatches?.size}
               />
               <Button
@@ -99,14 +99,14 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 fill="text"
                 disabled={!spanFilterMatches?.size}
               >
-                Show matches only
+                <Trans i18nKey="explore.show-matches-only">Show matches only</Trans>
               </Button>
             </div>
             <div className={styles.matchesOnly}>
               <Switch
                 value={search.criticalPathOnly}
                 onChange={(value) => setShowCriticalPathSpansOnly(value.currentTarget.checked ?? false)}
-                label="Show critical path only switch"
+                label={t('explore.trace-page-search-bar.label-show-paths', 'Show critical path only switch')}
               />
               <Button
                 onClick={() => setShowCriticalPathSpansOnly(!search.criticalPathOnly)}
@@ -114,7 +114,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 variant="secondary"
                 fill="text"
               >
-                Show critical path only
+                <Trans i18nKey="explore.show-critical-path-only">Show critical path only</Trans>
               </Button>
             </div>
           </div>

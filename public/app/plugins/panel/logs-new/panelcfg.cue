@@ -26,13 +26,18 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
+					showControls:             bool
 					showTime:                 bool
 					wrapLogMessage:           bool
 					enableLogDetails:         bool
+					syntaxHighlighting:       bool
 					sortOrder:                common.LogsSortOrder
 					dedupStrategy:            common.LogsDedupStrategy
+					grammar?:                 _
 					enableInfiniteScrolling?: bool
+					onLogOptionsChange?:      _
 					onNewLogsReceived?:       _
+					controlsStorageKey?:      string
 				} @cuetsy(kind="interface")
 			}
 		}]

@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import type { Monaco } from '@grafana/ui';
 
 import {
@@ -7,6 +8,7 @@ import {
   commonAnnotationsLoopSnippet,
   commonLabelsLoopSnippet,
   groupLabelsLoopSnippet,
+  jsonSnippet,
   labelsLoopSnippet,
 } from './snippets';
 import { SuggestionDefinition } from './suggestionDefinition';
@@ -15,12 +17,18 @@ import { SuggestionDefinition } from './suggestionDefinition';
 export function getGlobalSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Field;
 
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
     {
       label: 'Alerts',
       kind,
       detail: 'Alert[]',
-      documentation: { value: 'An Array containing all alerts' },
+      documentation: {
+        value: t(
+          'alerting.get-global-suggestions.value.an-array-containing-all-alerts',
+          'An Array containing all alerts'
+        ),
+      },
     },
     { label: 'Receiver', kind, detail: 'string' },
     { label: 'Status', kind, detail: 'string' },
@@ -28,37 +36,57 @@ export function getGlobalSuggestions(monaco: Monaco): SuggestionDefinition[] {
     { label: 'CommonLabels', kind, detail: '[]KeyValue' },
     { label: 'CommonAnnotations', kind, detail: '[]KeyValue' },
     { label: 'ExternalURL', kind, detail: 'string' },
+    { label: 'GroupKey', kind, detail: 'string' },
+    { label: 'TruncatedAlerts', kind, detail: 'integer' },
   ];
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 // Suggestions that are valid only in the scope of an alert (e.g. in the .Alerts loop)
 export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Field;
 
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
     {
       label: { label: 'Status', detail: '(Alert)', description: 'string' },
       kind,
       detail: 'string',
-      documentation: { value: 'Status of the alert. It can be `firing` or `resolved`' },
+      documentation: {
+        value: t(
+          'alerting.get-alert-suggestions.value.status-alert-firing-resolved',
+          'Status of the alert. It can be `firing` or `resolved`'
+        ),
+      },
     },
     {
       label: { label: 'Labels', detail: '(Alert)' },
       kind,
       detail: '[]KeyValue',
-      documentation: { value: 'A set of labels attached to the alert.' },
+      documentation: {
+        value: t(
+          'alerting.get-alert-suggestions.value.labels-attached-alert',
+          'A set of labels attached to the alert.'
+        ),
+      },
     },
     {
       label: { label: 'Annotations', detail: '(Alert)' },
       kind,
       detail: '[]KeyValue',
-      documentation: 'A set of annotations attached to the alert.',
+      documentation: t(
+        'alerting.get-alert-suggestions.documentation.annotations-attached-alert',
+        'A set of annotations attached to the alert.'
+      ),
     },
     {
       label: { label: 'StartsAt', detail: '(Alert)' },
       kind,
       detail: 'time.Time',
-      documentation: 'Time the alert started firing.',
+      documentation: t(
+        'alerting.get-alert-suggestions.documentation.time-the-alert-started-firing',
+        'Time the alert started firing.'
+      ),
     },
     {
       label: { label: 'EndsAt', detail: '(Alert)' },
@@ -71,7 +99,10 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
       label: { label: 'GeneratorURL', detail: '(Alert)' },
       kind,
       detail: 'string',
-      documentation: 'Back link to Grafana or external Alertmanager.',
+      documentation: t(
+        'alerting.get-alert-suggestions.documentation.grafana-external-alertmanager',
+        'Back link to Grafana or external Alertmanager.'
+      ),
     },
     {
       label: { label: 'SilenceURL', detail: '(Alert)' },
@@ -96,7 +127,10 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
       label: { label: 'Fingerprint', detail: '(Alert)' },
       kind,
       detail: 'string',
-      documentation: 'Fingerprint that can be used to identify the alert.',
+      documentation: t(
+        'alerting.get-alert-suggestions.documentation.fingerprint-identify-alert',
+        'Fingerprint that can be used to identify the alert.'
+      ),
     },
     {
       label: { label: 'ValueString', detail: '(Alert)' },
@@ -104,23 +138,36 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
       detail: 'string',
       documentation: 'String that contains labels and values of each reduced expression in the alert.',
     },
+    {
+      label: { label: 'OrgID', detail: '(Alert)' },
+      kind,
+      detail: 'integer',
+      documentation: t(
+        'alerting.get-alert-suggestions.documentation.organization-alert',
+        'The ID of the organization that owns the alert.'
+      ),
+    },
   ];
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 // Suggestions for .Alerts
 export function getAlertsSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Field;
 
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
     { label: 'Firing', kind, detail: 'Alert[]' },
     { label: 'Resolved', kind, detail: 'Alert[]' },
   ];
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 // Suggestions for the KeyValue types
 export function getKeyValueSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const kind = monaco.languages.CompletionItemKind.Field;
 
+  /* eslint-disable @grafana/i18n/no-untranslated-strings */
   return [
     { label: 'SortedPairs', kind, detail: '[]KeyValue' },
     { label: 'Names', kind, detail: '[]string' },
@@ -131,6 +178,7 @@ export function getKeyValueSuggestions(monaco: Monaco): SuggestionDefinition[] {
       kind: monaco.languages.CompletionItemKind.Method,
     },
   ];
+  /* eslint-enable @grafana/i18n/no-untranslated-strings */
 }
 
 export const snippets = {
@@ -169,6 +217,11 @@ export const snippets = {
     description: 'Renders a loop through annotations',
     snippet: annotationsLoopSnippet,
   },
+  json: {
+    label: 'json',
+    description: 'Renders a JSON object',
+    snippet: jsonSnippet,
+  },
 };
 
 // Snippets
@@ -176,7 +229,7 @@ export function getSnippetsSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const snippetKind = monaco.languages.CompletionItemKind.Snippet;
   const snippetInsertRule = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
 
-  const { alerts, alertDetails, groupLabels, commonLabels, commonAnnotations, labels, annotations } = snippets;
+  const { alerts, alertDetails, groupLabels, commonLabels, commonAnnotations, labels, annotations, json } = snippets;
 
   return [
     {
@@ -230,6 +283,13 @@ export function getSnippetsSuggestions(monaco: Monaco): SuggestionDefinition[] {
       kind: snippetKind,
       insertText: annotations.snippet,
       insertTextRules: snippetInsertRule,
+    },
+    {
+      label: json.label,
+      documentation: json.description,
+      kind: snippetKind,
+      insertText: json.snippet,
+      insertTextRules: monaco.languages.CompletionItemInsertTextRule.KeepWhitespace,
     },
   ];
 }

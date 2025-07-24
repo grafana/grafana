@@ -1,19 +1,24 @@
 import { Dashboard } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getPanelPluginCounts,
   getV1SchemaVariables,
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
-import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
+import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
+import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
@@ -24,13 +29,15 @@ import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSc
  * M is the type of the metadata
  * I is the type of the initial save model. By default it's the same as T.
  */
-export interface DashboardSceneSerializerLike<T, M, I = T> {
+export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unknown }> {
   /**
    * The save model which the dashboard scene was originally created from
    */
   initialSaveModel?: I;
   metadata?: M;
-  initializeMapping(saveModel: T | undefined): void;
+  apiVersion?: string;
+  initializeElementMapping(saveModel: T | undefined): void;
+  initializeDSReferencesMapping(saveModel: T | undefined): void;
   getSaveModel: (s: DashboardScene) => T;
   getSaveAsModel: (s: DashboardScene, options: SaveDashboardAsOptions) => T;
   getDashboardChangesFromScene: (
@@ -47,6 +54,9 @@ export interface DashboardSceneSerializerLike<T, M, I = T> {
   getPanelIdForElement: (elementId: string) => number | undefined;
   getElementIdForPanel: (panelId: number) => string | undefined;
   getElementPanelMapping: () => Map<string, number>;
+  getDSReferencesMapping: () => DSReferencesMapping;
+  makeExportableExternally: (s: DashboardScene) => Promise<E | { error: unknown }>;
+  getK8SMetadata: () => Partial<ObjectMeta> | undefined;
 }
 
 interface DashboardTrackingInfo {
@@ -58,12 +68,25 @@ interface DashboardTrackingInfo {
   settings_livenow?: boolean;
 }
 
-export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard, DashboardMeta> {
+export interface DSReferencesMapping {
+  panels: Map<string, Set<string>>;
+  variables: Set<string>;
+  annotations: Set<string>;
+}
+
+export class V1DashboardSerializer
+  implements DashboardSceneSerializerLike<Dashboard, DashboardMeta, Dashboard, DashboardJson>
+{
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
   protected elementPanelMap = new Map<string, number>();
+  protected defaultDsReferencesMap = {
+    panels: new Map<string, Set<string>>(), // refIds as keys
+    variables: new Set<string>(), // variable names as keys
+    annotations: new Set<string>(), // annotation names as keys
+  };
 
-  initializeMapping(saveModel: Dashboard | undefined) {
+  initializeElementMapping(saveModel: Dashboard | undefined) {
     this.elementPanelMap.clear();
 
     if (!saveModel || !saveModel.panels) {
@@ -79,6 +102,15 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 
   getElementPanelMapping() {
     return this.elementPanelMap;
+  }
+
+  initializeDSReferencesMapping(saveModel: Dashboard | undefined) {
+    // To be implemented in a different PR
+    return {};
+  }
+
+  getDSReferencesMapping() {
+    return this.defaultDsReferencesMap;
   }
 
   getPanelIdForElement(elementId: string) {
@@ -147,6 +179,17 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
       uid: result.uid,
       version: result.version,
     };
+    this.metadata = {
+      ...this.metadata,
+      k8s: {
+        ...this.metadata?.k8s,
+        generation: result.version,
+      },
+    };
+  }
+
+  getK8SMetadata() {
+    return this.metadata?.k8s;
   }
 
   getTrackingInformation(): DashboardTrackingInfo | undefined {
@@ -172,6 +215,16 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   getSnapshotUrl() {
     return this.initialSaveModel?.snapshot?.originalUrl;
   }
+
+  async makeExportableExternally(s: DashboardScene) {
+    const saveModel = this.getSaveModel(s);
+    const oldModel = new DashboardModel(saveModel, undefined, {
+      getVariablesFromState: () => {
+        return getVariablesCompatibility(window.__grafanaSceneContext);
+      },
+    });
+    return await makeExportableV1(oldModel);
+  }
 }
 
 export class V2DashboardSerializer
@@ -185,12 +238,18 @@ export class V2DashboardSerializer
   initialSaveModel?: DashboardV2Spec | Dashboard;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
   protected elementPanelMap = new Map<string, number>();
+  // map of elementId that will contain all the queries, variables and annotations that dont have a ds defined
+  protected defaultDsReferencesMap = {
+    panels: new Map<string, Set<string>>(), // refIds as keys
+    variables: new Set<string>(), // variable names as keys
+    annotations: new Set<string>(), // annotation names as keys
+  };
 
   getElementPanelMapping() {
     return this.elementPanelMap;
   }
 
-  initializeMapping(saveModel: DashboardV2Spec | undefined) {
+  initializeElementMapping(saveModel: DashboardV2Spec | undefined) {
     this.elementPanelMap.clear();
 
     if (!saveModel || !saveModel.elements) {
@@ -204,6 +263,67 @@ export class V2DashboardSerializer
         this.elementPanelMap.set(key, elementPanel.spec.id);
       }
     });
+  }
+
+  initializeDSReferencesMapping(saveModel: DashboardV2Spec | undefined) {
+    // The saveModel could be undefined or not a DashboardV2Spec
+    // when dashboardsNewLayout is enabled, saveModel could be v1
+    // in those cases, only when saving we will convert to v2
+    if (saveModel === undefined || (saveModel && !isDashboardV2Spec(saveModel))) {
+      return;
+    }
+    // initialize the object
+    this.defaultDsReferencesMap = {
+      panels: new Map<string, Set<string>>(),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    // get all the element keys
+    const elementKeys = Object.keys(saveModel?.elements || {});
+    elementKeys.forEach((key) => {
+      const elementPanel = saveModel?.elements[key];
+      if (elementPanel?.kind === 'Panel') {
+        // check if the elementPanel.spec.datasource is defined
+        const panelQueries = elementPanel.spec.data.spec.queries;
+
+        for (const query of panelQueries) {
+          if (!query.spec.datasource) {
+            const elementId = this.getElementIdForPanel(elementPanel.spec.id);
+            if (!this.defaultDsReferencesMap.panels.has(elementId)) {
+              this.defaultDsReferencesMap.panels.set(elementId, new Set());
+            }
+
+            const panelDsqueries = this.defaultDsReferencesMap.panels.get(elementId)!;
+
+            panelDsqueries.add(query.spec.refId);
+          }
+        }
+      }
+    });
+
+    // initialize autossigned variable ds references map
+    if (saveModel?.variables) {
+      for (const variable of saveModel.variables) {
+        // for query variables that dont have a ds defined add them to the list
+        if (variable.kind === 'QueryVariable' && !variable.spec.datasource) {
+          this.defaultDsReferencesMap.variables.add(variable.spec.name);
+        }
+      }
+    }
+
+    // initialize annotations ds references map
+    if (saveModel?.annotations) {
+      for (const annotation of saveModel.annotations) {
+        if (!annotation.spec.datasource) {
+          this.defaultDsReferencesMap.annotations.add(annotation.spec.name);
+        }
+      }
+    }
+  }
+
+  getDSReferencesMapping() {
+    return this.defaultDsReferencesMap;
   }
 
   getPanelIdForElement(elementId: string) {
@@ -268,6 +388,16 @@ export class V2DashboardSerializer
     this.initialSaveModel = {
       ...saveModel,
     };
+    if (this.metadata) {
+      this.metadata = {
+        ...this.metadata,
+        generation: result.version,
+      };
+    }
+  }
+
+  getK8SMetadata() {
+    return this.metadata;
   }
 
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
@@ -300,18 +430,36 @@ export class V2DashboardSerializer
   getSnapshotUrl() {
     return this.metadata?.annotations?.[AnnoKeyDashboardSnapshotOriginalUrl];
   }
+
+  async makeExportableExternally(s: DashboardScene) {
+    return await makeExportableV2(this.getSaveModel(s));
+  }
 }
 
-export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<Dashboard, DashboardMeta>;
-export function getDashboardSceneSerializer(version: 'v1'): DashboardSceneSerializerLike<Dashboard, DashboardMeta>;
+export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<
+  Dashboard,
+  DashboardMeta,
+  Dashboard,
+  DashboardJson
+>;
+export function getDashboardSceneSerializer(
+  version: 'v1'
+): DashboardSceneSerializerLike<Dashboard, DashboardMeta, Dashboard, DashboardJson>;
 export function getDashboardSceneSerializer(
   version: 'v2'
-): DashboardSceneSerializerLike<DashboardV2Spec, DashboardWithAccessInfo<DashboardV2Spec>['metadata']>;
+): DashboardSceneSerializerLike<
+  DashboardV2Spec,
+  DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+  DashboardV2Spec,
+  DashboardV2Spec
+>;
 export function getDashboardSceneSerializer(
   version?: 'v1' | 'v2'
 ): DashboardSceneSerializerLike<
   Dashboard | DashboardV2Spec,
-  DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+  DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+  Dashboard | DashboardV2Spec,
+  DashboardJson | DashboardV2Spec
 > {
   if (version === 'v2') {
     return new V2DashboardSerializer();

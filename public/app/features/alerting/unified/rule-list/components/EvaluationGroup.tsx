@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Dropdown, Icon, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { MetaText } from '../../components/MetaText';
 import MoreButton from '../../components/MoreButton';
@@ -26,6 +26,7 @@ export const EvaluationGroup = ({
   children,
 }: EvaluationGroupProps) => {
   const styles = useStyles2(getStyles);
+
   const isProvisioned = Boolean(provenance);
 
   return (
@@ -40,7 +41,9 @@ export const EvaluationGroup = ({
               </Text>
             </Stack>
           </button>
-          {isProvisioned && <Badge color="purple" text="Provisioned" />}
+          {isProvisioned && (
+            <Badge color="purple" text={t('alerting.evaluation-group.text-provisioned', 'Provisioned')} />
+          )}
           <Spacer />
           {interval && <MetaText icon="history">{interval}</MetaText>}
           <Button size="sm" icon="pen" variant="secondary" disabled={isProvisioned} data-testid="edit-group-action">
@@ -49,10 +52,19 @@ export const EvaluationGroup = ({
           <Dropdown
             overlay={
               <Menu>
-                <Menu.Item label="Re-order rules" icon="flip" disabled={isProvisioned} />
+                <Menu.Item
+                  label={t('alerting.evaluation-group.label-reorder-rules', 'Re-order rules')}
+                  icon="flip"
+                  disabled={isProvisioned}
+                />
                 <Menu.Divider />
-                <Menu.Item label="Export" icon="download-alt" />
-                <Menu.Item label="Delete" icon="trash-alt" destructive disabled={isProvisioned} />
+                <Menu.Item label={t('alerting.evaluation-group.label-export', 'Export')} icon="download-alt" />
+                <Menu.Item
+                  label={t('alerting.evaluation-group.label-delete', 'Delete')}
+                  icon="trash-alt"
+                  destructive
+                  disabled={isProvisioned}
+                />
               </Menu>
             }
           >

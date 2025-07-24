@@ -1,12 +1,12 @@
 import { ComponentPropsWithoutRef } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Tooltip } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
   Template = 'template',
-  MuteTiming = 'mute timing',
+  MuteTiming = 'time interval',
   AlertRule = 'alert rule',
   RootNotificationPolicy = 'root notification policy',
 }
@@ -20,9 +20,17 @@ interface ProvisioningAlertProps extends ExtraAlertProps {
 
 export const ProvisioningAlert = ({ resource, ...rest }: ProvisioningAlertProps) => {
   return (
-    <Alert title={`This ${resource} cannot be edited through the UI`} severity="info" {...rest}>
-      This {resource} has been provisioned, that means it was created by config. Please contact your server admin to
-      update this {resource}.
+    <Alert
+      title={t('alerting.provisioning.title-provisioned', 'This {{resource}} cannot be edited through the UI', {
+        resource,
+      })}
+      severity="info"
+      {...rest}
+    >
+      <Trans i18nKey="alerting.provisioning.body-provisioned">
+        This {{ resource }} has been provisioned, that means it was created by config. Please contact your server admin
+        to update this {{ resource }}.
+      </Trans>
     </Alert>
   );
 };
@@ -37,7 +45,7 @@ export const ProvisioningBadge = ({
    */
   provenance?: string;
 }) => {
-  const badge = <Badge text="Provisioned" color="purple" />;
+  const badge = <Badge text={t('alerting.provisioning-badge.badge.text-provisioned', 'Provisioned')} color="purple" />;
 
   if (tooltip) {
     const provenanceTooltip = (

@@ -1,0 +1,21 @@
+{
+  "kind": "Playlist",
+  "apiVersion": "playlist.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "sample-palylist"
+  },
+  "spec": {
+    "title": "Playlist from provisioning",
+    "interval": "5m",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "xCmMwXdVz"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "panel-tests"
+      }
+    ]
+  }
+}

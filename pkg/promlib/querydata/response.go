@@ -41,7 +41,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		statusCode == http.StatusServiceUnavailable:
 
 		iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-		r := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: true})
+		r := converter.ReadPrometheusStyleResult(iter, converter.Options{})
 		r.Status = backend.Status(res.StatusCode)
 
 		// Add frame to attach metadata
@@ -54,6 +54,14 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 			addMetadataToMultiFrame(q, frame)
 			if i == 0 {
 				frame.Meta.ExecutedQueryString = executedQueryString(q)
+				if frame.Meta.Custom == nil {
+					frame.Meta.Custom = make(map[string]any)
+				}
+				if custom, ok := frame.Meta.Custom.(map[string]any); ok {
+					// This is required for incremental querying feature
+					// Knowing the calculated minStep is required for merging and caching the frames on frontend side
+					custom["calculatedMinStep"] = q.Step.Milliseconds()
+				}
 			}
 		}
 

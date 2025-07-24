@@ -10,6 +10,7 @@ import {
   GroupByVariable,
   TextBoxVariable,
   SceneVariableSet,
+  SceneVariable,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, VariableHide, VariableType } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
@@ -24,8 +25,8 @@ import { QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 import {
   isEditableVariableType,
-  EDITABLE_VARIABLES,
   EDITABLE_VARIABLES_SELECT_ORDER,
+  getEditableVariables,
   getVariableTypeSelectOptions,
   getVariableEditor,
   getVariableScene,
@@ -36,6 +37,7 @@ import {
   getNextAvailableId,
   getVariableDefault,
   isSceneVariableInstance,
+  validateVariableName,
 } from './utils';
 
 const templateSrv = {
@@ -134,20 +136,22 @@ describe('getVariableTypeSelectOptions', () => {
 
     it('should contain all editable variable types', () => {
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length);
+      const editableVariables = getEditableVariables();
+      expect(options).toHaveLength(Object.keys(editableVariables).length);
 
       EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+        expect(editableVariables).toHaveProperty(type);
       });
     });
 
     it('should return an array of selectable values for editable variable types', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
       expect(options).toHaveLength(8);
 
       options.forEach((option, index) => {
         const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+        const variableTypeConfig = editableVariables[editableType];
 
         expect(option.value).toBe(editableType);
         expect(option.label).toBe(variableTypeConfig.name);
@@ -158,21 +162,23 @@ describe('getVariableTypeSelectOptions', () => {
 
   describe('when groupByVariable is disabled', () => {
     it('should contain all editable variable types except groupby', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length - 1);
+      expect(options).toHaveLength(Object.keys(editableVariables).length - 1);
 
       EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+        expect(editableVariables).toHaveProperty(type);
       });
     });
 
     it('should return an array of selectable values for editable variable types', () => {
+      const editableVariables = getEditableVariables();
       const options = getVariableTypeSelectOptions();
       expect(options).toHaveLength(7);
 
       options.forEach((option, index) => {
         const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+        const variableTypeConfig = editableVariables[editableType];
 
         expect(option.value).toBe(editableType);
         expect(option.label).toBe(variableTypeConfig.name);
@@ -183,11 +189,12 @@ describe('getVariableTypeSelectOptions', () => {
 });
 
 describe('getVariableEditor', () => {
+  const editableVariables = getEditableVariables();
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
+  it.each(Object.keys(editableVariables) as EditableVariableType[])(
     'should define an editor for variable type "%s"',
     (type) => {
       const editor = getVariableEditor(type);
@@ -210,11 +217,12 @@ describe('getVariableEditor', () => {
 });
 
 describe('getVariableScene', () => {
+  const editableVariables = getEditableVariables();
   beforeAll(() => {
     setTemplateSrv(templateSrv);
   });
 
-  it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
+  it.each(Object.keys(editableVariables) as EditableVariableType[])(
     'should define a scene object for every variable type',
     (type) => {
       const variable = getVariableScene(type, { name: 'foo' });
@@ -326,10 +334,8 @@ describe('getDefinition', () => {
 describe('getOptionDataSourceTypes', () => {
   it('should return all data source types when no data source types are specified', () => {
     const optionTypes = getOptionDataSourceTypes();
-    expect(optionTypes).toHaveLength(2);
-    // in the old code we always had an empty option
-    expect(optionTypes[0].value).toBe('');
-    expect(optionTypes[1].label).toBe('ds1');
+    expect(optionTypes).toHaveLength(1);
+    expect(optionTypes[0].label).toBe('ds1');
   });
 });
 
@@ -374,5 +380,55 @@ describe('getVariableDefault', () => {
 
     expect(defaultVariable).toBeInstanceOf(QueryVariable);
     expect(defaultVariable.state.name).toBe('query0');
+  });
+});
+
+describe('Variables name validation', () => {
+  let variable1: SceneVariable;
+  let variable2: SceneVariable;
+
+  beforeAll(async () => {
+    variable1 = new CustomVariable({
+      name: 'customVar',
+      query: 'test, test2',
+      value: 'test',
+      text: 'test',
+    });
+    variable2 = new CustomVariable({
+      name: 'customVar2',
+      query: 'test3, test4, $customVar',
+      value: '$customVar',
+      text: '$customVar',
+    });
+
+    new SceneVariableSet({ variables: [variable1, variable2] });
+  });
+
+  it('should not return error on same name and key', () => {
+    expect(validateVariableName(variable1, variable1.state.name).isValid).toBe(true);
+  });
+
+  it('should not return error if name is unique', () => {
+    expect(validateVariableName(variable1, 'unique_variable_name').isValid).toBe(true);
+  });
+
+  it('should return error if global variable name is used', () => {
+    expect(validateVariableName(variable1, '__').isValid).toBe(false);
+  });
+
+  it('should not return error if global variable name is used not at the beginning ', () => {
+    expect(validateVariableName(variable1, 'test__').isValid).toBe(true);
+  });
+
+  it('should return error if name is empty', () => {
+    expect(validateVariableName(variable1, '').isValid).toBe(false);
+  });
+
+  it('should return error if non word characters are used', () => {
+    expect(validateVariableName(variable1, '-').isValid).toBe(false);
+  });
+
+  it('should return error if variable name is taken', () => {
+    expect(validateVariableName(variable1, variable2.state.name).isValid).toBe(false);
   });
 });

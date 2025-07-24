@@ -55,7 +55,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 		Title: "Folder" + util.GenerateShortUID(),
 	}
 	gen := models.RuleGen
-	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder1)).GenerateManyRef(5)
+	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder1.ToFolderReference())).GenerateManyRef(5)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	db := fakes.NewRuleStore(t)
@@ -90,7 +90,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "unrecognized")
 	})
@@ -106,7 +106,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -124,7 +124,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -137,13 +137,50 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "loki",
-			// Should never resolve at the DNS level: https://www.rfc-editor.org/rfc/rfc6761#section-6.4
-			LokiReadURL:  "http://gone.invalid",
-			LokiWriteURL: "http://gone.invalid",
+			LokiSettings: setting.UnifiedAlertingLokiSettings{
+				// Should never resolve at the DNS level: https://www.rfc-editor.org/rfc/rfc6761#section-6.4
+				LokiReadURL:  "http://gone.invalid",
+				LokiWriteURL: "http://gone.invalid",
+			},
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+
+		require.NotNil(t, h)
+		require.NoError(t, err)
+	})
+
+	t.Run("fail initialization if prometheus backend missing datasource UID", func(t *testing.T) {
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled: true,
+			Backend: "prometheus",
+			// Missing PrometheusTargetDatasourceUID
+		}
+		ac := &acfakes.FakeRuleService{}
+
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+
+		require.Error(t, err)
+		require.ErrorContains(t, err, "datasource UID must not be empty")
+	})
+
+	t.Run("successful initialization of prometheus backend", func(t *testing.T) {
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled:                       true,
+			Backend:                       "prometheus",
+			PrometheusMetricName:          "test_metric",
+			PrometheusTargetDatasourceUID: "test-prometheus-uid",
+		}
+		ac := &acfakes.FakeRuleService{}
+
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -160,7 +197,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -183,7 +220,7 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -194,6 +231,75 @@ grafana_alerting_state_history_info{backend="noop"} 0
 `)
 		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_state_history_info")
 		require.NoError(t, err)
+	})
+}
+
+func TestConfigureNotificationHistorian(t *testing.T) {
+	t.Run("do not fail initialization if pinging Loki fails", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		met := metrics.NewNotificationHistorianMetrics(reg)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingNotificationHistory)
+		cfg := setting.UnifiedAlertingNotificationHistorySettings{
+			Enabled: true,
+			LokiSettings: setting.UnifiedAlertingLokiSettings{
+				// Should never resolve at the DNS level: https://www.rfc-editor.org/rfc/rfc6761#section-6.4
+				LokiRemoteURL: "http://gone.invalid",
+			},
+		}
+
+		h, err := configureNotificationHistorian(context.Background(), ft, cfg, met, logger, tracer)
+		require.NotNil(t, h)
+		require.NoError(t, err)
+
+		// Verify that the metric value is set to 1, indicating that notification history is enabled.
+		exp := bytes.NewBufferString(`
+# HELP grafana_alerting_notification_history_info Information about the notification history store.
+# TYPE grafana_alerting_notification_history_info gauge
+grafana_alerting_notification_history_info 1
+`)
+		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_notification_history_info")
+		require.NoError(t, err)
+	})
+
+	t.Run("emit special zero metric if notification history disabled", func(t *testing.T) {
+		testCases := []struct {
+			name string
+			ft   featuremgmt.FeatureToggles
+			cfg  setting.UnifiedAlertingNotificationHistorySettings
+		}{
+			{
+				"disabled via config",
+				featuremgmt.WithFeatures(featuremgmt.FlagAlertingNotificationHistory),
+				setting.UnifiedAlertingNotificationHistorySettings{Enabled: false},
+			},
+			{
+				"disabled via feature toggle",
+				featuremgmt.WithFeatures(),
+				setting.UnifiedAlertingNotificationHistorySettings{Enabled: true},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				reg := prometheus.NewRegistry()
+				met := metrics.NewNotificationHistorianMetrics(reg)
+				logger := log.NewNopLogger()
+				tracer := tracing.InitializeTracerForTest()
+				h, err := configureNotificationHistorian(context.Background(), tc.ft, tc.cfg, met, logger, tracer)
+				require.Nil(t, h)
+				require.NoError(t, err)
+
+				exp := bytes.NewBufferString(`
+# HELP grafana_alerting_notification_history_info Information about the notification history store.
+# TYPE grafana_alerting_notification_history_info gauge
+grafana_alerting_notification_history_info 0
+`)
+				err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_notification_history_info")
+				require.NoError(t, err)
+			})
+		}
 	})
 }
 

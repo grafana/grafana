@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
 
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
@@ -23,10 +24,18 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
         <thead>
           <tr>
             <th className="width-4"></th>
-            <th className="width-4">Version</th>
-            <th className="width-14">Date</th>
-            <th className="width-10">Updated by</th>
-            <th>Notes</th>
+            <th className="width-4">
+              <Trans i18nKey="dashboard.version-history-table.version">Version</Trans>
+            </th>
+            <th className="width-14">
+              <Trans i18nKey="dashboard.version-history-table.date">Date</Trans>
+            </th>
+            <th className="width-10">
+              <Trans i18nKey="dashboard.version-history-table.updated-by">Updated by</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="dashboard.version-history-table.notes">Notes</Trans>
+            </th>
             <th></th>
           </tr>
         </thead>
@@ -35,7 +44,11 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
             <tr key={version.id}>
               <td>
                 <Checkbox
-                  aria-label={`Toggle selection of version ${version.version}`}
+                  aria-label={t(
+                    'dashboard.version-history-table.aria-label-toggle-selection',
+                    'Toggle selection of version {{version}}',
+                    { version: version.version }
+                  )}
                   className={css({
                     display: 'inline',
                   })}
@@ -50,7 +63,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
               <td>{version.message}</td>
               <td className="text-right">
                 {idx === 0 ? (
-                  <Tag name="Latest" colorIndex={17} />
+                  <Tag name={t('dashboard.version-history-table.name-latest', 'Latest')} colorIndex={17} />
                 ) : (
                   <ModalsController>
                     {({ showModal, hideModal }) => (
@@ -66,7 +79,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
                           });
                         }}
                       >
-                        Restore
+                        <Trans i18nKey="dashboard.version-history-table.restore">Restore</Trans>
                       </Button>
                     )}
                   </ModalsController>

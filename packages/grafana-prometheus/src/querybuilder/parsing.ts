@@ -26,6 +26,8 @@ import {
   Without,
 } from '@prometheus-io/lezer-promql';
 
+import { t } from '@grafana/i18n';
+
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
   ErrorId,
@@ -34,7 +36,9 @@ import {
   getString,
   makeBinOp,
   makeError,
+  replaceBuiltInVariable,
   replaceVariables,
+  returnBuiltInVariable,
 } from './parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery, PromVisualQueryBinary } from './types';
@@ -42,13 +46,12 @@ import { PromVisualQuery, PromVisualQueryBinary } from './types';
 /**
  * Parses a PromQL query into a visual query model.
  *
- * It traverses the tree and uses sort of state machine to update the query model. The query model is modified
- * during the traversal and sent to each handler as context.
- *
- * @param expr
+ * It traverses the tree and uses sort of state machine to update the query model.
+ * The query model is modified during the traversal and sent to each handler as context.
  */
-export function buildVisualQueryFromString(expr: string): Context {
-  const replacedExpr = replaceVariables(expr);
+export function buildVisualQueryFromString(expr: string): Omit<Context, 'replacements'> {
+  expr = replaceBuiltInVariable(expr);
+  const { replacedExpr, replacedVariables } = replaceVariables(expr);
   const tree = parser.parse(replacedExpr);
   const node = tree.topNode;
 
@@ -61,6 +64,7 @@ export function buildVisualQueryFromString(expr: string): Context {
   const context: Context = {
     query: visQuery,
     errors: [],
+    replacements: replacedVariables,
   };
 
   try {
@@ -80,10 +84,8 @@ export function buildVisualQueryFromString(expr: string): Context {
     context.errors = [];
   }
 
-  // We don't want parsing errors related to Grafana global variables
-  if (isValidPromQLMinusGrafanaGlobalVariables(expr)) {
-    context.errors = [];
-  }
+  // No need to return replaced variables
+  delete context.replacements;
 
   return context;
 }
@@ -98,36 +100,7 @@ interface ParsingError {
 interface Context {
   query: PromVisualQuery;
   errors: ParsingError[];
-}
-
-// TODO find a better approach for grafana global variables
-function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
-  const context: Context = {
-    query: {
-      metric: '',
-      labels: [],
-      operations: [],
-    },
-    errors: [],
-  };
-
-  expr = expr.replace(/\$__interval/g, '1s');
-  expr = expr.replace(/\$__interval_ms/g, '1000');
-  expr = expr.replace(/\$__rate_interval/g, '1s');
-  expr = expr.replace(/\$__range_ms/g, '1000');
-  expr = expr.replace(/\$__range_s/g, '1');
-  expr = expr.replace(/\$__range/g, '1s');
-
-  const tree = parser.parse(expr);
-  const node = tree.topNode;
-
-  try {
-    handleExpression(expr, node, context);
-  } catch (err) {
-    return false;
-  }
-
-  return context.errors.length === 0;
+  replacements?: Record<string, string>;
 }
 
 /**
@@ -137,7 +110,7 @@ function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
  * @param node
  * @param context
  */
-export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
+function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
 
   switch (node.type.id) {
@@ -256,6 +229,18 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild(FunctionIdentifier);
   const funcName = getString(expr, nameNode);
 
+  // Visual query builder doesn't support nested queries and so info function.
+  if (funcName === 'info') {
+    context.errors.push({
+      text: t(
+        'grafana-prometheus.querybuilder.handle-function.text.query-parsing-is-ambiguous',
+        'Query parsing is ambiguous.'
+      ),
+      from: node.from,
+      to: node.to,
+    });
+  }
+
   const body = node.getChild(FunctionCallBody);
   const params = [];
   let interval = '';
@@ -268,7 +253,9 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
     let match = getString(expr, node).match(/\[(.+)\]/);
     if (match?.[1]) {
       interval = match[1];
-      params.push(match[1]);
+      // We were replaced the builtin variables to prevent errors
+      // Here we return those back
+      params.push(returnBuiltInVariable(match[1]));
     }
   }
 
@@ -352,7 +339,10 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
 
         if (binaryExpressionWithinFunctionArgs) {
           context.errors.push({
-            text: 'Query parsing is ambiguous.',
+            text: t(
+              'grafana-prometheus.querybuilder.update-function-args.text.query-parsing-is-ambiguous',
+              'Query parsing is ambiguous.'
+            ),
             from: binaryExpressionWithinFunctionArgs.from,
             to: binaryExpressionWithinFunctionArgs.to,
           });
@@ -372,6 +362,19 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
     case StringLiteral: {
       op.params.push(getString(expr, node).replace(/"/g, ''));
       break;
+    }
+
+    case VectorSelector: {
+      // When we replace a custom variable to prevent errors during parsing we receive VectorSelector and Identifier in it.
+      // But this is also a normal case for a normal function body. i.e. topk(5, http_requests_total{})
+      // In such cases we got identifier as http_requests_total. So we shouldn't push this as param.
+      // So we check whether the given VectorSelector is something we replaced earlier.
+      if (context.replacements?.[expr.substring(node.from, node.to)]) {
+        const identifierNode = node.getChild(Identifier);
+        const customVarName = getString(expr, identifierNode);
+        op.params.push(customVarName);
+        break;
+      }
     }
 
     default: {
@@ -444,6 +447,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, right, {
       query: binQuery.query,
       errors: context.errors,
+      replacements: context.replacements,
     });
   }
 }

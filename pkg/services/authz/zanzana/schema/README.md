@@ -15,8 +15,8 @@ them. This is because we want to store the folder tree relations.
 
 To grant a user access to a specific folder we store `{ “user”: “user:1”, relation: “read”, object:”folder:<name>” }`
 
-To grant a user access to sub resources of a folder we store ``{ “user”: “user:1”, relation: “resource_read”, object:”folder:<uid>”}` with additional context.
-This context holds all GroupResources in a list e.g. `{ "group_resources": ["dashboard.grafana.app/dashboards", "alerting.grafana.app/rules" ] }`.
+To grant a user access to sub resources of a folder we store `{ “user”: “user:1”, relation: “resource_read”, object:”folder:<uid>”}` with additional context.
+This context holds all GroupResources in a list e.g. `{ "subresources": ["dashboard.grafana.app/dashboards", "alerting.grafana.app/rules" ] }`.
 
 ## Resource level permissions
 
@@ -32,6 +32,15 @@ Subresources enable more granular permissions for the resources. Example might b
 To grant a user access to the subresource of the specific resource we store following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>/<resource_name>” }` with additional context `{ "group_resource": "dashboard.grafana.app/dashboards/<subresource>" }`
 
 It's also possible to grant user access to all subresources for specific resource type. It can be done with following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>” }`.
+
+For the typed resources (like folders, users, teams, etc) subresources work in a little bit different way. Since typed resources only have ID in the name, subresources are added to the `subresource_filter`. For example, to grant user access to folder subresource, following tuple will be created:
+
+```
+{ “user”: “user:1”, relation: “resource_read”, object:”folder:<uid>” }
+context: { "subresource_filter": ["folder.grafana.app/folders/<subresource>"] }
+```
+
+Note that relation is translated from `read` to `resource_read`. This is required to distinguish access between resource and its subresources. When check request is performed, we check if request contains subresource. If so, context filter and translated relation are used.
 
 ## Managed permissions
 

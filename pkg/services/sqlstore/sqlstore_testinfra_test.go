@@ -5,13 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 // Ensure that we can get any connection at all.
@@ -23,7 +24,7 @@ func TestIntegrationTempDatabaseConnect(t *testing.T) {
 
 	sqlStore := sqlstore.NewTestStore(t, sqlstore.WithoutMigrator())
 	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("SELECT 1")
+		_, err := sess.Query("SELECT 1")
 		return err
 	})
 	require.NoError(t, err, "failed to execute a SELECT 1")

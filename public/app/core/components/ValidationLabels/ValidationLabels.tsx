@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Box, Icon, Text, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { t } from 'app/core/internationalization';
 
 interface StrongPasswordValidation {
   message: string;

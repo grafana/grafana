@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { LinkButton, CallToActionCard, Icon, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 function getCardStyles(theme: GrafanaTheme2) {
   return css({
@@ -25,21 +26,26 @@ export const NoDataSourceCallToAction = () => {
   const footer = (
     <>
       <Icon name="rocket" />
-      <> ProTip: You can also define data sources through configuration files. </>
+      <>
+        <Trans i18nKey="explore.no-data-source-call-to-action.footer.pro-tip-define-sources-through-configuration-files">
+          {' '}
+          ProTip: You can also define data sources through configuration files.{' '}
+        </Trans>
+      </>
       <a
         href="http://docs.grafana.org/administration/provisioning/?utm_source=explore#data-sources"
         target="_blank"
         rel="noreferrer"
         className="text-link"
       >
-        Learn more
+        <Trans i18nKey="explore.no-data-source-call-to-action.footer.learn-more">Learn more</Trans>
       </a>
     </>
   );
 
   const ctaElement = (
     <LinkButton size="lg" href="datasources/new" icon="database" disabled={!canCreateDataSource}>
-      Add data source
+      <Trans i18nKey="explore.no-data-source-call-to-action.cta-element.add-data-source">Add data source</Trans>
     </LinkButton>
   );
 

@@ -21,8 +21,8 @@ func NewHealthServer(target server.DiagnosticServer) *server.HealthServer {
 	return server.NewHealthServer(target)
 }
 
-func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store openfgastorage.OpenFGADatastore, logger log.Logger) (*openfgaserver.Server, error) {
-	return server.NewOpenFGAServer(cfg, store, logger)
+func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store openfgastorage.OpenFGADatastore) (*openfgaserver.Server, error) {
+	return server.NewOpenFGAServer(cfg, store)
 }
 
 func NewOpenFGAHttpServer(cfg setting.ZanzanaServerSettings, srv grpcserver.Provider) (*http.Server, error) {

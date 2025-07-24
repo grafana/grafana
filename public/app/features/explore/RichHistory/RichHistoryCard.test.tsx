@@ -6,8 +6,8 @@ import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from 
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState, RichHistoryQuery } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
+import { ExploreState, RichHistoryQuery } from 'app/types/explore';
 
 import { RichHistoryCard, Props } from './RichHistoryCard';
 
@@ -71,24 +71,19 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
   getAppEvents: () => mockEventBus,
-}));
-
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: (ref: DataSourceRef | string) => {
-        const uid = typeof ref === 'string' ? ref : ref.uid;
-        if (!uid) {
-          return Promise.reject();
-        }
-        if (dsStore[uid]) {
-          return Promise.resolve(dsStore[uid]);
-        }
+  getDataSourceSrv: () => ({
+    get: (ref: DataSourceRef | string) => {
+      const uid = typeof ref === 'string' ? ref : ref.uid;
+      if (!uid) {
         return Promise.reject();
-      },
-    }),
-  };
-});
+      }
+      if (dsStore[uid]) {
+        return Promise.resolve(dsStore[uid]);
+      }
+      return Promise.reject();
+    },
+  }),
+}));
 
 const copyStringToClipboard = jest.fn();
 jest.mock('app/core/utils/explore', () => ({

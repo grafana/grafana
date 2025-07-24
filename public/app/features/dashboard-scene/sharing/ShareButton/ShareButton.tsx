@@ -4,9 +4,9 @@ import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { VizPanel } from '@grafana/scenes';
 import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -22,8 +22,8 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
 
   const [_, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
-    return await buildShareUrl(dashboard, panel);
-  }, [dashboard]);
+    await buildShareUrl(dashboard, panel);
+  }, [dashboard, panel]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
     if (isOpen) {
@@ -47,7 +47,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
         <Button
-          aria-label="share-dropdown-menu"
+          aria-label={t('dashboard-scene.share-button.aria-label-sharedropdownmenu', 'Toggle share menu')}
           data-testid={newShareButtonSelector.arrowMenu}
           size="sm"
           icon={isOpen ? 'angle-up' : 'angle-down'}

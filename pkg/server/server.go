@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -131,7 +132,12 @@ func (s *Server) Init() error {
 		return err
 	}
 
-	return nil
+	// Initialize the OpenFeature feature flag system
+	if err := featuremgmt.InitOpenFeatureWithCfg(s.cfg); err != nil {
+		return err
+	}
+
+	return s.provisioningService.RunInitProvisioners(s.context)
 }
 
 // Run initializes and starts services. This will block until all services have

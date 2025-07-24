@@ -31,6 +31,7 @@ const (
 	ClientSAML         = "auth.client.saml"
 	ClientPasswordless = "auth.client.passwordless"
 	ClientLDAP         = "ldap"
+	ClientProvisioning = "auth.client.apiserver.provisioning"
 )
 
 const (
@@ -72,9 +73,11 @@ type FetchPermissionsParams struct {
 	RestrictedActions []string
 	// AllowedActions will be added to the identity permissions
 	AllowedActions []string
-	// Note: Kept for backwards compatibility, use AllowedActions instead
+	// Note: Kept for backwards compatibility, use K8s style instead
 	// Roles permissions will be directly added to the identity permissions
 	Roles []string
+	// K8s stores Kubernetes-style permissions in the format "resource:action"
+	K8s []string
 }
 
 type (
@@ -283,7 +286,7 @@ func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, ident
 			scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)
 			if err == nil {
 				redirectTo, _ := url.QueryUnescape(scopedRedirectToCookie.Value)
-				if redirectTo != "" && validator(redirectTo) == nil {
+				if redirectTo != "" && validator(cfg.AppSubURL+redirectTo) == nil {
 					redirectURL = cfg.AppSubURL + redirectTo
 				}
 				cookies.DeleteCookie(w, redirectToCookieName, cookieOptions(cfg))

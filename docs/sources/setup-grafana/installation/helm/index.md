@@ -16,9 +16,9 @@ This topic includes instructions for installing and running Grafana on Kubernete
 
 [Helm](https://helm.sh/) is an open-source command line tool used for managing Kubernetes applications. It is a graduate project in the [CNCF Landscape](https://www.cncf.io/projects/helm/).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The Grafana open-source community offers Helm Charts for running it on Kubernetes. Please be aware that the code is provided without any warranties. If you encounter any problems, you can report them to the [Official GitHub repository](https://github.com/grafana/helm-charts/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 Watch this video to learn more about installing Grafana using Helm Charts: {{< youtube id="sgYrEleW24E">}}
 
@@ -199,9 +199,9 @@ In order to make any configuration changes, download the `values.yaml` file from
 
 https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Depending on your use case requirements, you can use a single YAML file that contains your configuration changes or you can create multiple YAML files.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Enable persistent storage **(recommended)**
 

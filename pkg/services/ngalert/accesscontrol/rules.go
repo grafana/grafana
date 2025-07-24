@@ -1,10 +1,9 @@
 package accesscontrol
 
 import (
+	"context"
 	"fmt"
 	"slices"
-
-	"golang.org/x/net/context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/expr"
@@ -180,13 +179,6 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 		}); err != nil {
 			return err
 		}
-		for _, rule := range change.Delete {
-			if err := r.HasAccessOrError(ctx, user, r.getRulesQueryEvaluator(rule), func() string {
-				return fmt.Sprintf("delete an alert rule '%s'", rule.UID)
-			}); err != nil {
-				return err
-			}
-		}
 	}
 
 	var addAuthorized, updateAuthorized bool // these are needed to check authorization for the rule create\update only once
@@ -217,10 +209,12 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 	}
 
 	for _, rule := range change.Update {
-		if err := r.HasAccessOrError(ctx, user, r.getRulesQueryEvaluator(rule.New), func() string {
-			return fmt.Sprintf("update alert rule '%s' (UID: %s)", rule.Existing.Title, rule.Existing.UID)
-		}); err != nil {
-			return err
+		if rule.AffectsQuery() {
+			if err := r.HasAccessOrError(ctx, user, r.getRulesQueryEvaluator(rule.New), func() string {
+				return fmt.Sprintf("update alert rule query '%s' (UID: %s)", rule.Existing.Title, rule.Existing.UID)
+			}); err != nil {
+				return err
+			}
 		}
 
 		// Check if the rule is moved from one folder to the current. If yes, then the user must have the authorization to delete rules from the source folder and add rules to the target folder.

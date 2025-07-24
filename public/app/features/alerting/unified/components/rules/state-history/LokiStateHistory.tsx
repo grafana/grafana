@@ -5,6 +5,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFrame, GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
@@ -76,12 +77,24 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   }, [setInstancesFilter, setValue]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Trans i18nKey="alerting.loki-state-history.loading">Loading...</Trans>
+      </div>
+    );
   }
   if (isError) {
     return (
-      <Alert title="Error fetching the state history" severity="error">
-        {error instanceof Error ? error.message : 'Unable to fetch alert state history'}
+      <Alert
+        title={t(
+          'alerting.loki-state-history.title-error-fetching-the-state-history',
+          'Error fetching the state history'
+        )}
+        severity="error"
+      >
+        {error instanceof Error
+          ? error.message
+          : t('alerting.loki-state-history.error-unable-to-fetch', 'Unable to fetch alert state history')}
       </Alert>
     );
   }
@@ -105,8 +118,15 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       {!isEmpty(commonLabels) && (
         <Stack gap={1} alignItems="center" wrap="wrap">
           <Stack gap={0.5} alignItems="center" minWidth="fit-content">
-            <Text variant="bodySmall">Common labels</Text>
-            <Tooltip content="Common labels are the ones attached to all of the alert instances">
+            <Text variant="bodySmall">
+              <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
+            </Text>
+            <Tooltip
+              content={t(
+                'alerting.loki-state-history.tooltip-common-labels',
+                'Common labels are the ones attached to all of the alert instances'
+              )}
+            >
               <Icon name="info-circle" size="sm" />
             </Tooltip>
           </Stack>
@@ -118,7 +138,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
           {emptyStateMessage}
           {totalRecordsCount > 0 && (
             <Button variant="secondary" type="button" onClick={onFilterCleared}>
-              Clear filters
+              <Trans i18nKey="alerting.loki-state-history.clear-filters">Clear filters</Trans>
             </Button>
           )}
         </div>
@@ -183,12 +203,18 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
         label={
           <Label htmlFor="instancesSearchInput">
             <Stack gap={0.5}>
-              <span>Filter instances</span>
+              <span>
+                <Trans i18nKey="alerting.search-field-input.filter-instances">Filter instances</Trans>
+              </span>
               <PopupCard
                 content={
                   <>
-                    Use label matcher expression (like <code>{'{foo=bar}'}</code>) or click on an instance label to
-                    filter instances
+                    <Trans i18nKey="alerting.search-field-input.filter-instances-tooltip">
+                      Use label matcher expression or click on an instance label to filter instances, for example:
+                    </Trans>
+                    <div>
+                      <code>{'{foo=bar}'}</code>
+                    </div>
                   </>
                 }
               >
@@ -204,11 +230,14 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
           suffix={
             showClearFilterSuffix && (
               <Button fill="text" icon="times" size="sm" onClick={onClearFilterClick}>
-                Clear
+                <Trans i18nKey="alerting.search-field-input.clear">Clear</Trans>
               </Button>
             )
           }
-          placeholder="Filter instances"
+          placeholder={t(
+            'alerting.search-field-input.instancesSearchInput-placeholder-filter-instances',
+            'Filter instances'
+          )}
           ref={ref}
           {...rest}
         />

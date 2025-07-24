@@ -1,4 +1,5 @@
 import { DataSourceSettings } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { ConfigSubSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Field, Icon, InlineLabel, Label, Stack, Switch, Tooltip } from '@grafana/ui';
@@ -83,19 +84,25 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
   const labelWidth = 40;
 
   return (
-    <ConfigSubSection title="Connection limits">
+    <ConfigSubSection
+      title={t('grafana-sql.components.connection-limits.title-connection-limits', 'Connection limits')}
+    >
       <Field
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Max open</span>
+              <span>
+                <Trans i18nKey="grafana-sql.components.connection-limits.max-open">Max open</Trans>
+              </span>
               <Tooltip
                 content={
                   <span>
-                    The maximum number of open connections to the database. If <i>Max idle connections</i> is greater
-                    than 0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
-                    <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set
-                    to 0, there is no limit on the number of open connections.
+                    <Trans i18nKey="grafana-sql.components.connection-limits.content-max-open">
+                      The maximum number of open connections to the database. If <i>Max idle connections</i> is greater
+                      than 0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
+                      <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set
+                      to 0, there is no limit on the number of open connections.
+                    </Trans>
                   </span>
                 }
               >
@@ -119,13 +126,20 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Auto max idle</span>
+              <span>
+                <Trans i18nKey="grafana-sql.components.connection-limits.auto-max-idle">Auto max idle</Trans>
+              </span>
               <Tooltip
                 content={
                   <span>
-                    If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
-                    <i> Max open connections</i>. If the number of maximum open connections is not set it will be set to
-                    the default ({config.sqlConnectionLimits.maxIdleConns}).
+                    <Trans
+                      i18nKey="grafana-sql.components.connection-limits.content-auto-max-idle"
+                      values={{ defaultMaxIdle: config.sqlConnectionLimits.maxIdleConns }}
+                    >
+                      If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
+                      <i> Max open connections</i>. If the number of maximum open connections is not set it will be set
+                      to the default ({'{{defaultMaxIdle}}'}).
+                    </Trans>
                   </span>
                 }
               >
@@ -142,14 +156,18 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Max idle</span>
+              <span>
+                <Trans i18nKey="grafana-sql.components.connection-limits.max-idle">Max idle</Trans>
+              </span>
               <Tooltip
                 content={
                   <span>
-                    The maximum number of connections in the idle connection pool.If <i>Max open connections</i> is
-                    greater than 0 but less than the <i>Max idle connections</i>, then the <i>Max idle connections</i>{' '}
-                    will be reduced to match the <i>Max open connections</i> limit. If set to 0, no idle connections are
-                    retained.
+                    <Trans i18nKey="grafana-sql.components.connection-limits.content-max-idle">
+                      The maximum number of connections in the idle connection pool.If <i>Max open connections</i> is
+                      greater than 0 but less than the <i>Max idle connections</i>, then the <i>Max idle connections</i>{' '}
+                      will be reduced to match the <i>Max open connections</i> limit. If set to 0, no idle connections
+                      are retained.
+                    </Trans>
                   </span>
                 }
               >
@@ -177,12 +195,16 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Max lifetime</span>
+              <span>
+                <Trans i18nKey="grafana-sql.components.connection-limits.max-lifetime">Max lifetime</Trans>
+              </span>
               <Tooltip
                 content={
                   <span>
-                    The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
-                    reused forever.
+                    <Trans i18nKey="grafana-sql.components.connection-limits.content-max-lifetime">
+                      The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
+                      reused forever.
+                    </Trans>
                   </span>
                 }
               >

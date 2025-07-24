@@ -2,10 +2,8 @@ import uFuzzy from '@leeoniya/ufuzzy';
 
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import {
   CatalogPlugin,
@@ -124,7 +122,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     url,
   } = plugin;
 
-  const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
+  const isDisabled = !!error;
   return {
     description,
     downloads,
@@ -178,7 +176,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     angularDetected,
   } = plugin;
 
-  const isDisabled = !!error || isDisabledSecretsPlugin(type);
+  const isDisabled = !!error;
   return {
     description,
     downloads: 0,
@@ -218,12 +216,12 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const installedVersion = local?.info.version;
   const id = remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
-  const isDisabled = !!error || isDisabledSecretsPlugin(type);
+  const isDisabled = !!error;
   const keywords = remote?.keywords || local?.info.keywords || [];
 
   let logos = {
-    small: `/public/img/icn-${type}.svg`,
-    large: `/public/img/icn-${type}.svg`,
+    small: `/public/build/img/icn-${type}.svg`,
+    large: `/public/build/img/icn-${type}.svg`,
   };
 
   if (remote) {
@@ -341,14 +339,6 @@ function getPluginSignature(options: {
   return PluginSignatureStatus.missing;
 }
 
-// Updates the core Grafana config to have the correct list available panels
-export const updatePanels = () =>
-  getBackendSrv()
-    .get('/api/frontend/settings')
-    .then((settings: Settings) => {
-      config.panels = settings.panels;
-    });
-
 export function getLatestCompatibleVersion(versions: Version[] | undefined): Version | undefined {
   if (!versions) {
     return;
@@ -370,7 +360,6 @@ export const hasInstallControlWarning = (
   const isCompatible = Boolean(latestCompatibleVersion);
   return (
     plugin.type === PluginType.renderer ||
-    plugin.type === PluginType.secretsmanager ||
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     plugin.isDev ||
     (!hasPermission && !isExternallyManaged) ||
@@ -401,10 +390,6 @@ export function isPreinstalledPlugin(id: string): { found: boolean; withVersion:
 
   const plugin = pluginCatalogPreinstalledPlugins?.find((p) => p.id === id);
   return { found: !!plugin?.id, withVersion: !!plugin?.version };
-}
-
-function isDisabledSecretsPlugin(type?: PluginType): boolean {
-  return type === PluginType.secretsmanager && !config.secretsManagerPluginEnabled;
 }
 
 export function isLocalCorePlugin(local?: LocalPlugin): boolean {
@@ -469,7 +454,6 @@ export function isPluginUpdatable(plugin: CatalogPlugin) {
 export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
   if (
     !isPluginModifiable(plugin) ||
-    plugin.type === PluginType.secretsmanager ||
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     !plugin.isPublished ||
     plugin.isDisabled ||
@@ -479,4 +463,16 @@ export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
   }
 
   return false;
+}
+
+export function isNonAngularVersion(version?: Version) {
+  if (!version) {
+    return false;
+  }
+
+  return version.angularDetected === false;
+}
+
+export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
+  return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
 }

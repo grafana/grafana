@@ -36,7 +36,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	deleted := c.Query("deleted")
 	permission := dashboardaccess.PERMISSION_VIEW
 
-	if deleted == "true" && c.SignedInUser.GetOrgRole() != org.RoleAdmin {
+	if deleted == "true" && c.GetOrgRole() != org.RoleAdmin {
 		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
 	}
 
@@ -88,7 +88,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Page:          page,
 		IsStarred:     starred == "true",
 		IsDeleted:     deleted == "true",
-		OrgId:         c.SignedInUser.GetOrgID(),
+		OrgId:         c.GetOrgID(),
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
 		Type:          dashboardType,

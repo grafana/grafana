@@ -49,47 +49,73 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 		{
 			name:            "with an unsupported datasource type",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com"}},
-			err:             errors.New("unexpected datasource type. expecting loki or prometheus"),
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: "unsupported-type"}},
+			err:             errors.New("unexpected datasource type 'unsupported-type', expected loki, prometheus, amazon prometheus, azure prometheus"),
 		},
 		{
 			name:            "with a Loki datasource",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: LokiDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_LOKI}},
 			expected:        "/api/prom/rules",
 		},
 		{
 			name:            "with a Prometheus datasource",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_PROMETHEUS}},
+			expected:        "/rules",
+		},
+		{
+			name:            "with an Amazon Prometheus datasource",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://amp.com", Type: datasources.DS_AMAZON_PROMETHEUS}},
+			expected:        "/rules",
+		},
+		{
+			name:            "with an Azure Prometheus datasource",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://azp.com", Type: datasources.DS_AZURE_PROMETHEUS}},
 			expected:        "/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and subtype of Cortex",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			urlParams:       "?subtype=cortex",
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_PROMETHEUS}},
 			expected:        "/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and subtype of Mimir",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			urlParams:       "?subtype=mimir",
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_PROMETHEUS}},
 			expected:        "/config/v1/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and subtype of Prometheus",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			urlParams:       "?subtype=prometheus",
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_PROMETHEUS}},
 			expected:        "/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and no subtype",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: datasources.DS_PROMETHEUS}},
 			expected:        "/rules",
+		},
+		{
+			name:            "with an Amazon Prometheus datasource and subtype of Mimir",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			urlParams:       "?subtype=mimir",
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://amp.com", Type: datasources.DS_AMAZON_PROMETHEUS}},
+			expected:        "/config/v1/rules",
+		},
+		{
+			name:            "with an Azure Prometheus datasource and subtype of Mimir",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			urlParams:       "?subtype=mimir",
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://azp.com", Type: datasources.DS_AZURE_PROMETHEUS}},
+			expected:        "/config/v1/rules",
 		},
 	}
 
@@ -149,7 +175,7 @@ func TestLotexRuler_RouteDeleteNamespaceRulesConfig(t *testing.T) {
 			expected:    "http://mimir.com/config/v1/rules/namespace%2Fwith%2Fslashes?subtype=mimir",
 			urlParams:   "?subtype=mimir",
 			namedParams: map[string]string{":DatasourceUID": "d164"},
-			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: datasources.DS_PROMETHEUS},
 		},
 		{
 			name:        "with a namespace that does not need to be escaped",
@@ -157,7 +183,7 @@ func TestLotexRuler_RouteDeleteNamespaceRulesConfig(t *testing.T) {
 			expected:    "http://mimir.com/config/v1/rules/namespace_without_slashes?subtype=mimir",
 			urlParams:   "?subtype=mimir",
 			namedParams: map[string]string{":DatasourceUID": "d164"},
-			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: datasources.DS_PROMETHEUS},
 		},
 	}
 
@@ -210,7 +236,7 @@ func TestLotexRuler_RouteDeleteRuleGroupConfig(t *testing.T) {
 			expected:    "http://mimir.com/config/v1/rules/namespace%2Fwith%2Fslashes/group%2Fwith%2Fslashes?subtype=mimir",
 			urlParams:   "?subtype=mimir",
 			namedParams: map[string]string{":DatasourceUID": "d164"},
-			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: datasources.DS_PROMETHEUS},
 		},
 		{
 			name:        "with a namespace that does not need to be escaped",
@@ -219,7 +245,7 @@ func TestLotexRuler_RouteDeleteRuleGroupConfig(t *testing.T) {
 			expected:    "http://mimir.com/config/v1/rules/namespace_without_slashes/group_without_slashes?subtype=mimir",
 			urlParams:   "?subtype=mimir",
 			namedParams: map[string]string{":DatasourceUID": "d164"},
-			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: datasources.DS_PROMETHEUS},
 		},
 	}
 
@@ -271,7 +297,7 @@ func TestLotexRuler_RouteGetNamespaceRulesConfig(t *testing.T) {
 			expected:    "http://mimir.com/config/v1/rules/namespace%2Fwith%2Fslashes?subtype=mimir",
 			urlParams:   "?subtype=mimir",
 			namedParams: map[string]string{":DatasourceUID": "d164"},
-			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: datasources.DS_PROMETHEUS},
 		},
 		{
 			name:        "with a namespace that does not need to be escaped",
@@ -279,7 +305,7 @@ func TestLotexRuler_RouteGetNamespaceRulesConfig(t *testing.T) {
 			expected:    "http://mimir.com/config/v1/rules/namespace_without_slashes?subtype=mimir",
 			urlParams:   "?subtype=mimir",
 			namedParams: map[string]string{":DatasourceUID": "d164"},
-			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: datasources.DS_PROMETHEUS},
 		},
 	}
 
@@ -332,7 +358,7 @@ func TestLotexRuler_RouteGetRulegGroupConfig(t *testing.T) {
 			expected:    "http://mimir.com/config/v1/rules/namespace%2Fwith%2Fslashes/group%2Fwith%2Fslashes?subtype=mimir",
 			urlParams:   "?subtype=mimir",
 			namedParams: map[string]string{":DatasourceUID": "d164"},
-			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: datasources.DS_PROMETHEUS},
 		},
 		{
 			name:        "with a namespace that does not need to be escaped",
@@ -341,7 +367,7 @@ func TestLotexRuler_RouteGetRulegGroupConfig(t *testing.T) {
 			expected:    "http://mimir.com/config/v1/rules/namespace_without_slashes/group_without_slashes?subtype=mimir",
 			urlParams:   "?subtype=mimir",
 			namedParams: map[string]string{":DatasourceUID": "d164"},
-			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: datasources.DS_PROMETHEUS},
 		},
 	}
 

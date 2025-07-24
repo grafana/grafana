@@ -2,7 +2,7 @@ package folderimpl
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
+func convertUnstructuredToFolder(item *unstructured.Unstructured, identifiers map[string]*user.User) (*folder.Folder, error) {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		return nil, err
@@ -37,27 +37,31 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		url = dashboards.GetFolderURL(uid, slug)
 	}
 
-	created := meta.GetCreationTimestamp().Time.UTC()
+	created := meta.GetCreationTimestamp().Local()
 	updated, _ := meta.GetUpdatedTimestamp()
 	if updated == nil {
 		updated = &created
 	} else {
-		tmp := updated.UTC()
+		tmp := updated.Local()
 		updated = &tmp
 	}
 
-	creator, err := ss.getUserFromMeta(ctx, meta.GetCreatedBy())
-	if err != nil {
-		return nil, err
+	createdBy, updatedBy := int64(0), int64(0)
+	createdByUID, updatedByUID := "", ""
+
+	if len(identifiers) > 0 {
+		user, ok := identifiers[meta.GetCreatedBy()]
+		if ok {
+			createdBy = user.ID
+			createdByUID = user.UID
+		}
+		user, ok = identifiers[meta.GetUpdatedBy()]
+		if ok {
+			updatedBy = user.ID
+			updatedByUID = user.UID
+		}
 	}
 
-	updater, err := ss.getUserFromMeta(ctx, meta.GetUpdatedBy())
-	if err != nil {
-		return nil, err
-	}
-	if updater.UID == "" {
-		updater = creator
-	}
 	manager, _ := meta.GetManagerProperties()
 	return &folder.Folder{
 		UID:         uid,
@@ -68,38 +72,126 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		Version:     int(meta.GetGeneration()),
 		ManagedBy:   manager.Kind,
 
-		URL:       url,
-		Created:   created,
-		Updated:   *updated,
-		OrgID:     info.OrgID,
-		CreatedBy: creator.ID,
-		UpdatedBy: updater.ID,
+		Fullpath:     meta.GetFullpath(),
+		FullpathUIDs: meta.GetFullpathUIDs(),
+		URL:          url,
+		Created:      created,
+		Updated:      *updated,
+		OrgID:        info.OrgID,
+
+		CreatedBy:    createdBy,
+		CreatedByUID: createdByUID,
+		UpdatedBy:    updatedBy,
+		UpdatedByUID: updatedByUID,
 	}, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) getUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
-	if userMeta == "" || toUID(userMeta) == "" {
-		return &user.User{}, nil
+func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
+	meta, err := utils.MetaAccessor(item)
+	if err != nil {
+		return nil, err
 	}
-	usr, err := ss.getUser(ctx, toUID(userMeta))
-	if err != nil && errors.Is(err, user.ErrUserNotFound) {
-		return &user.User{}, nil
+
+	identifiers := make(map[string]struct{}, 0)
+	identifiers[meta.GetCreatedBy()] = struct{}{}
+	identifiers[meta.GetUpdatedBy()] = struct{}{}
+
+	folderUserIdentifiers, err := ss.getFolderIdentifiers(ctx, identifiers)
+	if err != nil {
+		return nil, err
 	}
-	return usr, err
+
+	folder, err := convertUnstructuredToFolder(item, folderUserIdentifiers)
+	if err != nil {
+		return nil, err
+	}
+
+	return folder, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) getUser(ctx context.Context, uid string) (*user.User, error) {
-	userID, err := strconv.ParseInt(uid, 10, 64)
-	if err == nil {
-		return ss.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Context, unstructuredList *unstructured.UnstructuredList) ([]*folder.Folder, error) {
+	identifiers := make(map[string]struct{}, 0)
+	for _, item := range unstructuredList.Items {
+		meta, err := utils.MetaAccessor(&item)
+		if err != nil {
+			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
+		}
+
+		identifiers[meta.GetCreatedBy()] = struct{}{}
+		identifiers[meta.GetUpdatedBy()] = struct{}{}
 	}
-	return ss.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
+
+	folderUserIdentifiers, err := ss.getFolderIdentifiers(ctx, identifiers)
+	if err != nil {
+		return nil, err
+	}
+	folders := make([]*folder.Folder, 0)
+	for _, item := range unstructuredList.Items {
+		folder, err := convertUnstructuredToFolder(&item, folderUserIdentifiers)
+		if err != nil {
+			return nil, err
+		}
+		folders = append(folders, folder)
+	}
+
+	return folders, nil
 }
 
-func toUID(rawIdentifier string) string {
-	parts := strings.Split(rawIdentifier, ":")
+func (ss *FolderUnifiedStoreImpl) getFolderIdentifiers(ctx context.Context, identifiers map[string]struct{}) (map[string]*user.User, error) {
+	identifierMap, userUIDs, userIds := separateUIDsAndIDs(identifiers)
+	if len(userUIDs) == 0 && len(userIds) == 0 {
+		return nil, nil
+	}
+
+	users, err := ss.userService.ListByIdOrUID(ctx, userUIDs, userIds)
+	if err != nil {
+		return nil, err
+	}
+
+	userMap := make(map[string]*user.User, len(users))
+	for _, u := range users {
+		if _, ok := identifierMap[fmt.Sprintf("user:%d", u.ID)]; ok {
+			userMap[fmt.Sprintf("user:%d", u.ID)] = u
+		}
+
+		if _, ok := identifierMap[fmt.Sprintf("user:%s", u.UID)]; ok {
+			userMap[fmt.Sprintf("user:%s", u.UID)] = u
+		}
+	}
+	return userMap, nil
+}
+
+func parseIdentifier(identifier string) string {
+	parts := strings.Split(identifier, ":")
 	if len(parts) < 2 {
 		return ""
 	}
+	if parts[0] != "user" {
+		return ""
+	}
 	return parts[1]
+}
+
+func separateUIDsAndIDs(identifiers map[string]struct{}) (map[string]string, []string, []int64) {
+	uids := make([]string, 0)
+	ids := make([]int64, 0)
+	identifierMap := make(map[string]string, 0)
+
+	for identifier := range identifiers {
+		value := parseIdentifier(identifier)
+		if value == "" {
+			continue
+		}
+
+		identifierMap[identifier] = value
+
+		id, err := strconv.ParseInt(value, 10, 64)
+		if err == nil {
+			ids = append(ids, id)
+		} else {
+			uids = append(uids, value)
+		}
+	}
+
+	return identifierMap, uids, ids
 }

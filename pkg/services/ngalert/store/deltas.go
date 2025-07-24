@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -11,10 +12,27 @@ import (
 // AlertRuleFieldsToIgnoreInDiff contains fields that are ignored when calculating the RuleDelta.Diff.
 var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated", "UpdatedBy"}
 
+// AlertRuleFieldsWhichAffectQuery contains fields which affect the rule's query(s)
+var AlertRuleFieldsWhichAffectQuery = [...]string{"Data", "IntervalSeconds"}
+
 type RuleDelta struct {
 	Existing *models.AlertRule
 	New      *models.AlertRule
 	Diff     cmputil.DiffReport
+}
+
+func (d *RuleDelta) AffectsQuery() bool {
+	if len(d.Diff) == 0 {
+		return false
+	}
+	for _, path := range d.Diff.Paths() {
+		for _, field := range AlertRuleFieldsWhichAffectQuery {
+			if strings.HasPrefix(path, field) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 type GroupDelta struct {

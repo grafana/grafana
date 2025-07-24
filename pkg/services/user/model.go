@@ -15,6 +15,9 @@ func (f *HelpFlags1) AddFlag(flag HelpFlags1)     { *f |= flag }
 const (
 	HelpFlagGettingStartedPanelDismissed HelpFlags1 = 1 << iota
 	HelpFlagDashboardHelp1
+	HelpFlagEnterpriseAuth1
+	HelpFlagSyntheticMonitoring1
+	HelpFlagIRM1
 )
 
 type UpdateEmailActionType string
@@ -92,8 +95,9 @@ type UpdateUserCommand struct {
 	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
 	// If OrgID is included update current org for user
-	OrgID      *int64      `json:"-"`
-	HelpFlags1 *HelpFlags1 `json:"-"`
+	OrgID         *int64      `json:"-"`
+	HelpFlags1    *HelpFlags1 `json:"-"`
+	IsProvisioned *bool       `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {
@@ -137,11 +141,11 @@ type UserSearchHitDTO struct {
 	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`
+	IsProvisioned bool                 `json:"isProvisioned"`
 	LastSeenAt    time.Time            `json:"lastSeenAt"`
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
-	IsProvisioned bool                 `json:"-" xorm:"is_provisioned"`
 }
 
 type GetUserProfileQuery struct {
@@ -166,7 +170,7 @@ type UserProfileDTO struct {
 	CreatedAt                      time.Time       `json:"createdAt"`
 	AvatarURL                      string          `json:"avatarUrl"`
 	AccessControl                  map[string]bool `json:"accessControl,omitempty"`
-	IsProvisioned                  bool            `json:"-"`
+	IsProvisioned                  bool            `json:"isProvisioned"`
 }
 
 // implement Conversion interface to define custom field mapping (xorm feature)

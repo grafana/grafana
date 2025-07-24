@@ -9,7 +9,14 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByName, getRulesDataSourceByUID } from '../utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
+  SupportedExternalRulesSourceType,
+  getDataSourceByName,
+  getRulesDataSourceByUID,
+  isSupportedExternalRulesSourceType,
+} from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
@@ -34,8 +41,10 @@ export async function discoverFeaturesByUid(dataSourceUid: string): Promise<Prom
     throw new Error(`The data source url cannot be empty.`);
   }
 
-  if (type !== 'prometheus' && type !== 'loki') {
-    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
+  if (!isSupportedExternalRulesSourceType(type)) {
+    throw new Error(
+      `The build info request is not available for ${type}. Supported values are ${SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES.join()}.`
+    );
   }
 
   return discoverDataSourceFeatures({ name, url, type });
@@ -52,7 +61,7 @@ export async function discoverFeaturesByUid(dataSourceUid: string): Promise<Prom
 export async function discoverDataSourceFeatures(dsSettings: {
   url: string;
   name: string;
-  type: 'prometheus' | 'loki';
+  type: SupportedExternalRulesSourceType;
 }): Promise<PromApiFeatures> {
   const { url, name, type } = dsSettings;
 

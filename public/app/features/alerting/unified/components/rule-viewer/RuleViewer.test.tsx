@@ -5,7 +5,7 @@ import { byLabelText, byRole, byText } from 'testing-library-selector';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
@@ -17,12 +17,14 @@ import {
   mockDataSource,
   mockPluginLinkExtension,
   mockPromAlertingRule,
+  mockRulerGrafanaRecordingRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import * as ruleId from '../../utils/rule-id';
 import { stringifyIdentifier } from '../../utils/rule-id';
 
@@ -83,7 +85,7 @@ const openSilenceDrawer = async () => {
   await screen.findByText(/Configure silences/i);
 };
 
-beforeAll(() => {
+beforeEach(() => {
   grantPermissionsHelper([
     AccessControlAction.AlertingRuleCreate,
     AccessControlAction.AlertingRuleRead,
@@ -136,7 +138,7 @@ describe('RuleViewer', () => {
     );
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
 
-    beforeAll(() => {
+    beforeEach(() => {
       grantPermissionsHelper([
         AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingRuleRead,
@@ -182,6 +184,30 @@ describe('RuleViewer', () => {
       for (const menuItem of menuItems) {
         expect(menuItem.get()).toBeInTheDocument();
       }
+    });
+
+    it('shows paused state correctly for recording rules', async () => {
+      const recordingRule = getGrafanaRule({
+        name: 'Test recording rule',
+        rulerRule: mockRulerGrafanaRecordingRule(
+          {},
+          {
+            is_paused: true,
+            title: 'Test recording',
+            record: {
+              metric: 'test_recording',
+              from: 'A',
+            },
+          }
+        ),
+      });
+
+      const recordingRuleIdentifier = ruleId.fromCombinedRule('grafana', recordingRule);
+      await renderRuleViewer(recordingRule, recordingRuleIdentifier, ActiveTab.Details);
+
+      expect(await screen.findByText('Test recording rule')).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: 'Alert evaluation currently paused' })).toBeInTheDocument();
+      expect(screen.queryByText(/last evaluation duration/i)).not.toBeInTheDocument();
     });
 
     it('renders silencing form correctly and shows alert rule name', async () => {
@@ -260,6 +286,19 @@ describe('RuleViewer', () => {
         const versionSummary = screen.getByRole('heading', { level: 4 });
         expect(versionSummary).toHaveTextContent(/Version 5 updated by alerting/i);
         expect(versionSummary).toHaveTextContent(/Version 6 updated by provisioning/i);
+      });
+
+      it('should not show any labels if we only have private labels', async () => {
+        const ruleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+        const rule = getGrafanaRule({
+          name: 'Test alert',
+          labels: {
+            [GRAFANA_ORIGIN_LABEL]: 'plugins/synthetic-monitoring-app',
+          },
+        });
+
+        await renderRuleViewer(rule, ruleIdentifier);
+        expect(screen.queryByText('Labels')).not.toBeInTheDocument();
       });
     });
   });

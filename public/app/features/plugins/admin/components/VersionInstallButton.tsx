@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { gt, valid } from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Badge, Button, ConfirmModal, Icon, Spinner, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';
@@ -47,12 +47,19 @@ export const VersionInstallButton = ({
   }, [installedVersion, version.version]);
 
   if (version.version === installedVersion) {
-    return <Badge className={styles.badge} text="Installed" icon="check" color="green" />;
+    return (
+      <Badge
+        className={styles.badge}
+        text={t('plugins.version-install-button.text-installed', 'Installed')}
+        icon="check"
+        color="green"
+      />
+    );
   }
 
   const performInstallation = () => {
     const trackProps = {
-      path: location.pathname,
+      path: window.location.pathname,
       plugin_id: pluginId,
       version: version.version,
       is_latest: latestCompatibleVersion === version.version,
@@ -114,7 +121,11 @@ export const VersionInstallButton = ({
       <ConfirmModal
         isOpen={isModalOpen}
         title={t('plugins.catalog.versions.downgrade-title', 'Downgrade plugin version')}
-        body={`${t('plugins.catalog.versions.confirmation-text-1', 'Are you really sure you want to downgrade to version')} ${version.version}? ${t('plugins.catalog.versions.confirmation-text-2', 'You should normally not be doing this')}`}
+        body={t(
+          'plugins.catalog.versions.confirmation-text',
+          'Are you really sure you want to downgrade to version {{version}}? You should normally not be doing this',
+          { version: version.version }
+        )}
         confirmText={t('plugins.catalog.versions.downgrade-confirm', 'Downgrade')}
         onConfirm={onConfirm}
         onDismiss={onDismiss}

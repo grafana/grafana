@@ -1,7 +1,7 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Label, Spinner, Stack, Switch } from '@grafana/ui';
 
-import { t, Trans } from '../../../core/internationalization';
 import { ThemePicker } from '../../dashboard/components/ShareModal/ThemePicker';
 
 interface Props {
@@ -42,6 +42,7 @@ export default function ShareInternallyConfiguration({
                 'link.share.time-range-description',
                 'Change the current relative time range to an absolute time range'
               )}
+              id="time-range-description"
             >
               <Trans i18nKey="link.share.time-range-label">Lock time range</Trans>
             </Label>

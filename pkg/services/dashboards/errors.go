@@ -4,118 +4,123 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 )
 
 // Typed errors
 var (
-	ErrDashboardNotFound = DashboardErr{
+	ErrDashboardNotFound = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard not found",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
-	ErrDashboardCorrupt = DashboardErr{
+	ErrDashboardCorrupt = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard data is missing or corrupt",
 		StatusCode: 500,
 		Status:     "not-found",
 	}
-	ErrDashboardPanelNotFound = DashboardErr{
+	ErrDashboardPanelNotFound = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard panel not found",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
-	ErrDashboardFolderNotFound = DashboardErr{
+	ErrDashboardFolderNotFound = dashboardaccess.DashboardErr{
 		Reason:     "Folder not found",
 		StatusCode: 404,
 	}
-	ErrDashboardWithSameUIDExists = DashboardErr{
+	ErrDashboardWithSameUIDExists = dashboardaccess.DashboardErr{
 		Reason:     "A dashboard with the same uid already exists",
 		StatusCode: 400,
 	}
-	ErrDashboardVersionMismatch = DashboardErr{
+	ErrDashboardVersionMismatch = dashboardaccess.DashboardErr{
 		Reason:     "The dashboard has been changed by someone else",
 		StatusCode: 412,
 		Status:     "version-mismatch",
 	}
-	ErrDashboardTitleEmpty = DashboardErr{
+	ErrDashboardTitleEmpty = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard title cannot be empty",
 		StatusCode: 400,
 		Status:     "empty-name",
 	}
-	ErrDashboardTitleTooLong = DashboardErr{
+	ErrDashboardTitleTooLong = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard title cannot contain more than 5 000 characters",
 		StatusCode: 400,
 		Status:     "title-too-long",
 	}
-	ErrDashboardFolderCannotHaveParent = DashboardErr{
+	ErrDashboardFolderCannotHaveParent = dashboardaccess.DashboardErr{
 		Reason:     "A Dashboard Folder cannot be added to another folder",
 		StatusCode: 400,
 	}
-	ErrDashboardsWithSameSlugExists = DashboardErr{
+	ErrDashboardsWithSameSlugExists = dashboardaccess.DashboardErr{
 		Reason:     "Multiple dashboards with the same slug exists",
 		StatusCode: 412,
 	}
-	ErrDashboardTypeMismatch = DashboardErr{
+	ErrDashboardTypeMismatch = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard cannot be changed to a folder",
 		StatusCode: 400,
 	}
-	ErrDashboardFolderNameExists = DashboardErr{
+	ErrDashboardFolderNameExists = dashboardaccess.DashboardErr{
 		Reason:     "A folder with that name already exists",
 		StatusCode: 400,
 	}
-	ErrDashboardUpdateAccessDenied = DashboardErr{
+	ErrDashboardUpdateAccessDenied = dashboardaccess.DashboardErr{
 		Reason:     "Access denied to save dashboard",
 		StatusCode: 403,
 	}
-	ErrDashboardInvalidUid = DashboardErr{
+	ErrDashboardInvalidUid = dashboardaccess.DashboardErr{
 		Reason:     "uid contains illegal characters",
 		StatusCode: 400,
 	}
-	ErrDashboardUidTooLong = DashboardErr{
+	ErrDashboardUidTooLong = dashboardaccess.DashboardErr{
 		Reason:     "uid too long, max 40 characters",
 		StatusCode: 400,
 	}
-	ErrDashboardMessageTooLong = DashboardErr{
+	ErrDashboardMessageTooLong = dashboardaccess.DashboardErr{
 		Reason:     "message too long, max 500 characters",
 		StatusCode: 400,
 	}
-	ErrDashboardCannotSaveProvisionedDashboard = DashboardErr{
+	ErrDashboardCannotSaveProvisionedDashboard = dashboardaccess.DashboardErr{
 		Reason:     "Cannot save provisioned dashboard",
 		StatusCode: 400,
 	}
-	ErrDashboardRefreshIntervalTooShort = DashboardErr{
+	ErrDashboardRefreshIntervalTooShort = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard refresh interval is too low",
 		StatusCode: 400,
 	}
-	ErrDashboardCannotDeleteProvisionedDashboard = DashboardErr{
+	ErrDashboardCannotDeleteProvisionedDashboard = dashboardaccess.DashboardErr{
 		Reason:     "provisioned dashboard cannot be deleted",
 		StatusCode: 400,
 	}
-	ErrDashboardIdentifierNotSet = DashboardErr{
+	ErrDashboardIdentifierNotSet = dashboardaccess.DashboardErr{
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,
 	}
-	ErrDashboardIdentifierInvalid = DashboardErr{
+	ErrDashboardIdentifierInvalid = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard ID not a number",
 		StatusCode: 400,
 	}
-	ErrDashboardPanelIdentifierInvalid = DashboardErr{
+	ErrDashboardPanelIdentifierInvalid = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard panel ID not a number",
 		StatusCode: 400,
 	}
-	ErrDashboardOrPanelIdentifierNotSet = DashboardErr{
+	ErrDashboardOrPanelIdentifierNotSet = dashboardaccess.DashboardErr{
 		Reason:     "Unique identifier needed to be able to get a dashboard panel",
 		StatusCode: 400,
 	}
-	ErrProvisionedDashboardNotFound = DashboardErr{
+	ErrProvisionedDashboardNotFound = dashboardaccess.DashboardErr{
 		Reason:     "Dashboard is not provisioned",
 		StatusCode: 404,
 		Status:     "not-found",
 	}
-	ErrFolderRestoreNotFound = DashboardErr{
+	ErrFolderRestoreNotFound = dashboardaccess.DashboardErr{
 		Reason:     "Restoring folder not found",
 		StatusCode: 400,
 		Status:     "bad-request",
+	}
+	ErrQuotaReached = dashboardaccess.DashboardErr{
+		Reason:     "Dashboard quota reached",
+		StatusCode: 403,
+		Status:     "quota-reached",
 	}
 
 	ErrFolderNotFound             = errors.New("folder not found")
@@ -129,35 +134,6 @@ var (
 	ErrFolderAccessEscalation     = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
 	ErrFolderCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", errutil.WithPublicMessage("not enough permissions to create a folder in the selected location"))
 )
-
-// DashboardErr represents a dashboard error.
-type DashboardErr struct {
-	StatusCode int
-	Status     string
-	Reason     string
-}
-
-// Equal returns whether equal to another DashboardErr.
-func (e DashboardErr) Equal(o DashboardErr) bool {
-	return o.StatusCode == e.StatusCode && o.Status == e.Status && o.Reason == e.Reason
-}
-
-// Error returns the error message.
-func (e DashboardErr) Error() string {
-	if e.Reason != "" {
-		return e.Reason
-	}
-	return "Dashboard Error"
-}
-
-// Body returns the error's response body, if applicable.
-func (e DashboardErr) Body() util.DynMap {
-	if e.Status == "" {
-		return nil
-	}
-
-	return util.DynMap{"status": e.Status, "message": e.Error()}
-}
 
 type UpdatePluginDashboardError struct {
 	PluginId string

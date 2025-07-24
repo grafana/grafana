@@ -9,11 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	alertingHttp "github.com/grafana/alerting/http"
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/notify/stages"
-	"github.com/grafana/alerting/receivers"
-	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -53,16 +50,12 @@ type alertmanager struct {
 	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
 
-	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
-	Settings            *setting.Cfg
-	Store               AlertingStore
-	stateStore          stateStore
-	NotificationService notifications.Service
-
-	decryptFn alertingNotify.GetDecryptedValueFn
-	orgID     int64
-
-	withAutogen bool
+	ConfigMetrics        *metrics.AlertmanagerConfigMetrics
+	Store                AlertingStore
+	stateStore           stateStore
+	DefaultConfiguration string
+	decryptFn            alertingNotify.GetDecryptedValueFn
+	crypto               Crypto
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -94,7 +87,7 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 
 func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
-	m *metrics.Alertmanager, featureToggles featuremgmt.FeatureToggles,
+	m *metrics.Alertmanager, featureToggles featuremgmt.FeatureToggles, crypto Crypto, notificationHistorian nfstatus.NotificationHistorian,
 ) (*alertmanager, error) {
 	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
@@ -124,18 +117,9 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
-	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
-	action := stages.Disabled
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStage) {
-		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingAlertmanagerExtraDedupStageStopPipeline) {
-			action = stages.StopPipeline
-		} else {
-			action = stages.LogOnly
-		}
-		l.Info("Initializing Alertmanager", "extra_dedup_stage", action)
-	}
+	l := log.New("ngalert.notifier")
 
-	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
+	opts := alertingNotify.GrafanaAlertmanagerOpts{
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
@@ -145,27 +129,32 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
 		},
-		PipelineAndStateTimestampsMismatchAction: action,
+		EmailSender:           &emailSender{ns},
+		ImageProvider:         newImageProvider(store, l.New("component", "image-provider")),
+		Decrypter:             decryptFn,
+		Version:               setting.BuildVersion,
+		TenantKey:             "orgID",
+		TenantID:              orgID,
+		Peer:                  peer,
+		Logger:                l,
+		Metrics:               alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l),
+		NotificationHistorian: notificationHistorian,
 	}
 
-	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l))
+	gam, err := alertingNotify.NewGrafanaAlertmanager(opts)
 	if err != nil {
 		return nil, err
 	}
 
 	am := &alertmanager{
-		Base:                gam,
-		ConfigMetrics:       m.AlertmanagerConfigMetrics,
-		Settings:            cfg,
-		Store:               store,
-		NotificationService: ns,
-		orgID:               orgID,
-		decryptFn:           decryptFn,
-		stateStore:          stateStore,
-		logger:              l,
-
-		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
-		withAutogen: featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting),
+		Base:                 gam,
+		ConfigMetrics:        m.AlertmanagerConfigMetrics,
+		DefaultConfiguration: cfg.UnifiedAlerting.DefaultConfiguration,
+		Store:                store,
+		stateStore:           stateStore,
+		logger:               l.New("component", "alertmanager", opts.TenantKey, opts.TenantID), // similar to what the base does
+		decryptFn:            decryptFn,
+		crypto:               crypto,
 	}
 
 	return am, nil
@@ -188,27 +177,21 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	var outerErr error
 	am.Base.WithLock(func() {
 		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
+			AlertmanagerConfiguration: am.DefaultConfiguration,
 			Default:                   true,
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-			OrgID:                     am.orgID,
+			OrgID:                     am.Base.TenantID(),
 			LastApplied:               time.Now().UTC().Unix(),
 		}
 
-		cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
+		cfg, err := Load([]byte(am.DefaultConfiguration))
 		if err != nil {
 			outerErr = err
 			return
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if am.withAutogen {
-				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
-				if err != nil {
-					return err
-				}
-			}
-			_, err = am.applyConfig(cfg)
+			_, err = am.applyConfig(ctx, cfg, true)
 			return err
 		})
 		if err != nil {
@@ -226,7 +209,13 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	// Remove autogenerated config from the user config before saving it, may not be necessary as we already remove
 	// the autogenerated config before provenance guard. However, this is low impact and a good safety net.
 	RemoveAutogenConfigIfExists(cfg.AlertmanagerConfig.Route)
-	rawConfig, err := json.Marshal(&cfg)
+
+	err := am.crypto.EncryptExtraConfigs(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt external configurations: %w", err)
+	}
+
+	cfgToSave, err := json.Marshal(&cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
 	}
@@ -234,21 +223,14 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	var outerErr error
 	am.Base.WithLock(func() {
 		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
-			AlertmanagerConfiguration: string(rawConfig),
+			AlertmanagerConfiguration: string(cfgToSave),
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-			OrgID:                     am.orgID,
+			OrgID:                     am.Base.TenantID(),
 			LastApplied:               time.Now().UTC().Unix(),
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if am.withAutogen {
-				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, false)
-				if err != nil {
-					return err
-				}
-			}
-
-			_, err = am.applyConfig(cfg)
+			_, err = am.applyConfig(ctx, cfg, false) // fail if the autogen config is invalid
 			return err
 		})
 		if err != nil {
@@ -270,20 +252,26 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		if am.withAutogen {
-			err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
-			if err != nil {
-				outerErr = err
-				return
-			}
-		}
 		// Note: Adding the autogen config here causes alert_configuration_history to update last_applied more often.
 		// Since we will now update last_applied when autogen changes even if the user-created config remains the same.
 		// To fix this however, the local alertmanager needs to be able to tell the difference between user-created and
 		// autogen config, which may introduce cross-cutting complexity.
-		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg); err != nil {
+		configChanged, err := am.applyConfig(ctx, cfg, true)
+		if err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
+		}
+
+		if !configChanged {
+			return
+		}
+		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
+			OrgID:             am.Base.TenantID(),
+			ConfigurationHash: dbCfg.ConfigurationHash,
+		}
+		err = am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
+		if err != nil {
+			outerErr = fmt.Errorf("unable to mark configuration as applied: %w", err)
 		}
 	})
 
@@ -307,11 +295,11 @@ func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig, c
 	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
 
 	am.ConfigMetrics.ConfigHash.
-		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
 		Set(hashAsMetricValue(am.Base.ConfigHash()))
 
 	am.ConfigMetrics.ConfigSizeBytes.
-		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
 		Set(float64(cfgSize))
 }
 
@@ -339,7 +327,28 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
+func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, skipInvalid bool) (bool, error) {
+	err := am.crypto.DecryptExtraConfigs(ctx, cfg)
+	if err != nil {
+		return false, fmt.Errorf("failed to decrypt external configurations: %w", err)
+	}
+
+	mergeResult, err := cfg.GetMergedAlertmanagerConfig()
+	if err != nil {
+		return false, fmt.Errorf("failed to get full alertmanager configuration: %w", err)
+	}
+	if logInfo := mergeResult.LogContext(); len(logInfo) > 0 {
+		am.logger.Info("Configurations merged successfully but some resources were renamed", logInfo...)
+	}
+	amConfig := mergeResult.Config
+	templates := alertingNotify.PostableAPITemplatesToTemplateDefinitions(cfg.GetMergedTemplateDefinitions())
+
+	// Now add autogenerated config to the route.
+	err = AddAutogenConfig(ctx, am.logger, am.Store, am.Base.TenantID(), &amConfig, skipInvalid)
+	if err != nil {
+		return false, err
+	}
+
 	// First, let's make sure this config is not already loaded
 	rawConfig, err := json.Marshal(cfg)
 	if err != nil {
@@ -354,17 +363,25 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 		return false, nil
 	}
 
+	receivers := PostableApiAlertingConfigToApiReceivers(amConfig)
+	for _, recv := range receivers {
+		err = patchNewSecureFields(ctx, recv, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
+		if err != nil {
+			return false, err
+		}
+	}
+
 	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
-	err = am.Base.ApplyConfig(AlertingConfiguration{
-		rawAlertmanagerConfig:    rawConfig,
-		configHash:               configHash,
-		route:                    cfg.AlertmanagerConfig.Route.AsAMRoute(),
-		inhibitRules:             cfg.AlertmanagerConfig.InhibitRules,
-		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
-		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
-		templates:                ToTemplateDefinitions(cfg),
-		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
-		receiverIntegrationsFunc: am.buildReceiverIntegrations,
+	err = am.Base.ApplyConfig(alertingNotify.NotificationsConfiguration{
+		RoutingTree:       amConfig.Route.AsAMRoute(),
+		InhibitRules:      amConfig.InhibitRules,
+		MuteTimeIntervals: amConfig.MuteTimeIntervals,
+		TimeIntervals:     amConfig.TimeIntervals,
+		Templates:         templates,
+		Receivers:         receivers,
+		DispatcherLimits:  &nilLimits{},
+		Raw:               rawConfig,
+		Hash:              configHash,
 	})
 	if err != nil {
 		return false, err
@@ -374,52 +391,48 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 	return true, nil
 }
 
-// applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig) error {
-	configChanged, err := am.applyConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	if configChanged {
-		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
-			OrgID:             am.orgID,
-			ConfigurationHash: hash,
+func patchNewSecureFields(ctx context.Context, api *alertingNotify.APIReceiver, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+	for _, integration := range api.Integrations {
+		switch integration.Type {
+		case "dingding":
+			err := patchSettingsFromSecureSettings(ctx, integration, "url", decode, decrypt)
+			if err != nil {
+				return err
+			}
 		}
-		return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
 	}
-
 	return nil
 }
 
-func (am *alertmanager) AppURL() string {
-	return am.Settings.AppURL
-}
-
-// buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
-	receiverCfg, err := alertingNotify.BuildReceiverConfiguration(context.Background(), receiver, alertingNotify.DecodeSecretsFromBase64, am.decryptFn)
-	if err != nil {
-		return nil, err
+func patchSettingsFromSecureSettings(ctx context.Context, integration *alertingNotify.GrafanaIntegrationConfig, key string, decode alertingNotify.DecodeSecretsFn, decrypt alertingNotify.GetDecryptedValueFn) error {
+	if _, ok := integration.SecureSettings[key]; !ok {
+		return nil
 	}
-	s := &sender{am.NotificationService}
-	img := newImageProvider(am.Store, log.New("ngalert.notifier.image-provider"))
-	integrations, err := alertingNotify.BuildReceiverIntegrations(
-		receiverCfg,
-		tmpl,
-		img,
-		LoggerFactory,
-		alertingHttp.DefaultClientConfiguration,
-		func(n receivers.Metadata) (receivers.EmailSender, error) {
-			return s, nil
-		},
-		am.orgID,
-		setting.BuildVersion,
-	)
+	decoded, err := decode(integration.SecureSettings)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return integrations, nil
+	settings := map[string]any{}
+	err = json.Unmarshal(integration.Settings, &settings)
+	if err != nil {
+		return err
+	}
+	currentValue, ok := settings[key]
+	currentString := ""
+	if ok {
+		currentString, _ = currentValue.(string)
+	}
+	secretValue := decrypt(ctx, decoded, key, currentString)
+	if secretValue == currentString {
+		return nil
+	}
+	settings[key] = secretValue
+	data, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+	integration.Settings = data
+	return nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not

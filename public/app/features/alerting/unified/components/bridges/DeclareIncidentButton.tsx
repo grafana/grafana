@@ -1,3 +1,4 @@
+import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, Menu, Tooltip } from '@grafana/ui';
 
 import { usePluginBridge } from '../../hooks/usePluginBridge';
@@ -25,19 +26,24 @@ export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: P
     <>
       {loading === true && (
         <Button icon="fire" size="sm" type="button" disabled>
-          Declare Incident
+          <Trans i18nKey="alerting.declare-incident-button.declare-incident">Declare Incident</Trans>
         </Button>
       )}
       {installed === false && (
-        <Tooltip content={'Grafana Incident is not installed or is not configured correctly'}>
+        <Tooltip
+          content={t(
+            'alerting.declare-incident-button.content-grafana-incident-installed-configured-correctly',
+            'Grafana Incident is not installed or is not configured correctly'
+          )}
+        >
           <Button icon="fire" size="sm" type="button" disabled>
-            Declare Incident
+            <Trans i18nKey="alerting.declare-incident-button.declare-incident">Declare Incident</Trans>
           </Button>
         </Tooltip>
       )}
       {settings && (
         <LinkButton icon="fire" size="sm" type="button" href={bridgeURL}>
-          Declare Incident
+          <Trans i18nKey="alerting.declare-incident-button.declare-incident">Declare Incident</Trans>
         </LinkButton>
       )}
     </>
@@ -55,13 +61,34 @@ export const DeclareIncidentMenuItem = ({ title = '', severity = '', url = '' }:
 
   return (
     <>
-      {loading === true && <Menu.Item label="Declare incident" icon="fire" disabled />}
+      {loading === true && (
+        <Menu.Item
+          label={t('alerting.declare-incident-menu-item.label-declare-incident', 'Declare incident')}
+          icon="fire"
+          disabled
+        />
+      )}
       {installed === false && (
-        <Tooltip content={'Grafana Incident is not installed or is not configured correctly'}>
-          <Menu.Item label="Declare incident" icon="fire" disabled />
+        <Tooltip
+          content={t(
+            'alerting.declare-incident-menu-item.content-grafana-incident-installed-configured-correctly',
+            'Grafana Incident is not installed or is not configured correctly'
+          )}
+        >
+          <Menu.Item
+            label={t('alerting.declare-incident-menu-item.label-declare-incident', 'Declare incident')}
+            icon="fire"
+            disabled
+          />
         </Tooltip>
       )}
-      {settings && <Menu.Item label="Declare incident" url={bridgeURL} icon="fire" />}
+      {settings && (
+        <Menu.Item
+          label={t('alerting.declare-incident-menu-item.label-declare-incident', 'Declare incident')}
+          url={bridgeURL}
+          icon="fire"
+        />
+      )}
     </>
   );
 };

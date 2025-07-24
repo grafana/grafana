@@ -3,11 +3,11 @@ import { ReactElement, useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { CollapsableSection, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
 import { getUnknownsNetwork, UsagesToNetwork } from '../../variables/utils';
@@ -76,10 +76,16 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
 
 function CollapseLabel(): ReactElement {
   const style = useStyles2(getStyles);
+
   return (
     <h5>
       <Trans i18nKey="variables.unknown-table.renamed-or-missing-variables">Renamed or missing variables</Trans>
-      <Tooltip content="Click to expand a list with all variable references that have been renamed or are missing from the dashboard.">
+      <Tooltip
+        content={t(
+          'variables.unknown-table.tooltip-renamed-or-missing-variables',
+          'Click to expand a list with all variable references that have been renamed or are missing from the dashboard.'
+        )}
+      >
         <Icon name="info-circle" className={style.infoIcon} />
       </Tooltip>
     </h5>

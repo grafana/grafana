@@ -5,8 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,14 +18,14 @@ func TestChannelNotifier(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
-		n := newChannelNotifier(5, log.NewNopLogger())
+		n := newChannelNotifier(5, &logging.NoOpLogger{})
 
 		events, err := n.notify(ctx)
 		require.NoError(t, err)
 
 		testEvent := &resource.WrittenEvent{
-			Type: resource.WatchEvent_ADDED,
-			Key: &resource.ResourceKey{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
 				Group:     "test",
 				Resource:  "test",
 				Name:      "test1",
@@ -42,7 +45,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	t.Run("should drop events when buffer is full", func(t *testing.T) {
 		bufferSize := 2
-		n := newChannelNotifier(bufferSize, log.NewNopLogger())
+		n := newChannelNotifier(bufferSize, &logging.NoOpLogger{})
 
 		events, err := n.notify(context.Background())
 		require.NoError(t, err)
@@ -58,7 +61,7 @@ func TestChannelNotifier(t *testing.T) {
 
 	t.Run("should close subscriber channels when context cancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		n := newChannelNotifier(5, log.NewNopLogger())
+		n := newChannelNotifier(5, &logging.NoOpLogger{})
 
 		events, err := n.notify(ctx)
 		require.NoError(t, err)

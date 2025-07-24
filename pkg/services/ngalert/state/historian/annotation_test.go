@@ -211,7 +211,7 @@ func TestBuildAnnotations(t *testing.T) {
 		logger := log.NewNopLogger()
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
-		states[0].State.Values = nil
+		states[0].Values = nil
 
 		items := buildAnnotations(rule, states, logger)
 
@@ -224,7 +224,7 @@ func TestBuildAnnotations(t *testing.T) {
 		logger := log.NewNopLogger()
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
-		states[0].State.Values = map[string]float64{"a": 1.0, "b": 2.0}
+		states[0].Values = map[string]float64{"a": 1.0, "b": 2.0}
 
 		items := buildAnnotations(rule, states, logger)
 
@@ -242,7 +242,7 @@ func TestBuildAnnotations(t *testing.T) {
 		logger := log.NewNopLogger()
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
-		states[0].State.Values = map[string]float64{"nan": math.NaN(), "inf": math.Inf(1), "ninf": math.Inf(-1)}
+		states[0].Values = map[string]float64{"nan": math.NaN(), "inf": math.Inf(1), "ninf": math.Inf(-1)}
 
 		items := buildAnnotations(rule, states, logger)
 

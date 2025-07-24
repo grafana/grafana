@@ -5,10 +5,9 @@ import {
   Field,
   FieldType,
   transformDataFrame,
+  toDataFrame,
 } from '@grafana/data';
-import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
-import { SortByTransformerOptions, sortByTransformer } from '@grafana/data/src/transformations/transformers/sortBy';
-import { mockTransformationsRegistry } from '@grafana/data/src/utils/tests/mockTransformationsRegistry';
+import { mockTransformationsRegistry, SortByTransformerOptions, sortByTransformer } from '@grafana/data/internal';
 
 import { extractFieldsTransformer } from './extractFields';
 import { ExtractFieldsOptions, FieldExtractorID } from './types';

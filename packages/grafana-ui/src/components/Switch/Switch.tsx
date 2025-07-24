@@ -4,7 +4,7 @@ import { forwardRef, HTMLProps, useRef } from 'react';
 
 import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 
@@ -181,9 +181,9 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
     },
   }),
   disabled: css({
-    backgroundColor: 'rgba(204, 204, 220, 0.04)',
+    backgroundColor: transparent ? 'transparent' : 'rgba(204, 204, 220, 0.04)',
     color: 'rgba(204, 204, 220, 0.6)',
-    border: '1px solid rgba(204, 204, 220, 0.04)',
+    border: `1px solid ${transparent ? 'transparent' : 'rgba(204, 204, 220, 0.04)'}`,
   }),
   inlineLabel: css({
     cursor: 'pointer',

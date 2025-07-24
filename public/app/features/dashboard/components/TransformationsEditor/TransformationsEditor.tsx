@@ -5,6 +5,7 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   DataFrame,
+  DataQueryRequest,
   DataTransformerConfig,
   PanelData,
   SelectableValue,
@@ -12,6 +13,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -43,6 +45,7 @@ export type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 
 export interface TransformationData {
+  request?: DataQueryRequest;
   series: DataFrame[];
   annotations?: DataFrame[];
 }
@@ -334,7 +337,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onClick={() => {
               this.setState({ search: '' });
             }}
-            tooltip="Clear search"
+            tooltip={t('dashboard.un-themed-transformations-editor.tooltip-clear-search', 'Clear search')}
           />
         </>
       );
@@ -349,7 +352,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           onClick={() => {
             this.setState({ showPicker: false });
           }}
-          tooltip="Close picker"
+          tooltip={t('dashboard.un-themed-transformations-editor.tooltip-close-picker', 'Close picker')}
         />
       );
     }
@@ -386,13 +389,21 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onClick={() => this.setState({ showRemoveAllModal: true })}
             style={{ marginLeft: this.props.theme.spacing.md }}
           >
-            Delete all transformations
+            <Trans i18nKey="dashboard.un-themed-transformations-editor.delete-all-transformations">
+              Delete all transformations
+            </Trans>
           </Button>
           <ConfirmModal
             isOpen={Boolean(this.state.showRemoveAllModal)}
-            title="Delete all transformations?"
-            body="By deleting all transformations, you will go back to the main selection screen."
-            confirmText="Delete all"
+            title={t(
+              'dashboard.un-themed-transformations-editor.title-delete-all-transformations',
+              'Delete all transformations?'
+            )}
+            body={t(
+              'dashboard.un-theme-transformations-editor.body-delete-all-transformations',
+              'By deleting all transformations, you will go back to the main selection screen.'
+            )}
+            confirmText={t('dashboard.un-themed-transformations-editor.confirmText-delete-all', 'Delete all')}
             onConfirm={() => this.onTransformationRemoveAll()}
             onDismiss={() => this.setState({ showRemoveAllModal: false })}
           />
@@ -427,7 +438,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           }}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          Add another transformation
+          <Trans i18nKey="dashboard.un-themed-transformations-editor.actions.add-another-transformation">
+            Add another transformation
+          </Trans>
         </Button>
         {deleteAll}
       </ButtonGroup>

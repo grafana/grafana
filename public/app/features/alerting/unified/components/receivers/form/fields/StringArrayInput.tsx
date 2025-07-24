@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, useStyles2 } from '@grafana/ui';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
@@ -40,7 +41,7 @@ export const StringArrayInput = ({ value, onChange, readOnly = false }: Props) =
               <ActionIcon
                 className={styles.deleteIcon}
                 icon="trash-alt"
-                tooltip="delete"
+                tooltip={t('alerting.string-array-input.tooltip-delete', 'delete')}
                 onClick={() => deleteItem(index)}
               />
             )}
@@ -55,7 +56,7 @@ export const StringArrayInput = ({ value, onChange, readOnly = false }: Props) =
           size="sm"
           onClick={() => onChange([...(value ?? []), ''])}
         >
-          Add
+          <Trans i18nKey="alerting.string-array-input.add">Add</Trans>
         </Button>
       )}
     </div>

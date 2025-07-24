@@ -32,7 +32,7 @@ import (
 
 var (
 	// nolint:gosimple
-	htmlCommentRegex = regexp.MustCompile("(?i)<!--([\\s\\S]*?)-->")
+	htmlCommentRegex = regexp.MustCompile(`(?i)<!--([\s\S]*?)-->`)
 	svgRegex         = regexp.MustCompile(`(?i)^\s*(?:<\?xml[^>]*>\s*)?(?:<!doctype svg[^>]*>\s*)?<svg[^>]*>[^*]*<\/svg>\s*$`)
 )
 

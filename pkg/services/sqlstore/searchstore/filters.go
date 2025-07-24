@@ -43,12 +43,18 @@ func (f OrgFilter) Where() (string, []any) {
 }
 
 type TitleFilter struct {
-	Dialect migrator.Dialect
-	Title   string
+	Dialect         migrator.Dialect
+	Title           string
+	TitleExactMatch bool
 }
 
 func (f TitleFilter) Where() (string, []any) {
-	return fmt.Sprintf("dashboard.title %s ?", f.Dialect.LikeStr()), []any{"%" + f.Title + "%"}
+	if f.TitleExactMatch {
+		return "dashboard.title = ?", []any{f.Title}
+	}
+
+	sql, params := f.Dialect.LikeOperator("dashboard.title", true, f.Title, true)
+	return sql, []any{params}
 }
 
 type FolderFilter struct {

@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -72,7 +73,12 @@ export function transformUsagesToNetwork(
     const { variable, tree } = usage;
     const result: UsagesToNetwork = {
       variable,
-      nodes: [{ id: 'dashboard', label: 'dashboard' }],
+      nodes: [
+        {
+          id: 'dashboard',
+          label: t('dashboard-scene.transform-usages-to-network.result.label.dashboard', 'dashboard'),
+        },
+      ],
       edges: [],
       showGraph: false,
     };

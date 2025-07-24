@@ -31,10 +31,7 @@ func TestNoOpSampler(t *testing.T) {
 func generateTestExemplars(tr models.TimeRange) []models.Exemplar {
 	exemplars := []models.Exemplar{}
 	next := tr.Start.UTC()
-	for {
-		if next.Equal(tr.End) || next.After(tr.End) {
-			break
-		}
+	for !next.Equal(tr.End) && !next.After(tr.End) {
 		exemplars = append(exemplars, models.Exemplar{
 			Timestamp: next,
 			Value:     float64(next.Unix()),

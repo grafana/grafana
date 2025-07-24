@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { BootData } from '@grafana/data';
-import { setEchoSrv } from '@grafana/runtime/src';
+import { setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
 import { Echo } from '../../../../core/services/echo/Echo';
@@ -30,7 +30,8 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 function mockLocationHref(href: string) {
-  const location = window.location;
+  const win: typeof globalThis = window;
+  const location = win.location;
 
   let search = '';
   const searchPos = href.indexOf('?');
@@ -39,8 +40,8 @@ function mockLocationHref(href: string) {
   }
 
   // @ts-ignore
-  delete window.location;
-  window.location = {
+  delete win.location;
+  win.location = {
     ...location,
     href,
     origin: new URL(href).origin,

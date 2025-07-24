@@ -3,8 +3,9 @@ import { forwardRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, ScopedVars } from '@grafana/data';
-import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
+import { sanitize, sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { ButtonLinkProps } from '@grafana/ui/internal';
@@ -45,7 +46,11 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
                 key={`dashlinks-dropdown-item-${resolvedLink.uid}-${index}`}
                 label={resolvedLink.title}
                 testId={selectors.components.DashboardLinks.link}
-                aria-label={`${resolvedLink.title} dashboard`}
+                aria-label={t(
+                  'dashboard.dashboard-links-menu.aria-label-dashboard-name',
+                  '{{dashboardName}} dashboard',
+                  { dashboardName: resolvedLink.title }
+                )}
               />
             );
           })}

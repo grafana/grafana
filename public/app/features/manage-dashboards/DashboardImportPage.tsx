@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -25,14 +26,15 @@ import {
 import appEvents from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { StoreState } from 'app/types';
+import { dispatch } from 'app/store/store';
+import { StoreState } from 'app/types/store';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
+import { ImportDashboardOverviewV2 } from '../dashboard-scene/v2schema/ImportDashboardOverviewV2';
 
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
-import { fetchGcomDashboard, importDashboardJson } from './state/actions';
+import { fetchGcomDashboard, importDashboardJson, importDashboardV2Json } from './state/actions';
 import { initialImportDashboardState } from './state/reducers';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 
@@ -53,6 +55,7 @@ const JSON_PLACEHOLDER = `{
 
 const mapStateToProps = (state: StoreState) => ({
   loadingState: state.importDashboard.state,
+  dashboard: state.importDashboard.dashboard,
 });
 
 const mapDispatchToProps = {
@@ -88,7 +91,23 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     });
 
     try {
-      this.props.importDashboardJson(JSON.parse(String(result)));
+      const json = JSON.parse(String(result));
+
+      if (json.spec?.elements) {
+        dispatch(importDashboardV2Json(json.spec));
+        return;
+      } else if (json.elements) {
+        dispatch(importDashboardV2Json(json));
+        return;
+      }
+
+      // check if it's a v1 resource format
+      if (json.spec) {
+        this.props.importDashboardJson(json.spec);
+        return;
+      }
+
+      this.props.importDashboardJson(json);
     } catch (error) {
       if (error instanceof Error) {
         appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
@@ -102,7 +121,25 @@ class UnthemedDashboardImport extends PureComponent<Props> {
       import_source: 'json_pasted',
     });
 
-    this.props.importDashboardJson(JSON.parse(formData.dashboardJson));
+    const dashboard = JSON.parse(formData.dashboardJson);
+
+    // check if it's a v2 resource format
+    if (dashboard.spec?.elements) {
+      dispatch(importDashboardV2Json(dashboard.spec));
+      return;
+      // check if it's just a v2 spec
+    } else if (dashboard.elements) {
+      dispatch(importDashboardV2Json(dashboard));
+      return;
+    }
+
+    // check if it's a v1 resource format
+    if (dashboard.spec) {
+      this.props.importDashboardJson(dashboard.spec);
+      return;
+    }
+
+    this.props.importDashboardJson(dashboard);
   };
 
   getGcomDashboard = (formData: { gcomDashboard: string }) => {
@@ -127,6 +164,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     const styles = importStyles(this.props.theme);
 
     const GcomDashboardsLink = () => (
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
         grafana.com/dashboards
       </TextLink>
@@ -224,9 +262,25 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   }
 
   pageNav: NavModelItem = {
-    text: 'Import dashboard',
-    subTitle: 'Import dashboard from file or Grafana.com',
+    text: t('manage-dashboards.unthemed-dashboard-import.text.import-dashboard', 'Import dashboard'),
+    subTitle: t(
+      'manage-dashboards.unthemed-dashboard-import.subTitle.import-dashboard-from-file-or-grafanacom',
+      'Import dashboard from file or Grafana.com'
+    ),
   };
+
+  getDashboardOverview() {
+    const { loadingState, dashboard } = this.props;
+
+    if (loadingState === LoadingState.Done) {
+      if (dashboard.elements || dashboard.spec?.elements) {
+        return <ImportDashboardOverviewV2 />;
+      }
+      return <ImportDashboardOverview />;
+    }
+
+    return null;
+  }
 
   render() {
     const { loadingState } = this.props;
@@ -242,7 +296,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             </Stack>
           )}
           {[LoadingState.Error, LoadingState.NotStarted].includes(loadingState) && this.renderImportForm()}
-          {loadingState === LoadingState.Done && <ImportDashboardOverview />}
+          {this.getDashboardOverview()}
         </Page.Contents>
       </Page>
     );

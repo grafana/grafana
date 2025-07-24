@@ -1,4 +1,4 @@
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 import { EditableRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -22,7 +22,7 @@ export function useDeleteRuleFromGroup() {
     const { groupName, namespaceName } = ruleGroup;
 
     const action = deleteRuleAction({ identifier: ruleIdentifier });
-    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
+    const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, [action]);
 
     const successMessage = t('alerting.rules.delete-rule.success', 'Rule successfully deleted');
 

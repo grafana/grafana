@@ -3,9 +3,10 @@ import { JSX } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Text, TextLink, Switch, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { loadSettings, saveSettings } from './state/actions';
 
@@ -69,7 +70,7 @@ export const AuthDrawerUnconnected = ({
   };
 
   const subtitle = (
-    <>
+    <Trans i18nKey="auth-config.auth-drawer-unconneced.subtitle">
       Configure auth settings. Find out more in our{' '}
       <TextLink
         external={true}
@@ -78,18 +79,31 @@ export const AuthDrawerUnconnected = ({
         documentation
       </TextLink>
       .
-    </>
+    </Trans>
   );
 
   const styles = useStyles2(getStyles);
 
   return (
-    <Drawer title="Auth Settings" subtitle={subtitle} size="md" onClose={onClose}>
+    <Drawer
+      title={t('auth-config.auth-drawer-unconnected.title-auth-settings', 'Auth settings')}
+      subtitle={subtitle}
+      size="md"
+      onClose={onClose}
+    >
       <div className={styles.advancedAuth}>
-        <Text variant="h4">Advanced Auth</Text>
-        <Text variant="h5">Enable insecure email lookup</Text>
+        <Text variant="h4">
+          <Trans i18nKey="auth-config.auth-drawer-unconnected.advanced-auth">Advanced Auth</Trans>
+        </Text>
+        <Text variant="h5">
+          <Trans i18nKey="auth-config.auth-drawer-unconnected.enable-insecure-email-lookup">
+            Enable insecure email lookup
+          </Trans>
+        </Text>
         <Text variant="body" color="secondary">
-          Allow users to use the same email address to log into Grafana with different identity providers.
+          <Trans i18nKey="auth-config.auth-drawer-unconnected.enable-insecure-email-lookup-description">
+            Allow users to use the same email address to log into Grafana with different identity providers.
+          </Trans>
         </Text>
         <Switch value={allowInsecureEmail} onChange={oauthAllowInsecureEmailLookupOnChange} />
       </div>
@@ -98,9 +112,12 @@ export const AuthDrawerUnconnected = ({
         variant="secondary"
         className={styles.button}
         onClick={resetButtonOnClick}
-        tooltip="This action will disregard any saved changes and load the configuration from the configuration file."
+        tooltip={t(
+          'auth-config.auth-drawer-unconnected.reset-tooltip',
+          'This action will disregard any saved changes and load the configuration from the configuration file.'
+        )}
       >
-        Reset
+        <Trans i18nKey="auth-config.auth-drawer-unconnected.reset">Reset</Trans>
       </Button>
     </Drawer>
   );

@@ -3,11 +3,11 @@ import { of } from 'rxjs';
 import { DataQueryRequest, dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { createLokiDatasource } from './__mocks__/datasource';
-import { getMockFrames } from './__mocks__/frames';
 import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
+import { createLokiDatasource } from './mocks/datasource';
+import { getMockFrames } from './mocks/frames';
 import { runSplitQuery } from './querySplitting';
 import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
@@ -69,6 +69,21 @@ describe('runSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       // 3 sub-requests + complete
       expect(emitted).toHaveLength(4);
+    });
+  });
+
+  test('Interpolates queries before execution', async () => {
+    const request = createRequest([{ expr: 'count_over_time({a="b"}[$__auto])', refId: 'A', step: '$step' }]);
+    datasource = createLokiDatasource({
+      replace: (input = '') => {
+        return input.replace('$__auto', '5m').replace('$step', '5m');
+      },
+      getVariables: () => [],
+    });
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [] }));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      expect(jest.mocked(datasource.runQuery).mock.calls[0][0].targets[0].expr).toBe('count_over_time({a="b"}[5m])');
+      expect(jest.mocked(datasource.runQuery).mock.calls[0][0].targets[0].step).toBe('5m');
     });
   });
 
@@ -306,8 +321,7 @@ describe('runSplitQuery()', () => {
             },
           ],
           request,
-          new Date(),
-          { predefinedOperations: '' }
+          new Date()
         );
       });
     });
@@ -336,8 +350,7 @@ describe('runSplitQuery()', () => {
             },
           ],
           request,
-          new Date(),
-          { predefinedOperations: '' }
+          new Date()
         );
       });
     });
@@ -440,90 +453,6 @@ describe('runSplitQuery()', () => {
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 3x Logs + 3x Metric + (1x Instant), 7 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(7);
-      });
-    });
-  });
-
-  describe('Splitting targets based on splitDuration', () => {
-    const range1h = {
-      from: dateTime('2023-02-08T05:00:00.000Z'),
-      to: dateTime('2023-02-08T06:00:00.000Z'),
-      raw: {
-        from: dateTime('2023-02-08T05:00:00.000Z'),
-        to: dateTime('2023-02-08T06:00:00.000Z'),
-      },
-    };
-    beforeEach(() => {
-      jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [], refId: 'A' }));
-    });
-    test('with 30m splitDuration runs 2 queries', async () => {
-      const request = {
-        targets: [{ expr: '{a="b"}', refId: 'A', splitDuration: '30m' }],
-        range: range1h,
-      } as DataQueryRequest<LokiQuery>;
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        expect(datasource.runQuery).toHaveBeenCalledTimes(2);
-      });
-    });
-    test('with 1h splitDuration runs 1 queries', async () => {
-      const request = {
-        targets: [{ expr: '{a="b"}', refId: 'A', splitDuration: '1h' }],
-        range: range1h,
-      } as DataQueryRequest<LokiQuery>;
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
-      });
-    });
-    test('with 1h splitDuration and 2 targets runs 1 queries', async () => {
-      const request = {
-        targets: [
-          { expr: '{a="b"}', refId: 'A', splitDuration: '1h' },
-          { expr: '{a="b"}', refId: 'B', splitDuration: '1h' },
-        ],
-        range: range1h,
-      } as DataQueryRequest<LokiQuery>;
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
-      });
-    });
-    test('with 1h/30m splitDuration and 2 targets runs 3 queries', async () => {
-      const request = {
-        targets: [
-          { expr: '{a="b"}', refId: 'A', splitDuration: '1h' },
-          { expr: '{a="b"}', refId: 'B', splitDuration: '30m' },
-        ],
-        range: range1h,
-      } as DataQueryRequest<LokiQuery>;
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // 2 x 30m + 1 x 1h
-        expect(datasource.runQuery).toHaveBeenCalledTimes(3);
-      });
-    });
-    test('with mixed splitDuration runs the expected amount of queries', async () => {
-      const request = createRequest(
-        [
-          { expr: 'count_over_time({c="d"}[1m])', refId: 'A', splitDuration: '15m' },
-          { expr: '{a="b"}', refId: 'B', splitDuration: '15m' },
-          { expr: '{a="b"}', refId: 'C', splitDuration: '1h' },
-        ],
-        { range: range1h }
-      );
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // 4 * 15m + 4 * 15m + 1 * 1h
-        expect(datasource.runQuery).toHaveBeenCalledTimes(9);
-      });
-    });
-    test('with 1h/30m splitDuration and 1 log and 2 metric target runs 3 queries', async () => {
-      const request = createRequest(
-        [
-          { expr: '{a="b"}', refId: 'A', splitDuration: '1h' },
-          { expr: 'count_over_time({c="d"}[1m])', refId: 'C', splitDuration: '30m' },
-        ],
-        { range: range1h }
-      );
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // 2 x 30m + 1 x 1h
-        expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
     });
   });

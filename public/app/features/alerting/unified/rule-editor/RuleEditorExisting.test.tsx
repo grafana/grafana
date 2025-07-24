@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
@@ -95,20 +95,12 @@ describe('RuleEditor grafana managed rules', () => {
     expect(nameInput).toHaveValue(grafanaRulerRule.grafana_alert.title);
     //check that folder is in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
-    expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations[Annotation.summary]);
+    expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations?.[Annotation.summary]);
+    expect(screen.getByText('New folder')).toBeInTheDocument();
 
     //check that slashed folders are not in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
     expect(ui.inputs.folder.get()).not.toHaveTextContent(new RegExp(slashedFolder.title));
-
-    //check that slashes warning is only shown once user search slashes
-    //todo: move this test to a unit test in FolderAndGroup unit test
-    // const folderInput = await ui.inputs.folderContainer.find();
-    // expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
-    // await user.type(within(folderInput).getByRole('combobox'), 'new slashed //');
-    // expect(within(folderInput).getByText("Folders with '/' character are not allowed.")).toBeInTheDocument();
-    // await user.keyboard('{backspace} {backspace}{backspace}');
-    // expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
 
     // add an annotation
     await user.click(screen.getByText('Add custom annotation'));
@@ -117,8 +109,6 @@ describe('RuleEditor grafana managed rules', () => {
 
     // save and check what was sent to backend
     await user.click(ui.buttons.save.get());
-
-    expect(screen.getByText('New folder')).toBeInTheDocument();
   });
 
   it('saves evaluation interval correctly', async () => {
@@ -160,6 +150,6 @@ describe('Data source managed rules', () => {
 
   it('should show an error if the data source does not exist', async () => {
     renderRuleEditor('cri%24grafana-cloudd%24delete me%24delete me 3%24recording_rule_delete_2%24-476183141');
-    expect(await screen.findByText(/unable to find data source/i)).toBeInTheDocument();
+    expect(await screen.findByText(/not found/i)).toBeInTheDocument();
   });
 });

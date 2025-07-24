@@ -4,14 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -20,15 +24,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestBleveBackend(t *testing.T) {
-	dashboardskey := &resource.ResourceKey{
+	dashboardskey := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	folderKey := &resource.ResourceKey{
+	folderKey := &resourcepb.ResourceKey{
 		Namespace: dashboardskey.Namespace,
 		Group:     "folder.grafana.app",
 		Resource:  "folders",
@@ -64,106 +69,122 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, info.Fields, func(index resource.ResourceIndex) (int64, error) {
-			_ = index.Write(&resource.IndexableDocument{
-				RV:   1,
-				Name: "aaa",
-				Key: &resource.ResourceKey{
-					Name:      "aaa",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Title:  "aaa (dash)",
-				Folder: "xxx",
-				Fields: map[string]any{
-					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
-					DASHBOARD_ERRORS_TODAY:      25,
-					DASHBOARD_VIEWS_LAST_1_DAYS: 50,
-				},
-				Labels: map[string]string{
-					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
-				},
-				Tags: []string{"aa", "bb"},
-				Manager: &utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: "repo-1",
-				},
-				Source: &utils.SourceProperties{
-					Path:            "path/to/aaa.json",
-					Checksum:        "xyz",
-					TimestampMillis: 1609462800000, // 2021
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV:   1,
+							Name: "aaa",
+							Key: &resourcepb.ResourceKey{
+								Name:      "aaa",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Title:  "aaa (dash)",
+							Folder: "xxx",
+							Fields: map[string]any{
+								DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
+								DASHBOARD_ERRORS_TODAY:      25,
+								DASHBOARD_VIEWS_LAST_1_DAYS: 50,
+							},
+							Labels: map[string]string{
+								utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
+							},
+							Tags: []string{"aa", "bb"},
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/aaa.json",
+								Checksum:        "xyz",
+								TimestampMillis: 1609462800000, // 2021
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV:   2,
+							Name: "bbb",
+							Key: &resourcepb.ResourceKey{
+								Name:      "bbb",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Title:  "bbb (dash)",
+							Folder: "xxx",
+							Fields: map[string]any{
+								DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
+								DASHBOARD_ERRORS_TODAY:      40,
+								DASHBOARD_VIEWS_LAST_1_DAYS: 100,
+							},
+							Tags: []string{"aa"},
+							Labels: map[string]string{
+								"region":                           "east",
+								utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
+							},
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/bbb.json",
+								Checksum:        "hijk",
+								TimestampMillis: 1640998800000, // 2022
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 3,
+							Key: &resourcepb.ResourceKey{
+								Name:      "ccc",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Name:   "ccc",
+							Title:  "ccc (dash)",
+							Folder: "zzz",
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo2",
+							},
+							Source: &utils.SourceProperties{
+								Path: "path/in/repo2.yaml",
+							},
+							Fields: map[string]any{},
+							Tags:   []string{"aa"},
+							Labels: map[string]string{
+								"region": "west",
+							},
+						},
+					},
 				},
 			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV:   2,
-				Name: "bbb",
-				Key: &resource.ResourceKey{
-					Name:      "bbb",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Title:  "bbb (dash)",
-				Folder: "xxx",
-				Fields: map[string]any{
-					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
-					DASHBOARD_ERRORS_TODAY:      40,
-					DASHBOARD_VIEWS_LAST_1_DAYS: 100,
-				},
-				Tags: []string{"aa"},
-				Labels: map[string]string{
-					"region":                           "east",
-					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
-				},
-				Manager: &utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: "repo-1",
-				},
-				Source: &utils.SourceProperties{
-					Path:            "path/to/bbb.json",
-					Checksum:        "hijk",
-					TimestampMillis: 1640998800000, // 2022
-				},
-			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 3,
-				Key: &resource.ResourceKey{
-					Name:      "ccc",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Name:   "ccc",
-				Title:  "ccc (dash)",
-				Folder: "zzz",
-				Manager: &utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: "repo2",
-				},
-				Source: &utils.SourceProperties{
-					Path: "path/in/repo2.yaml",
-				},
-				Fields: map[string]any{},
-				Tags:   []string{"aa"},
-				Labels: map[string]string{
-					"region": "west",
-				},
-			})
+			if err != nil {
+				return 0, err
+			}
 			return rv, nil
 		})
 		require.NoError(t, err)
 		require.NotNil(t, index)
 		dashboardsIndex = index
 
-		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tags": {
 					Field: "tags",
 					Limit: 100,
@@ -204,10 +225,10 @@ func TestBleveBackend(t *testing.T) {
 		count, _ = index.DocCount(ctx, "zzz")
 		assert.Equal(t, int64(1), count)
 
-		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
-				Labels: []*resource.Requirement{{
+				Labels: []*resourcepb.Requirement{{
 					Key:      utils.LabelKeyDeprecatedInternalID, // nolint:staticcheck
 					Operator: "in",
 					Values:   []string{"10", "11"},
@@ -223,13 +244,13 @@ func TestBleveBackend(t *testing.T) {
 		})
 
 		// can get sprinkles fields and sort by them
-		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
 			Limit:  100000,
 			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
 		}, nil)
@@ -243,13 +264,13 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, int64(100), val)
 
 		// check auth will exclude results we don't have access to
-		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
 			Limit:  100000,
 			Fields: []string{DASHBOARD_ERRORS_TODAY, DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "fields." + DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
 		}, nil)
@@ -257,7 +278,7 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, 0, len(rsp.Results.Rows))
 
 		// Now look for repositories
-		found, err := index.ListManagedObjects(ctx, &resource.ListManagedObjectsRequest{
+		found, err := index.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 			Kind: "repo",
 			Id:   "repo-1",
 		})
@@ -329,46 +350,63 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, fields, func(index resource.ResourceIndex) (int64, error) {
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 1,
-				Key: &resource.ResourceKey{
-					Name:      "zzz",
-					Namespace: "ns",
-					Group:     "folder.grafana.app",
-					Resource:  "folders",
-				},
-				Title: "zzz (folder)",
-				Manager: &utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: "repo-1",
-				},
-				Source: &utils.SourceProperties{
-					Path:            "path/to/folder.json",
-					Checksum:        "xxxx",
-					TimestampMillis: 300,
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 1,
+							Key: &resourcepb.ResourceKey{
+								Name:      "zzz",
+								Namespace: "ns",
+								Group:     "folder.grafana.app",
+								Resource:  "folders",
+							},
+							Title: "zzz (folder)",
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/folder.json",
+								Checksum:        "xxxx",
+								TimestampMillis: 300,
+							},
+							Labels: map[string]string{
+								utils.LabelKeyDeprecatedInternalID: "123",
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 2,
+							Key: &resourcepb.ResourceKey{
+								Name:      "yyy",
+								Namespace: "ns",
+								Group:     "folder.grafana.app",
+								Resource:  "folders",
+							},
+							Title: "yyy (folder)",
+							Labels: map[string]string{
+								"region":                           "west",
+								utils.LabelKeyDeprecatedInternalID: "321",
+							},
+						},
+					},
 				},
 			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 2,
-				Key: &resource.ResourceKey{
-					Name:      "yyy",
-					Namespace: "ns",
-					Group:     "folder.grafana.app",
-					Resource:  "folders",
-				},
-				Title: "yyy (folder)",
-				Labels: map[string]string{
-					"region": "west",
-				},
-			})
+			if err != nil {
+				return 0, err
+			}
 			return rv, nil
 		})
 		require.NoError(t, err)
 		require.NotNil(t, index)
 		foldersIndex = index
 
-		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"folders": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
 			Limit: 100000,
@@ -387,21 +425,21 @@ func TestBleveBackend(t *testing.T) {
 		require.NotNil(t, foldersIndex)
 
 		// Use a federated query to get both results together, sorted by title
-		rsp, err := dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err := dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardskey,
 			},
 			Fields: []string{
 				"title", "_id",
 			},
-			Federated: []*resource.ResourceKey{
+			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
 					Limit: 100,
@@ -451,21 +489,21 @@ func TestBleveBackend(t *testing.T) {
 		}`, string(disp))
 
 		// now only when we have permissions to see dashboards
-		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": false}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": false}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardskey,
 			},
 			Fields: []string{
 				"title", "_id",
 			},
-			Federated: []*resource.ResourceKey{
+			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
 					Limit: 100,
@@ -480,21 +518,21 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, "dashboards", rsp.Results.Rows[2].Key.Resource)
 
 		// now only when we have permissions to see folders
-		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": true}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardskey,
 			},
 			Fields: []string{
 				"title", "_id",
 			},
-			Federated: []*resource.ResourceKey{
+			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
 					Limit: 100,
@@ -508,21 +546,21 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, "folders", rsp.Results.Rows[1].Key.Resource)
 
 		// now when we have permissions to see nothing
-		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": false}), &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
+		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": false}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
 				Key: dashboardskey,
 			},
 			Fields: []string{
 				"title", "_id",
 			},
-			Federated: []*resource.ResourceKey{
+			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
+			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
 					Limit: 100,
@@ -537,8 +575,8 @@ func TestBleveBackend(t *testing.T) {
 
 func TestGetSortFields(t *testing.T) {
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
-		searchReq := &resource.ResourceSearchRequest{
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+		searchReq := &resourcepb.ResourceSearchRequest{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "views_total", Desc: false},
 			},
 		}
@@ -546,8 +584,8 @@ func TestGetSortFields(t *testing.T) {
 		assert.Equal(t, []string{"fields.views_total"}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
-		searchReq := &resource.ResourceSearchRequest{
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+		searchReq := &resourcepb.ResourceSearchRequest{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "views_total", Desc: true},
 			},
 		}
@@ -555,8 +593,8 @@ func TestGetSortFields(t *testing.T) {
 		assert.Equal(t, []string{"-fields.views_total"}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
-		searchReq := &resource.ResourceSearchRequest{
-			SortBy: []*resource.ResourceSearchRequest_Sort{
+		searchReq := &resourcepb.ResourceSearchRequest{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "description", Desc: false},
 			},
 		}
@@ -595,4 +633,341 @@ func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteReque
 
 func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
 	return nil, nil
+}
+
+func TestSafeInt64ToInt(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   int64
+		want    int
+		wantErr bool
+	}{
+		{
+			name:  "Valid int64 within int range",
+			input: 42,
+			want:  42,
+		},
+		{
+			name:    "Overflow int64 value",
+			input:   math.MaxInt64,
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "Underflow int64 value",
+			input:   math.MinInt64,
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := safeInt64ToInt(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_isPathWithinRoot(t *testing.T) {
+	tests := []struct {
+		name string
+		dir  string
+		root string
+		want bool
+	}{
+		{
+			name: "valid path",
+			dir:  "/path/to/my-file/",
+			root: "/path/to/",
+			want: true,
+		},
+		{
+			name: "valid path without trailing slash",
+			dir:  "/path/to/my-file",
+			root: "/path/to",
+			want: true,
+		},
+		{
+			name: "path with double slashes",
+			dir:  "/path//to//my-file/",
+			root: "/path/to/",
+			want: true,
+		},
+		{
+			name: "invalid path: ..",
+			dir:  "/path/../above/",
+			root: "/path/to/",
+		},
+		{
+			name: "invalid path: \\",
+			dir:  "\\path/to",
+			root: "/path/to/",
+		},
+		{
+			name: "invalid path: not under safe dir",
+			dir:  "/path/to.txt",
+			root: "/path/to/",
+		},
+		{
+			name: "invalid path: empty paths",
+			dir:  "",
+			root: "/path/to/",
+		},
+		{
+			name: "invalid path: different path",
+			dir:  "/other/path/to/my-file/",
+			root: "/Some/other/path",
+		},
+		{
+			name: "invalid path: empty safe path",
+			dir:  "/path/to/",
+			root: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, isPathWithinRoot(tt.dir, tt.root))
+		})
+	}
+}
+
+func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, dir string) *bleveBackend {
+	if dir == "" {
+		dir = t.TempDir()
+	}
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          dir,
+		FileThreshold: int64(fileThreshold),
+		IndexCacheTTL: cacheTTL,
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	require.NoError(t, err)
+	require.NotNil(t, backend)
+	t.Cleanup(backend.closeAllIndexes)
+	return backend
+}
+
+func TestBleveInMemoryIndexExpiration(t *testing.T) {
+	backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, 100, nil, indexTestDocs(ns, 1))
+	require.NoError(t, err)
+
+	// Wait for index expiration, which is 1ns
+	time.Sleep(10 * time.Millisecond)
+	idx, err := backend.GetIndex(context.Background(), ns)
+	require.NoError(t, err)
+	require.Nil(t, idx)
+
+	// Verify that builtIndex is now closed.
+	_, err = builtIndex.DocCount(context.Background(), "")
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+}
+
+func TestBleveFileIndexExpiration(t *testing.T) {
+	backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	// size=100 is above FileThreshold, this will be file-based index
+	builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, 100, nil, indexTestDocs(ns, 1))
+	require.NoError(t, err)
+
+	// Wait for index expiration, which is 1ns
+	time.Sleep(10 * time.Millisecond)
+	idx, err := backend.GetIndex(context.Background(), ns)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	// Verify that builtIndex is still open.
+	cnt, err := builtIndex.DocCount(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(1), cnt)
+}
+
+func TestFileIndexIsReusedOnSameSizeAndRV(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, indexTestDocs(ns, 10))
+	require.NoError(t, err)
+	backend1.closeAllIndexes()
+
+	// We open new backend using same directory, and run indexing with same size (10) and RV (100). This should reuse existing index, and skip indexing.
+	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	idx, err := backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, indexTestDocs(ns, 1000))
+	require.NoError(t, err)
+
+	// Verify that we're reusing existing index and there is only 10 documents in it, not 1000.
+	cnt, err := idx.DocCount(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(10), cnt)
+}
+
+func TestFileIndexIsNotReusedOnDifferentSize(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, indexTestDocs(ns, 10))
+	require.NoError(t, err)
+	backend1.closeAllIndexes()
+
+	// We open new backend using same directory, but with different size. Index should be rebuilt.
+	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	idx, err := backend2.BuildIndex(context.Background(), ns, 100, 100, nil, indexTestDocs(ns, 100))
+	require.NoError(t, err)
+
+	// Verify that index has updated number of documents.
+	cnt, err := idx.DocCount(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(100), cnt)
+}
+
+func TestFileIndexIsNotReusedOnDifferentRV(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, indexTestDocs(ns, 10))
+	require.NoError(t, err)
+	backend1.closeAllIndexes()
+
+	// We open new backend using same directory, but with different RV. Index should be rebuilt.
+	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	idx, err := backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 999999, nil, indexTestDocs(ns, 100))
+	require.NoError(t, err)
+
+	// Verify that index has updated number of documents.
+	cnt, err := idx.DocCount(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(100), cnt)
+}
+
+func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	for name, testCase := range map[string]struct {
+		firstInMemory  bool
+		secondInMemory bool
+	}{
+		"in-memory, in-memory": {true, true},
+		"in-memory, file":      {true, false},
+		"file, in-memory":      {false, true},
+		"file, file":           {false, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+			firstSize := 100
+			if testCase.firstInMemory {
+				firstSize = 1
+			}
+			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), 100, nil, indexTestDocs(ns, firstSize))
+			require.NoError(t, err)
+
+			secondSize := 100
+			if testCase.firstInMemory {
+				secondSize = 1
+			}
+			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), 100, nil, indexTestDocs(ns, secondSize))
+			require.NoError(t, err)
+
+			// Verify that first and second index are different, and first one is now closed.
+			require.NotEqual(t, firstIndex, secondIndex)
+
+			_, err = firstIndex.DocCount(context.Background(), "")
+			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+
+			cnt, err := secondIndex.DocCount(context.Background(), "")
+			require.NoError(t, err)
+			require.Equal(t, int64(secondSize), cnt)
+		})
+	}
+}
+
+func indexTestDocs(ns resource.NamespacedResource, docs int) func(index resource.ResourceIndex) (int64, error) {
+	return func(index resource.ResourceIndex) (int64, error) {
+		var items []*resource.BulkIndexItem
+		for i := 0; i < docs; i++ {
+			items = append(items, &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns.Namespace,
+						Group:     ns.Group,
+						Resource:  ns.Resource,
+						Name:      fmt.Sprintf("doc%d", i),
+					},
+					Title: fmt.Sprintf("Document %d", i),
+				},
+			})
+		}
+
+		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		return int64(docs), err
+	}
+}
+
+func TestCleanOldIndexes(t *testing.T) {
+	dir := t.TempDir()
+
+	b := setupBleveBackend(t, 5, time.Nanosecond, dir)
+
+	t.Run("with skip", func(t *testing.T) {
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
+
+		b.cleanOldIndexes(dir, "index-2")
+		files, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		require.Len(t, files, 1)
+		require.Equal(t, "index-2", files[0].Name())
+	})
+
+	t.Run("without skip", func(t *testing.T) {
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
+
+		b.cleanOldIndexes(dir, "")
+		files, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		require.Len(t, files, 0)
+	})
 }

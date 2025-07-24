@@ -348,7 +348,7 @@ describe('MultiCombobox', () => {
       jest.advanceTimersByTime(1500); // Resolve the first request, should be ignored
       expect(screen.queryByRole('option', { name: 'first' })).not.toBeInTheDocument();
       expect(screen.queryByRole('option', { name: 'second' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('option', { name: 'third' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'third' })).toBeInTheDocument();
 
       jest.clearAllTimers();
     });

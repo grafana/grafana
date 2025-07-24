@@ -1,0 +1,27 @@
+name: Dispatch check for patch conflicts
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - "main"
+      - "release-*"
+
+permissions:
+  id-token: write
+  contents: read
+
+# Since this is run on a pull request, we want to apply the patches intended for the
+# target branch onto the source branch, to verify compatibility before merging.
+jobs:
+  dispatch-job:
+    uses: grafana/grafana/.github/workflows/pr-patch-check.yml@main
+    with:
+      head_ref: ${{ github.head_ref }}
+      base_ref: ${{ github.base_ref }}
+      repo: ${{ github.repository }}
+      sender_login: ${{ github.event.sender.login }}
+      sha: ${{ github.sha }}
+      pr_commit_sha: ${{ github.event.pull_request.head.sha }}

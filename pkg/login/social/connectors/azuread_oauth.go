@@ -29,12 +29,16 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+const (
+	forceUseGraphAPIKey = "force_use_graph_api" // #nosec G101 not a hardcoded credential
+	domainHintKey       = "domain_hint"
+)
 
 var (
 	ExtraAzureADSettingKeys = map[string]ExtraKeyInfo{
 		forceUseGraphAPIKey:     {Type: Bool, DefaultValue: false},
 		allowedOrganizationsKey: {Type: String},
+		domainHintKey:           {Type: String},
 	}
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
@@ -106,9 +110,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
 
 	return provider
 }
@@ -290,7 +292,8 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 		validateAllowedGroups,
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
-		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
+		validation.DomainValidator(info.Extra[domainHintKey], "Domain Hint"))
 }
 
 func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
@@ -323,6 +326,17 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 		return nil, &SocialError{"AzureAD OAuth: tenant mismatch"}
 	}
 	return claims, nil
+}
+
+func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	if domainHint, ok := s.info.Extra[domainHintKey]; ok && domainHint != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("domain_hint", domainHint))
+	}
+
+	return s.getAuthCodeURL(state, opts...)
 }
 
 func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
@@ -382,6 +396,12 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		}
 		if info.FederatedCredentialAudience == "" {
 			return ssosettings.ErrInvalidOAuthConfig("FIC audience is required for Managed identity authentication.")
+		}
+		return nil
+
+	case social.WorkloadIdentity:
+		if info.WorkloadIdentityTokenFile == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
 		}
 		return nil
 
@@ -552,11 +572,11 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 
 	bf.WriteString("## AzureAD specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("allowed_groups = %v\n", s.info.AllowedGroups))
-	bf.WriteString(fmt.Sprintf("forceUseGraphAPI = %v\n", s.forceUseGraphAPI))
+	fmt.Fprintf(bf, "allowed_groups = %v\n", s.info.AllowedGroups)
+	fmt.Fprintf(bf, "forceUseGraphAPI = %v\n", s.forceUseGraphAPI)
 	bf.WriteString("```\n\n")
 
-	return s.SocialBase.getBaseSupportBundleContent(bf)
+	return s.getBaseSupportBundleContent(bf)
 }
 
 func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {

@@ -1,6 +1,6 @@
 import { isNumber } from 'lodash';
 import Feature, { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -20,9 +20,10 @@ import {
   DataHoverClearEvent,
   DataFrame,
   FieldType,
+  colorManipulator,
+  MapLayerOptions,
 } from '@grafana/data';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
+import { FrameGeometrySourceMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -84,7 +85,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -102,7 +103,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       const styleBase = routeStyle(style.base);
       if (style.config.size && style.config.size.fixed) {
         // Applies width to base style if specified
-        styleBase.getStroke().setWidth(style.config.size.fixed);
+        styleBase.getStroke()?.setWidth(style.config.size.fixed);
       }
       vectorLayer.setStyle(styleBase);
     } else {
@@ -207,10 +208,10 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       image: new Circle({
         radius: crosshairRadius,
         stroke: new Stroke({
-          color: alpha(crosshairColor, 1),
+          color: colorManipulator.alpha(crosshairColor, 1),
           width: 1,
         }),
-        fill: new Fill({ color: alpha(crosshairColor, 0.4) }),
+        fill: new Fill({ color: colorManipulator.alpha(crosshairColor, 0.4) }),
       }),
     });
     const lineStyle = new Style({
@@ -306,7 +307,30 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             style.dims = getStyleDimension(frame, style, theme);
           }
 
-          source.updateLineString(frame);
+          source.clear(true);
+          const info = getGeometryField(frame, location);
+          if (!info.field) {
+            source.changed();
+            break;
+          }
+          const coords: number[][] = [];
+          for (const v of info.field.values) {
+            if (v instanceof Point) {
+              coords.push(v.getCoordinates());
+            }
+          }
+          if (coords.length >= 2) {
+            const geometry = new LineString(coords);
+            source['addFeatureInternal'](
+              new Feature({
+                frame,
+                rowIndex: 0,
+                geometry,
+              })
+            );
+          }
+          source.changed();
+
           break; // Only the first frame for now!
         }
       },

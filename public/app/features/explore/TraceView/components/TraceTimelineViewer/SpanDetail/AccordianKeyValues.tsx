@@ -20,10 +20,10 @@ import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TraceLink, TNil } from '../../types';
+import TNil from '../../types/TNil';
 
 import * as markers from './AccordianKeyValues.markers';
-import KeyValuesTable from './KeyValuesTable';
+import KeyValuesTable, { KeyValuesTableLink } from './KeyValuesTable';
 
 import { alignIcon } from '.';
 
@@ -68,7 +68,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: 'summaryItem',
       display: 'inline',
       paddingRight: '0.5rem',
-      borderRight: `1px solid ${autoColor(theme, '#ddd')}`,
       '&:last-child': {
         paddingRight: 0,
         borderRight: 'none',
@@ -77,11 +76,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     summaryLabel: css({
       label: 'summaryLabel',
       color: autoColor(theme, '#777'),
-    }),
-    summaryDelim: css({
-      label: 'summaryDelim',
-      color: autoColor(theme, '#bbb'),
-      padding: '0 0.2em',
+      paddingRight: '0.5rem',
     }),
   };
 };
@@ -94,7 +89,7 @@ export type AccordianKeyValuesProps = {
   interactive?: boolean;
   isOpen: boolean;
   label: string | React.ReactNode;
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
   onToggle?: null | (() => void);
 };
 
@@ -116,7 +111,6 @@ export function KeyValuesSummary({ data = null }: KeyValuesSummaryProps) {
         // `i` is necessary in the key because item.key can repeat
         <li className={styles.summaryItem} key={`${item.key}-${i}`}>
           <span className={styles.summaryLabel}>{item.key}</span>
-          <span className={styles.summaryDelim}>=</span>
           {String(item.value)}
         </li>
       ))}

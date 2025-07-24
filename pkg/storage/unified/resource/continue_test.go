@@ -10,6 +10,7 @@ func TestContinueToken(t *testing.T) {
 	token := &ContinueToken{
 		ResourceVersion: 100,
 		StartOffset:     50,
+		SortAscending:   false,
 	}
-	assert.Equal(t, "eyJvIjo1MCwidiI6MTAwfQ==", token.String())
+	assert.Equal(t, "eyJvIjo1MCwidiI6MTAwLCJzIjpmYWxzZX0=", token.String())
 }

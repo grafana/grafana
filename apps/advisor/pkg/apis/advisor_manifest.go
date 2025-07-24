@@ -7,15 +7,20 @@ package apis
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
+
+	v0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 )
 
 var (
-	rawSchemaCheckv0alpha1         = []byte(`{"spec":{"properties":{"data":{"additionalProperties":{"type":"string"},"description":"Generic data input that a check can receive","type":"object"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"},"report":{"properties":{"count":{"description":"Number of elements analyzed","type":"integer"},"failures":{"description":"List of failures","items":{"properties":{"item":{"description":"Human readable identifier of the item that failed","type":"string"},"links":{"description":"Links to actions that can be taken to resolve the failure","items":{"properties":{"message":{"description":"Human readable error message","type":"string"},"url":{"description":"URL to a page with more information about the error","type":"string"}},"required":["url","message"],"type":"object"},"type":"array"},"severity":{"description":"Severity of the failure","enum":["high","low"],"type":"string"},"stepID":{"description":"Step ID that the failure is associated with","type":"string"}},"required":["severity","stepID","item","links"],"type":"object"},"type":"array"}},"required":["count","failures"],"type":"object"}},"required":["report"],"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
+	rawSchemaCheckv0alpha1         = []byte(`{"spec":{"properties":{"data":{"additionalProperties":{"type":"string"},"description":"Generic data input that a check can receive","type":"object"}},"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"},"report":{"properties":{"count":{"description":"Number of elements analyzed","type":"integer"},"failures":{"description":"List of failures","items":{"properties":{"item":{"description":"Human readable identifier of the item that failed","type":"string"},"itemID":{"description":"ID of the item that failed","type":"string"},"links":{"description":"Links to actions that can be taken to resolve the failure","items":{"properties":{"message":{"description":"Human readable error message","type":"string"},"url":{"description":"URL to a page with more information about the error","type":"string"}},"required":["url","message"],"type":"object"},"type":"array"},"moreInfo":{"description":"More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.","type":"string"},"severity":{"description":"Severity of the failure","enum":["high","low"],"type":"string"},"stepID":{"description":"Step ID that the failure is associated with","type":"string"}},"required":["severity","stepID","item","itemID","links"],"type":"object"},"type":"array"}},"required":["count","failures"],"type":"object"}},"required":["report"],"type":"object"}}`)
 	versionSchemaCheckv0alpha1     app.VersionSchema
 	_                              = json.Unmarshal(rawSchemaCheckv0alpha1, &versionSchemaCheckv0alpha1)
-	rawSchemaCheckTypev0alpha1     = []byte(`{"spec":{"properties":{"name":{"type":"string"},"steps":{"items":{"properties":{"description":{"type":"string"},"resolution":{"type":"string"},"stepID":{"type":"string"},"title":{"type":"string"}},"required":["title","description","stepID","resolution"],"type":"object"},"type":"array"}},"required":["name","steps"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
+	rawSchemaCheckTypev0alpha1     = []byte(`{"spec":{"properties":{"name":{"type":"string"},"steps":{"items":{"properties":{"description":{"type":"string"},"resolution":{"type":"string"},"stepID":{"type":"string"},"title":{"type":"string"}},"required":["title","description","stepID","resolution"],"type":"object"},"type":"array"}},"required":["name","steps"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaCheckTypev0alpha1 app.VersionSchema
 	_                              = json.Unmarshal(rawSchemaCheckTypev0alpha1, &versionSchemaCheckTypev0alpha1)
 )
@@ -23,14 +28,16 @@ var (
 var appManifestData = app.ManifestData{
 	AppName: "advisor",
 	Group:   "advisor.grafana.app",
-	Kinds: []app.ManifestKind{
+	Versions: []app.ManifestVersion{
 		{
-			Kind:       "Check",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
+			Name:   "v0alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
 				{
-					Name: "v0alpha1",
+					Kind:       "Check",
+					Plural:     "Checks",
+					Scope:      "Namespaced",
+					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -41,27 +48,17 @@ var appManifestData = app.ManifestData{
 					},
 					Schema: &versionSchemaCheckv0alpha1,
 				},
-			},
-		},
 
-		{
-			Kind:       "CheckType",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
 				{
-					Name:   "v0alpha1",
-					Schema: &versionSchemaCheckTypev0alpha1,
+					Kind:       "CheckType",
+					Plural:     "CheckTypes",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaCheckTypev0alpha1,
 				},
 			},
 		},
 	},
-}
-
-func jsonToMap(j string) map[string]any {
-	m := make(map[string]any)
-	json.Unmarshal([]byte(j), &j)
-	return m
 }
 
 func LocalManifest() app.Manifest {
@@ -70,4 +67,29 @@ func LocalManifest() app.Manifest {
 
 func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("advisor")
+}
+
+var kindVersionToGoType = map[string]resource.Kind{
+	"Check/v0alpha1":     v0alpha1.CheckKind(),
+	"CheckType/v0alpha1": v0alpha1.CheckTypeKind(),
+}
+
+// ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
+// If there is no association for the provided Kind and Version, exists will return false.
+func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exists bool) {
+	goType, exists = kindVersionToGoType[fmt.Sprintf("%s/%s", kind, version)]
+	return goType, exists
+}
+
+var customRouteToGoResponseType = map[string]any{}
+
+// ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
+// kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
+// If there is no association for the provided kind, version, custom route path, and method, exists will return false.
+func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (goType any, exists bool) {
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	goType, exists = customRouteToGoResponseType[fmt.Sprintf("%s|%s|%s|%s", version, kind, path, strings.ToUpper(verb))]
+	return goType, exists
 }

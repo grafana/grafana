@@ -11,11 +11,16 @@
 import * as common from '@grafana/schema';
 
 export interface Options {
+  controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
+  grammar?: unknown;
+  onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
+  showControls: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
+  syntaxHighlighting: boolean;
   wrapLogMessage: boolean;
 }

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "Extensions test app",
+  "preload": true,
+  "id": "grafana-extensionstest-app",
+  "info": {
+    "keywords": ["app"],
+    "description": "",
+    "author": {
+      "name": "Grafana"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "name": "Exposed components",
+      "path": "/a/grafana-extensionstest-app/exposed-components",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "Added components",
+      "path": "/a/grafana-extensionstest-app/added-components",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "Added links",
+      "path": "/a/grafana-extensionstest-app/added-links",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": false
+    }
+  ],
+  "extensions": {
+    "addedLinks": [
+      {
+        "targets": ["grafana/dashboard/panel/menu"],
+        "title": "Open from time series or pie charts (path)",
+        "description": "This link will only be visible on time series and pie charts"
+      },
+      {
+        "targets": ["grafana/dashboard/panel/menu"],
+        "title": "Open from time series or pie charts (onClick)",
+        "description": "This link will only be visible on time series and pie charts"
+      }
+    ],
+    "extensionPoints": [
+      {
+        "id": "plugins/grafana-extensionstest-app/use-plugin-links/v1",
+        "title": "Extension point - links"
+      },
+      {
+        "id": "plugins/grafana-extensionstest-app/addComponent/v1",
+        "title": "Extension point - components"
+      },
+      {
+        "id": "plugins/grafana-extensionstest-app/actions",
+        "title": "Legacy extension point - usePluginExtensions() and usePluginLinkExtensions()"
+      },
+      {
+        "id": "plugins/grafana-extensionstest-app/configure-extension-component/v1",
+        "title": "Legacy extension point - usePluginComponentExtensions()"
+      }
+    ]
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.4.0",
+    "plugins": [],
+    "extensions": {
+      "exposedComponents": ["grafana-extensionexample1-app/reusable-component/v1"]
+    }
+  }
+}

@@ -1,14 +1,9 @@
-import { SelectableValue } from '@grafana/data';
+import { OrgRole, SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2, PopoverContent } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { OrgRole } from 'app/types';
+import { contextSrv } from 'app/core/core';
 
 import { getStyles } from './styles';
-
-const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
-  label: r === OrgRole.None ? 'No basic role' : r,
-  value: r,
-}));
 
 interface Props {
   value?: OrgRole;
@@ -21,6 +16,20 @@ interface Props {
 export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssage, tooltipMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+
+  // Create options dynamically to filter out OrgRole.None when access control is not licensed
+  const basicRoleOptions: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
+    .filter((r) => {
+      // Filter out OrgRole.None if access control is not licensed
+      if (r === OrgRole.None && !contextSrv.licensedAccessControlEnabled()) {
+        return false;
+      }
+      return true;
+    })
+    .map((r) => ({
+      label: r === OrgRole.None ? 'No basic role' : r,
+      value: r,
+    }));
 
   return (
     <>
@@ -42,7 +51,7 @@ export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssag
       <RadioButtonList
         name="Basic Role Selector"
         className={styles.basicRoleSelector}
-        options={BasicRoleOption}
+        options={basicRoleOptions}
         value={value}
         onChange={onChange}
         disabled={disabled}

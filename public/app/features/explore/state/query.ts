@@ -15,11 +15,9 @@ import {
   hasQueryImportSupport,
   LoadingState,
   LogsVolumeType,
-  PanelEvents,
   QueryFixAction,
   ScopedVars,
   SupplementaryQueryType,
-  toLegacyResponseData,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
@@ -41,15 +39,14 @@ import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state
 import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
-  createAsyncThunk,
   ExploreItemState,
   ExplorePanelData,
+  ExploreState,
+  QueryOptions,
   QueryTransaction,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
-import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
+  SupplementaryQueries,
+} from 'app/types/explore';
+import { createAsyncThunk, StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
 
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -1311,7 +1308,6 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
   const { response } = action.payload;
   const {
     request,
-    series,
     error,
     graphResult,
     logsResult,
@@ -1328,23 +1324,10 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
     if (error.type === DataQueryErrorType.Timeout || error.type === DataQueryErrorType.Cancelled) {
       return { ...state };
     }
-
-    // Send error to Angular editors
-    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
-    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
-      state.eventBridge.emit(PanelEvents.dataError, error);
-    }
   }
 
   if (!request) {
     return { ...state };
-  }
-
-  // Send legacy data to Angular editors
-  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
-  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
-    const legacy = series.map((v) => toLegacyResponseData(v));
-    state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
   return {

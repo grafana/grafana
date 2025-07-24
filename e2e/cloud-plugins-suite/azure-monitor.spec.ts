@@ -5,19 +5,19 @@ import { v4 as uuidv4 } from 'uuid';
 import { selectors as rawSelectors } from '@grafana/e2e-selectors';
 
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
+import { AzureQueryType } from '../../public/app/plugins/datasource/azuremonitor/types/query';
 import {
-  AzureDataSourceJsonData,
-  AzureDataSourceSecureJsonData,
-  AzureQueryType,
-} from '../../public/app/plugins/datasource/azuremonitor/types';
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData,
+} from '../../public/app/plugins/datasource/azuremonitor/types/types';
 import { e2e } from '../utils';
 
 const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
 
 type AzureMonitorConfig = {
-  secureJsonData: AzureDataSourceSecureJsonData;
-  jsonData: AzureDataSourceJsonData;
+  secureJsonData: AzureMonitorDataSourceSecureJsonData;
+  jsonData: AzureMonitorDataSourceJsonData;
 };
 
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
@@ -221,11 +221,8 @@ describe('Azure monitor datasource', () => {
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
-        cy.wait(1000); // Need to wait for code editor to completely load
-        e2eSelectors.queryEditor.argsQueryEditor.subscriptions
-          .input()
-          .find('[aria-label="select-clear-value"]')
-          .click();
+        cy.wait(2000); // Need to wait for code editor to completely load
+        e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('[aria-label="Clear value"]').click();
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('input').type('datasources{enter}');
         e2e.components.CodeEditor.container().type(
           "Resources | where resourceGroup == 'cloud-plugins-e2e-test-azmon' | project name, resourceGroup"

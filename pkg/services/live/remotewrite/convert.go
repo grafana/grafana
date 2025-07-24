@@ -57,8 +57,8 @@ func isValid(name string, table table) bool {
 	}
 
 	for i, r := range name {
-		switch {
-		case i == 0:
+		switch i {
+		case 0:
 			if !unicode.In(r, table.First) {
 				return false
 			}
@@ -83,8 +83,8 @@ func sanitize(name string, table table) (string, bool) {
 	var b strings.Builder
 
 	for i, r := range name {
-		switch {
-		case i == 0:
+		switch i {
+		case 0:
 			if unicode.In(r, table.First) {
 				b.WriteRune(r)
 			}

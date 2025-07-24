@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { isEmpty } from 'lodash';
 import { FC, useEffect } from 'react';
 import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
@@ -15,7 +14,7 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
@@ -26,33 +25,30 @@ import { WrapWithTemplateSelection } from './TemplateSelector';
 interface Props {
   defaultValue: any;
   option: NotificationChannelOption;
-  // this is defined if the option is rendered inside a subform
-  parentOption?: NotificationChannelOption;
+  getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
   invalid?: boolean;
   pathPrefix: string;
-  pathSuffix?: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
   customValidator?: (value: string) => boolean | string | Promise<boolean | string>;
   onResetSecureField?: (propertyName: string) => void;
-  secureFields?: NotificationChannelSecureFields;
+  onDeleteSubform?: (settingsPath: string, option: NotificationChannelOption) => void;
+  secureFields: NotificationChannelSecureFields;
 }
 
 export const OptionField: FC<Props> = ({
   option,
-  parentOption,
   invalid,
   pathPrefix,
-  pathSuffix = '',
   error,
   defaultValue,
   readOnly = false,
   customValidator,
   onResetSecureField,
-  secureFields = {},
+  secureFields,
+  onDeleteSubform,
+  getOptionMeta,
 }) => {
-  const optionPath = `${pathPrefix}${pathSuffix}`;
-
   if (option.element === 'subform') {
     return (
       <SubformField
@@ -62,65 +58,68 @@ export const OptionField: FC<Props> = ({
         defaultValue={defaultValue}
         option={option}
         errors={error}
-        pathPrefix={optionPath}
+        pathPrefix={pathPrefix}
+        onDelete={onDeleteSubform}
       />
     );
   }
   if (option.element === 'subform_array') {
     return (
       <SubformArrayField
+        secureFields={secureFields}
         readOnly={readOnly}
         defaultValues={defaultValue}
         option={option}
-        pathPrefix={optionPath}
+        pathPrefix={pathPrefix}
         errors={error as Array<DeepMap<any, FieldError>> | undefined}
       />
     );
   }
+
   return (
     <Field
       label={option.element !== 'checkbox' && option.element !== 'radio' ? option.label : undefined}
       description={option.description || undefined}
       invalid={!!error}
       error={error?.message}
-      data-testid={`${optionPath}${option.propertyName}`}
+      data-testid={`${pathPrefix}${option.propertyName}`}
     >
       <OptionInput
-        id={`${optionPath}${option.propertyName}`}
+        id={`${pathPrefix}${option.propertyName}`}
         defaultValue={defaultValue}
         option={option}
         invalid={invalid}
-        pathPrefix={optionPath}
+        pathPrefix={pathPrefix}
         readOnly={readOnly}
-        pathIndex={pathPrefix}
-        parentOption={parentOption}
         customValidator={customValidator}
         onResetSecureField={onResetSecureField}
         secureFields={secureFields}
+        getOptionMeta={getOptionMeta}
       />
     </Field>
   );
 };
 
-const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
+const OptionInput: FC<Props & { id: string }> = ({
   option,
   invalid,
   id,
   pathPrefix = '',
-  pathIndex = '',
   readOnly = false,
   customValidator,
   onResetSecureField,
   secureFields = {},
-  parentOption,
+  getOptionMeta,
 }) => {
   const styles = useStyles2(getStyles);
-  const { control, register, unregister, getValues, setValue } = useFormContext();
+  const { control, register, unregister, setValue } = useFormContext();
+
+  const optionMeta = getOptionMeta?.(option);
 
   const name = `${pathPrefix}${option.propertyName}`;
-  const nestedKey = parentOption ? `${parentOption.propertyName}.${option.propertyName}` : option.propertyName;
 
-  const isEncryptedInput = secureFields?.[nestedKey];
+  const secureFieldKey = option.secure && option.secureFieldKey ? option.secureFieldKey : '';
+  const isEncryptedInput = secureFieldKey && secureFields?.[secureFieldKey];
 
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
   useEffect(
@@ -158,15 +157,15 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           onSelectTemplate={onSelectTemplate}
         >
           {isEncryptedInput ? (
-            <SecretInput onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+            <SecretInput id={id} onReset={() => onResetSecureField?.(secureFieldKey)} isConfigured />
           ) : (
             <Input
               id={id}
-              readOnly={readOnly || useTemplates || determineReadOnly(option, getValues, pathIndex)}
+              readOnly={readOnly || useTemplates || optionMeta?.readOnly}
               invalid={invalid}
               type={option.inputType}
               {...register(name, {
-                required: determineRequired(option, getValues, pathIndex),
+                required: optionMeta?.required,
                 validate: {
                   validationRule: (v) =>
                     option.validationRule ? validateOption(v, option.validationRule, option.required) : true,
@@ -233,7 +232,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           onSelectTemplate={onSelectTemplate}
         >
           {isEncryptedInput ? (
-            <SecretTextArea onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+            <SecretTextArea id={id} onReset={() => onResetSecureField?.(secureFieldKey)} isConfigured />
           ) : (
             <TextArea
               id={id}
@@ -291,31 +290,4 @@ const validateOption = (value: string, validationRule: string, required: boolean
   }
 
   return RegExp(validationRule).test(value) ? true : 'Invalid format';
-};
-
-const determineRequired = (option: NotificationChannelOption, getValues: any, pathIndex: string) => {
-  const secureFields = getValues(`${pathIndex}secureFields`);
-  const secureSettings = getValues(`${pathIndex}secureSettings`);
-
-  if (!option.dependsOn) {
-    return option.required ? 'Required' : false;
-  }
-  if (isEmpty(secureFields) || !secureFields[option.dependsOn]) {
-    const dependentOn = Boolean(secureSettings[option.dependsOn]);
-    return !dependentOn && option.required ? 'Required' : false;
-  } else {
-    const dependentOn = Boolean(secureFields[option.dependsOn]);
-    return !dependentOn && option.required ? 'Required' : false;
-  }
-};
-
-const determineReadOnly = (option: NotificationChannelOption, getValues: any, pathIndex: string) => {
-  if (!option.dependsOn) {
-    return false;
-  }
-  if (isEmpty(getValues(`${pathIndex}secureFields`))) {
-    return getValues(`${pathIndex}secureSettings.${option.dependsOn}`);
-  } else {
-    return getValues(`${pathIndex}secureFields.${option.dependsOn}`);
-  }
 };

@@ -207,7 +207,7 @@ func (f *JSONFormatter) processArray(array []any, deltas []diff.Delta) error {
 			if int(d.Position.(diff.Index)) < len(array) {
 				continue
 			}
-			f.printRecursive(d.Position.String(), d.Value, ChangeAdded)
+			f.printRecursive(d.String(), d.Value, ChangeAdded)
 		}
 	}
 
@@ -227,7 +227,7 @@ func (f *JSONFormatter) processObject(object map[string]any, deltas []diff.Delta
 	for _, delta := range deltas {
 		d, ok := delta.(*diff.Added)
 		if ok {
-			f.printRecursive(d.Position.String(), d.Value, ChangeAdded)
+			f.printRecursive(d.String(), d.Value, ChangeAdded)
 		}
 	}
 

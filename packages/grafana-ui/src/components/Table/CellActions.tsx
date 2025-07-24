@@ -1,10 +1,12 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
+
 import { IconSize } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
-import { TooltipPlacement } from '../Tooltip';
+import { TooltipPlacement } from '../Tooltip/types';
 
 import { TableCellInspectorMode } from './TableCellInspector';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
@@ -58,7 +60,7 @@ export function CellActions({
         {inspectEnabled && (
           <IconButton
             name="eye"
-            tooltip="Inspect value"
+            tooltip={t('grafana-ui.table.cell-inspect', 'Inspect value')}
             onClick={() => {
               if (setInspectCell) {
                 setInspectCell({ value: cell.value, mode: previewMode });
@@ -68,10 +70,20 @@ export function CellActions({
           />
         )}
         {showFilters && (
-          <IconButton name={'search-plus'} onClick={onFilterFor} tooltip="Filter for value" {...commonButtonProps} />
+          <IconButton
+            name={'search-plus'}
+            onClick={onFilterFor}
+            tooltip={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
+            {...commonButtonProps}
+          />
         )}
         {showFilters && (
-          <IconButton name={'search-minus'} onClick={onFilterOut} tooltip="Filter out value" {...commonButtonProps} />
+          <IconButton
+            name={'search-minus'}
+            onClick={onFilterOut}
+            tooltip={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
+            {...commonButtonProps}
+          />
         )}
       </Stack>
     </div>

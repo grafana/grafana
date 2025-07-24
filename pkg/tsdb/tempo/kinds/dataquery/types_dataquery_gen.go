@@ -14,7 +14,6 @@ package dataquery
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 )
 
 type TempoQuery struct {
@@ -48,7 +47,7 @@ type TempoQuery struct {
 	// Defines the maximum number of spans per spanset that are returned from Tempo
 	Spss    *int64          `json:"spss,omitempty"`
 	Filters []TraceqlFilter `json:"filters"`
-	// Filters that are used to query the metrics summary
+	// deprecated Filters that are used to query the metrics summary
 	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
 	// The type of the table that is used to display the search results
 	TableType *SearchTableType `json:"tableType,omitempty"`
@@ -67,7 +66,9 @@ type TempoQuery struct {
 
 // NewTempoQuery creates a new TempoQuery object.
 func NewTempoQuery() *TempoQuery {
-	return &TempoQuery{}
+	return &TempoQuery{
+		Filters: []TraceqlFilter{},
+	}
 }
 
 type TraceqlFilter struct {
@@ -83,6 +84,8 @@ type TraceqlFilter struct {
 	ValueType *string `json:"valueType,omitempty"`
 	// The scope of the filter, can either be unscoped/all scopes, resource or span
 	Scope *TraceqlSearchScope `json:"scope,omitempty"`
+	// Whether the value is a custom value typed by the user
+	IsCustomValue *bool `json:"isCustomValue,omitempty"`
 }
 
 // NewTraceqlFilter creates a new TraceqlFilter object.
@@ -161,7 +164,7 @@ func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.

@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "Mode pembuat tidak menampilkan perubahan yang dibuat dalam kode. Pembuat kueri akan menampilkan perubahan terakhir yang Anda buat dalam mode pembuat.",
+        "cancel": "Batalkan",
+        "clipboard": "Ingin menyalin kode Anda ke papan klip?",
+        "copy-code-and-switch": "Salin kode dan beralih",
+        "discard-code-and-switch": "Buang kode dan beralih",
+        "warning": "PERINGATAN"
+      },
+      "connection-limits": {
+        "auto-max-idle": "Nonaktif maksimum otomatis",
+        "content-auto-max-idle": "Jika diaktifkan, secara otomatis atur jumlah <1>Koneksi nonaktif maksimum</1> ke nilai yang sama dengan<3> Koneksi terbuka maksimum</3>. Jika jumlah maksimum koneksi terbuka tidak diatur, jumlah tersebut akan diatur ke default ({{defaultMaxIdle}}).",
+        "content-max-idle": "Jumlah maksimum koneksi dalam pool koneksi nonaktif. Jika <1>Koneksi terbuka maksimum</1> lebih besar dari 0 tetapi kurang dari <3>Koneksi nonaktif maksimum</3>, maka <5>Koneksi nonaktif maksimum</5> akan dikurangi agar sesuai dengan batas <8>Koneksi terbuka maksimum</8>. Jika diatur ke 0, tidak ada koneksi nonaktif yang dipertahankan.",
+        "content-max-lifetime": "Jumlah waktu maksimum dalam detik untuk menggunakan koneksi lagi. Jika diatur ke 0, koneksi digunakan kembali terus-menerus tanpa batas waktu.",
+        "content-max-open": "Jumlah koneksi terbuka maksimum ke basis data. Jika <1>Koneksi nonaktif maksimum</1> lebih besar dari 0 dan <3>Koneksi terbuka maksimum</3> kurang dari <5>Koneksi nonaktif maksimum</5>, maka <7>Koneksi nonaktif maksimum</7> akan dikurangi agar sesuai dengan batas <9>Koneksi terbuka maksimum</9>. Jika diatur ke 0, tidak ada batasan jumlah koneksi terbuka.",
+        "max-idle": "Nonaktif maks",
+        "max-lifetime": "Periode maks",
+        "max-open": "Terbuka maks",
+        "title-connection-limits": "Batas koneksi"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "Selektor kumpulan data"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Kesalahan"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "Makro"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Kelompokkan berdasarkan",
+          "title-remove-group-by-column": "Hapus grup berdasarkan kolom"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "Urutkan Berdasarkan",
+        "label-limit": "Batas",
+        "label-offset": "Offset",
+        "label-order-by": "Urutkan Berdasarkan"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Pratinjau",
+          "tooltip-copy-to-clipboard": "Salin ke papan klip"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "Kueri Anda tidak valid. Periksa di bawah ini untuk detailnya. <1></1>Namun, Anda masih dapat menjalankan kueri ini.",
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-dataset": "Kumpulan data",
+        "label-filter": "Filter",
+        "label-format": "Format",
+        "label-group": "Grup",
+        "label-order": "Pesanan",
+        "label-preview": "Pratinjau",
+        "label-table": "Tabel",
+        "placeholder-select-format": "Pilih format",
+        "run-query": "Jalankan kueri"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "Tekan CTRL/CMD+Return untuk menjalankan kueri",
+        "tooltip-collapse": "Ciutkan editor",
+        "tooltip-expand": "Perluas editor",
+        "tooltip-format-query": "Format kueri"
+      },
+      "query-validator": {
+        "query-will-process": "<0></0> Kueri ini akan memproses <2>{{bytes}}</2> saat dijalankan.",
+        "validating-query": "Memvalidasi kueri..."
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "Mengedit di editor kode yang diperluas"
+        },
+        "title-query-num": "Kueri {{queryNum}}"
+      },
+      "select-column": {
+        "label-column": "Kolom"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "Parameter {{index}} untuk kolom {{columnIndex}}",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "Hapus parameter"
+          }
+        },
+        "title-add-parameter": "Tambahkan parameter"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "Agregasi",
+              "macros": "Makro"
+            }
+          }
+        },
+        "label": {
+          "time": "waktu",
+          "value": "nilai"
+        },
+        "label-alias": "Alias",
+        "label-data-operations": "Operasi data",
+        "title-add-column": "Tambah kolom",
+        "title-remove-column": "Hapus kolom"
+      },
+      "settings": {
+        "aria-label-conjunction": "Kata Penghubung",
+        "aria-label-field": "Bidang",
+        "aria-label-operator": "Operator",
+        "title-button-filter": "Filter {{ buttonLabel }}"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Memuat editor"
+      },
+      "table-selector": {
+        "aria-label-table-selector": "Selektor tabel",
+        "placeholder-loading": "Memuat tabel",
+        "placeholder-select-table": "Pilih tabel"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "Untuk mengautentikasi dengan sertifikat klien TLS/SSL, berikan sertifikat klien di sini.",
+        "content-tlsssl-client-key": "Untuk mengautentikasi dengan sertifikat TLS/SSL klien, berikan kunci di sini.",
+        "content-tlsssl-root-certificate": "Jika mode TLS/SSL yang dipilih memerlukan sertifikat root server, berikan di sini",
+        "tlsssl-client-certificate": "Sertifikat Klien TLS/SSL",
+        "tlsssl-client-key": "Kunci Klien TLS",
+        "tlsssl-root-certificate": "Sertifikat Root TLS/SSL"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "Filter berdasarkan nilai kolom",
+        "label-group-by-column": "Kelompokkan berdasarkan kolom"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "Selektor nilai makro"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "Kolom yang dipilih"
+      }
+    }
+  }
+}

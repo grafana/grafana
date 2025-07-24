@@ -27,8 +27,7 @@ import {
   ValueMapping,
   VariableHide,
 } from '@grafana/data';
-import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
-import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
+import { labelsToFieldsTransformer, mergeTransformer } from '@grafana/data/internal';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
@@ -65,6 +64,7 @@ import {
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -626,6 +626,14 @@ export class DashboardMigrator {
           return panel;
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
+        // Hacky way to call the automigrate feature
+        if (panel.type === 'table-old') {
+          const newType = getPanelPluginToMigrateTo(panel);
+          if (newType) {
+            panel.autoMigrateFrom = panel.type;
+            panel.type = newType;
+          }
+        }
         return panel;
       });
     }
@@ -822,16 +830,16 @@ export class DashboardMigrator {
 
     if (oldVersion < 37) {
       panelUpgrades.push((panel: PanelModel) => {
-        if (
-          panel.options?.legend &&
+        if (panel.options?.legend && typeof panel.options.legend === 'object') {
           // There were two ways to hide the legend, this normalizes to `legend.showLegend`
-          (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false)
-        ) {
-          panel.options.legend.displayMode = 'list';
-          panel.options.legend.showLegend = false;
-        } else if (panel.options?.legend) {
-          panel.options.legend = { ...panel.options?.legend, showLegend: true };
+          if (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false) {
+            panel.options.legend.displayMode = 'list';
+            panel.options.legend.showLegend = false;
+          } else {
+            panel.options.legend = { ...panel.options.legend, showLegend: true };
+          }
         }
+
         return panel;
       });
     }
@@ -980,6 +988,10 @@ export class DashboardMigrator {
     }
   }
 
+  // Migrates CloudWatch annotation queries that use multiple statistics into separate queries.
+  // For example, if an annotation query uses ['Max', 'Min'] statistics, it will be split into
+  // two separate annotation queries - one with 'Max' and another with 'Min'.
+  // The new annotation queries are added to the end of the annotations list.
   migrateCloudWatchAnnotationQuery() {
     for (const annotation of this.dashboard.annotations.list) {
       if (isLegacyCloudWatchAnnotationQuery(annotation)) {

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -18,18 +19,32 @@ const (
 	// alert rule when converting it to a Grafana alert rule. If this label is not present,
 	// a stable UID will be generated automatically based on the rule's data.
 	ruleUIDLabel = "__grafana_alert_rule_uid__"
-)
 
-const (
 	queryRefID          = "query"
 	prometheusMathRefID = "prometheus_math"
 	thresholdRefID      = "threshold"
 )
 
+var (
+	ErrInvalidDatasourceType = errutil.ValidationFailed(
+		"alerting.invalidDatasourceType",
+		errutil.WithPublicMessage("Datasource type must be Prometheus or Loki to import rules."),
+	)
+	ErrInvalidTargetDatasourceType = errutil.ValidationFailed(
+		"alerting.invalidTargetDatasourceType",
+		errutil.WithPublicMessage("Target datasource type must be Prometheus for recording rules."),
+	)
+)
+
 // Config defines the configuration options for the Prometheus to Grafana rules converter.
 type Config struct {
+	// DataSourceUID is the UID of the datasource the rules are querying.
 	DatasourceUID  string
 	DatasourceType string
+	// TargetDatasourceUID is the UID of the datasource the recording rules are writing to.
+	// If not set, it defaults to DataSourceUID.
+	TargetDatasourceUID  string
+	TargetDatasourceType string
 	// DefaultInterval is the default interval for rules in the groups that
 	// don't have Interval set.
 	DefaultInterval  time.Duration
@@ -43,6 +58,7 @@ type Config struct {
 	KeepOriginalRuleDefinition *bool
 	RecordingRules             RulesConfig
 	AlertRules                 RulesConfig
+	NotificationSettings       []models.NotificationSettings
 }
 
 // RulesConfig contains configuration that applies to either recording or alerting rules.
@@ -57,7 +73,7 @@ var (
 	defaultConfig = Config{
 		FromTimeRange:              &defaultTimeRange,
 		EvaluationOffset:           &defaultEvaluationOffset,
-		ExecErrState:               models.ErrorErrState,
+		ExecErrState:               models.OkErrState,
 		NoDataState:                models.OK,
 		KeepOriginalRuleDefinition: util.Pointer(true),
 	}
@@ -73,6 +89,10 @@ type Converter struct {
 func NewConverter(cfg Config) (*Converter, error) {
 	if cfg.DatasourceUID == "" {
 		return nil, fmt.Errorf("datasource UID is required")
+	}
+	if cfg.TargetDatasourceUID == "" {
+		cfg.TargetDatasourceUID = cfg.DatasourceUID
+		cfg.TargetDatasourceType = cfg.DatasourceType
 	}
 	if cfg.DatasourceType == "" {
 		return nil, fmt.Errorf("datasource type is required")
@@ -96,7 +116,7 @@ func NewConverter(cfg Config) (*Converter, error) {
 		cfg.KeepOriginalRuleDefinition = defaultConfig.KeepOriginalRuleDefinition
 	}
 	if cfg.DatasourceType != datasources.DS_PROMETHEUS && cfg.DatasourceType != datasources.DS_LOKI {
-		return nil, fmt.Errorf("invalid datasource type: %s", cfg.DatasourceType)
+		return nil, ErrInvalidDatasourceType.Errorf("invalid datasource type: %s, must be prometheus or loki", cfg.DatasourceType)
 	}
 
 	return &Converter{
@@ -119,7 +139,6 @@ func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, g
 }
 
 func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
-	uniqueNames := map[string]int{}
 	rules := make([]models.AlertRule, 0, len(promGroup.Rules))
 
 	interval := time.Duration(promGroup.Interval)
@@ -134,12 +153,6 @@ func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup
 		}
 		gr.RuleGroupIndex = i + 1
 		gr.IntervalSeconds = int64(interval.Seconds())
-
-		// Check rule title uniqueness within the group.
-		uniqueNames[gr.Title]++
-		if val := uniqueNames[gr.Title]; val > 1 {
-			gr.Title = fmt.Sprintf("%s (%d)", gr.Title, val)
-		}
 
 		uid, err := getUID(orgID, namespaceUID, promGroup.Name, i, rule)
 		if err != nil {
@@ -184,6 +197,11 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		forInterval = time.Duration(*rule.For)
 	}
 
+	var keepFiringFor time.Duration
+	if rule.KeepFiringFor != nil {
+		keepFiringFor = time.Duration(*rule.KeepFiringFor)
+	}
+
 	var query []models.AlertQuery
 	var title string
 	var isPaused bool
@@ -191,16 +209,20 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	var err error
 
 	isRecordingRule := rule.Record != ""
-	query, err = p.createQuery(rule.Expr, isRecordingRule)
+	query, err = p.createQuery(rule.Expr, isRecordingRule, promGroup)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
 
 	if isRecordingRule {
+		if p.cfg.TargetDatasourceType != datasources.DS_PROMETHEUS {
+			return models.AlertRule{}, ErrInvalidTargetDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus", p.cfg.TargetDatasourceType)
+		}
+
 		record = &models.Record{
 			From:                queryRefID,
 			Metric:              rule.Record,
-			TargetDatasourceUID: p.cfg.DatasourceUID,
+			TargetDatasourceUID: p.cfg.TargetDatasourceUID,
 		}
 
 		isPaused = p.cfg.RecordingRules.IsPaused
@@ -210,16 +232,19 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		title = rule.Alert
 	}
 
-	// Temporary workaround for avoiding the uniqueness check for the rule title.
-	// In Grafana alert rule titles must be unique within the same org and folder,
-	// but Prometheus allows multiple rules with the same name. By adding the group name
-	// to the title we ensure that the title is unique within the group.
-	// TODO: Remove this workaround when we have a proper solution for handling rule title uniqueness.
-	title = fmt.Sprintf("[%s] %s", promGroup.Name, title)
-
-	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels))
+	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels)+1)
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
+
+	// Save the merged group-level + rule-level labels to the original rule,
+	// to ensure that they are saved to the original YAML rule definition.
+	if rule.Labels == nil {
+		rule.Labels = make(map[string]string)
+	}
+	maps.Copy(rule.Labels, labels)
+
+	// Add a special label to indicate that this rule was converted from a Prometheus rule.
+	labels[models.ConvertedPrometheusRuleLabel] = "true"
 
 	originalRuleDefinition, err := yaml.Marshal(rule)
 	if err != nil {
@@ -227,19 +252,30 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	}
 
 	result := models.AlertRule{
-		OrgID:        orgID,
-		NamespaceUID: namespaceUID,
-		Title:        title,
-		Data:         query,
-		Condition:    query[len(query)-1].RefID,
-		NoDataState:  p.cfg.NoDataState,
-		ExecErrState: p.cfg.ExecErrState,
-		Annotations:  rule.Annotations,
-		Labels:       labels,
-		For:          forInterval,
-		RuleGroup:    promGroup.Name,
-		IsPaused:     isPaused,
-		Record:       record,
+		OrgID:         orgID,
+		NamespaceUID:  namespaceUID,
+		Title:         title,
+		Data:          query,
+		Condition:     query[len(query)-1].RefID,
+		NoDataState:   p.cfg.NoDataState,
+		ExecErrState:  p.cfg.ExecErrState,
+		Annotations:   rule.Annotations,
+		Labels:        labels,
+		For:           forInterval,
+		KeepFiringFor: keepFiringFor,
+		RuleGroup:     promGroup.Name,
+		IsPaused:      isPaused,
+		Record:        record,
+
+		// MissingSeriesEvalsToResolve is set to 1 to match the Prometheus behaviour.
+		// Prometheus resolves alerts as soon as the series disappears.
+		// By setting this value to 1 we ensure that the alert is resolved on the first evaluation
+		// that doesn't have the series.
+		MissingSeriesEvalsToResolve: util.Pointer(1),
+	}
+
+	if !isRecordingRule {
+		result.NotificationSettings = p.cfg.NotificationSettings
 	}
 
 	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {
@@ -264,8 +300,16 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 //
 // This is needed to ensure that we keep the Prometheus behaviour, where any returned result
 // is considered alerting, and only when the query returns no data is the alert treated as normal.
-func (p *Converter) createQuery(expr string, isRecordingRule bool) ([]models.AlertQuery, error) {
-	queryNode, err := createQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, expr, *p.cfg.FromTimeRange, *p.cfg.EvaluationOffset)
+func (p *Converter) createQuery(expr string, isRecordingRule bool, promGroup PrometheusRuleGroup) ([]models.AlertQuery, error) {
+	// If evaluation offset is set on the group level, use that, otherwise use the global evaluation offset.
+	var evaluationOffset time.Duration
+	if promGroup.QueryOffset != nil {
+		evaluationOffset = time.Duration(*promGroup.QueryOffset)
+	} else {
+		evaluationOffset = *p.cfg.EvaluationOffset
+	}
+
+	queryNode, err := createQueryNode(p.cfg.DatasourceUID, p.cfg.DatasourceType, expr, *p.cfg.FromTimeRange, evaluationOffset)
 	if err != nil {
 		return nil, err
 	}

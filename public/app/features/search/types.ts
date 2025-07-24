@@ -2,6 +2,8 @@ import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
 
+import { ManagerKind } from '../apiserver/types';
+
 import { QueryResponse } from './service/types';
 
 export enum DashboardSearchItemType {
@@ -80,6 +82,7 @@ export interface DashboardViewItem {
   // For enterprise sort options
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
+  managedBy?: ManagerKind;
 }
 
 export interface SearchAction extends Action {

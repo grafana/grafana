@@ -1,3 +1,4 @@
+import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton } from '@grafana/ui';
 
 import { AlertmanagerAction } from '../../../hooks/useAbilities';
@@ -14,13 +15,23 @@ export const GlobalConfigAlert = ({ alertManagerName }: GlobalConfigAlertProps) 
 
   return (
     <Authorize actions={[AlertmanagerAction.UpdateExternalConfiguration]}>
-      <Alert severity="info" title="Global config for contact points">
+      <Alert
+        severity="info"
+        title={t(
+          'alerting.global-config-alert.title-global-config-for-contact-points',
+          'Global config for contact points'
+        )}
+      >
         <p>
-          For each external Alertmanager you can define global settings, like server addresses, usernames and password,
-          for all the supported contact points.
+          <Trans i18nKey="alerting.global-config-alert.body">
+            For each external Alertmanager you can define global settings, like server addresses, usernames and
+            password, for all the supported contact points.
+          </Trans>
         </p>
         <LinkButton href={makeAMLink('alerting/notifications/global-config', alertManagerName)} variant="secondary">
-          {isVanillaAM ? 'View global config' : 'Edit global config'}
+          {isVanillaAM
+            ? t('alerting.global-config-alert.view-global-config', 'View global config')
+            : t('alerting.global-config-alert.edit-global-config', 'Edit global config')}
         </LinkButton>
       </Alert>
     </Authorize>

@@ -1,11 +1,11 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import debounce from 'debounce-promise';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import {
   Button,
   ButtonGroup,
@@ -19,49 +19,59 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../../../datasource';
-import { PromVisualQuery } from '../../types';
+import { getDebounceTimeInMilliseconds } from '../../../caching';
+import { METRIC_LABEL } from '../../../constants';
+import { regexifyLabelValuesQueryString } from '../../parsingUtils';
+import { formatPrometheusLabelFilters } from '../shared/formatter';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { ResultsTable } from './ResultsTable';
+import { metricsModaltestIds } from './shared/testIds';
+import { MetricsModalProps } from './shared/types';
 import {
   calculatePageList,
   calculateResultsPerPage,
   displayedMetrics,
-  getBackendSearchMetrics,
-  placeholders,
-  promTypes,
+  getPlaceholders,
+  getPromTypes,
   setMetrics,
   tracking,
 } from './state/helpers';
 import {
+  buildMetrics,
   DEFAULT_RESULTS_PER_PAGE,
+  filterMetricsBackend,
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
   MetricsModalMetadata,
-  // stateSlice,
+  setDisableTextWrap,
+  setFullMetaSearch,
+  setFuzzySearchQuery,
+  setIncludeNullMetadata,
+  setIsLoading,
+  setMetaHaystack,
+  setNameHaystack,
+  setPageNum,
+  setResultsPerPage,
+  setSelectedTypes,
+  setUseBackend,
+  showAdditionalSettings,
+  stateSlice,
 } from './state/state';
 import { getStyles } from './styles';
-import { MetricsData, PromFilterOption } from './types';
+import { PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
 
-export type MetricsModalProps = {
-  datasource: PrometheusDatasource;
-  isOpen: boolean;
-  query: PromVisualQuery;
-  onClose: () => void;
-  onChange: (query: PromVisualQuery) => void;
-  initialMetrics: string[] | (() => Promise<string[]>);
-};
-
 export const MetricsModal = (props: MetricsModalProps) => {
-  const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
+  const { datasource, isOpen, onClose, onChange, query, initialMetrics, timeRange } = props;
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query));
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
+  const placeholders = getPlaceholders();
+  const promTypes = getPromTypes();
 
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
@@ -95,7 +105,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
       value: t.value,
-      label: t.value,
+      label: t.label,
       description: t.description,
     };
   });
@@ -108,17 +118,25 @@ export const MetricsModal = (props: MetricsModalProps) => {
       debounce(async (metricText: string) => {
         dispatch(setIsLoading(true));
 
-        const metrics = await getBackendSearchMetrics(metricText, query.labels, datasource);
+        const queryString = regexifyLabelValuesQueryString(metricText);
+        const filterArray = query.labels ? formatPrometheusLabelFilters(query.labels) : [];
+        const match = `{__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}}`;
+
+        const results = await datasource.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match);
+
+        const resultsOptions = results.map((result) => ({
+          value: result,
+        }));
 
         dispatch(
           filterMetricsBackend({
-            metrics: metrics,
-            filteredMetricCount: metrics.length,
+            metrics: resultsOptions,
+            filteredMetricCount: resultsOptions.length,
             isLoading: false,
           })
         );
-      }, datasource.getDebounceTimeInMilliseconds()),
-    [datasource, query]
+      }, getDebounceTimeInMilliseconds(datasource.cacheLevel)),
+    [datasource.cacheLevel, datasource.languageProvider, query.labels, timeRange]
   );
 
   function fuzzyNameDispatch(haystackData: string[][]) {
@@ -187,9 +205,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
     <Modal
       data-testid={metricsModaltestIds.metricModal}
       isOpen={isOpen}
-      title="Metrics explorer"
+      title={t('grafana-prometheus.querybuilder.metrics-modal.title-metrics-explorer', 'Metrics explorer')}
       onDismiss={onClose}
-      aria-label="Browse metrics"
+      aria-label={t('grafana-prometheus.querybuilder.metrics-modal.aria-label-browse-metrics', 'Browse metrics')}
       className={styles.modal}
     >
       <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
@@ -227,7 +245,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
         <div className={styles.inputItem}>
           <Toggletip
-            aria-label="Additional settings"
+            aria-label={t(
+              'grafana-prometheus.querybuilder.metrics-modal.aria-label-additional-settings',
+              'Additional settings'
+            )}
             content={additionalSettings}
             placement="bottom-end"
             closeButton={false}
@@ -240,7 +261,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 data-testid={metricsModaltestIds.showAdditionalSettings}
                 className={styles.noBorder}
               >
-                Additional Settings
+                <Trans i18nKey="grafana-prometheus.querybuilder.metrics-modal.additional-settings">
+                  Additional Settings
+                </Trans>
               </Button>
               <Button
                 className={styles.noBorder}
@@ -252,12 +275,24 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
       </div>
       <div className={styles.resultsData}>
-        {query.metric && <i className={styles.currentlySelected}>Currently selected: {query.metric}</i>}
+        {query.metric && (
+          <i className={styles.currentlySelected}>
+            <Trans
+              i18nKey="grafana-prometheus.querybuilder.metrics-modal.currently-selected"
+              values={{ selected: query.metric }}
+            >
+              Currently selected: {'{{selected}}'}
+            </Trans>
+          </i>
+        )}
         {query.labels.length > 0 && (
           <div className={styles.resultsDataFiltered}>
             <Icon name="info-circle" size="sm" />
             <div className={styles.resultsDataFilteredText}>
-              &nbsp;These metrics have been pre-filtered by labels chosen in the label filters.
+              &nbsp;
+              <Trans i18nKey="grafana-prometheus.querybuilder.metrics-modal.metrics-pre-filtered">
+                These metrics have been pre-filtered by labels chosen in the label filters.
+              </Trans>
             </div>
           </div>
         )}
@@ -276,7 +311,13 @@ export const MetricsModal = (props: MetricsModalProps) => {
       </div>
       <div className={styles.resultsFooter}>
         <div className={styles.resultsAmount}>
-          Showing {state.filteredMetricCount} of {state.totalMetricCount} results
+          <Trans
+            i18nKey="grafana-prometheus.querybuilder.metrics-modal.results-amount"
+            values={{ num: state.filteredMetricCount }}
+            count={state.totalMetricCount}
+          >
+            Showing {'{{num}}'} of {'{{count}}'} results
+          </Trans>
         </div>
         <Pagination
           currentPage={state.pageNum ?? 1}
@@ -287,11 +328,16 @@ export const MetricsModal = (props: MetricsModalProps) => {
           }}
         />
         <div className={styles.resultsPerPageWrapper}>
-          <p className={styles.resultsPerPageLabel}># Results per page&nbsp;</p>
+          <p className={styles.resultsPerPageLabel}>
+            <Trans i18nKey="grafana-prometheus.querybuilder.metrics-modal.results-per-page">Results per page</Trans>
+          </p>
           <Input
             data-testid={metricsModaltestIds.resultsPerPage}
             value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
-            placeholder="results per page"
+            placeholder={t(
+              'grafana-prometheus.querybuilder.metrics-modal.placeholder-results-per-page',
+              'results per page'
+            )}
             width={10}
             title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
             type="number"
@@ -310,110 +356,3 @@ export const MetricsModal = (props: MetricsModalProps) => {
     </Modal>
   );
 };
-
-export const metricsModaltestIds = {
-  metricModal: 'metric-modal',
-  searchMetric: 'search-metric',
-  searchWithMetadata: 'search-with-metadata',
-  selectType: 'select-type',
-  metricCard: 'metric-card',
-  useMetric: 'use-metric',
-  searchPage: 'search-page',
-  resultsPerPage: 'results-per-page',
-  setUseBackend: 'set-use-backend',
-  showAdditionalSettings: 'show-additional-settings',
-};
-
-const stateSlice = createSlice({
-  name: 'metrics-modal-state',
-  initialState: initialState(),
-  reducers: {
-    filterMetricsBackend: (
-      state,
-      action: PayloadAction<{
-        metrics: MetricsData;
-        filteredMetricCount: number;
-        isLoading: boolean;
-      }>
-    ) => {
-      state.metrics = action.payload.metrics;
-      state.filteredMetricCount = action.payload.filteredMetricCount;
-      state.isLoading = action.payload.isLoading;
-    },
-    buildMetrics: (state, action: PayloadAction<MetricsModalMetadata>) => {
-      state.isLoading = action.payload.isLoading;
-      state.metrics = action.payload.metrics;
-      state.hasMetadata = action.payload.hasMetadata;
-      state.metaHaystackDictionary = action.payload.metaHaystackDictionary;
-      state.nameHaystackDictionary = action.payload.nameHaystackDictionary;
-      state.totalMetricCount = action.payload.totalMetricCount;
-      state.filteredMetricCount = action.payload.filteredMetricCount;
-    },
-    setIsLoading: (state, action: PayloadAction<boolean>) => {
-      state.isLoading = action.payload;
-    },
-    setFilteredMetricCount: (state, action: PayloadAction<number>) => {
-      state.filteredMetricCount = action.payload;
-    },
-    setResultsPerPage: (state, action: PayloadAction<number>) => {
-      state.resultsPerPage = action.payload;
-    },
-    setPageNum: (state, action: PayloadAction<number>) => {
-      state.pageNum = action.payload;
-    },
-    setFuzzySearchQuery: (state, action: PayloadAction<string>) => {
-      state.fuzzySearchQuery = action.payload;
-      state.pageNum = 1;
-    },
-    setNameHaystack: (state, action: PayloadAction<string[][]>) => {
-      state.nameHaystackOrder = action.payload[0];
-      state.nameHaystackMatches = action.payload[1];
-    },
-    setMetaHaystack: (state, action: PayloadAction<string[][]>) => {
-      state.metaHaystackOrder = action.payload[0];
-      state.metaHaystackMatches = action.payload[1];
-    },
-    setFullMetaSearch: (state, action: PayloadAction<boolean>) => {
-      state.fullMetaSearch = action.payload;
-      state.pageNum = 1;
-    },
-    setIncludeNullMetadata: (state, action: PayloadAction<boolean>) => {
-      state.includeNullMetadata = action.payload;
-      state.pageNum = 1;
-    },
-    setSelectedTypes: (state, action: PayloadAction<Array<SelectableValue<string>>>) => {
-      state.selectedTypes = action.payload;
-      state.pageNum = 1;
-    },
-    setUseBackend: (state, action: PayloadAction<boolean>) => {
-      state.useBackend = action.payload;
-      state.fullMetaSearch = false;
-      state.pageNum = 1;
-    },
-    setDisableTextWrap: (state) => {
-      state.disableTextWrap = !state.disableTextWrap;
-    },
-    showAdditionalSettings: (state) => {
-      state.showAdditionalSettings = !state.showAdditionalSettings;
-    },
-  },
-});
-
-// actions to update the state
-export const {
-  setIsLoading,
-  buildMetrics,
-  filterMetricsBackend,
-  setResultsPerPage,
-  setPageNum,
-  setFuzzySearchQuery,
-  setNameHaystack,
-  setMetaHaystack,
-  setFullMetaSearch,
-  setIncludeNullMetadata,
-  setSelectedTypes,
-  setUseBackend,
-  setDisableTextWrap,
-  showAdditionalSettings,
-  setFilteredMetricCount,
-} = stateSlice.actions;

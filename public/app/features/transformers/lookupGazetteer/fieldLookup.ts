@@ -19,7 +19,7 @@ export interface FieldLookupOptions {
 export const fieldLookupTransformer: DataTransformerInfo<FieldLookupOptions> = {
   id: DataTransformerID.fieldLookup,
   name: 'Lookup fields from resource',
-  description: 'Retrieve matching data based on specified field',
+  description: 'Use a field value to lookup countries, states, or airports.',
   defaultOptions: {},
 
   operator: (options) => (source) => source.pipe(mergeMap((data) => from(doGazetteerXform(data, options)))),
@@ -53,7 +53,7 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer
 
       if (matcher(field, frame, frames)) {
         const values = field.values;
-        const gazetteerFieldValuesBuffer: any[][] = [];
+        const gazetteerFieldValuesBuffer: unknown[][] = [];
 
         for (const gazetteerField of gazetteerFields) {
           const buffer = new Array(frameLength);

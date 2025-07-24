@@ -37,12 +37,6 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-
 	adminApiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	// Create the namespace we'll save our alerts to.
@@ -60,10 +54,10 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 	group1 := generateAlertRuleGroup(1, alertRuleGen())
 	group2 := generateAlertRuleGroup(1, alertRuleGen())
 
-	respModel, status, _ := adminApiClient.PostRulesGroupWithStatus(t, f1.UID, &group1)
+	respModel, status, _ := adminApiClient.PostRulesGroupWithStatus(t, f1.UID, &group1, false)
 	require.Equal(t, http.StatusAccepted, status)
 	ruleInFolder1UID := respModel.Created[0]
-	respModel, status, _ = adminApiClient.PostRulesGroupWithStatus(t, f2.UID, &group2)
+	respModel, status, _ = adminApiClient.PostRulesGroupWithStatus(t, f2.UID, &group2, false)
 	require.Equal(t, http.StatusAccepted, status)
 	ruleInFolder2UID := respModel.Created[0]
 

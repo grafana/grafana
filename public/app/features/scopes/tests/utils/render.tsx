@@ -2,13 +2,13 @@ import { cleanup, waitFor } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
-import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types/dashboard';
 
 import { defaultScopesServices, ScopesContextProvider } from '../../ScopesContextProvider';
 
@@ -197,7 +197,7 @@ export async function renderDashboard(
     </KBarProvider>
   );
 
-  await waitFor(() => expect(sceneGraph.getScopesBridge(scene)).toBeDefined());
+  await waitFor(() => expect(sceneGraph.getScopes(scene)).toBeDefined());
 
   return {
     scene,

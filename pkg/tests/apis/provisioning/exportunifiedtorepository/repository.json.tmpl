@@ -1,0 +1,21 @@
+{
+    "apiVersion": "provisioning.grafana.app/v0alpha1",
+    "kind": "Repository",
+    "metadata": {
+        "name": "{{ .Name }}"
+    },
+    "spec": {
+        "description": "Test",
+        "local": {
+            "path": "{{ .h.ProvisioningPath }}"
+        },
+        "sync": {
+            "enabled": true,
+            "target": "instance",
+            "intervalSeconds": 60
+        },
+        "title": "ExportToUnifiedRepository test repository",
+        "type": "local",
+        "workflows": ["write"]
+    }
+}

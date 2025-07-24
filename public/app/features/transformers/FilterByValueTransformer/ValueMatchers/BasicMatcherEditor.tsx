@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
@@ -33,7 +34,7 @@ export function basicMatcherEditor<T = any>(
         value={value}
         error={'Value needs to be a number or a variable'}
         onChange={onChangeVariableValue}
-        placeholder="Value or variable"
+        placeholder={t('transformers.basic-matcher-editor.placeholder-value-or-variable', 'Value or variable')}
         suggestions={getVariableSuggestions()}
       />
     );

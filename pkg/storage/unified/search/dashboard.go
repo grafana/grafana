@@ -8,22 +8,23 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 //------------------------------------------------------------
 // Standard dashboard fields
 //------------------------------------------------------------
 
-const DASHBOARD_LEGACY_ID = "legacy_id"
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
 const DASHBOARD_DS_TYPES = "ds_types"
 const DASHBOARD_TRANSFORMATIONS = "transformation"
+const DASHBOARD_LIBRARY_PANEL_REFERENCE = "reference.LibraryPanel"
 
 //------------------------------------------------------------
 // The following fields are added in enterprise
@@ -46,153 +47,148 @@ const DASHBOARD_ERRORS_TOTAL = "errors_total"
 const DASHBOARD_ERRORS_TODAY = "errors_today"
 
 func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields([]*resource.ResourceTableColumnDefinition{
+	fields, err := resource.NewSearchableDocumentFields([]*resourcepb.ResourceTableColumnDefinition{
 		{
 			Name:        DASHBOARD_SCHEMA_VERSION,
-			Type:        resource.ResourceTableColumnDefinition_INT32,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT32,
 			Description: "Numeric version saying when the schema was saved",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				NotNull: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_LINK_COUNT,
-			Type:        resource.ResourceTableColumnDefinition_INT32,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT32,
 			Description: "How many links appear on the page",
 		},
 		{
 			Name:        DASHBOARD_PANEL_TYPES,
-			Type:        resource.ResourceTableColumnDefinition_STRING,
+			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 			IsArray:     true,
 			Description: "How many links appear on the page",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_ERRORS_TODAY,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of errors that occurred today",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_ERRORS_LAST_1_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of errors that occurred in the last 1 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_ERRORS_LAST_7_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of errors that occurred in the last 7 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_ERRORS_LAST_30_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of errors that occurred in the last 30 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_ERRORS_TOTAL,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Total number of errors",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_QUERIES_TODAY,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of queries that occurred today",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_QUERIES_LAST_1_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of queries that occurred in the last 1 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_QUERIES_LAST_7_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of queries that occurred in the last 7 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_QUERIES_LAST_30_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of queries that occurred in the last 30 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_QUERIES_TOTAL,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Total number of queries",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_VIEWS_TODAY,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of views that occurred today",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_VIEWS_LAST_1_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of views that occurred in the last 1 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_VIEWS_LAST_7_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of views that occurred in the last 7 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_VIEWS_LAST_30_DAYS,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Number of views that occurred in the last 30 days",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
 		},
 		{
 			Name:        DASHBOARD_VIEWS_TOTAL,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
+			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 			Description: "Total number of views",
-			Properties: &resource.ResourceTableColumnDefinition_Properties{
+			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 				Filterable: true,
 			},
-		},
-		{
-			Name:        DASHBOARD_LEGACY_ID,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
-			Description: "Deprecated legacy id of the dashboard",
 		},
 	})
 	if namespaced == nil {
@@ -208,7 +204,7 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 		}
 	}
 	return resource.DocumentBuilderInfo{
-		GroupResource: v0alpha1.DashboardResourceInfo.GroupResource(),
+		GroupResource: dashV1.DashboardResourceInfo.GroupResource(),
 		Fields:        fields,
 		Namespaced:    namespaced,
 	}, err
@@ -237,7 +233,7 @@ type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int
 
 var _ resource.DocumentBuilder = &DashboardDocumentBuilder{}
 
-func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resource.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	if s.Namespace != "" && s.Namespace != key.Namespace {
 		return nil, fmt.Errorf("invalid namespace")
 	}
@@ -314,9 +310,9 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 
 	doc.Fields = map[string]any{
-		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,
-		DASHBOARD_LINK_COUNT:     summary.LinkCount,
-		DASHBOARD_LEGACY_ID:      summary.ID,
+		DASHBOARD_SCHEMA_VERSION:        summary.SchemaVersion,
+		DASHBOARD_LINK_COUNT:            summary.LinkCount,
+		resource.SEARCH_FIELD_LEGACY_ID: summary.ID,
 	}
 
 	if len(panelTypes) > 0 {
@@ -342,7 +338,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 
 func DashboardFields() []string {
 	baseFields := []string{
-		DASHBOARD_LEGACY_ID,
 		DASHBOARD_SCHEMA_VERSION,
 		DASHBOARD_LINK_COUNT,
 		DASHBOARD_PANEL_TYPES,

@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   SceneComponentProps,
@@ -99,6 +100,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
   const { tabs, pluginNotLoaded, panelRef } = model.useState();
   const location = useLocation();
+
   const queryParams = new URLSearchParams(location.search);
 
   if (!tabs) {
@@ -135,8 +137,12 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
       }
     >
       {pluginNotLoaded && (
-        <Alert title="Panel plugin not loaded">
-          Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
+        <Alert
+          title={t('dashboard-scene.panel-inspect-renderer.title-panel-plugin-not-loaded', 'Panel plugin not loaded')}
+        >
+          <Trans i18nKey="dashboard-scene.panel-inspect-renderer.body-panel-plugin-not-loaded">
+            Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
+          </Trans>
         </Alert>
       )}
       {currentTab && currentTab.Component && <currentTab.Component model={currentTab} />}

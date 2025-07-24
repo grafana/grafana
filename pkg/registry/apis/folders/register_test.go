@@ -9,20 +9,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	type input struct {
-		obj         *v0alpha1.Folder
+		obj         *folders.Folder
 		annotations map[string]string
 		name        string
 	}
@@ -30,15 +30,15 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	initialMaxDepth := folderValidationRules.maxDepth
 	folderValidationRules.maxDepth = 2
 	defer func() { folderValidationRules.maxDepth = initialMaxDepth }()
-	deepFolder := &v0alpha1.Folder{
-		Spec: v0alpha1.Spec{
+	deepFolder := &folders.Folder{
+		Spec: folders.FolderSpec{
 			Title: "foo",
 		},
 	}
 	deepFolder.Name = "valid-parent"
 	deepFolder.Annotations = map[string]string{"grafana.app/folder": "valid-grandparent"}
-	parentFolder := &v0alpha1.Folder{
-		Spec: v0alpha1.Spec{
+	parentFolder := &folders.Folder{
+		Spec: folders.FolderSpec{
 			Title: "foo-grandparent",
 		},
 	}
@@ -53,8 +53,8 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		{
 			name: "should return error when name is invalid",
 			input: input{
-				obj: &v0alpha1.Folder{
-					Spec: v0alpha1.Spec{
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
 						Title: "foo",
 					},
 				},
@@ -65,8 +65,8 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		{
 			name: "should return no error if every validation passes",
 			input: input{
-				obj: &v0alpha1.Folder{
-					Spec: v0alpha1.Spec{
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
 						Title: "foo",
 					},
 				},
@@ -76,8 +76,8 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		{
 			name: "should not allow creating a folder in a tree that is too deep",
 			input: input{
-				obj: &v0alpha1.Folder{
-					Spec: v0alpha1.Spec{
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
 						Title: "foo",
 					},
 				},
@@ -97,8 +97,8 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 		{
 			name: "should return error when title is empty",
 			input: input{
-				obj: &v0alpha1.Folder{
-					Spec: v0alpha1.Spec{
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
 						Title: "",
 					},
 				},
@@ -110,8 +110,8 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			name: "should return error if folder is a parent of itself",
 			input: input{
 				annotations: map[string]string{utils.AnnoKeyFolder: "myself"},
-				obj: &v0alpha1.Folder{
-					Spec: v0alpha1.Spec{
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
 						Title: "title",
 					},
 				},
@@ -145,10 +145,10 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.input.obj,
 				nil,
-				v0alpha1.SchemeGroupVersion.WithKind("folder"),
+				folders.SchemeGroupVersion.WithKind("folder"),
 				"stacks-123",
 				tt.input.name,
-				v0alpha1.SchemeGroupVersion.WithResource("folders"),
+				folders.SchemeGroupVersion.WithResource("folders"),
 				"",
 				"CREATE",
 				nil,
@@ -169,16 +169,16 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	tests := []struct {
 		name          string
-		statsResponse *resource.ResourceStatsResponse_Stats
+		statsResponse *resourcepb.ResourceStatsResponse_Stats
 		wantErr       bool
 	}{
 		{
 			name:          "should allow deletion when folder is empty",
-			statsResponse: &resource.ResourceStatsResponse_Stats{Count: 0},
+			statsResponse: &resourcepb.ResourceStatsResponse_Stats{Count: 0},
 		},
 		{
 			name:          "should return folder not empty when the folder is not empty",
-			statsResponse: &resource.ResourceStatsResponse_Stats{Count: 2},
+			statsResponse: &resourcepb.ResourceStatsResponse_Stats{Count: 2},
 			wantErr:       true,
 		},
 	}
@@ -188,8 +188,8 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	us := storageMock{m, s}
 	sm := searcherMock{Mock: m}
 
-	obj := &v0alpha1.Folder{
-		Spec: v0alpha1.Spec{
+	obj := &folders.Folder{
+		Spec: folders.FolderSpec{
 			Title: "foo",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -200,9 +200,9 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var setupFn = func(m *mock.Mock, stats *resource.ResourceStatsResponse_Stats) {
-				m.On("GetStats", mock.Anything, &resource.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
-					&resource.ResourceStatsResponse{Stats: []*resource.ResourceStatsResponse_Stats{stats}},
+			var setupFn = func(m *mock.Mock, stats *resourcepb.ResourceStatsResponse_Stats) {
+				m.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
+					&resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{stats}},
 					nil,
 				).Once()
 			}
@@ -221,10 +221,10 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				obj,
 				nil,
-				v0alpha1.SchemeGroupVersion.WithKind("folder"),
+				folders.SchemeGroupVersion.WithKind("folder"),
 				obj.Namespace,
 				obj.Name,
-				v0alpha1.SchemeGroupVersion.WithResource("folders"),
+				folders.SchemeGroupVersion.WithResource("folders"),
 				"",
 				"DELETE",
 				nil,
@@ -243,7 +243,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
-	var circularObj = &v0alpha1.Folder{
+	var circularObj = &folders.Folder{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:   "stacks-123",
 			Name:        "new-parent",
@@ -253,15 +253,15 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		updatedObj *v0alpha1.Folder
-		expected   *v0alpha1.Folder
+		updatedObj *folders.Folder
+		expected   *folders.Folder
 		setupFn    func(*mock.Mock)
 		wantErr    bool
 	}{
 		{
 			name: "should allow updating a folder spec",
-			updatedObj: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "different title",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -270,8 +270,8 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 					Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
 				},
 			},
-			expected: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			expected: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "different title",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -283,8 +283,8 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		},
 		{
 			name: "updated title should not be empty",
-			updatedObj: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -297,8 +297,8 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		},
 		{
 			name: "should allow moving to a valid parent",
-			updatedObj: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -309,14 +309,14 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			},
 			setupFn: func(m *mock.Mock) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
-					&v0alpha1.Folder{},
+					&folders.Folder{},
 					nil).Once()
 			},
 		},
 		{
 			name: "should not allow moving to a k6 folder",
-			updatedObj: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -327,15 +327,15 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			},
 			setupFn: func(m *mock.Mock) {
 				m.On("Get", mock.Anything, accesscontrol.K6FolderUID, mock.Anything).Return(
-					&v0alpha1.Folder{},
+					&folders.Folder{},
 					nil).Once()
 			},
 			wantErr: true,
 		},
 		{
 			name: "should not allow moving to a folder that is too deep",
-			updatedObj: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -358,8 +358,8 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 	us := storageMock{m, s}
 	sm := searcherMock{Mock: m}
 
-	obj := &v0alpha1.Folder{
-		Spec: v0alpha1.Spec{
+	obj := &folders.Folder{
+		Spec: folders.FolderSpec{
 			Title: "foo",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -386,10 +386,10 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.updatedObj,
 				obj,
-				v0alpha1.SchemeGroupVersion.WithKind("folder"),
+				folders.SchemeGroupVersion.WithKind("folder"),
 				tt.updatedObj.Namespace,
 				tt.updatedObj.Name,
-				v0alpha1.SchemeGroupVersion.WithResource("folders"),
+				folders.SchemeGroupVersion.WithResource("folders"),
 				"",
 				"UPDATE",
 				nil,
@@ -410,14 +410,14 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    *v0alpha1.Folder
-		expected *v0alpha1.Folder
+		input    *folders.Folder
+		expected *folders.Folder
 		wantErr  bool
 	}{
 		{
 			name: "should trim a title",
-			input: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			input: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "  foo  ",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -427,8 +427,8 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 					Name: "valid-name",
 				},
 			},
-			expected: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			expected: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -441,8 +441,8 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 		},
 		{
 			name: "should return error if title doesnt exist",
-			input: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{},
+			input: &folders.Folder{
+				Spec: folders.FolderSpec{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",
 				},
@@ -454,7 +454,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 		},
 		{
 			name: "should return error if spec doesnt exist",
-			input: &v0alpha1.Folder{
+			input: &folders.Folder{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",
 				},
@@ -479,32 +479,37 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				nil,
-				v0alpha1.SchemeGroupVersion.WithKind("folder"),
+				folders.SchemeGroupVersion.WithKind("folder"),
 				"stacks-123",
 				tt.input.Name,
-				v0alpha1.SchemeGroupVersion.WithResource("folders"),
+				folders.SchemeGroupVersion.WithResource("folders"),
 				"",
 				"CREATE",
 				nil,
 				true,
 				&user.SignedInUser{},
-			), nil)
+			)
 
+			err := b.Validate(context.Background(), admAttr, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+
+			err = b.Mutate(context.Background(), admAttr, nil)
+			require.NoError(t, err)
+			require.Equal(t, tt.input, tt.expected)
 		})
 	}
 }
 
 func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
-	existingObj := &v0alpha1.Folder{
-		Spec: v0alpha1.Spec{
+	existingObj := &folders.Folder{
+		Spec: folders.FolderSpec{
 			Title: "some title",
 		},
 		TypeMeta: metav1.TypeMeta{
@@ -516,14 +521,14 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	}
 	tests := []struct {
 		name     string
-		input    *v0alpha1.Folder
-		expected *v0alpha1.Folder
+		input    *folders.Folder
+		expected *folders.Folder
 		wantErr  bool
 	}{
 		{
 			name: "should trim a title",
-			input: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			input: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "  foo  ",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -533,8 +538,8 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 					Name: "valid-name",
 				},
 			},
-			expected: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{
+			expected: &folders.Folder{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -547,8 +552,8 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		},
 		{
 			name: "should return error if title doesnt exist",
-			input: &v0alpha1.Folder{
-				Spec: v0alpha1.Spec{},
+			input: &folders.Folder{
+				Spec: folders.FolderSpec{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",
 				},
@@ -560,7 +565,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		},
 		{
 			name: "should return error if spec doesnt exist",
-			input: &v0alpha1.Folder{
+			input: &folders.Folder{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",
 				},
@@ -585,25 +590,30 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				existingObj,
-				v0alpha1.SchemeGroupVersion.WithKind("folder"),
+				folders.SchemeGroupVersion.WithKind("folder"),
 				"stacks-123",
 				tt.input.Name,
-				v0alpha1.SchemeGroupVersion.WithResource("folders"),
+				folders.SchemeGroupVersion.WithResource("folders"),
 				"",
 				"UPDATE",
 				nil,
 				true,
 				&user.SignedInUser{},
-			), nil)
+			)
 
+			err := b.Validate(context.Background(), admAttr, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+
+			err = b.Mutate(context.Background(), admAttr, nil)
+			require.NoError(t, err)
+			require.Equal(t, tt.input, tt.expected)
 		})
 	}
 }

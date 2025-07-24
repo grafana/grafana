@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -35,7 +35,7 @@ func TestMigrations(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			fmt.Printf("failed to close xorm engine: %v", err)
+			t.Logf("failed to close xorm engine: %v", err)
 		}
 	})
 
@@ -77,8 +77,8 @@ func TestIntegrationMigrationLock(t *testing.T) {
 	}
 
 	dbType := sqlutil.GetTestDBType()
-	// skip for SQLite and Spanner since there is no database locking (only migrator locking)
-	if dbType == SQLite || dbType == Spanner {
+	// skip for SQLite since there is no database locking (only migrator locking)
+	if dbType == SQLite {
 		t.Skip()
 	}
 
@@ -92,7 +92,7 @@ func TestIntegrationMigrationLock(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			fmt.Printf("failed to close xorm engine: %v", err)
+			t.Logf("failed to close xorm engine: %v", err)
 		}
 	})
 
@@ -203,7 +203,7 @@ func TestMigratorLocking(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			fmt.Printf("failed to close xorm engine: %v", err)
+			t.Logf("failed to close xorm engine: %v", err)
 		}
 	})
 
@@ -235,8 +235,8 @@ func TestMigratorLocking(t *testing.T) {
 func TestDatabaseLocking(t *testing.T) {
 	dbType := sqlutil.GetTestDBType()
 
-	// skip for SQLite and Spanner since there is no database locking (only migrator locking)
-	if dbType == SQLite || dbType == Spanner {
+	// skip for SQLite since there is no database locking (only migrator locking)
+	if dbType == SQLite {
 		t.Skip()
 	}
 
@@ -250,7 +250,7 @@ func TestDatabaseLocking(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			fmt.Printf("failed to close xorm engine: %v", err)
+			t.Logf("failed to close xorm engine: %v", err)
 		}
 	})
 

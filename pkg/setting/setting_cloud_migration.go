@@ -32,7 +32,6 @@ type CloudMigrationSettings struct {
 	CreateTokenTimeout          time.Duration
 	DeleteTokenTimeout          time.Duration
 	TokenExpiresAfter           time.Duration
-	FeedbackURL                 string
 	FrontendPollInterval        time.Duration
 	AlertRulesState             string
 
@@ -60,7 +59,6 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.DeleteTokenTimeout = cloudMigration.Key("delete_token_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.TokenExpiresAfter = cloudMigration.Key("token_expires_after").MustDuration(7 * 24 * time.Hour)
 	cfg.CloudMigration.IsDeveloperMode = cloudMigration.Key("developer_mode").MustBool(false)
-	cfg.CloudMigration.FeedbackURL = cloudMigration.Key("feedback_url").MustString("")
 	cfg.CloudMigration.FrontendPollInterval = cloudMigration.Key("frontend_poll_interval").MustDuration(2 * time.Second)
 	cfg.CloudMigration.AlertRulesState = cloudMigration.Key("alert_rules_state").In(GMSAlertRulesPaused, []string{GMSAlertRulesPaused, GMSAlertRulesUnchanged})
 

@@ -1,7 +1,7 @@
 import { HttpResponse, JsonBodyType, StrictResponse, http } from 'msw';
 
 import { TemplatesTestPayload } from 'app/features/alerting/unified/api/templateApi';
-import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';
+import receiversMock from 'app/features/alerting/unified/components/contact-points/mocks/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import {
@@ -142,7 +142,7 @@ const getGrafanaAlertmanagerTemplatePreview = () =>
       const body = await request.json();
 
       if (body?.template.startsWith('{{')) {
-        return HttpResponse.json({ results: [{ name: 'asdasd', text: `some example preview for ${body.name}` }] });
+        return HttpResponse.json({ results: [{ name: 'asdasd', text: `some example preview for ${body.template}` }] });
       }
 
       return HttpResponse.json({});

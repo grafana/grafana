@@ -149,6 +149,7 @@ func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInst
 		CurrentReason:     modelInstance.CurrentReason,
 		LastEvalTime:      timestamppb.New(modelInstance.LastEvalTime),
 		LastSentAt:        nullableTimeToTimestamp(modelInstance.LastSentAt),
+		FiredAt:           nullableTimeToTimestamp(modelInstance.FiredAt),
 		ResolvedAt:        nullableTimeToTimestamp(modelInstance.ResolvedAt),
 		ResultFingerprint: modelInstance.ResultFingerprint,
 	}
@@ -191,6 +192,7 @@ func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *p
 		CurrentReason:     protoInstance.CurrentReason,
 		LastEvalTime:      protoInstance.LastEvalTime.AsTime(),
 		LastSentAt:        nullableTimestampToTime(protoInstance.LastSentAt),
+		FiredAt:           nullableTimestampToTime(protoInstance.FiredAt),
 		ResolvedAt:        nullableTimestampToTime(protoInstance.ResolvedAt),
 		ResultFingerprint: protoInstance.ResultFingerprint,
 	}

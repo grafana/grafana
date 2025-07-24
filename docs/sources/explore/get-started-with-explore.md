@@ -16,6 +16,8 @@ weight: 5
 
 # Get started with Explore
 
+{{< shared id="explore-overview" >}}
+
 Explore is your gateway for querying, analyzing, and aggregating data in Grafana. It allows you to visually explore and iterate until you develop a working query or set of queries for building visualizations and conducting data analysis. If your data source supports graph and table data, there's no need to create a dashboard, as Explore can display the results in both formats. This facilitates quick, detailed, real-time data analysis.
 
 With Explore you can:
@@ -31,6 +33,8 @@ Key features include:
 - Query editor, based on specific data source, to create and iterate queries.
 - [Query history](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/query-management/) to track and maintain your queries.
 - [Query inspector](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/) to help troubleshoot query performance.
+
+{{< /shared >}}
 
 Watch the following video to get started using Explore:
 
@@ -127,10 +131,10 @@ Select **Mixed** from the data source dropdown to run queries across multiple da
 
 When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Explore may generate long URLs, which some tools, like messaging or videoconferencing applications, might truncate due to fixed message lengths. In such cases, Explore displays a warning and loads a default state.
 If you encounter issues when sharing Explore links in these applications, you can generate shortened links. See [Share shortened link](#share-shortened-link) for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Generate Explore URLs from external tools
 

@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack } from '../ErrorBoundary/ErrorWithStack';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
@@ -22,13 +23,18 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   );
 
   if (loading) {
-    return <LoadingPlaceholder text={'Loading editor'} className={styles.container} />;
+    return (
+      <LoadingPlaceholder
+        text={t('grafana-ui.monaco.loading-placeholder', 'Loading editor')}
+        className={styles.container}
+      />
+    );
   }
 
   if (error) {
     return (
       <ErrorWithStack
-        title="React Monaco Editor failed to load"
+        title={t('grafana-ui.monaco.error-label', 'React Monaco Editor failed to load')}
         error={error}
         errorInfo={{ componentStack: error?.stack ?? '' }}
       />

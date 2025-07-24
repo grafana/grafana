@@ -14,8 +14,28 @@ const options: ComboboxOption[] = [
   { label: 'Option 3', value: '3', description: 'This is option 3' },
   { label: 'Option 4', value: '4' },
 ];
+const optionsWithGroups: ComboboxOption[] = [
+  { label: 'Option 1', value: '1', group: 'Group 1' },
+  { label: 'Option 2', value: '2' },
+  { label: 'Option 3', value: '3', group: 'Group 1' },
+  { label: 'Option 4', value: '4' },
+  { label: 'Option 5', value: '5', group: 'Group 2' },
+  { label: 'Option 6', value: '6', group: 'Group 2' },
+];
+const numericOptions: Array<ComboboxOption<number>> = [
+  { label: 'Option 0', value: 0 },
+  { label: 'Option 1', value: 1 },
+  { label: 'Option 2', value: 2 },
+  { label: 'Option 3', value: 3 },
+];
 
 describe('Combobox', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
+  beforeEach(() => {
+    user = userEvent.setup({ applyAccept: false });
+  });
+
   const onChangeHandler = jest.fn();
   beforeAll(() => {
     const mockGetBoundingClientRect = jest.fn(() => ({
@@ -102,13 +122,13 @@ describe('Combobox', () => {
     await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // Focus is at index 0 to start with
 
     expect(onChangeHandler).toHaveBeenCalledWith(options[2]);
-    expect(screen.queryByDisplayValue('Option 3')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
   });
 
   it('clears selected value', async () => {
     render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} isClearable />);
 
-    expect(screen.queryByDisplayValue('Option 2')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Option 2')).toBeInTheDocument();
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
 
@@ -144,11 +164,19 @@ describe('Combobox', () => {
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
     await userEvent.click(screen.getByRole('option', { name: 'Default' }));
-    expect(screen.queryByDisplayValue('Default')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Default')).toBeInTheDocument();
 
     await userEvent.click(input);
 
     expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('does not show a hanging 0 when the value is 0', async () => {
+    render(
+      <Combobox options={numericOptions} value={numericOptions[0].value} onChange={onChangeHandler} isClearable />
+    );
+    expect(screen.getByDisplayValue('Option 0')).toBeInTheDocument();
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 
   describe('groups', () => {
@@ -184,7 +212,7 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await userEvent.click(input);
 
-      const allHeaders = await screen.findAllByRole('presentation');
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
       expect(allHeaders).toHaveLength(2);
 
       const listbox = await screen.findByRole('listbox');
@@ -192,9 +220,45 @@ describe('Combobox', () => {
         ['Group 1', 'Option 1', 'Option 3', 'Option 6', 'Group 2', 'Option 2', 'Option 4', 'Option 5'].join('')
       );
     });
+
+    it('puts ungrouped options relative to first occurrence', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const listbox = await screen.findByRole('listbox');
+      expect(listbox).toHaveTextContent(
+        ['Group 1', 'Option 1', 'Option 3', 'Option 2', 'Option 4', 'Group 2', 'Option 5', 'Option 6'].join('')
+      );
+    });
+
+    it('does not render group header labels for ungrouped options', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
+
+      expect(allHeaders[0]).toHaveTextContent('Group 1');
+      expect(allHeaders[1]).toHaveTextContent('');
+    });
+
+    it('does not render a top border for the first group header', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByRole('presentation');
+
+      expect(allHeaders[0]).toHaveStyle('border-top: none');
+    });
   });
 
   describe('size support', () => {
+    // eslint-disable-next-line jest/expect-expect
     it('should require minWidth to be set with auto width', () => {
       // @ts-expect-error
       render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" />);
@@ -207,7 +271,7 @@ describe('Combobox', () => {
       const inputWrapper = screen.getByTestId('input-wrapper');
       const initialWidth = getComputedStyle(inputWrapper).width;
 
-      fireEvent.change(input, { target: { value: 'very very long value' } });
+      await user.type(input, 'very very long value');
 
       const newWidth = getComputedStyle(inputWrapper).width;
 
@@ -221,7 +285,7 @@ describe('Combobox', () => {
       const inputWrapper = screen.getByTestId('input-wrapper');
       const initialWidth = getComputedStyle(inputWrapper).width;
 
-      fireEvent.change(input, { target: { value: 'very very long value' } });
+      await user.type(input, 'very very long value');
 
       const newWidth = getComputedStyle(inputWrapper).width;
 
@@ -471,11 +535,9 @@ describe('Combobox', () => {
       });
 
       const customItem = screen.getByRole('option');
-      const customValue = customItem.getElementsByTagName('span')[0].textContent;
-      const customDescription = customItem.getElementsByTagName('span')[1].textContent;
-      expect(customItem).toBeInTheDocument();
-      expect(customValue).toBe('fir');
-      expect(customDescription).toBe('Use custom value');
+
+      expect(customItem).toHaveTextContent('fir');
+      expect(customItem).toHaveTextContent('Use custom value');
     });
 
     it('should display message when there is an error loading async options', async () => {
@@ -592,3 +654,12 @@ describe('Combobox', () => {
     });
   });
 });
+
+// Type test
+(() => {
+  // Handler function does not allow null for option.
+  function onChangeHandlerNoNull(option: ComboboxOption<string>) {}
+  // @ts-expect-error with isClearable set, onChange can pass `null`, so a function that does not accept null
+  // is an error. If this line errors, then the conditional typing for onChange has been broken.
+  return <Combobox options={options} value={null} onChange={onChangeHandlerNoNull} isClearable />;
+})();

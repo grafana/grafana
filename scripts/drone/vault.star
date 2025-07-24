@@ -55,8 +55,8 @@ def secrets():
         vault_secret(gar_pull_secret, "secret/data/common/gar", ".dockerconfigjson"),
         vault_secret(drone_token, "infra/data/ci/drone", "machine-user-token"),
         vault_secret(prerelease_bucket, "infra/data/ci/grafana/prerelease", "bucket"),
-        vault_secret(docker_username, "infra/data/ci/grafanaci-docker-hub", "username"),
-        vault_secret(docker_password, "infra/data/ci/grafanaci-docker-hub", "password"),
+        vault_secret(docker_username, "ci/data/common/dockerhub", "username"),
+        vault_secret(docker_password, "ci/data/common/dockerhub", "password"),
         vault_secret(
             gcp_upload_artifacts_key,
             "infra/data/ci/grafana/releng/artifacts-uploader-service-account",
@@ -153,21 +153,10 @@ def secrets():
             "infra/data/ci/grafana-release-eng/rgm",
             "dagger_token",
         ),
-        # grafana-delivery-bot secrets
-        vault_secret(
-            "delivery-bot-app-id",
-            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
-            "app-id",
-        ),
-        vault_secret(
-            "delivery-bot-app-installation-id",
-            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
-            "app-installation-id",
-        ),
         vault_secret(
             "delivery-bot-app-private-key",
-            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
-            "app-private-key",
+            "ci/data/repo/grafana/grafana/delivery-bot-app",
+            "PRIVATE_KEY",
         ),
         vault_secret(
             "gcr_credentials",

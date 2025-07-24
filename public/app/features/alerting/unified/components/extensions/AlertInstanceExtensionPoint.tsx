@@ -1,6 +1,7 @@
 import { ReactElement, useMemo, useState } from 'react';
 
 import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';
 import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
@@ -31,7 +32,11 @@ export const AlertInstanceExtensionPoint = ({
   return (
     <>
       <Dropdown placement="bottom-start" overlay={menu}>
-        <IconButton name="ellipsis-v" aria-label="Actions" variant="secondary" />
+        <IconButton
+          name="ellipsis-v"
+          aria-label={t('alerting.alert-instance-extension-point.aria-label-actions', 'Actions')}
+          variant="secondary"
+        />
       </Dropdown>
       {!!selectedExtension && !!selectedExtension.path && (
         <ConfirmNavigationModal

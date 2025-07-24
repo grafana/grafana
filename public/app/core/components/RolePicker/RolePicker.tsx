@@ -1,7 +1,8 @@
 import { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
 
+import { OrgRole } from '@grafana/data';
 import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
-import { Role, OrgRole } from 'app/types';
+import { Role } from 'app/types/accessControl';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
@@ -173,6 +174,7 @@ export const RolePicker = ({
     const options = roleOptions.map((r) => ({ ...r, delegatable: canUpdateRoles && r.delegatable }));
 
     if (query && query.trim() !== '') {
+      // TODO should this filter on `displayName` not (or in addition to) `name`?
       return options.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
     }
     return options;
@@ -210,6 +212,7 @@ export const RolePicker = ({
             <div onClick={(e) => e.stopPropagation()}>
               <RolePickerMenu
                 options={getOptions()}
+                isFiltered={query.trim() !== ''}
                 basicRole={selectedBuiltInRole}
                 appliedRoles={appliedRoles}
                 onBasicRoleSelect={onBasicRoleSelect}

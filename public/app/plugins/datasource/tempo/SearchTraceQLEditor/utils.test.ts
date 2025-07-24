@@ -5,9 +5,9 @@ import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { intrinsics } from '../traceql/traceql';
 
+import { emptyTags, testIntrinsics, v1Tags, v2Tags } from './mocks';
 import {
   filterToQuerySection,
-  generateQueryFromAdHocFilters,
   getAllTags,
   getFilteredTags,
   getIntrinsicTags,
@@ -21,34 +21,6 @@ const datasource: TempoDatasource = {
   },
 } as unknown as TempoDatasource;
 const lp = new TempoLanguageProvider(datasource);
-
-describe('generateQueryFromAdHocFilters generates the correct query for', () => {
-  it('an empty array', () => {
-    expect(generateQueryFromAdHocFilters([], lp)).toBe('{}');
-  });
-
-  it('a filter with values', () => {
-    expect(generateQueryFromAdHocFilters([{ key: 'footag', operator: '=', value: 'foovalue' }], lp)).toBe(
-      '{footag="foovalue"}'
-    );
-  });
-
-  it('two filters with values', () => {
-    expect(
-      generateQueryFromAdHocFilters(
-        [
-          { key: 'footag', operator: '=', value: 'foovalue' },
-          { key: 'bartag', operator: '=', value: '0' },
-        ],
-        lp
-      )
-    ).toBe('{footag="foovalue" && bartag=0}');
-  });
-
-  it('a filter with intrinsic values', () => {
-    expect(generateQueryFromAdHocFilters([{ key: 'kind', operator: '=', value: 'server' }], lp)).toBe('{kind=server}');
-  });
-});
 
 describe('gets correct tags', () => {
   const datasource: TempoDatasource = {
@@ -184,21 +156,3 @@ describe('filterToQuerySection returns the correct query section for a filter', 
     expect(result).toBe('span.foo=~"bar|baz"');
   });
 });
-
-export const emptyTags = [];
-export const testIntrinsics = uniq(['duration', 'kind', 'name', 'status'].concat(intrinsics));
-export const v1Tags = ['bar', 'foo'];
-export const v2Tags = [
-  {
-    name: 'resource',
-    tags: ['cluster', 'container'],
-  },
-  {
-    name: 'span',
-    tags: ['db'],
-  },
-  {
-    name: 'intrinsic',
-    tags: testIntrinsics,
-  },
-];

@@ -12,17 +12,22 @@ import {
 } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
-import { getRulesSourceName } from '../utils/datasource';
-import { getGroupOriginName } from '../utils/groupIdentifier';
+import { getGroupOriginName, groupIdentifier } from '../utils/groupIdentifier';
 import { isAdmin } from '../utils/misc';
-import { isFederatedRuleGroup, isPluginProvidedRule, rulerRuleType } from '../utils/rules';
+import {
+  isPluginProvidedRule,
+  isProvisionedPromRule,
+  isProvisionedRule,
+  prometheusRuleType,
+  rulerRuleType,
+} from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -66,12 +71,12 @@ export enum AlertmanagerAction {
   UpdateSilence = 'update-silence',
   PreviewSilencedInstances = 'preview-silenced-alerts',
 
-  // mute timings
-  ViewMuteTiming = 'view-mute-timing',
-  CreateMuteTiming = 'create-mute-timing',
-  UpdateMuteTiming = 'update-mute-timing',
-  DeleteMuteTiming = 'delete-mute-timing',
-  ExportMuteTimings = 'export-mute-timings',
+  // time intervals
+  ViewTimeInterval = 'view-time-interval',
+  CreateTimeInterval = 'create-time-interval',
+  UpdateTimeInterval = 'update-time-interval',
+  DeleteTimeInterval = 'delete-time-interval',
+  ExportTimeIntervals = 'export-time-intervals',
 
   // Alert groups
   ViewAlertGroups = 'view-alert-groups',
@@ -88,6 +93,13 @@ export enum AlertRuleAction {
   ModifyExport = 'modify-export-rule',
   Pause = 'pause-alert-rule',
   Restore = 'restore-alert-rule',
+  DeletePermanently = 'delete-alert-rule-permanently',
+}
+
+// this enum list all of the bulk actions we can perform on a folder
+export enum FolderBulkAction {
+  Pause = 'pause-folder', // unpause permissions are the same as pause
+  Delete = 'delete-folder',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -112,9 +124,24 @@ export enum AlertingAction {
 const AlwaysSupported = true;
 const NotSupported = false;
 
-export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction;
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction;
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
+
+/**
+ * This one will check for folder abilities
+ */
+export const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
+  return {
+    [FolderBulkAction.Pause]: [AlwaysSupported, isAdmin()],
+    [FolderBulkAction.Delete]: [AlwaysSupported, isAdmin()],
+  };
+};
+
+export const useFolderBulkActionAbility = (action: FolderBulkAction): Ability => {
+  const allAbilities = useFolderBulkActionAbilities();
+  return allAbilities[action];
+};
 
 /**
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
@@ -178,7 +205,7 @@ export function useRulerRuleAbility(
 }
 
 export function useRulerRuleAbilities(
-  rule: RulerRuleDTO,
+  rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifierV2,
   actions: AlertRuleAction[]
 ): Ability[] {
@@ -189,57 +216,16 @@ export function useRulerRuleAbilities(
   }, [abilities, actions]);
 }
 
-// This hook is being called a lot in different places
-// In some cases multiple times for ~80 rules (e.g. on the list page)
-// We need to investigate further if some of these calls are redundant
-// In the meantime, memoizing the result helps
+/**
+ * @deprecated Use {@link useAllRulerRuleAbilities} instead
+ */
 export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRuleAction> {
-  const rulesSourceName = getRulesSourceName(rule.namespace.rulesSource);
-
-  const {
-    isEditable,
-    isRemovable,
-    isRulerAvailable = false,
-    loading,
-  } = useIsRuleEditable(rulesSourceName, rule.rulerRule);
-  const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
-  const canSilence = useCanSilence(rule.rulerRule);
-
-  const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
-    const isProvisioned =
-      rulerRuleType.grafana.rule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-    const isFederated = isFederatedRuleGroup(rule.group);
-    const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule.rulerRule);
-    const isPluginProvided = isPluginProvidedRule(rule.rulerRule);
-
-    // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
-    const immutableRule = isProvisioned || isFederated || isPluginProvided;
-
-    // while we gather info, pretend it's not supported
-    const MaybeSupported = loading ? NotSupported : isRulerAvailable;
-    const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
-
-    // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
-    const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
-
-    const rulesPermissions = getRulesPermissions(rulesSourceName);
-
-    const abilities: Abilities<AlertRuleAction> = {
-      [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
-      [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
-      [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
-      [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
-      [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
-      [AlertRuleAction.Silence]: canSilence,
-      [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
-      [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
-      [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
-    };
-
-    return abilities;
-  }, [rule, loading, isRulerAvailable, isEditable, isRemovable, rulesSourceName, exportAllowed, canSilence]);
-
-  return abilities;
+  // This hook is being called a lot in different places
+  // In some cases multiple times for ~80 rules (e.g. on the list page)
+  // We need to investigate further if some of these calls are redundant
+  // In the meantime, memoizing the result helps
+  const groupIdentifierV2 = useMemo(() => groupIdentifier.fromCombinedRule(rule), [rule]);
+  return useAllRulerRuleAbilities(rule.rulerRule, groupIdentifierV2);
 }
 
 export function useAllRulerRuleAbilities(
@@ -253,7 +239,8 @@ export function useAllRulerRuleAbilities(
   const canSilence = useCanSilence(rule);
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
-    const isProvisioned = rulerRuleType.grafana.rule(rule) && Boolean(rule.grafana_alert.provenance);
+    const isProvisioned = rule ? isProvisionedRule(rule) : false;
+    // TODO: Add support for federated rules
     // const isFederated = isFederatedRuleGroup();
     const isFederated = false;
     const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule);
@@ -281,12 +268,141 @@ export function useAllRulerRuleAbilities(
       [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
       [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
       [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+      [AlertRuleAction.DeletePermanently]: [
+        MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule,
+        (isRemovable && isAdmin()) ?? false,
+      ],
     };
 
     return abilities;
   }, [rule, loading, isRulerAvailable, rulesSourceName, isEditable, isRemovable, canSilence, exportAllowed]);
 
   return abilities;
+}
+
+/**
+ * Hook for checking abilities on Grafana Prometheus rules (GrafanaPromRuleDTO)
+ * This is the next version of useAllRulerRuleAbilities designed to work with GrafanaPromRuleDTO
+ */
+export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): Abilities<AlertRuleAction> {
+  // For GrafanaPromRuleDTO, we use useIsGrafanaPromRuleEditable instead
+  const { isEditable, isRemovable, loading } = useIsGrafanaPromRuleEditable(rule); // duplicate
+  const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+
+  const silenceSupported = useGrafanaRulesSilenceSupport();
+  const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
+
+  const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
+    const isProvisioned = rule ? isProvisionedPromRule(rule) : false;
+
+    // Note: Grafana managed rules can't be federated - this is strictly a Mimir feature
+    // See: https://grafana.com/docs/mimir/latest/references/architecture/components/ruler/#federated-rule-groups
+    const isFederated = false;
+    // All GrafanaPromRuleDTO rules are Grafana-managed by definition
+    const isAlertingRule = prometheusRuleType.grafana.alertingRule(rule);
+    const isPluginProvided = isPluginProvidedRule(rule);
+
+    // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
+    const immutableRule = isProvisioned || isFederated || isPluginProvided;
+
+    // GrafanaPromRuleDTO rules are always supported (no loading state for ruler availability)
+    const MaybeSupported = loading ? NotSupported : AlwaysSupported;
+    const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
+
+    // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
+    const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+
+    const rulesPermissions = getRulesPermissions('grafana');
+
+    const abilities: Abilities<AlertRuleAction> = {
+      [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
+      [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
+      [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
+      [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
+      [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
+      [AlertRuleAction.Silence]: [silenceSupported, canSilenceInFolder && isAlertingRule],
+      [AlertRuleAction.ModifyExport]: [isAlertingRule, exportAllowed],
+      [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isAlertingRule, isEditable ?? false],
+      [AlertRuleAction.Restore]: [MaybeSupportedUnlessImmutable && isAlertingRule, isEditable ?? false],
+      [AlertRuleAction.DeletePermanently]: [
+        MaybeSupportedUnlessImmutable && isAlertingRule,
+        (isRemovable && isAdmin()) ?? false,
+      ],
+    };
+
+    return abilities;
+  }, [rule, loading, isEditable, isRemovable, canSilenceInFolder, exportAllowed, silenceSupported]);
+
+  return abilities;
+}
+
+interface IsGrafanaPromRuleEditableResult {
+  isEditable: boolean;
+  isRemovable: boolean;
+  loading: boolean;
+}
+
+/**
+ * Hook for checking if a GrafanaPromRuleDTO is editable
+ * Adapted version of useIsRuleEditable for GrafanaPromRuleDTO
+ */
+function useIsGrafanaPromRuleEditable(rule?: GrafanaPromRuleDTO): IsGrafanaPromRuleEditableResult {
+  const folderUID = rule?.folderUid;
+  const { folder, loading } = useFolder(folderUID);
+
+  return useMemo(() => {
+    if (!rule || !folderUID) {
+      return { isEditable: false, isRemovable: false, loading: false };
+    }
+
+    if (!folder) {
+      // Loading or invalid folder UID
+      return {
+        isEditable: false,
+        isRemovable: false,
+        loading,
+      };
+    }
+
+    // For Grafana-managed rules, check folder permissions
+    const rulesPermissions = getRulesPermissions('grafana');
+    const canEditGrafanaRules = ctx.hasPermissionInMetadata(rulesPermissions.update, folder);
+    const canRemoveGrafanaRules = ctx.hasPermissionInMetadata(rulesPermissions.delete, folder);
+
+    return {
+      isEditable: canEditGrafanaRules,
+      isRemovable: canRemoveGrafanaRules,
+      loading,
+    };
+  }, [rule, folderUID, folder, loading]);
+}
+
+export const skipToken = Symbol('ability-skip-token');
+type SkipToken = typeof skipToken;
+
+/**
+ * Hook for checking a single ability on a GrafanaPromRuleDTO
+ */
+export function useGrafanaPromRuleAbility(rule: GrafanaPromRuleDTO | SkipToken, action: AlertRuleAction): Ability {
+  const abilities = useAllGrafanaPromRuleAbilities(rule === skipToken ? undefined : rule);
+
+  return useMemo(() => {
+    return abilities[action];
+  }, [abilities, action]);
+}
+
+/**
+ * Hook for checking multiple abilities on a GrafanaPromRuleDTO
+ */
+export function useGrafanaPromRuleAbilities(
+  rule: GrafanaPromRuleDTO | SkipToken,
+  actions: AlertRuleAction[]
+): Ability[] {
+  const abilities = useAllGrafanaPromRuleAbilities(rule === skipToken ? undefined : rule);
+
+  return useMemo(() => {
+    return actions.map((action) => abilities[action]);
+  }, [abilities, actions]);
 }
 
 export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
@@ -391,28 +507,28 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
     [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
     [AlertmanagerAction.PreviewSilencedInstances]: toAbility(AlwaysSupported, instancePermissions.read),
-    // -- mute timings --
-    [AlertmanagerAction.CreateMuteTiming]: toAbility(
+    // -- time intervals --
+    [AlertmanagerAction.CreateTimeInterval]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.create,
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
     ),
-    [AlertmanagerAction.ViewMuteTiming]: toAbility(
+    [AlertmanagerAction.ViewTimeInterval]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_READ : [])
     ),
-    [AlertmanagerAction.UpdateMuteTiming]: toAbility(
+    [AlertmanagerAction.UpdateTimeInterval]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.update,
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
     ),
-    [AlertmanagerAction.DeleteMuteTiming]: toAbility(
+    [AlertmanagerAction.DeleteTimeInterval]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.delete,
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
     ),
-    [AlertmanagerAction.ExportMuteTimings]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
+    [AlertmanagerAction.ExportTimeIntervals]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
     [AlertmanagerAction.ViewAlertGroups]: toAbility(AlwaysSupported, instancePermissions.read),
   };
 

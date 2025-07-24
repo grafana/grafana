@@ -1,8 +1,7 @@
-import { useCallback } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { RuleIdentifier } from 'app/types/unified-alerting';
+import { Trans, t } from '@grafana/i18n';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
@@ -12,71 +11,98 @@ import { useRulesAccess } from '../utils/accessControlHooks';
 import * as ruleId from '../utils/rule-id';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
-import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { formValuesFromQueryParams, translateRouteParamToRuleType } from './formDefaults';
-
-type RuleEditorPathParams = {
+export type RuleEditorPathParams = {
   id?: string;
   type?: 'recording' | 'alerting' | 'grafana-recording';
 };
 
-const defaultPageNav: Partial<NavModelItem> = {
-  icon: 'bell',
+export const defaultPageNav: Partial<NavModelItem> = {
   id: 'alert-rule-view',
 };
 
-// sadly we only get the "type" when a new rule is being created, when editing an existing recording rule we can't actually know it from the URL
-const getPageNav = (identifier?: RuleIdentifier, type?: RuleEditorPathParams['type']) => {
-  if (type === 'recording' || type === 'grafana-recording') {
-    if (identifier) {
-      // this branch should never trigger actually, the type param isn't used when editing rules
-      return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit recording rule' };
-    } else {
-      return { ...defaultPageNav, id: 'alert-rule-add', text: 'New recording rule' };
-    }
-  }
-
-  if (identifier) {
-    // keep this one ambiguous, don't mentiond a specific alert type here
-    return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit rule' };
-  } else {
-    return { ...defaultPageNav, id: 'alert-rule-add', text: 'New alert rule' };
-  }
-};
-
 const RuleEditor = () => {
-  const { identifier, type } = useRuleEditorPathParams();
-  const { copyFromIdentifier, queryDefaults } = useRuleEditorQueryParams();
+  const { identifier } = useRuleEditorPathParams();
+  const cloneIdentifier = useIdentifierFromCopy();
+  const isManualRestore = useManualRestore();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
-  const getContent = useCallback(() => {
-    if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
-      return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
-    }
+  if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
+    return (
+      <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-create-rules', 'Cannot create rules')}>
+        <Trans i18nKey="alerting.rule-editor.get-content.sorry-allowed-create-rules">
+          Sorry! You are not allowed to create rules.
+        </Trans>
+      </AlertWarning>
+    );
+  }
 
-    if (identifier && !canEditRules(identifier.ruleSourceName)) {
-      return <AlertWarning title="Cannot edit rules">Sorry! You are not allowed to edit rules.</AlertWarning>;
-    }
+  if (identifier && !canEditRules(identifier.ruleSourceName)) {
+    return (
+      <AlertWarning title={t('alerting.rule-editor.get-content.title-cannot-edit-rules', 'Cannot edit rules')}>
+        <Trans i18nKey="alerting.rule-editor.get-content.sorry-allowed-rules">
+          Sorry! You are not allowed to edit rules.
+        </Trans>
+      </AlertWarning>
+    );
+  }
 
-    if (identifier) {
-      return <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} prefill={queryDefaults} />;
-    }
+  if (identifier) {
+    return (
+      <ExistingRuleEditor key={JSON.stringify(identifier)} identifier={identifier} isManualRestore={isManualRestore} />
+    );
+  }
 
-    if (copyFromIdentifier) {
-      return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
-    }
-    // new alert rule
-    return <AlertRuleForm prefill={queryDefaults} />;
-  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, identifier, queryDefaults]);
+  if (cloneIdentifier) {
+    return (
+      <ExistingRuleEditor
+        key={JSON.stringify(identifier)}
+        identifier={cloneIdentifier}
+        clone={true}
+        isManualRestore={isManualRestore}
+      />
+    );
+  }
+
+  // for new alerting or recording rules
+  return <NewRuleEditor />;
+};
+
+export const RECORDING_TYPE = ['grafana-recording', 'recording'];
+
+/**
+ * This one is used for creating new rules (both alerting and recording rules)
+ */
+function NewRuleEditor() {
+  const prefill = useDefaultsFromQuery();
+  const isManualRestore = useManualRestore();
+  const { type = '', identifier = '' } = useRuleEditorPathParams();
+
+  const isExisting = Boolean(identifier);
+  const isRecordingRule = RECORDING_TYPE.includes(type);
+
+  const newText = isRecordingRule
+    ? t('alerting.editor.new-recording-rule', 'New recording rule')
+    : t('alerting.editor.new-alert-rule', 'New alert rule');
+
+  const editText = isRecordingRule
+    ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
+    : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
 
   return (
-    <AlertingPageWrapper navId="alert-list" pageNav={getPageNav(identifier, type)}>
-      {getContent()}
+    <AlertingPageWrapper
+      navId="alert-list"
+      pageNav={{
+        id: 'alert-rule-add',
+        text: isExisting ? editText : newText,
+      }}
+    >
+      <AlertRuleForm prefill={prefill} isManualRestore={isManualRestore} />
     </AlertingPageWrapper>
   );
-};
+}
 
 // The pageNav property makes it difficult to only rely on AlertingPageWrapper
 // to catch errors.
@@ -91,12 +117,16 @@ function useRuleEditorPathParams() {
   return { identifier, type };
 }
 
-function useRuleEditorQueryParams() {
-  const { type } = useParams<RuleEditorPathParams>();
-
+function useIdentifierFromCopy() {
   const [searchParams] = useURLSearchParams();
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
-  const copyFromIdentifier = ruleId.tryParse(copyFromId);
+
+  return ruleId.tryParse(copyFromId);
+}
+
+function useDefaultsFromQuery() {
+  const { type } = useRuleEditorPathParams();
+  const [searchParams] = useURLSearchParams();
 
   const ruleType = translateRouteParamToRuleType(type);
 
@@ -104,5 +134,12 @@ function useRuleEditorQueryParams() {
     ? formValuesFromQueryParams(searchParams.get('defaults') ?? '', ruleType)
     : undefined;
 
-  return { copyFromIdentifier, queryDefaults };
+  return queryDefaults;
+}
+
+function useManualRestore() {
+  const [searchParams] = useURLSearchParams();
+  const isManualRestore = searchParams.has('isManualRestore');
+
+  return isManualRestore;
 }

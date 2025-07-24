@@ -2,7 +2,7 @@
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 categories:
   - alerting
-description: Learn how to group alert notifications effectively to reduce noise and streamline communication in Grafana Alerting — Part 3.
+description: Learn how to group alert notifications effectively to reduce noise and streamline communication in Grafana Alerting.
 labels:
   products:
     - enterprise
@@ -10,11 +10,11 @@ labels:
     - cloud
 tags:
   - intermediate
-title: Get started with Grafana Alerting - Part 3
-weight: 60
+title: Get started with Grafana Alerting - Group alert notifications
+weight: 64
 killercoda:
-  title: Get started with Grafana Alerting - Part 3
-  description: Learn how to group alert notifications effectively to reduce noise and streamline communication in Grafana Alerting — Part 3.
+  title: Get started with Grafana Alerting - Group alert notifications
+  description: Learn how to group alert notifications effectively to reduce noise and streamline communication in Grafana Alerting.
   backend:
     imageid: ubuntu
 refs:
@@ -37,9 +37,7 @@ refs:
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get started with Grafana Alerting - Part 3
-
-The Get started with Grafana Alerting tutorial Part 3 is a continuation of [Get started with Grafana Alerting tutorial Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
+This tutorial is a continuation of the [Get started with Grafana Alerting - Alert routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/) tutorial.
 
 Grouping in Grafana Alerting reduces notification noise by combining related alert instances into a single, concise notification. This is useful for on-call engineers, ensuring they focus on resolving incidents instead of sorting through a flood of notifications.
 
@@ -77,7 +75,7 @@ There are different ways you can follow along with this tutorial.
 
 - **Interactive learning environment**
 
-  - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Part 3](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt3/). It's a fully configured environment with all the dependencies already installed.
+  - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Grouping](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt3/). It's a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
 
@@ -279,8 +277,10 @@ Following the above example, [notification policies](ref:notification-policies) 
    These nested policies should route alert instances where the region label is either us-west or us-east. Only the us-west region team should receive grouped alert notifications.
 
    {{< admonition type="note" >}}
-   In Grafana, each label within a notification policy must have a unique key. If you attempt to add the same label key (e.g., region) with different values (us-west and us-east), only the last entry is saved, and the previous one is discarded. This is because labels are stored as associative arrays (maps), where each key must be unique.
-   For identical label keys use regex matchers (e.g., _region=~"us-west|us-east"_).
+   Label matchers are combined using the `AND` logical operator. This means that all matchers must be satisfied for a rule to be linked to a policy. If you attempt to use the same label key (e.g., region) with different values (e.g., us-west and us-east), the condition will not match, because it is logically impossible for a single key to have multiple values simultaneously.
+
+   However, `region!=us-east && region=!us-west` can match. For example, it would match a label set where `region=eu-central`.
+   Alternatively, for identical label keys use regular expression matchers (e.g., `region=~us-west|us-east`).
    {{</ admonition >}}
 
 <!-- INTERACTIVE ignore END -->
@@ -326,8 +326,9 @@ Following the above example, [notification policies](ref:notification-policies) 
 
    - Repeat for `region = us-east` with a different webhook or a different contact point.
 
-     **Note**: In Grafana, each label within a notification policy must have a unique key. If you attempt to add the same label key (e.g., region) with different values (us-west and us-east), only the last entry is saved, and the previous one is discarded. This is because labels are stored as associative arrays (maps), where each key must be unique.
-     For identical label keys use regex matchers (e.g., _region=~"us-west|us-east"_).
+     **Note**: Label matchers are combined using the `AND` logical operator. This means that all matchers must be satisfied for a rule to be linked to a policy. If you attempt to use the same label key (e.g., region) with different values (e.g., us-west and us-east), the condition will not match, because it is logically impossible for a single key to have multiple values simultaneously.
+
+     However, `region!=us-east && region=!us-west` can match. For example, it would match a label set where `region=eu-central`.Alternatively, for identical label keys use regular expression matchers (e.g., `region=~us-west|us-east`).
 
 {{< /docs/ignore >}}
 
@@ -339,7 +340,7 @@ Following the above example, [notification policies](ref:notification-policies) 
 In this section we configure an alert rule based on our application monitoring example.
 
 1. Navigate to **Alerts & IRM > Alerting > Alert rules**.
-2. Click **New alert rule**.
+2. Click **+ New alert rule**.
 
 ### Enter an alert rule name
 
@@ -375,7 +376,7 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
 1. In the **Alert condition** section:
 
-   - Keep `Last` as the value for the reducer function (`WHEN`), and `75` as the threshold value. This is the value above which the alert rule should trigger.
+   - Keep `Last` as the value for the reducer function (`WHEN`), and `IS ABOVE 75` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the queries.
 
@@ -391,9 +392,10 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 
 Every alert rule is assigned to an evaluation group. You can assign the alert rule to an existing evaluation group or create a new one.
 
-1. In the **Evaluation group and interval**, repeat the above step to create a new evaluation group. Name it `Multi-region group`.
+1. In the **Evaluation group and interval**, enter a name. For example: `Multi-region group`.
 1. Choose an **Evaluation interval** (how often the alert are evaluated). Choose `1m`.
 1. Set the **pending period** to `0s` (zero seconds), so the alert rule fires the moment the condition is met (this minimizes the waiting time for the demonstration).
+1. Set **Keep firing for** to, `0s`, so the alert stops firing immediately after the condition is no longer true.
 
 ### Configure notifications
 
@@ -511,13 +513,13 @@ _Detail of memory alert instances grouped into a separate notification for us-ea
 
 By configuring **notification policies** and using **labels** (such as _region_), you can group alert notifications based on specific criteria and route them to the appropriate teams. Fine-tuning **timing options**—including group wait, group interval, and repeat interval—further can reduce noise and ensures notifications remain actionable without overwhelming on-call engineers.
 
-## Learn more in [Grafana Alerting Part 4](http://www.grafana.com/tutorials/alerting-get-started-pt4/)
+## Learn more in [Grafana Alerting: Template your alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt4/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Part 4](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
+In [Get started with Grafana Alerting: Template your alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
 
 {{< /admonition >}}
 
@@ -525,7 +527,7 @@ In [Get started with Grafana Alerting - Part 4](http://www.grafana.com/tutorials
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Part 4](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
+In [Get started with Grafana Alerting: Template your alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt4/) you learn how to use templates to create customized and concise notifications.
 
 {{< /docs/ignore >}}
 

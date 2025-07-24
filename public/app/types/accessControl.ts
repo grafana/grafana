@@ -173,6 +173,7 @@ export interface Role {
   uid: string;
   name: string;
   displayName: string;
+  filteredDisplayName: string; // name to be shown in filtered role list
   description: string;
   group: string;
   global: boolean;

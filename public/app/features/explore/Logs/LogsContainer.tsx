@@ -4,7 +4,6 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import {
   AbsoluteTimeRange,
-  Field,
   hasLogsContextSupport,
   hasLogsContextUiSupport,
   LoadingState,
@@ -22,12 +21,14 @@ import {
   DataSourceWithQueryModificationSupport,
   hasQueryModificationSupport,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { StoreState } from 'app/types';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { ExploreItemState } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
 
 import { getTimeZone } from '../../profile/state/selectors';
 import {
@@ -163,20 +164,28 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     row: LogRowModel,
     origRow: LogRowModel,
     options: LogRowContextOptions
-  ): Promise<DataQueryResponse | []> => {
+  ): Promise<DataQueryResponse> => {
     const { logsQueries } = this.props;
 
     if (!origRow.dataFrame.refId || !this.state.dsInstances[origRow.dataFrame.refId]) {
-      return Promise.resolve([]);
+      return Promise.resolve({
+        data: [],
+      });
     }
 
     const ds = this.state.dsInstances[origRow.dataFrame.refId];
     if (!hasLogsContextSupport(ds)) {
-      return Promise.resolve([]);
+      return Promise.resolve({
+        data: [],
+      });
     }
 
     const query = this.getQuery(logsQueries, origRow, ds);
-    return query ? ds.getLogRowContext(row, options, query) : Promise.resolve([]);
+    return query
+      ? ds.getLogRowContext(row, options, query)
+      : Promise.resolve({
+          data: [],
+        });
   };
 
   getLogRowContextQuery = async (
@@ -228,9 +237,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     return hasLogsContextSupport(this.state.dsInstances[row.dataFrame.refId]);
   };
 
-  getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
+  getFieldLinks: GetFieldLinksFn = (field, rowIndex, dataFrame, vars) => {
     const { splitOpenFn, range } = this.props;
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame });
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars });
   };
 
   logDetailsFilterAvailable = () => {
@@ -300,7 +309,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
-          <Collapse label="Logs" loading={false} isOpen>
+          <Collapse label={t('explore.logs-container.label-logs', 'Logs')} loading={false} isOpen>
             <LiveTailControls exploreId={exploreId}>
               {(controls) => (
                 <LiveLogsWithTheme

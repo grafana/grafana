@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -277,7 +276,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				QueryRaw:   []byte(tc.query),
 				QueryType:  "",
 				DataSource: nil,
-			}, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))
+			})
 
 			if tc.shouldError {
 				require.Nil(t, cmd)
@@ -466,7 +465,7 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 		cmd, err := UnmarshalThresholdCommand(&rawNode{
 			RefID:    "B",
 			QueryRaw: raw,
-		}, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))
+		})
 		require.NoError(t, err)
 
 		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
@@ -639,7 +638,7 @@ func TestThresholdExecute(t *testing.T) {
 				t.Run(name, func(t *testing.T) {
 					result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
 						"A": newResults(input[name]),
-					}, tracing.InitializeTracerForTest())
+					}, tracing.InitializeTracerForTest(), nil)
 					require.NoError(t, err)
 					require.Equal(t, newResults(tc.expected[name]), result)
 				})

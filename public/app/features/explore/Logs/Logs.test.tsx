@@ -10,13 +10,12 @@ import {
   LoadingState,
   LogLevel,
   LogRowModel,
-  standardTransformersRegistry,
   toUtc,
   createDataFrame,
   ExploreLogsPanelState,
   DataQuery,
 } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
@@ -27,7 +26,7 @@ import { makeExplorePaneState } from '../state/utils';
 
 import { Logs } from './Logs';
 import { visualisationTypeKey } from './utils/logs';
-import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
+import { getMockElasticFrame, getMockLokiFrame } from './utils/mocks';
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -80,18 +79,7 @@ describe('Logs', () => {
   });
   beforeAll(() => {
     const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
-    standardTransformersRegistry.setInit(() => {
-      return transformers.map((t) => {
-        return {
-          id: t.id,
-          aliasIds: t.aliasIds,
-          name: t.name,
-          transformation: t,
-          description: t.description,
-          editor: () => null,
-        };
-      });
-    });
+    mockTransformationsRegistry(transformers);
   });
 
   afterAll(() => {

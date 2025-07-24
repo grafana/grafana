@@ -91,6 +91,11 @@ func (n staticValidator) Validate(settings models.NotificationSettings) error {
 			errs = append(errs, ErrorTimeIntervalDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: interval}})
 		}
 	}
+	for _, interval := range settings.ActiveTimeIntervals {
+		if _, ok := n.availableTimeIntervals[interval]; !ok {
+			errs = append(errs, ErrorTimeIntervalDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: interval}})
+		}
+	}
 	return errors.Join(errs...)
 }
 

@@ -2,7 +2,7 @@ import { StoryFn } from '@storybook/react';
 import { ValidateResult } from 'react-hook-form';
 
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
 import { InputControl } from '../InputControl';
 import { Select } from '../Select/Select';

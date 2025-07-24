@@ -1,3 +1,5 @@
+import { Trans } from '@grafana/i18n';
+
 import { GenericDataSourcePlugin } from '../types';
 
 export type Props = {
@@ -17,5 +19,9 @@ export function DataSourcePluginConfigPage({ plugin, pageId }: Props) {
     return <page.body plugin={plugin} query={{}} />;
   }
 
-  return <div>Page not found: {page}</div>;
+  return (
+    <div>
+      <Trans i18nKey="datasources.data-source-plugin-config-page.page-not-found">Page not found: {{ page }}</Trans>
+    </div>
+  );
 }

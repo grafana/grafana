@@ -32,7 +32,9 @@ export type E2EFactoryArgs<S extends Selectors> = { selectors: S };
 export type CypressOptions = Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>;
 
 const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, selectors: S): E2EFunctions<S> => {
-  const logOutput = (data: unknown) => cy.logToConsole('Retrieving Selector:', data);
+  const logSelectorsInfo = Boolean(Cypress.env('LOG_SELECTORS_INFO'));
+  const logOutput = logSelectorsInfo ? (data: unknown) => cy.logToConsole('Retrieving Selector:', data) : () => {};
+
   const keys = Object.keys(selectors);
   for (let index = 0; index < keys.length; index++) {
     const key = keys[index];

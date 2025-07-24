@@ -1,6 +1,9 @@
 SELECT
+  `guid`,
   `resource_version`,
   `namespace`,
+  `group`,
+  `resource`,
   `name`,
   `folder`,
   `value`
@@ -10,4 +13,4 @@ WHERE 1 = 1
   AND `group`     = 'gg'
   AND `resource`  = 'rr'
   AND `name`      = 'name'
-ORDER BY resource_version DESC
+ORDER BY `resource_version` DESC

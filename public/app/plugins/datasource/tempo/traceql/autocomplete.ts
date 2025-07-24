@@ -1,6 +1,6 @@
 import { IMarkdownString, languages } from 'monaco-editor';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
@@ -25,6 +25,8 @@ type CompletionItem = MinimalCompletionItem & {
 interface Props {
   languageProvider: TempoLanguageProvider;
   setAlertText: (text?: string) => void;
+  timeRangeForTags?: number;
+  range?: TimeRange;
 }
 
 /**
@@ -38,11 +40,15 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   languageProvider: TempoLanguageProvider;
   registerInteractionCommandId: string | null;
   setAlertText: (text?: string) => void;
+  timeRangeForTags?: number;
+  range?: TimeRange;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
     this.setAlertText = props.setAlertText;
     this.registerInteractionCommandId = null;
+    this.timeRangeForTags = props.timeRangeForTags;
+    this.range = props.range;
   }
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
@@ -128,6 +134,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       detail: 'Negated regular expression',
     },
   ];
+  // https://grafana.com/docs/tempo/latest/traceql/#structural
   static readonly structuralOps: MinimalCompletionItem[] = [
     {
       label: '>>',
@@ -163,6 +170,78 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       detail: 'Sibling',
       documentation:
         'Sibling operator. Checks that spans matching {condA} and {condB} are siblings of the same parent span.',
+    },
+    // Union structural operators
+    {
+      label: '&>>',
+      insertText: '&>>',
+      detail: 'Union Descendant',
+      documentation:
+        'The descendant operator (>>) looks for spans matching {condB} that are descendants of a span matching {condA}',
+    },
+    {
+      label: '&>',
+      insertText: '&>',
+      detail: 'Union Child',
+      documentation:
+        'The child operator (>) looks for spans matching {condB} that are direct child spans of a parent matching {condA}',
+    },
+    {
+      label: '&<<',
+      insertText: '&<<',
+      detail: 'Union Ancestor',
+      documentation:
+        'The ancestor operator (<<) looks for spans matching {condB} that are ancestor of a span matching {condA}',
+    },
+    {
+      label: '&<',
+      insertText: '&<',
+      detail: 'Union Parent',
+      documentation:
+        'The parent operator (<) looks for spans matching {condB} that are direct parent spans of a child matching {condA}',
+    },
+    {
+      label: '&~',
+      insertText: '&~',
+      detail: 'Union Sibling',
+      documentation:
+        'The sibling operator (~) looks at spans matching {condB} that have at least one sibling matching {condA}',
+    },
+    // Negated structural operators
+    {
+      label: '!>>',
+      insertText: '!>>',
+      detail: 'Not Descendant',
+      documentation:
+        'The not-descendant operator (!>>) looks for spans matching {condB} that are not descendant spans of a parent matching {condA}',
+    },
+    {
+      label: '!>',
+      insertText: '!>',
+      detail: 'Not Child',
+      documentation:
+        'The not-child operator (!>) looks for spans matching {condB} that are not direct child spans of a parent matching {condA}',
+    },
+    {
+      label: '!<<',
+      insertText: '!<<',
+      detail: 'Not Ancestor',
+      documentation:
+        'The not-ancestor operator (!<<) looks for spans matching {condB} that are not ancestor spans of a child matching {condA}',
+    },
+    {
+      label: '!<',
+      insertText: '!<',
+      detail: 'Not Parent',
+      documentation:
+        'The not-parent operator (!<) looks for spans matching {condB} that are not direct parent spans of a child matching {condA}',
+    },
+    {
+      label: '!~',
+      insertText: '!~',
+      detail: 'Not Sibling',
+      documentation:
+        'The not-sibling operator (!~) looks for spans matching {condB} that do not have at least one sibling matching {condA}',
     },
   ];
 
@@ -318,14 +397,24 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.registerInteractionCommandId = id;
   }
 
-  private async getTagValues(tagName: string, query: string): Promise<Array<SelectableValue<string>>> {
+  private async getTagValues(
+    tagName: string,
+    query: string,
+    timeRangeForTags?: number,
+    range?: TimeRange
+  ): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
     const cacheKey = `${tagName}:${query}`;
 
     if (this.cachedValues.hasOwnProperty(cacheKey)) {
       tagValues = this.cachedValues[cacheKey];
     } else {
-      tagValues = await this.languageProvider.getOptionsV2(tagName, query);
+      tagValues = await this.languageProvider.getOptionsV2({
+        tag: tagName,
+        query,
+        timeRangeForTags,
+        range,
+      });
       this.cachedValues[cacheKey] = tagValues;
     }
     return tagValues;
@@ -388,7 +477,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
-          tagValues = await this.getTagValues(situation.tagName, situation.query);
+          tagValues = await this.getTagValues(situation.tagName, situation.query, this.timeRangeForTags, this.range);
           setAlertText(undefined);
         } catch (error) {
           if (isFetchError(error)) {

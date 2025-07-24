@@ -171,7 +171,7 @@ type User struct {
 func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
 	return func(evaluator Evaluator) bool {
 		var targetOrgID int64 = GlobalOrgID
-		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
+		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.GetID())
 		if err != nil {
 			// This will be an common error for entities that can't authenticate in global scope
 			c.Logger.Debug("Failed to authenticate user in global scope", "error", err)
@@ -185,11 +185,11 @@ func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmod
 		}
 
 		// guard against nil map
-		if c.SignedInUser.Permissions == nil {
-			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+		if c.Permissions == nil {
+			c.Permissions = make(map[int64]map[string][]string)
 		}
 		// set on user so we don't fetch global permissions every time this is called
-		c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
+		c.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 
 		return hasAccess
 	}
@@ -212,13 +212,13 @@ var ReqSignedIn = func(c *contextmodel.ReqContext) bool {
 }
 
 var ReqGrafanaAdmin = func(c *contextmodel.ReqContext) bool {
-	return c.SignedInUser.GetIsGrafanaAdmin()
+	return c.GetIsGrafanaAdmin()
 }
 
 // ReqHasRole generates a fallback to check whether the user has a role
 // ReqHasRole(org.RoleAdmin) will always return true for Grafana server admins, eg, a Grafana Admin / Viewer role combination
 func ReqHasRole(role org.RoleType) func(c *contextmodel.ReqContext) bool {
-	return func(c *contextmodel.ReqContext) bool { return c.SignedInUser.HasRole(role) }
+	return func(c *contextmodel.ReqContext) bool { return c.HasRole(role) }
 }
 
 func BuildPermissionsMap(permissions []Permission) map[string]bool {

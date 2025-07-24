@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 
+import { t } from '@grafana/i18n';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';
@@ -21,7 +22,11 @@ export function RuleDetailsExpression(props: Props): JSX.Element | null {
   }
 
   return (
-    <DetailsField label="Expression" horizontal={true} className={cx({ [styles.exprRow]: !!annotations.length })}>
+    <DetailsField
+      label={t('alerting.rule-details-expression.label-expression', 'Expression')}
+      horizontal={true}
+      className={cx({ [styles.exprRow]: !!annotations.length })}
+    >
       <Expression expression={rule.query} rulesSource={rulesSource} />
     </DetailsField>
   );

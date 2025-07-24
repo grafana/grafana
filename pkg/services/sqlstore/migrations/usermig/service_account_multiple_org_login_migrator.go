@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -72,6 +72,7 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
               AND is_service_account = 1
               AND login NOT LIKE 'sa-' || CAST(org_id AS TEXT) || '-%';
         `)
+
 	default:
 		return fmt.Errorf("dialect not supported: %s", p.dialect)
 	}

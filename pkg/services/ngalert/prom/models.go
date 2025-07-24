@@ -25,18 +25,12 @@ type PrometheusRuleGroup struct {
 }
 
 func (g *PrometheusRuleGroup) Validate() error {
-	if g.QueryOffset != nil {
-		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset is not supported")
-	}
-
 	if g.Limit != 0 {
 		return ErrPrometheusRuleGroupValidationFailed.Errorf("limit is not supported")
 	}
 
-	for _, rule := range g.Rules {
-		if err := rule.Validate(); err != nil {
-			return err
-		}
+	if g.QueryOffset != nil && *g.QueryOffset < prommodel.Duration(0) {
+		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset must be >= 0")
 	}
 
 	return nil
@@ -50,12 +44,4 @@ type PrometheusRule struct {
 	Labels        map[string]string   `yaml:"labels,omitempty"`
 	Annotations   map[string]string   `yaml:"annotations,omitempty"`
 	Record        string              `yaml:"record,omitempty"`
-}
-
-func (r *PrometheusRule) Validate() error {
-	if r.KeepFiringFor != nil {
-		return ErrPrometheusRuleValidationFailed.Errorf("keep_firing_for is not supported")
-	}
-
-	return nil
 }

@@ -9,7 +9,7 @@ import {
   MutableDataFrame,
   DataFrame,
 } from '@grafana/data';
-import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
+import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
 import { logSeriesToLogsModel } from './logsModel';
 import {
@@ -356,13 +356,22 @@ describe('logRowsToReadableJson', () => {
   it('should format a single row', () => {
     const result = logRowsToReadableJson([testRow]);
 
-    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar' } }]);
+    expect(result).toEqual([
+      { date: '1970-01-01T00:00:00.010Z', line: 'test entry', timestamp: '123456789', fields: { foo: 'bar' } },
+    ]);
   });
 
   it('should format a df field row', () => {
     const result = logRowsToReadableJson([testRow2]);
 
-    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: 'bar2' } }]);
+    expect(result).toEqual([
+      {
+        date: '1970-01-01T00:00:00.010Z',
+        line: 'test entry',
+        timestamp: '123456789',
+        fields: { foo: 'bar', foo2: 'bar2' },
+      },
+    ]);
   });
 });
 

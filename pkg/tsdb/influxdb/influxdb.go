@@ -72,6 +72,12 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			database = settings.Database
 		}
 
+		proxyClient, err := settings.ProxyClient(ctx)
+		if err != nil {
+			logger.Error("influx proxy creation failed", "error", err)
+			return nil, fmt.Errorf("influx proxy creation failed")
+		}
+
 		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
@@ -85,6 +91,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			InsecureGrpc:  jsonData.InsecureGrpc,
 			Token:         settings.DecryptedSecureJSONData["token"],
 			Timeout:       opts.Timeouts.Timeout,
+			ProxyClient:   proxyClient,
 		}
 		return model, nil
 	}

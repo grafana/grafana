@@ -7,7 +7,7 @@ import { useInterval, useToggle } from 'react-use';
 import { LoadingState } from '@grafana/data';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
@@ -22,7 +22,7 @@ const PANEL_WIDTH = 400;
 const PANEL_HEIGHT = 150;
 
 const meta: Meta<typeof PanelChrome> = {
-  title: 'Visualizations/PanelChrome',
+  title: 'Plugins/PanelChrome',
   component: PanelChrome,
   parameters: {
     controls: {

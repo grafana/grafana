@@ -49,11 +49,13 @@ func TestErrorTemplates(t *testing.T) {
 	require.Equal(t, "plugin.archNotFound", base.Public().MessageID)
 	require.Equal(t, "grafana-test-app is not compatible with your system architecture: darwin-amd64", base.Public().Message)
 
-	err = ErrChecksumMismatch("http://localhost:6481/grafana-test-app/versions/1.0.0/download")
+	expectedChecksum := "abcdef1234567890"
+	computedChecksum := "abcdef0987654321"
+	err = ErrChecksumMismatch("http://localhost:6481/grafana-test-app/versions/1.0.0/download", expectedChecksum, computedChecksum)
 	require.True(t, errors.As(err, base))
 	require.Equal(t, http.StatusUnprocessableEntity, base.Public().StatusCode)
 	require.Equal(t, "plugin.checksumMismatch", base.Public().MessageID)
-	require.Equal(t, "expected SHA256 checksum does not match the downloaded archive (http://localhost:6481/grafana-test-app/versions/1.0.0/download) - please contact security@grafana.com", base.Public().Message)
+	require.Equal(t, "expected SHA256 checksum (abcdef1234567890) does not match the downloaded archive (http://localhost:6481/grafana-test-app/versions/1.0.0/download) computed SHA256 checksum (abcdef0987654321) - please contact security@grafana.com", base.Public().Message)
 
 	err = ErrCorePlugin("grafana-test-app")
 	require.True(t, errors.As(err, base))

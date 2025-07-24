@@ -46,6 +46,8 @@ export type Preferences = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  /** Selected locale (beta) */
+  regionalFormat?: string;
   /** light, dark, empty is default */
   theme?: string;
   /** The timezone selection
@@ -76,6 +78,7 @@ export type PatchPrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark';
   timezone?: 'utc' | 'browser';
   weekStart?: string;
@@ -88,6 +91,7 @@ export type UpdatePrefsCmd = {
   language?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
   timezone?: 'utc' | 'browser';
   weekStart?: string;

@@ -3,8 +3,8 @@ import { useId } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
 import { CreateSessionApiArg } from '../../../api';
@@ -136,8 +136,8 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
 
             <div>
               <Trans i18nKey="migrate-to-cloud.connect-modal.body-token-instructions">
-                Log into your cloud stack and navigate to Administration, General, Migrate to Grafana Cloud. Create a
-                migration token on that screen and paste the token here.
+                Log into your cloud stack and navigate to Administration &gt; General &gt; Migrate to Grafana Cloud.
+                Create a migration token on that screen and paste the token here.
               </Trans>
             </div>
 
@@ -167,6 +167,7 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
                 })}
                 id={tokenId}
                 placeholder={t('migrate-to-cloud.connect-modal.body-token-field-placeholder', 'Paste token here')}
+                data-testid="migrate-to-cloud-connect-session-modal-token-input"
               />
             </Field>
           </Stack>
@@ -176,7 +177,11 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
           <Button variant="secondary" onClick={hideModal}>
             <Trans i18nKey="migrate-to-cloud.connect-modal.cancel">Cancel</Trans>
           </Button>
-          <Button type="submit" disabled={isLoading || !token}>
+          <Button
+            type="submit"
+            disabled={isLoading || !token}
+            data-testid="migrate-to-cloud-connect-session-modal-connect-button"
+          >
             {isLoading
               ? t('migrate-to-cloud.connect-modal.connecting', 'Connecting to this stack...')
               : t('migrate-to-cloud.connect-modal.connect', 'Connect to this stack')}

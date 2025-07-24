@@ -1,7 +1,6 @@
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
-import { ScopesSelectorService } from '../selector/ScopesSelectorService';
 
 import {
   applyScopes,
@@ -22,8 +21,6 @@ import {
   updateScopes,
 } from './utils/actions';
 import {
-  expectPersistedApplicationsGrafanaNotPresent,
-  expectPersistedApplicationsMimirNotPresent,
   expectPersistedApplicationsMimirPresent,
   expectResultApplicationsCloudNotPresent,
   expectResultApplicationsCloudPresent,
@@ -39,8 +36,6 @@ import {
   expectResultCloudOpsSelected,
   expectScopesHeadline,
   expectScopesSelectorValue,
-  expectSelectedScopePath,
-  expectTreeScopePath,
 } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
@@ -58,7 +53,6 @@ describe('Tree', () => {
   let fetchNodesSpy: jest.SpyInstance;
   let fetchScopeSpy: jest.SpyInstance;
   let scopesService: ScopesService;
-  let scopesSelectorService: ScopesSelectorService;
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
@@ -68,12 +62,12 @@ describe('Tree', () => {
   beforeEach(async () => {
     const result = await renderDashboard();
     scopesService = result.scopesService;
-    scopesSelectorService = result.scopesSelectorService;
-    fetchNodesSpy = jest.spyOn(result.client, 'fetchNode');
+    fetchNodesSpy = jest.spyOn(result.client, 'fetchNodes');
     fetchScopeSpy = jest.spyOn(result.client, 'fetchScope');
   });
 
   afterEach(async () => {
+    locationService.replace('');
     await resetScenes([fetchNodesSpy, fetchScopeSpy]);
   });
 
@@ -170,8 +164,6 @@ describe('Tree', () => {
     await searchScopes('grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectPersistedApplicationsMimirPresent();
-    expectPersistedApplicationsGrafanaNotPresent();
-    expectResultApplicationsMimirNotPresent();
     expectResultApplicationsGrafanaPresent();
   });
 
@@ -181,7 +173,6 @@ describe('Tree', () => {
     await selectResultApplicationsMimir();
     await searchScopes('mimir');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-    expectPersistedApplicationsMimirNotPresent();
     expectResultApplicationsMimirPresent();
   });
 
@@ -194,8 +185,6 @@ describe('Tree', () => {
 
     await clearScopesSearch();
     expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
-    expectPersistedApplicationsMimirNotPresent();
-    expectPersistedApplicationsGrafanaNotPresent();
     expectResultApplicationsMimirPresent();
     expectResultApplicationsGrafanaPresent();
   });
@@ -248,7 +237,6 @@ describe('Tree', () => {
 
   it('Shows the proper headline', async () => {
     await openSelector();
-    expectScopesHeadline('Recommended');
 
     await searchScopes('Applications');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
@@ -259,27 +247,10 @@ describe('Tree', () => {
     expectScopesHeadline('No results found for your query');
   });
 
-  it('Updates the paths for scopes without paths on nodes fetching', async () => {
-    const selectedScopeName = 'grafana';
-    const unselectedScopeName = 'mimir';
-    const selectedScopeNameFromOtherGroup = 'dev';
-
-    await updateScopes(scopesService, [selectedScopeName, selectedScopeNameFromOtherGroup]);
-    expectSelectedScopePath(scopesSelectorService, selectedScopeName, []);
-    expectTreeScopePath(scopesSelectorService, selectedScopeName, []);
-    expectSelectedScopePath(scopesSelectorService, unselectedScopeName, undefined);
-    expectTreeScopePath(scopesSelectorService, unselectedScopeName, undefined);
-    expectSelectedScopePath(scopesSelectorService, selectedScopeNameFromOtherGroup, []);
-    expectTreeScopePath(scopesSelectorService, selectedScopeNameFromOtherGroup, []);
-
+  it('Should only show Recommended when there are no leaf container nodes visible', async () => {
     await openSelector();
     await expandResultApplications();
-    const expectedPath = ['', 'applications', 'applications-grafana'];
-    expectSelectedScopePath(scopesSelectorService, selectedScopeName, expectedPath);
-    expectTreeScopePath(scopesSelectorService, selectedScopeName, expectedPath);
-    expectSelectedScopePath(scopesSelectorService, unselectedScopeName, undefined);
-    expectTreeScopePath(scopesSelectorService, unselectedScopeName, undefined);
-    expectSelectedScopePath(scopesSelectorService, selectedScopeNameFromOtherGroup, []);
-    expectTreeScopePath(scopesSelectorService, selectedScopeNameFromOtherGroup, []);
+    await expandResultApplicationsCloud();
+    expectScopesHeadline('Recommended');
   });
 });

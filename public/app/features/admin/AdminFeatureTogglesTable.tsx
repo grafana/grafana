@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Switch, InteractiveTable, Tooltip, type CellProps, Button, ConfirmModal, type SortByFn } from '@grafana/ui';
 
 import { FeatureToggle, getTogglesAPI } from './AdminFeatureTogglesAPI';
@@ -36,6 +37,7 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
   const [localToggles, setLocalToggles] = useState<FeatureToggle[]>(featureToggles);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveModel, setShowSaveModal] = useState(false);
+
   const togglesApi = getTogglesAPI();
 
   const handleToggleChange = (toggle: FeatureToggle, newValue: boolean) => {
@@ -90,16 +92,23 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
     switch (stage) {
       case 'GA':
         return (
-          <Tooltip content={'General availability'}>
-            <div>GA</div>
+          <Tooltip
+            content={t(
+              'admin.admin-feature-toggles-table.get-stage-cell.content-general-availability',
+              'General availability'
+            )}
+          >
+            <div>
+              <Trans i18nKey="admin.admin-feature-toggles-table.get-stage-cell.ga">GA</Trans>
+            </div>
           </Tooltip>
         );
       case 'privatePreview':
       case 'preview':
       case 'experimental':
-        return 'Beta';
+        return t('admin.admin-feature-toggles-table.get-stage-cell.beta', 'Beta');
       case 'deprecated':
-        return 'Deprecated';
+        return t('admin.admin-feature-toggles-table.get-stage-cell.deprecated', 'Deprecated');
       default:
         return stage;
     }
@@ -152,21 +161,32 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
       {allowEditing && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
           <Button disabled={!hasModifications() || isSaving} onClick={showSaveChangesModal(true)} ref={saveButtonRef}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving
+              ? t('admin.admin-feature-toggles-table.saving', 'Saving...')
+              : t('admin.admin-feature-toggles-table.save-changes', 'Save changes')}
           </Button>
           <ConfirmModal
             isOpen={showSaveModel}
-            title="Apply feature toggle changes"
+            title={t(
+              'admin.admin-feature-toggles-table.title-apply-feature-toggle-changes',
+              'Apply feature toggle changes'
+            )}
             body={
               <div>
                 <p>
-                  Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary
-                  Beta phase, available for early adoption.
+                  <Trans i18nKey="admin.admin-feature-toggles-table.confirm-modal-body-1">
+                    Some features are stable (GA) and enabled by default, whereas some are currently in their
+                    preliminary Beta phase, available for early adoption.
+                  </Trans>
                 </p>
-                <p>We advise understanding the implications of each feature change before making modifications.</p>
+                <p>
+                  <Trans i18nKey="admin.admin-feature-toggles-table.confirm-modal-body-2">
+                    We advise understanding the implications of each feature change before making modifications.
+                  </Trans>
+                </p>
               </div>
             }
-            confirmText="Save changes"
+            confirmText={t('admin.admin-feature-toggles-table.confirmText-save-changes', 'Save changes')}
             onConfirm={async () => {
               showSaveChangesModal(false)();
               handleSaveChanges();

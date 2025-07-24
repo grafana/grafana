@@ -19,7 +19,6 @@ function getTraceView(frames: DataFrame[]) {
   return (
     <Provider store={store}>
       <TraceView
-        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
@@ -86,14 +85,14 @@ describe('TraceView', () => {
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
+    expect(screen.queryByText(/Span attributes/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByText(/Span Attributes/)).toBeTruthy();
+    expect(screen.queryByText(/Span attributes/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    screen.debug(screen.queryAllByText(/Span Attributes/));
-    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Span attributes/));
+    expect(screen.queryByText(/Span attributes/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {

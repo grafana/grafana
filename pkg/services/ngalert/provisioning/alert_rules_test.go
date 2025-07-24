@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -40,7 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestAlertRuleService(t *testing.T) {
+func TestIntegrationAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
@@ -753,7 +754,7 @@ func TestAlertRuleService(t *testing.T) {
 	})
 }
 
-func TestCreateAlertRule(t *testing.T) {
+func TestIntegrationCreateAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)
@@ -1923,8 +1924,8 @@ func TestDeleteRuleGroups(t *testing.T) {
 
 	t.Run("when filtering by imported Prometheus rules", func(t *testing.T) {
 		filterOpts := &FilterOptions{
-			ImportedPrometheusRule: util.Pointer(true),
-			NamespaceUIDs:          []string{"namespace1"},
+			HasPrometheusRuleDefinition: util.Pointer(true),
+			NamespaceUIDs:               []string{"namespace1"},
 		}
 
 		t.Run("when the group is not imported", func(t *testing.T) {
@@ -1982,7 +1983,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 	})
 }
 
-func TestProvisiongWithFullpath(t *testing.T) {
+func TestIntegrationProvisiongWithFullpath(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
@@ -1993,7 +1994,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(
 		fStore, ac, inProcBus, dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
@@ -2103,7 +2104,7 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 			uid = string(*userUID)
 		}
 
-		uids, ok := q.Params[2].([]string)
+		uids, ok := q.Params[3].([]string)
 		require.True(t, ok, "uids parameter should be []string")
 
 		operations = append(operations, deleteRuleOperation{

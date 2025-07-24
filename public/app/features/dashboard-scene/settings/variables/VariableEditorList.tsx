@@ -4,11 +4,12 @@ import classNames from 'classnames';
 import { ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
+import { isVariableEditable } from '../../serialization/sceneVariablesSetToVariables';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
 
@@ -46,7 +47,9 @@ export function VariableEditorList({
     onChangeOrder(result.source.index, result.destination.index);
   };
 
-  return variables.length <= 0 ? (
+  const editableVariables = variables.filter(isVariableEditable);
+
+  return editableVariables.length <= 0 ? (
     <EmptyVariablesList onAdd={onAdd} />
   ) : (
     <Stack direction="column" gap={3}>
@@ -57,8 +60,12 @@ export function VariableEditorList({
       >
         <thead>
           <tr>
-            <th>Variable</th>
-            <th>Definition</th>
+            <th>
+              <Trans i18nKey="dashboard-scene.variable-editor-list.variable">Variable</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="dashboard-scene.variable-editor-list.definition">Definition</Trans>
+            </th>
             <th colSpan={5} />
           </tr>
         </thead>
@@ -67,6 +74,10 @@ export function VariableEditorList({
             {(provided) => (
               <tbody ref={provided.innerRef} {...provided.droppableProps}>
                 {variables.map((variableScene, index) => {
+                  if (!isVariableEditable(variableScene)) {
+                    return null;
+                  }
+
                   const variableState = variableScene.state;
                   return (
                     <VariableEditorListRow
@@ -90,7 +101,7 @@ export function VariableEditorList({
       <Stack>
         <VariablesDependenciesButton variables={variables} />
         <Button data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton} onClick={onAdd} icon="plus">
-          New variable
+          <Trans i18nKey="dashboard-scene.variable-editor-list.new-variable">New variable</Trans>
         </Button>
       </Stack>
     </Stack>

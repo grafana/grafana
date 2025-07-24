@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { PluginState } from '@grafana/data/src';
+import { GrafanaTheme2, PluginState } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TextDimensionMode } from '@grafana/schema';
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
-import { ColorDimensionEditor } from 'app/features/dimensions/editors';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
@@ -164,27 +164,27 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = ['Button'];
+    const category = [t('canvas.button-item.category-button', 'Button')];
     builder
       .addCustomEditor({
         category,
         id: 'styleSelector',
         path: 'config.style',
-        name: 'Style',
+        name: t('canvas.button-item.name-style', 'Style'),
         editor: ButtonStyleEditor,
       })
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: 'Text',
+        name: t('canvas.button-item.name-text', 'Text'),
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: 'Text color',
+        name: t('canvas.button-item.name-text-color', 'Text color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -192,12 +192,12 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       .addRadio({
         category,
         path: 'config.align',
-        name: 'Align text',
+        name: t('canvas.button-item.name-align-text', 'Align text'),
         settings: {
           options: [
-            { value: Align.Left, label: 'Left' },
-            { value: Align.Center, label: 'Center' },
-            { value: Align.Right, label: 'Right' },
+            { value: Align.Left, label: t('canvas.button-item.label.left', 'Left') },
+            { value: Align.Center, label: t('canvas.button-item.label.center', 'Center') },
+            { value: Align.Right, label: t('canvas.button-item.label.right', 'Right') },
           ],
         },
         defaultValue: Align.Left,
@@ -205,16 +205,16 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: 'Text size',
+        name: t('canvas.button-item.name-text-size', 'Text size'),
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('canvas.button-item.placeholder.auto', 'Auto'),
         },
       })
       .addCustomEditor({
         category,
         id: 'apiSelector',
         path: 'config.api',
-        name: 'API',
+        name: t('canvas.button-item.name-api', 'API'),
         editor: APIEditor,
       });
   },

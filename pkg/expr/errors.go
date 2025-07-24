@@ -3,6 +3,8 @@ package expr
 import (
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
@@ -56,7 +58,7 @@ func MakeQueryError(refID, datasourceUID string, err error) error {
 	return QueryError.Build(data)
 }
 
-var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure to of the dependent expression or query [{{.Public.depRefId}}]"
+var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure of the dependent expression or query [{{.Public.depRefId}}]"
 
 var DependencyError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.dependencyError").MustTemplate(
@@ -69,7 +71,7 @@ func MakeDependencyError(refID, depRefID string) error {
 			"refId":    refID,
 			"depRefId": depRefID,
 		},
-		Error: fmt.Errorf("did not execute expression %v due to a failure to of the dependent expression or query %v", refID, depRefID),
+		Error: fmt.Errorf("did not execute expression %v due to a failure of the dependent expression or query %v", refID, depRefID),
 	}
 
 	return DependencyError.Build(data)
@@ -92,4 +94,32 @@ func makeUnexpectedNodeTypeError(refID, nodeType string) error {
 	}
 
 	return UnexpectedNodeTypeError.Build(data)
+}
+
+var DuplicateStringColumnError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.duplicateStringColumns").MustTemplate(
+	"your SQL query returned {{ .Public.count }} rows with duplicate values across the string columns, which is not allowed for alerting. Examples: ({{ .Public.examples }}). Hint: use GROUP BY or aggregation (e.g. MAX(), AVG()) to return one row per unique combination.",
+	errutil.WithPublic("SQL query returned duplicate combinations of string column values. Use GROUP BY or aggregation to return one row per combination."),
+)
+
+func makeDuplicateStringColumnError(examples []string) error {
+	const limit = 5
+	sort.Strings(examples)
+	exampleStr := strings.Join(truncateExamples(examples, limit), ", ")
+
+	return DuplicateStringColumnError.Build(errutil.TemplateData{
+		Public: map[string]any{
+			"examples": exampleStr,
+			"count":    len(examples),
+		},
+	})
+}
+
+func truncateExamples(examples []string, limit int) []string {
+	if len(examples) <= limit {
+		return examples
+	}
+	truncated := examples[:limit]
+	truncated = append(truncated, fmt.Sprintf("... and %d more", len(examples)-limit))
+	return truncated
 }

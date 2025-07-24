@@ -1,5 +1,3 @@
-import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
-
 import {
   getDashboard,
   getDashboardsContainer,
@@ -9,15 +7,15 @@ import {
   getNotFoundForScope,
   getNotFoundNoScopes,
   getPersistedApplicationsMimirSelect,
+  getRecentScopeSet,
+  getRecentScopesSection,
   getResultApplicationsCloudSelect,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
   getResultCloudDevRadio,
   getResultCloudOpsRadio,
-  getSelectedScope,
   getSelectorInput,
   getTreeHeadline,
-  getTreeScope,
   queryAllDashboard,
   queryDashboard,
   queryDashboardFolderExpand,
@@ -25,6 +23,8 @@ import {
   queryDashboardsSearch,
   queryPersistedApplicationsGrafanaSelect,
   queryPersistedApplicationsMimirSelect,
+  queryRecentScopeSet,
+  queryRecentScopesSection,
   queryResultApplicationsCloudSelect,
   queryResultApplicationsGrafanaSelect,
   queryResultApplicationsMimirSelect,
@@ -40,6 +40,10 @@ const expectValue = (selector: () => HTMLInputElement, value: string) => expect(
 const expectTextContent = (selector: () => HTMLElement, text: string) => expect(selector()).toHaveTextContent(text);
 const expectDisabled = (selector: () => HTMLElement) => expect(selector()).toBeDisabled();
 
+export const expectRecentScopeNotPresent = (scope: string) => expectNotInDocument(() => queryRecentScopeSet(scope));
+export const expectRecentScope = (scope: string) => expectInDocument(() => getRecentScopeSet(scope));
+export const expectRecentScopeNotPresentInDocument = () => expectNotInDocument(queryRecentScopesSection);
+export const expectRecentScopesSection = () => expectInDocument(getRecentScopesSection);
 export const expectScopesSelectorClosed = () => expectNotInDocument(querySelectorApply);
 export const expectScopesSelectorDisabled = () => expectDisabled(getSelectorInput);
 export const expectScopesSelectorValue = (value: string) => expectValue(getSelectorInput, value);
@@ -78,8 +82,3 @@ export const expectDashboardInDocument = (uid: string) => expectInDocument(() =>
 export const expectDashboardNotInDocument = (uid: string) => expectNotInDocument(() => queryDashboard(uid));
 export const expectDashboardLength = (uid: string, length: number) =>
   expect(queryAllDashboard(uid)).toHaveLength(length);
-
-export const expectSelectedScopePath = (service: ScopesSelectorService, name: string, path: string[] | undefined) =>
-  expect(getSelectedScope(service, name)?.path).toEqual(path);
-export const expectTreeScopePath = (service: ScopesSelectorService, name: string, path: string[] | undefined) =>
-  expect(getTreeScope(service, name)?.path).toEqual(path);

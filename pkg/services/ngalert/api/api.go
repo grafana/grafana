@@ -120,7 +120,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.Scheduler, api.RuleStore, ruleAuthzService),
+		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.Scheduler, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
@@ -181,22 +181,15 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		hist:   api.Historian,
 	}), m)
 
-	api.RegisterNotificationsApiEndpoints(NewNotificationsApi(&NotificationSrv{
-		logger:            logger,
-		receiverService:   api.ReceiverService,
-		muteTimingService: api.MuteTimings,
-	}), m)
-
-	if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI) {
-		api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
-			NewConvertPrometheusSrv(
-				&api.Cfg.UnifiedAlerting,
-				logger,
-				api.RuleStore,
-				api.DatasourceCache,
-				api.AlertRules,
-				api.FeatureManager,
-			),
-		), m)
-	}
+	api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
+		NewConvertPrometheusSrv(
+			&api.Cfg.UnifiedAlerting,
+			logger,
+			api.RuleStore,
+			api.DatasourceCache,
+			api.AlertRules,
+			api.FeatureManager,
+			api.MultiOrgAlertmanager,
+		),
+	), m)
 }

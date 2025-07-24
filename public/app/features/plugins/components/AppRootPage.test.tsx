@@ -4,7 +4,7 @@ import { Routes, Route, Link } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { AppPlugin, PluginType, AppRootProps, NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
-import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getMockPlugin } from '@grafana/data/test';
 import { setEchoSrv } from '@grafana/runtime';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -15,15 +15,15 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
+import { importAppPlugin } from '../pluginLoader';
 import { getPluginSettings } from '../pluginSettings';
-import { importAppPlugin } from '../plugin_loader';
 
 import AppRootPage from './AppRootPage';
 
 jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
-jest.mock('../plugin_loader', () => ({
+jest.mock('../pluginLoader', () => ({
   importAppPlugin: jest.fn(),
 }));
 

@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	usernameAdmin    = "admin"
+	usernameAdmin    = "otherAdmin"
 	usernameNonAdmin = "nonAdmin"
 	defaultPassword  = "password"
 )

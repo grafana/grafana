@@ -4,9 +4,9 @@ import { ReactElement } from 'react';
 
 import { TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Stack, EmptyState, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
@@ -60,8 +60,12 @@ export function VariableEditorList({
               >
                 <thead>
                   <tr>
-                    <th>Variable</th>
-                    <th>Definition</th>
+                    <th>
+                      <Trans i18nKey="variables.variable-editor-list.variable">Variable</Trans>
+                    </th>
+                    <th>
+                      <Trans i18nKey="variables.variable-editor-list.definition">Definition</Trans>
+                    </th>
                     <th colSpan={5} />
                   </tr>
                 </thead>
@@ -95,7 +99,7 @@ export function VariableEditorList({
                 onClick={onAdd}
                 icon="plus"
               >
-                New variable
+                <Trans i18nKey="variables.variable-editor-list.new-variable">New variable</Trans>
               </Button>
             </Stack>
           </Stack>

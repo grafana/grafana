@@ -49,7 +49,6 @@ function createContactPoint(httpConfig: DeprecatedAuthHTTPConfig | HTTPAuthConfi
       {
         __id: '',
         type: '',
-        secureSettings: {},
         secureFields: {},
         settings: {
           http_config: {

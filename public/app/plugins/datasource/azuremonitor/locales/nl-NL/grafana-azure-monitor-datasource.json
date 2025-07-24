@@ -1,0 +1,304 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "Geavanceerd"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "Toevoegen",
+      "aria-label-remove": "Verwijderen",
+      "button-add-resource": "Bron toevoegen",
+      "button-add-resource-uri": "URI van bron toevoegen",
+      "label-namespace": "Namespace",
+      "label-region": "Regio",
+      "label-resource-group": "Brongroep",
+      "label-resource-name": "Naam van het object",
+      "label-resource-number": "Bron {{resourceNum}}",
+      "label-resource-uri": "Bron-URI('s) ",
+      "label-subscription": "Abonnement",
+      "placeholder-resource-name": "naam",
+      "tooltip-region": "Het codegebied van de bron. Optioneel voor één bron, maar verplicht bij het selecteren van meerdere bronnen.",
+      "tooltip-resource-uri": "Bewerk de <2>bron-uri</2> handmatig. Ondersteunt het gebruik van meerdere sjabloonvariabelen (bijv.: /subscriptions/$subId/resourceGroups/$rg)"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "Totaal van de functie",
+      "aria-label-column": "Kolom",
+      "aria-label-remove": "Verwijderen",
+      "label-percentile": "VAN"
+    },
+    "aggregate-section": {
+      "label-aggregate": "Totaal",
+      "tooltip-aggregate": "Voer berekeningen uit over rijen gegevens, zoals aantal, som, gemiddelde, minimum, maximum, standaardafwijking of percentielen."
+    },
+    "aggregation-field": {
+      "label-aggregation": "Totaal"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "Klantnummer",
+      "aria-label-client-secret": "Gebruikerssleutel",
+      "aria-label-symbol-client-secret": "Gebruikerssleutel",
+      "aria-label-tenant-id": "Tenant-id",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "Client-id applicatie",
+      "label-client-secret": "Gebruikerssleutel",
+      "label-symbol-client-secret": "Gebruikerssleutel",
+      "label-tenant-id": "Directory-id (tenant)",
+      "placeholder-symbol-client-secret": "geconfigureerd",
+      "reset-symbol-client-secret": "Resetten"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "{{queryDisplayName}} onbewerkte query",
+      "aria-label-use-query": "Knop Gebruik deze query",
+      "button-use-query": "Gebruik deze query",
+      "label-categories": "Categorieën",
+      "label-query-results": "Resultaten van query: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "Alle categorieën",
+      "placeholder-search-logs": "Querylogboeken zoeken",
+      "text-loading": "Laden..."
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "Start je querymodus",
+      "title-kick-start": "Start je query"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "Kies het type authenticatie voor Azure-services",
+      "label-authentication": "Autorisate",
+      "title-authentication": "Autorisate"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "Basislogs",
+      "description-basic-logs": "Als je deze functie inschakelt, worden Azure Monitor-kosten per query gemaakt op dashboardpanelen die tabellen opvragen die zijn geconfigureerd voor <2>Basislogboeken</2>.",
+      "label-enable-basic-logs": "Basislogboeken inschakelen"
+    },
+    "config-editor": {
+      "description-additional-settings": "Aanvullende instellingen zijn optionele instellingen die kunnen worden geconfigureerd voor meer controle over je gegevensbron. Dit omvat Secure Socks Proxy.",
+      "description-request-timeout": "Stel de time-out van het verzoek in seconden in. Standaard is 30 seconden.",
+      "title-additional-settings": "Aanvullende instellingen",
+      "title-request-timeout": "Time-out verzoek"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "Fallback-inloggegevens zijn uitgeschakeld. Omdat op gebruikers gebaseerde authenticatie alleen inherent verzoeken met een gebruiker in het bereik ondersteunt, werken functies zoals waarschuwingen, opgenomen query's of rapportage niet zoals verwacht. Bekijk de <2>documentatie</2> voor meer informatie.",
+      "body-service-credentials": "Op gebruikers gebaseerde authenticatie ondersteunt niet inherent Grafana-functies die verzoeken doen aan de gegevensbron zonder dat gebruikersgegevens beschikbaar zijn voor het verzoek. Een voorbeeld hiervan is waarschuwen. Als je ervoor wilt zorgen dat functies die geen gebruiker in de context van het verzoek hebben, nog steeds werken, geef dan hieronder fallback-inloggegevens op.",
+      "description-authentication": "Kies het type authenticatie voor Azure-services",
+      "description-service-credentials": "Kies of fallback-service-inloggegevens zijn ingeschakeld of uitgeschakeld voor deze gegevensbron",
+      "label-authentication": "Autorisate",
+      "label-service-credentials": "Service-inloggegevens",
+      "note-service-credentials": "Opmerking: functies zoals waarschuwingen worden beperkt tot het toegangsniveau van de fallback-inloggegevens in plaats van de gebruiker. Dit kan verwarring veroorzaken voor gebruikers en moet worden verduidelijkt.",
+      "title-fallback-credentials-disabled": "Fallback-inloggegevens uitgeschakeld",
+      "title-fallback-service-credentials": "Fallback-service-inloggegevens",
+      "title-service-credentials": "Service-inloggegevens"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "Standaardabonnement",
+      "label-default-subscription": "Standaardabonnement",
+      "load-subscriptions": "Abonnementen laden"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "Verwijderen",
+      "label-dimensions": "Dimensies",
+      "placeholder-field": "Veld",
+      "placeholder-operation": "Werking",
+      "placeholder-select-value": "Waarde selecteren",
+      "placeholder-select-values": "Waarde(n) selecteren"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "{{type}} is uitgefaseerd in Grafana 9. Zie de <3>uitfaseringsmelding</3> voor meer informatie over het migreren van je query's. Dit is de huidige querydefinitie:",
+      "title-unknown-query-type": "Onbekend querytype"
+    },
+    "filter": {
+      "aria-label-remove-filter": "Filter verwijderen",
+      "placeholder-property": "Eigenschap",
+      "placeholder-value": "Waarde"
+    },
+    "filter-item": {
+      "aria-label-column": "Kolom",
+      "aria-label-column-value": "Kolomwaarde",
+      "aria-label-operator": "Operator",
+      "label-or": "OF"
+    },
+    "filter-section": {
+      "label-add-group": "Groep toevoegen",
+      "label-and": "EN",
+      "label-filters": "Filters",
+      "tooltip-filters": "Beperk de resultaten door voorwaarden toe te passen op specifieke kolommen."
+    },
+    "filters": {
+      "label-filters": "Filters"
+    },
+    "format-as-field": {
+      "label-format-as": "Opmaak als"
+    },
+    "fuzzy-search": {
+      "aria-label-select-column": "Kolom selecteren",
+      "label-fuzzy-search": "Vage zoekopdracht",
+      "placeholder-search-team": "Geef zoekterm op",
+      "tooltip-fuzzy-search": "Zoek naar geschatte tekstovereenkomsten met tolerantie voor spellingvariaties. Standaard scant de vage zoekopdracht alle kolommen (*) in de hele tabel, niet alleen specifieke velden."
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Grafana-sjabloonvariabelefunctie",
+      "placeholder-grafana-template-variable": "Typ een Grafana-sjabloonvariabelefunctie, bijv. {{example}} "
+    },
+    "group-by-item": {
+      "aria-label-column": "Kolom",
+      "aria-label-remove": "Verwijderen"
+    },
+    "group-by-section": {
+      "label-group-by": "Groeperen op",
+      "tooltip-group-by": "Organiseer resultaten in categorieën op basis van gespecificeerde kolommen. Groeperen op kan onafhankelijk worden gebruikt om unieke waarden in geselecteerde kolommen weer te geven, of worden gecombineerd met aggregaatfuncties om samenvattende statistieken voor elke groep te produceren. Wanneer deze optie afzonderlijk wordt gebruikt, retourneert het verschillende combinaties van de gespecificeerde kolommen."
+    },
+    "kql-preview": {
+      "button-hide": "Verbergen",
+      "button-show": "Tonen",
+      "label-query-preview": "Voorbeeldweergave van query"
+    },
+    "legend-format-field": {
+      "label-legend-format": "Legenda-indeling",
+      "placeholder-legend-format": "Aliaspatronen"
+    },
+    "limit-section": {
+      "label-limit": "Limiet",
+      "placeholder-limit": "Voer de limiet in",
+      "tooltip-limit": "Beperk het aantal geretourneerde rijen (standaard is 1000)."
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "Basislogquery's brengen kosten met zich mee op basis van de hoeveelheid gescande gegevens.",
+      "label-logs": "Logs",
+      "title-basic-logs-queries": "Basislogquery's",
+      "tooltip-logs": "Geeft aan of een basis- of analytische logquery moet worden uitgevoerd."
+    },
+    "logs-query-builder": {
+      "title-no-tables": "Bron is geladen, maar zonder tabellen"
+    },
+    "logs-query-editor": {
+      "learn-more": "Meer informatie ",
+      "view-query": "Query bekijken in Azure Portal"
+    },
+    "metric-name-field": {
+      "label-metric": "Metrisch"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "Metrische naamruimte"
+    },
+    "nested-row": {
+      "text-loading": "Laden..."
+    },
+    "order-by-section": {
+      "aria-label-order-by-column": "Sorteren op kolom",
+      "aria-label-order-direction": "Volgorde sortering",
+      "label-by": "OP",
+      "label-order-by": "Sorteren op",
+      "tooltip-order-by": "Sorteer resultaten op basis van een of meer kolommen in oplopende of aflopende volgorde."
+    },
+    "query-editor": {
+      "alert-error-occurred": "Er is een fout opgetreden bij het aanvragen van de metagegevens van Azure Monitor"
+    },
+    "query-header": {
+      "aria-label-kick-start": "Knop Start query met Azure-logboeken",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "Start je query",
+      "button-run-query": "Query uitvoeren",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "Service",
+      "placeholder-service": "Service...",
+      "title-switch-mode": "Veranderen van bewerkersmodus?"
+    },
+    "raw-query": {
+      "aria-label-selector": "Kiezer"
+    },
+    "resource-field": {
+      "label-resource": "Bron",
+      "title-select-resource": "Kies een bron"
+    },
+    "resource-label": {
+      "select-resource": "Kies een bron"
+    },
+    "resource-picker": {
+      "button-apply": "Toepassen",
+      "button-cancel": "Annuleren",
+      "header-location": "Locatie",
+      "header-scope": "Bereik",
+      "header-type": "Type",
+      "heading-selection": "Selectie",
+      "result-limit": "Eerste {{numResults}} resultaten weergeven",
+      "text-loading": "Laden...",
+      "text-no-resources": "Geen bronnen gevonden",
+      "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor"
+    },
+    "scope-selector": {
+      "label": "Bereik"
+    },
+    "search": {
+      "aria-label-resource-search": "Bron zoeken",
+      "placeholder-resource-search": "Zoek naar een bron"
+    },
+    "subscription-field": {
+      "label-subscriptions": "Abonnementen",
+      "validation-subscriptions": "Er moet ten minste één abonnement worden gekozen."
+    },
+    "table-section": {
+      "aria-label-columns": "Kolommen",
+      "aria-label-table": "Tabel",
+      "label-columns": "Kolommen",
+      "label-table": "Tabel",
+      "placeholder-select-columns": "Selecteer kolommen",
+      "placeholder-select-table": "Selecteer een tabel"
+    },
+    "time-grain-field": {
+      "label-time-grain": "Tijdsinterval"
+    },
+    "time-management": {
+      "label-time-column": "Tijdkolom",
+      "label-time-range": "Tijdsbereik",
+      "tooltip-time-column": "<0>Specificeert de tijdkolom die wordt gebruikt voor het filteren. Standaard naar de eerste tabellen <1>timeSpan</1> kolom, de eerste <3>datetime</3> kolom gevonden of <5>TimeGenerated</5>.</0>",
+      "tooltip-time-range": "<0>Specificeert het tijdsbereik dat wordt gebruikt om te zoeken. De optie <1>Query</1> gebruikt alleen tijdsbereiken die in de query zijn opgegeven. <3>Dashboard</3> gebruikt alleen het Grafana-tijdbereik. In de Logs Builder-modus wordt alleen Dashboard-tijd gebruikt.</0>"
+    },
+    "top-field": {
+      "label-top": "Boven"
+    },
+    "trace-type-field": {
+      "label-event-type": "Gebeurtenistype",
+      "placeholder-event-type": "Kies gebeurtenistypes"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "Uitvoerings-id"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "Voor het gebruik van deze gegevensbron moet je worden geverifieerd via Azure Entra (voorheen Azure Active Directory). Bekijk de <2>documentatie</2> voor meer informatie.",
+      "title-unsupported-auth": "Niet-ondersteunde authenticatieprovider"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "Backendfuncties van gegevensbronnen (zoals waarschuwingen) vereisen service-inloggegevens om te functioneren. Deze gegevensbron is geconfigureerd zonder fallback van service-inloggegevens of de fallback-functionaliteit is uitgeschakeld. Bekijk de <2>documentatie</2> voor meer informatie.",
+      "title-no-fallback-credentials": "Geen fallback-inloggegevens beschikbaar"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "Aangepaste naamruimte selecteren",
+      "aria-label-select-namespace": "Namespace selecteren",
+      "aria-label-select-query-type": "Selecteer query",
+      "aria-label-select-region": "Selecteer regio",
+      "aria-label-select-resource": "Selecteer bron",
+      "aria-label-select-resource-group": "Selecteer bronnengroep",
+      "aria-label-select-subscription": "Selecteer abonnement",
+      "label-custom-namespace": "Aangepaste naamruimte",
+      "label-namespace": "Namespace",
+      "label-query-type": "Type vraag",
+      "label-region": "Regio",
+      "label-resource": "Bron",
+      "label-resource-group": "Brongroep",
+      "label-resource-type": "Brontype",
+      "label-subscription": "Abonnement",
+      "placeholder-custom-namespace": "Optioneel",
+      "placeholder-namespace": "Optioneel",
+      "placeholder-region": "Optioneel",
+      "placeholder-resource-group": "Optioneel",
+      "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van de metagegevens van Azure Monitor"
+    }
+  }
+}

@@ -14,6 +14,9 @@ type RepositoryViewList struct {
 	// The UI should force the onboarding workflow when this is true
 	LegacyStorage bool `json:"legacyStorage,omitempty"`
 
+	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
+	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
+
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
 }
@@ -25,12 +28,15 @@ type RepositoryView struct {
 	// Repository display
 	Title string `json:"title"`
 
-	// Edit options within the repository
-	ReadOnly bool `json:"readOnly"`
-
 	// The repository type
 	Type RepositoryType `json:"type"`
 
 	// When syncing, where values are saved
 	Target SyncTargetType `json:"target"`
+
+	// For git, this is the target branch
+	Branch string `json:"branch,omitempty"`
+
+	// The supported workflows
+	Workflows []Workflow `json:"workflows"`
 }

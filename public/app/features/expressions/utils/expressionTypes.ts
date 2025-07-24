@@ -2,7 +2,7 @@ import { ReducerID } from '@grafana/data';
 
 import { EvalFunction } from '../../alerting/state/alertDef';
 import { isReducerType } from '../guards';
-import { ClassicCondition, ExpressionQuery, ExpressionQueryType, ReducerType } from '../types';
+import { ClassicCondition, ExpressionQuery, ExpressionQueryType, ReducerMode, ReducerType } from '../types';
 
 export const getDefaults = (query: ExpressionQuery) => {
   switch (query.type) {
@@ -68,4 +68,33 @@ export function getReducerType(value: string): ReducerType | undefined {
     return value;
   }
   return undefined;
+}
+
+export function isStrictReducer(expressionModel: ExpressionQuery): boolean {
+  if (!isReducerExpression(expressionModel)) {
+    return false;
+  }
+
+  const mode = expressionModel.settings?.mode;
+  return mode === ReducerMode.Strict || mode === undefined;
+}
+
+export function isReducerExpression(expressionModel: ExpressionQuery) {
+  return expressionModel.type === ExpressionQueryType.reduce;
+}
+
+export function isThresholdExpression(expressionModel: ExpressionQuery) {
+  return expressionModel.type === ExpressionQueryType.threshold;
+}
+
+/**
+ * Determines if the given evaluator function type is a range type (requiring two threshold values)
+ */
+export function isRangeEvaluator(evalFunction: EvalFunction): boolean {
+  return (
+    evalFunction === EvalFunction.IsWithinRange ||
+    evalFunction === EvalFunction.IsOutsideRange ||
+    evalFunction === EvalFunction.IsOutsideRangeIncluded ||
+    evalFunction === EvalFunction.IsWithinRangeIncluded
+  );
 }

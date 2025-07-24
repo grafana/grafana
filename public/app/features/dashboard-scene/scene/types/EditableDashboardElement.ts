@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 
 import { IconName } from '@grafana/data';
+import { SceneObject } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 /**
@@ -18,7 +19,7 @@ export interface EditableDashboardElement {
   /**
    * Hook that returns edit pane options
    */
-  useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
+  useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[];
 
   /**
    * Panel Actions
@@ -29,6 +30,11 @@ export interface EditableDashboardElement {
    * Supports delete action
    */
   onDelete?(): void;
+
+  /**
+   * Should confirm delete action
+   */
+  onConfirmDelete?(): void;
 
   /**
    * Supports duplicate action
@@ -44,12 +50,38 @@ export interface EditableDashboardElement {
    * creates a new multi-selection element from a list of selected items
    */
   createMultiSelectedElement?(elements: this[]): EditableDashboardElement;
+
+  /**
+   * scroll element into view (when selected from outline)
+   */
+  scrollIntoView?(): void;
+
+  /**
+   * Used to sync row collapsed state with outline
+   */
+  getCollapsedState?(): boolean;
+
+  /**
+   * Used to sync row collapsed state with outline
+   */
+  setCollapsedState?(collapsed: boolean): void;
+
+  /**
+   * Used to change name from outline
+   */
+  onChangeName?(name: string): { errorMessage?: string } | void;
+
+  /**
+   * Container objects can have children
+   */
+  getOutlineChildren?(): SceneObject[];
 }
 
 export interface EditableDashboardElementInfo {
   instanceName: string;
   typeName: string;
   icon: IconName;
+  isHidden?: boolean;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {

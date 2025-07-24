@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
 import * as React from 'react';
+import { useMemo } from 'react';
 
 import { PluginExtensionPoints, dateTime, findCommonLabels } from '@grafana/data';
 import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
@@ -69,7 +69,7 @@ const columns: AlertTableColumnProps[] = [
         alert: { state },
       },
     }) => <AlertStateTag state={state} />,
-    size: '80px',
+    size: '95px',
   },
   {
     id: 'labels',

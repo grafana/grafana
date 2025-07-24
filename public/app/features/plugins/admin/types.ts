@@ -9,7 +9,8 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
-import { StoreState, PluginsState } from 'app/types';
+import { PluginsState } from 'app/types/plugins';
+import { StoreState } from 'app/types/store';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 
@@ -24,7 +25,6 @@ export enum PluginIconName {
   datasource = 'database',
   panel = 'credit-card',
   renderer = 'capture',
-  secretsmanager = 'key-skeleton-alt',
 }
 
 export interface CatalogPlugin extends WithAccessControlMetadata {
@@ -66,6 +66,10 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isProvisioned?: boolean;
   url?: string;
 }
+export interface Screenshots {
+  path: string;
+  name: string;
+}
 
 export interface CatalogPluginDetails {
   readme?: string;
@@ -82,9 +86,12 @@ export interface CatalogPluginDetails {
   lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  sponsorshipUrl?: string;
+  repositoryUrl?: string;
   raiseAnIssueUrl?: string;
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
+  screenshots?: Screenshots[] | null;
 }
 
 export interface CatalogPluginInfo {
@@ -113,6 +120,7 @@ export type RemotePlugin = {
         name: string;
         url: string;
       }>;
+      screenshots?: Screenshots[] | null;
     };
   };
   links: Array<{ rel: string; href: string }>;
@@ -149,6 +157,8 @@ export type RemotePlugin = {
   lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  sponsorshipUrl?: string;
+  repositoryUrl?: string;
   raiseAnIssueUrl?: string;
 };
 
@@ -269,6 +279,7 @@ export enum PluginTabLabels {
   CHANGELOG = 'Changelog',
   PLUGINDETAILS = 'Plugin details',
   DATASOURCE_CONNECTIONS = 'Data source connections',
+  SCREENSHOTS = 'Screenshots',
 }
 
 export enum PluginTabIds {
@@ -281,6 +292,7 @@ export enum PluginTabIds {
   CHANGELOG = 'changelog',
   PLUGINDETAILS = 'right-panel',
   DATASOURCE_CONNECTIONS = 'datasource-connections',
+  SCREENSHOTS = 'screenshots',
 }
 
 export enum RequestStatus {

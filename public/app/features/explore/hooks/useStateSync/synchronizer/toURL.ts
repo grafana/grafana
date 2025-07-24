@@ -9,7 +9,7 @@ import { changePanelsStateAction } from 'app/features/explore/state/explorePane'
 import { splitClose, splitOpen } from 'app/features/explore/state/main';
 import { runQueries } from 'app/features/explore/state/query';
 import { changeRangeAction } from 'app/features/explore/state/time';
-import { ExploreState } from 'app/types';
+import { ExploreState } from 'app/types/explore';
 
 import { getUrlStateFromPaneState } from '../index';
 import { InitState } from '../internal.utils';

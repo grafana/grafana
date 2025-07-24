@@ -1,13 +1,20 @@
-import { BaseQueryFn } from '@reduxjs/toolkit/query';
-import { TypedLazyQueryTrigger } from '@reduxjs/toolkit/query/react';
 import { useCallback } from 'react';
 
-import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
+import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { BaseQueryFnArgs } from '../../api/alertingApi';
-import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
+import { PromRulesResponse, prometheusApi, usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
+
+interface UseGeneratorHookOptions {
+  /**
+   * Whether to populate the RTKQ cache with the groups.
+   * Populating cache might harm performance when fetching a lot of groups or fetching multiple pages
+   */
+  populateCache?: boolean;
+  limitAlerts?: number;
+}
 
 interface FetchGroupsOptions {
   groupLimit?: number;
@@ -19,24 +26,79 @@ export function usePrometheusGroupsGenerator() {
 
   return useCallback(
     async function* (ruleSource: DataSourceRulesSourceIdentifier, groupLimit: number) {
-      const getRuleSourceGroups = (options: FetchGroupsOptions) =>
-        getGroups({ ruleSource: { uid: ruleSource.uid }, ...options });
+      const getRuleSourceGroupsWithCache = async (fetchOptions: FetchGroupsOptions) => {
+        const response = await getGroups({
+          ruleSource: { uid: ruleSource.uid },
+          notificationOptions: { showErrorAlert: false },
+          ...fetchOptions,
+        }).unwrap();
 
-      yield* genericGroupsGenerator(getRuleSourceGroups, groupLimit);
+        return response;
+      };
+
+      yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
     },
     [getGroups]
   );
 }
 
-export function useGrafanaGroupsGenerator() {
+interface GrafanaPromApiFilter {
+  state?: PromAlertingRuleState[];
+  health?: RuleHealth[];
+  contactPoint?: string;
+}
+
+interface GrafanaFetchGroupsOptions extends FetchGroupsOptions {
+  filter?: GrafanaPromApiFilter;
+}
+
+export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
+  const { populateGroupsResponseCache } = usePopulateGrafanaPrometheusApiCache();
+
+  const getGroupsAndProvideCache = useCallback(
+    async (fetchOptions: GrafanaFetchGroupsOptions) => {
+      const response = await getGrafanaGroups({
+        ...fetchOptions,
+        limitAlerts: hookOptions.limitAlerts,
+        ...fetchOptions.filter,
+      }).unwrap();
+
+      if (hookOptions.populateCache) {
+        populateGroupsResponseCache(response.data.groups);
+      }
+
+      return response;
+    },
+    [getGrafanaGroups, hookOptions.limitAlerts, hookOptions.populateCache, populateGroupsResponseCache]
+  );
 
   return useCallback(
-    async function* (groupLimit: number) {
-      yield* genericGroupsGenerator(getGrafanaGroups, groupLimit);
+    async function* (groupLimit: number, filter?: GrafanaPromApiFilter) {
+      yield* genericGroupsGenerator(
+        (fetchOptions) => getGroupsAndProvideCache({ ...fetchOptions, filter }),
+        groupLimit
+      );
     },
-    [getGrafanaGroups]
+    [getGroupsAndProvideCache]
   );
+}
+
+/**
+ * Converts a Prometheus groups generator yielding arrays of groups to a generator yielding groups one by one
+ * @param generator - The paginated generator to convert
+ * @returns A non-paginated generator that yields all groups from the original generator one by one
+ */
+export function toIndividualRuleGroups<TGroup extends PromRuleGroupDTO>(
+  generator: AsyncGenerator<TGroup[], void, unknown>
+): AsyncGenerator<TGroup, void, unknown> {
+  return (async function* () {
+    for await (const batch of generator) {
+      for (const item of batch) {
+        yield item;
+      }
+    }
+  })();
 }
 
 // Generator lazily provides groups one by one only when needed
@@ -44,38 +106,17 @@ export function useGrafanaGroupsGenerator() {
 // For unpaginated data sources we fetch everything in one go
 // For paginated we fetch the next page when needed
 async function* genericGroupsGenerator<TGroup>(
-  fetchGroups: TypedLazyQueryTrigger<PromRulesResponse<TGroup>, FetchGroupsOptions, BaseQueryFn<BaseQueryFnArgs>>,
+  fetchGroups: (options: FetchGroupsOptions) => Promise<PromRulesResponse<TGroup>>,
   groupLimit: number
 ) {
-  const response = await fetchGroups({ groupLimit });
+  let response = await fetchGroups({ groupLimit });
+  yield response.data.groups;
 
-  if (!response.isSuccess) {
-    return;
-  }
-
-  if (response.data?.data) {
-    yield* response.data.data.groups;
-  }
-
-  let lastToken: string | undefined = undefined;
-  if (response.data?.data?.groupNextToken) {
-    lastToken = response.data.data.groupNextToken;
-  }
+  let lastToken: string | undefined = response.data?.groupNextToken;
 
   while (lastToken) {
-    const response = await fetchGroups({
-      groupNextToken: lastToken,
-      groupLimit: groupLimit,
-    });
-
-    if (!response.isSuccess) {
-      return;
-    }
-
-    if (response.data?.data) {
-      yield* response.data.data.groups;
-    }
-
-    lastToken = response.data?.data?.groupNextToken;
+    response = await fetchGroups({ groupNextToken: lastToken, groupLimit: groupLimit });
+    yield response.data.groups;
+    lastToken = response.data?.groupNextToken;
   }
 }

@@ -81,7 +81,6 @@ export function AppChromeMenu({}: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     backdrop: css({
-      backdropFilter: 'blur(1px)',
       backgroundColor: theme.components.overlay.background,
       bottom: 0,
       left: 0,

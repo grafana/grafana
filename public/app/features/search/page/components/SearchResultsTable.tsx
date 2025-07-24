@@ -7,6 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useTableStyles, TableCell } from '@grafana/ui/internal';
@@ -168,11 +169,19 @@ export const SearchResultsTable = React.memo(
     );
 
     if (!rows.length) {
-      return <div className={styles.noData}>No data</div>;
+      return (
+        <div className={styles.noData}>
+          <Trans i18nKey="search.search-results-table.no-data">No values</Trans>
+        </div>
+      );
     }
 
     return (
-      <div {...getTableProps()} aria-label="Search results table" role="table">
+      <div
+        {...getTableProps()}
+        aria-label={t('search.search-results-table.aria-label-search-results-table', 'Search results table')}
+        role="table"
+      >
         {headerGroups.map((headerGroup) => {
           const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps({
             style: { width },

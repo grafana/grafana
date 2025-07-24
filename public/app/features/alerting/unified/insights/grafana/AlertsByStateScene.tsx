@@ -51,6 +51,8 @@ export function getGrafanaInstancesByStateScene(datasource: DataSourceRef, panel
           .overrideColor(overrideToFixedColor('normal'))
           .matchFieldsWithName('pending')
           .overrideColor(overrideToFixedColor('pending'))
+          .matchFieldsWithName('recovering')
+          .overrideColor(overrideToFixedColor('recovering'))
           .matchFieldsWithName('error')
           .overrideColor(overrideToFixedColor('error'))
           .matchFieldsWithName('nodata')

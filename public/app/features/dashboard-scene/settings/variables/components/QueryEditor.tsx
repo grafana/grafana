@@ -1,4 +1,5 @@
 import { DataSourceApi, LoadingState, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { Text, Box } from '@grafana/ui';
@@ -37,8 +38,10 @@ export function QueryEditor({
   if (VariableQueryEditor && isLegacyQueryEditor(VariableQueryEditor, datasource)) {
     return (
       <Box marginBottom={2}>
-        <Text element={'h4'}>Query</Text>
-        <Box marginTop={1}>
+        <Text variant="bodySmall" weight="medium">
+          <Trans i18nKey="dashboard-scene.query-editor.query">Query</Trans>
+        </Text>
+        <Box marginTop={0.25}>
           <VariableQueryEditor
             key={datasource.uid}
             datasource={datasource}
@@ -54,8 +57,7 @@ export function QueryEditor({
   if (VariableQueryEditor && isQueryEditor(VariableQueryEditor, datasource)) {
     return (
       <Box marginBottom={2}>
-        <Text element={'h4'}>Query</Text>
-        <Box marginTop={1}>
+        <Box marginTop={0.25}>
           <VariableQueryEditor
             key={datasource.uid}
             datasource={datasource}

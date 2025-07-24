@@ -1,6 +1,7 @@
 import saveAs from 'file-saver';
 
 import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { Randomize } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
@@ -57,13 +58,16 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
       snapshotUpdate: 0,
       options: [
         {
-          label: 'GitHub comment',
+          label: t('dashboard.support-snapshot-service.label.git-hub-comment', 'GitHub comment'),
           description: 'Copy and paste this message into a GitHub issue or comment',
           value: ShowMessage.GithubComment,
         },
         {
-          label: 'Panel support snapshot',
-          description: 'Dashboard JSON used to help troubleshoot visualization issues',
+          label: t('dashboard.support-snapshot-service.label.panel-support-snapshot', 'Panel support snapshot'),
+          description: t(
+            'dashboard.support-snapshot-service.description.dashboard-troubleshoot-visualization-issues',
+            'Dashboard JSON used to help troubleshoot visualization issues'
+          ),
           value: ShowMessage.PanelSnapshot,
         },
       ],
@@ -107,7 +111,7 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     if (markdownText.length > maxLen) {
       this.setState({
         error: {
-          title: 'Copy to clipboard failed',
+          title: t('dashboard.support-snapshot-service.title.copy-to-clipboard-failed', 'Copy to clipboard failed'),
           message: 'Snapshot is too large, consider download and attaching a file instead',
         },
       });

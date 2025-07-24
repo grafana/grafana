@@ -18,7 +18,11 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}` }),
     }),
     createSnapshot: build.mutation<CreateSnapshotApiResponse, CreateSnapshotApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}/snapshot`, method: 'POST' }),
+      query: (queryArg) => ({
+        url: `/cloudmigration/migration/${queryArg.uid}/snapshot`,
+        method: 'POST',
+        body: queryArg.createSnapshotRequestDto,
+      }),
     }),
     getSnapshot: build.query<GetSnapshotApiResponse, GetSnapshotApiArg>({
       query: (queryArg) => ({
@@ -26,6 +30,9 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           resultPage: queryArg.resultPage,
           resultLimit: queryArg.resultLimit,
+          resultSortColumn: queryArg.resultSortColumn,
+          resultSortOrder: queryArg.resultSortOrder,
+          errorsOnly: queryArg.errorsOnly,
         },
       }),
     }),
@@ -50,6 +57,9 @@ const injectedRtkApi = api.injectEndpoints({
           sort: queryArg.sort,
         },
       }),
+    }),
+    getResourceDependencies: build.query<GetResourceDependenciesApiResponse, GetResourceDependenciesApiArg>({
+      query: () => ({ url: `/cloudmigration/resources/dependencies` }),
     }),
     getCloudMigrationToken: build.query<GetCloudMigrationTokenApiResponse, GetCloudMigrationTokenApiArg>({
       query: () => ({ url: `/cloudmigration/token` }),
@@ -90,6 +100,7 @@ export type CreateSnapshotApiResponse = /** status 200 (empty) */ CreateSnapshot
 export type CreateSnapshotApiArg = {
   /** UID of a session */
   uid: string;
+  createSnapshotRequestDto: CreateSnapshotRequestDto;
 };
 export type GetSnapshotApiResponse = /** status 200 (empty) */ GetSnapshotResponseDto;
 export type GetSnapshotApiArg = {
@@ -97,6 +108,12 @@ export type GetSnapshotApiArg = {
   resultPage?: number;
   /** Max limit for snapshot results returned. */
   resultLimit?: number;
+  /** ResultSortColumn can be used to override the default system sort. Valid values are "name", "resource_type", and "status". */
+  resultSortColumn?: string;
+  /** ResultSortOrder is used with ResultSortColumn. Valid values are ASC and DESC. */
+  resultSortOrder?: string;
+  /** ErrorsOnly is used to only return resources with error statuses */
+  errorsOnly?: boolean;
   /** Session UID of a session */
   uid: string;
   /** UID of a snapshot */
@@ -127,6 +144,8 @@ export type GetShapshotListApiArg = {
   /** Sort with value latest to return results sorted in descending order. */
   sort?: string;
 };
+export type GetResourceDependenciesApiResponse = /** status 200 (empty) */ ResourceDependenciesResponseDto;
+export type GetResourceDependenciesApiArg = void;
 export type GetCloudMigrationTokenApiResponse = /** status 200 (empty) */ GetAccessTokenResponseDto;
 export type GetCloudMigrationTokenApiArg = void;
 export type CreateCloudMigrationTokenApiResponse = /** status 200 (empty) */ CreateAccessTokenResponseDto;
@@ -170,8 +189,25 @@ export type CloudMigrationSessionRequestDto = {
 export type CreateSnapshotResponseDto = {
   uid?: string;
 };
+export type CreateSnapshotRequestDto = {
+  resourceTypes?: (
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN'
+  )[];
+};
 export type MigrateDataResponseItemDto = {
   errorCode?:
+    | 'ALERT_RULES_QUOTA_REACHED'
+    | 'ALERT_RULES_GROUP_QUOTA_REACHED'
     | 'DATASOURCE_NAME_CONFLICT'
     | 'DATASOURCE_INVALID_URL'
     | 'DATASOURCE_ALREADY_MANAGED'
@@ -248,6 +284,36 @@ export type SnapshotDto = {
 };
 export type SnapshotListResponseDto = {
   snapshots?: SnapshotDto[];
+};
+export type ResourceDependencyDto = {
+  dependencies?: (
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN'
+  )[];
+  resourceType?:
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'ALERT_RULE_GROUP'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING'
+    | 'PLUGIN';
+};
+export type ResourceDependenciesResponseDto = {
+  resourceDependencies?: ResourceDependencyDto[];
 };
 export type GetAccessTokenResponseDto = {
   createdAt?: string;
@@ -347,6 +413,7 @@ export const {
   useCancelSnapshotMutation,
   useUploadSnapshotMutation,
   useGetShapshotListQuery,
+  useGetResourceDependenciesQuery,
   useGetCloudMigrationTokenQuery,
   useCreateCloudMigrationTokenMutation,
   useDeleteCloudMigrationTokenMutation,

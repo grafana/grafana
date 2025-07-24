@@ -46,7 +46,7 @@ func (am *FakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
 	}
 
 	for _, a := range am.Alerts() {
-		for k, v := range a.Alert.Labels {
+		for k, v := range a.Labels {
 			if k == model.AlertNameLabel {
 				n = append(n, v)
 			}

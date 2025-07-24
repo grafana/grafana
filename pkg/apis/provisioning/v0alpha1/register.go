@@ -41,6 +41,12 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				target = m.Spec.Local.Path
 			case GitHubRepositoryType:
 				target = m.Spec.GitHub.URL
+			case GitRepositoryType:
+				target = m.Spec.Git.URL
+			case BitbucketRepositoryType:
+				target = m.Spec.Bitbucket.URL
+			case GitLabRepositoryType:
+				target = m.Spec.GitLab.URL
 			}
 
 			return []interface{}{
@@ -68,7 +74,7 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*Job)
 			if !ok {
-				return nil, errors.New("expected Repository")
+				return nil, errors.New("expected Job")
 			}
 
 			return []interface{}{
@@ -117,6 +123,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&ResourceStats{},
 		&Job{},
 		&JobList{},
+		&RefList{},
 	)
 	return nil
 }

@@ -67,7 +67,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 				DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			remoteAM, err := remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvStore), secretsService.Decrypt, remote.NoopAutogenFn, m, tracing.InitializeTracerForTest())
+			remoteAM, err := remote.NewAlertmanager(ctx, externalAMCfg, notifier.NewFileStore(orgID, kvStore), notifier.NewCrypto(secretsService, configStore, log.NewNopLogger()), remote.NoopAutogenFn, m, tracing.InitializeTracerForTest())
 			require.NoError(t, err)
 
 			// Use both Alertmanager implementations in the forked Alertmanager.
@@ -102,13 +102,14 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		nopLogger,
 		secretsService,
 		featuremgmt.WithFeatures(),
+		nil,
 		override,
 	)
 	require.NoError(t, err)
 
 	// It should send config and state on startup.
 	var lastConfig *remoteClient.UserGrafanaConfig
-	var lastState *remoteClient.UserGrafanaState
+	var lastState *remoteClient.UserState
 	{
 		// We should start with no config and no state in the external Alertmanager.
 		require.Empty(t, fakeAM.config)
@@ -137,12 +138,12 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		require.Equal(t, fakeAM.config, lastConfig)
 		require.Equal(t, fakeAM.state, lastState)
 
-		// Syncing after the sync interval elapses should update both config and state.
+		// Syncing after the sync interval elapses should update the config, not the state.
 		require.Eventually(t, func() bool {
 			require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
-			return fakeAM.config != lastConfig && fakeAM.state != lastState
+			return fakeAM.config != lastConfig && fakeAM.state == lastState
 		}, 15*time.Second, 300*time.Millisecond)
-		lastConfig, lastState = fakeAM.config, fakeAM.state
+		lastConfig = fakeAM.config
 	}
 
 	// It should send config and state on shutdown.
@@ -154,13 +155,12 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			OrgID:                     1,
 			LastApplied:               time.Now().Unix(),
 		}))
-		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "lwEKhgEKAWESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8ClwEKhgEKAWISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8C"))
-		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "OAopCgZncm91cEESEgoJcmVjZWl2ZXJBEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAVOAopCgZncm91cEISEgoJcmVjZWl2ZXJCEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAV"))
 
 		// Both state and config should be updated when shutting the Alertmanager down.
 		moa.StopAndWait()
-		require.NotEqual(t, fakeAM.config, lastConfig)
-		require.NotEqual(t, fakeAM.state, lastState)
+		require.Eventually(t, func() bool {
+			return fakeAM.config != lastConfig && fakeAM.state != lastState
+		}, 15*time.Second, 300*time.Millisecond)
 	}
 }
 
@@ -175,7 +175,7 @@ func newFakeRemoteAlertmanager(t *testing.T, user, pass string) *fakeRemoteAlert
 type fakeRemoteAlertmanager struct {
 	t        *testing.T
 	config   *remoteClient.UserGrafanaConfig
-	state    *remoteClient.UserGrafanaState
+	state    *remoteClient.UserState
 	username string
 	password string
 }
@@ -241,7 +241,7 @@ func (f *fakeRemoteAlertmanager) getConfig(w http.ResponseWriter) {
 }
 
 func (f *fakeRemoteAlertmanager) postState(w http.ResponseWriter, r *http.Request) {
-	var state remoteClient.UserGrafanaState
+	var state remoteClient.UserState
 	require.NoError(f.t, json.NewDecoder(r.Body).Decode(&state))
 
 	f.state = &state

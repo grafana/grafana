@@ -36,6 +36,11 @@ func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
 	measurement := model.Get("measurement").MustString("")
 	resultFormat := model.Get("resultFormat").MustString("")
 
+	adhocFilters, err := parseAdhocFilters(model.Get("adhocFilters").MustArray())
+	if err != nil {
+		return nil, errors.Join(ErrInvalidQuery, err)
+	}
+
 	tags, err := parseTags(model)
 	if err != nil {
 		return nil, errors.Join(ErrInvalidQuery, err)
@@ -84,6 +89,7 @@ func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
 		OrderByTime:  orderByTime,
 		ResultFormat: resultFormat,
 		Statement:    statement,
+		AdhocFilters: adhocFilters,
 	}, nil
 }
 
@@ -108,6 +114,38 @@ func parseSelects(model *simplejson.Json) ([]*Select, error) {
 		result = append(result, &parts)
 	}
 
+	return result, nil
+}
+
+func parseAdhocFilters(adhocFilters []any) ([]*Tag, error) {
+	result := make([]*Tag, 0, len(adhocFilters))
+	for _, t := range adhocFilters {
+		tagJson := simplejson.NewFromAny(t)
+		tag := &Tag{}
+		var err error
+
+		tag.Key, err = tagJson.Get("key").String()
+		if err != nil {
+			return nil, err
+		}
+
+		tag.Value, err = tagJson.Get("value").String()
+		if err != nil {
+			return nil, err
+		}
+
+		operator, err := tagJson.Get("operator").String()
+		if err == nil {
+			tag.Operator = operator
+		}
+
+		condition, err := tagJson.Get("condition").String()
+		if err == nil {
+			tag.Condition = condition
+		}
+
+		result = append(result, tag)
+	}
 	return result, nil
 }
 

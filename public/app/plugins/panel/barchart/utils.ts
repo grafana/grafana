@@ -13,7 +13,8 @@ import {
   getFieldSeriesColor,
   outerJoinDataFrames,
 } from '@grafana/data';
-import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
+import { decoupleHideFromState } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import {
   AxisColorMode,
   AxisPlacement,
@@ -56,8 +57,13 @@ export function prepSeries(
   xFieldName?: string,
   colorFieldName?: string
 ): BarSeries {
+  // this allows PanelDataErrorView to show the default noValue message
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
-    return { series: [], _rest: [], warn: 'No data in response' };
+    return {
+      warn: '',
+      series: [],
+      _rest: [],
+    };
   }
 
   cacheFieldDisplayNames(frames);
@@ -120,7 +126,7 @@ export function prepSeries(
     let warn: string | null = null;
 
     if (fields.length === 1) {
-      warn = 'No numeric fields found';
+      warn = t('bar-chart.warn.missing-numeric', 'No numeric fields found');
     }
 
     frame.fields = fields;
@@ -141,7 +147,7 @@ export function prepSeries(
     series: [],
     _rest: [],
     color: null,
-    warn: 'Bar charts requires a string or time field',
+    warn: t('bar-chart.warn.missing-series', 'Bar charts require a string or time field'),
   };
 }
 
@@ -247,7 +253,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       // use opacity from first numeric field
       let opacityField = frame.fields.find((f) => f.type === FieldType.number)!;
 
-      fillOpacity = (opacityField.config.custom.fillOpacity ?? 100) / 100;
+      fillOpacity = (opacityField?.config?.custom?.fillOpacity ?? 100) / 100;
 
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame.fields[seriesIdx];

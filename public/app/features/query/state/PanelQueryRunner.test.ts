@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
-import { DataSourceApi, TypedVariableModel } from '@grafana/data';
+import { DataSourceApi, dateTime, TypedVariableModel } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
@@ -155,8 +155,8 @@ function describeQueryRunnerScenario(
         minInterval: ctx.minInterval,
         maxDataPoints: ctx.maxDataPoints ?? Infinity,
         timeRange: {
-          from: grafanaData.dateTime().subtract(1, 'days'),
-          to: grafanaData.dateTime(),
+          from: dateTime('2023-01-01T12:00:00Z'),
+          to: dateTime('2023-01-02T12:00:00Z'),
           raw: { from: '1d', to: 'now' },
         },
         panelId: 1,

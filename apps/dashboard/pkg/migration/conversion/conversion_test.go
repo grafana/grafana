@@ -9,18 +9,25 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestConversionMatrixExist(t *testing.T) {
+	// Initialize the migrator with a test data source provider
+	migration.Initialize(testutil.GetTestProvider())
+
 	versions := []v1.Object{
-		&v0alpha1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
-		&v1alpha1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
-		&v2alpha1.Dashboard{Spec: v2alpha1.DashboardSpec{Title: "dashboardV2"}},
+		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
+		&dashv1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
+		&dashv2alpha1.Dashboard{Spec: dashv2alpha1.DashboardSpec{Title: "dashboardV2alpha1"}},
+		&dashv2alpha2.Dashboard{Spec: dashv2alpha2.DashboardSpec{Title: "dashboardV2alpha2"}},
 	}
 
 	scheme := runtime.NewScheme()
@@ -44,4 +51,21 @@ func TestConversionMatrixExist(t *testing.T) {
 			require.True(t, strings.HasPrefix(meta.FindTitle(""), "dashboard"))
 		})
 	}
+}
+
+func TestDeepCopyValid(t *testing.T) {
+	dash1 := &dashv0.Dashboard{}
+	meta1, err := utils.MetaAccessor(dash1)
+	require.NoError(t, err)
+	meta1.SetFolder("f1")
+	require.Equal(t, "f1", dash1.Annotations[utils.AnnoKeyFolder])
+
+	dash1Copy := dash1.DeepCopyObject()
+	metaCopy, err := utils.MetaAccessor(dash1Copy)
+	require.NoError(t, err)
+	require.Equal(t, "f1", metaCopy.GetFolder())
+
+	// Changing a property on the copy should not effect the original
+	metaCopy.SetFolder("XYZ")
+	require.Equal(t, "f1", meta1.GetFolder()) // 💣💣💣
 }

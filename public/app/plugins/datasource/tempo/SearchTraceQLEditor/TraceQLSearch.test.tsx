@@ -2,8 +2,6 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { config } from '@grafana/runtime';
-
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
@@ -238,26 +236,28 @@ describe('TraceQLSearch', () => {
     });
   });
 
-  it('should not render group by when feature toggle is not enabled', async () => {
-    await waitFor(() => {
+  it('should not render group by alert when query does not contain group by', async () => {
+    await act(async () => {
       render(
         <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
       );
-      const groupBy = screen.queryByText('Aggregate by');
-      expect(groupBy).toBeNull();
-      expect(groupBy).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Remove aggregate by from this query' })).not.toBeInTheDocument();
     });
   });
 
-  it('should render group by when feature toggle enabled', async () => {
-    config.featureToggles.metricsSummary = true;
-    await waitFor(() => {
+  it('should render group by alert when query contains group by', async () => {
+    const onChange = jest.fn();
+    await waitFor(async () => {
       render(
-        <TraceQLSearch datasource={datasource} query={query} onChange={onChange} onClearResults={onClearResults} />
+        <TraceQLSearch
+          datasource={datasource}
+          query={{ ...query, groupBy: [] }}
+          onChange={onChange}
+          onClearResults={onClearResults}
+        />
       );
-      const groupBy = screen.queryByText('Aggregate by');
-      expect(groupBy).not.toBeNull();
-      expect(groupBy).toBeInTheDocument();
+      const button = screen.queryByRole('button', { name: 'Remove aggregate by from this query' });
+      expect(button).toBeInTheDocument();
     });
   });
 });

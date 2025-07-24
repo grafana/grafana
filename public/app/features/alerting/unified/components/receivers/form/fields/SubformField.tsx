@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 
@@ -12,10 +13,16 @@ import { getReceiverFormFieldStyles } from './styles';
 interface Props {
   defaultValue: any;
   option: NotificationChannelOption;
+  getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
   pathPrefix: string;
   errors?: DeepMap<any, FieldError>;
   readOnly?: boolean;
-  secureFields?: NotificationChannelSecureFields;
+  secureFields: NotificationChannelSecureFields;
+  /**
+   * Callback function to delete a subform field. Removal requires side effects
+   * like settings and secure fields cleanup.
+   */
+  onDelete?: (settingsPath: string, option: NotificationChannelOption) => void;
   onResetSecureField?: (propertyName: string) => void;
 }
 
@@ -24,8 +31,10 @@ export const SubformField = ({
   pathPrefix,
   errors,
   defaultValue,
+  getOptionMeta,
   readOnly = false,
-  secureFields = {},
+  secureFields,
+  onDelete,
   onResetSecureField,
 }: Props) => {
   const styles = useStyles2(getReceiverFormFieldStyles);
@@ -36,18 +45,23 @@ export const SubformField = ({
 
   const [show, setShow] = useState(!!value);
 
+  const onDeleteClick = () => {
+    onDelete?.(name, option);
+    setShow(false);
+  };
+
   return (
     <div className={styles.wrapper} data-testid={`${name}.container`}>
       <h6>{option.label}</h6>
       {option.description && <p className={styles.description}>{option.description}</p>}
       {show && (
         <>
-          {!readOnly && (
+          {!readOnly && onDelete && (
             <ActionIcon
               data-testid={`${name}.delete-button`}
               icon="trash-alt"
-              tooltip="delete"
-              onClick={() => setShow(false)}
+              tooltip={t('alerting.subform-field.tooltip-delete', 'delete')}
+              onClick={onDeleteClick}
               className={styles.deleteIcon}
             />
           )}
@@ -55,10 +69,11 @@ export const SubformField = ({
             return (
               <OptionField
                 readOnly={readOnly}
-                secureFields={secureFields}
+                getOptionMeta={getOptionMeta}
                 onResetSecureField={onResetSecureField}
+                onDeleteSubform={onDelete}
+                secureFields={secureFields}
                 defaultValue={defaultValue?.[subOption.propertyName]}
-                parentOption={option}
                 key={subOption.propertyName}
                 option={subOption}
                 pathPrefix={`${name}.`}
@@ -78,7 +93,7 @@ export const SubformField = ({
           onClick={() => setShow(true)}
           data-testid={`${name}.add-button`}
         >
-          Add
+          <Trans i18nKey="alerting.subform-field.add">Add</Trans>
         </Button>
       )}
     </div>

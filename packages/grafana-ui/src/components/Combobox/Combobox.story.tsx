@@ -16,7 +16,7 @@ type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> &
 type Story<T extends string | number = string> = StoryObj<PropsAndCustomArgs<T>>;
 
 const meta: Meta<PropsAndCustomArgs> = {
-  title: 'Forms/Combobox',
+  title: 'Inputs/Combobox',
   component: Combobox,
   parameters: {
     docs: {
@@ -103,6 +103,26 @@ export const AutoSize: Story = {
 export const CustomValue: Story = {
   args: {
     createCustomValue: true,
+  },
+  render: BaseCombobox,
+};
+
+export const GroupsWithMixedLabels: Story = {
+  args: {
+    options: [
+      { label: 'One', value: 'one', group: 'Group 1' },
+      { label: 'Two', value: 'two', group: 'Group 1' },
+      { label: 'Three', value: 'three', group: 'Group 3' },
+      { label: 'Four', value: 'four', group: 'Group 1' },
+      { label: 'Five', value: 'five' },
+      { label: 'Six', value: 'six' },
+      { label: 'Seven', value: 'seven', group: 'Group 2' },
+      { label: 'Eight', value: 'eight', group: 'Group 3' },
+      { label: 'Nine', value: 'nine', group: 'Group 3' },
+      { label: 'Ten', value: 'ten', group: 'Group 3' },
+      { label: 'Eleven', value: 'eleven' },
+    ],
+    value: '',
   },
   render: BaseCombobox,
 };

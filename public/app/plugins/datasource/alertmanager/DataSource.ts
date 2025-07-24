@@ -42,7 +42,7 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
       options.headers!.Authorization = this.instanceSettings.basicAuth;
     }
 
-    return lastValueFrom(getBackendSrv().fetch<any>(options));
+    return lastValueFrom(getBackendSrv().fetch(options));
   }
 
   async testDatasource() {

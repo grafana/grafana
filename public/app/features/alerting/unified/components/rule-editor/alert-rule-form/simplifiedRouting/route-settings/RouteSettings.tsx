@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
 import { MultiValueRemove, MultiValueRemoveProps } from '@grafana/ui/internal';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
@@ -53,22 +54,36 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     }
   }, [overrideGrouping, setValue, alertManager, groupByCount]);
 
+  const separator = <span>, </span>;
+
   return (
     <Stack direction="column">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-        <InlineField label="Override grouping" transparent={true} className={styles.switchElement}>
+        <InlineField
+          label={t('alerting.routing-settings.label-override-grouping', 'Override grouping')}
+          transparent={true}
+          className={styles.switchElement}
+        >
           <Switch id="override-grouping-toggle" {...register(`contactPoints.${alertManager}.overrideGrouping`)} />
         </InlineField>
         {!overrideGrouping && (
           <Text variant="body" color="secondary">
-            Grouping: <strong>{REQUIRED_FIELDS_IN_GROUPBY.join(', ')}</strong>
+            <Trans
+              i18nKey="alerting.routing-settings.grouping"
+              values={{ fields: REQUIRED_FIELDS_IN_GROUPBY.join(', ') }}
+            >
+              Grouping: <strong>{'{{fields}}'}</strong>
+            </Trans>
           </Text>
         )}
       </Stack>
       {overrideGrouping && (
         <Field
-          label="Group by"
-          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy."
+          label={t('alerting.routing-settings.label-group-by', 'Group by')}
+          description={t(
+            'alerting.routing-settings.description-group-by',
+            'Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy.'
+          )}
           {...register(`contactPoints.${alertManager}.groupBy`)}
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
           className={styles.optionalContent}
@@ -93,7 +108,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <MultiSelect
-                  aria-label="Group by"
+                  aria-label={t('alerting.routing-settings.aria-label-group-by', 'Group by')}
                   {...field}
                   allowCustomValue
                   className={formStyles.input}
@@ -137,14 +152,26 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         </Field>
       )}
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-        <InlineField label="Override timings" transparent={true} className={styles.switchElement}>
+        <InlineField
+          label={t('alerting.routing-settings.label-override-timings', 'Override timings')}
+          transparent={true}
+          className={styles.switchElement}
+        >
           <Switch id="override-timings-toggle" {...register(`contactPoints.${alertManager}.overrideTimings`)} />
         </InlineField>
         {!overrideTimings && (
           <Text variant="body" color="secondary">
-            Group wait: <strong>{groupWaitValue}, </strong>
-            Group interval: <strong>{groupIntervalValue}, </strong>
-            Repeat interval: <strong>{repeatIntervalValue}</strong>
+            <Trans i18nKey="alerting.routing-settings.group-wait" values={{ groupWaitValue }}>
+              Group wait: <strong>{'{{groupWaitValue}}'}</strong>
+            </Trans>
+            {separator}
+            <Trans i18nKey="alerting.routing-settings.group-interval" values={{ groupIntervalValue }}>
+              Group interval: <strong>{'{{groupIntervalValue}}'}</strong>
+            </Trans>
+            {separator}
+            <Trans i18nKey="alerting.routing-settings.repeat-interval" values={{ repeatIntervalValue }}>
+              Repeat interval: <strong>{'{{repeatIntervalValue}}'}</strong>
+            </Trans>
           </Text>
         )}
       </Stack>

@@ -3,6 +3,7 @@ package converter
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -362,7 +363,7 @@ func typeOf(value interface{}) data.FieldType {
 	case *bool:
 		return data.FieldTypeNullableBool
 	default:
-		fmt.Printf("unknown value type: %v", v)
+		slog.Error("unknown influx value type", "value", v)
 		return data.FieldTypeNullableJSON
 	}
 }

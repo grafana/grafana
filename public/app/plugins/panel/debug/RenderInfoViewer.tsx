@@ -9,6 +9,7 @@ import {
   PanelProps,
   ReducerID,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 
 import { Options, UpdateConfig } from './panelcfg.gen';
@@ -74,12 +75,43 @@ export class RenderInfoViewer extends Component<Props> {
     return (
       <div>
         <div>
-          <IconButton name="step-backward" title="reset counters" onClick={this.resetCounters} tooltip="Step back" />
+          <IconButton
+            name="step-backward"
+            title={t('debug.render-info-viewer.title-reset-counters', 'Reset counters')}
+            onClick={this.resetCounters}
+            tooltip={t('debug.render-info-viewer.tooltip-step-back', 'Step back')}
+          />
           <span>
-            {showCounters.render && <span>Render: {this.counters.render}&nbsp;</span>}
-            {showCounters.dataChanged && <span>Data: {this.counters.dataChanged}&nbsp;</span>}
-            {showCounters.schemaChanged && <span>Schema: {this.counters.schemaChanged}&nbsp;</span>}
-            <span>TIME: {elapsed}ms</span>
+            {showCounters.render && (
+              <span>
+                <Trans i18nKey="debug.render-info-viewer.render-counter" values={{ numRenders: this.counters.render }}>
+                  Render: {'{{numRenders}}'}&nbsp;
+                </Trans>
+              </span>
+            )}
+            {showCounters.dataChanged && (
+              <span>
+                <Trans
+                  i18nKey="debug.render-info-viewer.data-counter"
+                  values={{ numDataChanges: this.counters.dataChanged }}
+                >
+                  Data: {'{{numDataChanges}}'}&nbsp;
+                </Trans>
+              </span>
+            )}
+            {showCounters.schemaChanged && (
+              <span>
+                <Trans
+                  i18nKey="debug.render-info-viewer.schema-counter"
+                  values={{ numSchemaChanges: this.counters.schemaChanged }}
+                >
+                  Schema: {'{{numSchemaChanges}}'}&nbsp;
+                </Trans>
+              </span>
+            )}
+            <span>
+              <Trans i18nKey="debug.render-info-viewer.elapsed-time">Time: {{ elapsed }}ms</Trans>
+            </span>
           </span>
         </div>
 
@@ -92,9 +124,15 @@ export class RenderInfoViewer extends Component<Props> {
               <table className="filter-table">
                 <thead>
                   <tr>
-                    <td>Field</td>
-                    <td>Type</td>
-                    <td>Last</td>
+                    <td>
+                      <Trans i18nKey="debug.render-info-viewer.field">Field</Trans>
+                    </td>
+                    <td>
+                      <Trans i18nKey="debug.render-info-viewer.type">Type</Trans>
+                    </td>
+                    <td>
+                      <Trans i18nKey="debug.render-info-viewer.last">Last</Trans>
+                    </td>
                   </tr>
                 </thead>
                 <tbody>

@@ -16,10 +16,13 @@ import (
 
 // +k8s:openapi-gen=true
 type Investigation struct {
-	metav1.TypeMeta     `json:",inline" yaml:",inline"`
-	metav1.ObjectMeta   `json:"metadata" yaml:"metadata"`
-	Spec                InvestigationSpec   `json:"spec" yaml:"spec"`
-	InvestigationStatus InvestigationStatus `json:"status" yaml:"status"`
+	metav1.TypeMeta   `json:",inline" yaml:",inline"`
+	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
+
+	// Spec is the spec of the Investigation
+	Spec InvestigationSpec `json:"spec" yaml:"spec"`
+
+	Status InvestigationStatus `json:"status" yaml:"status"`
 }
 
 func (o *Investigation) GetSpec() any {
@@ -37,14 +40,14 @@ func (o *Investigation) SetSpec(spec any) error {
 
 func (o *Investigation) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.InvestigationStatus,
+		"status": o.Status,
 	}
 }
 
 func (o *Investigation) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.InvestigationStatus, true
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -57,7 +60,7 @@ func (o *Investigation) SetSubresource(name string, value any) error {
 		if !ok {
 			return fmt.Errorf("cannot set status type %#v, not of type InvestigationStatus", value)
 		}
-		o.InvestigationStatus = cast
+		o.Status = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
@@ -219,6 +222,20 @@ func (o *Investigation) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
+func (o *Investigation) DeepCopy() *Investigation {
+	cpy := &Investigation{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *Investigation) DeepCopyInto(dst *Investigation) {
+	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+	dst.TypeMeta.Kind = o.TypeMeta.Kind
+	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Investigation{}
 
@@ -262,5 +279,41 @@ func (o *InvestigationList) SetItems(items []resource.Object) {
 	}
 }
 
+func (o *InvestigationList) DeepCopy() *InvestigationList {
+	cpy := &InvestigationList{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *InvestigationList) DeepCopyInto(dst *InvestigationList) {
+	resource.CopyObjectInto(dst, o)
+}
+
 // Interface compliance compile-time check
 var _ resource.ListObject = &InvestigationList{}
+
+// Copy methods for all subresource types
+
+// DeepCopy creates a full deep copy of Spec
+func (s *InvestigationSpec) DeepCopy() *InvestigationSpec {
+	cpy := &InvestigationSpec{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies Spec into another Spec object
+func (s *InvestigationSpec) DeepCopyInto(dst *InvestigationSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of InvestigationStatus
+func (s *InvestigationStatus) DeepCopy() *InvestigationStatus {
+	cpy := &InvestigationStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies InvestigationStatus into another InvestigationStatus object
+func (s *InvestigationStatus) DeepCopyInto(dst *InvestigationStatus) {
+	resource.CopyObjectInto(dst, s)
+}

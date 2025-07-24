@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   CellProps,
@@ -15,7 +17,8 @@ import {
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 
@@ -123,7 +126,7 @@ const getCellContent = (
     return columnName === 'avatarUrl' ? <Skeleton circle width={24} height={24} /> : <Skeleton width={100} />;
   }
   const href = `/org/serviceaccounts/${original.uid}`;
-  const ariaLabel = `Edit service account's ${name} details`;
+  const ariaLabel = `Edit service account's ${original.name} details`;
   switch (columnName) {
     case 'avatarUrl':
       return (
@@ -186,7 +189,7 @@ const getRoleCell = (
       )
     ) : (
       <OrgRolePicker
-        aria-label="Role"
+        aria-label={t('serviceaccounts.get-role-cell.aria-label-role', 'Role')}
         value={value}
         disabled={original.isExternal || !canUpdateRole || original.isDisabled}
         onChange={(newRole) => onRoleChange(newRole, original)}
@@ -210,24 +213,28 @@ const getActionsCell = (
       <Stack alignItems="center" justifyContent="flex-end">
         {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !original.tokens && (
           <Button onClick={() => onAddTokenClick(original)} disabled={original.isDisabled}>
-            Add token
+            <Trans i18nKey="serviceaccounts.get-actions-cell.add-token">Add token</Trans>
           </Button>
         )}
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original) &&
           (original.isDisabled ? (
             <Button variant="secondary" size="md" onClick={() => onEnable(original)}>
-              Enable
+              <Trans i18nKey="serviceaccounts.get-actions-cell.enable">Enable</Trans>
             </Button>
           ) : (
             <Button variant="secondary" size="md" onClick={() => onDisable(original)}>
-              Disable
+              <Trans i18nKey="serviceaccounts.get-actions-cell.disable">Disable</Trans>
             </Button>
           ))}
 
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, original) && (
           <IconButton
             name="trash-alt"
-            aria-label={`Delete service account ${original.name}`}
+            aria-label={t(
+              'serviceaccounts.get-actions-cell.aria-label-delete-button',
+              'Delete service account {{serviceAccountName}}',
+              { serviceAccountName: original.name }
+            )}
             variant="secondary"
             onClick={() => onRemoveButtonClick(original)}
           />
@@ -239,7 +246,10 @@ const getActionsCell = (
           disabled={true}
           name="lock"
           size="md"
-          tooltip={`This is a managed service account and cannot be modified.`}
+          tooltip={t(
+            'serviceaccounts.get-actions-cell.tooltip-managed-service-account-cannot-modified',
+            'This is a managed service account and cannot be modified'
+          )}
         />
       </Stack>
     );

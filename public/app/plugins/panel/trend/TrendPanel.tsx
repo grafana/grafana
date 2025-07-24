@@ -1,14 +1,21 @@
 import { useMemo } from 'react';
 
-import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
-import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import {
+  isLikelyAscendingVector,
+  DataFrame,
+  FieldMatcherID,
+  fieldMatchers,
+  FieldType,
+  PanelProps,
+  TimeRange,
+} from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
-import { findFieldIndex } from 'app/features/dimensions';
+import { findFieldIndex } from 'app/features/dimensions/utils';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { prepareGraphableFields } from '../timeseries/utils';

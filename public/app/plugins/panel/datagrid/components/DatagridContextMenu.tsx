@@ -3,7 +3,8 @@ import { capitalize } from 'lodash';
 import * as React from 'react';
 
 import { DataFrame, FieldType } from '@grafana/data';
-import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
+import { convertFieldType } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/internal';
@@ -118,7 +119,7 @@ export const DatagridContextMenu = ({
       {showDeleteColumn || showDeleteRow ? <MenuDivider /> : null}
       {showClearRow ? (
         <MenuItem
-          label="Clear row"
+          label={t('datagrid.datagrid-context-menu.render-context-menu-items.label-clear-row', 'Clear row')}
           onClick={() => {
             reportInteraction(INTERACTION_EVENT_NAME, {
               item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
@@ -130,7 +131,7 @@ export const DatagridContextMenu = ({
       ) : null}
       {showClearColumn ? (
         <MenuItem
-          label="Clear column"
+          label={t('datagrid.datagrid-context-menu.render-context-menu-items.label-clear-column', 'Clear column')}
           onClick={() => {
             const field = data.fields[column];
             field.values = field.values.map(() => null);
@@ -146,7 +147,7 @@ export const DatagridContextMenu = ({
       ) : null}
       {showClearRow || showClearColumn ? <MenuDivider /> : null}
       <MenuItem
-        label="Remove all data"
+        label={t('datagrid.datagrid-context-menu.render-context-menu-items.label-remove-all-data', 'Remove all data')}
         onClick={() => {
           reportInteraction(INTERACTION_EVENT_NAME, {
             item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
@@ -156,7 +157,7 @@ export const DatagridContextMenu = ({
         }}
       />
       <MenuItem
-        label="Search..."
+        label={t('datagrid.datagrid-context-menu.render-context-menu-items.label-search', 'Search...')}
         onClick={() => {
           reportInteraction(INTERACTION_EVENT_NAME, {
             item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
@@ -216,7 +217,9 @@ export const DatagridContextMenu = ({
     return (
       <>
         {fieldTypeConversionData.length ? (
-          <MenuGroup label="Set field type">
+          <MenuGroup
+            label={t('datagrid.datagrid-context-menu.render-header-menu-items.label-set-field-type', 'Set field type')}
+          >
             {fieldTypeConversionData.map((conversionData, index) => (
               <MenuItem
                 key={index}
@@ -259,10 +262,13 @@ export const DatagridContextMenu = ({
             }
           }}
         />
-        <MenuItem label="Rename column" onClick={renameColumnClicked} />
+        <MenuItem
+          label={t('datagrid.datagrid-context-menu.render-header-menu-items.label-rename-column', 'Rename column')}
+          onClick={renameColumnClicked}
+        />
         <MenuDivider />
         <MenuItem
-          label="Delete column"
+          label={t('datagrid.datagrid-context-menu.render-header-menu-items.label-delete-column', 'Delete column')}
           onClick={() => {
             reportInteraction(INTERACTION_EVENT_NAME, {
               item: INTERACTION_ITEM.HEADER_MENU_ACTION,
@@ -278,7 +284,7 @@ export const DatagridContextMenu = ({
           }}
         />
         <MenuItem
-          label="Clear column"
+          label={t('datagrid.datagrid-context-menu.render-header-menu-items.label-clear-column', 'Clear column')}
           onClick={() => {
             const field = data.fields[column];
             field.values = field.values.map(() => null);

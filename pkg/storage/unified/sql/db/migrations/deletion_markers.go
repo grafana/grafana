@@ -3,9 +3,9 @@ package migrations
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"

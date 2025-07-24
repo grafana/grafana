@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
@@ -29,7 +29,7 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataAlertingTabSt
   }
 
   public getTabLabel() {
-    return 'Alert';
+    return t('dashboard-scene.panel-data-alerting-tab.tab-label', 'Alert');
   }
 
   public getDashboardUID() {
@@ -64,9 +64,22 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
   });
 
   const alert = errors.length ? (
-    <Alert title="Errors loading rules" severity="error">
+    <Alert
+      title={t(
+        'dashboard-scene.panel-data-alerting-tab-rendered.alert.title-errors-loading-rules',
+        'Errors loading rules'
+      )}
+      severity="error"
+    >
       {errors.map((error, index) => (
-        <div key={index}>Failed to load Grafana rules state: {stringifyErrorLike(error)}</div>
+        <div key={index}>
+          <Trans
+            i18nKey="dashboard-scene.panel-data-alerting-tab-rendered.error-failed-to-load"
+            values={{ errorToDisplay: stringifyErrorLike(error) }}
+          >
+            Failed to load Grafana rules state: {'{{errorToDisplay}}'}
+          </Trans>
+        </div>
       ))}
     </Alert>
   ) : null;
@@ -75,7 +88,9 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
     return (
       <>
         {alert}
-        <LoadingPlaceholder text="Loading rules..." />
+        <LoadingPlaceholder
+          text={t('dashboard-scene.panel-data-alerting-tab-rendered.text-loading-rules', 'Loading rules...')}
+        />
       </>
     );
   }
@@ -108,7 +123,10 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
         </>
       )}
       {isNew && !!dashboard.state.meta.canSave && (
-        <Alert severity="info" title="Dashboard not saved">
+        <Alert
+          severity="info"
+          title={t('dashboard-scene.panel-data-alerting-tab-rendered.title-dashboard-not-saved', 'Dashboard not saved')}
+        >
           <Trans i18nKey="dashboard.panel-edit.alerting-tab.dashboard-not-saved">
             Dashboard must be saved before alerts can be added.
           </Trans>

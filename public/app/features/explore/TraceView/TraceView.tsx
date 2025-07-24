@@ -14,7 +14,9 @@ import {
   mapInternalLinkToExplore,
   SplitOpen,
   TimeRange,
+  TraceSearchProps,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -22,26 +24,24 @@ import { useStyles2 } from '@grafana/ui';
 import { TempoQuery } from '@grafana-plugins/tempo/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { changePanelState } from '../state/explorePane';
 
-import {
-  SpanBarOptionsData,
-  SpanLinkFunc,
-  Trace,
-  TracePageHeader,
-  TraceTimelineViewer,
-  TTraceTimeline,
-} from './components';
 import memoizedTraceCriticalPath from './components/CriticalPath';
+import { TracePageHeader } from './components/TracePageHeader';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
+import TraceTimelineViewer from './components/TraceTimelineViewer';
 import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
+import { SpanBarOptionsData } from './components/settings/SpanBarSettings';
+import TTraceTimeline from './components/types/TTraceTimeline';
+import { SpanLinkFunc } from './components/types/links';
+import { Trace } from './components/types/trace';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { SearchProps, useSearch } from './useSearch';
+import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -67,7 +67,7 @@ type Props = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
-  spanFilters?: SearchProps;
+  spanFilters?: TraceSearchProps;
   timeRange: TimeRange;
 };
 
@@ -99,7 +99,7 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
-  const { search, setSearch, spanFilterMatches } = useSearch(traceProp?.spans, spanFilters);
+  const { search, setSearch, spanFilterMatches } = useSearch(exploreId, traceProp?.spans, spanFilters);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [headerHeight, setHeaderHeight] = useState(100);
@@ -167,6 +167,7 @@ export function TraceView(props: Props) {
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
+  const datasourceUid = datasource ? datasource?.uid : '';
   const scrollElement = props.scrollElement
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
@@ -202,6 +203,7 @@ export function TraceView(props: Props) {
             trace={traceProp}
             traceToProfilesOptions={traceToProfilesOptions}
             datasourceType={datasourceType}
+            datasourceUid={datasourceUid}
             spanBarOptions={spanBarOptions?.spanBar}
             traceTimeline={traceTimeline}
             updateNextViewRangeTime={updateNextViewRangeTime}
@@ -225,7 +227,6 @@ export function TraceView(props: Props) {
             detailToggle={toggleDetail}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
-            linksGetter={() => []}
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
@@ -245,7 +246,9 @@ export function TraceView(props: Props) {
           />
         </>
       ) : (
-        <div className={styles.noDataMsg}>No data</div>
+        <div className={styles.noDataMsg}>
+          <Trans i18nKey="explore.trace-view.no-data">No data</Trans>
+        </div>
       )}
     </>
   );
@@ -280,7 +283,10 @@ function useFocusSpanLink(options: {
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
     const link: DataLink = {
-      title: 'Deep link to this span',
+      title: t(
+        'explore.use-focus-span-link.create-focus-span-link.link.title.deep-link-to-this-span',
+        'Deep link to this span'
+      ),
       url: '',
       internal: {
         datasourceUid: options.datasource?.uid!,

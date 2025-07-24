@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport/api"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
@@ -23,13 +24,14 @@ func ProvideService(routeRegister routing.RouteRegister,
 	quotaService quota.Service,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store,
 	libraryPanelService librarypanels.Service, dashboardService dashboards.DashboardService,
-	ac accesscontrol.AccessControl, folderService folder.Service,
+	ac accesscontrol.AccessControl, folderService folder.Service, features featuremgmt.FeatureToggles,
 ) *ImportDashboardService {
 	s := &ImportDashboardService{
 		pluginDashboardService: pluginDashboardService,
 		dashboardService:       dashboardService,
 		libraryPanelService:    libraryPanelService,
 		folderService:          folderService,
+		features:               features,
 	}
 
 	dashboardImportAPI := api.New(s, quotaService, pluginStore, ac)
@@ -43,6 +45,7 @@ type ImportDashboardService struct {
 	dashboardService       dashboards.DashboardService
 	libraryPanelService    librarypanels.Service
 	folderService          folder.Service
+	features               featuremgmt.FeatureToggles
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
@@ -131,21 +134,24 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		User:      req.User,
 	}
 
-	savedDashboard, err := s.dashboardService.ImportDashboard(ctx, dto)
-	if err != nil {
-		return nil, err
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	// nolint:staticcheck
 	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId, req.FolderUid)
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, savedDashboard)
+	savedDashboard, err := s.dashboardService.ImportDashboard(ctx, dto)
 	if err != nil {
 		return nil, err
+	}
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
+
+	// in the k8s flow, we connect the library panels in pkg/registry/apis/dashboard/legacy/sql_dashboards.go
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+		err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, savedDashboard)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	revision := savedDashboard.Data.Get("revision").MustInt64(0)

@@ -11,11 +11,14 @@ import {
   TransformerCategory,
   SelectableValue,
 } from '@grafana/data';
-import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
-import { getTemplateSrv } from '@grafana/runtime/src/services';
+import { FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/filterFieldsByName.svg';
+import lightImage from '../images/light/filterFieldsByName.svg';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -198,14 +201,14 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     const { options, selected, isRegexValid } = this.state;
     return (
       <div>
-        <InlineFieldRow label="Use variable">
-          <InlineField label="From variable">
+        <InlineFieldRow label={t('transformers.filter-by-name-transformer-editor.label-use-variable', 'Use variable')}>
+          <InlineField label={t('transformers.filter-by-name-transformer-editor.label-from-variable', 'From variable')}>
             <InlineSwitch value={this.state.byVariable} onChange={this.onFromVariableChange}></InlineSwitch>
           </InlineField>
         </InlineFieldRow>
         {this.state.byVariable ? (
           <InlineFieldRow>
-            <InlineField label="Variable">
+            <InlineField label={t('transformers.filter-by-name-transformer-editor.label-variable', 'Variable')}>
               <Select
                 value={this.state.variable}
                 onChange={this.onVariableChange}
@@ -214,14 +217,17 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
             </InlineField>
           </InlineFieldRow>
         ) : (
-          <InlineFieldRow label="Identifier">
+          <InlineFieldRow label={t('transformers.filter-by-name-transformer-editor.label-identifier', 'Identifier')}>
             <InlineField
-              label="Identifier"
+              label={t('transformers.filter-by-name-transformer-editor.label-identifier', 'Identifier')}
               invalid={!isRegexValid}
               error={!isRegexValid ? 'Invalid pattern' : undefined}
             >
               <Input
-                placeholder="Regular expression pattern"
+                placeholder={t(
+                  'transformers.filter-by-name-transformer-editor.placeholder-regular-expression-pattern',
+                  'Regular expression pattern'
+                )}
                 value={this.state.regex || ''}
                 onChange={(e) => this.setState({ regex: e.currentTarget.value })}
                 onBlur={this.onInputBlur}
@@ -249,12 +255,18 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
-  id: DataTransformerID.filterFieldsByName,
-  editor: FilterByNameTransformerEditor,
-  transformation: standardTransformers.filterFieldsByNameTransformer,
-  name: standardTransformers.filterFieldsByNameTransformer.name,
-  description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
-  categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
-};
+export const getFilterFieldsByNameTransformRegistryItem: () => TransformerRegistryItem<FilterFieldsByNameTransformerOptions> =
+  () => ({
+    id: DataTransformerID.filterFieldsByName,
+    editor: FilterByNameTransformerEditor,
+    transformation: standardTransformers.filterFieldsByNameTransformer,
+    name: t('transformers.filter-by-name-transformer-editor.name.filter-fields-by-name', 'Filter fields by name'),
+    description: t(
+      'transformers.filter-by-name-transformer-editor.description.remove-part-query-results-regex-pattern',
+      'Remove parts of the query results using a regex pattern.'
+    ),
+    categories: new Set([TransformerCategory.Filter]),
+    help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

@@ -12,6 +12,7 @@ import {
   FieldType,
   GrafanaTheme2,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { LayerName } from 'app/core/components/Layers/LayerName';
@@ -81,7 +82,7 @@ export const SeriesEditor = ({
       {mapping === SeriesMapping.Manual && (
         <>
           <Button icon="plus" size="sm" variant="secondary" onClick={addSeries} className={style.marginBot}>
-            Add series
+            <Trans i18nKey="xychart.series-editor.add-series">Add series</Trans>
           </Button>
 
           <div className={style.marginBot}>
@@ -92,7 +93,9 @@ export const SeriesEditor = ({
                   className={index === selectedIdx ? `${style.row} ${style.sel}` : style.row}
                   onClick={() => setSelectedIdx(index)}
                   role="button"
-                  aria-label={`Select series ${index + 1}`}
+                  aria-label={t('xychart.series-editor.aria-label-select-series', 'Select series {{seriesNum}}', {
+                    seriesNum: index + 1,
+                  })}
                   tabIndex={0}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
@@ -111,10 +114,9 @@ export const SeriesEditor = ({
                   />
                   <IconButton
                     name="trash-alt"
-                    title={'remove'}
                     className={cx(style.actionIcon)}
                     onClick={() => deleteSeries(index)}
-                    tooltip="Delete series"
+                    tooltip={t('xychart.series-editor.tooltip-delete-series', 'Delete series')}
                   />
                 </div>
               );
@@ -125,9 +127,13 @@ export const SeriesEditor = ({
 
       {selectedIdx >= 0 && series != null && (
         <Fragment key={formKey}>
-          <Field label="Frame">
+          <Field label={t('xychart.series-editor.label-frame', 'Frame')}>
             <Select
-              placeholder={mapping === SeriesMapping.Auto ? 'All frames' : 'Select frame'}
+              placeholder={
+                mapping === SeriesMapping.Auto
+                  ? t('xychart.series-editor.placeholder-all-frames', 'All frames')
+                  : t('xychart.series-editor.placeholder-select-frame', 'Select frame')
+              }
               isClearable={true}
               options={context.data.map((frame, index) => ({
                 value: index,
@@ -150,7 +156,7 @@ export const SeriesEditor = ({
               }}
             />
           </Field>
-          <Field label="X field">
+          <Field label={t('xychart.series-editor.label-x-field', 'X field')}>
             <FieldNamePicker
               value={series.x?.matcher.options as string}
               context={context}
@@ -176,15 +182,18 @@ export const SeriesEditor = ({
                   filter: (field) =>
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
-                    field.type === FieldType.number &&
+                    (field.type === FieldType.number || field.type === FieldType.time) &&
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
-                  placeholderText: mapping === SeriesMapping.Auto ? 'First number field in each frame' : undefined,
+                  placeholderText:
+                    mapping === SeriesMapping.Auto
+                      ? t('xychart.series-editor.placeholder-x-field', 'First number or time field in each frame')
+                      : undefined,
                 },
               }}
             />
           </Field>
-          <Field label="Y field">
+          <Field label={t('xychart.series-editor.label-y-field', 'Y field')}>
             <FieldNamePicker
               value={series.y?.matcher?.options as string}
               context={context}
@@ -214,12 +223,15 @@ export const SeriesEditor = ({
                     field.type === FieldType.number &&
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
-                  placeholderText: mapping === SeriesMapping.Auto ? 'Remaining number fields in each frame' : undefined,
+                  placeholderText:
+                    mapping === SeriesMapping.Auto
+                      ? t('xychart.series-editor.placeholder-y-field', 'Remaining number fields in each frame')
+                      : undefined,
                 },
               }}
             />
           </Field>
-          <Field label="Size field">
+          <Field label={t('xychart.series-editor.label-size-field', 'Size field')}>
             <FieldNamePicker
               value={series.size?.matcher?.options as string}
               context={context}
@@ -244,7 +256,6 @@ export const SeriesEditor = ({
                 settings: {
                   // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
                   filter: (field) =>
-                    field.name !== series.x?.matcher.options &&
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
                     field.type === FieldType.number &&
@@ -255,7 +266,7 @@ export const SeriesEditor = ({
               }}
             />
           </Field>
-          <Field label="Color field">
+          <Field label={t('xychart.series-editor.label-color-field', 'Color field')}>
             <FieldNamePicker
               value={series.color?.matcher?.options as string}
               context={context}
@@ -280,7 +291,6 @@ export const SeriesEditor = ({
                 settings: {
                   // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
                   filter: (field) =>
-                    field.name !== series.x?.matcher.options &&
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
                     field.type === FieldType.number &&

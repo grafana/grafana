@@ -1,7 +1,6 @@
 import { of } from 'rxjs';
 
-import { CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
-import { dateTime } from '@grafana/data/src/datetime/moment_wrapper';
+import { dateTime, CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 
 import {
@@ -12,10 +11,10 @@ import {
   dimensionVariable,
   periodIntervalVariable,
   accountIdVariable,
-} from '../__mocks__/CloudWatchDataSource';
-import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
-import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
-import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
+} from '../mocks/CloudWatchDataSource';
+import { initialVariableModelState } from '../mocks/CloudWatchVariables';
+import { setupMockedMetricsQueryRunner } from '../mocks/MetricsQueryRunner';
+import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../mocks/queries';
 import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({

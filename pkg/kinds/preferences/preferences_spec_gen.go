@@ -25,6 +25,8 @@ type Spec struct {
 	Theme *string `json:"theme,omitempty"`
 	// Selected language (beta)
 	Language *string `json:"language,omitempty"`
+	// Selected locale (beta)
+	RegionalFormat *string `json:"regionalFormat,omitempty"`
 	// Explore query history preferences
 	QueryHistory *QueryHistoryPreference `json:"queryHistory,omitempty"`
 	// Cookie preferences
@@ -65,5 +67,7 @@ type NavbarPreference struct {
 
 // NewNavbarPreference creates a new NavbarPreference object.
 func NewNavbarPreference() *NavbarPreference {
-	return &NavbarPreference{}
+	return &NavbarPreference{
+		BookmarkUrls: []string{},
+	}
 }

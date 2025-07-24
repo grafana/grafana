@@ -16,6 +16,7 @@ import { Placement } from '@popperjs/core';
 import { memo, cloneElement, isValidElement, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
@@ -139,7 +140,7 @@ export const Toggletip = memo(
               {closeButton && (
                 <div className={style.headerClose}>
                   <IconButton
-                    aria-label="Close"
+                    aria-label={t('grafana-ui.toggletip.close', 'Close')}
                     name="times"
                     data-testid="toggletip-header-close"
                     onClick={() => {

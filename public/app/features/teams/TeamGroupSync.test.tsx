@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { TeamGroup } from '../../types';
+import { TeamGroup } from 'app/types/teams';
 
 import { Props, TeamGroupSync } from './TeamGroupSync';
-import { getMockTeamGroups } from './__mocks__/teamMocks';
+import { getMockTeamGroups } from './mocks/teamMocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -47,11 +47,11 @@ describe('TeamGroupSync', () => {
 
   it('should call remove group', async () => {
     const mockRemoveGroup = jest.fn();
-    const mockGroup: TeamGroup = { teamId: 1, groupId: 'some/group' };
+    const mockGroup: TeamGroup = { teamId: 1, groupId: 'someGroup' };
     setup({ removeTeamGroup: mockRemoveGroup, groups: [mockGroup] });
-    await userEvent.click(screen.getByRole('button', { name: 'Remove group some/group' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove group someGroup' }));
     await waitFor(() => {
-      expect(mockRemoveGroup).toHaveBeenCalledWith('some/group');
+      expect(mockRemoveGroup).toHaveBeenCalledWith('someGroup');
     });
   });
 });

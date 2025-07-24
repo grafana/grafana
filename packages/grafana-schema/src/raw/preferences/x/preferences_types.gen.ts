@@ -55,6 +55,10 @@ export interface Preferences {
    */
   queryHistory?: QueryHistoryPreference;
   /**
+   * Selected locale (beta)
+   */
+  regionalFormat?: string;
+  /**
    * light, dark, empty is default
    */
   theme?: string;

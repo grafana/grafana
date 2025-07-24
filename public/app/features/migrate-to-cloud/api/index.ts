@@ -26,7 +26,12 @@ export const cloudMigrationAPI = generatedAPI
     }),
   })
   .enhanceEndpoints({
-    addTagTypes: ['cloud-migration-token', 'cloud-migration-session', 'cloud-migration-snapshot'],
+    addTagTypes: [
+      'cloud-migration-token',
+      'cloud-migration-session',
+      'cloud-migration-snapshot',
+      'cloud-migration-resource-dependencies',
+    ],
 
     endpoints: {
       // Cloud-side - create token
@@ -68,22 +73,38 @@ export const cloudMigrationAPI = generatedAPI
         invalidatesTags: ['cloud-migration-snapshot'],
       },
 
+      // Resource dependencies
+      getResourceDependencies: {
+        providesTags: ['cloud-migration-resource-dependencies'],
+      },
+
       getDashboardByUid: suppressErrorsOnQuery,
       getLibraryElementByUid: suppressErrorsOnQuery,
       getLocalPluginList: suppressErrorsOnQuery,
     },
   });
 
-function suppressErrorsOnQuery<QueryArg, BaseQuery extends BaseQueryFn, TagTypes extends string, ResultType>(
-  endpoint: EndpointDefinition<QueryArg, BaseQuery, TagTypes, ResultType>
-) {
+function suppressErrorsOnQuery<
+  QueryArg,
+  BaseQuery extends BaseQueryFn,
+  TagTypes extends string,
+  ResultType,
+  ReducerPath extends string,
+  PageParam,
+>(endpoint: EndpointDefinition<QueryArg, BaseQuery, TagTypes, ResultType, ReducerPath, PageParam>) {
   if (!endpoint.query) {
     return;
   }
 
+  // internal type from rtk-query that isn't exported
+  type InfiniteQueryCombinedArg<QueryArg, PageParam> = {
+    queryArg: QueryArg;
+    pageParam: PageParam;
+  };
+
   const originalQuery = endpoint.query;
-  endpoint.query = (...args) => {
-    const baseQuery = originalQuery(...args);
+  endpoint.query = (arg: QueryArg & InfiniteQueryCombinedArg<QueryArg, PageParam>) => {
+    const baseQuery = originalQuery(arg);
     baseQuery.showErrorAlert = false;
     return baseQuery;
   };

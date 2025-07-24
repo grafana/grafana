@@ -14,15 +14,16 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
-import { t, Trans } from '../../../utils/i18n';
-import { Button } from '../../Button';
+import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { WeekStart } from '../WeekStartPicker';
+import { commonFormat } from '../commonFormat';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
@@ -46,7 +47,7 @@ interface InputState {
 }
 
 const ERROR_MESSAGES = {
-  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "now"'),
+  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "{{now}}"', { now: 'now' }),
   range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
 };
 
@@ -92,7 +93,7 @@ export const TimeRangeContent = (props: Props) => {
     }
 
     const raw: RawTimeRange = { from: from.value, to: to.value };
-    const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth);
+    const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth, commonFormat);
 
     onApplyFromProps(timeRange);
   }, [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value, fiscalYearStartMonth]);
@@ -136,13 +137,15 @@ export const TimeRangeContent = (props: Props) => {
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
-  const fiscalYearMessage = t('time-picker.range-content.fiscal-year', 'Fiscal year');
 
   const fyTooltip = (
     <div className={style.tooltip}>
       {rangeUtil.isFiscal(value) ? (
         <Tooltip
-          content={`${fiscalYearMessage}: ${fiscalYear.from.format('MMM-DD')} - ${fiscalYear.to.format('MMM-DD')}`}
+          content={t('time-picker.range-content.fiscal-year', 'Fiscal year: {{from}} - {{to}}', {
+            from: fiscalYear.from.format('MMM-DD'),
+            to: fiscalYear.to.format('MMM-DD'),
+          })}
         >
           <Icon name="info-circle" />
         </Tooltip>
@@ -235,7 +238,7 @@ export const TimeRangeContent = (props: Props) => {
 
 function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   const raw: RawTimeRange = { from, to };
-  const timeRange = rangeUtil.convertRawToRange(raw, timezone);
+  const timeRange = rangeUtil.convertRawToRange(raw, timezone, undefined, commonFormat);
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
 
   return !valid;
@@ -265,12 +268,12 @@ function valueToState(
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone });
+    return dateTimeFormat(value, { timeZone, format: commonFormat });
   }
 
   if (value.endsWith('Z')) {
-    const dt = dateTimeParse(value, { timeZone: 'utc', format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' });
-    return dateTimeFormat(dt, { timeZone });
+    const dt = dateTimeParse(value);
+    return dateTimeFormat(dt, { timeZone, format: commonFormat });
   }
 
   return value;
