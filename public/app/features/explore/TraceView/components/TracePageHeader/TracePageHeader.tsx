@@ -215,7 +215,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           {config.feedbackLinksEnabled && (
             <Tooltip
               content={t(
-                'explore.trace-page-actions.title-share-thoughts-about-tracing-grafana',
+                'explore.trace-page-header.title-share-thoughts-about-tracing-grafana',
                 'Share your thoughts about tracing in Grafana.'
               )}
             >
@@ -227,7 +227,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                 href="https://forms.gle/RZDEx8ScyZNguDoC8"
                 target="_blank"
               >
-                <Trans i18nKey="explore.trace-page-actions.give-feedback">Feedback</Trans>
+                <Trans i18nKey="explore.trace-page-header.give-feedback">Feedback</Trans>
               </LinkButton>
             </Tooltip>
           )}

@@ -7244,6 +7244,7 @@
     "trace-page-header": {
       "duration": "Duration",
       "export-started": "Export started",
+      "give-feedback": "Feedback",
       "link-copied": "Link copied to clipboard",
       "path": "Path",
       "route": "Route",
@@ -7254,6 +7255,7 @@
       "share-tooltip": "Share trace",
       "start-time": "Start time",
       "target": "Target",
+      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana.",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
       "url": "URL"
