@@ -1,7 +1,5 @@
 import { memo } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
 
-import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { logInfo } from '@grafana/runtime';
 import { LinkButton, Stack } from '@grafana/ui';
@@ -9,6 +7,7 @@ import { LinkButton, Stack } from '@grafana/ui';
 import { LogMessages } from '../../Analytics';
 import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { createReturnTo } from '../../hooks/useReturnTo';
 import { createRelativeUrl } from '../../utils/url';
 
 interface RuleListActionButtonsProps {
@@ -25,7 +24,7 @@ export const RuleListActionButtons = memo<RuleListActionButtonsProps>(
     return (
       <Stack gap={1}>
         {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
-        <CreateAlertButton />
+        <CreateAlertButtons />
         <ExportNewRuleButton />
       </Stack>
     );
@@ -34,11 +33,11 @@ export const RuleListActionButtons = memo<RuleListActionButtonsProps>(
 
 RuleListActionButtons.displayName = 'RuleListActionButtons';
 
-export function CreateAlertButton() {
+function CreateAlertButtons() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
 
-  const location = useLocation();
+  const returnTo = createReturnTo();
 
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
   const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
@@ -46,8 +45,9 @@ export function CreateAlertButton() {
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
       <Stack direction="row" gap={1}>
+        <AIAlertRuleButtonComponent />
         <LinkButton
-          href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
+          href={createRelativeUrl('/alerting/new/alerting', { returnTo })}
           icon="plus"
           onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
         >
@@ -60,7 +60,7 @@ export function CreateAlertButton() {
 }
 
 function ExportNewRuleButton() {
-  const returnTo = window.location.pathname + window.location.search;
+  const returnTo = createReturnTo();
   const url = createRelativeUrl(`/alerting/export-new-rule`, {
     returnTo,
   });
