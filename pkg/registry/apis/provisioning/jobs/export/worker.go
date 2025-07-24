@@ -57,6 +57,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	}
 
 	cloneOptions := repository.StageOptions{
+		Ref:          options.Branch,
 		Timeout:      10 * time.Minute,
 		PushOnWrites: false,
 	}
