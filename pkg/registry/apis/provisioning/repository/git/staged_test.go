@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,6 +69,23 @@ func TestNewStagedGitRepository(t *testing.T) {
 			wantError: nil,
 		},
 		{
+			name: "succeeds with CommitOnlyOnce option",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			opts: repository.StageOptions{
+				PushOnWrites:     false,
+				CommitOnlyOnce:   true,
+				CommitOnlyOnceMessage: "Custom commit message",
+			},
+			wantError: nil,
+		},
+		{
 			name: "fails with GetRef error",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{}, errors.New("ref not found"))
@@ -123,6 +141,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 				actualOpts := stagedRepo.(*stagedGitRepository).opts
 				require.Equal(t, tt.opts.PushOnWrites, actualOpts.PushOnWrites)
 				require.Equal(t, tt.opts.Timeout, actualOpts.Timeout)
+				require.Equal(t, tt.opts.CommitOnlyOnce, actualOpts.CommitOnlyOnce)
+				require.Equal(t, tt.opts.CommitOnlyOnceMessage, actualOpts.CommitOnlyOnceMessage)
 			}
 		})
 	}
@@ -363,6 +383,22 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			wantError:  errors.New("push failed"),
 			expectPush: true, // Push is still called even though it fails
 		},
+		{
+			name: "succeeds with CommitOnlyOnce - no immediate commit",
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.CreateBlobReturns(hash.Hash{1, 2, 3}, nil)
+			},
+			opts: repository.StageOptions{
+				PushOnWrites:   false,
+				CommitOnlyOnce: true,
+			},
+			path:       "test.yaml",
+			ref:        "",
+			data:       []byte("content"),
+			message:    "Create test file",
+			wantError:  nil,
+			expectPush: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -385,6 +421,15 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				require.Equal(t, 1, mockWriter.PushCallCount())
 			} else if tt.wantError == nil {
 				require.Equal(t, 0, mockWriter.PushCallCount())
+			}
+
+			// Verify commit behavior based on CommitOnlyOnce option
+			if tt.opts.CommitOnlyOnce {
+				require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when CommitOnlyOnce is true")
+			} else if tt.wantError == nil {
+				require.Equal(t, 1, mockWriter.CommitCallCount(), "One commit should be made when CommitOnlyOnce is false")
+			} else if tt.wantError != nil && !strings.Contains(tt.wantError.Error(), "commit") {
+				require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when error occurs before commit")
 			}
 		})
 	}
@@ -781,42 +826,96 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 
 func TestStagedGitRepository_Push(t *testing.T) {
 	tests := []struct {
-		name        string
-		setupMock   func(*mocks.FakeStagedWriter)
-		wantError   error
-		expectCalls int
+		name            string
+		opts            repository.StageOptions
+		setupMock       func(*mocks.FakeStagedWriter)
+		wantError       error
+		expectPushCalls int
+		expectCommitCalls int
 	}{
 		{
-			name: "succeeds with empty ref",
+			name: "succeeds with normal push",
+			opts: repository.StageOptions{},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.PushReturns(nil)
 			},
-			wantError:   nil,
-			expectCalls: 1,
-		},
-		{
-			name: "succeeds with matching ref",
-			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
-				mockWriter.PushReturns(nil)
-			},
-			wantError:   nil,
-			expectCalls: 1,
+			wantError:         nil,
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
 		},
 		{
 			name: "succeeds with timeout",
+			opts: repository.StageOptions{
+				Timeout: time.Second * 5,
+			},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.PushReturns(nil)
 			},
-			wantError:   nil,
-			expectCalls: 1,
+			wantError:         nil,
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
+		},
+		{
+			name: "succeeds with CommitOnlyOnce and default message",
+			opts: repository.StageOptions{
+				CommitOnlyOnce: true,
+			},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
+				mockWriter.PushReturns(nil)
+			},
+			wantError:         nil,
+			expectPushCalls:   1,
+			expectCommitCalls: 1,
+		},
+		{
+			name: "succeeds with CommitOnlyOnce and custom message",
+			opts: repository.StageOptions{
+				CommitOnlyOnce:        true,
+				CommitOnlyOnceMessage: "Custom commit message",
+			},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
+				mockWriter.PushReturns(nil)
+			},
+			wantError:         nil,
+			expectPushCalls:   1,
+			expectCommitCalls: 1,
+		},
+		{
+			name: "fails with commit error when CommitOnlyOnce",
+			opts: repository.StageOptions{
+				CommitOnlyOnce: true,
+			},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
+			},
+			wantError:         errors.New("commit changes: commit failed"),
+			expectPushCalls:   0,
+			expectCommitCalls: 1,
 		},
 		{
 			name: "fails with push error",
+			opts: repository.StageOptions{},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.PushReturns(errors.New("push failed"))
 			},
-			wantError:   errors.New("push failed"),
-			expectCalls: 1,
+			wantError:         errors.New("push failed"),
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
+		},
+		{
+			name: "fails with push error after successful commit",
+			opts: repository.StageOptions{
+				CommitOnlyOnce: true,
+			},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
+				mockWriter.PushReturns(errors.New("push failed"))
+			},
+			wantError:         errors.New("push failed"),
+			expectPushCalls:   1,
+			expectCommitCalls: 1,
 		},
 	}
 
@@ -825,7 +924,7 @@ func TestStagedGitRepository_Push(t *testing.T) {
 			mockWriter := &mocks.FakeStagedWriter{}
 			tt.setupMock(mockWriter)
 
-			stagedRepo := createTestStagedRepositoryWithWriter(mockWriter, repository.StageOptions{})
+			stagedRepo := createTestStagedRepositoryWithWriter(mockWriter, tt.opts)
 
 			err := stagedRepo.Push(context.Background())
 
@@ -835,7 +934,18 @@ func TestStagedGitRepository_Push(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			require.Equal(t, tt.expectCalls, mockWriter.PushCallCount())
+			require.Equal(t, tt.expectPushCalls, mockWriter.PushCallCount())
+			require.Equal(t, tt.expectCommitCalls, mockWriter.CommitCallCount())
+
+			// Verify commit message when CommitOnlyOnce is used
+			if tt.opts.CommitOnlyOnce && tt.expectCommitCalls > 0 && tt.wantError == nil {
+				_, actualMessage, _, _ := mockWriter.CommitArgsForCall(0)
+				expectedMessage := tt.opts.CommitOnlyOnceMessage
+				if expectedMessage == "" {
+					expectedMessage = "Staged changes"
+				}
+				require.Equal(t, expectedMessage, actualMessage)
+			}
 		})
 	}
 }

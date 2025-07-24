@@ -78,8 +78,10 @@ func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data
 		return err
 	}
 
-	if err := r.commit(ctx, r.writer, message); err != nil {
-		return err
+	if !r.opts.CommitOnlyOnce {
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
 	}
 
 	if r.opts.PushOnWrites {
@@ -116,8 +118,10 @@ func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data 
 		}
 	}
 
-	if err := r.commit(ctx, r.writer, message); err != nil {
-		return err
+	if !r.opts.CommitOnlyOnce {
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
 	}
 
 	if r.opts.PushOnWrites {
@@ -140,8 +144,10 @@ func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data
 		return err
 	}
 
-	if err := r.commit(ctx, r.writer, message); err != nil {
-		return err
+	if !r.opts.CommitOnlyOnce {
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
 	}
 
 	if r.opts.PushOnWrites {
@@ -160,8 +166,10 @@ func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message str
 		return err
 	}
 
-	if err := r.commit(ctx, r.writer, message); err != nil {
-		return err
+	if !r.opts.CommitOnlyOnce {
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
 	}
 
 	if r.opts.PushOnWrites {
@@ -176,6 +184,16 @@ func (r *stagedGitRepository) Push(ctx context.Context) error {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, r.opts.Timeout)
 		defer cancel()
+	}
+
+	if r.opts.CommitOnlyOnce {
+		message := r.opts.CommitOnlyOnceMessage
+		if message == "" {
+			message = "Staged changes"
+		}
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
 	}
 
 	return r.writer.Push(ctx)

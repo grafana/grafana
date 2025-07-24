@@ -15,6 +15,10 @@ type StageOptions struct {
 	PushOnWrites bool
 	// Maximum time allowed for clone operation in seconds (0 means no limit)
 	Timeout time.Duration
+	// Commit only once on push instead of intermediate commits
+	CommitOnlyOnce bool
+	// Commit message to use when CommitOnlyOnce is true
+	CommitOnlyOnceMessage string
 }
 
 //go:generate mockery --name StageableRepository --structname MockStageableRepository --inpackage --filename stageable_repository_mock.go --with-expecter
