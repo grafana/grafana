@@ -12,11 +12,11 @@ export function useIsConditionallyHidden(scene: SceneObject): [boolean, string |
     return [false, undefined, null];
   }
 
-  const value = state.conditionalRendering.evaluate() ?? true;
+  const { result } = state.conditionalRendering.useState();
 
   return [
-    !value,
-    value ? undefined : 'dashboard-visible-hidden-element',
-    value ? null : <ConditionalRenderingOverlay />,
+    !result,
+    result ? undefined : 'dashboard-visible-hidden-element',
+    result ? null : <ConditionalRenderingOverlay />,
   ];
 }

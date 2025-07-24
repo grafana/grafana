@@ -6,11 +6,13 @@ import { ConditionalRenderingChangedEvent } from '../edit-pane/shared';
 
 import { ConditionalRenderingBase } from './ConditionalRenderingBase';
 import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
-import { ItemsWithConditionalRendering } from './types';
+import { ConditionEvaluationResult, ItemsWithConditionalRendering } from './types';
 import { getItemType, translatedItemType } from './utils';
 
 export interface ConditionalRenderingState extends SceneObjectState {
   rootGroup: ConditionalRenderingGroup;
+  result: boolean;
+  force: boolean;
 }
 
 export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingState> {
@@ -24,8 +26,8 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
     );
   }
 
-  public constructor(state: ConditionalRenderingState) {
-    super(state);
+  public constructor(state: Omit<ConditionalRenderingState, 'result' | 'force'>) {
+    super({ ...state, result: true, force: false });
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -40,13 +42,19 @@ export class ConditionalRendering extends SceneObjectBase<ConditionalRenderingSt
     });
   }
 
-  public evaluate(): boolean {
-    return this.state.rootGroup.evaluate();
+  public evaluate(): ConditionEvaluationResult {
+    this.state.rootGroup.recalculateResult();
+    return { result: this.state.rootGroup.state.result, force: this.state.rootGroup.state.force };
   }
 
   public notifyChange() {
-    this.parent?.forceRender();
-    this.parent?.publishEvent(new ConditionalRenderingChangedEvent(this), true);
+    const { result, force } = this.evaluate();
+
+    if (this.state.result !== result || this.state.force !== force) {
+      this.setState({ result, force });
+      this.parent?.forceRender();
+      this.parent?.publishEvent(new ConditionalRenderingChangedEvent(this), true);
+    }
   }
 
   public deleteItem<T extends ConditionalRenderingBase>(item: T) {

@@ -44,6 +44,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
             {...(addDndContainer
               ? { ref: model.containerRef, ['data-auto-grid-item-drop-target']: isDragging ? key : undefined }
               : {})}
+            className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
           >
             {isDragged && <div className={styles.draggedPlaceholder} />}
             {isLazy ? (
@@ -53,7 +54,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                   conditionalRenderingClass,
                   styles.wrapper,
                   isDragged && !isRepeat && styles.draggedWrapper,
-                  isDragged && isRepeat && styles.draggedRepeatWrapper
+                  isDragged && isRepeat && styles.draggedRepeatWrapper,
+                  isConditionallyHidden && !isEditing && styles.hidden
                 )}
               >
                 <item.Component model={item} />
@@ -126,5 +128,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: `0 0 ${theme.spacing(0.5)} ${theme.colors.primary.border}`,
     background: `${theme.colors.primary.transparent}`,
     zIndex: -1,
+  }),
+  hidden: css({
+    display: 'none',
   }),
 });

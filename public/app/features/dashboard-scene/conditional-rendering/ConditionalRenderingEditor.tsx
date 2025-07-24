@@ -28,6 +28,8 @@ export function useConditionalRenderingEditor(
 
   const conditionalRenderingToRender = conditionalRendering ?? getPlaceholderConditionalRendering();
 
+  const { result } = conditionalRenderingToRender.useState();
+
   return new OptionsPaneCategoryDescriptor({
     title,
     disabledText: conditionalRendering
@@ -43,7 +45,7 @@ export function useConditionalRenderingEditor(
         <div>{title}</div>
         {conditionalRendering ? (
           <Tooltip content={conditionalRenderingToRender.info}>
-            <Icon name={!conditionalRenderingToRender.evaluate() ? 'eye-slash' : 'eye'} />
+            <Icon name={!result ? 'eye-slash' : 'eye'} />
           </Tooltip>
         ) : (
           <Icon name="eye-slash" />

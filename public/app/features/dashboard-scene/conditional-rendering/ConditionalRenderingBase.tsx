@@ -11,19 +11,22 @@ import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
 import {
   ConditionalRenderingConditions,
   ConditionalRenderingKindTypes,
+  ConditionEvaluationResult,
   ConditionValues,
   ItemsWithConditionalRendering,
 } from './types';
 
 export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
   value: V;
+  result: boolean;
+  force: boolean;
 }
 
 export abstract class ConditionalRenderingBase<
   S extends ConditionalRenderingBaseState = ConditionalRenderingBaseState,
 > extends SceneObjectBase<S> {
   public constructor(state: S) {
-    super(state);
+    super({ ...state, result: true, force: true });
 
     this.addActivationHandler(() => this._baseActivationHandler());
   }
@@ -47,7 +50,30 @@ export abstract class ConditionalRenderingBase<
 
   public abstract serialize(): ConditionalRenderingKindTypes;
 
-  public abstract evaluate(): boolean;
+  public abstract evaluate(): ConditionEvaluationResult;
+
+  public getForceTrue(): ConditionEvaluationResult {
+    return { result: true, force: true };
+  }
+
+  public getForceFalse(): ConditionEvaluationResult {
+    return { result: false, force: true };
+  }
+
+  public getActualResult(result: boolean): ConditionEvaluationResult {
+    return { result, force: false };
+  }
+
+  public recalculateResult(): ConditionEvaluationResult {
+    const result = this.evaluate();
+
+    if (result.result !== this.state.result || result.force !== this.state.force) {
+      this.setState({ ...this.state, result: result.result, force: result.force });
+      this._notifyChange();
+    }
+
+    return result;
+  }
 
   public onDelete() {
     this._getConditionalLogicRoot().deleteItem(this);
@@ -73,13 +99,9 @@ export abstract class ConditionalRenderingBase<
     return this.supportedItemTypes.includes(this.getItemType());
   }
 
-  public notifyChange() {
-    this._getConditionalLogicRoot().notifyChange();
-  }
-
-  public setStateAndNotify(state: Partial<S>) {
+  public setStateAndRecalculate(state: Partial<S>) {
     this.setState(state);
-    this.notifyChange();
+    this.recalculateResult();
   }
 
   public findRule() {
@@ -90,7 +112,7 @@ export abstract class ConditionalRenderingBase<
     const group = this.getRenderingGroup();
     const restoredState = [...group.state.value];
     restoredState.splice(index, 0, rule);
-    group.setStateAndNotify({ value: restoredState });
+    group.setStateAndRecalculate({ value: restoredState });
   }
 
   private getRenderingGroup(): ConditionalRenderingGroup {
@@ -100,6 +122,10 @@ export abstract class ConditionalRenderingBase<
 
   private _getConditionalLogicRoot(): ConditionalRendering {
     return sceneGraph.getAncestor(this, ConditionalRendering);
+  }
+
+  private _notifyChange() {
+    this._getConditionalLogicRoot().notifyChange();
   }
 }
 
