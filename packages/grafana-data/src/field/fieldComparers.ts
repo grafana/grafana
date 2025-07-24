@@ -90,15 +90,15 @@ const timestampIndexComparer = (values: number[], reverse: boolean, nanos?: numb
 };
 
 const timeIndexComparer = (values: unknown[], reverse: boolean, nanos?: number[]): IndexComparer => {
+  const mult = reverse ? -1 : 1;
   return (a: number, b: number): number => {
     const vA = values[a];
     const vB = values[b];
 
     if (nanos !== undefined) {
-      const mult = reverse ? -1 : 1;
-      return (reverse ? timeComparer(vB, vA) : timeComparer(vA, vB)) || mult * numericComparer(nanos[a], nanos[b]);
+      return mult * timeComparer(vA, vB) || mult * numericComparer(nanos[a], nanos[b]);
     }
-    return reverse ? timeComparer(vB, vA) : timeComparer(vA, vB);
+    return mult * timeComparer(vB, vA);
   };
 };
 
