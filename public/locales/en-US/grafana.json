@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "AI Alert Rule Button failed to load",
+        "feedback-button": "AI Feedback Button failed to load",
         "improve-annotations-button": "AI Improve Annotations Button failed to load",
         "improve-labels-button": "AI Improve Labels Button failed to load",
         "template-button": "AI Template Button failed to load",
@@ -2803,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Refresh preview",
+      "empty-state": "Add template content to see preview",
       "label-preview": "Preview",
       "refresh": "Refresh"
     },
@@ -8598,7 +8600,10 @@
         "no-data": "No data"
       },
       "no-values-label": "No values",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sparkline": {
+        "no-data": "no data"
+      }
     },
     "tags": {
       "list-label": "Tags"

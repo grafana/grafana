@@ -123,6 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      id-token: write
     steps:
         - name: "Get vault secrets"
           id: vault-secrets
@@ -134,13 +135,14 @@ jobs:
               GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem  
         - name: Generate token
           id: generate_token
-          uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
+          uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
           with:
             app-id: ${{ env.GITHUB_APP_ID }}
             private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
             permission-members: read
         - name: Check if member of grafana org
           id: check-if-grafana-org-member
+          continue-on-error: true
           run: gh api https://api.github.com/orgs/grafana/members/${{ env.ACTOR }} >/dev/null 2>&1 && echo "is_grafana_org_member=true" >> "$GITHUB_OUTPUT"
           env:
               GH_TOKEN: ${{ steps.generate_token.outputs.token }}
