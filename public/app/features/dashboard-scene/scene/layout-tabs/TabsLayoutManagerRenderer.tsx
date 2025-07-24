@@ -8,6 +8,7 @@ import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectStat
 import { Button, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { isInCloneChain } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
@@ -25,6 +26,8 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(currentTab);
+
+  const isClone = isInCloneChain(tabs[0]?.state.key || '');
 
   return (
     <div className={styles.tabLayoutContainer}>
@@ -55,7 +58,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                 </div>
               )}
             </Droppable>
-            {isEditing && (
+            {isEditing && !isClone && (
               <div className="dashboard-canvas-add-button">
                 <Button
                   icon="plus"
