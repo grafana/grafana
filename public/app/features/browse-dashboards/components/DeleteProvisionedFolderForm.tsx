@@ -23,7 +23,6 @@ interface FormProps extends DeleteProvisionedFolderFormProps {
   repository?: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   folder?: Folder;
-  isGitHub: boolean;
 }
 
 interface DeleteProvisionedFolderFormProps {
@@ -31,15 +30,7 @@ interface DeleteProvisionedFolderFormProps {
   onDismiss?: () => void;
 }
 
-function FormContent({
-  initialValues,
-  parentFolder,
-  repository,
-  workflowOptions,
-  folder,
-  isGitHub,
-  onDismiss,
-}: FormProps) {
+function FormContent({ initialValues, parentFolder, repository, workflowOptions, folder, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
 
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
@@ -128,7 +119,7 @@ function FormContent({
             isNew={false}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            repository={repository}
           />
 
           {/* Delete / Cancel button */}
@@ -149,7 +140,7 @@ function FormContent({
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'delete',
     title: parentFolder?.title,
@@ -167,7 +158,6 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
       repository={repository}
       workflowOptions={workflowOptions}
       folder={folder}
-      isGitHub={isGitHub}
     />
   );
 }
