@@ -751,7 +751,7 @@ export type ObjectMeta = {
 };
 export type DeleteJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
-  Paths: string[];
+  paths?: string[];
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
 };
