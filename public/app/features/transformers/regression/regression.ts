@@ -129,7 +129,7 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
         fields: [
           { name: xField.name, type: xField.type, values: predictionPoints, config: {} },
           {
-            name: `${getFieldDisplayName(yField, predictFromFrame, frames)} predicted`,
+            name: `${getFieldDisplayName(yField, predictFromFrame, frames)}`,
             type: yField.type,
             values: predictionPoints.map((x) => result.predict(x - normalizationSubtrahend)),
             config: {},
