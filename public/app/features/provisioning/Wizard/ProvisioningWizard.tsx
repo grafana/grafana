@@ -65,7 +65,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } = useStepStatus();
+  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
+    useStepStatus();
 
   const { data } = useGetFrontendSettingsQuery();
   const isLegacyStorage = Boolean(data?.legacyStorage);
