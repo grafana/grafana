@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 
 import { SUGGESTIONS_LIMIT } from '../../../constants';
-import { FUNCTIONS } from '../../../promql';
+import { getFunctions } from '../../../promql';
 import { getMockTimeRange } from '../../../test/mocks/datasource';
 
 import { filterMetricNames, getCompletions } from './completions';
@@ -172,7 +172,7 @@ const metricNameCompletionSituations = ['AT_ROOT', 'IN_FUNCTION', 'EMPTY'] as Me
 
 function getSuggestionCountForSituation(situationType: MetricNameSituation, metricsCount: number): number {
   const limitedMetricNamesCount = metricsCount < SUGGESTIONS_LIMIT ? metricsCount : SUGGESTIONS_LIMIT;
-  let suggestionsCount = limitedMetricNamesCount + FUNCTIONS.length;
+  let suggestionsCount = limitedMetricNamesCount + getFunctions().length;
 
   if (situationType === 'EMPTY') {
     suggestionsCount += history.length;

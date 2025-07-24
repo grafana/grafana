@@ -752,6 +752,8 @@ export type ObjectMeta = {
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
 };
 export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
@@ -772,6 +774,8 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
   /** Prefix in target file system */
   path?: string;
 };
@@ -819,8 +823,9 @@ export type JobStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state?: 'error' | 'pending' | 'success' | 'working';
+  state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
 };
@@ -991,8 +996,9 @@ export type SyncStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state: 'error' | 'pending' | 'success' | 'working';
+  state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
 export type WebhookStatus = {
   encryptedSecret?: string;
