@@ -93,8 +93,8 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
       onRemove={prParam ? () => window.open(textUtil.sanitizeUrl(prParam), '_blank') : undefined}
     >
       <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-saved">
-        The rest of Grafana users in your organization will still see the current version saved to main until this
-        branch is merged
+        The rest of Grafana users in your organization will still see the current version saved to configured default
+        branch until this branch is merged
       </Trans>
     </Alert>
   );

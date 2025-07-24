@@ -79,7 +79,11 @@ describe('PreviewBannerViewPR', () => {
       setup({ prParam: 'test-url', isNewPr: false });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText('This resource is loaded from a pull request in GitHub.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged'
+        )
+      ).toBeInTheDocument();
     });
 
     it('should render correct button text for new PR dashboard', () => {
@@ -107,7 +111,11 @@ describe('PreviewBannerViewPR', () => {
       setup({ prParam: 'test-url', isNewPr: false });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText('This resource is loaded from a pull request in GitHub.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'This resource is loaded from the branch you just created in GitHub and it is only visible to you'
+        )
+      ).toBeInTheDocument();
     });
 
     it('should render correct button text for new PR resource', () => {
@@ -140,14 +148,22 @@ describe('PreviewBannerViewPR', () => {
       setup({ prParam: 'test-url', isNewPr: false, repoType: 'gitlab' });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText('This resource is loaded from a pull request in GitLab.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'This resource is loaded from the branch you just created in GitLab and it is only visible to you'
+        )
+      ).toBeInTheDocument();
     });
 
     it('should handle Bitbucket repository type', () => {
       setup({ prParam: 'test-url', isNewPr: false, repoType: 'bitbucket' });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText('This resource is loaded from a pull request in Bitbucket.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'This resource is loaded from the branch you just created in Bitbucket and it is only visible to you'
+        )
+      ).toBeInTheDocument();
     });
   });
 });
