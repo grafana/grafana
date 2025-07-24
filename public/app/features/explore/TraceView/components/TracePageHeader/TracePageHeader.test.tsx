@@ -25,9 +25,10 @@ import {
 import { usePluginLinks } from '@grafana/runtime';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
+import { TraceViewPluginExtensionContext } from '../types/trace';
+
 import { TracePageHeader } from './TracePageHeader';
 import { trace } from './mocks';
-import { TraceViewPluginExtensionContext } from '../types/trace';
 
 // Mock @grafana/runtime
 jest.mock('@grafana/runtime', () => ({
