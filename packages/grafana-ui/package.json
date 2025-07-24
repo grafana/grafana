@@ -53,6 +53,7 @@
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "storybook": "storybook dev -p 9001 -c .storybook --no-open",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
+    "storybook:test": "test-storybook --url http://localhost:9001",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json && rimraf ./unstable"
@@ -152,6 +153,7 @@
     "@storybook/preview-api": "^8.6.2",
     "@storybook/react": "^8.6.2",
     "@storybook/react-webpack5": "^8.6.2",
+    "@storybook/test-runner": "^0.23.0",
     "@storybook/theming": "^8.6.2",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",

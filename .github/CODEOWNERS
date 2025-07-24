@@ -999,6 +999,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
+/.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
 /.github/workflows/storybook-verification.yml @grafana/grafana-frontend-platform
 /.github/workflows/storybook-verification-playwright.yml @grafana/grafana-frontend-platform
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling

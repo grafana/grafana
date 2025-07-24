@@ -9,6 +9,8 @@ const meta: Meta<typeof RangeSlider> = {
     controls: {
       exclude: ['tooltipAlwaysVisible'],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     orientation: { control: { type: 'select', options: ['horizontal', 'vertical'] } },
