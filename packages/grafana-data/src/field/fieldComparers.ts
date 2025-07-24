@@ -94,11 +94,10 @@ const timeIndexComparer = (values: unknown[], reverse: boolean, nanos?: number[]
     const vA = values[a];
     const vB = values[b];
 
-    const sort = reverse ? timeComparer(vB, vA) : timeComparer(vA, vB);
-    if (sort === 0 && nanos?.[a] !== undefined && nanos?.[b] !== undefined) {
-      return numericComparer(nanos[a], nanos[b]);
+    if (nanos !== undefined) {
+      return (reverse ? timeComparer(vB, vA) : timeComparer(vA, vB)) || numericComparer(nanos[a], nanos[b]);
     }
-    return sort;
+    return reverse ? timeComparer(vB, vA) : timeComparer(vA, vB);
   };
 };
 
