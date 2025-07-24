@@ -2468,7 +2468,7 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
-      "draft-new-rule": "Draft a new rule",
+      "draft-new-rule": "New alert rule for export",
       "ds-error": {
         "title": "Cannot load rules for this datasource"
       },
