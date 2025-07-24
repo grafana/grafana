@@ -243,8 +243,8 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | [Auto](#auto)                             | A basic text and number cell. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
-| [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the field text is displayed in the appropriate color. |
-| [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the field background is displayed in the appropriate color. |
+| [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the cell text is displayed in the appropriate color. |
+| [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the cell background is displayed in the appropriate color. |
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
@@ -258,12 +258,7 @@ This is a basic text and number cell.
 
 It has the following cell options:
 
-<!-- prettier-ignore-start -->
-| Option | Description |
-| ------ | ----------- |
-| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
-| Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
-<!-- prettier-ignore-end -->
+{{< docs/shared lookup="visualizations/cell-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Sparkline
 
@@ -293,22 +288,17 @@ For more detailed information about all of the sparkline styling options (except
 
 #### Colored text
 
-If thresholds, value mappings, or color schemes are set, with this cell type, the field text is displayed in the appropriate color.
+If thresholds, value mappings, or color schemes are set, the cell text is displayed in the appropriate color.
 
 ![Table with colored text cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-text-v11.3-2.png)
 
 The colored text cell type has the following options:
 
-<!-- prettier-ignore-start -->
-| Option | Description |
-| ------ | ----------- |
-| Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
-| Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
-<!-- prettier-ignore-end -->
+{{< docs/shared lookup="visualizations/cell-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Colored background
 
-If thresholds, value mappings, or color schemes are set, with this cell type, the field background is displayed in the appropriate color.
+If thresholds, value mappings, or color schemes are set, the cell background is displayed in the appropriate color.
 
 ![Table with colored background cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-bkgrnd-v11.3-2.png)
 
@@ -326,6 +316,7 @@ The colored background cell type has the following options:
 | Wrap text | <p>Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table. To wrap the text _in a specific column only_, use a **Fields with name** [field override](ref:field-override), select the **Cell options > Cell type** override property, and toggle on the **Wrap text** switch.</p><p>Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.</p> |
 | Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 <!-- prettier-ignore-end -->
+{{< docs/shared lookup="visualizations/cell-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Gauge
 
