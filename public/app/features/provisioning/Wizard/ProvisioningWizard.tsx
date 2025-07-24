@@ -11,6 +11,7 @@ import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/ap
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { getDefaultValues } from '../Config/defaults';
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { dataToSpec } from '../utils/data';
@@ -19,7 +20,6 @@ import { getFormErrors } from '../utils/getFormErrors';
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
-import { StepAlert } from './StepAlert';
 import { useStepStatus } from './StepStatusContext';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
@@ -284,7 +284,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               </Text>
             </Box>
 
-            {hasStepError && 'error' in stepStatusInfo && <StepAlert error={stepStatusInfo.error} />}
+            {hasStepError && 'error' in stepStatusInfo && <ProvisioningAlert error={stepStatusInfo.error} />}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}

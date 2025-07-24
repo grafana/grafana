@@ -7,7 +7,7 @@ import { Job } from 'app/api/clients/provisioning/v0alpha1';
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
 import { useStepStatus } from '../Wizard/StepStatusContext';
-import { StepErrorInfo } from '../Wizard/types';
+import { ProvisioningErrorInfo } from '../types';
 
 import { JobSummary } from './JobSummary';
 
@@ -43,7 +43,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
         break;
       case 'error':
         if (!errorSetRef.current) {
-          const errorInfo: StepErrorInfo = {
+          const errorInfo: ProvisioningErrorInfo = {
             title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
             message: errors?.length ? errors : message,
           };

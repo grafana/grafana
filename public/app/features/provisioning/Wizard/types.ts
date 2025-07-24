@@ -1,6 +1,6 @@
 import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
-import { RepositoryFormData } from '../types';
+import { ProvisioningErrorInfo, RepositoryFormData } from '../types';
 
 export type WizardStep = 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
@@ -28,11 +28,6 @@ export interface ModeOption {
 
 export type StepStatus = 'idle' | 'running' | 'error' | 'success';
 
-export interface StepErrorInfo {
-  title?: string;
-  message?: string | string[];
-}
-
 export type StepStatusInfo = 
   | { status: 'idle' | 'running' | 'success' }
-  | { status: 'error'; error: string | StepErrorInfo };
+  | { status: 'error'; error: string | ProvisioningErrorInfo };
