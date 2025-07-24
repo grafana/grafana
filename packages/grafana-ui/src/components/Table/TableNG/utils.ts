@@ -355,7 +355,7 @@ export function applySort(
 
       result = sortDir * compare(a[columnKey], b[columnKey]);
 
-      if (result === 0 && colType === FieldType.time && sortNanos[i] !== undefined) {
+      if (result === 0 && sortNanos[i] !== undefined && colType === FieldType.time) {
         result = sortDir * sortNanos[i]![a.__index] - sortNanos[i]![b.__index];
       }
 
