@@ -13460,11 +13460,11 @@
           "polynomial": "Polynomial"
         }
       },
-      "trendline": "trendline",
-      "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict",
       "tags": {
         "regression-analysis": "Regression analysis"
-      }
+      },
+      "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict",
+      "trendline": "trendline"
     },
     "rename-by-regex-transformer": {
       "description": {
