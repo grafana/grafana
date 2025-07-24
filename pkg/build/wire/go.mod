@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build/wire
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/google/go-cmp v0.7.0
@@ -11,5 +11,5 @@ require (
 
 require (
 	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 )
