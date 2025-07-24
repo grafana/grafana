@@ -848,6 +848,38 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 	OrgID int64
 }
 
+type RuleTypeFilter int
+
+const (
+	RuleTypeFilterAll RuleTypeFilter = iota
+	RuleTypeFilterAlerting
+	RuleTypeFilterRecording
+)
+
+// Add this new struct
+type ListAlertRulesByGroupQuery struct {
+	OrgID         int64
+	RuleUIDs      []string
+	NamespaceUIDs []string
+	ExcludeOrgs   []int64
+	RuleGroups    []string
+
+	// DashboardUID and PanelID are optional and allow filtering rules
+	// to return just those for a dashboard and panel.
+	DashboardUID string
+	PanelID      int64
+
+	ReceiverName     string
+	TimeIntervalName string
+
+	HasPrometheusRuleDefinition *bool
+
+	RuleType RuleTypeFilter
+
+	GroupLimit         int64  // Number of groups to fetch
+	GroupContinueToken string // Token for per-group pagination
+}
+
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
