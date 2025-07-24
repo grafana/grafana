@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
+import { varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -25,7 +26,15 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { CellColors, TableRow, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
+import {
+  CellColors,
+  TableRow,
+  ColumnTypes,
+  FrameToRowsConverter,
+  Comparator,
+  TypographyCtx,
+  LineCounter,
+} from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
@@ -71,58 +80,111 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(cellOptions?.wrapText);
 }
 
-// matches characters which CSS
-const spaceRegex = /[\s-]/;
+/**
+ * @internal creates a typography context based on a font size and family. used to measure text
+ * and estimate size of text in cells.
+ */
+export function createTypographyContext(fontSize: number, fontFamily: string, letterSpacing = 0.15): TypographyCtx {
+  const font = `${fontSize}px ${fontFamily}`;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
 
-export interface GetMaxWrapCellOptions {
-  colWidths: number[];
-  avgCharWidth: number;
-  wrappedColIdxs: boolean[];
+  ctx.letterSpacing = `${letterSpacing}px`;
+  ctx.font = font;
+  const txt =
+    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
+  const txtWidth = ctx.measureText(txt).width;
+  const avgCharWidth = txtWidth / txt.length + letterSpacing;
+  const { count } = varPreLine(ctx);
+
+  return {
+    count,
+    ctx,
+    font,
+    avgCharWidth,
+  };
+}
+
+export function getTextLineCounter(typographyCtx: TypographyCtx): LineCounter {
+  return (value, colWidth) => {
+    if (!value) {
+      return 1;
+    }
+    return typographyCtx.count(String(value), colWidth);
+  };
+}
+
+/**
+ * @internal return a text line counter for every field which has wrapHeaderText enabled.
+ */
+export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): Array<LineCounter | null> {
+  let textLineCounter: LineCounter;
+  return fields.map((field) => {
+    if (!field.config?.custom?.wrapHeaderText) {
+      return null;
+    }
+    if (!textLineCounter) {
+      textLineCounter = getTextLineCounter(typographyCtx);
+    }
+    return textLineCounter;
+  });
+}
+
+/**
+ * @internal return a text line counter for every field which has wrapHeaderText enabled.
+ */
+export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyCtx): Array<LineCounter | null> {
+  let textLineCounter: LineCounter;
+  return fields.map((field) => {
+    if (!shouldTextWrap(field)) {
+      return null;
+    }
+    // TODO: Pills and DataLinks will have custom line counters here. we can also provide a monospace TypographyCtx
+    // for situations where that's appropriate as well.
+    if (!textLineCounter) {
+      textLineCounter = getTextLineCounter(typographyCtx);
+    }
+    return textLineCounter;
+  });
 }
 
 /**
  * @internal
- * loop through the fields and their values, determine which cell is going to determine the
- * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
+ * loop through the fields and their values, determine which cell is going to determine the height of the row based
+ *  on its content and width, and return the height in pixels of that row, with vertial padding applied.
  */
-export function getMaxWrapCell(
+export function getRowHeight(
   fields: Field[],
   rowIdx: number,
-  { colWidths, avgCharWidth, wrappedColIdxs }: GetMaxWrapCellOptions
-): {
-  text: string;
-  idx: number;
-  numLines: number;
-} {
+  columnWidths: number[],
+  defaultHeight: number,
+  lineCounters: Array<LineCounter | null>,
+  lineHeight = TABLE.LINE_HEIGHT,
+  verticalPadding = 0
+): number {
   let maxLines = 1;
-  let maxLinesIdx = -1;
-  let maxLinesText = '';
 
-  // TODO: consider changing how we store this, using a record by column key instead of an array
-  for (let i = 0; i < colWidths.length; i++) {
-    if (wrappedColIdxs[i]) {
+  for (let i = 0; i < fields.length; i++) {
+    const lineCounter = lineCounters[i];
+    if (lineCounter) {
       const field = fields[i];
       // special case: for the header, provide `-1` as the row index.
-      const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
-
-      if (cellTextRaw != null) {
-        const cellText = String(cellTextRaw);
-
-        if (spaceRegex.test(cellText)) {
-          const charsPerLine = colWidths[i] / avgCharWidth;
-          const approxLines = cellText.length / charsPerLine;
-
-          if (approxLines > maxLines) {
-            maxLines = approxLines;
-            maxLinesIdx = i;
-            maxLinesText = cellText;
-          }
+      const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
+      if (cellValueRaw != null) {
+        const approxLine = lineCounter(cellValueRaw, columnWidths[i]);
+        if (approxLine > maxLines) {
+          maxLines = approxLine;
         }
       }
     }
   }
 
-  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
+  if (maxLines === 1) {
+    return defaultHeight;
+  }
+
+  const totalHeight = maxLines * lineHeight + verticalPadding;
+  return Math.max(totalHeight, defaultHeight);
 }
 
 /**

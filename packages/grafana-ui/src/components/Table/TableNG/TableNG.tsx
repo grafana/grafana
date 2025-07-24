@@ -26,7 +26,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId, TableCellHeight } from '@grafana/schema';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -52,29 +52,29 @@ import {
   useRowHeight,
   useScrollbarWidth,
   useSortedRows,
-  useTypographyCtx,
 } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps } from './types';
 import {
+  applySort,
+  computeColWidths,
+  createTypographyContext,
+  displayJsonValue,
   frameToRecords,
+  getAlignment,
+  getApplyToRowBgFn,
+  getCellColors,
+  getCellLinks,
+  getCellOptions,
   getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
-  getVisibleFields,
-  shouldTextOverflow,
-  getApplyToRowBgFn,
-  computeColWidths,
-  applySort,
-  getCellColors,
-  getCellOptions,
-  shouldTextWrap,
-  isCellInspectEnabled,
-  getCellLinks,
-  withDataLinksActionsTooltip,
-  displayJsonValue,
-  getAlignment,
   getJustifyContent,
+  getVisibleFields,
+  isCellInspectEnabled,
+  shouldTextOverflow,
+  shouldTextWrap,
   TextAlign,
+  withDataLinksActionsTooltip,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -160,7 +160,6 @@ export function TableNG(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
-  const defaultHeaderHeight = getDefaultRowHeight(theme, TableCellHeight.Sm);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
@@ -172,13 +171,15 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
     [width, hasNestedFrames, scrollbarWidth]
   );
-  const typographyCtx = useTypographyCtx();
+  const typographyCtx = useMemo(
+    () => createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
+    [theme]
+  );
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    defaultHeight: defaultHeaderHeight,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
@@ -580,7 +581,7 @@ export function TableNG(props: TableNGProps) {
             {...commonDataGridProps}
             className={clsx(styles.grid, styles.gridNested)}
             headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
-            headerRowHeight={hasNestedHeaders ? defaultHeaderHeight : 0}
+            headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
             columns={nestedColumns}
             rows={expandedRecords}
             renderers={{ renderRow, renderCell: renderCellRoot }}
@@ -599,7 +600,6 @@ export function TableNG(props: TableNGProps) {
     crossFilterOrder,
     crossFilterRows,
     data,
-    defaultHeaderHeight,
     defaultRowHeight,
     enableSharedCrosshair,
     expandedRows,

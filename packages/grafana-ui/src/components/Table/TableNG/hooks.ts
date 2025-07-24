@@ -1,22 +1,20 @@
 import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
-import { varPreLine } from 'uwrap';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
-import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
+import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
+import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
 import {
   getDisplayName,
   processNestedTableRows,
   applySort,
-  getCellOptions,
   getColumnTypes,
-  GetMaxWrapCellOptions,
-  getMaxWrapCell,
+  getRowHeight,
+  buildHeaderLineCounters,
+  buildRowLineCounters,
 } from './utils';
 
 // Helper function to get displayed value
@@ -314,49 +312,6 @@ export function useFooterCalcs(
   }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
-interface TypographyCtx {
-  ctx: CanvasRenderingContext2D;
-  font: string;
-  avgCharWidth: number;
-  calcRowHeight: (text: string, cellWidth: number, defaultHeight: number) => number;
-}
-
-export function useTypographyCtx(): TypographyCtx {
-  const theme = useTheme2();
-  const typographyCtx = useMemo((): TypographyCtx => {
-    const font = `${theme.typography.fontSize}px ${theme.typography.fontFamily}`;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    // set in grafana/data in createTypography.ts
-    const letterSpacing = 0.15;
-
-    ctx.letterSpacing = `${letterSpacing}px`;
-    ctx.font = font;
-    const txt =
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
-    const txtWidth = ctx.measureText(txt).width;
-    const avgCharWidth = txtWidth / txt.length + letterSpacing;
-    const { count } = varPreLine(ctx);
-
-    const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
-      if (text === '') {
-        return defaultHeight;
-      }
-      const numLines = count(text, cellWidth);
-      const totalHeight = numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING;
-      return Math.max(totalHeight, defaultHeight);
-    };
-
-    return {
-      calcRowHeight,
-      ctx,
-      font,
-      avgCharWidth,
-    };
-  }, [theme.typography.fontSize, theme.typography.fontFamily]);
-  return typographyCtx;
-}
-
 const ICON_WIDTH = 16;
 const ICON_GAP = 4;
 
@@ -364,7 +319,6 @@ interface UseHeaderHeightOptions {
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
-  defaultHeight: number;
   sortColumns: SortColumn[];
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
@@ -374,12 +328,14 @@ export function useHeaderHeight({
   fields,
   enabled,
   columnWidths,
-  defaultHeight,
   sortColumns,
-  typographyCtx: { calcRowHeight, avgCharWidth },
+  typographyCtx,
   showTypeIcons = false,
 }: UseHeaderHeightOptions): number {
   const perIconSpace = ICON_WIDTH + ICON_GAP;
+
+  const lineCounters = useMemo(() => buildHeaderLineCounters(fields, typographyCtx), [fields, typographyCtx]);
+
   const columnAvailableWidths = useMemo(
     () =>
       columnWidths.map((c, idx) => {
@@ -396,46 +352,26 @@ export function useHeaderHeight({
         if (showTypeIcons) {
           width -= perIconSpace;
         }
-        return Math.floor(width);
+        // sadly, the math for this is off by exactly 1 pixel. shrug.
+        return Math.floor(width) - 1;
       }),
     [fields, columnWidths, sortColumns, showTypeIcons, perIconSpace]
   );
 
-  const [wrappedColHeaderIdxs, hasWrappedColHeaders] = useMemo(() => {
-    let hasWrappedColHeaders = false;
-    return [
-      fields.map((field) => {
-        const wrapText = field.config?.custom?.wrapHeaderText ?? false;
-        if (wrapText) {
-          hasWrappedColHeaders = true;
-        }
-        return wrapText;
-      }),
-      hasWrappedColHeaders,
-    ];
-  }, [fields]);
-
-  const maxWrapCellOptions = useMemo<GetMaxWrapCellOptions>(
-    () => ({
-      colWidths: columnAvailableWidths,
-      avgCharWidth,
-      wrappedColIdxs: wrappedColHeaderIdxs,
-    }),
-    [columnAvailableWidths, avgCharWidth, wrappedColHeaderIdxs]
-  );
-
-  // TODO: is there a less clunky way to subtract the top padding value?
   const headerHeight = useMemo(() => {
     if (!enabled) {
       return 0;
     }
-    if (!hasWrappedColHeaders) {
-      return defaultHeight - TABLE.CELL_PADDING;
-    }
-
-    const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
-  }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
+    return getRowHeight(
+      fields,
+      -1,
+      columnAvailableWidths,
+      TABLE.HEADER_HEIGHT,
+      lineCounters,
+      TABLE.LINE_HEIGHT,
+      TABLE.CELL_PADDING
+    );
+  }, [fields, enabled, columnAvailableWidths, lineCounters]);
 
   return headerHeight;
 }
@@ -455,41 +391,14 @@ export function useRowHeight({
   hasNestedFrames,
   defaultHeight,
   expandedRows,
-  typographyCtx: { calcRowHeight, avgCharWidth },
+  typographyCtx,
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {
-  const [wrappedColIdxs, hasWrappedCols] = useMemo(() => {
-    let hasWrappedCols = false;
-    return [
-      fields.map((field) => {
-        if (field.type !== FieldType.string) {
-          return false;
-        }
-
-        const cellOptions = getCellOptions(field);
-        const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
-        const type = cellOptions.type;
-        const result = !!wrapText && type !== TableCellDisplayMode.Image;
-        if (result === true) {
-          hasWrappedCols = true;
-        }
-        return result;
-      }),
-      hasWrappedCols,
-    ];
-  }, [fields]);
+  const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
+  const hasWrappedCols = useMemo(() => lineCounters.some((lc) => lc !== null), [lineCounters]);
 
   const colWidths = useMemo(
     () => columnWidths.map((c) => c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT),
     [columnWidths]
-  );
-
-  const maxWrapCellOptions = useMemo<GetMaxWrapCellOptions>(
-    () => ({
-      colWidths,
-      avgCharWidth,
-      wrappedColIdxs,
-    }),
-    [colWidths, avgCharWidth, wrappedColIdxs]
   );
 
   const rowHeight = useMemo(() => {
@@ -516,19 +425,17 @@ export function useRowHeight({
       }
 
       // regular rows
-      const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
-      return calcRowHeight(maxLinesText, colWidths[maxLinesIdx], defaultHeight);
+      return getRowHeight(
+        fields,
+        row.__index,
+        colWidths,
+        defaultHeight,
+        lineCounters,
+        TABLE.LINE_HEIGHT,
+        TABLE.CELL_PADDING * 2
+      );
     };
-  }, [
-    calcRowHeight,
-    defaultHeight,
-    expandedRows,
-    fields,
-    hasNestedFrames,
-    hasWrappedCols,
-    maxWrapCellOptions,
-    colWidths,
-  ]);
+  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, lineCounters, expandedRows]);
 
   return rowHeight;
 }

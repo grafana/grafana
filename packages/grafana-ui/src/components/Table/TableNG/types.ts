@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
+import { Count } from 'uwrap';
 
 import {
   DataFrame,
@@ -261,3 +262,12 @@ export interface ScrollPosition {
   x: number;
   y: number;
 }
+
+export interface TypographyCtx {
+  ctx: CanvasRenderingContext2D;
+  font: string;
+  avgCharWidth: number;
+  count: Count;
+}
+
+export type LineCounter = (value: unknown, colWidth: number) => number;
