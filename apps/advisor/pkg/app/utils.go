@@ -199,7 +199,6 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 						}
 					}()
 					logger := log.With("step", step.ID())
-					stepErr, err = step.Run(ctx, logger, spec, item)
 					// Create a copy of the context with a cloned HTTP request to prevent
 					// concurrent modifications to the same header map
 					safeCtx := contexthandler.CopyWithReqContext(ctx)
