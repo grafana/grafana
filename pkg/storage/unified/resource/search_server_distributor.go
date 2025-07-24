@@ -151,7 +151,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		md = make(metadata.MD)
 	}
 
-	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", inst.Id)
+	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", inst.Id, "namespace", namespace)
 
 	_ = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", inst.Id))
 
