@@ -347,10 +347,11 @@ type filesPostOptions struct {
 	originalPath string // Source path for move operations (optional)
 	message      string // Commit message (optional)
 	body         string // Request body content (optional)
+	ref          string // Git ref/branch (optional)
 }
 
-func postFilesRequest(t *testing.T, helper *provisioningTestHelper, repo string, opts filesPostOptions) *http.Response {
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+func (h *provisioningTestHelper) postFilesRequest(t *testing.T, repo string, opts filesPostOptions) *http.Response {
+	addr := h.GetEnv().Server.HTTPServer.Listener.Addr().String()
 	baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
 		addr, repo, opts.targetPath)
 
@@ -365,6 +366,9 @@ func postFilesRequest(t *testing.T, helper *provisioningTestHelper, repo string,
 	if opts.message != "" {
 		params.Set("message", opts.message)
 	}
+	if opts.ref != "" {
+		params.Set("ref", opts.ref)
+	}
 	parsedUrl.RawQuery = params.Encode()
 
 	req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(opts.body))
@@ -375,24 +379,4 @@ func postFilesRequest(t *testing.T, helper *provisioningTestHelper, repo string,
 	require.NoError(t, err)
 
 	return resp
-}
-
-// postFilesMove is a convenience wrapper for move operations
-func postFilesMove(t *testing.T, helper *provisioningTestHelper, repo, targetPath, originalPath, message string) *http.Response {
-	return postFilesRequest(t, helper, repo, filesPostOptions{
-		targetPath:   targetPath,
-		originalPath: originalPath,
-		message:      message,
-		body:         "",
-	})
-}
-
-// postFilesMoveWithContent is a convenience wrapper for move operations with content update
-func postFilesMoveWithContent(t *testing.T, helper *provisioningTestHelper, repo, targetPath, originalPath, message, content string) *http.Response {
-	return postFilesRequest(t, helper, repo, filesPostOptions{
-		targetPath:   targetPath,
-		originalPath: originalPath,
-		message:      message,
-		body:         content,
-	})
 }

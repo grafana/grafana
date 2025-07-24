@@ -856,7 +856,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const targetPath = "moved/simple-move.json"
 
 		// Perform the move operation using helper function
-		resp := postFilesMove(t, helper, repo, targetPath, originalDashboard, "move file without content change")
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetPath,
+			originalPath: originalDashboard,
+			message:      "move file without content change",
+		})
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
@@ -895,7 +899,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const targetPath = "deep/nested/timeline.json"
 
 		// Perform the move operation without the file ever being synced to Grafana
-		resp := postFilesMove(t, helper, repo, targetPath, sourceFile, "move never-synced file to nested path")
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetPath,
+			originalPath: sourceFile,
+			message:      "move never-synced file to nested path",
+		})
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
@@ -933,7 +941,12 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		updatedContent := helper.LoadFile("testdata/text-options.json")
 
 		// Perform move with content update using helper function
-		resp := postFilesMoveWithContent(t, helper, repo, targetPath, sourcePath, "move file with content update", string(updatedContent))
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetPath,
+			originalPath: sourcePath,
+			message:      "move file with content update",
+			body:         string(updatedContent),
+		})
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update should succeed")
@@ -988,7 +1001,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		const targetDir = "moved-dir/"
 
 		// Move directory using helper function
-		resp := postFilesMove(t, helper, repo, targetDir, sourceDir, "move directory")
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetDir,
+			originalPath: sourceDir,
+			message:      "move directory",
+		})
 		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move should succeed")
@@ -1030,7 +1047,11 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 			require.NoError(t, result.Error(), "should create test file")
 
 			// Now try to move this file to a directory path using helper function
-			resp := postFilesMove(t, helper, repo, "target-dir/", "simple-test.json", "test move")
+			resp := helper.postFilesRequest(t, repo, filesPostOptions{
+				targetPath:   "target-dir/",
+				originalPath: "simple-test.json",
+				message:      "test move",
+			})
 			// nolint:errcheck
 			defer resp.Body.Close()
 			// Read response body to check error message
