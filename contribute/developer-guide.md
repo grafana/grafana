@@ -120,7 +120,7 @@ If, instead, you would like to build and watch a specific plugin you can run the
 yarn workspace <name_of_plugin> dev
 ```
 
-If you want to run multiple specific plugins, you can use the following command. 
+If you want to run multiple specific plugins, you can use the following command.
 
 ```
 yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
@@ -128,7 +128,7 @@ yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datas
 
 If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
 
-```yarn nx show projects --projects="@grafana-plugins/*"```
+`yarn nx show projects --projects="@grafana-plugins/*"`
 
 Next, we'll explain how to build and run the web server that serves these frontend assets.
 
