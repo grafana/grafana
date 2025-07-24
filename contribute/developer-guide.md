@@ -126,6 +126,10 @@ If you want to run multiple specific plugins, you can use the following command.
 yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
 ```
 
+If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
+
+```yarn nx show projects --projects="@grafana-plugins/*"```
+
 Next, we'll explain how to build and run the web server that serves these frontend assets.
 
 ### Backend
