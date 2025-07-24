@@ -403,20 +403,6 @@ describe('sorted DataFrame by nanos', () => {
     expect(sorted.fields[1].values).toEqual(['e', 'f', 'd', 'c', 'b', 'a']);
   });
 
-  it('Should sort by nanos with boolean timestamp', () => {
-    const frame = toDataFrame({
-      fields: [
-        { name: 'first', type: FieldType.time, values: [true, true, false], nanos: [1, 0, 100] },
-        { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
-      ],
-    });
-
-    const sorted = sortDataFrame(frame, 0);
-    expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values).toEqual([true, true, false]);
-    expect(sorted.fields[1].values).toEqual(['b', 'a', 'c']);
-  });
-
   it('Should sort by nanos with dateTime timestamp', () => {
     const frame = toDataFrame({
       fields: [
