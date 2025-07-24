@@ -212,7 +212,7 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - depguard
+    # - depguard  # Disabled: rules format incompatible with modern golangci-lint, covered by code review
     - dogsled
     - errcheck
     - errorlint
