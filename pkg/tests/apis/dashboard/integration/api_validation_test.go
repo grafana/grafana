@@ -20,7 +20,6 @@ import (
 	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -61,9 +60,6 @@ type TestContext struct {
 func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
-	}
-	if !db.IsTestDbSQLite() {
-		t.Skip("test only on sqlite for now")
 	}
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
@@ -135,9 +131,6 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	if !db.IsTestDbSQLite() {
-		t.Skip("test only on sqlite for now")
-	}
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
@@ -187,9 +180,6 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 func TestIntegrationDashboardAPI(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
-	}
-	if !db.IsTestDbSQLite() {
-		t.Skip("test only on sqlite for now")
 	}
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
