@@ -15,6 +15,7 @@ import {
   LoadingState,
   CoreApp,
   LogRowModel,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -25,6 +26,7 @@ import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
+import { ScrollDirection } from '../InfiniteScroll';
 
 import { LogList } from './LogList';
 
@@ -67,12 +69,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     logRowGroups: css({
       height: '60vh',
       alignSelf: 'stretch',
-      display: 'inline-block',
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      '& > table': {
-        minWidth: '100%',
-      },
+      padding: theme.spacing(0, 0.5, 1, 0),
     }),
     flexColumn: css({
       display: 'flex',
@@ -262,6 +260,15 @@ export const LogLineContext = memo(
       }
     }, [initialized, loadMore, log]);
 
+    const handleLoadMore = useCallback(
+      (_: AbsoluteTimeRange, direction: ScrollDirection) => {
+        if (direction === ScrollDirection.Bottom) {
+          loadMore('below', allLogs[allLogs.length - 1]);
+        }
+      },
+      [allLogs, loadMore]
+    );
+
     return (
       <Modal
         isOpen={open}
@@ -279,15 +286,17 @@ export const LogLineContext = memo(
               app={CoreApp.Unknown}
               containerElement={containerRef.current}
               dedupStrategy={LogsDedupStrategy.none}
+              detailsMode="inline"
               displayedFields={displayedFields}
               enableLogDetails={true}
-              detailsMode="inline"
+              infiniteScrollMode="unlimited"
+              loadMore={handleLoadMore}
               logs={allLogs}
               loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
               permalinkedLogId={log.uid}
               onClickHideField={onClickHideField}
               onClickShowField={onClickShowField}
-              showControls={false}
+              showControls
               showTime={showTime}
               sortOrder={logsSortOrder}
               timeRange={timeRange}
