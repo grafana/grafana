@@ -21,7 +21,7 @@ import { PromVisualQuery } from './querybuilder/types';
  * @param operator
  */
 export function addLabelToQuery(query: string, key: string, value: string | number, operator = '='): string {
-  if (!key || !value) {
+  if (!key) {
     throw new Error('Need label to add to query.');
   }
 
