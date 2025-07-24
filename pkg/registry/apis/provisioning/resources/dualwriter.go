@@ -376,7 +376,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 
 func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
 	// Read the original file to get its content for parsing and authorization
-	originalFile, err := r.repo.Read(ctx, opts.OriginalPath, opts.Ref)
+	originalFile, err := r.repo.Read(ctx, opts.OriginalPath, "")
 	if err != nil {
 		return nil, fmt.Errorf("read original file: %w", err)
 	}
@@ -483,6 +483,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	newParsed.Action = provisioning.ResourceActionMove
+
 	return newParsed, nil
 }
 
