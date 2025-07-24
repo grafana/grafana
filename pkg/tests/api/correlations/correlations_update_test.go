@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -234,7 +234,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 				user: adminUser,
 				page: "",
 			})
-			assert.Equal(collect, http.StatusOK, res.StatusCode, "Correlation should be available before update")
+			require.Equal(collect, http.StatusOK, res.StatusCode, "Correlation should be available before update")
 			require.NoError(collect, res.Body.Close())
 		}, 5*time.Second, 10*time.Millisecond, "Correlation should be available for reading before update")
 
