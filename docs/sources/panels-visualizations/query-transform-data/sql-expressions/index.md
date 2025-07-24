@@ -150,6 +150,7 @@ The SQL conversion path:
 
 - Currently, only one SQL expression is supported per panel or alert.
 - Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
+- Autocomplete is available, but column/field autocomplete is only available after enabling the `sqlExpressionsColumnAutoComplete` feature toggle, which is provided on an experimental basis.
 
 ## Supported data source formats
 

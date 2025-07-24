@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "평가 그룹 편집"
     },
     "group-loader": {
-      "group-load-failed": "{{ namespaceName }}의 {{ groupName }} 그룹에서 규칙 로딩 실패"
+      "group-load-failed": "{{ namespaceName }}의 {{ groupName }} 그룹에서 규칙 로딩 실패",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "그룹을 삭제하는 중입니다"
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "미리 보기 새로 고침",
+      "empty-state": "",
       "label-preview": "미리보기",
       "refresh": "새로 고침"
     },
@@ -8575,7 +8578,10 @@
         "no-data": ""
       },
       "no-values-label": "값 없음",
-      "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}"
+      "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "태그"
@@ -9300,6 +9306,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9318,6 +9325,9 @@
       "copy-log": "로그 라인 복사",
       "hide-details": "로그 세부 정보 표시",
       "icon-label": "로그 메뉴",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "로그 고정",
       "show-context": "맥락 보기",
       "show-details": "로그 세부 정보 숨기기",
@@ -11171,7 +11181,8 @@
       "starting": "시작하는 중...",
       "status": {
         "title-error-running-job": "작업 실행 중 오류 발생",
-        "title-job-completed-successfully": "작업이 성공적으로 완료되었습니다"
+        "title-job-completed-successfully": "작업이 성공적으로 완료되었습니다",
+        "title-warning-running-job": ""
       },
       "summary": "요약"
     },

@@ -288,7 +288,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'] },
         });
@@ -301,7 +301,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['mean'] },
         });
@@ -314,7 +314,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, textField] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'] },
         });
@@ -327,7 +327,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: undefined,
         });
@@ -340,7 +340,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: false,
           footerOptions: { show: true, reducer: ['sum'] },
         });
@@ -353,7 +353,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, textField] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: undefined },
         });
@@ -366,7 +366,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: [] },
         });
@@ -379,7 +379,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: ['Field2', 'Field3'] },
         });
@@ -392,7 +392,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: ['Field1', 'Field2', 'Field3'] },
         });
@@ -405,13 +405,26 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: ['Field1', 'Field 2'] },
         });
       });
 
       expect(result.current).toEqual(['Total', '6', '13']);
+    });
+
+    it('should not return the reducer label in the first column if there is a calc to render', () => {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
+          enabled: true,
+          footerOptions: { show: true, reducer: ['sum'], fields: [] },
+        });
+      });
+
+      expect(result.current).toEqual(['6', '13']);
     });
   });
 

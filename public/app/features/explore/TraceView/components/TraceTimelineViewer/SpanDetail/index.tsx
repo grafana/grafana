@@ -14,7 +14,6 @@
 
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
-import cx from 'classnames';
 import { useCallback, useMemo } from 'react';
 
 import {
@@ -34,7 +33,7 @@ import { Trans, t } from '@grafana/i18n';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { TextArea, useStyles2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
@@ -49,6 +48,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
+import { ShareSpanButton } from './ShareSpanButton';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
@@ -101,42 +101,21 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     listWrapper: css({
       overflow: 'hidden',
+      flexGrow: 1,
+      display: 'flex',
+      justifyContent: 'flex-end',
     }),
     list: css({
-      textAlign: 'right',
+      textAlign: 'left',
     }),
     operationName: css({
       margin: 0,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      flexBasis: '50%',
+      maxWidth: '50%',
       flexGrow: 0,
       flexShrink: 0,
-    }),
-    debugInfo: css({
-      label: 'debugInfo',
-      display: 'block',
-      letterSpacing: '0.25px',
-      margin: '0.5em 0 -0.75em',
-      textAlign: 'right',
-    }),
-    debugLabel: css({
-      label: 'debugLabel',
-      '&::before': {
-        color: autoColor(theme, '#bbb'),
-        content: 'attr(data-label)',
-      },
-    }),
-    debugValue: css({
-      label: 'debugValue',
-      backgroundColor: 'inherit',
-      border: 'none',
-      color: autoColor(theme, '#888'),
-      cursor: 'pointer',
-      '&:hover': {
-        color: autoColor(theme, '#333'),
-      },
     }),
     AccordianWarnings: css({
       label: 'AccordianWarnings',
@@ -163,9 +142,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     Textarea: css({
       wordBreak: 'break-all',
       whiteSpace: 'pre',
-    }),
-    LinkIcon: css({
-      fontSize: '1.5em',
     }),
     linkList: css({
       display: 'flex',
@@ -355,12 +331,13 @@ export default function SpanDetail(props: SpanDetailProps) {
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
-        <h2 className={styles.operationName} title={operationName}>
+        <h6 className={styles.operationName} title={operationName}>
           {operationName}
-        </h2>
+        </h6>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
         </div>
+        <ShareSpanButton focusSpanLink={focusSpanLink} />
       </div>
       <div className={styles.linkList}>{linksComponent}</div>
       <div>
@@ -455,29 +432,6 @@ export default function SpanDetail(props: SpanDetailProps) {
             traceName={traceName}
           />
         )}
-        <small className={styles.debugInfo}>
-          {/* TODO: fix keyboard a11y */}
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-          <a
-            {...focusSpanLink}
-            onClick={(e) => {
-              // click handling logic copied from react router:
-              // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
-              if (
-                focusSpanLink.onClick &&
-                e.button === 0 && // Ignore everything but left clicks
-                (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
-                !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
-              ) {
-                e.preventDefault();
-                focusSpanLink.onClick(e);
-              }
-            }}
-          >
-            <Icon name={'link'} className={cx(alignIcon, styles.LinkIcon)}></Icon>
-          </a>
-          <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
-        </small>
       </div>
     </div>
   );

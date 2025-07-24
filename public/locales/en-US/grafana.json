@@ -7160,6 +7160,7 @@
           "start-time": "Start Time:"
         }
       },
+      "share-span": "Share",
       "warnings": "Warnings"
     },
     "span-filters": {
@@ -8600,7 +8601,10 @@
         "no-data": "No data"
       },
       "no-values-label": "No values",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sparkline": {
+        "no-data": "no data"
+      }
     },
     "tags": {
       "list-label": "Tags"
