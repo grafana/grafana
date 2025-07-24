@@ -10,6 +10,15 @@ datasources:
   - tempo
   - loki
 
+# Plugin JSON data, as key/value pairs
+pluginJson:
+  foo: bar
+
+# Plugin Secure JSON data. By default, the `kubeconfig` and `kubenamespace` values will be added in the generated YAML.
+# You can overwrite those values by specifying them here instead.
+pluginSecureJson:
+  baz: foo
+
 # Standalone operator docker image. Leave this empty to not deploy an operator
 operatorImage: "github.com/grafana/grafana/apps/iam/operator:latest"
 
