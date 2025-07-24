@@ -131,7 +131,7 @@ You can add macros to your queries to simplify the syntax and enable dynamic ele
 
 | Macro example                                         | Description                                                                                                                                                                                                               |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `$__time(dateColumn)`                                 | Replaces the value with an expression to convert to a UNIX timestamp and renames the column to `Time`. It also helps to recognize the `time` column, as required in Time Series format. Example: _UNIX_TIMESTAMP(dateColumn) AS time_sec_.                                                            |
+| `$__time(dateColumn)`                                 | Replaces the value with an expression to convert to a UNIX timestamp and renames the column to `time_sec`. It also helps to recognize the `time` column, as required in Time Series format. Example: _UNIX_TIMESTAMP(dateColumn) AS time_sec_.                                                            |
 | `$__timeEpoch(dateColumn)`                            | Replaces the value with an expression to convert to a UNIX Epoch timestamp and renames the column to `time_sec`. Example: _UNIX_TIMESTAMP(dateColumn) AS time_sec_.                                                       |
 | `$__timeFilter(dateColumn)`                           | Applies a time range filter using the specified column name and fetches only the data that falls within that range. Example: _dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)_                                 |
 | `$__timeFrom()`                                       | Replaces the value with the start of the currently active time selection. Example: _FROM_UNIXTIME(1494410783)_                                                                                                            |
@@ -245,7 +245,7 @@ Table panel result:
 
 {{< figure alt="output of time group macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timegroup-macro.png" >}}
 
-Given the result in the following example, the data is grouped and aggregated within buckets with timestamps of fixed interval i.e. 5 mins. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U).
+Given the result in the following example, the data is grouped and aggregated within buckets with timestamps of fixed interval i.e. 5 mins. To customize the default series name formatting (optional), refer to [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/).
 
 **Example with `$__timeGroupAlias(dateColumn,'5m')` Macro:**
 
@@ -265,7 +265,7 @@ Table panel result:
 {{< figure alt="output of time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro.png" >}}
 
 The following result is similar to the result of the `$__timeGroup(dateColumn,'5m')` macro, except it uses a built-in alias for the time column.
-To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U).
+To customize the default series name formatting (optional), refer to [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/).
 
 **Example with `$__timeGroupAlias` Macro to convert null values to zero instead:**
 
@@ -285,7 +285,7 @@ Table panel result:
 
 {{< figure alt="output of null values to zero case, for time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro-conv-null-to-zero.png" >}}
 
-Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the `Time` column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](https://www.google.com/url?q=https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/&sa=D&source=docs&ust=1752744133031256&usg=AOvVaw3WN6JEG7QlBgFC6HPNnS_U) to display the value of `${__field.labels.hostname}`.
+Given the result in the following example, null values within bucket timestamps are replaced by zero and also add the `Time` column alias by default. To customize the default series name formatting (optional), refer to [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/) to display the value of `${__field.labels.hostname}`.
 
 **Example with multiple columns for `$__timeGroupAlias(dateColumn,'5m')` Macro:**
 
