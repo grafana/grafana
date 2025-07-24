@@ -242,8 +242,9 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the cell background is displayed in the appropriate color. |
 | [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
-| [JSON View](#json-view)                   | Shows values formatted as code.                                                                                                                                                                                                                                                                                                               |
-| [Image](#image)                           | If the field value is an image URL or a base64 encoded image, the table displays the image.                                                                                                                                                                                                                                                   |
+| [JSON View](#json-view)                   | Shows values formatted as code. |
+| [Image](#image)                           | If the field value is an image URL or a base64 encoded image, the table displays the image. |
+<-- prettier-ignore-end-->
 
 #### Auto
 
