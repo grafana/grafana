@@ -228,7 +228,9 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
+			Push: &v0alpha1.ExportJobOptions{
+				Branch: "feature-branch",
+			},
 		},
 	}
 
@@ -239,7 +241,8 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 			Namespace: "test-namespace",
 		},
 		Spec: v0alpha1.RepositorySpec{
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			Type:      v0alpha1.GitRepositoryType,
+			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
 		},
 	})
 
@@ -258,9 +261,11 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
-	// Verify clone and push options
+	// Verify all stage options including Ref (branch), Timeout, and PushOnWrites
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-		return opts.Timeout == 10*time.Minute && opts.Mode == repository.StageModeCommitOnlyOnce
+		return opts.Ref == "feature-branch" &&
+			opts.Timeout == 10*time.Minute &&
+			!opts.PushOnWrites && opts.Mode == repository.StageModeCommitOnlyOnce
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
@@ -268,6 +273,89 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
+}
+
+func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
+	tests := []struct {
+		name        string
+		branch      string
+		expectedRef string
+		workflows   []v0alpha1.Workflow
+		repoType    v0alpha1.RepositoryType
+	}{
+		{
+			name:        "branch specified",
+			branch:      "develop",
+			expectedRef: "develop",
+			workflows:   []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+			repoType:    v0alpha1.GitRepositoryType,
+		},
+		{
+			name:        "empty branch",
+			branch:      "",
+			expectedRef: "",
+			workflows:   []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
+			repoType:    v0alpha1.LocalRepositoryType,
+		},
+		{
+			name:        "main branch",
+			branch:      "main",
+			expectedRef: "main",
+			workflows:   []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
+			repoType:    v0alpha1.GitRepositoryType,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := v0alpha1.Job{
+				Spec: v0alpha1.JobSpec{
+					Action: v0alpha1.JobActionPush,
+					Push: &v0alpha1.ExportJobOptions{
+						Branch: tt.branch,
+					},
+				},
+			}
+
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(&v0alpha1.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "test-namespace",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					Type:      tt.repoType,
+					Workflows: tt.workflows,
+				},
+			})
+
+			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			mockClients := resources.NewMockClientFactory(t)
+			mockResourceClients := resources.NewMockResourceClients(t)
+			mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
+
+			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+			mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+			mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
+
+			mockExportFn := NewMockExportFn(t)
+			mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+			mockStageFn := NewMockWrapWithStageFn(t)
+			// Verify that the stage options contain the correct branch reference and other parameters
+			mockStageFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
+				return opts.Ref == tt.expectedRef &&
+					opts.Timeout == 10*time.Minute &&
+					!opts.PushOnWrites
+			}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+				return fn(repo, true)
+			})
+
+			r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
+			err := r.Process(context.Background(), mockRepo, job, mockProgress)
+			require.NoError(t, err)
+		})
+	}
 }
 
 func TestExportWorker_ProcessExportFnError(t *testing.T) {
