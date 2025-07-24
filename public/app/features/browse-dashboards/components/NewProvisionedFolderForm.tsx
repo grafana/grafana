@@ -26,14 +26,13 @@ interface FormProps extends Props {
   repository?: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   folder?: Folder;
-  isGitHub: boolean;
 }
 interface Props {
   parentFolder?: FolderDTO;
   onDismiss?: () => void;
 }
 
-function FormContent({ initialValues, repository, workflowOptions, folder, isGitHub, onDismiss }: FormProps) {
+function FormContent({ initialValues, repository, workflowOptions, folder, onDismiss }: FormProps) {
   const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
@@ -159,7 +158,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
             isNew={false}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            repository={repository}
             hidePath
           />
 
@@ -197,7 +196,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
 }
 
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'create',
     title: '', // Empty title for new folders
@@ -215,7 +214,6 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
       repository={repository}
       workflowOptions={workflowOptions}
       folder={folder}
-      isGitHub={isGitHub}
     />
   );
 }

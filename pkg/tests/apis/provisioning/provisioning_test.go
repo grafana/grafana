@@ -575,16 +575,27 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	helper := runGrafana(t)
 	ctx := context.Background()
 
+	// The dashboard shouldn't exist yet
+	const allPanels = "n1jR8vnnz"
+	_, err := helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	require.Error(t, err, "no all-panels dashboard should exist")
+	require.True(t, apierrors.IsNotFound(err))
+
 	const repo = "local-tmp"
 	// Set up the repository and the file to import.
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
-
 	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo,
 		"SyncEnabled": true,
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+
+	// We create the repository
+	_, err = helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
+
+	// Now, we import it, such that it may exist
+	// The sync may not be necessary as the sync may have happened automatically at this point
+	helper.SyncAndWait(t, repo, nil)
 
 	// Make sure the repo can read and validate the file
 	obj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
@@ -592,21 +603,14 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 
 	resource, _, err := unstructured.NestedMap(obj.Object, "resource")
 	require.NoError(t, err, "missing resource")
-	action, _, err := unstructured.NestedString(resource, "action")
 	require.NoError(t, err, "invalid action")
-
 	require.NotNil(t, resource["file"], "the raw file")
 	require.NotNil(t, resource["dryRun"], "dryRun result")
-	require.Equal(t, "create", action)
 
-	// But the dashboard shouldn't exist yet
-	const allPanels = "n1jR8vnnz"
-	_, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
-	require.Error(t, err, "no all-panels dashboard should exist")
-	require.True(t, apierrors.IsNotFound(err))
-
-	// Now, we import it, such that it may exist
-	helper.SyncAndWait(t, repo, nil)
+	action, _, err := unstructured.NestedString(resource, "action")
+	require.NoError(t, err, "invalid action")
+	// FIXME: there is no point in in returning action for a read / get request.
+	require.Equal(t, "update", action)
 
 	_, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
@@ -739,45 +743,15 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// create the structure:
-	// dashboard1.json
-	// folder/
-	//  dashboard2.json
-	// 	nested/
-	// 	  dashboard3.json
-	dashboard1 := helper.LoadFile("testdata/all-panels.json")
-	result := helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", "dashboard1.json").
-		Body(dashboard1).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error())
-	dashboard2 := helper.LoadFile("testdata/text-options.json")
-	result = helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", "folder", "dashboard2.json").
-		Body(dashboard2).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error())
-	dashboard3 := helper.LoadFile("testdata/timeline-demo.json")
-	result = helper.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", "folder", "nested", "dashboard3.json").
-		Body(dashboard3).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error())
-
+	// Copy the dashboards to the repository path
+	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
+	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "folder/dashboard2.json")
+	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/nested/dashboard3.json")
 	// make sure we don't fail when there is a .keep file in a folder
 	helper.CopyToProvisioningPath(t, "testdata/.keep", "folder/nested/.keep")
+
+	// Trigger and wait for a sync job to finish
+	helper.SyncAndWait(t, repo, nil)
 
 	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
