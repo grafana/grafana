@@ -230,6 +230,11 @@ export class Scene {
       this.root.elements.forEach((el) => {
         el.applyLayoutStylesToDiv(false);
       });
+      // TODO: This is a workaround to apply styles to the elements after the size update.
+      // Remove this after dealing with the connection anchors stacking context issue.
+      if (this.connections.connectionAnchorDiv) {
+        this.connections.connectionAnchorDiv.style.display = 'none';
+      }
     }
   }
 
