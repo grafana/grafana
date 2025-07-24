@@ -2,9 +2,10 @@ import { ComponentType, createElement } from 'react';
 
 import { t } from '@grafana/i18n';
 import { withErrorBoundary } from '@grafana/ui';
-import { AIFeedbackOrigin } from 'app/extensions/alerting/AI/feedback/AIFeedbackComponent';
 
 import { logError } from '../../Analytics';
+
+export type AIFeedbackOrigin = 'alert-rule' | 'template' | 'triage';
 
 export interface GenAIFeedbackButtonProps {
   origin: AIFeedbackOrigin;
