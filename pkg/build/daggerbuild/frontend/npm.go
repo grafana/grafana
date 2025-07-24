@@ -20,7 +20,7 @@ func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, 
 		lernaPack  = fmt.Sprintf("yarn lerna exec --no-private -- yarn pack --out %s", out)
 
 		nxBuild = fmt.Sprintf("yarn run packages:build && yarn nx release version %s --no-git-commit --no-git-tag --no-stage-changes --group grafanaPackages", ersion)
-		nxPack  = fmt.Sprintf("yarn nx exec --projects=$(cat nx.json | jq -r '.relase.groups.grafanaPackages.projects | join(\",\")') -- yarn pack --out %s", out)
+		nxPack  = fmt.Sprintf("yarn nx exec --projects=$(cat nx.json | jq -r '.release.groups.grafanaPackages.projects | join(\",\")') -- yarn pack --out %s", out)
 	)
 
 	return builder.WithExec([]string{"mkdir", "npm-packages"}).
