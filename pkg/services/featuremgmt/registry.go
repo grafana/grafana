@@ -1250,13 +1250,6 @@ var (
 			Owner:        grafanaOSSBigTent,
 		},
 		{
-			Name:            "enableExtensionsAdminPage",
-			Description:     "Enables the extension admin page regardless of development mode",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
-		},
-		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
 			Stage:       FeatureStagePublicPreview,
