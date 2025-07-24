@@ -33,7 +33,7 @@ func TestNewStagedGitRepository(t *testing.T) {
 				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			wantError: nil,
 		},
@@ -48,7 +48,7 @@ func TestNewStagedGitRepository(t *testing.T) {
 				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			wantError: nil,
 		},
@@ -63,8 +63,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
-				Timeout:      time.Second * 5,
+				Mode:    repository.StageModeCommitOnEach,
+				Timeout: time.Second * 5,
 			},
 			wantError: nil,
 		},
@@ -79,9 +79,23 @@ func TestNewStagedGitRepository(t *testing.T) {
 				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites:     false,
-				CommitOnlyOnce:   true,
+				Mode:                  repository.StageModeCommitOnlyOnce,
 				CommitOnlyOnceMessage: "Custom commit message",
+			},
+			wantError: nil,
+		},
+		{
+			name: "succeeds with CommitAndPushOnEach option",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockWriter := &mocks.FakeStagedWriter{}
+				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			opts: repository.StageOptions{
+				Mode: repository.StageModeCommitAndPushOnEach,
 			},
 			wantError: nil,
 		},
@@ -91,7 +105,7 @@ func TestNewStagedGitRepository(t *testing.T) {
 				mockClient.GetRefReturns(nanogit.Ref{}, errors.New("ref not found"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			wantError: errors.New("ref not found"),
 		},
@@ -105,7 +119,7 @@ func TestNewStagedGitRepository(t *testing.T) {
 				mockClient.NewStagedWriterReturns(nil, errors.New("failed to create writer"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			wantError: errors.New("build staged writer: failed to create writer"),
 		},
@@ -139,9 +153,8 @@ func TestNewStagedGitRepository(t *testing.T) {
 
 				// Compare opts fields individually since function pointers can't be compared directly
 				actualOpts := stagedRepo.(*stagedGitRepository).opts
-				require.Equal(t, tt.opts.PushOnWrites, actualOpts.PushOnWrites)
+				require.Equal(t, tt.opts.Mode, actualOpts.Mode)
 				require.Equal(t, tt.opts.Timeout, actualOpts.Timeout)
-				require.Equal(t, tt.opts.CommitOnlyOnce, actualOpts.CommitOnlyOnce)
 				require.Equal(t, tt.opts.CommitOnlyOnceMessage, actualOpts.CommitOnlyOnceMessage)
 			}
 		})
@@ -297,7 +310,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:       "test.yaml",
 			ref:        "",
@@ -314,7 +327,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				mockWriter.PushReturns(nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: true,
+				Mode: repository.StageModeCommitAndPushOnEach,
 			},
 			path:       "test.yaml",
 			ref:        "main",
@@ -329,7 +342,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				// No setup needed as error occurs before writer calls
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "feature-branch",
@@ -343,7 +356,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				mockWriter.CreateBlobReturns(hash.Hash{}, errors.New("create blob failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -358,7 +371,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -374,7 +387,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				mockWriter.PushReturns(errors.New("push failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: true,
+				Mode: repository.StageModeCommitAndPushOnEach,
 			},
 			path:       "test.yaml",
 			ref:        "",
@@ -389,8 +402,7 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				mockWriter.CreateBlobReturns(hash.Hash{1, 2, 3}, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites:   false,
-				CommitOnlyOnce: true,
+				Mode: repository.StageModeCommitOnlyOnce,
 			},
 			path:       "test.yaml",
 			ref:        "",
@@ -423,16 +435,26 @@ func TestStagedGitRepository_Create(t *testing.T) {
 				require.Equal(t, 0, mockWriter.PushCallCount())
 			}
 
-			// Verify commit behavior based on CommitOnlyOnce option
-			if tt.opts.CommitOnlyOnce {
-				require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when CommitOnlyOnce is true")
-			} else if tt.wantError == nil || strings.Contains(tt.wantError.Error(), "push failed") {
-				require.Equal(t, 1, mockWriter.CommitCallCount(), "One commit should be made when CommitOnlyOnce is false (even if push fails)")
-			} else if tt.wantError != nil && strings.Contains(tt.wantError.Error(), "commit") {
-				// Commit failed, so it should have been attempted but failed
-				require.Equal(t, 1, mockWriter.CommitCallCount(), "Commit should be attempted even if it fails")
-			} else if tt.wantError != nil {
-				require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when error occurs before commit")
+			// Verify commit behavior based on StageMode
+			switch tt.opts.Mode {
+			case repository.StageModeCommitOnlyOnce:
+				require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when StageModeCommitOnlyOnce is used")
+			case repository.StageModeCommitOnEach, repository.StageModeCommitAndPushOnEach:
+				if tt.wantError == nil || strings.Contains(tt.wantError.Error(), "push failed") {
+					require.Equal(t, 1, mockWriter.CommitCallCount(), "One commit should be made when using commit modes (even if push fails)")
+				} else if tt.wantError != nil && strings.Contains(tt.wantError.Error(), "commit") {
+					// Commit failed, so it should have been attempted but failed
+					require.Equal(t, 1, mockWriter.CommitCallCount(), "Commit should be attempted even if it fails")
+				} else if tt.wantError != nil {
+					require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when error occurs before commit")
+				}
+			default:
+				// Default behavior (backward compatibility)
+				if tt.wantError == nil || strings.Contains(tt.wantError.Error(), "push failed") {
+					require.Equal(t, 1, mockWriter.CommitCallCount(), "One commit should be made with default mode (even if push fails)")
+				} else if tt.wantError != nil {
+					require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when error occurs before commit")
+				}
 			}
 		})
 	}
@@ -459,7 +481,7 @@ func TestStagedGitRepository_Write(t *testing.T) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:       "test.yaml",
 			ref:        "",
@@ -478,7 +500,7 @@ func TestStagedGitRepository_Write(t *testing.T) {
 				mockWriter.PushReturns(nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: true,
+				Mode: repository.StageModeCommitAndPushOnEach,
 			},
 			path:       "test.yaml",
 			ref:        "main",
@@ -494,7 +516,7 @@ func TestStagedGitRepository_Write(t *testing.T) {
 				// No setup needed as error occurs before writer calls
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "feature-branch",
@@ -508,7 +530,7 @@ func TestStagedGitRepository_Write(t *testing.T) {
 				mockWriter.BlobExistsReturns(false, errors.New("blob exists check failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -523,7 +545,7 @@ func TestStagedGitRepository_Write(t *testing.T) {
 				mockWriter.CreateBlobReturns(hash.Hash{}, errors.New("create failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -538,7 +560,7 @@ func TestStagedGitRepository_Write(t *testing.T) {
 				mockWriter.UpdateBlobReturns(hash.Hash{}, errors.New("update failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -554,7 +576,7 @@ func TestStagedGitRepository_Write(t *testing.T) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -608,7 +630,7 @@ func TestStagedGitRepository_Update(t *testing.T) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:       "test.yaml",
 			ref:        "",
@@ -625,7 +647,7 @@ func TestStagedGitRepository_Update(t *testing.T) {
 				mockWriter.PushReturns(nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: true,
+				Mode: repository.StageModeCommitAndPushOnEach,
 			},
 			path:       "test.yaml",
 			ref:        "main",
@@ -640,7 +662,7 @@ func TestStagedGitRepository_Update(t *testing.T) {
 				// No setup needed as error occurs before writer calls
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "feature-branch",
@@ -654,7 +676,7 @@ func TestStagedGitRepository_Update(t *testing.T) {
 				// No setup needed as error occurs before writer calls
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "directory/",
 			ref:       "",
@@ -668,7 +690,7 @@ func TestStagedGitRepository_Update(t *testing.T) {
 				mockWriter.UpdateBlobReturns(hash.Hash{}, errors.New("update blob failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -683,7 +705,7 @@ func TestStagedGitRepository_Update(t *testing.T) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -736,7 +758,7 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:       "test.yaml",
 			ref:        "",
@@ -752,7 +774,7 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 				mockWriter.PushReturns(nil)
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: true,
+				Mode: repository.StageModeCommitAndPushOnEach,
 			},
 			path:       "testdir/",
 			ref:        "main",
@@ -766,7 +788,7 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 				// No setup needed as error occurs before writer calls
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "feature-branch",
@@ -779,7 +801,7 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 				mockWriter.DeleteBlobReturns(hash.Hash{}, errors.New("delete blob failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -793,7 +815,7 @@ func TestStagedGitRepository_Delete(t *testing.T) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
 			},
 			opts: repository.StageOptions{
-				PushOnWrites: false,
+				Mode: repository.StageModeCommitOnEach,
 			},
 			path:      "test.yaml",
 			ref:       "",
@@ -861,7 +883,7 @@ func TestStagedGitRepository_Push(t *testing.T) {
 		{
 			name: "succeeds with CommitOnlyOnce and default message",
 			opts: repository.StageOptions{
-				CommitOnlyOnce: true,
+				Mode: repository.StageModeCommitOnlyOnce,
 			},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -874,7 +896,7 @@ func TestStagedGitRepository_Push(t *testing.T) {
 		{
 			name: "succeeds with CommitOnlyOnce and custom message",
 			opts: repository.StageOptions{
-				CommitOnlyOnce:        true,
+				Mode:                  repository.StageModeCommitOnlyOnce,
 				CommitOnlyOnceMessage: "Custom commit message",
 			},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
@@ -888,7 +910,7 @@ func TestStagedGitRepository_Push(t *testing.T) {
 		{
 			name: "fails with commit error when CommitOnlyOnce",
 			opts: repository.StageOptions{
-				CommitOnlyOnce: true,
+				Mode: repository.StageModeCommitOnlyOnce,
 			},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, errors.New("commit failed"))
@@ -910,7 +932,7 @@ func TestStagedGitRepository_Push(t *testing.T) {
 		{
 			name: "fails with push error after successful commit",
 			opts: repository.StageOptions{
-				CommitOnlyOnce: true,
+				Mode: repository.StageModeCommitOnlyOnce,
 			},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
@@ -941,7 +963,7 @@ func TestStagedGitRepository_Push(t *testing.T) {
 			require.Equal(t, tt.expectCommitCalls, mockWriter.CommitCallCount())
 
 			// Verify commit message when CommitOnlyOnce is used
-			if tt.opts.CommitOnlyOnce && tt.expectCommitCalls > 0 && tt.wantError == nil {
+			if tt.opts.Mode == repository.StageModeCommitOnlyOnce && tt.expectCommitCalls > 0 && tt.wantError == nil {
 				_, actualMessage, _, _ := mockWriter.CommitArgsForCall(0)
 				expectedMessage := tt.opts.CommitOnlyOnceMessage
 				if expectedMessage == "" {

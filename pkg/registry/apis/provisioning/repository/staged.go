@@ -10,14 +10,24 @@ import (
 	"github.com/grafana/nanogit"
 )
 
+// StageMode defines the staging and commit behavior
+type StageMode string
+
+const (
+	// StageModeCommitOnEach commits each file operation individually (default)
+	StageModeCommitOnEach StageMode = "commit_on_each"
+	// StageModeCommitOnlyOnce stages all changes and commits them all at once on push
+	StageModeCommitOnlyOnce StageMode = "commit_only_once"
+	// StageModeCommitAndPushOnEach commits and pushes each file operation individually
+	StageModeCommitAndPushOnEach StageMode = "commit_and_push_on_each"
+)
+
 type StageOptions struct {
-	// Push on every write
-	PushOnWrites bool
+	// Mode defines the staging and commit behavior
+	Mode StageMode
 	// Maximum time allowed for clone operation in seconds (0 means no limit)
 	Timeout time.Duration
-	// Commit only once on push instead of intermediate commits
-	CommitOnlyOnce bool
-	// Commit message to use when CommitOnlyOnce is true
+	// Commit message to use when Mode is StageModeCommitOnlyOnce
 	CommitOnlyOnceMessage string
 }
 
