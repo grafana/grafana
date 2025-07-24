@@ -48,7 +48,7 @@ export function AlertingRuleQueryExtentionPoint({ extensionsToShow, query }: Pro
     context: context,
     limitPerPlugin: 3,
   });
-  debugger;
+
   // filter the link so that the query data source matches the queryless app data source
   // we only want one link per query row editor for now
   // but we can show an array of links for more flexibility in the future
