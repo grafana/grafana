@@ -25,14 +25,14 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
 
   const titleText = isNewPr
     ? t(
-        'provisioned-resource-preview-banner.title-created-branch-git-hub',
+        'provisioned-resource-preview-banner.title-created-branch-in-repo',
         'A new resource has been created in a branch in {{repoType}}.',
         {
           repoType: capitalizedRepoType,
         }
       )
     : t(
-        'provisioned-resource-preview-banner.title-loaded-pull-request-git-hub',
+        'provisioned-resource-preview-banner.title-loaded-pull-request-in-repo',
         'This resource is loaded from a pull request in {{repoType}}.',
         {
           repoType: capitalizedRepoType,
@@ -45,14 +45,14 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
         {...commonAlertProps}
         buttonContent={
           <Stack alignItems="center">
-            {t('provisioned-resource-preview-banner.preview-banner.open-git-hub', 'Open in {{repoType}}', {
+            {t('provisioned-resource-preview-banner.preview-banner.open-in-repo-button', 'Open in {{repoType}}', {
               repoType: capitalizedRepoType,
             })}
             <Icon name="external-link-alt" />
           </Stack>
         }
         title={t(
-          'provisioned-resource-preview-banner.preview-banner.behind-branch',
+          'provisioned-resource-preview-banner.preview-banner.behind-branch-text',
           'This resource is behind the branch in {{repoType}}.',
           {
             repoType: capitalizedRepoType,
@@ -60,8 +60,11 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
         )}
         onRemove={repoUrl ? () => window.open(textUtil.sanitizeUrl(repoUrl), '_blank') : undefined}
       >
-        <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.new-branch">
-          View it in {{ repoType: capitalizedRepoType }} to see the latest changes.
+        <Trans
+          i18nKey="provisioned-resource-preview-banner.preview-banner.view-in-repo-button"
+          values={{ repoType: capitalizedRepoType }}
+        >
+          View it in {{ repoType }} to see the latest changes.
         </Trans>
       </Alert>
     );
@@ -75,12 +78,12 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
         <Stack alignItems="center">
           {isNewPr
             ? t(
-                'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-git-hub',
+                'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
                 'Open pull request in {{repoType}}',
                 { repoType: capitalizedRepoType }
               )
             : t(
-                'provisioned-resource-preview-banner.preview-banner.view-pull-request-in-git-hub',
+                'provisioned-resource-preview-banner.preview-banner.view-pull-request-in-repo',
                 'View pull request in {{repoType}}',
                 { repoType: capitalizedRepoType }
               )}
