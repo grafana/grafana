@@ -12834,13 +12834,18 @@
       "placeholder-field-or-number": "Field or number",
       "placeholder-fields-or-number": "Field(s) or number"
     },
+    "template-expression-options-editor": {
+      "label-expression:": "Expression",
+      "tooltip-transform-template-expression": "Transform a template expression into a field value"
+    },
     "calculate-field-transformer-editor": {
       "calculation-modes": {
         "label": {
           "binary-operation": "Binary operation",
           "reduce-row": "Reduce row",
           "row-index": "Row index",
-          "unary-operation": "Unary operation"
+          "unary-operation": "Unary operation",
+          "template-expression": "Template expression"
         }
       },
       "label": {

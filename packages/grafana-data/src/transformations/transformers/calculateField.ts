@@ -23,6 +23,7 @@ export enum CalculateFieldMode {
   BinaryOperation = 'binary',
   UnaryOperation = 'unary',
   Index = 'index',
+  TemplateExpression = 'templateExpression',
 }
 
 export enum WindowSizeMode {
@@ -72,6 +73,10 @@ interface IndexOptions {
   asPercentile: boolean;
 }
 
+interface TemplateExpressionOptions {
+  expression: string;
+}
+
 const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -106,6 +111,7 @@ export interface CalculateFieldTransformerOptions {
   binary?: BinaryOptions;
   unary?: UnaryOptions;
   index?: IndexOptions;
+  template?: TemplateExpressionOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -249,6 +255,36 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 fields: options.replaceFields ? [f] : [...frame.fields, f],
               };
             });
+          case CalculateFieldMode.TemplateExpression:
+            const expression = options.template?.expression ?? '';
+            const exprFieldNames = [
+              ...new Set([...expression.matchAll(/\{([\w\d\._-]+)\}/g)].map((match) => match[1])),
+            ];
+            type FieldData = { fieldName: string; values: any[] };
+
+            creator = (frame: DataFrame) => {
+              if (!options.template) {
+                return undefined;
+              }
+              const exprFieldValues: FieldData[] = exprFieldNames.reduce((values: FieldData[], fieldName: string) => {
+                const field = frame.fields.find((f) => f.name === fieldName);
+                if (field) {
+                  values.push({ fieldName, values: field.values });
+                }
+                return values;
+              }, []);
+
+              const outValues = [];
+              for (let i = 0; i < frame.length; i++) {
+                let rowValue = expression;
+                exprFieldValues.map(({ fieldName, values }) => {
+                  rowValue = rowValue.replaceAll(`{${fieldName}}`, values[i]);
+                });
+                outValues.push(rowValue);
+              }
+              return outValues;
+            };
+            break;
         }
 
         // Nothing configured
