@@ -201,6 +201,25 @@ func TestStagedGitRepository_Read(t *testing.T) {
 			wantError: nil,
 		},
 		{
+			name: "succeeds with ref matching stage options",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{1, 2, 3},
+				}, nil)
+				mockClient.GetCommitReturns(&nanogit.Commit{
+					Tree: hash.Hash{4, 5, 6},
+				}, nil)
+				mockClient.GetBlobByPathReturns(&nanogit.Blob{
+					Content: []byte("file content"),
+					Hash:    hash.Hash{7, 8, 9},
+				}, nil)
+			},
+			path:      "test.yaml",
+			ref:       "feature",
+			wantError: nil,
+		},
+		{
 			name: "fails with unsupported ref",
 			setupMock: func(_ *mocks.FakeClient) {
 				// No setup needed as error occurs before client calls
@@ -216,7 +235,13 @@ func TestStagedGitRepository_Read(t *testing.T) {
 			mockClient := &mocks.FakeClient{}
 			tt.setupMock(mockClient)
 
-			stagedRepo := createTestStagedRepository(mockClient)
+			// Use stage options with ref "feature" for the specific test case
+			opts := repository.StageOptions{}
+			if tt.ref == "feature" {
+				opts.Ref = "feature"
+			}
+			
+			stagedRepo := createTestStagedRepositoryWithWriter(&mocks.FakeStagedWriter{}, opts, mockClient)
 			fileInfo, err := stagedRepo.Read(context.Background(), tt.path, tt.ref)
 			if tt.wantError != nil {
 				require.EqualError(t, err, tt.wantError.Error())
@@ -875,6 +900,75 @@ func TestStagedGitRepository_Remove(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, mockWriter.CleanupCallCount())
 	})
+}
+
+func TestStagedGitRepository_isRefSupported(t *testing.T) {
+	tests := []struct {
+		name        string
+		stageOpts   repository.StageOptions
+		gitBranch   string
+		ref         string
+		expected    bool
+	}{
+		{
+			name:      "empty ref is supported",
+			stageOpts: repository.StageOptions{},
+			gitBranch: "main",
+			ref:       "",
+			expected:  true,
+		},
+		{
+			name:      "ref matches git config branch",
+			stageOpts: repository.StageOptions{},
+			gitBranch: "main",
+			ref:       "main",
+			expected:  true,
+		},
+		{
+			name:      "ref matches stage options ref",
+			stageOpts: repository.StageOptions{Ref: "feature"},
+			gitBranch: "main",
+			ref:       "feature",
+			expected:  true,
+		},
+		{
+			name:      "ref matches stage options ref when empty defaults to git branch",
+			stageOpts: repository.StageOptions{Ref: ""},
+			gitBranch: "main",
+			ref:       "main",
+			expected:  true,
+		},
+		{
+			name:      "unsupported ref",
+			stageOpts: repository.StageOptions{Ref: "feature"},
+			gitBranch: "main",
+			ref:       "other-branch",
+			expected:  false,
+		},
+		{
+			name:      "unsupported ref with empty stage options",
+			stageOpts: repository.StageOptions{},
+			gitBranch: "main",
+			ref:       "feature",
+			expected:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stagedRepo := &stagedGitRepository{
+				gitRepository: &gitRepository{
+					gitConfig: RepositoryConfig{
+						Branch: tt.gitBranch,
+					},
+				},
+				opts: tt.stageOpts,
+			}
+
+			result := stagedRepo.isRefSupported(tt.ref)
+			require.Equal(t, tt.expected, result)
+		})
+	}
 }
 
 // Helper functions for creating test instances
