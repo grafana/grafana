@@ -54,10 +54,13 @@ const (
 
 	// Finished with errors
 	JobStateError JobState = "error"
+
+	// Finished with some non-critical errors
+	JobStateWarning JobState = "warning"
 )
 
 func (j JobState) Finished() bool {
-	return j == JobStateSuccess || j == JobStateError
+	return j == JobStateSuccess || j == JobStateError || j == JobStateWarning
 }
 
 type JobSpec struct {

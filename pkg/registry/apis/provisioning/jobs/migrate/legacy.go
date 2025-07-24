@@ -41,6 +41,10 @@ func (m *LegacyMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter
 		Timeout: 10 * time.Minute,
 	}
 
+	// Fail if migrating at least one
+	progress.StrictMaxErrors(1)
+	progress.SetMessage(ctx, "migrating legacy resources")
+
 	if err := m.wrapWithStageFn(ctx, rw, stageOptions, func(repo repository.Repository, staged bool) error {
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
