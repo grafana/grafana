@@ -15,6 +15,7 @@ import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
 import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
+import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
@@ -22,7 +23,6 @@ import { ProvisionedDashboardFormData } from '../shared';
 
 import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 import { getProvisionedMeta } from './utils/getProvisionedMeta';
-import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
