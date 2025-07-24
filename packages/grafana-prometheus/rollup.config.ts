@@ -11,6 +11,7 @@ export default [
     input: entryPoint,
     plugins: [...plugins, image()],
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-prometheus')],
+    treeshake: false,
   },
   tsDeclarationOutput(pkg),
 ];

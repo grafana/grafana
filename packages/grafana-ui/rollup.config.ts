@@ -24,6 +24,7 @@ export default [
       }),
     ],
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
+    treeshake: false,
   },
   {
     input: 'src/unstable.ts',
@@ -36,6 +37,7 @@ export default [
       }),
     ],
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
+    treeshake: false,
   },
   tsDeclarationOutput(pkg),
   tsDeclarationOutput(pkg, {

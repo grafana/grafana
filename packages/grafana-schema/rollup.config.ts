@@ -15,6 +15,7 @@ export default [
     input: entryPoint,
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-schema')],
+    treeshake: false,
   },
   tsDeclarationOutput(pkg, { input: './dist/esm/index.d.ts' }),
   {
@@ -31,5 +32,6 @@ export default [
       format: 'esm',
       dir: path.dirname(pkg.publishConfig.module),
     },
+    treeshake: false,
   },
 ];

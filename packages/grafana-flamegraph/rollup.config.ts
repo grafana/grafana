@@ -10,6 +10,7 @@ export default [
     input: entryPoint,
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-flamegraph')],
+    treeshake: false,
   },
   tsDeclarationOutput(pkg),
 ];
