@@ -19,7 +19,7 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
       if (typeof field.values[0] === 'number') {
         return timestampIndexComparer(values, reverse, field?.nanos);
       }
-      return timeIndexComparer(values, reverse);
+      return timeIndexComparer(values, reverse, field?.nanos);
     default:
       return naturalIndexComparer(reverse);
   }
@@ -89,11 +89,16 @@ const timestampIndexComparer = (values: number[], reverse: boolean, nanos?: numb
   };
 };
 
-const timeIndexComparer = (values: unknown[], reverse: boolean): IndexComparer => {
+const timeIndexComparer = (values: unknown[], reverse: boolean, nanos?: number[]): IndexComparer => {
   return (a: number, b: number): number => {
     const vA = values[a];
     const vB = values[b];
-    return reverse ? timeComparer(vB, vA) : timeComparer(vA, vB);
+
+    const sort = reverse ? timeComparer(vB, vA) : timeComparer(vA, vB);
+    if (sort === 0 && nanos?.[a] !== undefined && nanos?.[b] !== undefined) {
+      return numericComparer(nanos[a], nanos[b]);
+    }
+    return sort;
   };
 };
 
