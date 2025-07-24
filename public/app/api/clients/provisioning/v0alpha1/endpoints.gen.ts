@@ -749,7 +749,12 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
-export type DeleteJobOptions = object;
+export type DeleteJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  Paths: string[];
+  /** Ref to the branch or commit hash to delete from */
+  ref?: string;
+};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
@@ -769,11 +774,11 @@ export type SyncJobOptions = {
   incremental: boolean;
 };
 export type ExportJobOptions = {
-  /** Target branch for export (only git) */
+  /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
-  /** Prefix in target file system */
+  /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {

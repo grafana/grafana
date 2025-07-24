@@ -112,9 +112,11 @@ type ExportJobOptions struct {
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
 
+	// FIXME: we should validate this in admission hooks
 	// Target branch for export (only git)
 	Branch string `json:"branch,omitempty"`
 
+	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
 }
@@ -124,7 +126,16 @@ type MigrateJobOptions struct {
 	History bool `json:"history,omitempty"`
 }
 
-type DeleteJobOptions struct{}
+type DeleteJobOptions struct {
+	// Ref to the branch or commit hash to delete from
+	Ref string `json:"ref,omitempty"`
+	// Paths to be deleted. Examples:
+	// - dashboard.json (for a file)
+	// - a/b/c/other-dashboard.json (for a file)
+	// - nested/deep/ (for a directory)
+	// FIXME: we should validate this in admission hooks
+	Paths []string
+}
 
 // The job status
 type JobStatus struct {

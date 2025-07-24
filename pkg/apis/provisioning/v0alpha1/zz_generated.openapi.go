@@ -161,6 +161,31 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref to the branch or commit hash to delete from",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"Paths": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"Paths"},
 			},
 		},
 	}
@@ -213,14 +238,14 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 					},
 					"branch": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Target branch for export (only git)",
+							Description: "FIXME: we should validate this in admission hooks Target branch for export (only git)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Prefix in target file system",
+							Description: "FIXME: we should validate this in admission hooks Prefix in target file system",
 							Type:        []string{"string"},
 							Format:      "",
 						},
