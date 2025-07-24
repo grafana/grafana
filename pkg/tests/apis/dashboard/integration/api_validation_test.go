@@ -231,11 +231,6 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 				runDashboardPermissionTests(t, org1Ctx, true)
 			})
 
-			t.Run("Dashboard LIST API test", func(t *testing.T) {
-				t.Skip("Skip LIST")
-				runDashboardListTests(t, org1Ctx)
-			})
-
 			t.Run("Dashboard HTTP API test", func(t *testing.T) {
 				runDashboardHttpTest(t, org1Ctx, org2Ctx)
 			})
