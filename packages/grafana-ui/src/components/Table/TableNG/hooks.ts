@@ -407,6 +407,8 @@ export function useRowHeight({
       return defaultHeight;
     }
 
+    // this cache should get blown away on resize, data refresh, updated fields, etc.
+    const cache: number[] = [];
     return (row: TableRow) => {
       // nested rows
       if (row.__depth > 0) {
@@ -425,15 +427,19 @@ export function useRowHeight({
       }
 
       // regular rows
-      return getRowHeight(
-        fields,
-        row.__index,
-        colWidths,
-        defaultHeight,
-        lineCounters,
-        TABLE.LINE_HEIGHT,
-        TABLE.CELL_PADDING * 2
-      );
+      if (!cache[row.__index]) {
+        cache[row.__index] = getRowHeight(
+          fields,
+          row.__index,
+          colWidths,
+          defaultHeight,
+          lineCounters,
+          TABLE.LINE_HEIGHT,
+          TABLE.CELL_PADDING * 2
+        );
+      }
+
+      return cache[row.__index];
     };
   }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, lineCounters, expandedRows]);
 
