@@ -25,6 +25,7 @@ import {
   getComparator,
   getDefaultRowHeight,
   getIsNestedTable,
+  getAlignment,
   getJustifyContent,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
@@ -32,122 +33,77 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
-  describe('text alignment', () => {
-    it('should map alignment options to flex values', () => {
-      // Test 'left' alignment
-      const leftField = {
-        name: 'Value',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {
-            align: 'left',
+  describe('alignment', () => {
+    it.each(['left', 'center', 'right'] as const)('should return "%s" when configured', (align) => {
+      expect(
+        getAlignment({
+          name: 'Value',
+          type: FieldType.string,
+          values: [],
+          config: {
+            custom: {
+              align,
+            },
           },
-        },
-      };
-      expect(getJustifyContent(leftField)).toBe('flex-start');
+        })
+      ).toBe(align);
+    });
 
-      // Test 'center' alignment
-      const centerField = {
-        name: 'Value',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {
-            align: 'center',
+    it.each([
+      { type: FieldType.string, align: 'left' },
+      { type: FieldType.number, align: 'right' },
+      { type: FieldType.boolean, align: 'left' },
+      { type: FieldType.time, align: 'left' },
+    ])('should return "$align" for field type $type by default', ({ type, align }) => {
+      expect(
+        getAlignment({
+          name: 'Test',
+          type,
+          values: [],
+          config: {
+            custom: {},
           },
-        },
-      };
-      expect(getJustifyContent(centerField)).toBe('center');
+        })
+      ).toBe(align);
+    });
 
-      // Test 'right' alignment
-      const rightField = {
-        name: 'Value',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {
-            align: 'right',
+    it.each([
+      { cellType: undefined, align: 'right' },
+      { cellType: TableCellDisplayMode.Auto, align: 'right' },
+      { cellType: TableCellDisplayMode.ColorText, align: 'right' },
+      { cellType: TableCellDisplayMode.ColorBackground, align: 'right' },
+      { cellType: TableCellDisplayMode.Gauge, align: 'left' },
+      { cellType: TableCellDisplayMode.JSONView, align: 'left' },
+      { cellType: TableCellDisplayMode.DataLinks, align: 'left' },
+    ])('numeric field should return "$align" for cell type "$cellType"', ({ align, cellType }) => {
+      expect(
+        getAlignment({
+          name: 'Test',
+          type: FieldType.number,
+          values: [],
+          config: {
+            custom: {
+              ...(cellType !== undefined
+                ? {
+                    cellOptions: {
+                      type: cellType,
+                    },
+                  }
+                : {}),
+            },
           },
-        },
-      };
-      expect(getJustifyContent(rightField)).toBe('flex-end');
+        })
+      ).toBe(align);
     });
 
-    it('should default to flex-start when no alignment specified', () => {
-      const field = {
-        name: 'Value',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getJustifyContent(field)).toBe('flex-start');
-    });
-
-    it('should default to flex-start when no field is specified', () => {
-      expect(getJustifyContent(undefined)).toBe('flex-start');
-    });
-
-    it('should default to flex-end for number types', () => {
-      const field = {
-        name: 'Value',
-        type: FieldType.number,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getJustifyContent(field)).toBe('flex-end');
-    });
-
-    it('should default to flex-start for string types', () => {
-      const field = {
-        name: 'String',
-        type: FieldType.string,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getJustifyContent(field)).toBe('flex-start');
-    });
-
-    it('should default to flex-start for enum types', () => {
-      const field = {
-        name: 'Enum',
-        type: FieldType.enum,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getJustifyContent(field)).toBe('flex-start');
-    });
-
-    it('should default to flex-start for time types', () => {
-      const field = {
-        name: 'Time',
-        type: FieldType.time,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getJustifyContent(field)).toBe('flex-start');
-    });
-
-    it('should default to flex-start for boolean types', () => {
-      const field = {
-        name: 'Active',
-        type: FieldType.boolean,
-        values: [],
-        config: {
-          custom: {},
-        },
-      };
-      expect(getJustifyContent(field)).toBe('flex-start');
+    describe('mapping to getJustifyContent', () => {
+      it.each([
+        { align: 'left', expected: 'flex-start' },
+        { align: 'center', expected: 'center' },
+        { align: 'right', expected: 'flex-end' },
+      ] as const)(`should map align "$align" to justifyContent "$expected"`, ({ align, expected }) => {
+        expect(getJustifyContent(align)).toBe(expected);
+      });
     });
   });
 
@@ -188,7 +144,6 @@ describe('TableNG utils', () => {
       const colors = getCellColors(theme, field, displayValue);
       expect(colors.bgColor).toBe('rgb(255, 0, 0)');
       expect(colors.textColor).toBe('rgb(247, 248, 250)');
-      expect(colors.bgHoverColor).toBe('rgb(255, 36, 36)');
     });
 
     it('should handle color background gradient mode', () => {
@@ -206,7 +161,6 @@ describe('TableNG utils', () => {
       const colors = getCellColors(theme, field, displayValue);
       expect(colors.bgColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
       expect(colors.textColor).toBe('rgb(247, 248, 250)');
-      expect(colors.bgHoverColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), rgb(255, 54, 54))');
     });
   });
 
@@ -921,6 +875,21 @@ describe('TableNG utils', () => {
         expect(onClickHandler).not.toHaveBeenCalled();
       }
     );
+
+    it('should filter out links which contain neither href nor onClick', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        values: ['value1'],
+        getLinks: (): LinkModel[] => [
+          { title: 'Invalid Link', target: '_blank', origin: { datasourceUid: 'test' } } as LinkModel, // No href or onClick
+        ],
+      };
+
+      const links = getCellLinks(field, 0);
+      expect(links).toEqual([]);
+    });
   });
 
   describe('extractPixelValue', () => {

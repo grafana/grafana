@@ -99,12 +99,7 @@
     </script>
 
     [[range $asset := .Assets.JSFiles]]
-      <script
-      nonce="[[$.Nonce]]"
-      src="[[$asset.FilePath]]"
-      type="text/javascript"
-      defer
-      ></script>
+      <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript" defer></script>
     [[end]]
   </body>
 </html>

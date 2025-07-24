@@ -13,6 +13,8 @@ import (
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
+var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
+var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // CoreRoleStorageBackend uses the resource.StorageBackend interface to provide storage for core roles.
 // Used wire to identify the storage backend for core roles.
@@ -41,4 +43,7 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Toggle for enabling authz management apis
 	enableAuthZApis bool
+
+	// Toggle for enabling dual writer
+	enableDualWriter bool
 }

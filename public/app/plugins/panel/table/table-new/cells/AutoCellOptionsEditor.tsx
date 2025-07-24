@@ -1,14 +1,17 @@
 import { FormEvent } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { TableAutoCellOptions, TableColorTextCellOptions, TableColoredBackgroundCellOptions } from '@grafana/schema';
+import { TableAutoCellOptions, TableColoredBackgroundCellOptions, TableColorTextCellOptions } from '@grafana/schema';
 import { Field, Input, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
-export function AutoCellOptionsEditor<
-  P extends TableAutoCellOptions | TableColorTextCellOptions | TableColoredBackgroundCellOptions,
->({ cellOptions, onChange }: TableCellEditorProps<P>) {
+export const AutoCellOptionsEditor = ({
+  cellOptions,
+  onChange,
+}: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions | TableColoredBackgroundCellOptions>) => {
+  // Handle row coloring changes
   const onWrapTextChange = () => {
     cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);
@@ -22,12 +25,17 @@ export function AutoCellOptionsEditor<
   return (
     <>
       <Field label={t('table.auto-cell-options-editor.label-wrap-text', 'Wrap text')}>
-        <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
+        <Switch
+          label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Wrap text`)}
+          value={cellOptions.wrapText}
+          onChange={onWrapTextChange}
+        />
       </Field>
       {cellOptions.wrapText && (
         <Field label={t('table.auto-cell-options-editor.max-wrapped-lines', 'Wrap text line limit')}>
           <Input
             type="number"
+            label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Wrap text line limit`)}
             value={cellOptions.maxWrappedLines}
             onChange={onMaxWrappedLinesChange}
             min={1}
@@ -37,4 +45,4 @@ export function AutoCellOptionsEditor<
       )}
     </>
   );
-}
+};

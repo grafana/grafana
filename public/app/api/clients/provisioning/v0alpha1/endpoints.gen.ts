@@ -819,8 +819,9 @@ export type JobStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state?: 'error' | 'pending' | 'success' | 'working';
+  state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
 };
@@ -862,6 +863,8 @@ export type BitbucketRepositoryConfig = {
   path?: string;
   /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
   /** The repository URL (e.g. `https://bitbucket.org/example/test`). */
   url?: string;
 };
@@ -876,6 +879,8 @@ export type GitRepositoryConfig = {
   path?: string;
   /** Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again. */
   token?: string;
+  /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
+  tokenUser?: string;
   /** The repository URL (e.g. `https://github.com/example/test.git`). */
   url?: string;
 };
@@ -987,8 +992,9 @@ export type SyncStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state: 'error' | 'pending' | 'success' | 'working';
+  state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
 export type WebhookStatus = {
   encryptedSecret?: string;

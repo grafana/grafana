@@ -219,13 +219,6 @@ export interface ImageCellProps {
   rowIdx: number;
 }
 
-export interface JSONCellProps {
-  justifyContent: Property.JustifyContent;
-  value: TableCellValue;
-  field: Field;
-  rowIdx: number;
-}
-
 export interface DataLinksCellProps {
   field: Field;
   rowIdx: number;
@@ -246,9 +239,7 @@ export interface CellColors {
 export interface AutoCellProps {
   field: Field;
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
-  cellOptions: TableCellOptions;
 }
 
 export interface ActionCellProps {

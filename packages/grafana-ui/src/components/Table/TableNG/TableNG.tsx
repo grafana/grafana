@@ -1,7 +1,8 @@
 import 'react-data-grid/lib/styles.css';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import { Property } from 'csstype';
-import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -34,7 +35,7 @@ import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { CellColors, TableCellDisplayMode } from '../types';
+import { TableCellDisplayMode } from '../types';
 import { DataLinksActionsTooltipState } from '../utils';
 
 import { HeaderCell } from './Cells/HeaderCell';
@@ -59,8 +60,6 @@ import {
   getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
-  getTextAlign,
-  getJustifyContent,
   getVisibleFields,
   shouldTextOverflow,
   getApplyToRowBgFn,
@@ -73,6 +72,10 @@ import {
   getCellLinks,
   withDataLinksActionsTooltip,
   getMaxWrappedLines,
+  displayJsonValue,
+  getAlignment,
+  getJustifyContent,
+  TextAlign,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -160,7 +163,7 @@ export function TableNG(props: TableNGProps) {
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
   const defaultHeaderHeight = getDefaultRowHeight(theme, TableCellHeight.Sm);
   const [isInspecting, setIsInspecting] = useState(false);
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
@@ -208,7 +211,11 @@ export function TableNG(props: TableNGProps) {
   });
 
   // Create a map of column key to text wrap
-  const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
+  const footerCalcs = useFooterCalcs(sortedRows, visibleFields, {
+    enabled: hasFooter,
+    footerOptions,
+    isCountRowsSet,
+  });
   const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   const renderRow = useMemo(
@@ -280,6 +287,11 @@ export function TableNG(props: TableNGProps) {
 
       let lastRowIdx = -1;
       let _rowHeight = 0;
+      // shared when whole row will be styled by a single cell's color
+      let rowCellStyle: Partial<CSSProperties> = {
+        color: undefined,
+        background: undefined,
+      };
 
       f.forEach((field, i) => {
         const cellOptions = getCellOptions(field);
@@ -302,10 +314,19 @@ export function TableNG(props: TableNGProps) {
           field.display = getDisplayProcessor({ field, theme });
         }
 
-        const justifyContent = getJustifyContent(field);
+        // attach JSONCell custom display function to JSONView cell type
+        if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
+          field.display = displayJsonValue;
+        }
+
+        // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
+        // the text-align css property, and for others, we'll use justify-content to align the cell
+        // contents with flexbox. We always just get both and provide both when styling the cell.
+        const textAlign = getAlignment(field);
+        const justifyContent = getJustifyContent(textAlign);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
-        const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
+        const headerCellClass = getHeaderCellStyles(theme, justifyContent);
         const renderFieldCell = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
@@ -315,7 +336,7 @@ export function TableNG(props: TableNGProps) {
 
         // helps us avoid string cx and emotion per-cell
         const cellActionClassName = showActions
-          ? cx(
+          ? clsx(
               'table-cell-actions',
               styles.cellActions,
               justifyContent === 'flex-end' ? styles.cellActionsEnd : styles.cellActionsStart
@@ -326,50 +347,74 @@ export function TableNG(props: TableNGProps) {
         const shouldWrap = shouldTextWrap(field);
         const maxWrappedLines = shouldWrap ? getMaxWrappedLines(field) : undefined;
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
+        const canBeColorized =
+          cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
+        const isMonospace = cellType === TableCellDisplayMode.JSONView;
 
         result.colsWithTooltip[displayName] = withTooltip;
+
+        // get static cell class based on col props
+
+        let cellClass = '';
+
+        switch (cellType) {
+          case TableCellDisplayMode.Auto:
+          case TableCellDisplayMode.ColorBackground:
+          case TableCellDisplayMode.ColorText:
+          case TableCellDisplayMode.DataLinks:
+          case TableCellDisplayMode.JSONView:
+            cellClass = getCellStyles(
+              theme,
+              textAlign,
+              shouldWrap,
+              shouldOverflow,
+              canBeColorized,
+              isMonospace,
+              cellType === TableCellDisplayMode.DataLinks,
+              maxWrappedLines
+            );
+            break;
+        }
+
+        // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
           const rowIdx = props.row.__index;
-          const value = props.row[props.column.key];
 
           // meh, this should be cached by the renderRow() call?
           if (rowIdx !== lastRowIdx) {
             _rowHeight = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
             lastRowIdx = rowIdx;
+
+            rowCellStyle.color = undefined;
+            rowCellStyle.background = undefined;
+
+            // generate shared styles for whole row
+            if (applyToRowBgFn != null) {
+              let { textColor, bgColor } = applyToRowBgFn(rowIdx);
+              rowCellStyle.color = textColor;
+              rowCellStyle.background = bgColor;
+            }
           }
 
-          let colors: CellColors;
+          let style: CSSProperties | undefined;
 
-          if (applyToRowBgFn != null) {
-            colors = applyToRowBgFn(props.rowIdx);
-          } else if (cellType !== TableCellDisplayMode.Auto) {
+          if (rowCellStyle.color != null || rowCellStyle.background != null) {
+            style = rowCellStyle;
+          }
+          // apply background for cell types which can have a background and have proper
+          else if (canBeColorized) {
+            const value = props.row[props.column.key];
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-            colors = getCellColors(theme, cellOptions, displayValue);
-          } else {
-            colors = {};
+            let { textColor, bgColor } = getCellColors(theme, cellOptions, displayValue);
+            style = {
+              color: textColor,
+              background: bgColor,
+            };
           }
 
-          const cellStyle = getCellStyles(
-            theme,
-            field,
-            _rowHeight,
-            shouldWrap,
-            shouldOverflow,
-            withTooltip,
-            colors,
-            maxWrappedLines
-          );
-
-          return (
-            <Cell
-              key={key}
-              {...props}
-              className={cx(props.className, cellStyle.cell)}
-              style={{ color: colors.textColor ?? 'inherit' }}
-            />
-          );
+          return <Cell key={key} {...props} className={clsx(props.className, cellClass)} style={style} />; // TODO: remove expensive concat
         };
 
         result.cellRootRenderers[displayName] = renderCellRoot;
@@ -500,12 +545,19 @@ export function TableNG(props: TableNGProps) {
       },
       renderCell: ({ row }) => {
         if (row.__depth === 0) {
+          const rowIdx = row.__index;
+
           return (
             <RowExpander
               height={defaultRowHeight}
-              isExpanded={expandedRows[row.__index] ?? false}
+              isExpanded={expandedRows.has(rowIdx)}
               onCellExpand={() => {
-                setExpandedRows({ ...expandedRows, [row.__index]: !expandedRows[row.__index] });
+                if (expandedRows.has(rowIdx)) {
+                  expandedRows.delete(rowIdx);
+                } else {
+                  expandedRows.add(rowIdx);
+                }
+                setExpandedRows(new Set(expandedRows));
               }}
             />
           );
@@ -529,8 +581,8 @@ export function TableNG(props: TableNGProps) {
         return (
           <DataGrid<TableRow, TableSummaryRow>
             {...commonDataGridProps}
-            className={cx(styles.grid, styles.gridNested)}
-            headerRowClass={cx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
+            className={clsx(styles.grid, styles.gridNested)}
+            headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
             headerRowHeight={hasNestedHeaders ? defaultHeaderHeight : 0}
             columns={nestedColumns}
             rows={expandedRecords}
@@ -595,13 +647,19 @@ export function TableNG(props: TableNGProps) {
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
-        headerRowClass={cx(styles.headerRow, { [styles.displayNone]: noHeader })}
+        headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
-        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
+        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
           // Note: could be column.field; JS says yes, but TS says no!
           const field = columns[column.idx].field;
 
-          if (colsWithTooltip[getDisplayName(field)]) {
+          if (
+            colsWithTooltip[getDisplayName(field)] &&
+            target instanceof HTMLElement &&
+            // this walks up the tree to find either a faux link wrapper or the cell root
+            // it then only proceeds if we matched the faux link wrapper
+            target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
+          ) {
             const rowIdx = row.__index;
             setTooltipState({
               coords: {
@@ -693,16 +751,11 @@ export function TableNG(props: TableNGProps) {
  * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
  */
 const renderRowFactory =
-  (
-    fields: Field[],
-    panelContext: PanelContext,
-    expandedRows: Record<string, boolean>,
-    enableSharedCrosshair: boolean
-  ) =>
+  (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;
-    const isExpanded = !!expandedRows[rowIdx];
+    const isExpanded = expandedRows.has(rowIdx);
 
     // Don't render non expanded child rows
     if (row.__depth === 1 && !isExpanded) {
@@ -745,6 +798,8 @@ const getGridStyles = (
     '--rdg-header-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
     '--rdg-border-color': theme.colors.border.weak,
     '--rdg-color': theme.colors.text.primary,
+    '--rdg-summary-border-color': theme.colors.border.weak,
+    '--rdg-summary-border-width': '1px',
 
     // note: this cannot have any transparency since default cells that
     // overlay/overflow on hover inherit this background and need to occlude cells below
@@ -761,7 +816,27 @@ const getGridStyles = (
 
     border: 'none',
 
-    '.rdg-summary-row': {
+    '.rdg-cell': {
+      '&:last-child': {
+        borderInlineEnd: 'none',
+      },
+    },
+
+    // add a box shadow on hover and selection for all body cells
+    '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
+      '&:hover, &[aria-selected=true]': {
+        boxShadow: theme.shadows.z2,
+      },
+      // selected cells should appear below hovered cells.
+      '&:hover': {
+        zIndex: theme.zIndex.tooltip - 2,
+      },
+      '&[aria-selected=true]': {
+        zIndex: theme.zIndex.tooltip - 3,
+      },
+    },
+
+    '.rdg-header-row, .rdg-summary-row': {
       '.rdg-cell': {
         zIndex: theme.zIndex.tooltip - 1,
         paddingInline: TABLE.CELL_PADDING,
@@ -847,8 +922,8 @@ const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
   }),
 });
 
-const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
-  headerCell: css({
+const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
+  css({
     display: 'flex',
     gap: theme.spacing(0.5),
     zIndex: theme.zIndex.tooltip - 1,
@@ -858,60 +933,89 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
     '&:last-child': {
       borderInlineEnd: 'none',
     },
-  }),
-});
+  });
 
 const getCellStyles = (
   theme: GrafanaTheme2,
-  field: Field,
-  rowHeight: number,
+  textAlign: TextAlign,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  hasTooltip: boolean,
-  colors: CellColors,
+  isColorized: boolean,
+  isMonospace: boolean,
+  // TODO: replace this with cellTypeStyles: TemplateStringsArray object
+  isLinkCell: boolean,
   maxWrappedLines?: number
-) => {
-  return {
-    cell: css({
-      textOverflow: 'ellipsis',
-      background: colors.bgColor ?? 'inherit',
-      alignContent: 'center',
-      textAlign: getTextAlign(field),
-      justifyContent: getJustifyContent(field),
-      paddingInline: TABLE.CELL_PADDING,
-      height: '100%',
-      minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
-      ...(shouldWrap && { whiteSpace: 'pre-line' }),
-      ...(hasTooltip && { cursor: 'pointer' }),
-      ...(maxWrappedLines && {
-        // height properties need to override the default settings.
-        height: 'auto',
-        maxHeight: maxWrappedLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2,
-        minHeight: 'none',
-        // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
-        display: '-webkit-box',
-        '-webkit-line-clamp': String(maxWrappedLines),
-        '-webkit-box-orient': 'vertical',
-        overflowY: 'hidden',
-      }),
-      '&:last-child': {
-        borderInlineEnd: 'none',
+) =>
+  css({
+    display: 'flex',
+    alignItems: 'center',
+    textAlign,
+    justifyContent: getJustifyContent(textAlign),
+    paddingInline: TABLE.CELL_PADDING,
+    minHeight: '100%',
+    backgroundClip: 'padding-box !important', // helps when cells have a bg color
+    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
+    ...(isMonospace && { fontFamily: 'monospace' }),
+    ...(maxWrappedLines && {
+      // height properties need to override the default settings.
+      height: 'auto',
+      maxHeight: maxWrappedLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2,
+      minHeight: 'none',
+      // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
+      display: '-webkit-box',
+      '-webkit-line-clamp': String(maxWrappedLines),
+      '-webkit-box-orient': 'vertical',
+      overflowY: 'hidden',
+    }),
+
+    // should omit if no cell actions, and no shouldOverflow
+    '&:hover, &[aria-selected=true]': {
+      '.table-cell-actions': {
+        display: 'flex',
       },
-      '&:hover': {
-        background: colors.bgHoverColor,
-        '.table-cell-actions': {
-          display: 'flex',
+
+      ...((shouldOverflow || maxWrappedLines) && {
+        zIndex: theme.zIndex.tooltip - 2,
+        whiteSpace: isMonospace ? 'pre' : 'pre-line',
+        height: 'fit-content',
+        maxHeight: 'none',
+        minWidth: 'fit-content',
+        paddingBlock: TABLE.CELL_PADDING,
+        '-webkit-line-clamp': 'none',
+      }),
+    },
+
+    a: {
+      cursor: 'pointer',
+      ...(isColorized
+        ? {
+            color: 'inherit',
+            textDecoration: 'underline',
+          }
+        : {
+            color: theme.colors.text.link,
+            textDecoration: 'none',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }),
+    },
+
+    ...(isLinkCell && {
+      '> a': {
+        // display: 'inline', // textWrap ? 'block' : 'inline',
+        whiteSpace: 'nowrap',
+        paddingInline: theme.spacing(1),
+        borderRight: `2px solid ${theme.colors.border.medium}`,
+
+        '&:first-of-type': {
+          paddingInlineStart: 0,
         },
-        ...((shouldOverflow || maxWrappedLines) && {
-          zIndex: theme.zIndex.tooltip - 2,
-          whiteSpace: 'pre-line',
-          height: 'fit-content',
-          maxHeight: 'none',
-          minWidth: 'fit-content',
-          paddingBlock: TABLE.CELL_PADDING,
-          '-webkit-line-clamp': 'none',
-        }),
+
+        '&:last-of-type': {
+          borderRight: 'none',
+          paddingInlineEnd: 0,
+        },
       },
     }),
-  };
-};
+  });
