@@ -93,6 +93,12 @@ export const TimeSeriesTooltip = ({
 
     // Check if the field supports filtering (similar to table implementation)
     const showFilters = Boolean(
+      // We only show filters on filterable fields (xField.config.filterable).
+      // Fields will have been marked as filterable by the data source if that data source supports adhoc filtering
+      // (eg. Prom or Loki) and the field types support adhoc filtering (eg. string or number - depending on the data source).
+      // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
+      // are derived from a data source, but are not present in the data source.
+      // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
       config.featureToggles.adhocFiltersInTooltips && xField.config.filterable && onAddAdHocFilter != null
     );
 
