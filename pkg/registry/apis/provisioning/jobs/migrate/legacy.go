@@ -36,7 +36,9 @@ func NewLegacyMigrator(
 func (m *LegacyMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := rw.Config().Namespace
 	stageOptions := repository.StageOptions{
-		PushOnWrites: options.History,
+		CommitOnlyOnce:        !options.History,
+		CommitOnlyOnceMessage: options.Message,
+		PushOnWrites:          options.History,
 		// TODO: make this configurable
 		Timeout: 10 * time.Minute,
 	}
