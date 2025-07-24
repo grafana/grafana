@@ -241,20 +241,20 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 <!-- prettier-ignore-start -->
 | Cell type                                 | Description                                                                                                                |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| [Auto](#auto)                             | Automatically displays values with sensible defaults applied. |
+| [Auto](#auto)                             | A basic text and number cell. |
 | [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [Colored text](#colored-text)             | If thresholds are set, then the field text is displayed in the appropriate threshold color. |
 | [Colored background](#colored-background) | If thresholds are set, then the field background is displayed in the appropriate threshold color. |
-| [Gauge](#gauge)                           | Cells can be displayed as a graphical gauge, with several different presentation types. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
+| [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
-| [Image](#image)                           | If the field value is an image URL or a base64 encoded image, the table displays the image. |
+| [Image](#image)                           | Displays an image when the value is a URL or a base64 encoded image. |
 | [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
 <!-- prettier-ignore-end -->
 
 #### Auto
 
-This cell type automatically displays values with sensible defaults applied.
+This is a basic text and number cell.
 
 It has the following cell options:
 
