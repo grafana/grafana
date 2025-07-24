@@ -105,6 +105,9 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
   };
 }
 
+/**
+ * @internal returns counts the number of lines in the value of a text cell using the typography context's count function.
+ */
 export function getTextLineCounter(typographyCtx: TypographyCtx): LineCounter {
   return (value, colWidth) => {
     if (!value) {
