@@ -5,7 +5,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Mou
 import { Align, VariableSizeList } from 'react-window';
 
 import {
-  AbsoluteTimeRange,
   CoreApp,
   DataFrame,
   EventBus,
@@ -24,7 +23,7 @@ import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@graf
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { InfiniteScroll } from './InfiniteScroll';
+import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
@@ -50,10 +49,11 @@ export interface Props {
   getFieldLinks?: GetFieldLinksFn;
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
+  infiniteScrollMode?: InfiniteScrollMode;
   initialScrollPosition?: 'top' | 'bottom';
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loading?: boolean;
-  loadMore?: (range: AbsoluteTimeRange) => void;
+  loadMore?: LoadMoreLogsType;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
@@ -117,6 +117,7 @@ export const LogList = ({
   getFieldLinks,
   getRowContextQuery,
   grammar,
+  infiniteScrollMode,
   initialScrollPosition = 'top',
   isLabelFilterActive,
   loading,
@@ -197,6 +198,7 @@ export const LogList = ({
           getFieldLinks={getFieldLinks}
           grammar={grammar}
           initialScrollPosition={initialScrollPosition}
+          infiniteScrollMode={infiniteScrollMode}
           loading={loading}
           loadMore={loadMore}
           logs={logs}
@@ -215,6 +217,7 @@ const LogListComponent = ({
   getFieldLinks,
   grammar,
   initialScrollPosition = 'top',
+  infiniteScrollMode = 'interval',
   loading,
   loadMore,
   logs,
@@ -443,6 +446,7 @@ const LogListComponent = ({
         <InfiniteScroll
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
+          infiniteScrollMode={infiniteScrollMode}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}
