@@ -57,7 +57,7 @@ func (m *migrator) migrate(dash map[string]interface{}, targetVersion int) error
 	for nextVersion := inputVersion + 1; nextVersion <= targetVersion; nextVersion++ {
 		if migration, ok := m.migrations[nextVersion]; ok {
 			if err := migration(dash); err != nil {
-				return schemaversion.NewMigrationError("migration failed", inputVersion, nextVersion)
+				return schemaversion.NewMigrationError("migration failed: "+err.Error(), inputVersion, nextVersion)
 			}
 			dash["schemaVersion"] = nextVersion
 		}
