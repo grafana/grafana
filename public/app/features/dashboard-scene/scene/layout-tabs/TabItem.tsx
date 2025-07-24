@@ -181,9 +181,16 @@ export class TabItem
 
   public onChangeRepeat(repeat: string | undefined) {
     if (repeat) {
-      this.setState({ repeatByVariable: repeat });
+      let title = this.state.title;
+      if (title?.includes(`$${this.state.repeatByVariable}`)) {
+        title = title.replace(`$${this.state.repeatByVariable}`, `$${repeat}`);
+      } else {
+        title = `${title} $${repeat}`;
+      }
+      this.setState({ repeatByVariable: repeat, title });
     } else {
-      this.setState({ repeatedTabs: undefined, $variables: undefined, repeatByVariable: undefined });
+      const title = this.state.title?.replace(`$${this.state.repeatByVariable}`, ``);
+      this.setState({ repeatedTabs: undefined, $variables: undefined, repeatByVariable: undefined, title });
     }
   }
 
