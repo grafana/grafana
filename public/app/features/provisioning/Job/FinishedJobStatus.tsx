@@ -49,8 +49,13 @@ export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) 
       } else if (state === 'success') {
         setStepStatusInfo({ status: 'success' });
       } else if (state === 'warning') {
-        // We treat warnings as success for now, but this could be changed later
-        setStepStatusInfo({ status: 'success' });
+        setStepStatusInfo({
+          status: 'warning',
+          warning: {
+            title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+            message: errors?.length ? errors : message,
+          },
+        });
       }
     }
 

@@ -11069,10 +11069,10 @@
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
+    "error-title-default": "Error",
     "expanded-row": {
       "job-specification": "Job Specification",
-      "summary": "Summary",
-      "title-error": "Error"
+      "summary": "Summary"
     },
     "features-list": {
       "actions": {
@@ -11216,11 +11216,12 @@
       "no-job-found-message": "The job may have been deleted or could not be retrieved. Cancel the current process and start again.",
       "starting": "Starting...",
       "status": {
-        "title-error-running-job": "Error running job",
-        "title-job-completed-successfully": "Job completed successfully",
-        "title-warning-running-job": "Job completed with warnings"
+        "title-error-running-job": "Error running job"
       },
-      "summary": "Summary"
+      "summary": "Summary",
+      "title": {
+        "error-fetching-active-job": "Error fetching active job"
+      }
     },
     "local": {
       "path-description": "Local file system path to the repository",

@@ -26,8 +26,7 @@ export interface ModeOption {
   subtitle: string;
 }
 
-export type StepStatus = 'idle' | 'running' | 'error' | 'success';
-
-export type StepStatusInfo = 
+export type StepStatusInfo =
   | { status: 'idle' | 'running' | 'success' }
-  | { status: 'error'; error: string | ProvisioningErrorInfo };
+  | { status: 'error'; error: string | ProvisioningErrorInfo }
+  | { status: 'warning'; warning: string | ProvisioningErrorInfo };

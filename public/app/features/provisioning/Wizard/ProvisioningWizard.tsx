@@ -65,7 +65,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError } = useStepStatus();
+  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } = useStepStatus();
 
   const { data } = useGetFrontendSettingsQuery();
   const isLegacyStorage = Boolean(data?.legacyStorage);
@@ -251,8 +251,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         setIsSubmitting(false);
       }
     } else {
-      // only proceed if the job was successful
-      if (isStepSuccess) {
+      // proceed if the job was successful or had warnings
+      if (isStepSuccess || hasStepWarning) {
         handleNext();
       }
     }
@@ -263,9 +263,9 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     if (activeStep !== 'connection' && hasStepError) {
       return true;
     }
-    // Synchronize step requires success to proceed
+    // Synchronize step requires success or warning to proceed
     if (activeStep === 'synchronize') {
-      return !isStepSuccess; // Disable next button if the step is not successful
+      return !(isStepSuccess || hasStepWarning); // Disable next button if the step is not successful or has warnings
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   };
@@ -285,6 +285,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
             </Box>
 
             {hasStepError && 'error' in stepStatusInfo && <ProvisioningAlert error={stepStatusInfo.error} />}
+            {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}

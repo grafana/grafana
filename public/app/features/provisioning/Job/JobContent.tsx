@@ -7,7 +7,6 @@ import { Job } from 'app/api/clients/provisioning/v0alpha1';
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
 import { useStepStatus } from '../Wizard/StepStatusContext';
-import { ProvisioningErrorInfo } from '../types';
 
 import { JobSummary } from './JobSummary';
 
@@ -38,18 +37,25 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
         setStepStatusInfo({ status: 'success' });
         break;
       case 'warning':
-        // Treat warnings as success for step progression, but could be changed
-        setStepStatusInfo({ status: 'success' });
+        if (!errorSetRef.current) {
+          setStepStatusInfo({
+            status: 'warning',
+            warning: {
+              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+              message: errors?.length ? errors : message,
+            },
+          });
+          errorSetRef.current = true;
+        }
         break;
       case 'error':
         if (!errorSetRef.current) {
-          const errorInfo: ProvisioningErrorInfo = {
-            title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
-            message: errors?.length ? errors : message,
-          };
           setStepStatusInfo({
             status: 'error',
-            error: errorInfo,
+            error: {
+              title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
+              message: errors?.length ? errors : message,
+            },
           });
           errorSetRef.current = true;
         }
