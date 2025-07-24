@@ -260,7 +260,7 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify clone and push options
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-		return opts.Timeout == 10*time.Minute && !opts.PushOnWrites
+		return opts.Timeout == 10*time.Minute && opts.Mode == repository.StageModeCommitOnlyOnce
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
@@ -406,7 +406,7 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify clone and push options
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-		return opts.Timeout == 10*time.Minute && !opts.PushOnWrites
+		return opts.Timeout == 10*time.Minute && opts.Mode == repository.StageModeCommitOnlyOnce
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
