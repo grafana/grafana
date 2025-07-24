@@ -641,7 +641,6 @@ func (s *Service) buildSnapshot(
 }
 
 func (s *Service) buildSnapshotWithDBStorage(ctx context.Context, snapshotUID string, snapshotWriter *snapshot.SnapshotWriter, resourcesGroupedByType map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, maxItemsPerPartition uint32) error {
-	maxItemsPerPartition = 1
 	for _, resourceType := range currentMigrationTypes {
 		i := 0
 		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
