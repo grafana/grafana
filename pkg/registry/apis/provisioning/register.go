@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -74,7 +75,8 @@ var (
 )
 
 type APIBuilder struct {
-	features featuremgmt.FeatureToggles
+	features   featuremgmt.FeatureToggles
+	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
 	getter              rest.Getter
@@ -98,6 +100,7 @@ type APIBuilder struct {
 	repositorySecrets secrets.RepositorySecrets
 	client            client.ProvisioningV0alpha1Interface
 	access            authlib.AccessChecker
+	mutators          []controller.Mutator
 	statusPatcher     *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
@@ -116,6 +119,7 @@ func NewAPIBuilder(
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
+	usageStats usagestats.Service,
 	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
@@ -125,8 +129,15 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
+	mutators := []controller.Mutator{
+		git.Mutator(repositorySecrets),
+		github.Mutator(repositorySecrets),
+	}
+
 	b := &APIBuilder{
+		mutators:            mutators,
 		tracer:              tracer,
+		usageStats:          usageStats,
 		localFileResolver:   local,
 		features:            features,
 		ghFactory:           ghFactory,
@@ -151,11 +162,13 @@ func NewAPIBuilder(
 		b.extras = append(b.extras, builder(b))
 	}
 
-	// Add the available repository types from the extras
+	// Add the available repository types and mutators from the extras
 	for _, extra := range b.extras {
 		for _, t := range extra.RepositoryTypes() {
 			b.availableRepositoryTypes[t] = true
 		}
+
+		b.mutators = append(b.mutators, extra.Mutators()...)
 	}
 
 	return b
@@ -175,7 +188,7 @@ func RegisterAPIService(
 	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
-	usageStatsService usagestats.Service,
+	usageStats usagestats.Service,
 	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -193,13 +206,13 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
+		usageStats,
 		repositorySecrets,
 		access,
 		tracer,
 		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
-	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
 	return builder, nil
 }
 
@@ -425,92 +438,15 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Sync.IntervalSeconds = 60
 	}
 
-	// TODO: move this logic into github repository concrete implementation.
-	if r.Spec.Type == provisioning.GitHubRepositoryType {
-		if r.Spec.GitHub == nil {
-			return fmt.Errorf("github configuration is required")
-		}
-
-		// Trim trailing slash or .git
-		if len(r.Spec.GitHub.URL) > 5 {
-			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
-			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
-		}
-	}
-	if r.Spec.Type == provisioning.GitRepositoryType {
-		if r.Spec.Git == nil {
-			return fmt.Errorf("git configuration is required")
-		}
-
-		if r.Spec.GitHub != nil {
-			return fmt.Errorf("git and github cannot be used together")
-		}
-
-		if r.Spec.Local != nil {
-			return fmt.Errorf("git and local cannot be used together")
-		}
-
-		// Trim trailing slash and ensure .git is present
-		if len(r.Spec.Git.URL) > 5 {
-			r.Spec.Git.URL = strings.TrimSuffix(r.Spec.Git.URL, "/")
-
-			if !strings.HasSuffix(r.Spec.Git.URL, ".git") {
-				r.Spec.Git.URL = r.Spec.Git.URL + ".git"
-			}
-		}
-	}
-
 	if r.Spec.Workflows == nil {
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
-	if err := b.encryptGithubToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt github secrets: %w", err)
-	}
-
-	if err := b.encryptGitToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt git secrets: %w", err)
-	}
-
 	// Mutate the repository with any extra mutators
-	for _, extra := range b.extras {
-		if err := extra.Mutate(ctx, r); err != nil {
+	for _, mutator := range b.mutators {
+		if err := mutator(ctx, r); err != nil {
 			return fmt.Errorf("failed to mutate repository: %w", err)
 		}
-	}
-
-	return nil
-}
-
-// TODO: move this to a more appropriate place
-func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
-	if repo.Spec.GitHub != nil &&
-		repo.Spec.GitHub.Token != "" {
-		secretName := repo.Name + "-github-token"
-
-		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, secretName, repo.Spec.GitHub.Token)
-		if err != nil {
-			return err
-		}
-		repo.Spec.GitHub.Token = ""
-		repo.Spec.GitHub.EncryptedToken = nameOrValue
-	}
-
-	return nil
-}
-
-// TODO: move this to a more appropriate place
-// TODO: make this one more generic
-func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
-	if repo.Spec.Git != nil && repo.Spec.Git.Token != "" {
-		secretName := repo.Name + "-git-token"
-		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, secretName, repo.Spec.Git.Token)
-		if err != nil {
-			return err
-		}
-
-		repo.Spec.Git.EncryptedToken = nameOrValue
-		repo.Spec.Git.Token = ""
 	}
 
 	return nil
@@ -628,6 +564,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.repositoryLister = repoInformer.Lister()
+
+			// Create the repository resources factory
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.repositoryLister, b.unified)
+			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
@@ -1225,13 +1165,16 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			token = string(decrypted)
 		}
 
-		return git.NewGitRepository(ctx, r, git.RepositoryConfig{
+		cfg := git.RepositoryConfig{
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
 			Path:           r.Spec.Git.Path,
+			TokenUser:      r.Spec.Git.TokenUser,
 			Token:          token,
 			EncryptedToken: r.Spec.Git.EncryptedToken,
-		})
+		}
+
+		return git.NewGitRepository(ctx, r, cfg, b.repositorySecrets)
 	case provisioning.GitHubRepositoryType:
 		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
 		logger.Info("Instantiating Github repository")
@@ -1259,12 +1202,12 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, b.repositorySecrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken)
+		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken, b.repositorySecrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}

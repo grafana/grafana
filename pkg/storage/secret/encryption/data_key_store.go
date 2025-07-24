@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 // encryptionStoreImpl is the actual implementation of the data key storage.
@@ -19,25 +18,18 @@ type encryptionStoreImpl struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
 	tracer  trace.Tracer
-	log     log.Logger
 	metrics *DataKeyMetrics
 }
 
 func ProvideDataKeyStorage(
 	db contracts.Database,
 	tracer trace.Tracer,
-	features featuremgmt.FeatureToggles,
 	registerer prometheus.Registerer,
 ) (contracts.DataKeyStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return &encryptionStoreImpl{}, nil
-	}
-
 	store := &encryptionStoreImpl{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 		tracer:  tracer,
-		log:     log.New("encryption.store"),
 		metrics: NewDataKeyMetrics(registerer),
 	}
 
@@ -45,11 +37,16 @@ func ProvideDataKeyStorage(
 }
 
 func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid string) (*contracts.SecretDataKey, error) {
+	start := time.Now()
 	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.GetDataKey", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("uid", uid),
 	))
-	defer span.End()
+
+	defer func() {
+		span.End()
+		ss.metrics.GetDataKeyDuration.Observe(float64(time.Since(start)))
+	}()
 
 	req := readDataKey{
 		SQLTemplate: sqltemplate.New(ss.dialect),
@@ -103,11 +100,15 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 }
 
 func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace, label string) (*contracts.SecretDataKey, error) {
+	start := time.Now()
 	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.GetCurrentDataKey", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("label", label),
 	))
-	defer span.End()
+	defer func() {
+		span.End()
+		ss.metrics.GetCurrentDataKeyDuration.Observe(float64(time.Since(start)))
+	}()
 
 	req := readCurrentDataKey{
 		SQLTemplate: sqltemplate.New(ss.dialect),
@@ -161,10 +162,14 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 }
 
 func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace string) ([]*contracts.SecretDataKey, error) {
+	start := time.Now()
 	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.GetAllDataKeys", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
-	defer span.End()
+	defer func() {
+		span.End()
+		ss.metrics.GetAllDataKeysDuration.Observe(float64(time.Since(start)))
+	}()
 
 	req := listDataKeys{
 		SQLTemplate: sqltemplate.New(ss.dialect),
@@ -218,12 +223,16 @@ func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace str
 }
 
 func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *contracts.SecretDataKey) error {
+	start := time.Now()
 	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.CreateDataKey", trace.WithAttributes(
 		attribute.String("uid", dataKey.UID),
 		attribute.String("namespace", dataKey.Namespace),
 		attribute.Bool("active", dataKey.Active),
 	))
-	defer span.End()
+	defer func() {
+		span.End()
+		ss.metrics.CreateDataKeyDuration.Observe(float64(time.Since(start)))
+	}()
 
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
@@ -260,10 +269,14 @@ func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *contr
 }
 
 func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace string) error {
+	start := time.Now()
 	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.DisableDataKeys", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
-	defer span.End()
+	defer func() {
+		span.End()
+		ss.metrics.DisableDataKeysDuration.Observe(float64(time.Since(start)))
+	}()
 
 	req := disableDataKeys{
 		SQLTemplate: sqltemplate.New(ss.dialect),
@@ -294,11 +307,15 @@ func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace st
 }
 
 func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid string) error {
+	start := time.Now()
 	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.DeleteDataKey", trace.WithAttributes(
 		attribute.String("uid", uid),
 		attribute.String("namespace", namespace),
 	))
-	defer span.End()
+	defer func() {
+		span.End()
+		ss.metrics.DeleteDataKeyDuration.Observe(float64(time.Since(start)))
+	}()
 
 	if len(uid) == 0 {
 		return fmt.Errorf("data key id is missing")

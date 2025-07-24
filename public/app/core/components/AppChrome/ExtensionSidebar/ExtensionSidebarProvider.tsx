@@ -4,9 +4,9 @@ import { useLocalStorage } from 'react-use';
 import { PluginExtensionPoints, store, type ExtensionInfo } from '@grafana/data';
 import { config, getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { OpenExtensionSidebarEvent } from 'app/types/events';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent } from 'app/types/events';
 
-import { DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
+import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
@@ -173,7 +173,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       if (
         event.payload.pluginId &&
         event.payload.componentTitle &&
-        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId)
+        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId) &&
+        availableComponents
+          .get(event.payload.pluginId)
+          ?.addedComponents.some((component) => component.title === event.payload.componentTitle)
       ) {
         setDockedComponentWithProps(
           JSON.stringify({ pluginId: event.payload.pluginId, componentTitle: event.payload.componentTitle }),
@@ -182,11 +185,17 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       }
     };
 
-    const subscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
-    return () => {
-      subscription.unsubscribe();
+    const closeSidebarHandler = () => {
+      setDockedComponentId(undefined);
     };
-  }, [isEnabled, setDockedComponentWithProps]);
+
+    const openSubscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
+    const closeSubscription = getAppEvents().subscribe(CloseExtensionSidebarEvent, closeSidebarHandler);
+    return () => {
+      openSubscription.unsubscribe();
+      closeSubscription.unsubscribe();
+    };
+  }, [isEnabled, setDockedComponentWithProps, availableComponents]);
 
   // update the stored docked component id when it changes
   useEffect(() => {
@@ -222,7 +231,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         dockedComponentId,
         setDockedComponentId: (componentId) => setDockedComponentWithProps(componentId, undefined),
         availableComponents,
-        extensionSidebarWidth: extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+        extensionSidebarWidth: Math.min(
+          extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+          MAX_EXTENSION_SIDEBAR_WIDTH
+        ),
         setExtensionSidebarWidth,
         props,
       }}

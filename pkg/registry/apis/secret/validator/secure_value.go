@@ -2,7 +2,6 @@ package validator
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -14,16 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
-type secureValueValidator struct {
-	decryptersAllowList contracts.DecryptAllowList
-}
+type secureValueValidator struct{}
 
 var _ contracts.SecureValueValidator = &secureValueValidator{}
 
-func ProvideSecureValueValidator(decryptersAllowList contracts.DecryptAllowList) contracts.SecureValueValidator {
-	return &secureValueValidator{
-		decryptersAllowList: decryptersAllowList,
-	}
+func ProvideSecureValueValidator() contracts.SecureValueValidator {
+	return &secureValueValidator{}
 }
 
 func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, operation admission.Operation) field.ErrorList {
@@ -43,6 +38,13 @@ func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, op
 	}
 
 	// General validations.
+	if sv.Name == "" {
+		errs = append(errs, field.Required(field.NewPath("metadata", "name"), "a `name` is required"))
+	}
+	if sv.Namespace == "" {
+		errs = append(errs, field.Required(field.NewPath("metadata", "namespace"), "a `namespace` is required"))
+	}
+
 	if sv.Spec.Value != nil && len(*sv.Spec.Value) > contracts.SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES {
 		errs = append(
 			errs,
@@ -50,7 +52,7 @@ func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, op
 		)
 	}
 
-	if errs := validateDecrypters(sv.Spec.Decrypters, v.decryptersAllowList); len(errs) > 0 {
+	if errs := validateDecrypters(sv.Spec.Decrypters); len(errs) > 0 {
 		return errs
 	}
 
@@ -107,7 +109,7 @@ func validateSecureValueUpdate(sv, oldSv *secretv1beta1.SecureValue) field.Error
 }
 
 // validateDecrypters validates that (if populated) the `decrypters` must be unique.
-func validateDecrypters(decrypters []string, decryptersAllowList map[string]struct{}) field.ErrorList {
+func validateDecrypters(decrypters []string) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	// Limit the number of decrypters to 64 to not have it unbounded.
@@ -130,20 +132,6 @@ func validateDecrypters(decrypters []string, decryptersAllowList map[string]stru
 				errs,
 				field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, "decrypters cannot be empty if specified"),
 			)
-
-			continue
-		}
-
-		// Allow List: decrypters must match exactly and be in the allowed list to be able to decrypt.
-		if len(decryptersAllowList) > 0 {
-			if _, exists := decryptersAllowList[decrypter]; !exists {
-				errs = append(
-					errs,
-					field.Invalid(field.NewPath("spec", "decrypters", "["+strconv.Itoa(i)+"]"), decrypter, fmt.Sprintf("allowed values: %v", decryptersAllowList)),
-				)
-
-				return errs
-			}
 
 			continue
 		}
