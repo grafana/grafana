@@ -5,7 +5,7 @@ import { textUtil } from '@grafana/data';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
-import { PreviewBannerViewPR } from './PreviewBannerViewPR';
+import { isValidRepoType, PreviewBannerViewPR } from './PreviewBannerViewPR';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -149,5 +149,22 @@ describe('PreviewBannerViewPR', () => {
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(screen.getByText('This resource is loaded from a pull request in Bitbucket.')).toBeInTheDocument();
     });
+  });
+});
+
+describe('isValidRepoType', () => {
+  it('should return true for valid repo types', () => {
+    expect(isValidRepoType('github')).toBe(true);
+    expect(isValidRepoType('gitlab')).toBe(true);
+    expect(isValidRepoType('bitbucket')).toBe(true);
+    expect(isValidRepoType('git')).toBe(true);
+  });
+
+  it('should return false for invalid repo types', () => {
+    expect(isValidRepoType('unknown')).toBe(false);
+    expect(isValidRepoType('apple')).toBe(false);
+    expect(isValidRepoType('')).toBe(false);
+    expect(isValidRepoType(undefined)).toBe(false);
+    expect(isValidRepoType(null)).toBe(false);
   });
 });

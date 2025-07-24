@@ -99,6 +99,9 @@ export function PreviewBannerViewPR({ prParam, isNewPr, behindBranch, repoUrl }:
   );
 }
 
-function isValidRepoType(repoType: string | undefined): repoType is RepoType {
-  return repoType != null && repoType in RepoTypeDisplay;
+export function isValidRepoType(repoType: string | undefined): repoType is RepoType {
+  if (typeof repoType !== 'string') {
+    return false;
+  }
+  return repoType in RepoTypeDisplay;
 }
