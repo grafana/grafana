@@ -350,10 +350,18 @@ export function applySort(
       const sortDir = direction === 'ASC' ? 1 : -1;
 
       result = sortDir * compare(a[columnKey], b[columnKey]);
+      if (result === 0) {
+        const sortField = fields?.find((field) => field.name === columnKey);
+        if (sortField?.nanos !== undefined) {
+          result = sortDir * compare(sortField.nanos[a.__index], sortField.nanos[b.__index]);
+        }
+      }
+
       if (result !== 0) {
         break;
       }
     }
+
     return result;
   };
 
