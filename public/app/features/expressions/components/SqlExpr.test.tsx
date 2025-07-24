@@ -108,6 +108,7 @@ describe('SqlExpr with GenAI features', () => {
     onChange: jest.fn(),
     refIds: [{ value: 'A' }],
     query: { refId: 'expression_1', type: ExpressionQueryType.sql, expression: `SELECT * FROM A LIMIT 10` },
+    queries: [],
   };
 
   it('renders GenAI buttons when feature toggle is enabled and expression is empty', async () => {

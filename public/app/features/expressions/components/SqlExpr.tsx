@@ -80,7 +80,7 @@ const GenAIExplanationDrawer = lazy(() =>
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
 
-interface SqlExprProps {
+export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
   query: SqlExpressionQuery;
   queries: DataQuery[] | undefined;
