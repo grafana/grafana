@@ -3,6 +3,8 @@ import { Alert } from '@grafana/ui';
 
 import { ProvisioningErrorInfo } from '../types';
 
+import { MessageList } from './MessageList';
+
 interface ProvisioningAlertProps {
   error?: string | ProvisioningErrorInfo;
   warning?: string | ProvisioningErrorInfo;
@@ -26,13 +28,7 @@ const getMessage = (alert: string | ProvisioningErrorInfo) => {
   }
 
   if (Array.isArray(alert.message)) {
-    return (
-      <ul style={{ margin: 0, paddingLeft: '1.2em' }}>
-        {alert.message.map((msg, index) => (
-          <li key={index}>{msg}</li>
-        ))}
-      </ul>
-    );
+    return <MessageList messages={alert.message} />;
   }
 
   return alert.message;

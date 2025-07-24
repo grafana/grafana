@@ -6,6 +6,7 @@ import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, 
 import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
+import { MessageList } from '../Shared/MessageList';
 import { formatTimestamp } from '../utils/time';
 
 import { CheckRepository } from './CheckRepository';
@@ -192,15 +193,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                         </Text>
                       </div>
                       <div className={styles.valueColumn}>
-                        <Stack gap={1}>
-                          <ul style={{ margin: 0, paddingLeft: '1.2em' }}>
-                            {status.sync.message.map((msg, idx) => (
-                              <li key={idx}>
-                                <Text variant="body">{msg}</Text>
-                              </li>
-                            ))}
-                          </ul>
-                        </Stack>
+                        <MessageList messages={status.sync.message} variant="body" />
                       </div>
                     </>
                   )}
