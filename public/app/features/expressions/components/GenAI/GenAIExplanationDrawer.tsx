@@ -1,8 +1,6 @@
-import { css } from '@emotion/css';
-
-import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
+import { renderMarkdown } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Drawer, useStyles2, Stack, Card } from '@grafana/ui';
+import { Drawer, Stack, Card } from '@grafana/ui';
 
 interface AIExplanationDrawerProps {
   isOpen: boolean;
@@ -11,8 +9,6 @@ interface AIExplanationDrawerProps {
 }
 
 export const GenAIExplanationDrawer = ({ isOpen, onClose, explanation }: AIExplanationDrawerProps) => {
-  const styles = useStyles2(getStyles);
-
   if (!isOpen) {
     return null;
   }
@@ -23,30 +19,11 @@ export const GenAIExplanationDrawer = ({ isOpen, onClose, explanation }: AIExpla
       size="md"
       title={<Trans i18nKey="sql-expressions.explanation-modal-title">SQL Query Explanation</Trans>}
     >
-      <div className={styles.content} data-testid="explanation-drawer">
-        <Stack direction="column" gap={3}>
-          <div className={styles.explanationContainer}>
-            <Card noMargin>
-              <div className="markdown-html" dangerouslySetInnerHTML={{ __html: renderMarkdown(explanation) }} />
-            </Card>
-          </div>
-        </Stack>
-      </div>
+      <Stack direction="column" data-testid="explanation-drawer">
+        <Card noMargin>
+          <div className="markdown-html" dangerouslySetInnerHTML={{ __html: renderMarkdown(explanation) }} />
+        </Card>
+      </Stack>
     </Drawer>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  content: css({
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  explanationContainer: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(2),
-    overflow: 'auto',
-    flex: 1,
-  }),
-});
