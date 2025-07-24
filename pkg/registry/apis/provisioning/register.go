@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
@@ -616,7 +617,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			workers := []jobs.Worker{migrationWorker, syncWorker, exportWorker}
+			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible)
+			workers := []jobs.Worker{
+				deleteWorker,
+				exportWorker,
+				migrationWorker,
+				syncWorker,
+			}
 
 			// Add any extra workers
 			for _, extra := range b.extras {
