@@ -426,9 +426,12 @@ func TestStagedGitRepository_Create(t *testing.T) {
 			// Verify commit behavior based on CommitOnlyOnce option
 			if tt.opts.CommitOnlyOnce {
 				require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when CommitOnlyOnce is true")
-			} else if tt.wantError == nil {
-				require.Equal(t, 1, mockWriter.CommitCallCount(), "One commit should be made when CommitOnlyOnce is false")
-			} else if tt.wantError != nil && !strings.Contains(tt.wantError.Error(), "commit") {
+			} else if tt.wantError == nil || strings.Contains(tt.wantError.Error(), "push failed") {
+				require.Equal(t, 1, mockWriter.CommitCallCount(), "One commit should be made when CommitOnlyOnce is false (even if push fails)")
+			} else if tt.wantError != nil && strings.Contains(tt.wantError.Error(), "commit") {
+				// Commit failed, so it should have been attempted but failed
+				require.Equal(t, 1, mockWriter.CommitCallCount(), "Commit should be attempted even if it fails")
+			} else if tt.wantError != nil {
 				require.Equal(t, 0, mockWriter.CommitCallCount(), "No commits should be made when error occurs before commit")
 			}
 		})
