@@ -46,6 +46,13 @@ jest.mock('app/core/copy/appNotification', () => ({
   })),
 }));
 
+// Mock config
+jest.mock('../../../../../core/config', () => ({
+  config: {
+    feedbackLinksEnabled: false, // Default to false to avoid interference with tests
+  },
+}));
+
 // Mock navigator.clipboard
 Object.assign(navigator, {
   clipboard: {
@@ -287,7 +294,7 @@ describe('TracePageHeader test', () => {
 
       const button = screen.getByRole('button', { name: /Test Extension/i });
       expect(button).toBeInTheDocument();
-      expect(button).toHaveClass('css-125ehy6-button'); // Grafana button secondary class
+      expect(button).toHaveClass('css-7byezq-button'); // Grafana button primary class
     });
 
     it('should render extension icons when provided', () => {
@@ -415,6 +422,69 @@ describe('TracePageHeader test', () => {
       // Verify that trace data is still available
       expect(contextArg.traceID).toBe(trace.traceID);
       expect(contextArg.spans).toBe(trace.spans);
+    });
+  });
+
+  describe('Feedback Button', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should not render feedback button when feedbackLinksEnabled is false', () => {
+      // config.feedbackLinksEnabled is already mocked to false
+      setup();
+
+      const feedbackButton = screen.queryByText('Feedback');
+      expect(feedbackButton).not.toBeInTheDocument();
+    });
+
+    it('should render feedback button when feedbackLinksEnabled is true', () => {
+      // Mock config with feedbackLinksEnabled = true
+      const mockConfig = require('../../../../../core/config');
+      mockConfig.config.feedbackLinksEnabled = true;
+
+      setup();
+
+      const feedbackButton = screen.getByText('Feedback');
+      expect(feedbackButton).toBeInTheDocument();
+      expect(feedbackButton.closest('a')).toHaveAttribute('href', 'https://forms.gle/RZDEx8ScyZNguDoC8');
+      expect(feedbackButton.closest('a')).toHaveAttribute('target', '_blank');
+    });
+
+    it('should display tooltip for feedback button', async () => {
+      const user = userEvent.setup();
+
+      // Mock config with feedbackLinksEnabled = true
+      const mockConfig = require('../../../../../core/config');
+      mockConfig.config.feedbackLinksEnabled = true;
+
+      setup();
+
+      const feedbackButton = screen.getByText('Feedback');
+      await user.hover(feedbackButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('tooltip')).toBeInTheDocument();
+        expect(screen.getByText('Share your thoughts about tracing in Grafana.')).toBeInTheDocument();
+      });
+    });
+
+    it('should render feedback button with correct styling and icon', () => {
+      // Mock config with feedbackLinksEnabled = true
+      const mockConfig = require('../../../../../core/config');
+      mockConfig.config.feedbackLinksEnabled = true;
+
+      setup();
+
+      const feedbackButton = screen.getByText('Feedback');
+      const buttonElement = feedbackButton.closest('a');
+
+      expect(buttonElement).toBeInTheDocument();
+      expect(buttonElement).toHaveClass('css-125ehy6-button'); // Secondary variant class
+
+      // Check for icon
+      const iconElement = buttonElement?.querySelector('svg');
+      expect(iconElement).toBeInTheDocument();
     });
   });
 });
