@@ -104,6 +104,11 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 		}
 	}
+	// Run an initial cleanup to remove old checks
+	err = r.cleanupChecks(ctxWithoutCancel, logger)
+	if err != nil {
+		logger.Error("Error cleaning up old check reports", "error", err)
+	}
 
 	nextSendInterval := getNextSendInterval(lastCreated, r.evaluationInterval)
 	ticker := time.NewTicker(nextSendInterval)
