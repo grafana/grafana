@@ -27,4 +27,12 @@ export interface ModeOption {
 }
 
 export type StepStatus = 'idle' | 'running' | 'error' | 'success';
-export type StepStatusInfo = { status: StepStatus } | { status: 'error'; error: string };
+
+export interface StepErrorInfo {
+  title?: string;
+  message?: string | string[];
+}
+
+export type StepStatusInfo = 
+  | { status: 'idle' | 'running' | 'success' }
+  | { status: 'error'; error: string | StepErrorInfo };

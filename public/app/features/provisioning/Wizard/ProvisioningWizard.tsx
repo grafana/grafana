@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
-import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
@@ -19,6 +19,7 @@ import { getFormErrors } from '../utils/getFormErrors';
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
+import { StepAlert } from './StepAlert';
 import { useStepStatus } from './StepStatusContext';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
@@ -283,9 +284,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               </Text>
             </Box>
 
-            {hasStepError && 'error' in stepStatusInfo && stepStatusInfo.error && (
-              <Alert severity="error" title={stepStatusInfo.error} />
-            )}
+            {hasStepError && 'error' in stepStatusInfo && <StepAlert error={stepStatusInfo.error} />}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
