@@ -37,7 +37,7 @@ export const DEGREES = [
 
 export const getRegressionTransformer: () => SynchronousDataTransformerInfo<RegressionTransformerOptions> = () => ({
   id: DataTransformerID.regression,
-  name: t('transformers.regression.name.regression-analysis', 'Regression analysis'),
+  name: t('transformers.regression.name.trendline', 'Trendline'),
   description: t(
     'transformers.regression.description.create-new-data-frame',
     'Create a new data frame containing values predicted by a statistical model.'

@@ -13439,7 +13439,7 @@
         "create-new-data-frame": "Create a new data frame containing values predicted by a statistical model."
       },
       "name": {
-        "regression-analysis": "Regression analysis"
+        "trendline": "Trendline"
       }
     },
     "regression-transformer-editor": {
@@ -13460,8 +13460,11 @@
           "polynomial": "Polynomial"
         }
       },
-      "regression": "regression",
-      "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
+      "trendline": "trendline",
+      "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict",
+      "tags": {
+        "regression-analysis": "Regression analysis"
+      }
     },
     "rename-by-regex-transformer": {
       "description": {
