@@ -342,20 +342,21 @@ export function applySort(
     return rows;
   }
 
-  const sortNanos = sortColumns.map((c) => fields.find((f) => getDisplayName(f) === c.columnKey)?.nanos);
+  const sortNanos = sortColumns.map(
+    (c) => fields.find((f) => f.type === FieldType.time && getDisplayName(f) === c.columnKey)?.nanos
+  );
 
   const compareRows = (a: TableRow, b: TableRow): number => {
     let result = 0;
 
     for (let i = 0; i < sortColumns.length; i++) {
       const { columnKey, direction } = sortColumns[i];
-      const colType = columnTypes[columnKey];
-      const compare = getComparator(colType);
+      const compare = getComparator(columnTypes[columnKey]);
       const sortDir = direction === 'ASC' ? 1 : -1;
 
       result = sortDir * compare(a[columnKey], b[columnKey]);
 
-      if (result === 0 && sortNanos[i] !== undefined && colType === FieldType.time) {
+      if (result === 0 && sortNanos[i] !== undefined) {
         result = sortDir * (sortNanos[i]![a.__index] - sortNanos[i]![b.__index]);
       }
 
