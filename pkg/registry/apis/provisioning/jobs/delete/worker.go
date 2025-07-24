@@ -35,6 +35,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 	paths := opts.Paths
 	progress.SetTotal(ctx, len(paths))
+	progress.StrictMaxErrors(1) // Fail fast on any error during deletion
 
 	fn := func(repo repository.Repository, _ bool) error {
 		rw, ok := repo.(repository.ReaderWriter)

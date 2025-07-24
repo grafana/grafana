@@ -97,6 +97,7 @@ func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 	}), mock.Anything).Return(errors.New("delete job submitted targeting repository that is not a ReaderWriter"))
 
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute)
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
@@ -119,6 +120,7 @@ func TestDeleteWorker_ProcessWrapFnError(t *testing.T) {
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute)
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
@@ -149,6 +151,7 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 	})
 
 	mockProgress.On("SetTotal", mock.Anything, 2).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test/path1").Return()
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test/path2").Return()
 	mockProgress.On("TooManyErrors").Return(nil).Twice()
@@ -190,6 +193,7 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 	})
 
 	mockProgress.On("SetTotal", mock.Anything, 2).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test/path1").Return()
 
 	deleteError := errors.New("delete failed")
@@ -227,6 +231,7 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 	})
 
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test/path").Return()
 	mockProgress.On("TooManyErrors").Return(nil)
 
@@ -270,6 +275,7 @@ func TestDeleteWorker_ProcessSyncWorkerError(t *testing.T) {
 	})
 
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test/path").Return()
 	mockProgress.On("TooManyErrors").Return(nil)
 
