@@ -17,7 +17,6 @@ import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
-import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
@@ -116,8 +115,6 @@ const RuleListV1 = () => {
 
   const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
   const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
-  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
   return (
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
@@ -125,12 +122,7 @@ const RuleListV1 = () => {
       navId="alert-list"
       isLoading={false}
       renderTitle={(title) => <RuleListPageTitle title={title} />}
-      actions={
-        <RuleListActionButtons
-          hasAlertRulesCreated={hasAlertRulesCreated}
-          canCreateGrafanaRules={canCreateGrafanaRules}
-        />
-      }
+      actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}
     >
       <Stack direction="column">
         <RuleListErrors />

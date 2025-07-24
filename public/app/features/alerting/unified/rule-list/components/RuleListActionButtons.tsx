@@ -12,24 +12,20 @@ import { createRelativeUrl } from '../../utils/url';
 
 interface RuleListActionButtonsProps {
   hasAlertRulesCreated: boolean;
-  canCreateGrafanaRules: boolean;
 }
 
-export const RuleListActionButtons = memo<RuleListActionButtonsProps>(
-  ({ hasAlertRulesCreated, canCreateGrafanaRules }) => {
-    if (!hasAlertRulesCreated) {
-      return null;
-    }
-
-    return (
-      <Stack gap={1}>
-        {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
-        <CreateAlertButtons />
-        <ExportNewRuleButton />
-      </Stack>
-    );
+export const RuleListActionButtons = memo<RuleListActionButtonsProps>(({ hasAlertRulesCreated }) => {
+  if (!hasAlertRulesCreated) {
+    return null;
   }
-);
+
+  return (
+    <Stack gap={1}>
+      <CreateAlertButtons />
+      <ExportNewRuleButton />
+    </Stack>
+  );
+});
 
 RuleListActionButtons.displayName = 'RuleListActionButtons';
 
