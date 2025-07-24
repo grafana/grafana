@@ -11,15 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-//go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
-type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
-
 type Worker struct {
 	syncWorker jobs.Worker
-	wrapFn     WrapWithStageFn
+	wrapFn     repository.WrapWithStageFn
 }
 
-func NewWorker(syncWorker jobs.Worker, wrapFn WrapWithStageFn) *Worker {
+func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn) *Worker {
 	return &Worker{
 		syncWorker: syncWorker,
 		wrapFn:     wrapFn,
@@ -39,7 +36,6 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	paths := opts.Paths
 	progress.SetTotal(ctx, len(paths))
 
-	// Paths removal
 	fn := func(repo repository.Repository, _ bool) error {
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
