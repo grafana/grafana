@@ -45,10 +45,6 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     return await this.getResource(url, params);
   }
 
-  isSearchFormValid(query: JaegerQuery): boolean {
-    return !!query.service;
-  }
-
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
