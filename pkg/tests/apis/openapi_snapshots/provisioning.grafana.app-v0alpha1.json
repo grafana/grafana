@@ -2636,6 +2636,10 @@
             "description": "The source folder (or empty) to export",
             "type": "string"
           },
+          "message": {
+            "description": "Message to use when committing the changes in a single commit",
+            "type": "string"
+          },
           "path": {
             "description": "Prefix in target file system",
             "type": "string"
@@ -3156,6 +3160,10 @@
           "history": {
             "description": "Preserve history (if possible)",
             "type": "boolean"
+          },
+          "message": {
+            "description": "Message to use when committing the changes in a single commit",
+            "type": "string"
           }
         }
       },

@@ -752,6 +752,8 @@ export type ObjectMeta = {
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
 };
 export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
@@ -772,6 +774,8 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
   /** Prefix in target file system */
   path?: string;
 };

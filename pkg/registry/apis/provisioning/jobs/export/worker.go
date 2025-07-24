@@ -56,9 +56,15 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
+	msg := options.Message
+	if msg == "" {
+		msg = fmt.Sprintf("Export from Grafana %s", job.Name)
+	}
+
 	cloneOptions := repository.StageOptions{
-		Timeout:      10 * time.Minute,
-		PushOnWrites: false,
+		Mode:                  repository.StageModeCommitOnlyOnce,
+		CommitOnlyOnceMessage: msg,
+		Timeout:               10 * time.Minute,
 	}
 
 	fn := func(repo repository.Repository, _ bool) error {

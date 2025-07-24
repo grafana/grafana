@@ -37,7 +37,9 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
-			Push: &provisioning.ExportJobOptions{},
+			Push: &provisioning.ExportJobOptions{
+				Message: options.Message,
+			},
 		},
 	}
 	if err := m.exportWorker.Process(ctx, repo, exportJob, progress); err != nil {

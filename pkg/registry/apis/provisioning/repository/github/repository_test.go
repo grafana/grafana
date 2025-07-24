@@ -985,8 +985,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
 		mockStagedRepo := repository.NewMockStagedRepository(t)
 		opts := repository.StageOptions{
-			PushOnWrites: true,
-			Timeout:      10 * time.Second,
+			Mode:    repository.StageModeCommitOnEach,
+			Timeout: 10 * time.Second,
 		}
 		mockGitRepo.On("Stage", ctx, opts).Return(mockStagedRepo, nil)
 
