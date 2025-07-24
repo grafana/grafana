@@ -11,15 +11,15 @@ import (
 )
 
 // StageMode defines the staging and commit behavior
-type StageMode string
+type StageMode int
 
 const (
 	// StageModeCommitOnEach commits each file operation individually (default)
-	StageModeCommitOnEach StageMode = "commit_on_each"
+	StageModeCommitOnEach StageMode = iota
 	// StageModeCommitOnlyOnce stages all changes and commits them all at once on push
-	StageModeCommitOnlyOnce StageMode = "commit_only_once"
+	StageModeCommitOnlyOnce
 	// StageModeCommitAndPushOnEach commits and pushes each file operation individually
-	StageModeCommitAndPushOnEach StageMode = "commit_and_push_on_each"
+	StageModeCommitAndPushOnEach
 )
 
 type StageOptions struct {
