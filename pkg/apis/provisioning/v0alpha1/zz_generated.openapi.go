@@ -193,6 +193,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Message to use when committing the changes in a single commit",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"folder": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The source folder (or empty) to export",
@@ -1027,6 +1034,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 						SchemaProps: spec.SchemaProps{
 							Description: "Preserve history (if possible)",
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Message to use when committing the changes in a single commit",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},

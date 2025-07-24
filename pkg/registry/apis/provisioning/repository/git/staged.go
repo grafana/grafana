@@ -91,6 +91,25 @@ func (r *stagedGitRepository) ReadTree(ctx context.Context, ref string) ([]repos
 	return r.gitRepository.ReadTree(ctx, ref)
 }
 
+// handleCommitAndPush handles the commit and push logic based on the StageMode
+func (r *stagedGitRepository) handleCommitAndPush(ctx context.Context, message string) error {
+	switch r.opts.Mode {
+	case repository.StageModeCommitOnEach:
+		return r.commit(ctx, r.writer, message)
+	case repository.StageModeCommitAndPushOnEach:
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
+		return r.Push(ctx)
+	case repository.StageModeCommitOnlyOnce:
+		// No immediate commit, will commit on Push
+		return nil
+	default:
+		// Default to StageModeCommitOnEach for backward compatibility
+		return r.commit(ctx, r.writer, message)
+	}
+}
+
 func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data []byte, message string) error {
 	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
@@ -100,15 +119,7 @@ func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data
 		return err
 	}
 
-	if err := r.commit(ctx, r.writer, message); err != nil {
-		return err
-	}
-
-	if r.opts.PushOnWrites {
-		return r.Push(ctx)
-	}
-
-	return nil
+	return r.handleCommitAndPush(ctx, message)
 }
 
 func (r *stagedGitRepository) blobExists(ctx context.Context, path string) (bool, error) {
@@ -138,15 +149,7 @@ func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data 
 		}
 	}
 
-	if err := r.commit(ctx, r.writer, message); err != nil {
-		return err
-	}
-
-	if r.opts.PushOnWrites {
-		return r.Push(ctx)
-	}
-
-	return nil
+	return r.handleCommitAndPush(ctx, message)
 }
 
 func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data []byte, message string) error {
@@ -162,15 +165,7 @@ func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data
 		return err
 	}
 
-	if err := r.commit(ctx, r.writer, message); err != nil {
-		return err
-	}
-
-	if r.opts.PushOnWrites {
-		return r.Push(ctx)
-	}
-
-	return nil
+	return r.handleCommitAndPush(ctx, message)
 }
 
 func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message string) error {
@@ -182,15 +177,7 @@ func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message str
 		return err
 	}
 
-	if err := r.commit(ctx, r.writer, message); err != nil {
-		return err
-	}
-
-	if r.opts.PushOnWrites {
-		return r.Push(ctx)
-	}
-
-	return nil
+	return r.handleCommitAndPush(ctx, message)
 }
 
 func (r *stagedGitRepository) Push(ctx context.Context) error {
@@ -198,6 +185,16 @@ func (r *stagedGitRepository) Push(ctx context.Context) error {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, r.opts.Timeout)
 		defer cancel()
+	}
+
+	if r.opts.Mode == repository.StageModeCommitOnlyOnce {
+		message := r.opts.CommitOnlyOnceMessage
+		if message == "" {
+			message = "Staged changes"
+		}
+		if err := r.commit(ctx, r.writer, message); err != nil {
+			return err
+		}
 	}
 
 	return r.writer.Push(ctx)
