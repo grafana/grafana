@@ -1,5 +1,5 @@
 import { FALLBACK_COLOR, Field, FieldType, formattedValueToString, getFieldColorModeForField } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, StackingMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { ColorIndicatorStyles } from './VizTooltipColorIndicator';
 import { ColorIndicator, ColorPlacement, VizTooltipItem } from './types';
@@ -82,6 +82,49 @@ export const getContentItems = (
   fieldFilter = (field: Field) => true,
   hideZeros = false
 ): VizTooltipItem[] => {
+  // needed for computing percentage on stacked fields, null means 'NotAvailable'
+  let groupAccums: Record<string, number | null> = {};
+
+  for (let i = 0; i < fields.length; i++) {
+    const field = fields[i];
+
+    if (field === xField || field.type === FieldType.time || field.config.custom?.hideFrom?.viz) {
+      continue;
+    }
+
+    // only accum those in 'percent' stacking mode
+    const stackingConfig = field.config.custom?.stacking;
+    if (!stackingConfig || stackingConfig.mode !== StackingMode.Percent) {
+      continue;
+    }
+
+    // not available when group contains non-numeric
+    if (!(field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)) {
+      groupAccums[stackingConfig.group] = null;
+      continue;
+    }
+
+    let dataIdx = dataIdxs[i];
+
+    // not available when group contains non-hovered
+    if (dataIdx == null) {
+      groupAccums[stackingConfig.group] = null;
+      continue;
+    }
+
+    const v = fields[i].values[dataIdx];
+
+    if (v === null) {
+      continue;
+    }
+
+    if (groupAccums[stackingConfig.group] === undefined) {
+      groupAccums[stackingConfig.group] = v;
+    } else if (groupAccums[stackingConfig.group] !== null) {
+      groupAccums[stackingConfig.group] += v;
+    }
+  }
+
   let rows: VizTooltipItem[] = [];
 
   let allNumeric = true;
@@ -140,9 +183,16 @@ export const getContentItems = (
       colorPlacement = ColorPlacement.trailing;
     }
 
+    const stackingConfig = field.config.custom?.stacking;
+    let suffixInPercentStackingMode = '';
+    if (stackingConfig && stackingConfig.mode === StackingMode.Percent && groupAccums[stackingConfig.group]) {
+      const percentage = (numeric / groupAccums[stackingConfig.group]!) * 100;
+      suffixInPercentStackingMode = isFinite(percentage) ? ` (${percentage.toFixed()}%)` : '';
+    }
+
     rows.push({
       label: field.state?.displayName ?? field.name,
-      value: formattedValueToString(display),
+      value: `${formattedValueToString(display)}${suffixInPercentStackingMode}`,
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,
