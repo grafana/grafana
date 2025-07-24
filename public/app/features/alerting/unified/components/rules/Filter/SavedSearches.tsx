@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, InteractiveTable, Stack } from '@grafana/ui';
 
 import MoreButton from '../../MoreButton';
@@ -12,7 +12,6 @@ type TableColumns = {
 
 export const SavedSearches = () => {
   const applySearch = useCallback((name: string) => {}, []);
-  const { t } = useTranslate();
 
   return (
     <Stack direction="column" gap={2} alignItems="flex-end">
