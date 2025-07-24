@@ -43,6 +43,9 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     bootData: {
+      user: {
+        timezone: 'UTC',
+      },
       settings: {
         defaultDatasource: '-- Grafana --',
         datasources: {

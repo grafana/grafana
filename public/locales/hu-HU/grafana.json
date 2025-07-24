@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Értékelési csoport szerkesztése"
     },
     "group-loader": {
-      "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben"
+      "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "A csoport törlése folyamatban van"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Előnézet frissítése",
+      "empty-state": "",
       "label-preview": "Előnézet",
       "refresh": "Frissítés"
     },
@@ -8597,7 +8600,10 @@
         "no-data": ""
       },
       "no-values-label": "Nincsenek értékek",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Címkék"
@@ -9330,6 +9336,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Nincs megjeleníthető mező.",
+      "open-assistant": "",
       "pin-line": "Napló kitűzése",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9355,9 @@
       "copy-log": "Naplósor másolása",
       "hide-details": "Napló részleteinek megjelenítése",
       "icon-label": "Naplómenü",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Napló rögzítése",
       "show-context": "Kontextus megjelenítése",
       "show-details": "Napló részleteinek elrejtése",
@@ -11207,7 +11217,8 @@
       "starting": "Kezdés…",
       "status": {
         "title-error-running-job": "Hiba történt a feladat futtatásakor",
-        "title-job-completed-successfully": "A feladat sikeresen befejeződött"
+        "title-job-completed-successfully": "A feladat sikeresen befejeződött",
+        "title-warning-running-job": ""
       },
       "summary": "Összegzés"
     },
