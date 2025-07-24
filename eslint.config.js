@@ -414,4 +414,22 @@ module.exports = [
       ],
     },
   },
+  {
+    name: 'grafana/no-extensions-imports',
+    files: ['**/*.{ts,tsx,js}'],
+    ignores: ['public/app/extensions/**/*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['app/extensions', 'app/extensions/*'],
+              message: 'Importing from app/extensions is not allowed',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
