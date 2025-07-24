@@ -100,3 +100,12 @@ export type CriticalPathSection = {
   section_start: number;
   section_end: number;
 };
+
+// Type for the plugin link context that includes trace data and datasource information
+export type TraceViewPluginExtensionContext = Trace & {
+  datasource: {
+    name: string;
+    uid: string;
+    type: string;
+  };
+};

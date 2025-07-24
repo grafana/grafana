@@ -27,6 +27,7 @@ import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { TracePageHeader } from './TracePageHeader';
 import { trace } from './mocks';
+import { TraceViewPluginExtensionContext } from '../types/trace';
 
 // Mock @grafana/runtime
 jest.mock('@grafana/runtime', () => ({
@@ -99,6 +100,8 @@ const setup = (pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean }
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
     data: new MutableDataFrame(),
+    datasourceName: 'test-datasource',
+    datasourceUid: 'test-datasource-uid',
   };
 
   return {
@@ -130,13 +133,20 @@ describe('TracePageHeader test', () => {
   });
 
   describe('Plugin Extensions', () => {
-    it('should call usePluginLinks with correct parameters', () => {
+    it('should call usePluginLinks with correct parameters including datasource context', () => {
       const { mockUsePluginLinks } = setup();
 
       expect(mockUsePluginLinks).toHaveBeenCalledWith({
         extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
-        context: trace,
-        limitPerPlugin: 5,
+        context: {
+          ...trace,
+          datasource: {
+            name: 'test-datasource',
+            uid: 'test-datasource-uid',
+            type: 'tempo',
+          },
+        },
+        limitPerPlugin: 2,
       });
     });
 
@@ -317,14 +327,21 @@ describe('TracePageHeader test', () => {
       expect(screen.getByText('Extension 3')).toBeInTheDocument();
     });
 
-    it('should maintain extension context with trace data', () => {
+    it('should maintain extension context with trace data and datasource information', () => {
       const { mockUsePluginLinks } = setup();
 
       const [callArgs] = mockUsePluginLinks.mock.calls;
       expect(callArgs[0]).toEqual({
         extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
-        context: trace,
-        limitPerPlugin: 5,
+        context: {
+          ...trace,
+          datasource: {
+            name: 'test-datasource',
+            uid: 'test-datasource-uid',
+            type: 'tempo',
+          },
+        },
+        limitPerPlugin: 2,
       });
 
       // Verify the context contains the expected trace properties
@@ -332,6 +349,15 @@ describe('TracePageHeader test', () => {
       expect(callArgs[0].context).toHaveProperty('spans');
       expect(callArgs[0].context).toHaveProperty('duration', trace.duration);
       expect(callArgs[0].context).toHaveProperty('startTime', trace.startTime);
+
+      // Verify the context contains the datasource information
+      expect(callArgs[0].context).toHaveProperty('datasource');
+      const contextWithDatasource = callArgs[0].context as TraceViewPluginExtensionContext;
+      expect(contextWithDatasource.datasource).toEqual({
+        name: 'test-datasource',
+        uid: 'test-datasource-uid',
+        type: 'tempo',
+      });
     });
 
     it('should handle loading state gracefully', () => {
@@ -372,6 +398,22 @@ describe('TracePageHeader test', () => {
       fireEvent.click(button);
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should provide datasource context to plugin extensions', () => {
+      const { mockUsePluginLinks } = setup();
+
+      const contextArg = mockUsePluginLinks.mock.calls[0][0].context as TraceViewPluginExtensionContext;
+
+      // Verify that plugin extensions receive datasource information in context
+      expect(contextArg.datasource).toBeDefined();
+      expect(contextArg.datasource.name).toBe('test-datasource');
+      expect(contextArg.datasource.uid).toBe('test-datasource-uid');
+      expect(contextArg.datasource.type).toBe('tempo');
+
+      // Verify that trace data is still available
+      expect(contextArg.traceID).toBe(trace.traceID);
+      expect(contextArg.spans).toBe(trace.spans);
     });
   });
 });

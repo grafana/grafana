@@ -45,7 +45,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { config } from '../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
-import { Trace } from '../types/trace';
+import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
 import { SpanFilters } from './SpanFilters/SpanFilters';
@@ -110,16 +110,18 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   }, [trace.spans]);
 
   // Get plugin extensions for trace view header actions
+  const traceContext: TraceViewPluginExtensionContext = {
+    ...trace,
+    datasource: {
+      name: datasourceName,
+      uid: datasourceUid,
+      type: datasourceType,
+    },
+  };
+
   const { links: extensionLinks } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
-    context: {
-      ...trace,
-      datasource: {
-        name: datasourceName,
-        uid: datasourceUid,
-        type: datasourceType,
-      },
-    },
+    context: traceContext,
     limitPerPlugin: 2,
   });
 
