@@ -12,9 +12,12 @@ const getTitle = (alert: string | ProvisioningErrorInfo, isWarning = false) => {
   if (typeof alert === 'string') {
     return alert;
   }
-  const defaultKey = isWarning ? 'provisioning.warning-title-default' : 'provisioning.error-title-default';
-  const defaultText = isWarning ? 'Warning' : 'Error';
-  return alert.title || t(defaultKey, defaultText);
+  
+  if (isWarning) {
+    return alert.title || t('provisioning.warning-title-default', 'Warning');
+  } else {
+    return alert.title || t('provisioning.error-title-default', 'Error');
+  }
 };
 
 const getMessage = (alert: string | ProvisioningErrorInfo) => {
@@ -36,21 +39,17 @@ const getMessage = (alert: string | ProvisioningErrorInfo) => {
 };
 
 export function ProvisioningAlert({ error, warning }: ProvisioningAlertProps) {
-  if (error) {
-    return (
-      <Alert severity="error" title={getTitle(error, false)}>
-        {getMessage(error)}
-      </Alert>
-    );
+  const alertData = error || warning;
+  const isWarning = Boolean(warning);
+  const severity = isWarning ? 'warning' : 'error';
+  
+  if (!alertData) {
+    return null;
   }
-
-  if (warning) {
-    return (
-      <Alert severity="warning" title={getTitle(warning, true)}>
-        {getMessage(warning)}
-      </Alert>
-    );
-  }
-
-  return null;
+  
+  return (
+    <Alert severity={severity} title={getTitle(alertData, isWarning)}>
+      {getMessage(alertData)}
+    </Alert>
+  );
 }

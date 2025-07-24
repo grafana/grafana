@@ -11216,7 +11216,8 @@
       "no-job-found-message": "The job may have been deleted or could not be retrieved. Cancel the current process and start again.",
       "starting": "Starting...",
       "status": {
-        "title-error-running-job": "Error running job"
+        "title-error-running-job": "Error running job",
+        "title-warning-running-job": "Job completed with warnings"
       },
       "summary": "Summary",
       "title": {
@@ -11387,6 +11388,7 @@
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
+    "warning-title-default": "Warning",
     "wizard": {
       "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
       "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
