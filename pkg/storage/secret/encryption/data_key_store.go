@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -299,8 +300,8 @@ func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace st
 		return fmt.Errorf("getting rows affected: %w", err)
 	}
 
-	if rowsAffected != 1 {
-		return fmt.Errorf("expected 1 row affected, but affected %d", rowsAffected)
+	if rowsAffected == 0 {
+		logging.FromContext(ctx).Info("Disable all data keys: no keys were disabled for namespace", "namespace", namespace)
 	}
 
 	return nil
@@ -371,7 +372,7 @@ func (ss *encryptionStoreImpl) DisableAllDataKeys(ctx context.Context) error {
 
 	result, err := ss.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("updating data key row: %w", err)
+		return fmt.Errorf("updating data keys: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -379,8 +380,8 @@ func (ss *encryptionStoreImpl) DisableAllDataKeys(ctx context.Context) error {
 		return fmt.Errorf("getting rows affected: %w", err)
 	}
 
-	if rowsAffected != 1 {
-		return fmt.Errorf("expected 1 row affected, but affected %d", rowsAffected)
+	if rowsAffected == 0 {
+		logging.FromContext(ctx).Info("Disable all data keys: no keys were disabled")
 	}
 
 	return nil

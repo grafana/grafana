@@ -361,3 +361,14 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 	return s.providerConfig
 }
+
+func (s *EncryptionManager) DisableAllDataKeys(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.DisableDataKeys")
+	defer span.End()
+
+	if err := s.store.DisableAllDataKeys(ctx); err != nil {
+		return fmt.Errorf("failed to disable data keys: %w", err)
+	}
+
+	return nil
+}
