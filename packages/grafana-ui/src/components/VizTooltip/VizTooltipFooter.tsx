@@ -42,23 +42,19 @@ function makeRenderLinksOrActions<T extends LinkModel | ActionModel>(
 
     if (oneClickItem != null) {
       return (
-        <div className={styles.dataLinks}>
-          <Stack direction="column" justifyContent="flex-start" gap={0.5}>
-            <span className={styles.oneClickWrapper}>
-              <Icon name="info-circle" size="lg" className={styles.infoIcon} />
-              {renderOneClickTrans(oneClickItem.title)}
-            </span>
-          </Stack>
-        </div>
+        <Stack direction="column" justifyContent="flex-start" gap={0.5}>
+          <span className={styles.oneClickWrapper}>
+            <Icon name="info-circle" size="lg" className={styles.infoIcon} />
+            {renderOneClickTrans(oneClickItem.title)}
+          </span>
+        </Stack>
       );
     }
 
     return (
-      <div className={styles.dataLinks}>
-        <Stack direction="column" justifyContent="flex-start" gap={itemGap}>
-          {items.map((item, i) => renderItem(item, i, styles))}
-        </Stack>
-      </div>
+      <Stack direction="column" justifyContent="flex-start" gap={itemGap}>
+        {items.map((item, i) => renderItem(item, i, styles))}
+      </Stack>
     );
   };
 
@@ -85,23 +81,41 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, onFilterCl
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
   const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
 
+  const VIZ_TOOLTIP_FOOTER_BUTTONS = [
+    {
+      shouldRender: !hasOneClickAction,
+      render: renderDataLinks(dataLinks, styles),
+    },
+    {
+      shouldRender: !hasOneClickLink,
+      render: renderActions(actions, styles),
+    },
+    {
+      shouldRender: !hasOneClickLink && !hasOneClickAction && onFilterClick,
+      render: (
+        <Button icon="filter" variant="secondary" size="sm" onClick={onFilterClick}>
+          <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">Filter for value</Trans>
+        </Button>
+      ),
+    },
+    {
+      shouldRender: !hasOneClickLink && !hasOneClickAction && annotate != null,
+      render: (
+        <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
+          <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <div className={styles.wrapper}>
-      {!hasOneClickAction && renderDataLinks(dataLinks, styles)}
-      {!hasOneClickLink && renderActions(actions, styles)}
-      {!hasOneClickLink && !hasOneClickAction && onFilterClick && (
-        <div className={styles.filterForValue}>
-          <Button icon="filter" variant="secondary" size="sm" onClick={onFilterClick}>
-            <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">Filter for value</Trans>
-          </Button>
-        </div>
-      )}
-      {!hasOneClickLink && !hasOneClickAction && annotate != null && (
-        <div className={styles.addAnnotations}>
-          <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
-            <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>
-          </Button>
-        </div>
+      {VIZ_TOOLTIP_FOOTER_BUTTONS.map(({ shouldRender, render }, index) =>
+        shouldRender && render ? (
+          <div key={index} className={styles.footerButton}>
+            {render}
+          </div>
+        ) : null
       )}
     </div>
   );
@@ -114,15 +128,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     padding: theme.spacing(0),
   }),
-  dataLinks: css({
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(1),
-  }),
-  addAnnotations: css({
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(1),
-  }),
-  filterForValue: css({
+  footerButton: css({
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
   }),
