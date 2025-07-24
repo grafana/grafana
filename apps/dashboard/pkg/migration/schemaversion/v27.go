@@ -98,7 +98,7 @@ func V27(dashboard map[string]interface{}) error {
 // removeRepeatedPanels filters out panels with repeatPanelId or repeatByRow properties
 // and cleans up repeated panels in collapsed rows
 func removeRepeatedPanels(panels []interface{}) []interface{} {
-	var newPanels []interface{}
+	newPanels := make([]interface{}, 0, len(panels))
 
 	for _, panel := range panels {
 		p, ok := panel.(map[string]interface{})
