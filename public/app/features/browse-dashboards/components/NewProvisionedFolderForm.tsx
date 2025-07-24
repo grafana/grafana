@@ -12,6 +12,7 @@ import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/ap
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
+import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
@@ -60,6 +61,17 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
           ),
         ],
       });
+
+      const prUrl = request.data?.urls?.newPullRequestURL;
+      if (workflow === 'branch' && prUrl) {
+        const url = buildResourceBranchRedirectUrl({
+          paramName: 'new_pull_request_url',
+          paramValue: prUrl,
+          repoType: request.data?.repository?.type,
+        });
+        navigate(url);
+        return;
+      }
 
       // TODO: Update when the upsert type is fixed
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
