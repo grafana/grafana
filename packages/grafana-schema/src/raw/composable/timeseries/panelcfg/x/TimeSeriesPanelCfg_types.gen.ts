@@ -15,6 +15,7 @@ export const pluginVersion = "12.1.0-pre";
 export interface Options extends common.OptionsWithTimezones {
   legend: common.VizLegendOptions;
   orientation?: common.VizOrientation;
+  timeCompare?: common.TimeCompareOptions;
   tooltip: common.VizTooltipOptions;
 }
 

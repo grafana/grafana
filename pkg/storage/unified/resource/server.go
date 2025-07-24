@@ -20,6 +20,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/dskit/ring"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -180,6 +181,8 @@ type SearchOptions struct {
 
 	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
 	RebuildInterval time.Duration
+
+	Ring *ring.Ring
 }
 
 type ResourceServerOptions struct {
@@ -223,6 +226,9 @@ type ResourceServerOptions struct {
 
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue QOSEnqueuer
+
+	Ring           *ring.Ring
+	RingLifecycler *ring.BasicLifecycler
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -305,7 +311,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
 		if err != nil {
 			return nil, err
 		}

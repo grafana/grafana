@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1563,7 +1564,8 @@
       "title": "Редактирование группы оценки"
     },
     "group-loader": {
-      "group-load-failed": "Не удалось загрузить правила из группы {{ groupName }} в {{ namespaceName }}"
+      "group-load-failed": "Не удалось загрузить правила из группы {{ groupName }} в {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Выполняется удаление группы"
@@ -2828,6 +2830,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Обновить просмотр",
+      "empty-state": "",
       "label-preview": "Предварительный просмотр",
       "refresh": "Обновить"
     },
@@ -8641,7 +8644,10 @@
         "no-data": ""
       },
       "no-values-label": "Нет значений",
-      "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}"
+      "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Теги"
@@ -9390,6 +9396,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9408,6 +9415,9 @@
       "copy-log": "Копировать строку журнала",
       "hide-details": "Показать сведения о журнале",
       "icon-label": "Меню журнала",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Закрепить журнал",
       "show-context": "Показать контекст",
       "show-details": "Скрыть сведения о журнале",
@@ -11279,7 +11289,8 @@
       "starting": "Запуск...",
       "status": {
         "title-error-running-job": "Ошибка при выполнении задания",
-        "title-job-completed-successfully": "Задание завершено"
+        "title-job-completed-successfully": "Задание завершено",
+        "title-warning-running-job": ""
       },
       "summary": "Сводка"
     },

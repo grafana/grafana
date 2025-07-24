@@ -8,6 +8,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
+  RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
@@ -19,16 +20,18 @@ import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
 
+import { buildResourceBranchRedirectUrl } from './utils';
+
 export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
-  isGitHub: boolean;
   isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
   targetFolderUID?: string;
   targetFolderTitle?: string;
+  repository?: RepositoryView;
   onDismiss: () => void;
   onSuccess: (folderUID: string, folderTitle: string) => void;
 }
@@ -38,16 +41,17 @@ export function MoveProvisionedDashboardForm({
   defaultValues,
   loadedFromRef,
   readOnly,
-  isGitHub,
   isNew,
   workflowOptions,
   targetFolderUID,
   targetFolderTitle,
+  repository,
   onDismiss,
   onSuccess,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { editPanel: panelEditor } = dashboard.useState();
+
   const { handleSubmit, watch } = methods;
   const appEvents = getAppEvents();
 
@@ -142,7 +146,12 @@ export function MoveProvisionedDashboardForm({
 
   const onBranchSuccess = () => {
     panelEditor?.onDiscard();
-    navigate(`/dashboards?new_pull_request_url=${createRequest.data?.urls?.newPullRequestURL}`);
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'new_pull_request_url',
+      paramValue: createRequest?.data?.urls?.newPullRequestURL,
+      repoType: createRequest?.data?.repository?.type,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({
@@ -213,7 +222,7 @@ export function MoveProvisionedDashboardForm({
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}
-              isGitHub={isGitHub}
+              repository={repository}
             />
 
             <Stack gap={2}>
