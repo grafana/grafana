@@ -884,6 +884,46 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		require.NoError(t, err, "dashboard should still exist in Grafana after move")
 	})
 
+	t.Run("move file to nested path without ref", func(t *testing.T) {
+		// Test a different scenario: Move a file that was never synced to Grafana
+		// This might reveal the issue if dashboard creation fails during move
+		const sourceFile = "never-synced.json"
+		helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", sourceFile)
+
+		// DO NOT sync - move the file immediately without it ever being in Grafana
+		const targetPath = "deep/nested/timeline.json"
+
+		// Perform the move operation without the file ever being synced to Grafana
+		resp := postFilesMove(t, helper, repo, targetPath, sourceFile, "move never-synced file to nested path")
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
+
+		// Verify the file moved in the repository
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
+		require.NoError(t, err, "moved file should exist in nested repository path")
+
+		// Check folders were created
+		folderList, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "should be able to list folders")
+
+		t.Logf("Folders after moving never-synced file: %d", len(folderList.Items))
+		for _, folder := range folderList.Items {
+			title, _, _ := unstructured.NestedString(folder.Object, "spec", "title")
+			t.Logf("  - %s: %s", folder.GetName(), title)
+		}
+
+		// The key test: Check if dashboard was created in Grafana during move
+		// The timeline-demo.json has UID "c0s0aPp4z"
+		const timelineUID = "c0s0aPp4z"
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		require.NoError(t, err, "dashboard should exist in Grafana after moving never-synced file")
+		t.Logf("Dashboard WAS created during move operation")
+		title, _, _ := unstructured.NestedString(dashboard.Object, "spec", "title")
+		folder, _, _ := unstructured.NestedString(dashboard.Object, "metadata", "annotations", "grafana.app/folder")
+		t.Logf("  - Title: %s, Folder: %s", title, folder)
+	})
+
 	t.Run("move file with content update", func(t *testing.T) {
 		const sourcePath = "moved/simple-move.json" // Use the file from previous test
 		const targetPath = "updated/content-updated.json"
