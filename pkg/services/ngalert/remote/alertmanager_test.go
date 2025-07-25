@@ -609,6 +609,14 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 						time.Location{},
 						labels.Matcher{},
 						common_config.ProxyConfig{})))
+
+				got1 := got
+				got = ""
+				err = am.CompareAndSendConfiguration(ctx, &cfg)
+				require.NoError(tt, err)
+
+				got2 := got
+				require.Equalf(tt, got1, got2, "Configuration is not idempotent")
 				return
 			}
 			for _, expErr := range test.expErrContains {
