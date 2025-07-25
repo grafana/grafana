@@ -14,6 +14,7 @@ import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
+import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
 
@@ -293,6 +294,7 @@ const FlameGraphContainer = ({
             isDiffMode={dataContainer.isDiffFlamegraph()}
             setCollapsedMap={setCollapsedMap}
             collapsedMap={collapsedMap}
+            assistantContext={data ? getAssistantContextFromDataFrame(data) : undefined}
           />
         )}
 
