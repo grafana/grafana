@@ -1,7 +1,7 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { varPreLine } from 'uwrap';
+import { Count, varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -103,25 +103,36 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
     ctx,
     font,
     avgCharWidth,
+    estimateLines: getTextLineEstimator(avgCharWidth),
+    wrappedCount: (value, width) => count(String(value), width),
   };
 }
 
 /**
- * @internal returns counts the number of lines in the value of a text cell using the typography context's count function.
+ * @internal returns a line counter which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
  */
-export function getTextLineCounter(typographyCtx: TypographyCtx): LineCounter {
+export function getTextLineEstimator(avgCharWidth: number): LineCounter {
   return (value, width) => {
     if (!value) {
       return 1;
     }
-    return typographyCtx.count(String(value), width);
+
+    // we don't have string breaking enabled in the table,
+    // so an unbroken string is by definition a single line.
+    const strValue = String(value);
+    if (!spaceRegex.test(strValue)) {
+      return 1;
+    }
+
+    const charsPerLine = width / avgCharWidth;
+    return strValue.length / charsPerLine;
   };
 }
 
 /**
  * @internal return a text line counter for every field which has wrapHeaderText enabled.
  */
-export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] {
+export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
   const wrappedColIdxs = fields.reduce((acc, field, idx) => {
     if (field.config?.custom?.wrapHeaderText) {
       acc.push(idx);
@@ -130,27 +141,46 @@ export function buildHeaderLineCounters(fields: Field[], typographyCtx: Typograp
   }, [] as number[]);
 
   if (wrappedColIdxs.length === 0) {
-    return [];
+    return undefined;
   }
 
-  return [{ counter: getTextLineCounter(typographyCtx), fieldIdxs: wrappedColIdxs }];
+  // don't bother with estimating the line counts for the headers, because it's punishing
+  // when we get it wrong and there won't be that many compared to how many rows a table might contain.
+  return [{ counter: typographyCtx.wrappedCount, fieldIdxs: wrappedColIdxs }];
 }
 
+const spaceRegex = /[\s-]/;
+
 /**
- * @internal return a text line counter for every field which has wrapHeaderText enabled.
+ * @internal return a text line counter for every field which has wrapHeaderText enabled. we do this once as we're rendering
+ * the table, and then getRowHeight uses the output of this to caluclate the height of each row.
  */
-export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] {
+export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
   const result: Record<string, LineCounterEntry> = {};
+  let wrappedFields = 0;
 
   for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
     const field = fields[fieldIdx];
     if (shouldTextWrap(field)) {
+      wrappedFields++;
       // TODO: Pills, DataLinks, and JSON will have custom line counters here.
+
+      // for string fields, we really want to find the longest field ahead of time to reduce the number of calls to `count`.
+      // calling `count` is going to get a perfectly accurate line count, but it is expensive, so we'd rather estimate the line
+      // count and call the counter only for the field which will take up the most space based on its
       if (field.type === FieldType.string) {
-        result.textCounter = result.textCounter ?? { counter: getTextLineCounter(typographyCtx), fieldIdxs: [] };
+        result.textCounter = result.textCounter ?? {
+          counter: typographyCtx.estimateLines,
+          estimate: typographyCtx.wrappedCount,
+          fieldIdxs: [],
+        };
         result.textCounter.fieldIdxs.push(fieldIdx);
       }
     }
+  }
+
+  if (wrappedFields === 0) {
+    return undefined;
   }
 
   return Object.values(result);
@@ -166,21 +196,34 @@ export function getRowHeight(
   rowIdx: number,
   columnWidths: number[],
   defaultHeight: number,
-  lineCounters: LineCounterEntry[],
+  lineCounters?: LineCounterEntry[],
   lineHeight = TABLE.LINE_HEIGHT,
   verticalPadding = 0
 ): number {
-  let maxLines = 1;
+  if (!lineCounters?.length) {
+    return defaultHeight;
+  }
 
-  for (const { counter, fieldIdxs } of lineCounters) {
+  let maxLines = 1;
+  let maxValue = '';
+  let maxWidth = 0;
+  let accurateCounter: LineCounter | undefined;
+
+  for (const { estimate, counter, fieldIdxs } of lineCounters) {
+    const count = estimate ?? counter;
+    const isEstimating = typeof estimate === 'function';
     for (const fieldIdx of fieldIdxs) {
       const field = fields[fieldIdx];
       // special case: for the header, provide `-1` as the row index.
       const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellValueRaw != null) {
-        const approxLines = counter(cellValueRaw, columnWidths[fieldIdx]);
+        const colWidth = columnWidths[fieldIdx];
+        const approxLines = count(cellValueRaw, colWidth);
         if (approxLines > maxLines) {
           maxLines = approxLines;
+          maxValue = cellValueRaw;
+          maxWidth = colWidth;
+          accurateCounter = isEstimating ? counter : undefined;
         }
       }
     }
@@ -188,6 +231,12 @@ export function getRowHeight(
 
   if (maxLines === 1) {
     return defaultHeight;
+  }
+
+  // if we finished this row height loop with an estimate, we need to call
+  // the `getValue` method to unwrap and get the accurate line count.
+  if (typeof accurateCounter === 'function') {
+    maxLines = accurateCounter(maxValue, maxWidth);
   }
 
   const totalHeight = maxLines * lineHeight + verticalPadding;

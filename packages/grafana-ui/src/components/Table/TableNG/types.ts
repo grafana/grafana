@@ -268,10 +268,9 @@ export interface TypographyCtx {
   font: string;
   avgCharWidth: number;
   count: Count;
+  estimateLines: LineCounter;
+  wrappedCount: LineCounter;
 }
 
-export type LineCounter = (value: unknown, colWidth: number) => number;
-export interface LineCounterEntry {
-  counter: LineCounter;
-  fieldIdxs: number[];
-}
+export type LineCounter = (value: unknown, width: number) => number;
+export type LineCounterEntry = { counter: LineCounter; estimate?: LineCounter; fieldIdxs: number[] };

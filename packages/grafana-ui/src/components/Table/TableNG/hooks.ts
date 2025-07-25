@@ -394,7 +394,7 @@ export function useRowHeight({
   typographyCtx,
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {
   const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
-  const hasWrappedCols = useMemo(() => lineCounters.some((lc) => lc !== null), [lineCounters]);
+  const hasWrappedCols = useMemo(() => lineCounters?.length ?? 0 > 0, [lineCounters]);
 
   const colWidths = useMemo(() => {
     const columnWidthAffordance = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
@@ -409,7 +409,7 @@ export function useRowHeight({
 
     // this cache should get blown away on resize, data refresh, updated fields, etc.
     // caching by __index is ok because sorting does not modify the __index.
-    const cache: number[] = [];
+    const cache: Array<number | undefined> = Array(fields[0].values.length);
     return (row: TableRow) => {
       // nested rows
       if (row.__depth > 0) {
@@ -428,8 +428,9 @@ export function useRowHeight({
       }
 
       // regular rows
-      if (!cache[row.__index]) {
-        cache[row.__index] = getRowHeight(
+      let result = cache[row.__index];
+      if (!result) {
+        result = getRowHeight(
           fields,
           row.__index,
           colWidths,
@@ -438,9 +439,10 @@ export function useRowHeight({
           TABLE.LINE_HEIGHT,
           TABLE.CELL_PADDING * 2
         );
+        cache[row.__index] = result;
       }
 
-      return cache[row.__index];
+      return result;
     };
   }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, lineCounters, expandedRows]);
 
