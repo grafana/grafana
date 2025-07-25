@@ -77,12 +77,10 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 
 		// If the request is coming from ST HG, the service identity used for decryption is still from the signed token,
 		// but for auditing purposes we also log the service identity passed in the request metadata.
-		md, ok := metadata.FromIncomingContext(ctx)
-		if ok {
-			grafanaSTServiceIdentity := md.Get(contracts.HeaderGrafanaSTServiceIdentityName)
-			if len(grafanaSTServiceIdentity) > 0 {
-				args = append(args, "grafana_st_decrypter_identity", grafanaSTServiceIdentity)
-				span.SetAttributes(attribute.StringSlice("grafana_st_decrypter.identity", grafanaSTServiceIdentity))
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			if svcIdentities := md.Get(contracts.HeaderGrafanaSTServiceIdentityName); len(svcIdentities) > 0 {
+				args = append(args, "grafana_st_decrypter_identity", svcIdentities[0])
+				span.SetAttributes(attribute.String("grafana_st_decrypter.identity", svcIdentities[0]))
 			}
 		}
 
