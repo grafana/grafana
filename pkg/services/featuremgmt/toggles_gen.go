@@ -143,10 +143,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagPluginsDetailsRightPanel
-	// Enables right panel for the plugins details page
-	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
-
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
@@ -363,6 +359,10 @@ const (
 	// Allow pan and zoom in canvas panel
 	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
 
+	// FlagTimeComparison
+	// Enables time comparison option in supported panels
+	FlagTimeComparison = "timeComparison"
+
 	// FlagLogsInfiniteScrolling
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
@@ -430,6 +430,10 @@ const (
 	// FlagSqlExpressions
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
+
+	// FlagSqlExpressionsColumnAutoComplete
+	// Enables column autocomplete for SQL Expressions
+	FlagSqlExpressionsColumnAutoComplete = "sqlExpressionsColumnAutoComplete"
 
 	// FlagGroupToNestedTableTransformation
 	// Enables the group to nested table transformation
@@ -899,6 +903,10 @@ const (
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
 
+	// FlagKubernetesAuthnMutation
+	// Enables create, delete, and update mutations for resources owned by IAM identity
+	FlagKubernetesAuthnMutation = "kubernetesAuthnMutation"
+
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
@@ -962,4 +970,8 @@ const (
 	// FlagDashboardDsAdHocFiltering
 	// Enables adhoc filtering support for the dashboard datasource
 	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
+
+	// FlagAlertmanagerRemoteSecondaryWithRemoteState
+	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
+	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
 )

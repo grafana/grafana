@@ -15,6 +15,7 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
+import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { useSelector } from 'app/types/store';
@@ -38,7 +39,6 @@ interface FormProps extends BulkDeleteProvisionResourceProps {
   initialValues: BulkDeleteFormData;
   repository: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
-  isGitHub: boolean;
   folderPath?: string;
 }
 
@@ -59,15 +59,7 @@ type MoveResultSuccessState = {
   repoUrl?: string;
 };
 
-function FormContent({
-  initialValues,
-  selectedItems,
-  repository,
-  workflowOptions,
-  folderPath,
-  isGitHub,
-  onDismiss,
-}: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
   // States
   const [progress, setProgress] = useState<ProgressState | null>(null);
   const [failureResults, setFailureResults] = useState<MoveResultFailed[] | undefined>();
@@ -98,7 +90,13 @@ function FormContent({
     if (workflow === 'branch') {
       onDismiss?.();
       if (successState.repoUrl) {
-        navigate({ search: `?repo_url=${encodeURIComponent(successState.repoUrl)}` });
+        const url = buildResourceBranchRedirectUrl({
+          paramName: 'repo_url',
+          paramValue: successState.repoUrl,
+          repoType: repository.type,
+        });
+
+        navigate(url);
         return;
       }
       window.location.reload();
@@ -233,7 +231,7 @@ function FormContent({
                 isNew={false}
                 workflow={workflow}
                 workflowOptions={workflowOptions}
-                isGitHub={isGitHub}
+                repository={repository}
                 hidePath
               />
 
@@ -263,7 +261,6 @@ export function BulkDeleteProvisionedResource({
   const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
-  const isGitHub = repository?.type === 'github';
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();
 
@@ -284,7 +281,6 @@ export function BulkDeleteProvisionedResource({
       initialValues={initialValues}
       repository={repository}
       workflowOptions={workflowOptions}
-      isGitHub={isGitHub}
       folderPath={folderPath}
     />
   );

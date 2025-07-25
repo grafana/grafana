@@ -262,14 +262,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "pluginsDetailsRightPanel",
-			Description:  "Enables right panel for the plugins details page",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true",
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:              "sqlDatasourceDatabaseSelection",
 			Description:       "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly:      true,
@@ -668,6 +660,13 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "timeComparison",
+			Description:  "Enables time comparison option in supported panels",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:         "logsInfiniteScrolling",
 			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
 			Stage:        FeatureStageGeneralAvailability,
@@ -802,6 +801,13 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
+		},
+		{
+			Name:         "sqlExpressionsColumnAutoComplete",
+			Description:  "Enables column autocomplete for SQL Expressions",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
 		},
 		{
 			Name:         "groupToNestedTableTransformation",
@@ -1710,6 +1716,14 @@ var (
 			HideFromDocs:      true,
 		},
 		{
+			Name:              "kubernetesAuthnMutation",
+			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:              "restoreDashboards",
 			Description:       "Enables restore deleted dashboards feature",
 			Stage:             FeatureStageExperimental,
@@ -1844,6 +1858,15 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:              "alertmanagerRemoteSecondaryWithRemoteState",
+			Description:       "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
 		},
 	}
 )
