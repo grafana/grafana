@@ -27,6 +27,13 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
   useCreateRepositoryFilesWithPathMutation: jest.fn(),
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
+  provisioningAPIv0alpha1: {
+    endpoints: {
+      listRepository: {
+        select: jest.fn(() => () => ({ data: { items: [] } })),
+      },
+    },
+  },
 }));
 
 jest.mock('app/api/clients/folder/v1beta1', () => ({
@@ -70,7 +77,13 @@ function setup(props: Partial<Props> = {}) {
       folder: { uid: '', title: '' },
     },
     readOnly: false,
-    isGitHub: true,
+    repository: {
+      type: 'github',
+      name: 'test-repo',
+      title: 'Test Repo',
+      workflows: ['branch', 'write'],
+      target: 'folder',
+    },
     workflowOptions: [
       { label: 'Write', value: 'write' },
       { label: 'Branch', value: 'branch' },

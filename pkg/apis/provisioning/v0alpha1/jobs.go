@@ -103,6 +103,9 @@ type SyncJobOptions struct {
 }
 
 type ExportJobOptions struct {
+	// Message to use when committing the changes in a single commit
+	Message string `json:"message,omitempty"`
+
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
 
@@ -116,6 +119,9 @@ type ExportJobOptions struct {
 type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
+
+	// Message to use when committing the changes in a single commit
+	Message string `json:"message,omitempty"`
 }
 
 // The job status

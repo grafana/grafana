@@ -7160,6 +7160,7 @@
           "start-time": "Start Time:"
         }
       },
+      "share-span": "Share",
       "warnings": "Warnings"
     },
     "span-filters": {
@@ -8600,7 +8601,10 @@
         "no-data": "No data"
       },
       "no-values-label": "No values",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sparkline": {
+        "no-data": "no data"
+      }
     },
     "tags": {
       "list-label": "Tags"
@@ -10948,15 +10952,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "This resource is behind the branch in GitHub.",
-      "new-branch": "View it in GitHub to see the latest changes.",
-      "not-saved": "The value is not yet saved in the Grafana database",
-      "open-git-hub": "Open in Github",
-      "open-pull-request-in-git-hub": "Open pull request in GitHub",
-      "view-pull-request-in-git-hub": "View pull request in GitHub"
+      "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
+      "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
+      "open-in-repo-button": "Open in {{repoType}}",
+      "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
+      "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
-    "title-created-branch-git-hub": "A new resource has been created in a branch in GitHub.",
-    "title-loaded-pull-request-git-hub": "This resource is loaded from a pull request in GitHub."
+    "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
     "banner": {
@@ -11066,10 +11070,10 @@
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
+    "error-title-default": "Error",
     "expanded-row": {
       "job-specification": "Job Specification",
-      "summary": "Summary",
-      "title-error": "Error"
+      "summary": "Summary"
     },
     "features-list": {
       "actions": {
@@ -11214,10 +11218,12 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
-        "title-job-completed-successfully": "Job completed successfully",
         "title-warning-running-job": "Job completed with warnings"
       },
-      "summary": "Summary"
+      "summary": "Summary",
+      "title": {
+        "error-fetching-active-job": "Error fetching active job"
+      }
     },
     "local": {
       "path-description": "Local file system path to the repository",
@@ -11383,6 +11389,7 @@
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
+    "warning-title-default": "Warning",
     "wizard": {
       "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
       "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",

@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1563,7 +1564,8 @@
       "title": "Upravit hodnotící skupinu"
     },
     "group-loader": {
-      "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}"
+      "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Probíhá odstranění skupiny"
@@ -2828,6 +2830,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Obnovit náhled",
+      "empty-state": "",
       "label-preview": "Náhled",
       "refresh": "Obnovit"
     },
@@ -7201,6 +7204,7 @@
           "start-time": "Čas zahájení:"
         }
       },
+      "share-span": "",
       "warnings": "Varování"
     },
     "span-filters": {
@@ -8641,7 +8645,10 @@
         "no-data": ""
       },
       "no-values-label": "Žádné hodnoty",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tagy"
@@ -9390,6 +9397,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Žádná pole k zobrazení.",
+      "open-assistant": "",
       "pin-line": "Připnout protokol",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9408,6 +9416,9 @@
       "copy-log": "Kopírovat řádek protokolu",
       "hide-details": "Zobrazit podrobnosti protokolu",
       "icon-label": "Nabídka protokolu",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Připnout protokol",
       "show-context": "Zobrazit kontext",
       "show-details": "Skrýt podrobnosti protokolu",
@@ -11007,15 +11018,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11131,10 +11142,10 @@
       "title-instant-updates-requests-webhooks": "Okamžité aktualizace a pull requesty pomocí webhooků.",
       "title-visual-previews-in-pull-requests": "Vizuální náhledy v pull requestech s vykreslením obrázků"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Specifikace úlohy",
-      "summary": "Shrnutí",
-      "title-error": "Chyba"
+      "summary": "Shrnutí"
     },
     "features-list": {
       "actions": {
@@ -11279,9 +11290,12 @@
       "starting": "Spouštění…",
       "status": {
         "title-error-running-job": "Chyba při spouštění úlohy",
-        "title-job-completed-successfully": "Úloha byla úspěšně dokončena"
+        "title-warning-running-job": ""
       },
-      "summary": "Shrnutí"
+      "summary": "Shrnutí",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11447,6 +11461,7 @@
       "go-to": "Přejít na",
       "make-sure": "Nezapomeňte zahrnout tato oprávnění"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Během tohoto procesu nebude možné vytvářet, upravovat ani odstraňovat zdroje. V posledním kroku zmizí.",
       "alert-point-2": "Po zajištění se zdroje znovu zobrazí a budou spravovány prostřednictvím externího úložiště.",
