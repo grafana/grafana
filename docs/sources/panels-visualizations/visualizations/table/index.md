@@ -227,14 +227,8 @@ After you activate the table footer, make selections for the following options:
 ### Cell options
 
 Cell options allow you to control how data is displayed in a table.
-<<<<<<< HEAD
-The options are:
-
-- [Cell type](#cell-type) - Control the default cell display settings.
-- # [Cell value inspect](#cell-value-inspect) - Enables value inspection from table cells.
-  The options are differ based on the cell type that you select and are outlined within the descriptions of each cell type.
-  The following table provides short descriptions for each cell type and links to a longer description and the cell type options.
-  > > > > > > > 227a33fadd6 (Docs: Document cell options by cell type (#106961))
+The options are differ based on the cell type that you select and are outlined within the descriptions of each cell type.
+The following table provides short descriptions for each cell type and links to a longer description and the cell type options.
 
 #### Cell type
 
