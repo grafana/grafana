@@ -26,7 +26,6 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
-import { PrometheusDatasource as PrometheusDatasourceType } from '@grafana/prometheus';
 import {
   BackendSrvRequest,
   config,
