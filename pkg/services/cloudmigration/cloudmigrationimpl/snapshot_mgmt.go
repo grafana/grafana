@@ -781,7 +781,6 @@ func (s *Service) uploadSnapshotWithFSStorage(ctx context.Context, session *clou
 	// nolint:gosec
 	indexFile, err := os.Open(indexFilePath)
 	if err != nil {
-		// TODO: Clean this notice once we've fixed the HA bug
 		return fmt.Errorf("opening index files: %w. If you are running Grafana in a highly-available setup, try setting cloud_migration.resource_storage_type to 'db' or scaling down to one replica to avoid a known bug: https://github.com/grafana/grafana/issues/107264", err)
 	}
 	defer func() {
