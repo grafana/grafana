@@ -252,11 +252,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Allow core plugins to be loaded as external
-  * @default true
-  */
-  externalCorePlugins?: boolean;
-  /**
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;
@@ -286,6 +281,10 @@ export interface FeatureToggles {
   * Routes library panel requests from /api to the /apis endpoint
   */
   kubernetesLibraryPanels?: boolean;
+  /**
+  * Routes library panel connections requests from /api to using search
+  */
+  kubernetesLibraryPanelConnections?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
   */
@@ -349,6 +348,10 @@ export interface FeatureToggles {
   */
   alertmanagerRemoteSecondary?: boolean;
   /**
+  * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
+  */
+  alertingProvenanceLockWrites?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -392,6 +395,10 @@ export interface FeatureToggles {
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Enables time comparison option in supported panels
+  */
+  timeComparison?: boolean;
   /**
   * Enables infinite scrolling for the Logs panel in Explore and Dashboards
   * @default true
@@ -468,6 +475,10 @@ export interface FeatureToggles {
   * Enables SQL Expressions, which can execute SQL queries against data source results.
   */
   sqlExpressions?: boolean;
+  /**
+  * Enables column autocomplete for SQL Expressions
+  */
+  sqlExpressionsColumnAutoComplete?: boolean;
   /**
   * Enables the group to nested table transformation
   * @default true
@@ -744,6 +755,11 @@ export interface FeatureToggles {
   */
   alertingAIGenAlertRules?: boolean;
   /**
+  * Enable AI-generated feedback from the Grafana UI.
+  * @default false
+  */
+  alertingAIFeedback?: boolean;
+  /**
   * Enable AI-improve alert rules labels and annotations.
   * @default false
   */
@@ -842,10 +858,6 @@ export interface FeatureToggles {
   * @default true
   */
   grafanaconThemes?: boolean;
-  /**
-  * Loads plugins from CDN synchronously
-  */
-  pluginsCDNSyncLoader?: boolean;
   /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   */
@@ -1054,4 +1066,8 @@ export interface FeatureToggles {
   * Enable dual reader for unified storage search
   */
   unifiedStorageSearchDualReaderEnabled?: boolean;
+  /**
+  * Enables adhoc filtering support for the dashboard datasource
+  */
+  dashboardDsAdHocFiltering?: boolean;
 }

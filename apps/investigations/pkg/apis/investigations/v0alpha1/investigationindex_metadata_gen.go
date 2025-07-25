@@ -24,5 +24,8 @@ type InvestigationIndexMetadata struct {
 
 // NewInvestigationIndexMetadata creates a new InvestigationIndexMetadata object.
 func NewInvestigationIndexMetadata() *InvestigationIndexMetadata {
-	return &InvestigationIndexMetadata{}
+	return &InvestigationIndexMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }
