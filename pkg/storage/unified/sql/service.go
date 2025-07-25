@@ -300,12 +300,12 @@ func (s *service) running(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) stopping(_ error) error {
-	fmt.Println(">>>>> STOPPING")
+func (s *service) stopping(errMsg error) error {
+	fmt.Println(">>>>> STOPPING", errMsg)
 	s.ringLifecycler.StopAsync()
 	fmt.Println(">>>>> WAITING TO TERMINATE")
-	s.ringLifecycler.AwaitTerminated(context.Background())
-	fmt.Println("ALL GOOD")
+	err := s.ringLifecycler.AwaitTerminated(context.Background())
+	fmt.Println("ALL GOOD?", err)
 	// if s.hasSubservices {
 	// 	err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
 	// 	if err != nil {
