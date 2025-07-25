@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TableCellOptions } from '@grafana/schema';
-import { Badge, Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
@@ -29,7 +29,6 @@ interface Props {
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
-  const alphaGroup = t('table.cell-types.label.text-alpha', 'Alpha');
   const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
     { value: TableCellDisplayMode.Auto, label: t('table.cell-types.label.auto', 'Auto') },
     { value: TableCellDisplayMode.ColorText, label: t('table.cell-types.color-text', 'Colored text') },
@@ -41,14 +40,11 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
     { value: TableCellDisplayMode.Gauge, label: t('table.cell-types.gauge', 'Gauge') },
     { value: TableCellDisplayMode.Sparkline, label: t('table.cell-types.sparkline', 'Sparkline') },
     { value: TableCellDisplayMode.JSONView, label: t('table.cell-types.json', 'JSON View') },
+    { value: TableCellDisplayMode.Pill, label: t('table.cell-types.pill', 'Pill') },
     { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
     { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
-
-    // cell types in Alpha appear at the end of the list
-    { value: TableCellDisplayMode.Pill, label: t('table.cell-types.pill', 'Pill'), group: alphaGroup },
   ];
   const currentMode = cellDisplayModeOptions.find((o) => o.value === cellType)!;
-  const isAlpha = currentMode.group === alphaGroup;
 
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
@@ -83,21 +79,6 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       <Field>
         <Combobox options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
-      {isAlpha && (
-        <Badge
-          text={t('table.color-background-cell-options-editor.label.text-alpha', 'Alpha')}
-          color="blue"
-          style={{
-            fontSize: '11px',
-            lineHeight: '1.2',
-            position: 'absolute',
-            right: 27,
-            top: 7,
-            zIndex: 1,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
       {(cellType === TableCellDisplayMode.Auto || cellType === TableCellDisplayMode.ColorText) && (
         <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}

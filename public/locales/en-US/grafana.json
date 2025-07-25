@@ -12458,8 +12458,7 @@
       "image": "Image",
       "json": "JSON View",
       "label": {
-        "auto": "Auto",
-        "text-alpha": "Alpha"
+        "auto": "Auto"
       },
       "pill": "Pill",
       "sparkline": "Sparkline"
