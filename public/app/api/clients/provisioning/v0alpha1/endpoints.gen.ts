@@ -758,6 +758,12 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type DeleteJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash to delete from */
+  ref?: string;
+};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
@@ -779,22 +785,26 @@ export type SyncJobOptions = {
   incremental: boolean;
 };
 export type ExportJobOptions = {
-  /** Target branch for export (only git) */
+  /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
   /** Message to use when committing the changes in a single commit */
   message?: string;
+  /** FIXME: we should validate this in admission hooks Prefix in target file system */
   /** Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {
   /** Possible enum values:
+     - `"delete"` deletes files in the remote repository
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'migrate' | 'pr' | 'pull' | 'push';
+  action?: 'delete' | 'migrate' | 'pr' | 'pull' | 'push';
+  /** Delete when the action is `delete` */
+  delete?: DeleteJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Pull request options */
