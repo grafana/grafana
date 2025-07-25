@@ -18,8 +18,8 @@ weight: 800
 A variable is a placeholder for a value.
 When you change the value, the element using the variable will change to reflect the new value.
 
-Variables are displayed as drop-down lists at the top of the dashboard.
-These lists make it easy to update the variable value and thus change the data being displayed in your dashboard.
+Variables are displayed as drop-down lists (or in some cases text fields) at the top of the dashboard.
+These drop-down lists make it easy to update the variable value and thus change the data being displayed in your dashboard.
 
 For example, if you needed to monitor several servers, you _could_ make a dashboard for each server.
 Or you could create one dashboard and use panels with variables like this one, where you can change the server using the variable selector:
@@ -55,16 +55,19 @@ Click a variable in the list to see its settings.
 A _template_ is any query that contains a variable.
 Queries with text that starts with `$` are templates.
 
-For example, if you were administering a dashboard to monitor several servers, you _could_ make a dashboard for each server.
-Or you could create one dashboard and use panels with template queries like this one:
-
-```text
-wmi_system_threads{instance=~"$server"}
-```
-
 {{< admonition type="note">}}
 In our documentation and in the application, we typically simply refer to a _template query_ as a _query_, but we often use the terms _variable_ and _template variable_ interchangeably.
 {{< /admonition >}}
+
+For example, if you were administering a dashboard to monitor several servers, instead of creating a dashboard for each server, you could create one dashboard with template queries like this one:
+
+```text
+groupByNode(movingAverage(apps.$app.$server.counters.requests.count, 10), 2, 'sum')
+```
+
+The following image shows how this would look in a panel using the template:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-template-query-v12.1.png" max-width="750px" alt="A panel using a template query" >}}
 
 ### Variables in URLs
 
