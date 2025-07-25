@@ -50,7 +50,7 @@ export const AutoCellOptionsEditor = ({
         >
           <Input
             type="number"
-            label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Wrap text line limit`)}
+            aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Wrap text line limit`)}
             value={cellOptions.maxWrappedLines}
             onChange={onMaxWrappedLinesChange}
             min={1}
