@@ -1,6 +1,6 @@
 import { set } from 'lodash';
 
-import { DateTime, dateTimeParse, FeatureToggles, TimeRange } from '@grafana/data';
+import { DateTime, dateTimeParse, FeatureToggles } from '@grafana/data';
 import { initRegionalFormatForTests } from '@grafana/i18n';
 
 import * as commonFormatModule from '../commonFormat';
