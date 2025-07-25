@@ -457,6 +457,30 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 	return r.commitAndPush(ctx, writer, comment)
 }
 
+func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+	if ref == "" {
+		ref = r.gitConfig.Branch
+	}
+	ctx, _ = r.logger(ctx, ref)
+
+	branchRef, err := r.ensureBranchExists(ctx, ref)
+	if err != nil {
+		return err
+	}
+
+	// Create a staged writer
+	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	if err != nil {
+		return fmt.Errorf("create staged writer: %w", err)
+	}
+
+	if err := r.move(ctx, oldPath, newPath, writer); err != nil {
+		return err
+	}
+
+	return r.commitAndPush(ctx, writer, comment)
+}
+
 func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.StagedWriter) error {
 	finalPath := safepath.Join(r.gitConfig.Path, path)
 	// Check if it's a directory - use DeleteTree for directories, DeleteBlob for files
@@ -475,6 +499,44 @@ func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.
 			}
 			return fmt.Errorf("delete blob: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func (r *gitRepository) move(ctx context.Context, oldPath, newPath string, writer nanogit.StagedWriter) error {
+	oldFinalPath := safepath.Join(r.gitConfig.Path, oldPath)
+	newFinalPath := safepath.Join(r.gitConfig.Path, newPath)
+
+	// Check if moving directories
+	if safepath.IsDir(oldPath) && safepath.IsDir(newPath) {
+		// For directories, trim trailing slashes and use MoveTree
+		oldTrimmed := strings.TrimSuffix(oldFinalPath, "/")
+		newTrimmed := strings.TrimSuffix(newFinalPath, "/")
+
+		if _, err := writer.MoveTree(ctx, oldTrimmed, newTrimmed); err != nil {
+			if errors.Is(err, nanogit.ErrObjectNotFound) {
+				return repository.ErrFileNotFound
+			}
+			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
+				return repository.ErrFileAlreadyExists
+			}
+			return fmt.Errorf("move tree: %w", err)
+		}
+	} else if !safepath.IsDir(oldPath) && !safepath.IsDir(newPath) {
+		// For files, use MoveBlob operation
+		if _, err := writer.MoveBlob(ctx, oldFinalPath, newFinalPath); err != nil {
+			if errors.Is(err, nanogit.ErrObjectNotFound) {
+				return repository.ErrFileNotFound
+			}
+			if errors.Is(err, nanogit.ErrObjectAlreadyExists) {
+				return repository.ErrFileAlreadyExists
+			}
+			return fmt.Errorf("move blob: %w", err)
+		}
+	} else {
+		// Mismatched types (file to directory or vice versa)
+		return apierrors.NewBadRequest("cannot move between file and directory types")
 	}
 
 	return nil

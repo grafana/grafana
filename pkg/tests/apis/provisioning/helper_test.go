@@ -3,6 +3,9 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -335,4 +338,45 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return repo
+}
+
+// postFilesRequest performs a direct HTTP POST request to the files API.
+// This bypasses Kubernetes REST client limitations with '/' characters in subresource names.
+type filesPostOptions struct {
+	targetPath   string // The target file/directory path
+	originalPath string // Source path for move operations (optional)
+	message      string // Commit message (optional)
+	body         string // Request body content (optional)
+	ref          string // Git ref/branch (optional)
+}
+
+func (h *provisioningTestHelper) postFilesRequest(t *testing.T, repo string, opts filesPostOptions) *http.Response {
+	addr := h.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
+		addr, repo, opts.targetPath)
+
+	// Build the URL with proper query parameter encoding
+	parsedUrl, err := url.Parse(baseUrl)
+	require.NoError(t, err)
+	params := parsedUrl.Query()
+
+	if opts.originalPath != "" {
+		params.Set("originalPath", opts.originalPath)
+	}
+	if opts.message != "" {
+		params.Set("message", opts.message)
+	}
+	if opts.ref != "" {
+		params.Set("ref", opts.ref)
+	}
+	parsedUrl.RawQuery = params.Encode()
+
+	req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(opts.body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	return resp
 }

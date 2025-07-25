@@ -280,6 +280,24 @@ func (_m *MockRepository) Write(ctx context.Context, path string, ref string, da
 	return r0
 }
 
+// Move provides a mock function with given fields: ctx, oldPath, newPath, ref, message
+func (_m *MockRepository) Move(ctx context.Context, oldPath string, newPath string, ref string, message string) error {
+	ret := _m.Called(ctx, oldPath, newPath, ref, message)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Move")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = rf(ctx, oldPath, newPath, ref, message)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewMockRepository creates a new instance of MockRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockRepository(t interface {
