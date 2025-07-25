@@ -262,14 +262,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "pluginsDetailsRightPanel",
-			Description:  "Enables right panel for the plugins details page",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true",
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:              "sqlDatasourceDatabaseSelection",
 			Description:       "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly:      true,
@@ -664,6 +656,13 @@ var (
 			Name:         "canvasPanelPanZoom",
 			Description:  "Allow pan and zoom in canvas panel",
 			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "timeComparison",
+			Description:  "Enables time comparison option in supported panels",
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 		},

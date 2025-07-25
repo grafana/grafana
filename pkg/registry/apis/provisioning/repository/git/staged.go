@@ -26,7 +26,12 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 		defer cancel()
 	}
 
-	ref, err := repo.client.GetRef(ctx, "refs/heads/"+repo.gitConfig.Branch)
+	branch := opts.Ref
+	if branch == "" {
+		branch = repo.gitConfig.Branch
+	}
+
+	ref, err := repo.client.GetRef(ctx, "refs/heads/"+branch)
 	if err != nil {
 		// TODO: opts.CreateIfNotExists doesn't make sense in the context of the staged repository
 		// because we only support the branch that is passed in.
@@ -47,8 +52,25 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 	}, nil
 }
 
+// isRefSupported checks if the given ref is supported for staged operations.
+// It returns true if ref is empty, equals the git config branch, or equals the staged options ref.
+func (r *stagedGitRepository) isRefSupported(ref string) bool {
+	if ref == "" {
+		return true
+	}
+	if ref == r.gitConfig.Branch {
+		return true
+	}
+	// Allow ref if it matches the staged options ref (the branch we're staging to)
+	stagingBranch := r.opts.Ref
+	if stagingBranch == "" {
+		stagingBranch = r.gitConfig.Branch
+	}
+	return ref == stagingBranch
+}
+
 func (r *stagedGitRepository) Read(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
-	if ref != "" && ref != r.gitConfig.Branch {
+	if !r.isRefSupported(ref) {
 		return nil, errors.New("ref is not supported for staged repository")
 	}
 
@@ -58,7 +80,7 @@ func (r *stagedGitRepository) Read(ctx context.Context, path, ref string) (*repo
 }
 
 func (r *stagedGitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
-	if ref != "" && ref != r.gitConfig.Branch {
+	if !r.isRefSupported(ref) {
 		return nil, errors.New("ref is not supported for staged repository")
 	}
 
@@ -89,7 +111,7 @@ func (r *stagedGitRepository) handleCommitAndPush(ctx context.Context, message s
 }
 
 func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data []byte, message string) error {
-	if ref != "" && ref != r.gitConfig.Branch {
+	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}
 
@@ -108,7 +130,7 @@ func (r *stagedGitRepository) blobExists(ctx context.Context, path string) (bool
 }
 
 func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data []byte, message string) error {
-	if ref != "" && ref != r.gitConfig.Branch {
+	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}
 
@@ -131,7 +153,7 @@ func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data 
 }
 
 func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data []byte, message string) error {
-	if ref != "" && ref != r.gitConfig.Branch {
+	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}
 
@@ -147,7 +169,7 @@ func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data
 }
 
 func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message string) error {
-	if ref != "" && ref != r.gitConfig.Branch {
+	if !r.isRefSupported(ref) {
 		return errors.New("ref is not supported for staged repository")
 	}
 

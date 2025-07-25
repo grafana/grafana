@@ -7138,6 +7138,7 @@
           "start-time": "开始时间："
         }
       },
+      "share-span": "",
       "warnings": "警告"
     },
     "span-filters": {
@@ -10918,15 +10919,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11033,10 +11034,10 @@
       "title-instant-updates-requests-webhooks": "通过 Webhook 实现即时更新和拉取请求。",
       "title-visual-previews-in-pull-requests": "具有图像渲染功能的拉取请求可视化预览"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "作业规范",
-      "summary": "摘要",
-      "title-error": "错误"
+      "summary": "摘要"
     },
     "features-list": {
       "actions": {
@@ -11181,10 +11182,12 @@
       "starting": "正在启动...",
       "status": {
         "title-error-running-job": "运行作业时出错",
-        "title-job-completed-successfully": "作业已成功完成",
         "title-warning-running-job": ""
       },
-      "summary": "摘要"
+      "summary": "摘要",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11350,6 +11353,7 @@
       "go-to": "前往",
       "make-sure": "务必包含以下权限"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "在此过程中将无法创建、编辑或删除资源。在最后一步中，它们将消失。",
       "alert-point-2": "预配完成后，资源将重新出现并通过外部存储进行管理。",
