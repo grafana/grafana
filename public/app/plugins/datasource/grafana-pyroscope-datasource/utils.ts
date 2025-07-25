@@ -9,7 +9,8 @@ import {
   DataQueryResponse,
   DataQueryRequest,
 } from '@grafana/data';
-import { GrafanaPyroscopeDataQuery } from '@grafana/schema';
+
+import { GrafanaPyroscopeDataQuery } from './dataquery.gen';
 
 export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {
   const labelMatchers: AbstractLabelMatcher[] = [];
@@ -140,7 +141,10 @@ export const grammar: Grammar = {
   punctuation: /[{}(),.]/,
 };
 
-export function enrichDataFrameWithAssistantContentMapper(request: DataQueryRequest<GrafanaPyroscopeDataQuery>) {
+export function enrichDataFrameWithAssistantContentMapper(
+  request: DataQueryRequest<GrafanaPyroscopeDataQuery>,
+  datasourceName: string
+) {
   const validTargets = request.targets;
   return (response: DataQueryResponse) => {
     response.data = response.data.map((data: DataFrame) => {
@@ -155,7 +159,7 @@ export function enrichDataFrameWithAssistantContentMapper(request: DataQueryRequ
 
       const context = [
         createContext(ItemDataType.Datasource, {
-          datasourceName: 'Pyroscope',
+          datasourceName: datasourceName,
           datasourceUid: query.datasource.uid,
           datasourceType: query.datasource.type,
         }),

@@ -56,7 +56,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
         ...request,
         targets: validTargets,
       })
-      .pipe(map(enrichDataFrameWithAssistantContentMapper(request)));
+      .pipe(map(enrichDataFrameWithAssistantContentMapper(request, this.name)));
   }
 
   async getProfileTypes(start: number, end: number): Promise<ProfileTypeMessage[]> {
