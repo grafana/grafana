@@ -22,8 +22,7 @@ type RemotePrimaryForkedAlertmanager struct {
 	remote   remoteAlertmanager
 }
 
-// RemotePrimaryFactory can be used to override the default factory function in the multi-org Alertmanager
-// when starting Grafana in remote primary mode.
+// RemotePrimaryFactory is used to override the default factory function in the multi-org Alertmanager.
 func RemotePrimaryFactory(
 	cfg AlertmanagerConfig,
 	store stateStore,

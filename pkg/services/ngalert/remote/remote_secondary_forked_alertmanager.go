@@ -56,8 +56,7 @@ func (c *RemoteSecondaryConfig) Validate() error {
 	return nil
 }
 
-// RemoteSecondaryFactory can be used to override the default factory function in the multi-org Alertmanager
-// when starting Grafana in remote secondary mode.
+// RemoteSecondaryFactory is used to override the default factory function in the multi-org Alertmanager.
 func RemoteSecondaryFactory(
 	cfg AlertmanagerConfig,
 	stateStore stateStore,
