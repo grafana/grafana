@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Segment, SegmentInput, useStyles2 } from '@grafana/ui';
@@ -23,6 +23,18 @@ type FieldEditorProps = {
  */
 export function FunctionParamEditor({ editableParam, onChange, onExpandedChange, autofocus }: FieldEditorProps) {
   const styles = useStyles2(getStyles);
+  const modifiedStyle = {
+    segment: css({
+      overflowWrap: 'anywhere',
+      height: '100%',
+    }),
+    input: css({
+      overflowWrap: 'anywhere',
+      height: '100%',
+    }),
+  };
+  const segmentClassName = cx(styles.segment, modifiedStyle.segment);
+  const inputClassName = cx(styles.input, modifiedStyle.input);
 
   if (editableParam.options?.length > 0) {
     return (
@@ -30,7 +42,7 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
         autofocus={autofocus}
         value={editableParam.value}
         inputPlaceholder={editableParam.name}
-        className={styles.segment}
+        className={segmentClassName}
         options={editableParam.options}
         placeholder={' +' + editableParam.name}
         onChange={(value) => {
@@ -40,15 +52,13 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
         inputMinWidth={150}
         allowCustomValue={true}
         allowEmptyValue={true}
-        // We set this to ensure any long text wraps
-        labelStyles={{ overflowWrap: 'anywhere', height: '100%' }}
       ></Segment>
     );
   } else {
     return (
       <SegmentInput
         autofocus={autofocus}
-        className={styles.input}
+        className={inputClassName}
         value={editableParam.value || ''}
         placeholder={' +' + editableParam.name}
         inputPlaceholder={editableParam.name}
@@ -64,8 +74,6 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
           paddingLeft: '4px',
           minWidth: '100px',
         }}
-        // We set this to ensure any long text wraps
-        labelStyles={{ overflowWrap: 'anywhere', height: '100%' }}
       ></SegmentInput>
     );
   }

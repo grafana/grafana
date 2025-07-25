@@ -18,7 +18,6 @@ export interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDi
   onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;
   inputMinWidth?: number;
-  labelStyles?: React.CSSProperties;
 }
 
 export function Segment<T>({
@@ -35,7 +34,6 @@ export function Segment<T>({
   inputPlaceholder,
   onExpandedChange,
   autofocus = false,
-  labelStyles,
   ...rest
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
@@ -60,7 +58,6 @@ export function Segment<T>({
                 },
                 className
               )}
-              style={labelStyles}
             >
               {labelAsString || placeholder}
             </InlineLabel>

@@ -16,7 +16,6 @@ export interface SegmentInputProps
     Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
   onChange: (text: string | number) => void;
-  labelStyles?: React.CSSProperties;
 }
 
 const FONT_SIZE = 14;
@@ -31,7 +30,6 @@ export function SegmentInput({
   disabled,
   autofocus = false,
   onExpandedChange,
-  labelStyles,
   ...rest
 }: React.PropsWithChildren<SegmentInputProps>) {
   const ref = useRef<HTMLInputElement>(null);
@@ -60,7 +58,6 @@ export function SegmentInput({
                 },
                 className
               )}
-              style={labelStyles}
             >
               {initialValue || placeholder}
             </InlineLabel>
