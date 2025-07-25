@@ -53,7 +53,7 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	if !s.enableAuthnMutation {
 		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
 	}
-  
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
