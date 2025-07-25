@@ -10,8 +10,6 @@ type EncryptionManager interface {
 	// implementation present at manager.EncryptionService.
 	Encrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error)
 	Decrypt(ctx context.Context, namespace string, payload []byte) ([]byte, error)
-
-	DisableAllDataKeys(ctx context.Context) error
 }
 
 type EncryptedValue struct {

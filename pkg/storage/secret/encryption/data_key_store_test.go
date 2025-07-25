@@ -31,6 +31,8 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("test")
 	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 	require.NoError(t, err)
+	globalStore, err := ProvideGlobalDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 
@@ -103,7 +105,7 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	require.True(t, staticKey.Active)
 
 	// Test DisableAllDataKeys
-	err = store.DisableAllDataKeys(ctx)
+	err = globalStore.DisableAllDataKeys(ctx)
 	require.NoError(t, err)
 
 	// Verify that remaining data keys are disabled

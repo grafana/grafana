@@ -350,11 +350,31 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 	return nil
 }
 
-func (ss *encryptionStoreImpl) DisableAllDataKeys(ctx context.Context) error {
+type globalEncryptionStoreImpl struct {
+	db      contracts.Database
+	dialect sqltemplate.Dialect
+	tracer  trace.Tracer
+	metrics *GlobalDataKeyMetrics
+}
+
+func ProvideGlobalDataKeyStorage(
+	db contracts.Database,
+	tracer trace.Tracer,
+	registerer prometheus.Registerer,
+) (contracts.GlobalDataKeyStorage, error) {
+	store := &globalEncryptionStoreImpl{
+		db:      db,
+		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:  tracer,
+		metrics: NewGlobalDataKeyMetrics(registerer),
+	}
+
+	return store, nil
+}
+
+func (ss *globalEncryptionStoreImpl) DisableAllDataKeys(ctx context.Context) error {
 	start := time.Now()
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.DisableAllDataKeys", trace.WithAttributes(
-		attribute.String("namespace", namespace),
-	))
+	ctx, span := ss.tracer.Start(ctx, "GlobalDataKeyStorage.DisableAllDataKeys")
 	defer func() {
 		span.End()
 		ss.metrics.DisableAllDataKeysDuration.Observe(float64(time.Since(start)))

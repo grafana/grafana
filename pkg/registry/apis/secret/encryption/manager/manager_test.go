@@ -398,46 +398,6 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 	})
 }
 
-func TestEncryptionService_DataKeysDeactivation(t *testing.T) {
-	ctx := context.Background()
-	svc := setupTestService(t)
-
-	dataKeyA := &contracts.SecretDataKey{
-		UID:           util.GenerateShortUID(),
-		Label:         "test-a",
-		Active:        true,
-		Provider:      "secret_key.v1",
-		EncryptedData: []byte{0x62, 0xAF, 0xA1, 0x1A},
-		Namespace:     "test-namespace-a",
-	}
-	dataKeyB := &contracts.SecretDataKey{
-		UID:           util.GenerateShortUID(),
-		Label:         "test-b",
-		Active:        true,
-		Provider:      "secret_key.v1",
-		EncryptedData: []byte{0x62, 0xAF, 0xA1, 0x1A},
-		Namespace:     "test-namespace-b",
-	}
-
-	err := svc.store.CreateDataKey(ctx, dataKeyA)
-	require.NoError(t, err)
-	err = svc.store.CreateDataKey(ctx, dataKeyB)
-	require.NoError(t, err)
-
-	t.Run("deactivating all DEKs", func(t *testing.T) {
-		err = svc.DisableAllDataKeys(ctx)
-		require.NoError(t, err)
-
-		res, err := svc.store.GetDataKey(ctx, dataKeyA.Namespace, dataKeyA.UID)
-		require.NoError(t, err)
-		assert.False(t, res.Active)
-
-		res, err = svc.store.GetDataKey(ctx, dataKeyB.Namespace, dataKeyB.UID)
-		require.NoError(t, err)
-		assert.False(t, res.Active)
-	})
-}
-
 type fakeProvider struct {
 	encryptCalled bool
 	decryptCalled bool
