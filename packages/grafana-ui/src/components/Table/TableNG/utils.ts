@@ -1,7 +1,7 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { Count, varPreLine } from 'uwrap';
+import { varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -243,7 +243,8 @@ export function getRowHeight(
     maxLines = accurateCounter(maxValue, maxWidth);
   }
 
-  const totalHeight = Math.floor(maxLines) * lineHeight + verticalPadding;
+  // we want a round number of lines for rendering
+  const totalHeight = Math.ceil(maxLines) * lineHeight + verticalPadding;
   return Math.max(totalHeight, defaultHeight);
 }
 
