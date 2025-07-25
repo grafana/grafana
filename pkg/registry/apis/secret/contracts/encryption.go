@@ -32,6 +32,9 @@ type EncryptedValueStorage interface {
 	Update(ctx context.Context, namespace, name string, version int64, encryptedData []byte) error
 	Get(ctx context.Context, namespace, name string, version int64) (*EncryptedValue, error)
 	Delete(ctx context.Context, namespace, name string, version int64) error
+}
+
+type GlobalEncryptedValueStorage interface {
 	ListAll(ctx context.Context, opts ListOpts) ([]*EncryptedValue, error)
 	CountAll(ctx context.Context) (int64, error)
 }

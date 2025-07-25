@@ -207,7 +207,24 @@ func (s *encryptedValStorage) Delete(ctx context.Context, namespace, name string
 	return nil
 }
 
-func (s *encryptedValStorage) ListAll(ctx context.Context, opts contracts.ListOpts) ([]*contracts.EncryptedValue, error) {
+type globalEncryptedValStorage struct {
+	db      contracts.Database
+	dialect sqltemplate.Dialect
+	tracer  trace.Tracer
+}
+
+func ProvideGlobalEncryptedValueStorage(
+	db contracts.Database,
+	tracer trace.Tracer,
+) (contracts.GlobalEncryptedValueStorage, error) {
+	return &globalEncryptedValStorage{
+		db:      db,
+		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:  tracer,
+	}, nil
+}
+
+func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.ListOpts) ([]*contracts.EncryptedValue, error) {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.ListAll", trace.WithAttributes(
 		attribute.Int64("limit", opts.Limit),
 		attribute.Int64("offset", opts.Offset),
@@ -262,7 +279,7 @@ func (s *encryptedValStorage) ListAll(ctx context.Context, opts contracts.ListOp
 	return encryptedValues, nil
 }
 
-func (s *encryptedValStorage) CountAll(ctx context.Context) (int64, error) {
+func (s *globalEncryptedValStorage) CountAll(ctx context.Context) (int64, error) {
 	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.CountAll")
 	defer span.End()
 
