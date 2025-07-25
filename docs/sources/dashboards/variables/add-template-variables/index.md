@@ -351,6 +351,23 @@ InfluxDB and Prometheus use regular expressions, so the same variable would be i
 
 Elasticsearch uses Lucene query syntax, so the same variable would be formatted as `("host1" OR "host2" OR "host3")`. In this case, every value must be escaped so that the value only contains Lucene control words and quotation marks.
 
+#### Variable indexing
+
+If you have a multi-value variable that's formatted as an array, you can use array positions to reference the values rather than the actual values.
+You can use this functionality in dashboard panels to filter data, and when you do so, the array is maintained.
+
+To reference variable values this way, use the following syntax:
+
+```text
+${query0.0}
+```
+
+The preceding syntax references the first, or `0`, position in the array.
+
+In the following example, there's an array of three values, `1t`, `2t`, and `3t`, and rather than referencing those values, the panel query references the second value in the array using the syntax `${query0.1}`:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-indexed-variables-v12.1.png" max-width="750px" alt="Panel query using variable indexing to reference a value" >}}
+
 #### Troubleshoot multi-value variables
 
 Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic behind it. Especially for InfluxDB and Prometheus where the use of regular expression syntax requires that the variable is used in regular expression operator context.
