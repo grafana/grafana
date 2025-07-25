@@ -5,4 +5,4 @@
  * @packageDocumentation
  */
 
-export {};
+export { matchers } from './matchers';
