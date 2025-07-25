@@ -62,7 +62,6 @@ For configuring controls outside of playlist playback, you can use the following
 
 - The [variable usage check](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/) is not yet available.
 - Editing a panel:
-
   - The **Library panels** tab is not available anymore. You can replace a library panel from the panel menu.
   - The **Overrides** tab is not in panel options (coming in Grafana v11.3.0). Overrides are shown at the bottom of the option list.
   - The drop-down menu to collapse the visualization picker is missing (coming in Grafana v11.3.0).

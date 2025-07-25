@@ -6,7 +6,7 @@ echo "Go build cache: $(go env GOCACHE), $(ls -1 $(go env GOCACHE) | wc -l) item
 # Need to build version into the binary so plugin compatibility works correctly
 VERSION=$(jq -r .version package.json)
 
-go build \
+go build -v \
   -ldflags "-X main.version=${VERSION}" \
   -gcflags "all=-N -l" \
   -o ./bin/grafana ./pkg/cmd/grafana
