@@ -294,9 +294,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.Contains(t, args, "decrypter_identity")
 		for i, arg := range args {
 			if arg == "grafana_st_decrypter_identity" {
-				actualIdentity := args[i+1].([]string)
-				require.Len(t, actualIdentity, 1)
-				require.Equal(t, stSvcIdentity, actualIdentity[0])
+				actualIdentity := args[i+1].(string)
+				require.Equal(t, stSvcIdentity, actualIdentity)
 			}
 
 			if arg == "decrypter_identity" {
