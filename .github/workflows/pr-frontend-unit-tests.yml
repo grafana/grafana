@@ -134,6 +134,7 @@ jobs:
       - frontend-unit-tests
       - frontend-unit-tests-enterprise
       - frontend-decoupled-plugin-tests
+      - frontend-packages-unit-tests
     # always() is the best function here.
     # success() || failure() will skip this function if any need is also skipped.
     # That means conditional test suites will fail the entire requirement check.
