@@ -204,17 +204,15 @@
           try {
             rawBootData = JSON.parse(textResponse);
           } catch {
-            // If we haven't gotten a JSON response, there must be an error
             throw new Error("Unexpected response type: " + textResponse);
           }
 
+          // If the response is 503, instruct the caller to retry again later.
           if (resp.status === 503 && rawBootData.code === 'Loading') {
-            // If the response is 503, instruct the caller to retry again later.
             return;
           }
           
           if (!resp.ok) {
-            // Or if we got a non-200 response, throw an error.
             throw new Error("Unexpected response body: " + textResponse);
           }
 
@@ -230,17 +228,15 @@
               try {
                 const bootData = await fetchBootData();
 
+                // If the boot data is undefined, retry after a delay
                 if (!bootData) {
-                  // If the boot data is undefined, retry after a delay
                   setLoading();
                   setTimeout(attemptFetch, CHECK_INTERVAL);
                   return;
                 }
 
-                // Success - resolve with boot data
                 resolve(bootData);
               } catch (error) {
-                // Any error rejects the promise
                 reject(error);
               }
             };
