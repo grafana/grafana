@@ -49,16 +49,16 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   }
 }
 
-function shouldUseFull(
+function getTriggerType(
   context: monacoTypes.languages.CompletionContext,
   word: monacoTypes.editor.IWordAtPosition | null,
   model: monacoTypes.editor.ITextModel,
   position: monacoTypes.Position,
   isManualTrigger: boolean
-): boolean {
+): TriggerType {
   // Manual trigger (Ctrl+Space)
   if (isManualTrigger) {
-    return true;
+    return 'full';
   }
 
   // Trigger characters
@@ -71,15 +71,15 @@ function shouldUseFull(
   });
 
   if (triggerChars.includes(charBeforeCursor)) {
-    return true;
+    return 'full';
   }
 
   // Word length >= 3
   if (word && word.word.length >= 3) {
-    return true;
+    return 'full';
   }
 
-  return false;
+  return 'partial';
 }
 
 export function getCompletionProvider(
@@ -117,9 +117,7 @@ export function getCompletionProvider(
       state.isManualTriggerRequested = false;
     }
 
-    const triggerType: TriggerType = shouldUseFull(context, word, model, position, isManualTrigger)
-      ? 'full'
-      : 'partial';
+    const triggerType: TriggerType = getTriggerType(context, word, model, position, isManualTrigger);
 
     // For immediate triggers (manual, trigger chars, or already 3+ chars), execute immediately
     const isImmediate = isManualTrigger || triggerType === 'full';
@@ -141,7 +139,7 @@ export function getCompletionProvider(
       debounceTimer = setTimeout(() => {
         // Re-check if we should use full completions after debounce
         const updatedWord = model.getWordAtPosition(position);
-        const updatedTriggerType: TriggerType = shouldUseFull(context, updatedWord, model, position, false)
+        const updatedTriggerType: TriggerType = getTriggerType(context, updatedWord, model, position, false)
           ? 'full'
           : 'partial';
 

@@ -116,7 +116,6 @@ const getFunctionCompletions: () => Completion[] = () => {
   }));
 };
 
-// Remove the triggerType parameter and rename the function
 async function getFunctionsOnlyCompletions(): Promise<Completion[]> {
   return Promise.resolve(getFunctionCompletions());
 }
