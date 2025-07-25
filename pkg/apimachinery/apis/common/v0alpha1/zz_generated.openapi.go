@@ -287,6 +287,13 @@ func schema_apimachinery_apis_common_v0alpha1_ScopeSpec(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"defaultParent": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Provides a default parent for the scope. This refers to a node in the selector. This is used to display the title next to the selected scope.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"filters": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{

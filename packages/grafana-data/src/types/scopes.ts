@@ -49,9 +49,9 @@ export interface ScopeSpecFilter {
 
 export interface ScopeSpec {
   title: string;
-  type: string;
   description: string;
-  category: string;
+  // Used if the desired parent node is something other than the one being selected
+  defaultParent?: string;
   filters: ScopeSpecFilter[];
 }
 
