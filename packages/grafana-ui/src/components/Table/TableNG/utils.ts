@@ -109,11 +109,11 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
  * @internal returns counts the number of lines in the value of a text cell using the typography context's count function.
  */
 export function getTextLineCounter(typographyCtx: TypographyCtx): LineCounter {
-  return (value, colWidth) => {
+  return (value, width) => {
     if (!value) {
       return 1;
     }
-    return typographyCtx.count(String(value), colWidth);
+    return typographyCtx.count(String(value), width);
   };
 }
 
@@ -154,7 +154,7 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
 /**
  * @internal
  * loop through the fields and their values, determine which cell is going to determine the height of the row based
- *  on its content and width, and return the height in pixels of that row, with vertial padding applied.
+ * on its content and width, and return the height in pixels of that row, with vertial padding applied.
  */
 export function getRowHeight(
   fields: Field[],

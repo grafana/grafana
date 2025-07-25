@@ -14,7 +14,8 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 
 import { TableCellDisplayMode } from '../types';
 
-import { TABLE } from './constants';
+import { COLUMN, TABLE } from './constants';
+import { LineCounter } from './types';
 import {
   extractPixelValue,
   frameToRecords,
@@ -29,7 +30,12 @@ import {
   getJustifyContent,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
-  // getRowHeight,
+  computeColWidths,
+  getRowHeight,
+  buildRowLineCounters,
+  buildHeaderLineCounters,
+  getTextLineCounter,
+  createTypographyContext,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -972,23 +978,292 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('createTypographyCtx', () => {});
-
-  describe('getTextLineCounter', () => {
-    it.todo('should return 1 if the value is falsy');
-    it.todo('should use typographyCtx.count to count the lines of the stringified value');
+  describe('createTypographyCtx', () => {
+    // we can't test the effectiveness of this typography context in unit tests, only that it
+    // actually executed the JS correctly. If you called `count` with a sensible value and width,
+    // it wouldn't give you a very reasonable answer in Jest's DOM environment for some reason.
+    it('creates the context using uwrap', () => {
+      const ctx = createTypographyContext(14, 'sans-serif');
+      expect(ctx).toEqual(
+        expect.objectContaining({
+          font: '14px sans-serif',
+          ctx: expect.any(CanvasRenderingContext2D),
+          count: expect.any(Function),
+          avgCharWidth: expect.any(Number),
+        })
+      );
+      expect(ctx.count('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
+    });
   });
 
-  describe('buildHeaderLineCounters', () => {});
+  describe('getTextLineCounter', () => {
+    const ctx = {
+      font: '14px sans-serif',
+      ctx: {} as CanvasRenderingContext2D,
+      count: jest.fn(() => 1),
+      avgCharWidth: 7,
+    };
 
-  describe('buildRowLineCounters', () => {});
+    const counter = getTextLineCounter(ctx);
+
+    it('should return 1 if the value is falsy', () => {
+      expect(counter('', 100)).toBe(1);
+      expect(counter(null, 100)).toBe(1);
+      expect(counter(undefined, 100)).toBe(1);
+      expect(counter(0, 100)).toBe(1);
+    });
+
+    it('should use typographyCtx.count to count the lines of the stringified value', () => {
+      ctx.count.mockReturnValue(3);
+      expect(counter('foo', 100)).toBe(3);
+      expect(ctx.count).toHaveBeenCalledWith('foo', 100);
+
+      ctx.count.mockReturnValue(2);
+      expect(counter(3456, 50)).toBe(2);
+      expect(ctx.count).toHaveBeenCalledWith('3456', 50);
+    });
+  });
+
+  describe('buildHeaderLineCounters', () => {
+    const ctx = {
+      font: '14px sans-serif',
+      ctx: {} as CanvasRenderingContext2D,
+      count: jest.fn(() => 2),
+      avgCharWidth: 7,
+    };
+
+    it('returns an array of line counters for each column', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapHeaderText: true } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
+      ];
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters).toHaveLength(2);
+
+      // mocked the value as "2" above.
+      expect(counters[0]!('Name', 100)).toBe(2);
+      expect(counters[1]!('Age', 100)).toBe(2);
+    });
+
+    it('returns the same line counter instance for every field', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapHeaderText: true } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
+      ];
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters[0]).toBe(counters[1]);
+    });
+
+    it('returns null in the array for fields which do not have header text wrapping', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
+      ];
+
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters).toHaveLength(2);
+
+      expect(counters[0]).toBeNull();
+      expect(counters[1]).toBeInstanceOf(Function);
+    });
+  });
+
+  describe('buildRowLineCounters', () => {
+    const ctx = {
+      font: '14px sans-serif',
+      ctx: {} as CanvasRenderingContext2D,
+      count: jest.fn(() => 2),
+      avgCharWidth: 7,
+    };
+
+    it('returns an array of line counters for each column', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters).toHaveLength(2);
+
+      // mocked the value as "2" above.
+      expect(counters[0]!('Name', 100)).toBe(2);
+      expect(counters[1]!('Age', 100)).toBe(2);
+    });
+
+    it('returns the same line counter instance for every field', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters[0]).toBe(counters[1]);
+    });
+
+    it('returns null in the array for fields which do not have header text wrapping', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+      ];
+
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters).toHaveLength(2);
+
+      expect(counters[0]).toBeNull();
+      expect(counters[1]).toBeInstanceOf(Function);
+    });
+  });
 
   describe('getRowHeight', () => {
-    it.todo('should return the row height based on the contents');
-    it.todo('should take colWidths into account when calculating max wrap cell');
-    it.todo('should use the display name if the rowIdx is -1 (which is used to calc header height in wrapped rows)');
-    it.todo('should ignore columns which are not wrapped');
-    it.todo('should only apply wrapping on idiomatic break characters (space, -, etc)');
+    let fields: Field[];
+    let counters: LineCounter[];
+
+    beforeEach(() => {
+      fields = [
+        {
+          name: 'Name',
+          type: FieldType.string,
+          values: ['foo', 'bar', 'baz', 'longer one here', 'shorter'],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
+        {
+          name: 'Age',
+          type: FieldType.number,
+          values: [1, 2, 3, 123456, 789122349932],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
+      ];
+      counters = [
+        jest.fn((value, _length: number) => String(value).split(' ').length), // Mocked to count words as lines
+        jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)), // Mocked to return a line for every 3 digits of a number
+      ];
+    });
+
+    it('should use the default height for single-line rows', () => {
+      // 1 line @ 20px, 10px vertical padding = 30, minimum is 36
+      expect(getRowHeight(fields, 0, [30, 30], 36, counters, 20, 10)).toBe(36);
+    });
+
+    it('should use the default height for multi-line rows which are shorter than the default height', () => {
+      // 3 lines @ 5px, 5px vertical padding = 20, minimum is 36
+      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 5, 5)).toBe(36);
+    });
+
+    it('should return the row height using line counters for multi-line', () => {
+      // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding
+      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(70);
+
+      // 4 lines @ 15px (789 122 349 932), 15px vertical padding
+      expect(getRowHeight(fields, 4, [30, 30], 36, counters, 15, 15)).toBe(75);
+    });
+
+    it('should take colWidths into account when calculating max wrap cell', () => {
+      getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
+      expect(counters[0]).toHaveBeenCalledWith('longer one here', 50);
+      expect(counters[1]).toHaveBeenCalledWith(123456, 60);
+    });
+
+    // this is used to calc wrapped header height
+    it('should use the display name if the rowIdx is -1', () => {
+      getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
+      expect(counters[0]).toHaveBeenCalledWith('Name', 50);
+      expect(counters[1]).toHaveBeenCalledWith('Age', 60);
+    });
+
+    it('should ignore columns which do not have line counters', () => {
+      const height = getRowHeight(fields, 3, [30, 30], 36, [null, counters[1]], 20, 10);
+      // 2 lines @ 20px, 10px vertical padding (not 3 lines, since we don't line count Name)
+      expect(height).toBe(50);
+    });
+  });
+
+  describe('computeColWidths', () => {
+    it('returns the configured widths if all columns set them', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 100 } },
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 200 } },
+            },
+          ],
+          500
+        )
+      ).toEqual([100, 200]);
+    });
+
+    it('fills the available space if a column has no width set', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 200 } },
+            },
+          ],
+          500
+        )
+      ).toEqual([300, 200]);
+    });
+
+    it('applies minimum width when auto width would dip below it', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { minWidth: 100 } },
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { minWidth: 100 } },
+            },
+          ],
+          100
+        )
+      ).toEqual([100, 100]);
+    });
+
+    it('should use the global column default width when nothing is set', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+          ],
+          // we have two columns but have set the table to the width of one default column.
+          COLUMN.DEFAULT_WIDTH
+        )
+      ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
+    });
   });
 
   describe('displayJsonValue', () => {

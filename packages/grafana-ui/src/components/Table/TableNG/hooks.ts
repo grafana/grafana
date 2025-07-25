@@ -396,10 +396,10 @@ export function useRowHeight({
   const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
   const hasWrappedCols = useMemo(() => lineCounters.some((lc) => lc !== null), [lineCounters]);
 
-  const colWidths = useMemo(
-    () => columnWidths.map((c) => c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT),
-    [columnWidths]
-  );
+  const colWidths = useMemo(() => {
+    const columnWidthAffordance = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    return columnWidths.map((c) => c - columnWidthAffordance);
+  }, [columnWidths]);
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
@@ -408,6 +408,7 @@ export function useRowHeight({
     }
 
     // this cache should get blown away on resize, data refresh, updated fields, etc.
+    // caching by __index is ok because sorting does not modify the __index.
     const cache: number[] = [];
     return (row: TableRow) => {
       // nested rows
@@ -423,7 +424,7 @@ export function useRowHeight({
         }
 
         const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
-        return Math.max(defaultHeight, defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2);
+        return defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2;
       }
 
       // regular rows

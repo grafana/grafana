@@ -1,18 +1,19 @@
 import { act, renderHook } from '@testing-library/react';
-import { varPreLine } from 'uwrap';
 
 import { cacheFieldDisplayNames, createDataFrame, Field, FieldType } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { TABLE } from './constants';
-import { useFilteredRows, usePaginatedRows, useSortedRows, useFooterCalcs, useHeaderHeight } from './hooks';
+import {
+  useFilteredRows,
+  usePaginatedRows,
+  useSortedRows,
+  useFooterCalcs,
+  useHeaderHeight,
+  useRowHeight,
+} from './hooks';
+import { TableRow } from './types';
 import { createTypographyContext } from './utils';
-
-jest.mock('uwrap', () => ({
-  // ...jest.requireActual('uwrap'),
-  varPreLine: jest.fn(() => ({
-    count: jest.fn(() => 1),
-  })),
-}));
 
 describe('TableNG hooks', () => {
   function setupData() {
@@ -23,21 +24,21 @@ describe('TableNG hooks', () => {
         type: FieldType.string,
         display: (v) => ({ text: v as string, numeric: NaN }),
         config: {},
-        values: [],
+        values: ['Alice', 'Bob', 'Charlie'],
       },
       {
         name: 'age',
         type: FieldType.number,
         display: (v) => ({ text: (v as number).toString(), numeric: v as number }),
         config: {},
-        values: [],
+        values: [30, 25, 35],
       },
       {
         name: 'active',
         type: FieldType.boolean,
         display: (v) => ({ text: (v as boolean).toString(), numeric: NaN }),
         config: {},
-        values: [],
+        values: [true, false, true],
       },
     ];
 
@@ -454,16 +455,7 @@ describe('TableNG hooks', () => {
       expect(result.current).toBe(28);
     });
 
-    // TODO
-    it.skip('should return the appropriate height for wrapped text', () => {
-      // Simulate 2 lines of text
-      jest.mocked(varPreLine).mockReturnValue({
-        count: jest.fn(() => 2),
-        each: jest.fn(),
-        split: jest.fn(),
-        test: jest.fn(),
-      });
-
+    it('should return the appropriate height for wrapped text', () => {
       const { fields } = setupData();
       const { result } = renderHook(() => {
         return useHeaderHeight({
@@ -485,7 +477,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5 },
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5, count: jest.fn(() => 2) },
           sortColumns: [],
         });
       });
@@ -493,17 +485,8 @@ describe('TableNG hooks', () => {
       expect(result.current).toBe(50);
     });
 
-    // TODO
-    it.skip('should calculate the available width for a header cell based on the icons rendered within it', () => {
+    it('should calculate the available width for a header cell based on the icons rendered within it', () => {
       const countFn = jest.fn(() => 1);
-
-      // Simulate 2 lines of text
-      jest.mocked(varPreLine).mockReturnValue({
-        count: countFn,
-        each: jest.fn(),
-        split: jest.fn(),
-        test: jest.fn(),
-      });
 
       const { fields } = setupData();
 
@@ -527,13 +510,13 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 10 },
+          typographyCtx: { ...typographyCtx, count: countFn },
           sortColumns: [],
           showTypeIcons: false,
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 87);
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86);
 
       renderHook(() => {
         return useHeaderHeight({
@@ -556,16 +539,245 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 10 },
+          typographyCtx: { ...typographyCtx, count: countFn },
           sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
           showTypeIcons: true,
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 27);
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26);
     });
   });
 
-  // TODO
-  describe('useRowHeight', () => {});
+  describe('useRowHeight', () => {
+    const typographyCtx = createTypographyContext(14, 'sans-serif');
+
+    it('returns the default height if there are no wrapped columns or nested frames', () => {
+      const { fields } = setupData();
+
+      const defaultHeight = 40;
+
+      expect(
+        renderHook(() => {
+          return useRowHeight({
+            fields,
+            columnWidths: [100, 100, 100],
+            defaultHeight,
+            typographyCtx: typographyCtx,
+            hasNestedFrames: false,
+            expandedRows: new Set(),
+          });
+        }).result.current
+      ).toBe(defaultHeight);
+    });
+
+    describe('nested frames', () => {
+      it('returns 0 if the parent row is not expanded', () => {
+        const { fields } = setupData();
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'nested', type: FieldType.nestedFrames, values: [createDataFrame({ fields })], config: {} },
+              ],
+              columnWidths: [100, 100, 100],
+              defaultHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              expandedRows: new Set(),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __depth: 1, data: createDataFrame({ fields }), __index: 0 });
+          }).result.current
+        ).toBe(0);
+      });
+
+      it('returns a static height if there are no rows in the nested frame', () => {
+        const { fields } = setupData();
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'nested', type: FieldType.nestedFrames, values: [createDataFrame({ fields })], config: {} },
+              ],
+              columnWidths: [100, 100, 100],
+              defaultHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              expandedRows: new Set([0]),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __depth: 1,
+              data: undefined,
+              __index: 0,
+            });
+          }).result.current
+        ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2);
+      });
+
+      it('calculates the height to return based on the number of rows in the nested frame', () => {
+        const { fields } = setupData();
+
+        const defaultHeight = 40;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'nested', type: FieldType.nestedFrames, values: [createDataFrame({ fields })], config: {} },
+              ],
+              columnWidths: [100, 100, 100],
+              defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              expandedRows: new Set([0]),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __index: 0,
+              __depth: 1,
+              data: createDataFrame({ fields }),
+            });
+          }).result.current
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2); // 3 rows + header + padding
+      });
+
+      it('removes the header if configured', () => {
+        const { fields } = setupData();
+
+        const defaultHeight = 40;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'nested', type: FieldType.nestedFrames, values: [createDataFrame({ fields })], config: {} },
+              ],
+              columnWidths: [100, 100, 100],
+              defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              expandedRows: new Set([0]),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __index: 0,
+              __depth: 1,
+              data: createDataFrame({ fields, meta: { custom: { noHeader: true } } }),
+            });
+          }).result.current
+        ).toBe(defaultHeight * 3 + TABLE.CELL_PADDING * 2); // 3 rows + padding (no header)
+      });
+    });
+
+    // we test the lineCounters and getRowHeight directly to check that all of that
+    // math is working correctly. we mainly want to confirm here that the
+    // cache is clearing and that the local logic in this hook works.
+    describe('wrapped columns', () => {
+      let rows: TableRow[];
+      let fieldsWithWrappedText: Field[];
+
+      beforeEach(() => {
+        const { fields, rows: _rows } = setupData();
+
+        rows = _rows;
+        fieldsWithWrappedText = fields.map((field) => {
+          if (field.name === 'name') {
+            return {
+              ...field,
+              name: 'Longer name that needs wrapping',
+              config: {
+                ...field.config,
+                custom: {
+                  ...field.config?.custom,
+                  cellOptions: {
+                    cellType: TableCellDisplayMode.Auto,
+                    wrapText: true,
+                  },
+                },
+              },
+            };
+          }
+          return field;
+        });
+      });
+
+      it('handles changes to default height on re-render', () => {
+        const { result, rerender } = renderHook(
+          ({ defaultHeight }) => {
+            const rowHeight = useRowHeight({
+              fields: fieldsWithWrappedText,
+              columnWidths: [100, 100, 100],
+              defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: false,
+              expandedRows: new Set(),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight;
+          },
+          {
+            initialProps: { defaultHeight: 40 },
+          }
+        );
+
+        expect(result.current(rows[0])).toBe(40);
+
+        // change the column widths
+        rerender({ defaultHeight: 50 });
+
+        expect(result.current(rows[0])).toBe(50);
+      });
+
+      it('handles subtleties of column widths', () => {
+        const { result, rerender } = renderHook(
+          ({ columnWidths }) => {
+            const rowHeight = useRowHeight({
+              fields: fieldsWithWrappedText,
+              columnWidths,
+              defaultHeight: 40,
+              // mock count to return 2 if the width is less than 100px.
+              typographyCtx: { ...typographyCtx, count: jest.fn((_val, width) => (width < 100 ? 2 : 1)) },
+              hasNestedFrames: false,
+              expandedRows: new Set(),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight;
+          },
+          {
+            initialProps: { columnWidths: [100 + TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT, 100, 100] },
+          }
+        );
+
+        expect(result.current(rows[0])).toBe(40);
+
+        // 2 rows, per the mocked count function
+        rerender({ columnWidths: [90, 100, 100] });
+        expect(result.current(rows[0])).toBe(TABLE.LINE_HEIGHT * 2 + TABLE.CELL_PADDING * 2);
+
+        // back to single row
+        rerender({ columnWidths: [150, 100, 100] });
+        expect(result.current(rows[0])).toBe(40);
+
+        // column widths are adjusted to account for the TABLE.CELL_PADDING and TABLE.BORDER_RIGHT on either side.
+        rerender({ columnWidths: [100 + TABLE.CELL_PADDING * 2, 100, 100] });
+        expect(result.current(rows[0])).toBe(TABLE.LINE_HEIGHT * 2 + TABLE.CELL_PADDING * 2);
+      });
+    });
+  });
 });
