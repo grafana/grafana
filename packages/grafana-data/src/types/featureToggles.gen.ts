@@ -166,11 +166,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables right panel for the plugins details page
-  * @default true
-  */
-  pluginsDetailsRightPanel?: boolean;
-  /**
   * Enables previous SQL data source dataset dropdown behavior
   */
   sqlDatasourceDatabaseSelection?: boolean;
@@ -400,6 +395,10 @@ export interface FeatureToggles {
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Enables time comparison option in supported panels
+  */
+  timeComparison?: boolean;
   /**
   * Enables infinite scrolling for the Logs panel in Explore and Dashboards
   * @default true
