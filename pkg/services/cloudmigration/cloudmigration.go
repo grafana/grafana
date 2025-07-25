@@ -7,6 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+const (
+	ResourceStorageTypeFs = "fs"
+	ResourceStorageTypeDb = "db"
+)
+
 type Service interface {
 	// GetToken Returns the cloud migration token if it exists.
 	GetToken(ctx context.Context) (authapi.TokenView, error)
