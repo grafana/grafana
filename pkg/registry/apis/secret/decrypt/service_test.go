@@ -2,22 +2,28 @@ package decrypt
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"golang.org/x/net/nettest"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -141,19 +147,14 @@ func TestDecryptService(t *testing.T) {
 		require.Contains(t, err.Error(), "decrypt_server_address is required")
 	})
 
-	t.Run("when storage type is grpc with valid config, it uses token exchange", func(t *testing.T) {
+	t.Run("happy path with grpc+tls server with fake toke exchanger and server", func(t *testing.T) {
 		t.Parallel()
 
-		tracer := noop.NewTracerProvider().Tracer("test")
-
-		grafanaSvcIdentity := "svc-identity-decrypter"
-		svcIdentity := "provsysoning-test"
-		namespace := "stacks-1234"
-
+		respTokenExchanged := "test-token"
 		tokenExchangeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := `{
 				"data": { 
-					"token": "test-token"
+					"token": "` + respTokenExchanged + `"
 				}
 			}`
 			w.Header().Set("Content-Type", "application/json")
@@ -161,10 +162,23 @@ func TestDecryptService(t *testing.T) {
 		}))
 		t.Cleanup(tokenExchangeServer.Close)
 
+		// Set up gRPC Server with TLS
 		listener, err := nettest.NewLocalListener("tcp")
 		require.NoError(t, err)
 
-		grpcServer := grpc.NewServer()
+		certPaths := createX509TestDir(t)
+
+		serverCert, err := tls.LoadX509KeyPair(certPaths.serverCert, certPaths.serverKey)
+		require.NoError(t, err)
+
+		tlsConfig := &tls.Config{
+			Certificates:       []tls.Certificate{serverCert},
+			ClientAuth:         tls.NoClientCert,
+			InsecureSkipVerify: false,
+			ServerName:         "localhost",
+		}
+
+		grpcServer := grpc.NewServer(grpc.Creds(credentials.NewTLS(tlsConfig)))
 		t.Cleanup(grpcServer.Stop)
 
 		decryptServer := &mockDecryptServer{}
@@ -186,11 +200,17 @@ func TestDecryptService(t *testing.T) {
 			<-t.Context().Done()
 		}()
 
+		// Populate configuration with gRPC+TLS options and mock token exchanger
+		grafanaSvcIdentity := "svc-identity-decrypter"
+		namespace := "stacks-1234"
+
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "grpc"
 		cfg.SecretsManagement.DecryptServerAddress = listener.Addr().String()
 		cfg.SecretsManagement.DecryptGrafanaServiceName = grafanaSvcIdentity
-		cfg.SecretsManagement.DecryptServerUseTLS = false
+		cfg.SecretsManagement.DecryptServerUseTLS = true
+		cfg.SecretsManagement.DecryptServerTLSServerName = "localhost"
+		cfg.SecretsManagement.DecryptServerTLSSkipVerify = false
 
 		grpcClientAuth := cfg.Raw.Section("grpc_client_authentication")
 		_, err = grpcClientAuth.NewKey("token", "test-token")
@@ -200,12 +220,22 @@ func TestDecryptService(t *testing.T) {
 		_, err = grpcClientAuth.NewKey("token_namespace", namespace)
 		require.NoError(t, err)
 
+		apiServer := cfg.Raw.Section("grafana-apiserver")
+		_, err = apiServer.NewKey("proxy_client_cert_file", certPaths.clientCert)
+		require.NoError(t, err)
+		_, err = apiServer.NewKey("proxy_client_key_file", certPaths.clientKey)
+		require.NoError(t, err)
+		_, err = apiServer.NewKey("apiservice_ca_bundle_file", certPaths.ca)
+		require.NoError(t, err)
+
+		// Create and test decryption, using the mock grpc server as we dont test the business logic here
 		decryptService, err := NewDecryptService(cfg, tracer, nil)
 		require.NoError(t, err)
 		require.NotNil(t, decryptService)
 
 		t.Cleanup(func() { require.NoError(t, decryptService.Close()) })
 
+		svcIdentity := "provsysoning-test"
 		authCtx := identity.WithServiceIdentityContext(ctx, 1, identity.WithServiceIdentityName(svcIdentity))
 
 		result, err := decryptService.Decrypt(authCtx, namespace, "secure-value-1")
@@ -213,6 +243,14 @@ func TestDecryptService(t *testing.T) {
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
 		require.NotEmpty(t, result["secure-value-1"])
+
+		requestContext := decryptServer.Calls[0].Arguments[0].(context.Context)
+
+		md, ok := metadata.FromIncomingContext(requestContext)
+		require.True(t, ok)
+		require.NotEmpty(t, md)
+		require.Equal(t, svcIdentity, md[strings.ToLower(contracts.HeaderGrafanaSTServiceIdentityName)][0])
+		require.Equal(t, respTokenExchanged, md[strings.ToLower(clients.ExtJWTAuthenticationHeaderName)][0])
 	})
 }
 
@@ -234,4 +272,41 @@ var _ decryptv1beta1.SecureValueDecrypterServer = (*mockDecryptServer)(nil)
 func (m *mockDecryptServer) DecryptSecureValues(ctx context.Context, req *decryptv1beta1.SecureValueDecryptRequest) (*decryptv1beta1.SecureValueDecryptResponseCollection, error) {
 	args := m.Called(ctx, req)
 	return args.Get(0).(*decryptv1beta1.SecureValueDecryptResponseCollection), args.Error(1)
+}
+
+type certPaths struct {
+	clientCert string
+	clientKey  string
+	serverCert string
+	serverKey  string
+	ca         string
+}
+
+func createX509TestDir(t *testing.T) certPaths {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	ca := testcerts.NewCA()
+	caCertFile, _, err := ca.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	serverKp, err := ca.NewKeyPair("localhost")
+	require.NoError(t, err)
+
+	serverCertFile, serverKeyFile, err := serverKp.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	clientKp, err := ca.NewKeyPair()
+	require.NoError(t, err)
+	clientCertFile, clientKeyFile, err := clientKp.ToTempFile(tmpDir)
+	require.NoError(t, err)
+
+	return certPaths{
+		clientCert: clientCertFile.Name(),
+		clientKey:  clientKeyFile.Name(),
+		serverCert: serverCertFile.Name(),
+		serverKey:  serverKeyFile.Name(),
+		ca:         caCertFile.Name(),
+	}
 }
