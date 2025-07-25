@@ -59,13 +59,13 @@ Queries with text that starts with `$` are templates.
 In our documentation and in the application, we typically simply refer to a _template query_ as a _query_, but we often use the terms _variable_ and _template variable_ interchangeably.
 {{< /admonition >}}
 
-For example, if you were administering a dashboard to monitor several servers, instead of creating a dashboard for each server, you could create one dashboard with template queries like this one:
+For example, if you were administering a dashboard to monitor several servers, it could have panels that use template queries like this one:
 
 ```text
 groupByNode(movingAverage(apps.$app.$server.counters.requests.count, 10), 2, 'sum')
 ```
 
-The following image shows how this would look in a panel using the template:
+The following image shows a panel in edit mode using the query:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-template-query-v12.1.png" max-width="750px" alt="A panel using a template query" >}}
 
