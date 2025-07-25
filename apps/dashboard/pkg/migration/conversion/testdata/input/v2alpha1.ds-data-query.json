@@ -938,7 +938,7 @@
     "title": "Test: V2alpha1 dashboard with annotations",
     "variables": [
       {
-        "kind": "VariableQuery",
+        "kind": "QueryVariable",
         "spec": {
           "datasource": {
             "uid": "gdev-prometheus"
@@ -955,7 +955,7 @@
         }
       },
       {
-        "kind": "VariableQuery",
+        "kind": "QueryVariable",
         "spec": {
           "enable": true,
           "hide": false,
@@ -970,7 +970,7 @@
         }
       },
       {
-        "kind": "VariableQuery",
+        "kind": "QueryVariable",
         "spec": {
           "enable": true,
           "hide": false,
@@ -982,7 +982,7 @@
         }
       },
       {
-        "kind": "VariableQuery",
+        "kind": "QueryVariable",
         "spec": {
           "enable": true,
           "hide": false,
