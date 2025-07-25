@@ -210,8 +210,12 @@ export function getRowHeight(
   let accurateCounter: LineCounter | undefined;
 
   for (const { estimate, counter, fieldIdxs } of lineCounters) {
+    // for some of the line counters, getting the precise count of the lines is expensive. those line counters
+    // set both an "estimate" and a "counter" function. if the cell we find to be the max was estimated, we will
+    // get the "true" value right before calculating the row height by hanging onto a reference to the counter fn.
     const count = estimate ?? counter;
     const isEstimating = typeof estimate === 'function';
+
     for (const fieldIdx of fieldIdxs) {
       const field = fields[fieldIdx];
       // special case: for the header, provide `-1` as the row index.
@@ -239,7 +243,7 @@ export function getRowHeight(
     maxLines = accurateCounter(maxValue, maxWidth);
   }
 
-  const totalHeight = maxLines * lineHeight + verticalPadding;
+  const totalHeight = Math.floor(maxLines) * lineHeight + verticalPadding;
   return Math.max(totalHeight, defaultHeight);
 }
 
