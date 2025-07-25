@@ -12455,15 +12455,13 @@
     },
     "cell-types": {
       "actions": "Actions",
+      "auto": "Auto",
       "color-background": "Colored background",
       "color-text": "Colored text",
       "data-links": "Data links",
       "gauge": "Gauge",
       "image": "Image",
       "json": "JSON View",
-      "label": {
-        "auto": "Auto"
-      },
       "pill": "Pill",
       "sparkline": "Sparkline"
     },

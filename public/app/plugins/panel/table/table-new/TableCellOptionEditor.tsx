@@ -30,7 +30,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
   const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
-    { value: TableCellDisplayMode.Auto, label: t('table.cell-types.label.auto', 'Auto') },
+    { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
     { value: TableCellDisplayMode.ColorText, label: t('table.cell-types.color-text', 'Colored text') },
     {
       value: TableCellDisplayMode.ColorBackground,
