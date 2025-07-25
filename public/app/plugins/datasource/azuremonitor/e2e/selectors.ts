@@ -80,6 +80,9 @@ export const components = {
         button: 'data-testid run-query',
       },
     },
+    logsQueryBuilder: {
+      container: { input: 'data-testid azure-monitor-logs-query-builder' },
+    },
     argsQueryEditor: {
       container: {
         input: 'data-testid azure-monitor-arg-query-editor',
