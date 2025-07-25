@@ -6,7 +6,7 @@ type Props = {
   className?: string;
 };
 
-export function AnalyzeFlameGraph(props: Props) {
+export function AnalyzeFlameGraphButton(props: Props) {
   const { assistantContext, className } = props;
   const [isAvailable, openAssistant] = useAssistant();
 

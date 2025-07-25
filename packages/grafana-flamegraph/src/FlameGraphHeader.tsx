@@ -7,7 +7,7 @@ import { createContext } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { AnalyzeFlameGraph } from './AnalyzeFlameGraph';
+import { AnalyzeFlameGraphButton } from './AnalyzeFlameGraphButton';
 import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
 import { CollapsedMap } from './FlameGraph/dataTransform';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
@@ -89,7 +89,9 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
-        {assistantContext && <AnalyzeFlameGraph className={styles.buttonSpacing} assistantContext={assistantContext} />}
+        {assistantContext && (
+          <AnalyzeFlameGraphButton className={styles.buttonSpacing} assistantContext={assistantContext} />
+        )}
         {showResetButton && (
           <Button
             variant={'secondary'}
