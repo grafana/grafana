@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { CoreApp, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { CoreApp, QueryEditorProps, SelectableValue, TimeRange } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
