@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/fullstorydev/grpchan"
-	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
@@ -129,7 +128,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, namespace string, names
 	// Up until here the identity is the one set by the ST service, but when the request goes out to the gRPC server,
 	// the aggregator will use the CAP for the HG which contains a different service identity.
 	// This is used for logging purposes only.
-	serviceIdentityList, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
+	serviceIdentityList, ok := authInfo.GetExtra()[authnlib.ServiceIdentityKey]
 	if !ok || len(serviceIdentityList) != 1 {
 		return nil, errors.New("invalid service identity in auth info")
 	}
