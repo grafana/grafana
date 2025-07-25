@@ -3,10 +3,11 @@ import { Button } from '@grafana/ui';
 
 type Props = {
   assistantContext: Array<ReturnType<typeof createContext>>;
+  className?: string;
 };
 
 export function AnalyzeFlameGraph(props: Props) {
-  const { assistantContext } = props;
+  const { assistantContext, className } = props;
   const [isAvailable, openAssistant] = useAssistant();
 
   if (!isAvailable || !openAssistant) {
@@ -15,6 +16,7 @@ export function AnalyzeFlameGraph(props: Props) {
 
   return (
     <Button
+      className={className}
       onClick={() =>
         openAssistant({
           prompt: 'Analyze Flame Graph',
@@ -22,7 +24,9 @@ export function AnalyzeFlameGraph(props: Props) {
         })
       }
       variant="secondary"
-      size="md"
+      fill="outline"
+      icon="ai-sparkle"
+      size="sm"
     >
       Analyze Flame Graph
     </Button>

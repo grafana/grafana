@@ -89,7 +89,7 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
-        {assistantContext && <AnalyzeFlameGraph assistantContext={assistantContext} />}
+        {assistantContext && <AnalyzeFlameGraph className={styles.buttonSpacing} assistantContext={assistantContext} />}
         {showResetButton && (
           <Button
             variant={'secondary'}
