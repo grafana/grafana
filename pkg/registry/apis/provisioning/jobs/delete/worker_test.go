@@ -371,4 +371,3 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 		})
 	}
 }
-
