@@ -16,6 +16,9 @@ export default defineConfig<PluginOptions>({
   reporter: [
     ['html'], // pretty
   ],
+  expect: {
+    timeout: 10_000,
+  },
   use: {
     baseURL: process.env.GRAFANA_URL ?? DEFAULT_URL,
     trace: 'retain-on-failure',
