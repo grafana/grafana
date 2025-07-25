@@ -51,9 +51,13 @@ export function ScopesInput({
     [appliedScopes, scopes]
   );
 
-  const scopesGroup = useMemo(() => {
-    return getScopesPath(appliedScopes, nodes)?.[-1];
-  }, [appliedScopes, nodes]);
+  // const scopesGroup = useMemo(() => {
+  //   return getScopesPath(appliedScopes, nodes)?.[-1];
+  // }, [appliedScopes, nodes]);
+
+  const appliedScopeNodeIds = appliedScopes.map((s) => s.parentNodeId);
+  console.log('appliedScopeNodeIds', appliedScopeNodeIds);
+  const parentNodeTitle = appliedScopeNodeIds[0] ? nodes[appliedScopeNodeIds[0]]?.spec.title : undefined;
 
   const input = useMemo(
     () => (
@@ -65,7 +69,7 @@ export function ScopesInput({
         value={scopesTitles}
         aria-label={t('scopes.selector.input.placeholder', 'Select scopes...')}
         data-testid="scopes-selector-input"
-        prefix={scopesGroup ? <span>{scopesGroup}:</span> : undefined}
+        prefix={parentNodeTitle ? <span>{parentNodeTitle}:</span> : undefined}
         suffix={
           appliedScopes.length > 0 && !disabled ? (
             <IconButton
@@ -85,7 +89,7 @@ export function ScopesInput({
         }}
       />
     ),
-    [disabled, loading, onInputClick, onRemoveAllClick, appliedScopes, scopesTitles, scopesGroup]
+    [disabled, loading, onInputClick, onRemoveAllClick, appliedScopes, scopesTitles, parentNodeTitle]
   );
 
   return (
