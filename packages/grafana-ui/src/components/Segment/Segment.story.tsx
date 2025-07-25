@@ -11,8 +11,8 @@ import { Segment, SegmentSyncProps } from './Segment';
 import { SegmentSection } from './SegmentSection';
 
 const AddButton = (
-  <span aria-label="Add" className="gf-form-label query-part">
-    <Icon name="plus-circle" />
+  <span className="gf-form-label query-part">
+    <Icon aria-label="Add" name="plus-circle" />
   </span>
 );
 
