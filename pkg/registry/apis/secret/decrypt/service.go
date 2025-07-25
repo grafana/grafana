@@ -69,11 +69,7 @@ func NewDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage con
 			return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 		}
 
-		// TODO: allow configuration of TLS settings
-		tlsConfig := TLSConfig{
-			UseTLS:             true,
-			InsecureSkipVerify: true,
-		}
+		tlsConfig := readTLSFromConfig(cfg)
 
 		// TODO: service name
 		client, err := NewGRPCDecryptClientWithTLS(tokenExchangeClient, tracer, grpcClientConfig.TokenNamespace, cfg.SecretsManagement.DecryptServerAddress, tlsConfig)
@@ -88,4 +84,24 @@ func NewDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage con
 	}
 
 	return nil, fmt.Errorf("unsupported storage type: %s", cfg.SecretsManagement.DecryptServerType)
+}
+
+func readTLSFromConfig(cfg *setting.Cfg) TLSConfig {
+	apiServer := cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	if !cfg.SecretsManagement.DecryptServerUseTLS {
+		return TLSConfig{
+			UseTLS:             false,
+			InsecureSkipVerify: true,
+		}
+	}
+
+	return TLSConfig{
+		UseTLS:             true,
+		CertFile:           apiServer.Key("proxy_client_cert_file").MustString(""),
+		KeyFile:            apiServer.Key("proxy_client_key_file").MustString(""),
+		CAFile:             apiServer.Key("apiservice_ca_bundle_file").MustString(""),
+		ServerName:         cfg.SecretsManagement.DecryptServerAddress,
+		InsecureSkipVerify: cfg.SecretsManagement.DecryptServerTLSSkipVerify,
+	}
 }
