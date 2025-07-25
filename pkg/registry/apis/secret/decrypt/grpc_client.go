@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
@@ -57,7 +58,7 @@ func NewGRPCDecryptClientWithTLS(
 
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
 	conn, err := grpc.NewClient(address, opts...)

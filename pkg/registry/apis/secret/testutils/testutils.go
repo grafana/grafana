@@ -128,7 +128,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
-	var logger logging.Logger = logging.DefaultLogger
+	logger := logging.DefaultLogger
 	if setupCfg.Logger != nil {
 		logger = setupCfg.Logger
 	}
