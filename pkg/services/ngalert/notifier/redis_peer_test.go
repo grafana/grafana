@@ -88,7 +88,7 @@ func TestNewRedisPeerWithTLS(t *testing.T) {
 }
 
 func TestNewRedisPeerWithMutualTLS(t *testing.T) {
-	// Skip during CI migration - Redis mutual TLS setup can trigger connectivity issues  
+	// Skip during CI migration - Redis mutual TLS setup can trigger connectivity issues
 	// Part of Redis infrastructure problems causing dispatcher panics
 	// Consistent with other Redis test skips during migration
 	t.Skip()
