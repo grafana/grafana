@@ -61,7 +61,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
     - **Stddev** - Calculates the moving standard deviation.
     - **Variance** - Calculates the moving variance.
   - **Row index** - Insert a field with the row index.
-  - **Template expression** - Insert a field with the value generated from a template expression. The expression can use the values of other fields in the calculation by using the {field} syntax, with optional modifiers for padding.
+  - **Template expression** - Insert a field with the value generated from a template expression. The expression can paste the value of other fields by using the {field} syntax, with optional modifiers for padding.
     - **No alignment** - Pastes the contents of 'field': {field}
     - **Left alignment** - Pastes the contents of 'field' aligned left with default padding character, padded to 10 characters: {field:<10}
     - **Right alignment** - Pastes the contents of 'field' aligned right with default padding character, padded to 10 characters: {field:>10}
