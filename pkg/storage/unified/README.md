@@ -476,6 +476,18 @@ ring.
 
 The Dual Writer system is a critical component of Unified Storage that manages the transition between legacy storage and unified storage during the migration process. It provides six different modes (0-5) that control how data is read from and written to both storage systems.
 
+### Dual Writer Mode Reference Table
+
+| Mode | Description | Read Source | Read Behavior | Write Targets | Write Behavior | Error Handling | Background Sync |
+|------|-------------|-------------|---------------|---------------|----------------|----------------|-----------------|
+| **0** | Disabled | Legacy Only | Synchronous | Legacy Only | Synchronous | Legacy errors bubble up | None |
+| **1** | Legacy Primary + Best Effort Unified | Legacy Only | Legacy: Sync<br/>Unified: Async (background) | Legacy + Unified | Legacy: Sync<br/>Unified: Async (background) | Only legacy errors bubble up.<br/>Unified errors logged but ignored | Active - syncs legacy → unified |
+| **2** | Legacy Primary + Unified Sync | Legacy Only | Legacy: Sync<br/>Unified: Sync (verification read) | Legacy + Unified | Legacy: Sync<br/>Unified: Sync | Legacy errors bubble up first.<br/>Unified errors bubble up (except NotFound which is ignored).<br/>If write succeeds in legacy but fails in unified, unified error bubbles up and legacy is cleaned up | Active - syncs legacy → unified |
+| **3** | Unified Primary + Legacy Sync | Unified Primary | Unified: Sync<br/>Legacy: Fallback on NotFound | Legacy + Unified | Legacy: Sync<br/>Unified: Sync | Legacy errors bubble up first.<br/>If legacy succeeds but unified fails, unified error bubbles up and legacy is cleaned up | Prerequisite - only available after sync completes |
+| **4** | Unified Only (Post-Sync) | Unified Only | Synchronous | Unified Only | Synchronous | Unified errors bubble up | Prerequisite - only available after sync completes |
+| **5** | Unified Only (Force) | Unified Only | Synchronous | Unified Only | Synchronous | Unified errors bubble up | None - bypasses sync requirements |
+
+
 ### Dual Writer Architecture
 
 The dual writer acts as an intermediary layer that sits between the API layer and the storage backends, routing read and write operations based on the configured mode.
@@ -579,11 +591,12 @@ sequenceDiagram
     API->>DW: Read Request
     DW->>LS: Read from Legacy
     LS-->>DW: Data
-    DW->>US: Read from Unified (Foreground)
+    DW->>US: Verification Read (Foreground)
+    Note over US: Verifies unified storage can serve the same object
     US-->>DW: Success/Error
-    alt Unified Read Failed
+    alt Verification Read Failed (Non-NotFound)
         DW-->>API: Unified Error
-    else Unified Read Success
+    else Verification Read Success or NotFound
         DW-->>API: Legacy Data
     end
     
@@ -669,17 +682,6 @@ sequenceDiagram
     Note over LS: Not Used
 ```
 
-### Dual Writer Mode Reference Table
-
-| Mode | Description | Read Source | Read Behavior | Write Targets | Write Behavior | Error Handling | Background Sync |
-|------|-------------|-------------|---------------|---------------|----------------|----------------|-----------------|
-| **0** | Disabled | Legacy Only | Synchronous | Legacy Only | Synchronous | Legacy errors bubble up | None |
-| **1** | Legacy Primary + Best Effort Unified | Legacy Only | Legacy: Sync<br/>Unified: Async (background) | Legacy + Unified | Legacy: Sync<br/>Unified: Async (background) | Only legacy errors bubble up.<br/>Unified errors logged but ignored | Active - syncs legacy → unified |
-| **2** | Legacy Primary + Unified Sync | Legacy Only | Legacy: Sync<br/>Unified: Sync (validation) | Legacy + Unified | Legacy: Sync<br/>Unified: Sync | Legacy errors bubble up first.<br/>If legacy succeeds but unified fails, unified error bubbles up and legacy is cleaned up | Active - syncs legacy → unified |
-| **3** | Unified Primary + Legacy Sync | Unified Primary | Unified: Sync<br/>Legacy: Fallback on NotFound | Legacy + Unified | Legacy: Sync<br/>Unified: Sync | Legacy errors bubble up first.<br/>If legacy succeeds but unified fails, unified error bubbles up and legacy is cleaned up | Prerequisite - only available after sync completes |
-| **4** | Unified Only (Post-Sync) | Unified Only | Synchronous | Unified Only | Synchronous | Unified errors bubble up | Prerequisite - only available after sync completes |
-| **5** | Unified Only (Force) | Unified Only | Synchronous | Unified Only | Synchronous | Unified errors bubble up | None - bypasses sync requirements |
-
 ### Background Sync Behavior
 
 The background sync service runs periodically (default: every hour) and is responsible for:
@@ -741,6 +743,7 @@ flowchart TD
 3. **Cleanup Operations**: Best effort - failures are logged but don't fail the original operation
 
 #### Read Operation Fallback
+- **Mode 2**: `NotFound` errors from unified storage are ignored (object may not be synced yet), but other errors bubble up
 - **Mode 3**: If unified storage returns `NotFound`, automatically falls back to legacy storage
 - **Other Modes**: No fallback - errors bubble up directly
 
