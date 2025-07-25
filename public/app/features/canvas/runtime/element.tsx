@@ -54,9 +54,6 @@ export class ElementState implements LayerElement {
   // Temp stored constraint for visualization purposes (switch to top / left constraint to simplify some functionality)
   tempConstraint: Constraint | undefined;
 
-  // Flag to track if element is currently being resized
-  isResizing = false;
-
   // Filled in by ref
   div?: HTMLDivElement;
 
