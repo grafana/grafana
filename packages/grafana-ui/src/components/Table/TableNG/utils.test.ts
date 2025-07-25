@@ -44,7 +44,7 @@ import {
   migrateTableDisplayModeToCellOptions,
   shouldTextOverflow,
   shouldTextWrap,
-  withDataLinksActionTooltip,
+  withDataLinksActionsTooltip,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -372,7 +372,7 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('withDataLinksActionTooltip', () => {
+  describe('withDataLinksActionsTooltip', () => {
     it.each([
       {
         expected: true,
@@ -543,7 +543,7 @@ describe('TableNG utils', () => {
     ] satisfies Array<{ expected: boolean; case: string; field: Field }>)(
       'returns $expected if the cell has $case',
       ({ field, expected }) => {
-        expect(withDataLinksActionTooltip(field)).toBe(expected);
+        expect(withDataLinksActionsTooltip(field)).toBe(expected);
       }
     );
   });

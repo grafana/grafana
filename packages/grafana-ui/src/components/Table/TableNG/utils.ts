@@ -141,7 +141,7 @@ export function shouldTextWrap(field: Field): boolean {
  * @internal
  * returns true if we should show the tooltip for data links and/or actions for this cell.
  */
-export function withDataLinksActionTooltip(field: Field, cellType = getCellOptions(field).type) {
+export function withDataLinksActionsTooltip(field: Field, cellType = getCellOptions(field).type) {
   return (
     cellType !== TableCellDisplayMode.DataLinks &&
     cellType !== TableCellDisplayMode.Actions &&
