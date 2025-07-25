@@ -35,7 +35,6 @@ type StorageMetrics struct {
 	SecureValueMetadataGetCount       prometheus.Counter
 	SecureValueMetadataListDuration   prometheus.Histogram
 	SecureValueMetadataListCount      prometheus.Counter
-	SecureValueGetForDecryptDuration  prometheus.Histogram
 	SecureValueSetExternalIDDuration  prometheus.Histogram
 	SecureValueSetStatusDuration      prometheus.Histogram
 
@@ -185,13 +184,6 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "secure_value_metadata_list_count",
 			Help:      "Count of secure value metadata list operations",
 		}),
-		SecureValueGetForDecryptDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_get_for_decrypt_duration_seconds",
-			Help:      "Duration of secure value get for decrypt operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
 		SecureValueSetExternalIDDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
@@ -257,7 +249,6 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueMetadataGetCount,
 				m.SecureValueMetadataListDuration,
 				m.SecureValueMetadataListCount,
-				m.SecureValueGetForDecryptDuration,
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
 				m.DecryptDuration,
