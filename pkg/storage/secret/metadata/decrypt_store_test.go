@@ -6,13 +6,13 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	grpcmetadata "google.golang.org/grpc/metadata"
 	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 )
@@ -262,6 +262,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create auth context with proper permissions that match the decrypters
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, tokenSvcIdentity, types.TypeUser)
 
+		// Needs to be incoming because we are pretending we received the metadata from a gRPC request
 		ctx = grpcmetadata.NewIncomingContext(authCtx, grpcmetadata.New(map[string]string{
 			contracts.HeaderGrafanaSTServiceIdentityName: stSvcIdentity,
 		}))
@@ -325,7 +326,7 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 }
 
 type mockLogger struct {
-	log.Logger
+	logging.Logger
 	InfoMsgs []string
 	InfoArgs [][]any
 }

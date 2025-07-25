@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +14,6 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -35,7 +35,7 @@ import (
 
 type SetupConfig struct {
 	KeeperService contracts.KeeperService
-	Logger        log.Logger
+	Logger        logging.Logger
 }
 
 func defaultSetupCfg() SetupConfig {
@@ -48,7 +48,7 @@ func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig)
 	}
 }
 
-func WithLogger(logger log.Logger) func(*SetupConfig) {
+func WithLogger(logger logging.Logger) func(*SetupConfig) {
 	return func(setupCfg *SetupConfig) {
 		setupCfg.Logger = logger
 	}
@@ -128,7 +128,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
-	var logger log.Logger = log.New("decrypt.storage")
+	var logger logging.Logger = logging.DefaultLogger
 	if setupCfg.Logger != nil {
 		logger = setupCfg.Logger
 	}

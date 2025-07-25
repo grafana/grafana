@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
+// HeaderGrafanaSTServiceIdentityName is used to pass the ST HG service identity in the gRPC request metadata.
 const HeaderGrafanaSTServiceIdentityName = "X-Grafana-ST-Service-Identity-Name"
 
 var (

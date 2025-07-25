@@ -5,10 +5,10 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,7 +26,7 @@ func ProvideDecryptService(
 ) (contracts.DecryptService, error) {
 	existingDecryptStorage, err := metadata.ProvideDecryptStorage(
 		tracer,
-		log.New("decrypt.storage"),
+		logging.DefaultLogger.With("logger", "decrypt.storage"),
 		keeperService,
 		keeperMetadataStorage,
 		secureValueMetadataStorage,
@@ -71,7 +71,6 @@ func NewDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage con
 
 		tlsConfig := readTLSFromConfig(cfg)
 
-		// TODO: service name
 		client, err := NewGRPCDecryptClientWithTLS(tokenExchangeClient, tracer, grpcClientConfig.TokenNamespace, cfg.SecretsManagement.DecryptServerAddress, tlsConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create grpc decrypt client: %w", err)
@@ -87,14 +86,14 @@ func NewDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage con
 }
 
 func readTLSFromConfig(cfg *setting.Cfg) TLSConfig {
-	apiServer := cfg.SectionWithEnvOverrides("grafana-apiserver")
-
 	if !cfg.SecretsManagement.DecryptServerUseTLS {
 		return TLSConfig{
 			UseTLS:             false,
 			InsecureSkipVerify: true,
 		}
 	}
+
+	apiServer := cfg.SectionWithEnvOverrides("grafana-apiserver")
 
 	return TLSConfig{
 		UseTLS:             true,

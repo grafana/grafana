@@ -7,6 +7,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -14,7 +15,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
@@ -22,7 +22,7 @@ import (
 
 func ProvideDecryptStorage(
 	tracer trace.Tracer,
-	logger log.Logger,
+	logger logging.Logger,
 	keeperService contracts.KeeperService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -47,7 +47,7 @@ func ProvideDecryptStorage(
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
 	tracer                     trace.Tracer
-	logger                     log.Logger
+	logger                     logging.Logger
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -92,7 +92,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error())
 		}
 
-		s.logger.Info("Audit log:", args...)
+		s.logger.Info("Secrets Audit Log", args...)
 
 		success := decryptErr == nil
 		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
