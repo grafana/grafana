@@ -11,9 +11,10 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
@@ -21,6 +22,7 @@ import (
 
 func ProvideDecryptStorage(
 	tracer trace.Tracer,
+	logger log.Logger,
 	keeperService contracts.KeeperService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -33,6 +35,7 @@ func ProvideDecryptStorage(
 
 	return &decryptStorage{
 		tracer:                     tracer,
+		logger:                     logger,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -44,6 +47,7 @@ func ProvideDecryptStorage(
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
 	tracer                     trace.Tracer
+	logger                     log.Logger
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -65,14 +69,33 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	defer func() {
 		span.SetAttributes(attribute.String("decrypter.identity", decrypterIdentity))
 
+		args := []any{
+			"namespace", namespace.String(),
+			"secret_name", name,
+			"decrypter_identity", decrypterIdentity,
+		}
+
+		// If the request is coming from ST HG, the service identity used for decryption is still from the signed token,
+		// but for auditing purposes we also log the service identity passed in the request metadata.
+		md, ok := metadata.FromIncomingContext(ctx)
+		if ok {
+			grafanaSTServiceIdentity := md.Get(contracts.HeaderGrafanaSTServiceIdentityName)
+			if len(grafanaSTServiceIdentity) > 0 {
+				args = append(args, "grafana_st_decrypter_identity", grafanaSTServiceIdentity)
+				span.SetAttributes(attribute.StringSlice("grafana_st_decrypter.identity", grafanaSTServiceIdentity))
+			}
+		}
+
 		if decryptErr == nil {
-			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_success", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity)
+			args = append(args, "operation", "decrypt_secret_success")
 		} else {
 			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
-
-			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_error", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity, "error", decryptErr)
+			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error())
 		}
+
+		s.logger.Info("Audit log:", args...)
+
 		success := decryptErr == nil
 		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 		s.metrics.DecryptRequestCount.WithLabelValues(strconv.FormatBool(success)).Inc()

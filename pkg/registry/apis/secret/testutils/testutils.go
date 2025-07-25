@@ -13,6 +13,7 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -34,6 +35,7 @@ import (
 
 type SetupConfig struct {
 	KeeperService contracts.KeeperService
+	Logger        log.Logger
 }
 
 func defaultSetupCfg() SetupConfig {
@@ -43,6 +45,12 @@ func defaultSetupCfg() SetupConfig {
 func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig) {
 	return func(setupCfg *SetupConfig) {
 		setupCfg.KeeperService = keeperService
+	}
+}
+
+func WithLogger(logger log.Logger) func(*SetupConfig) {
+	return func(setupCfg *SetupConfig) {
+		setupCfg.Logger = logger
 	}
 }
 
@@ -59,6 +67,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	}
 
 	tracer := noop.NewTracerProvider().Tracer("test")
+
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
 	database := database.ProvideDatabase(testDB, tracer)
@@ -119,7 +128,12 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
-	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
+	var logger log.Logger = log.New("decrypt.storage")
+	if setupCfg.Logger != nil {
+		logger = setupCfg.Logger
+	}
+
+	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, logger, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
 	testCfg := setting.NewCfg()

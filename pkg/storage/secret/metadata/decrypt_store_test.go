@@ -7,10 +7,12 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	grpcmetadata "google.golang.org/grpc/metadata"
 	"k8s.io/utils/ptr"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 )
@@ -248,7 +250,60 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.Empty(t, exposed)
 	})
 
-	// TODO: add more tests for keeper failure scenarios, lets see how the async work will change this though.
+	t.Run("happy path with grpc metadata in request, also record the metadata as part of the service identity", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		tokenSvcIdentity := "svc"
+		stSvcIdentity := "st-svc"
+
+		// Create auth context with proper permissions that match the decrypters
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, tokenSvcIdentity, types.TypeUser)
+
+		ctx = grpcmetadata.NewIncomingContext(authCtx, grpcmetadata.New(map[string]string{
+			contracts.HeaderGrafanaSTServiceIdentityName: stSvcIdentity,
+		}))
+
+		// Setup service
+		fakeLogger := &mockLogger{}
+		sut := testutils.Setup(t, testutils.WithLogger(fakeLogger))
+
+		// Create a secure value
+		spec := secretv1beta1.SecureValueSpec{
+			Description: "description",
+			Decrypters:  []string{tokenSvcIdentity},
+			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+		}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv.Name = "sv-test"
+		sv.Namespace = "default"
+
+		_, err := sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
+
+		exposed, err := sut.DecryptStorage.Decrypt(ctx, "default", "sv-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, exposed)
+		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
+
+		require.Len(t, fakeLogger.InfoArgs, 1)
+		args := fakeLogger.InfoArgs[0]
+		require.Contains(t, args, "grafana_st_decrypter_identity")
+		require.Contains(t, args, "decrypter_identity")
+		for i, arg := range args {
+			if arg == "grafana_st_decrypter_identity" {
+				actualIdentity := args[i+1].([]string)
+				require.Len(t, actualIdentity, 1)
+				require.Equal(t, stSvcIdentity, actualIdentity[0])
+			}
+
+			if arg == "decrypter_identity" {
+				require.Equal(t, tokenSvcIdentity, args[i+1])
+			}
+		}
+	})
 }
 
 func createAuthContext(ctx context.Context, namespace string, permissions []string, svc string, identityType types.IdentityType) context.Context {
@@ -268,4 +323,15 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 	}
 
 	return types.WithAuthInfo(ctx, requester)
+}
+
+type mockLogger struct {
+	log.Logger
+	InfoMsgs []string
+	InfoArgs [][]any
+}
+
+func (m *mockLogger) Info(msg string, args ...any) {
+	m.InfoMsgs = append(m.InfoMsgs, msg)
+	m.InfoArgs = append(m.InfoArgs, args)
 }

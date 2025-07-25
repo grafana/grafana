@@ -9,7 +9,9 @@ import (
 	"os"
 
 	"github.com/fullstorydev/grpchan"
+	"github.com/grafana/authlib/authn"
 	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -21,9 +23,8 @@ import (
 )
 
 type GRPCDecryptClient struct {
-	serviceName string
-	conn        *grpc.ClientConn
-	client      decryptv1beta1.SecureValueDecrypterClient
+	conn   *grpc.ClientConn
+	client decryptv1beta1.SecureValueDecrypterClient
 }
 
 var _ contracts.DecryptService = &GRPCDecryptClient{}
@@ -37,16 +38,16 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCDecryptClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address, serviceName string) (*GRPCDecryptClient, error) {
-	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, address, TLSConfig{}, serviceName)
+func NewGRPCDecryptClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, namespace, address string) (*GRPCDecryptClient, error) {
+	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, namespace, address, TLSConfig{})
 }
 
 func NewGRPCDecryptClientWithTLS(
 	tokenExchanger authnlib.TokenExchanger,
 	tracer trace.Tracer,
+	namespace string,
 	address string,
 	tlsConfig TLSConfig,
-	serviceName string,
 ) (*GRPCDecryptClient, error) {
 	creds, err := createTLSCredentials(tlsConfig)
 	if err != nil {
@@ -58,10 +59,10 @@ func NewGRPCDecryptClientWithTLS(
 		return nil, fmt.Errorf("failed to connect to grpc decrypt server at %s: %w", address, err)
 	}
 
-	// TODO: do we need to set authn.WithClientInterceptorNamespace?
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
 		tokenExchanger,
 		authnlib.WithClientInterceptorTracer(tracer),
+		authnlib.WithClientInterceptorNamespace(namespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
 	)
 
@@ -120,14 +121,33 @@ func (g *GRPCDecryptClient) Close() error {
 }
 
 func (g *GRPCDecryptClient) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, errors.New("missing auth info in context")
+	}
+
+	// Up until here the identity is the one set by the ST service, but when the request goes out to the gRPC server,
+	// the aggregator will use the CAP for the HG which contains a different service identity.
+	// This is used for logging purposes only.
+	serviceIdentityList, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
+	if !ok || len(serviceIdentityList) != 1 {
+		return nil, errors.New("invalid service identity in auth info")
+	}
+
+	serviceIdentity := serviceIdentityList[0]
+	if len(serviceIdentity) == 0 {
+		return nil, errors.New("empty service identity in auth info")
+	}
+
 	req := &decryptv1beta1.SecureValueDecryptRequest{
 		Namespace: namespace,
 		Names:     names,
 	}
 
-	// TODO: how to pass service name??
+	// Decryption will still use the service identity from the auth token,
+	// but we also pass the service identity from the request metadata for auditing purposes.
 	md := metadata.New(map[string]string{
-		"X-Grafana-Service-Name": g.serviceName,
+		contracts.HeaderGrafanaSTServiceIdentityName: serviceIdentity,
 	})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 

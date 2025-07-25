@@ -3,10 +3,12 @@ package decrypt
 import (
 	"fmt"
 
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
-	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,6 +26,7 @@ func ProvideDecryptService(
 ) (contracts.DecryptService, error) {
 	existingDecryptStorage, err := metadata.ProvideDecryptStorage(
 		tracer,
+		log.New("decrypt.storage"),
 		keeperService,
 		keeperMetadataStorage,
 		secureValueMetadataStorage,
@@ -50,6 +53,14 @@ func NewDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage con
 			return nil, fmt.Errorf("grpc_client_authentication.token and grpc_client_authentication.token_exchange_url are required when secrets_manager.decrypt_server_type is grpc")
 		}
 
+		nsInfo, err := claims.ParseNamespace(grpcClientConfig.TokenNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse token namespace %v: %w", grpcClientConfig.TokenNamespace, err)
+		}
+		if nsInfo.OrgID < 1 {
+			return nil, fmt.Errorf("invalid token namepsace %v", grpcClientConfig.TokenNamespace)
+		}
+
 		tokenExchangeClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 			Token:            grpcClientConfig.Token,
 			TokenExchangeURL: grpcClientConfig.TokenExchangeURL,
@@ -65,7 +76,7 @@ func NewDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage con
 		}
 
 		// TODO: service name
-		client, err := NewGRPCDecryptClientWithTLS(tokenExchangeClient, tracer, cfg.SecretsManagement.DecryptServerAddress, tlsConfig, "service-name")
+		client, err := NewGRPCDecryptClientWithTLS(tokenExchangeClient, tracer, grpcClientConfig.TokenNamespace, cfg.SecretsManagement.DecryptServerAddress, tlsConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create grpc decrypt client: %w", err)
 		}

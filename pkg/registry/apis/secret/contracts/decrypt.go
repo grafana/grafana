@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
+const HeaderGrafanaSTServiceIdentityName = "X-Grafana-ST-Service-Identity-Name"
+
 var (
 	ErrDecryptNotFound      = errors.New("not found")
 	ErrDecryptNotAuthorized = errors.New("not authorized")
