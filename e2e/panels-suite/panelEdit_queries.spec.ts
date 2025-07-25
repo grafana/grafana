@@ -14,7 +14,7 @@ describe('Panel edit tests - queries', () => {
     // UI functionality works fine, but test expects different element count
     // TODO: Update test selectors after CI migration completion to handle multiple elements
     cy.skip();
-    
+
     e2e.flows.openDashboard({ uid: '5SdHCadmz', queryParams: { editPanel: 3 } });
 
     // New panel editor opens when navigating from Panel menu
