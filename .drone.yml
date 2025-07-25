@@ -25,7 +25,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-drone
@@ -75,7 +75,7 @@ steps:
   - go install github.com/bazelbuild/buildtools/buildifier@latest
   - buildifier --lint=warn -mode=check -r .
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: lint-starlark
 trigger:
   event:
@@ -140,7 +140,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -150,7 +150,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -159,7 +159,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-jsonnet
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -210,7 +210,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-package
   pull: always
   volumes:
@@ -472,7 +472,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-cue
 trigger:
   event:
@@ -542,7 +542,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-cue
 trigger:
   branch: main
@@ -609,7 +609,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -619,7 +619,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -628,7 +628,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-jsonnet
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -678,7 +678,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-package
   pull: always
   volumes:
@@ -1156,7 +1156,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -1286,7 +1286,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -1427,7 +1427,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --artifacts-editions=oss --tag $${DRONE_TAG} --src-bucket
@@ -1519,7 +1519,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -1619,7 +1619,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -1716,7 +1716,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
@@ -1790,7 +1790,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -1884,7 +1884,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -2007,7 +2007,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -2114,7 +2114,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -2260,7 +2260,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-publish
   pull: always
   volumes:
@@ -2390,7 +2390,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -2732,7 +2732,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM docker:27-cli
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.24.4-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.24.5-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22.16.0-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22-bookworm
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
@@ -2760,7 +2760,7 @@ steps:
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL docker:27-cli
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
-  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.24.4-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.24.5-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:22.16.0-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:22-bookworm
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
@@ -3007,6 +3007,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: bedf3558cfe4e2293bff6ca30b39049bc60d15f5f24a063c35f16d17f2b25533
+hmac: c38baa8613d2cf1a5506f6b6568b0869204ba8b2e7281e117c31f3a64bf64447
 
 ...
