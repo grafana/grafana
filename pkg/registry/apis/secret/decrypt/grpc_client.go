@@ -11,6 +11,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -142,6 +143,9 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, namespace string, names
 		Namespace: namespace,
 		Names:     names,
 	}
+
+	// removeme
+	logging.FromContext(ctx).Error("Found service identity for decryption", "service_identity", serviceIdentity)
 
 	// Decryption will still use the service identity from the auth token,
 	// but we also pass the service identity from the request metadata for auditing purposes.
