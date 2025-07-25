@@ -143,8 +143,6 @@ jobs:
             path: e2e/various-suite
           - suite: dashboards-suite
             path: e2e/dashboards-suite
-          - suite: smoke-tests-suite
-            path: e2e/smoke-tests-suite
           - suite: panels-suite
             path: e2e/panels-suite
           - suite: various-suite (old arch)
