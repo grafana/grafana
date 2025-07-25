@@ -5,12 +5,15 @@ import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@graf
 import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Box, Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';
 
+import { dashboardEditActions } from '../edit-pane/shared';
+
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import {
   ConditionalRenderingSerializerRegistryItem,
   VariableConditionValue,
   VariableConditionValueOperator,
 } from './types';
+import { translatedItemType } from './utils';
 
 type ConditionalRenderingVariableState = ConditionalRenderingBaseState<VariableConditionValue>;
 
@@ -31,7 +34,7 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
     return t(
       'dashboard.conditional-rendering.conditions.variable.info',
       'Show or hide the {{type}} dynamically based on the variable value.',
-      { type: this.getItemType() }
+      { type: translatedItemType(this.getItemType()) }
     );
   }
 
@@ -110,6 +113,8 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
     []
   );
 
+  const undoText = t('dashboard.edit-actions.edit-template-variable-rule', 'Change template variable rule');
+
   return (
     <Stack direction="column" gap={0.5}>
       <Stack direction="row" gap={0.5} grow={1}>
@@ -118,7 +123,14 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
             placeholder={t('dashboard.conditional-rendering.conditions.variable.name', 'Name')}
             options={variableNames}
             value={value.name}
-            onChange={(option) => model.setStateAndNotify({ value: { ...value, name: option.value } })}
+            onChange={(option) => {
+              dashboardEditActions.edit({
+                description: undoText,
+                source: model,
+                perform: () => model.setStateAndNotify({ value: { ...value, name: option.value } }),
+                undo: () => model.setStateAndNotify({ value: { ...value, name: value.name } }),
+              });
+            }}
           />
         </Box>
 
@@ -127,13 +139,28 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
           minWidth={10}
           options={operatorOptions}
           value={value.operator}
-          onChange={(option) => model.setStateAndNotify({ value: { ...value, operator: option.value } })}
+          onChange={(option) => {
+            dashboardEditActions.edit({
+              description: undoText,
+              source: model,
+              perform: () => model.setStateAndNotify({ value: { ...value, operator: option.value } }),
+              undo: () => model.setStateAndNotify({ value: { ...value, operator: value.operator } }),
+            });
+          }}
         />
       </Stack>
       <Input
         placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
         value={value.value}
-        onChange={(e) => model.setStateAndNotify({ value: { ...value, value: e.currentTarget.value } })}
+        onChange={(e) => {
+          const eventValue = e.currentTarget.value;
+          dashboardEditActions.edit({
+            description: undoText,
+            source: model,
+            perform: () => model.setStateAndNotify({ value: { ...value, value: eventValue } }),
+            undo: () => model.setStateAndNotify({ value: { ...value, value: value.value } }),
+          });
+        }}
       />
     </Stack>
   );
