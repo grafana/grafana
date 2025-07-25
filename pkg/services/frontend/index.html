@@ -28,7 +28,7 @@
   </head>
 
   <body>
-    <div class="fs-loader">
+    <div class="preloader">
       <style>
         /**
           * This style tag is purposefully inside the fs-loader div so
@@ -68,7 +68,7 @@
           margin: 0;
         }
 
-        .fs-loader {
+        .preloader {
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -186,38 +186,68 @@
             return;
           }
 
-          document.querySelector('.fs-loader').classList.add('fs-loader-starting-up');
+          document.querySelector('.preloader').classList.add('fs-loader-starting-up');
           hasSetLoading = true;
         }
 
         const CHECK_INTERVAL = 1 * 1000;
 
-        async function loadBootData() {
-          while (true) {
-            const resp = await fetch("/bootdata");
-
-            const textResponse = await resp.text();
-            let rawBootData;
-            try {
-              rawBootData = JSON.parse(textResponse);
-            } catch {
-              // If we haven't gotten a JSON response, there must be an error
-              throw new Error("Unexpected response type: " + textResponse);
-            }
-
-            if (resp.status === 503 && rawBootData.code === 'Loading') {
-              // If the response is 503, poll until we get a valid response.
-              setLoading();
-              await new Promise(resolve => setTimeout(resolve, CHECK_INTERVAL));
-              continue;
-            } else if (!resp.ok) {
-              // Or if we got a non-200 response, throw an error.
-              const errorText = await resp.text();
-              throw new Error("Unexpected response body: " + errorText);
-            }
-
-            return rawBootData;
+        /**
+         * Fetches boot data from the server. If it returns undefined, it should be retried later.
+         * Will return a rejected promise on unrecoverable errors.
+         **/
+        async function fetchBootData() {
+          const resp = await fetch("/bootdata");
+          const textResponse = await resp.text();
+          
+          let rawBootData;
+          try {
+            rawBootData = JSON.parse(textResponse);
+          } catch {
+            // If we haven't gotten a JSON response, there must be an error
+            throw new Error("Unexpected response type: " + textResponse);
           }
+
+          if (resp.status === 503 && rawBootData.code === 'Loading') {
+            // If the response is 503, instruct the caller to retry again later.
+            return;
+          }
+          
+          if (!resp.ok) {
+            // Or if we got a non-200 response, throw an error.
+            throw new Error("Unexpected response body: " + textResponse);
+          }
+
+          return rawBootData;
+        }
+
+        /**
+         * Loads the boot data from the server, retrying if it's unavailable.
+         **/
+        function loadBootData() {
+          return new Promise((resolve, reject) => {
+            const attemptFetch = async () => {
+              try {
+                const bootData = await fetchBootData();
+
+                if (!bootData) {
+                  // If the boot data is undefined, retry after a delay
+                  setLoading();
+                  setTimeout(attemptFetch, CHECK_INTERVAL);
+                  return;
+                }
+
+                // Success - resolve with boot data
+                resolve(bootData);
+              } catch (error) {
+                // Any error rejects the promise
+                reject(error);
+              }
+            };
+
+            // Start the first attempt immediately
+            attemptFetch();
+          });
         }
 
         async function initGrafana() {
