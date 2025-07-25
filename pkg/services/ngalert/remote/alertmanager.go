@@ -354,13 +354,13 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 		StaticHeaders: am.staticHeaders,
 	}
 
-	hash, err := calculateUserGrafanaConfigHash(payload)
+	cfgHash, err := calculateUserGrafanaConfigHash(payload)
 	if err != nil {
 		am.log.Error("Unable to calculate hash of the configuration. Using the empty string", "error", err)
-		hash = ""
+		cfgHash = ""
 	}
-	payload.Hash = hash
-	payload.Default = am.isDefaultConfiguration(hash)
+	payload.Hash = cfgHash
+	payload.Default = am.isDefaultConfiguration(cfgHash)
 	return payload, nil
 }
 
