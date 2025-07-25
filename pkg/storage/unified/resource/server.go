@@ -20,6 +20,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+	"github.com/grafana/dskit/ring"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -180,6 +181,8 @@ type SearchOptions struct {
 
 	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
 	RebuildInterval time.Duration
+
+	Ring *ring.Ring
 }
 
 type ResourceServerOptions struct {
@@ -223,6 +226,9 @@ type ResourceServerOptions struct {
 
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue QOSEnqueuer
+
+	Ring           *ring.Ring
+	RingLifecycler *ring.BasicLifecycler
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -305,7 +311,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, opts.Ring, opts.RingLifecycler)
 		if err != nil {
 			return nil, err
 		}
@@ -404,6 +410,8 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
+//
+//nolint:gocyclo
 func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
@@ -434,6 +442,16 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 
 	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
+	}
+
+	// Verify that this resource can reference secure values
+	secure, err := obj.GetSecureValues()
+	if err != nil {
+		return nil, AsErrorResult(err)
+	}
+	if len(secure) > 0 {
+		// See: https://github.com/grafana/grafana/pull/107803
+		return nil, NewBadRequestError("Saving secure values is not yet supported")
 	}
 
 	event := &WriteEvent{
@@ -782,6 +800,11 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable to read previous object, %v", err))
 	}
+	oldObj, err := utils.MetaAccessor(marker)
+	if err != nil {
+		return nil, err
+	}
+
 	obj, err := utils.MetaAccessor(marker)
 	if err != nil {
 		return nil, err
@@ -793,6 +816,8 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	obj.SetUpdatedBy(user.GetUID())
 	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
+	event.ObjectOld = oldObj
+	event.Object = obj
 	event.Value, err = marker.MarshalJSON()
 	if err != nil {
 		return nil, apierrors.NewBadRequest(

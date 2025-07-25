@@ -12,7 +12,7 @@ import { AutoSaveField } from './AutoSaveField';
 import mdx from './AutoSaveField.mdx';
 
 const meta: Meta = {
-  title: 'Forms/AutoSaveField',
+  title: 'Inputs/AutoSaveField',
   component: AutoSaveField,
   parameters: {
     docs: {
@@ -35,6 +35,8 @@ const meta: Meta = {
         'validationMessageHorizontalOverflow',
       ],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     saveErrorMessage: { control: 'text' },

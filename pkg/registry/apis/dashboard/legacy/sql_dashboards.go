@@ -175,7 +175,8 @@ func (r *rowsWrapper) Next() bool {
 
 		r.row, err = r.a.scanRow(r.rows, r.history)
 		if err != nil {
-			if len(r.rejected) > 1000 || r.row == nil {
+			r.a.log.Error("error scanning dashboard", "error", err)
+			if len(r.rejected) > 0 || r.row == nil {
 				r.err = fmt.Errorf("too many rejected rows (%d) %w", len(r.rejected), err)
 				return false
 			}
@@ -263,6 +264,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data, &apiVersion,
 	)
+
 	switch apiVersion.String {
 	case "":
 		apiVersion.String = dashboardV0.VERSION // default value
@@ -489,10 +491,10 @@ type panel struct {
 	FolderUID sql.NullString
 
 	Created   time.Time
-	CreatedBy string
+	CreatedBy sql.NullString
 
 	Updated   time.Time
-	UpdatedBy string
+	UpdatedBy sql.NullString
 
 	Version int64
 
@@ -633,13 +635,13 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 	if p.FolderUID.Valid {
 		meta.SetFolder(p.FolderUID.String)
 	}
-	meta.SetCreatedBy(p.CreatedBy)
+	meta.SetCreatedBy(getUserID(p.CreatedBy, sql.NullInt64{}))
 	meta.SetGeneration(p.Version)
 	meta.SetDeprecatedInternalID(p.ID) //nolint:staticcheck
 
 	// Only set updated metadata if it is different
-	if p.UpdatedBy != p.CreatedBy || p.Updated.Sub(p.Created) > time.Second {
-		meta.SetUpdatedBy(p.UpdatedBy)
+	if p.UpdatedBy.Valid && p.Updated.Sub(p.Created) > time.Second {
+		meta.SetUpdatedBy(getUserID(p.UpdatedBy, sql.NullInt64{}))
 		meta.SetUpdatedTimestamp(&p.Updated)
 	}
 

@@ -25,7 +25,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -809,6 +809,41 @@ describe('transformSaveModelToScene', () => {
       expect((libPanelBehavior as LibraryPanelBehavior).state.uid).toEqual(panel.libraryPanel.uid);
       expect((libPanelBehavior as LibraryPanelBehavior).state.name).toEqual(panel.libraryPanel.name);
       expect(gridItem.state.body.state.title).toEqual(panel.title);
+    });
+
+    describe('header actions', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
+      it('should include headerActions when timeComparison feature toggle is enabled', () => {
+        config.featureToggles.timeComparison = true;
+
+        const panel = {
+          title: 'Test Panel',
+          type: 'timeseries',
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        };
+
+        const { vizPanel } = buildGridItemForTest(panel);
+
+        expect(vizPanel.state.headerActions).toBeDefined();
+        expect(vizPanel.state.headerActions).toHaveLength(1);
+      });
+
+      it('should not include headerActions when timeComparison feature toggle is disabled', () => {
+        config.featureToggles.timeComparison = false;
+
+        const panel = {
+          title: 'Test Panel',
+          type: 'timeseries',
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        };
+
+        const { vizPanel } = buildGridItemForTest(panel);
+
+        expect(vizPanel.state.headerActions).toBeUndefined();
+      });
     });
   });
 

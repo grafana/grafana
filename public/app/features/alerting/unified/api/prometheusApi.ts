@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { RuleHealth } from 'app/types/unified-alerting';
 import {
   GrafanaPromRuleGroupDTO,
@@ -118,18 +118,20 @@ export const prometheusApi = alertingApi.injectEndpoints({
 export function usePopulateGrafanaPrometheusApiCache() {
   const dispatch = useDispatch();
 
-  const populateGroupResponseCache = useCallback(
-    (group: GrafanaPromRuleGroupDTO) => {
+  const populateGroupsResponseCache = useCallback(
+    (groups: GrafanaPromRuleGroupDTO[]) => {
       dispatch(
-        prometheusApi.util.upsertQueryData(
-          'getGrafanaGroups',
-          { folderUid: group.folderUid, groupName: group.name },
-          { data: { groups: [group] }, status: 'success' }
+        prometheusApi.util.upsertQueryEntries(
+          groups.map((group) => ({
+            endpointName: 'getGrafanaGroups',
+            arg: { folderUid: group.folderUid, groupName: group.name, limitAlerts: 0 },
+            value: { data: { groups: [group] }, status: 'success' },
+          }))
         )
       );
     },
     [dispatch]
   );
 
-  return { populateGroupResponseCache };
+  return { populateGroupsResponseCache };
 }

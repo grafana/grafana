@@ -3327,6 +3327,25 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardQueryVariableSpec(ref common.Re
 							Format:  "",
 						},
 					},
+					"staticOptions": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardVariableOption"),
+									},
+								},
+							},
+						},
+					},
+					"staticOptionsOrder": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "current", "hide", "refresh", "skipUrlSync", "query", "regex", "sort", "options", "multi", "includeAll", "allowCustomValue"},
 			},

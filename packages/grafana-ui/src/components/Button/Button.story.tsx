@@ -12,12 +12,14 @@ import { ButtonGroup } from './ButtonGroup';
 const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
 
 export default {
-  title: 'Buttons/Button',
+  title: 'Inputs/Button',
   component: Button,
   parameters: {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     size: {

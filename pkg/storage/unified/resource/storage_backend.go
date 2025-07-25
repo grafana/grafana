@@ -63,6 +63,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 	rv := k.snowflake.Generate().Int64()
 
+	obj := event.Object
 	// Write data.
 	var action DataAction
 	switch event.Type {
@@ -87,8 +88,13 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		action = DataActionUpdated
 	case resourcepb.WatchEvent_DELETED:
 		action = DataActionDeleted
+		obj = event.ObjectOld
 	default:
 		return 0, fmt.Errorf("invalid event type: %d", event.Type)
+	}
+
+	if obj == nil {
+		return 0, fmt.Errorf("object is nil")
 	}
 
 	// Build the search document
@@ -119,7 +125,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			Name:            event.Key.Name,
 			ResourceVersion: rv,
 			Action:          action,
-			Folder:          event.Object.GetFolder(),
+			Folder:          obj.GetFolder(),
 		},
 		Value: MetaData{
 			IndexableDocument: *doc,
@@ -137,7 +143,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
-		Folder:          event.Object.GetFolder(),
+		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
 	})
 	if err != nil {
@@ -209,7 +215,6 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	// Fetch the latest objects
 	keys := make([]MetaDataKey, 0, min(defaultListBufferSize, req.Limit+1))
-	idx := 0
 	for metaKey, err := range k.metaStore.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
@@ -219,17 +224,15 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if err != nil {
 			return 0, err
 		}
-		// Skip the first offset items. This is not efficient, but it's a simple way to implement it for now.
-		if idx < int(offset) {
-			idx++
-			continue
-		}
 		keys = append(keys, metaKey)
-		// Only fetch the first limit items + 1 to get the next token.
-		if len(keys) >= int(req.Limit+1) {
-			break
-		}
 	}
+
+	sortMetaKeysByResourceVersion(keys, true) // sort ascending for sql parity
+
+	if offset > 0 && int64(len(keys)) > offset {
+		keys = keys[offset:]
+	}
+
 	iter := kvListIterator{
 		keys:         keys,
 		currentIndex: -1,
@@ -423,6 +426,19 @@ func sortByResourceVersion(filteredKeys []DataKey, sortAscending bool) {
 	} else {
 		sort.Slice(filteredKeys, func(i, j int) bool {
 			return filteredKeys[i].ResourceVersion > filteredKeys[j].ResourceVersion
+		})
+	}
+}
+
+// sortMetaKeysByResourceVersion sorts the metadata keys based on the sortAscending flag
+func sortMetaKeysByResourceVersion(keys []MetaDataKey, sortAscending bool) {
+	if sortAscending {
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i].ResourceVersion < keys[j].ResourceVersion
+		})
+	} else {
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i].ResourceVersion > keys[j].ResourceVersion
 		})
 	}
 }

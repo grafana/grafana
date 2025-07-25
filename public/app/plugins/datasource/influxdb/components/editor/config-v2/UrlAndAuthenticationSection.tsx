@@ -38,10 +38,16 @@ export const UrlAndAuthenticationSection = (props: Props) => {
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
 
   // Database + Retention Policy (DBRP) mapping is required for InfluxDB OSS 1.x and 2.x when using InfluxQL
-  const requiresDrbpMapping =
+  const requiresDbrpMapping =
     options.jsonData.product &&
     options.jsonData.version === InfluxVersion.InfluxQL &&
-    ['InfluxDB OSS 1.x', 'InfluxDB OSS 2.x'].includes(options.jsonData.product);
+    [
+      'InfluxDB OSS 1.x',
+      'InfluxDB OSS 2.x',
+      'InfluxDB Enterprise 1.x',
+      'InfluxDB Cloud (TSM)',
+      'InfluxDB Cloud Serverless',
+    ].includes(options.jsonData.product);
 
   const onProductChange = ({ value }: ComboboxOption) => {
     trackInfluxDBConfigV2ProductSelected({ product: value });
@@ -113,10 +119,10 @@ export const UrlAndAuthenticationSection = (props: Props) => {
 
           <Space v={2} />
 
-          {requiresDrbpMapping && (
-            <Alert severity="warning" title="InfluxQL requires DRBP mapping">
-              InfluxDB OSS 1.x and 2.x users must configure a Database + Retention Policy (DBRP) mapping via the CLI or
-              API before data can be queried.{' '}
+          {requiresDbrpMapping && (
+            <Alert severity="warning" title="InfluxQL requires DBRP mapping">
+              {`${options.jsonData.product} requires a Database + Retention Policy (DBRP) mapping via the CLI or
+              API before data can be queried.`}{' '}
               <TextLink href="https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/" external>
                 Learn how to set this up
               </TextLink>

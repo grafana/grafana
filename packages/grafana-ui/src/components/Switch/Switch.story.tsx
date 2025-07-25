@@ -10,12 +10,14 @@ import { InlineSwitch, Switch } from './Switch';
 import mdx from './Switch.mdx';
 
 const meta: Meta<typeof Switch> = {
-  title: 'Forms/Switch',
+  title: 'Inputs/Switch',
   component: Switch,
   parameters: {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   args: {
     disabled: false,

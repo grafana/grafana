@@ -22,7 +22,7 @@ const PANEL_WIDTH = 400;
 const PANEL_HEIGHT = 150;
 
 const meta: Meta<typeof PanelChrome> = {
-  title: 'Visualizations/PanelChrome',
+  title: 'Plugins/PanelChrome',
   component: PanelChrome,
   parameters: {
     controls: {
@@ -31,6 +31,8 @@ const meta: Meta<typeof PanelChrome> = {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
 };
 

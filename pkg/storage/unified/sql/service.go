@@ -75,8 +75,8 @@ type service struct {
 
 	docBuilders resource.DocumentBuilderSupplier
 
-	storageRing *ring.Ring
-	lifecycler  *ring.BasicLifecycler
+	searchRing     *ring.Ring
+	ringLifecycler *ring.BasicLifecycler
 
 	queue     QOSEnqueueDequeuer
 	scheduler *scheduler.Scheduler
@@ -91,7 +91,7 @@ func ProvideUnifiedStorageGrpcService(
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
-	storageRing *ring.Ring,
+	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
@@ -116,7 +116,7 @@ func ProvideUnifiedStorageGrpcService(
 		docBuilders:        docBuilders,
 		storageMetrics:     storageMetrics,
 		indexMetrics:       indexMetrics,
-		storageRing:        storageRing,
+		searchRing:         searchRing,
 		subservicesWatcher: services.NewFailureWatcher(),
 	}
 
@@ -143,7 +143,7 @@ func ProvideUnifiedStorageGrpcService(
 		delegate = ring.NewLeaveOnStoppingDelegate(delegate, log)
 		delegate = ring.NewAutoForgetDelegate(resource.RingHeartbeatTimeout*2, delegate, log)
 
-		s.lifecycler, err = ring.NewBasicLifecycler(
+		s.ringLifecycler, err = ring.NewBasicLifecycler(
 			lifecyclerCfg,
 			resource.RingName,
 			resource.RingKey,
@@ -155,7 +155,9 @@ func ProvideUnifiedStorageGrpcService(
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
 		}
-		subservices = append(subservices, s.lifecycler)
+
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
+		subservices = append(subservices, s.ringLifecycler)
 	}
 
 	if cfg.QOSEnabled {
@@ -220,6 +222,8 @@ func (s *service) starting(ctx context.Context) error {
 		IndexMetrics:   s.indexMetrics,
 		Features:       s.features,
 		QOSQueue:       s.queue,
+		Ring:           s.searchRing,
+		RingLifecycler: s.ringLifecycler,
 	}
 	server, err := NewResourceServer(serverOptions)
 	if err != nil {
@@ -254,12 +258,12 @@ func (s *service) starting(ctx context.Context) error {
 		s.log.Info("waiting until resource server is JOINING in the ring")
 		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		if err := ring.WaitInstanceState(lfcCtx, s.storageRing, s.lifecycler.GetInstanceID(), ring.JOINING); err != nil {
+		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
 		}
 		s.log.Info("resource server is JOINING in the ring")
 
-		if err := s.lifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
+		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
 			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
 		}
 		s.log.Info("resource server is ACTIVE in the ring")

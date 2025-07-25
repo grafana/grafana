@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { Column, DataGridProps, SortColumn } from 'react-data-grid';
+import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
+import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
@@ -255,6 +255,7 @@ export interface FooterCalcsOptions {
 
 export function useFooterCalcs(
   rows: TableRow[],
+  // it's very important that this is the _visible_ fields.
   fields: Field[],
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
@@ -265,6 +266,8 @@ export function useFooterCalcs(
       return [];
     }
 
+    const fieldNameSet = footerOptions.fields?.length ? new Set(footerOptions.fields) : null;
+
     return fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
@@ -274,24 +277,27 @@ export function useFooterCalcs(
         return index === 0 ? `${rows.length}` : '';
       }
 
+      let emptyValue = '';
       if (index === 0) {
         const footerCalcReducer = footerReducers[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
+        emptyValue = footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
 
       if (field.type !== FieldType.number) {
-        return '';
+        return emptyValue;
       }
 
       // if field.display is undefined, don't throw
       const displayFn = field.display;
       if (!displayFn) {
-        return '';
+        return emptyValue;
       }
 
-      // If fields array is specified, only show footer for fields included in that array
-      if (footerOptions.fields?.length && !footerOptions.fields?.includes(getDisplayName(field))) {
-        return '';
+      // If fields array is specified, only show footer for fields included in that array.
+      // the array can include either the display name or the field name. we don't use a field matcher
+      // because that requires us to drill the data frame down here.
+      if (fieldNameSet && !fieldNameSet.has(getDisplayName(field)) && !fieldNameSet.has(field.name)) {
+        return emptyValue;
       }
 
       const calc = footerReducers[0];
@@ -439,8 +445,7 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: number;
-  headerHeight: number;
-  expandedRows: Record<string, boolean>;
+  expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
 
@@ -449,7 +454,6 @@ export function useRowHeight({
   fields,
   hasNestedFrames,
   defaultHeight,
-  headerHeight,
   expandedRows,
   typographyCtx: { calcRowHeight, avgCharWidth },
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {
@@ -496,15 +500,19 @@ export function useRowHeight({
 
     return (row: TableRow) => {
       // nested rows
-      if (Number(row.__depth) > 0) {
+      if (row.__depth > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows[row.__index]) {
+        if (!expandedRows.has(row.__index)) {
           return 0;
         }
 
-        // Ensure we have a minimum height (defaultHeight) for the nested table even if data is empty
         const rowCount = row.data?.length ?? 0;
-        return Math.max(defaultHeight, defaultHeight * rowCount + headerHeight);
+        if (rowCount === 0) {
+          return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
+        }
+
+        const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
+        return Math.max(defaultHeight, defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2);
       }
 
       // regular rows
@@ -518,7 +526,6 @@ export function useRowHeight({
     fields,
     hasNestedFrames,
     hasWrappedCols,
-    headerHeight,
     maxWrapCellOptions,
     colWidths,
   ]);
@@ -596,4 +603,18 @@ export function useColumnResize(
   );
 
   return dataGridResizeHandler;
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = ref.current?.element;
+
+    if (el) {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    }
+  }, [ref, height, renderedRows]);
+
+  return scrollbarWidth;
 }

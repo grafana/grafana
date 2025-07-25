@@ -52,6 +52,7 @@
       "button-use-query": "Gunakan kueri ini",
       "label-categories": "Kategori",
       "label-query-results": "Hasil kueri: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Semua kategori",
       "placeholder-search-logs": "Pencarian kueri Log",
       "text-loading": "Memuat..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "Batasi jumlah baris yang dikembalikan (default-nya adalah 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Kueri Log Dasar dikenakan biaya berdasarkan jumlah data yang dipindai.",
       "label-logs": "Log",
       "title-basic-logs-queries": "Kueri Log Dasar",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Tombol kueri untuk memulai menggunakan log Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Mulai kueri Anda",
       "button-run-query": "Jalankan kueri",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Layanan",
       "placeholder-service": "Melayani...",
       "title-switch-mode": "Beralih ke mode editor?"
@@ -223,7 +233,7 @@
       "title-error-occurred": "Terjadi kesalahan saat meminta sumber daya dari Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Ruang Lingkup"
     },
     "search": {
       "aria-label-resource-search": "Pencarian sumber daya",

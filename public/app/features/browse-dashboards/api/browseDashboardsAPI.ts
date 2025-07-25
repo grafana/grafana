@@ -15,16 +15,11 @@ import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } fro
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
-import {
-  DescendantCount,
-  DescendantCountDTO,
-  FolderDTO,
-  FolderListItemDTO,
-  ImportDashboardResponseDTO,
-  PermissionLevelString,
-  SaveDashboardResponseDTO,
-} from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
+import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
+import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } from 'app/types/folders';
 
+import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { DashboardTreeSelection } from '../types';
 
@@ -293,6 +288,7 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+        const pageStateManager = getDashboardScenePageStateManager();
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
@@ -336,6 +332,9 @@ export const browseDashboardsAPI = createApi({
           }
 
           await getDashboardAPI().deleteDashboard(dashboardUID, true);
+
+          pageStateManager.clearDashboardCache();
+          pageStateManager.removeSceneCache(dashboardUID);
 
           // handling success alerts for these feature toggles
           // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts

@@ -5,15 +5,15 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, useStyles2 } from '@grafana/ui';
 
-import { ManagerKind } from '../../apiserver/types';
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
-import { isSharedWithMe } from './utils';
+import { isSharedWithMe, canEditItemType } from './utils';
 
 export default function CheckboxCell({
   row: { original: row },
   isSelected,
   onItemSelectionChange,
+  permissions,
 }: DashboardsTreeCellProps) {
   const item = row.item;
 
@@ -33,6 +33,11 @@ export default function CheckboxCell({
     return <CheckboxSpacer />;
   }
 
+  // Check if user can edit this specific item type
+  if (permissions && !canEditItemType(item.kind, permissions)) {
+    return <CheckboxSpacer />;
+  }
+
   const state = isSelected(item);
 
   return (
@@ -42,7 +47,6 @@ export default function CheckboxCell({
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}
-      disabled={item.managedBy === ManagerKind.Repo}
     />
   );
 }

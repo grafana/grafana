@@ -52,10 +52,13 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     ) {
       return false;
     }
-    return (
-      t.name.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase()) ||
-      t.description?.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase())
-    );
+    const searchLower = drawerState.search.toLocaleLowerCase();
+    const textMatch =
+      t.name.toLocaleLowerCase().includes(searchLower) || t.description?.toLocaleLowerCase().includes(searchLower);
+    const tagMatch = t.tags?.size
+      ? Array.from(t.tags).some((tag) => tag.toLocaleLowerCase().includes(searchLower))
+      : false;
+    return textMatch || tagMatch;
   });
 
   const searchBoxSuffix = (
