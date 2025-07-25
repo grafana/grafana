@@ -21,13 +21,11 @@ export const ColorBackgroundCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
-  // Handle row coloring changes
   const onColorRowChange = () => {
     cellOptions.applyToRow = !cellOptions.applyToRow;
     onChange(cellOptions);
   };
 
-  // Handle row coloring changes
   const onWrapTextChange = () => {
     cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);

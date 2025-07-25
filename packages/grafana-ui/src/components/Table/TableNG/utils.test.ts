@@ -1188,6 +1188,13 @@ describe('TableNG utils', () => {
       const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
       expect(height).toBe(36);
     });
+
+    it('clamps the number of lines by the maxWrappedLines', () => {
+      fields[0].config.custom.cellOptions.maxWrappedLines = 2; // Set max wrapped lines to 2
+
+      // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding _would_ be 70, but we set the maxWrappedLines to 2, so it's 50.
+      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
+    });
   });
 
   describe('computeColWidths', () => {
