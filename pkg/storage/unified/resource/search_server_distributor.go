@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"hash/fnv"
+	"math/rand"
 	"time"
 
 	"github.com/grafana/dskit/ring"
@@ -138,7 +139,9 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	client, err := ds.clientPool.GetClientForInstance(rs.Instances[0])
+	// Randomly select an instance for primitive load balancing
+	inst := rs.Instances[rand.Intn(len(rs.Instances))]
+	client, err := ds.clientPool.GetClientForInstance(inst)
 	if err != nil {
 		return ctx, nil, err
 	}
@@ -148,9 +151,9 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		md = make(metadata.MD)
 	}
 
-	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", rs.Instances[0].Id)
+	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", inst.Id, "namespace", namespace)
 
-	_ = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", rs.Instances[0].Id))
+	_ = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", inst.Id))
 
 	return userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace), client.(*RingClient).Client, nil
 }

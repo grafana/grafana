@@ -7138,6 +7138,7 @@
           "start-time": "開始時間："
         }
       },
+      "share-span": "",
       "warnings": "警告"
     },
     "span-filters": {
@@ -10918,15 +10919,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11033,10 +11034,10 @@
       "title-instant-updates-requests-webhooks": "透過 webhook 即時更新和拉取請求。",
       "title-visual-previews-in-pull-requests": "具有圖片轉譯的拉取請求中的視覺預覽"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "作業規範",
-      "summary": "摘要",
-      "title-error": "錯誤"
+      "summary": "摘要"
     },
     "features-list": {
       "actions": {
@@ -11181,10 +11182,12 @@
       "starting": "正在開始…",
       "status": {
         "title-error-running-job": "執行作業時發生錯誤",
-        "title-job-completed-successfully": "作業已成功完成",
         "title-warning-running-job": ""
       },
-      "summary": "摘要"
+      "summary": "摘要",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11350,6 +11353,7 @@
       "go-to": "前往",
       "make-sure": "請務必包含以下權限"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "在此過程中，將無法建立、編輯或刪除資源。在最後一步中，它們將會消失。",
       "alert-point-2": "佈建完成後，資源將重新出現，並透過外部儲存空間進行管理。",
