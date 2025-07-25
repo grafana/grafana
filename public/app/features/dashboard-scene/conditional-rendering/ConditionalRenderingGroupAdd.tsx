@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { ValuePicker } from '@grafana/ui';
 
 import { GroupConditionItemType, ItemsWithConditionalRendering } from './types';
@@ -25,10 +26,18 @@ export const ConditionalRenderingGroupAdd = ({ itemType, hasVariables, onAdd }: 
         label: t('dashboard.conditional-rendering.conditions.group.add.time-range-size', 'Time range less than'),
         value: 'timeRangeSize',
       },
+      {
+        label: t('dashboard.conditional-rendering.conditions.group.add.scopes', 'Scopes'),
+        value: 'scopes',
+      },
     ];
 
     if (itemType !== 'panel') {
       allOptions.shift();
+    }
+
+    if (!config.featureToggles.scopeFilters) {
+      allOptions.pop();
     }
 
     return allOptions;
