@@ -246,6 +246,8 @@ type Identity struct {
 func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	t.Helper()
 
+	// Get a new resource client for admin user
+	// TODO: we need to figure out why reusing the same client results in slower tests
 	adminClient := func() *apis.K8sResourceClient {
 		return getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 	}
@@ -581,7 +583,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			// one from initial save, one from update
 			require.Equal(t, len(versions.Items), 2)
 
-			err = getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR()).Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
+			err = adminClient().Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -1139,13 +1141,14 @@ func updateDashboard(t *testing.T, client *apis.K8sResourceClient, dashboard *un
 func runAuthorizationTests(t *testing.T, ctx TestContext) {
 	t.Helper()
 
+	// Get a new resource client for admin user
+	// TODO: we need to figure out why reusing the same client results in slower tests
 	adminClient := func() *apis.K8sResourceClient {
 		// admin token
 		return getServiceAccountResourceClient(t, ctx.Helper, ctx.AdminServiceAccountToken, ctx.OrgID, getDashboardGVR())
 	}
 
 	// Get clients for each identity type and role
-
 	adminUserClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getDashboardGVR())
 	editorUserClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getDashboardGVR())
 	viewerUserClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getDashboardGVR())
@@ -1167,6 +1170,8 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 		{Name: "Viewer token", DashboardClient: viewerTokenClient, Type: "token"},
 	}
 
+	// TODO: re-enable admin cleanup clients when we have figured out why reusing the same client results in slower tests
+	// TODO: This is currently disabled to avoid issues with reusing the same client in tests.
 	// Get admin clients for cleanup based on identity type
 	// adminCleanupClients := map[string]*apis.K8sResourceClient{
 	//		"user":  adminUserClient,
@@ -1217,6 +1222,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 	for _, identity := range identities {
 		identity := identity // Capture range variable
 		t.Run(identity.Name, func(t *testing.T) {
+			// TODO: This is currently disabled to avoid issues with reusing the same client in tests.
 			// Get admin client for cleanup based on identity type
 			// adminClient := adminCleanupClients[identity.Type]
 
