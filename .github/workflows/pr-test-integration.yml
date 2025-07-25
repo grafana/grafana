@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,6 +42,9 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Setup Grafana Enterprise
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: ./.github/actions/setup-enterprise
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -61,6 +65,7 @@ jobs:
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
+      id-token: write
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
@@ -85,6 +90,9 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Setup Grafana Enterprise
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: ./.github/actions/setup-enterprise
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -107,6 +115,7 @@ jobs:
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
+      id-token: write
     env:
       GRAFANA_TEST_DB: postgres
       PGPASSWORD: grafanatest
@@ -130,6 +139,9 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Setup Grafana Enterprise
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: ./.github/actions/setup-enterprise
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
