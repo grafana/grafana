@@ -1797,10 +1797,10 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref common.ReferenceC
 					},
 					"action": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The action required/used for dryRun\n\nPossible enum values:\n - `\"create\"`\n - `\"delete\"`\n - `\"update\"`",
+							Description: "The action required/used for dryRun\n\nPossible enum values:\n - `\"create\"`\n - `\"delete\"`\n - `\"move\"`\n - `\"update\"`",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"create", "delete", "update"},
+							Enum:        []interface{}{"create", "delete", "move", "update"},
 						},
 					},
 					"dryRun": {
