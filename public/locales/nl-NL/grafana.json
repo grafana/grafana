@@ -7160,6 +7160,7 @@
           "start-time": "Starttijd:"
         }
       },
+      "share-span": "",
       "warnings": "Waarschuwingen"
     },
     "span-filters": {
@@ -10951,15 +10952,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11069,10 +11070,10 @@
       "title-instant-updates-requests-webhooks": "Directe updates en pull requests met webhooks.",
       "title-visual-previews-in-pull-requests": "Visuele voorbeelden in pull requests met beeldweergave"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Taakbeschrijving",
-      "summary": "Samenvatting",
-      "title-error": "Fout"
+      "summary": "Samenvatting"
     },
     "features-list": {
       "actions": {
@@ -11217,10 +11218,12 @@
       "starting": "Starten...",
       "status": {
         "title-error-running-job": "Er is een fout opgetreden bij het uitvoeren van de taak",
-        "title-job-completed-successfully": "Taak is voltooid",
         "title-warning-running-job": ""
       },
-      "summary": "Samenvatting"
+      "summary": "Samenvatting",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11386,6 +11389,7 @@
       "go-to": "Ga naar",
       "make-sure": "Zorg ervoor dat je deze toestemmingen opneemt"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Bronnen kunnen tijdens dit proces niet worden gemaakt, bewerkt of verwijderd. In de laatste stap verdwijnen ze.",
       "alert-point-2": "Zodra de provisioning is voltooid, verschijnen bronnen weer en worden ze beheerd via externe opslag.",
