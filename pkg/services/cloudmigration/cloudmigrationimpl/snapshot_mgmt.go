@@ -567,7 +567,6 @@ func (s *Service) buildSnapshot(
 		Private: privateKey[:],
 	},
 		crypto.NewNacl(),
-		// TODO: this is creating a local dir, not always necessary
 		snapshotMeta.LocalDir,
 	)
 	if err != nil {
