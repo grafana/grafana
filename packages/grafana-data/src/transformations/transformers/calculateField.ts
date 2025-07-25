@@ -15,7 +15,6 @@ import { FieldMatcherID } from '../matchers/ids';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
-import { parseTemplateTokens, processTemplateTokens } from './utils';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -258,17 +257,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
               };
             });
           case CalculateFieldMode.TemplateExpression:
-            const expression = options.template?.expression ?? '';
-            const parsedTemplateTokens = parseTemplateTokens(expression);
-            options.returnType = FieldType.string;
-            creator = (frame: DataFrame) => {
-              const outValues: string[] = [];
-              for (let i = 0; i < frame.length; i++) {
-                outValues.push(processTemplateTokens(expression, parsedTemplateTokens, frame.fields, i));
-              }
-              return outValues;
-            };
-            break;
+            return data;
         }
 
         // Nothing configured
@@ -729,6 +718,8 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
       break;
     case CalculateFieldMode.Index:
       return 'Row';
+    case CalculateFieldMode.TemplateExpression:
+      return 'Field';
   }
 
   return 'math';
