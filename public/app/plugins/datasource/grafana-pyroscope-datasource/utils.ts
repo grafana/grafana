@@ -175,7 +175,6 @@ export function enrichDataFrameWithAssistantContentMapper(
         }),
       ];
 
-      console.log(context);
       data.meta = data.meta || {};
       data.meta.custom = {
         ...data.meta.custom,
