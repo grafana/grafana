@@ -301,12 +301,17 @@ func (s *service) running(ctx context.Context) error {
 }
 
 func (s *service) stopping(_ error) error {
-	if s.hasSubservices {
-		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
-		if err != nil {
-			return fmt.Errorf("failed to stop subservices: %w", err)
-		}
-	}
+	fmt.Println(">>>>> STOPPING")
+	s.ringLifecycler.StopAsync()
+	fmt.Println(">>>>> WAITING TO TERMINATE")
+	s.ringLifecycler.AwaitTerminated(context.Background())
+	fmt.Println("ALL GOOD")
+	// if s.hasSubservices {
+	// 	err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
+	// 	if err != nil {
+	// 		return fmt.Errorf("failed to stop subservices: %w", err)
+	// 	}
+	// }
 	return nil
 }
 
