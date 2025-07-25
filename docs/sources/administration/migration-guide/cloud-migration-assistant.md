@@ -208,7 +208,7 @@ Attempting to migrate a large number of alert rules might result in the followin
 Maximum number of alert rule groups reached: Delete some alert rule groups or upgrade your plan and try again.
 ```
 
-To avoid this, refer to the [Alert rule limits in Grafana Cloud](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#alert-rule-limits-in-grafana-cloud).
+To avoid this, refer to the [Alert rule limits in Grafana Cloud](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#alert-rule-limits-in-grafana-cloud) when migrating alert rules.
 
 #### Prevent duplicated alert notifications
 
