@@ -61,9 +61,12 @@ func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile stri
 }
 
 func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) (*APIBuilder, error) {
+	if !cfg.OpenFeature.APIEnabled {
+		return nil, nil
+	}
+
 	var staticEvaluator featuremgmt.StaticFlagEvaluator //  No static evaluator needed for non-static provider
 	var err error
-
 	if cfg.OpenFeature.ProviderType == setting.StaticProviderType {
 		staticEvaluator, err = featuremgmt.CreateStaticEvaluator(cfg)
 		if err != nil {
