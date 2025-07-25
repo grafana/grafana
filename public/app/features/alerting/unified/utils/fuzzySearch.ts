@@ -41,6 +41,29 @@ export function shouldUseFuzzySearch(searchTerm: string): boolean {
 }
 
 /**
+ * Internal function that performs the core fuzzy search logic.
+ * Returns the indices of matching items in the haystack.
+ */
+function performFuzzySearch(haystack: string[], searchTerm: string): number[] {
+  const ufuzzy = createFuzzyMatcher();
+  const needleTermsCount = ufuzzy.split(searchTerm).length;
+
+  // apply an outOfOrder limit which helps to limit the number of permutations to search for
+  // and prevents the browser from hanging
+  const outOfOrderLimit = needleTermsCount < 5 ? 4 : 0;
+
+  const [idxs, info, order] = ufuzzy.search(haystack, searchTerm, outOfOrderLimit, INFO_THRESHOLD);
+
+  if (info && order) {
+    return order.map((idx) => info.idx[idx]);
+  } else if (idxs) {
+    return [...idxs];
+  }
+
+  return [];
+}
+
+/**
  * Applies fuzzy search to a list of items using the provided filter function.
  * Falls back to simple string matching when fuzzy search is not applicable.
  */
@@ -54,24 +77,10 @@ export function fuzzyFilter<TItem>(items: TItem[], filterBy: (item: TItem) => st
     return items.filter((item) => filterBy(item).toLowerCase().includes(searchTerm.toLowerCase()));
   }
 
-  const ufuzzy = createFuzzyMatcher();
-  const needleTermsCount = ufuzzy.split(searchTerm).length;
   const haystack = items.map(filterBy);
+  const matchingIndices = performFuzzySearch(haystack, searchTerm);
 
-  // apply an outOfOrder limit which helps to limit the number of permutations to search for
-  // and prevents the browser from hanging
-  const outOfOrderLimit = needleTermsCount < 5 ? 4 : 0;
-
-  const [idxs, info, order] = ufuzzy.search(haystack, searchTerm, outOfOrderLimit, INFO_THRESHOLD);
-
-  let filteredItems = items;
-  if (info && order) {
-    filteredItems = order.map((idx) => items[info.idx[idx]]);
-  } else if (idxs) {
-    filteredItems = idxs.map((idx) => items[idx]);
-  }
-
-  return filteredItems;
+  return matchingIndices.map((idx) => items[idx]);
 }
 
 /**
@@ -104,15 +113,8 @@ export function fuzzyMatches(target: string, searchTerm: string): boolean {
     return target.toLowerCase().includes(searchTerm.toLowerCase());
   }
 
-  const ufuzzy = createFuzzyMatcher();
-  const needleTermsCount = ufuzzy.split(searchTerm).length;
   const haystack = [target];
+  const matchingIndices = performFuzzySearch(haystack, searchTerm);
 
-  // apply an outOfOrder limit which helps to limit the number of permutations to search for
-  // and prevents the browser from hanging
-  const outOfOrderLimit = needleTermsCount < 5 ? 4 : 0;
-
-  const [idxs] = ufuzzy.search(haystack, searchTerm, outOfOrderLimit, INFO_THRESHOLD);
-
-  return Boolean(idxs && idxs.length > 0);
+  return matchingIndices.length > 0;
 }
