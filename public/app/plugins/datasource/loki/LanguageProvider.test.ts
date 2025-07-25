@@ -761,7 +761,7 @@ describe('Query imports', () => {
           maxLines: DEFAULT_MAX_LINES_SAMPLE,
           refId: 'data-samples',
         },
-        expect.any(Object)
+        languageProvider.getDefaultTimeRange()
       );
     });
 
@@ -782,7 +782,7 @@ describe('Query imports', () => {
           maxLines: 5,
           refId: 'data-samples',
         },
-        expect.any(Object)
+        languageProvider.getDefaultTimeRange()
       );
     });
 
