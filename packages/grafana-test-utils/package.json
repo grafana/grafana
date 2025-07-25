@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/test-utils",
-  "version": "12.0.0-pre",
+  "version": "12.2.0-pre",
   "private": true,
   "description": "Grafana test utils & Mock API",
   "keywords": [
