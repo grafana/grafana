@@ -2720,6 +2720,22 @@
     },
     {
       "metadata": {
+        "name": "restrictedPluginApis",
+        "resourceVersion": "1753429586217",
+        "creationTimestamp": "2025-07-25T07:46:26Z"
+      },
+      "spec": {
+        "description": "Enables sharing a list of APIs with a list of plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1753285129398",
         "creationTimestamp": "2024-09-26T12:51:38Z"

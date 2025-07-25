@@ -13,6 +13,8 @@ import {
   OrgRole,
   PluginType,
   PluginContextProvider,
+  RestrictedGrafanaApisContextProvider,
+  RestrictedGrafanaApisContextType,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
@@ -38,6 +40,7 @@ import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
+import { addPanel } from './restrictedGrafanaApis/addPanel';
 
 interface Props {
   // The ID of the plugin we would like to load and display
@@ -56,6 +59,14 @@ interface State {
 }
 
 const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
+
+// Core APIs that we would like to share with only a certain list of plugins.
+// (APIs that are availble to all plugins should be shared via the packages.)
+const restrictedGrafanaApis: RestrictedGrafanaApisContextType = config.featureToggles.restrictedPluginApis
+  ? {
+      addPanel,
+    }
+  : {};
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const { pluginId: pluginIdParam = '' } = useParams();
@@ -107,32 +118,39 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   const pluginRoot = plugin.root && (
     <PluginContextProvider meta={plugin.meta}>
-      <PluginErrorBoundary
-        fallback={({ error, errorInfo }) => (
-          <ErrorWithStack
-            title={t('plugins.app-root-page.error-loading-plugin', 'Plugin failed to load')}
-            error={error}
-            errorInfo={errorInfo}
-          />
-        )}
+      <RestrictedGrafanaApisContextProvider
+        pluginId={pluginId}
+        apis={restrictedGrafanaApis}
+        apiWhitelist={config.bootData.settings.pluginRestrictedAPIsWhitelist}
+        apiBlacklist={config.bootData.settings.pluginRestrictedAPIsBlacklist}
       >
-        <ExtensionRegistriesProvider
-          registries={{
-            addedLinksRegistry: addedLinksRegistry.readOnly(),
-            addedComponentsRegistry: addedComponentsRegistry.readOnly(),
-            exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
-            addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
-          }}
+        <PluginErrorBoundary
+          fallback={({ error, errorInfo }) => (
+            <ErrorWithStack
+              title={t('plugins.app-root-page.error-loading-plugin', 'Plugin failed to load')}
+              error={error}
+              errorInfo={errorInfo}
+            />
+          )}
         >
-          <plugin.root
-            meta={plugin.meta}
-            basename={location.pathname}
-            onNavChanged={onNavChanged}
-            query={queryParams}
-            path={location.pathname}
-          />
-        </ExtensionRegistriesProvider>
-      </PluginErrorBoundary>
+          <ExtensionRegistriesProvider
+            registries={{
+              addedLinksRegistry: addedLinksRegistry.readOnly(),
+              addedComponentsRegistry: addedComponentsRegistry.readOnly(),
+              exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+              addedFunctionsRegistry: addedFunctionsRegistry.readOnly(),
+            }}
+          >
+            <plugin.root
+              meta={plugin.meta}
+              basename={location.pathname}
+              onNavChanged={onNavChanged}
+              query={queryParams}
+              path={location.pathname}
+            />
+          </ExtensionRegistriesProvider>
+        </PluginErrorBoundary>
+      </RestrictedGrafanaApisContextProvider>
     </PluginContextProvider>
   );
 

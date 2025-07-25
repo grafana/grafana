@@ -1070,4 +1070,9 @@ export interface FeatureToggles {
   * Enables adhoc filtering support for the dashboard datasource
   */
   dashboardDsAdHocFiltering?: boolean;
+  /**
+  * Enables sharing a list of APIs with a list of plugins
+  * @default false
+  */
+  restrictedPluginApis?: boolean;
 }

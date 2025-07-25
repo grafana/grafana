@@ -966,4 +966,8 @@ const (
 	// FlagDashboardDsAdHocFiltering
 	// Enables adhoc filtering support for the dashboard datasource
 	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
+
+	// FlagRestrictedPluginApis
+	// Enables sharing a list of APIs with a list of plugins
+	FlagRestrictedPluginApis = "restrictedPluginApis"
 )
