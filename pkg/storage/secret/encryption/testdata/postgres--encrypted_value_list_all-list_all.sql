@@ -7,5 +7,5 @@ SELECT
   "updated"
 FROM
   "secret_encrypted_value"
-ORDER BY "name" ASC
+ORDER BY "created" ASC
 ;

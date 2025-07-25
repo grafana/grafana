@@ -224,17 +224,25 @@ func ProvideGlobalEncryptedValueStorage(
 	}, nil
 }
 
-func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.ListOpts) ([]*contracts.EncryptedValue, error) {
-	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.ListAll", trace.WithAttributes(
+func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.ListOpts, untilTime *int64) ([]*contracts.EncryptedValue, error) {
+	attrs := []attribute.KeyValue{
 		attribute.Int64("limit", opts.Limit),
 		attribute.Int64("offset", opts.Offset),
-	))
+	}
+	if untilTime != nil {
+		attrs = append(attrs, attribute.Int64("untilTime", *untilTime))
+	}
+	ctx, span := s.tracer.Start(ctx, "GlobalEncryptedValueStorage.CountAll", trace.WithAttributes(attrs...))
 	defer span.End()
 
 	req := listAllEncryptedValues{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Limit:       opts.Limit,
 		Offset:      opts.Offset,
+	}
+	if untilTime != nil {
+		req.HasUntilTime = true
+		req.UntilTime = *untilTime
 	}
 
 	query, err := sqltemplate.Execute(sqlEncryptedValueListAll, req)
@@ -279,14 +287,28 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 	return encryptedValues, nil
 }
 
-func (s *globalEncryptedValStorage) CountAll(ctx context.Context) (int64, error) {
-	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.CountAll")
+func (s *globalEncryptedValStorage) CountAll(ctx context.Context, untilTime *int64) (int64, error) {
+	attrs := []attribute.KeyValue{}
+	if untilTime != nil {
+		attrs = append(attrs, attribute.Int64("untilTime", *untilTime))
+	}
+	ctx, span := s.tracer.Start(ctx, "GlobalEncryptedValueStorage.CountAll", trace.WithAttributes(attrs...))
 	defer span.End()
 
-	var encryptedValue EncryptedValue
-	query := fmt.Sprintf("SELECT COUNT(*) AS COUNT FROM %s;", encryptedValue.TableName())
+	req := countAllEncryptedValues{
+		SQLTemplate: sqltemplate.New(s.dialect),
+	}
+	if untilTime != nil {
+		req.HasUntilTime = true
+		req.UntilTime = *untilTime
+	}
 
-	rows, err := s.db.QueryContext(ctx, query)
+	query, err := sqltemplate.Execute(sqlEncryptedValueCountAll, req)
+	if err != nil {
+		return 0, fmt.Errorf("execute template %q: %w", sqlEncryptedValueCountAll.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return 0, fmt.Errorf("getting row: %w", err)
 	}

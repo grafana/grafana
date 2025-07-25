@@ -7,6 +7,6 @@ SELECT
   "updated"
 FROM
   "secret_encrypted_value"
-ORDER BY "name" ASC
+ORDER BY "created" ASC
 LIMIT 10 OFFSET 0
 ;

@@ -35,6 +35,6 @@ type EncryptedValueStorage interface {
 }
 
 type GlobalEncryptedValueStorage interface {
-	ListAll(ctx context.Context, opts ListOpts) ([]*EncryptedValue, error)
-	CountAll(ctx context.Context) (int64, error)
+	ListAll(ctx context.Context, opts ListOpts, untilTime *int64) ([]*EncryptedValue, error)
+	CountAll(ctx context.Context, untilTime *int64) (int64, error)
 }

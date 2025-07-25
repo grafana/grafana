@@ -4,6 +4,7 @@ import (
 	"errors"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
@@ -135,7 +136,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		require.NoError(t, err)
 
 		// List all encrypted values, without pagination
-		obtainedEVs, err := sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{})
+		obtainedEVs, err := sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{}, nil)
 		require.NoError(t, err)
 		require.NotEmpty(t, obtainedEVs)
 		require.Len(t, obtainedEVs, 2)
@@ -146,7 +147,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		require.Equal(t, createdEvA.EncryptedData, obtainedEvA.EncryptedData)
 
 		// Test pagination by limiting the results to 1, offset by 0
-		obtainedEVs, err = sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{Limit: 1})
+		obtainedEVs, err = sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{Limit: 1}, nil)
 		require.NoError(t, err)
 		require.NotEmpty(t, obtainedEVs)
 		require.Len(t, obtainedEVs, 1)
@@ -157,7 +158,7 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		require.Equal(t, createdEvA.EncryptedData, obtainedEvA.EncryptedData)
 
 		// Test pagination by limiting the results to 1, offset by 1
-		obtainedEVs, err = sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{Limit: 1, Offset: 1})
+		obtainedEVs, err = sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{Limit: 1, Offset: 1}, nil)
 		require.NoError(t, err)
 		require.NotEmpty(t, obtainedEVs)
 		require.Len(t, obtainedEVs, 1)
@@ -166,6 +167,13 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		require.Equal(t, createdEvB.Namespace, obtainedEvB.Namespace)
 		require.Equal(t, createdEvB.Name, obtainedEvB.Name)
 		require.Equal(t, createdEvB.EncryptedData, obtainedEvB.EncryptedData)
+
+		// List all encrypted values, until a certain time
+		pastTime := time.Now().Add(-1 * time.Hour).Unix()
+		obtainedEVs, err = sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{}, &pastTime)
+		require.NoError(t, err)
+		require.Empty(t, obtainedEVs)
+
 	})
 
 	t.Run("counting encrypted values returns their total", func(t *testing.T) {
@@ -178,9 +186,15 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		_, err = sut.EncryptedValueStorage.Create(t.Context(), "test-namespace-b", "test-name", 1, []byte("test-data"))
 		require.NoError(t, err)
 
-		count, err := sut.GlobalEncryptedValueStorage.CountAll(t.Context())
+		count, err := sut.GlobalEncryptedValueStorage.CountAll(t.Context(), nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
+
+		// Count all encrypted values, until a certain time
+		pastTime := time.Now().Add(-1 * time.Hour).Unix()
+		count, err = sut.GlobalEncryptedValueStorage.CountAll(t.Context(), &pastTime)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), count)
 	})
 }
 
