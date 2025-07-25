@@ -7138,6 +7138,7 @@
           "start-time": "시작 시간:"
         }
       },
+      "share-span": "",
       "warnings": "경고"
     },
     "span-filters": {
@@ -10918,15 +10919,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11033,10 +11034,10 @@
       "title-instant-updates-requests-webhooks": "웹훅을 통한 즉시 업데이트 및 풀 요청.",
       "title-visual-previews-in-pull-requests": "이미지 렌더링을 통해 풀 요청을 시각적으로 미리 보기"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "작업 사양",
-      "summary": "요약",
-      "title-error": "오류"
+      "summary": "요약"
     },
     "features-list": {
       "actions": {
@@ -11181,10 +11182,12 @@
       "starting": "시작하는 중...",
       "status": {
         "title-error-running-job": "작업 실행 중 오류 발생",
-        "title-job-completed-successfully": "작업이 성공적으로 완료되었습니다",
         "title-warning-running-job": ""
       },
-      "summary": "요약"
+      "summary": "요약",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11350,6 +11353,7 @@
       "go-to": "다음으로 이동",
       "make-sure": "반드시 이러한 권한을 포함하세요"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "이 프로세스 중에는 리소스를 생성, 편집 또는 삭제할 수 없습니다. 마지막 단계에서는 리소스가 표시되지 않습니다.",
       "alert-point-2": "프로비저닝이 완료되면 리소스가 다시 표시되고 외부 스토리지를 통해 관리됩니다.",
