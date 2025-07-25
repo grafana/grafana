@@ -14,7 +14,7 @@ import (
 func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, src *dagger.Directory, ersion string) (*dagger.Directory, error) {
 	// Check if the version of Grafana uses lerna or nx to manage package versioning.
 	var (
-		out = fmt.Sprintf("/src/npm-packages/$LERNA_PACKAGE_NAME-%v.tgz", "v"+ersion)
+		out = fmt.Sprintf("./npm-packages/$LERNA_PACKAGE_NAME-%v.tgz", "v"+ersion)
 
 		lernaBuild = fmt.Sprintf("yarn run packages:build && yarn lerna version %s --exact --no-git-tag-version --no-push --force-publish -y", ersion)
 		lernaPack  = fmt.Sprintf("yarn lerna exec --no-private -- yarn pack --out %s", out)
