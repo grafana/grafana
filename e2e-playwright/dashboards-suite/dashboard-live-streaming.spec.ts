@@ -2,6 +2,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import testDashboard from '../dashboards/DashboardLiveTest.json';
 
+test.use({
+  featureToggles: {
+    tableNextGen: true,
+  },
+});
+
 test.describe(
   'Dashboard Live streaming support',
   {
@@ -31,18 +37,10 @@ test.describe(
       }
     });
 
-    test('Should receive streaming data', async ({ gotoDashboardPage, selectors }) => {
+    test('Should receive streaming data', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Live'))).toBeVisible();
-      await expect
-        .poll(
-          async () =>
-            await dashboardPage
-              .getByGrafanaSelector(selectors.components.Panels.Visualization.Table.body)
-              .getByRole('row')
-              .count()
-        )
-        .toBeGreaterThan(5);
+      await expect.poll(async () => await page.getByRole('grid').getByRole('row').count()).toBeGreaterThan(5);
     });
   }
 );

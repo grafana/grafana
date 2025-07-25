@@ -54,7 +54,20 @@ export function getPluginFromCache(path: string): CachedPlugin | undefined {
 export function extractCacheKeyFromPath(path: string) {
   const regex = /\/?public\/plugins\/([^\/]+)\//;
   const match = path.match(regex);
-  return match ? match[1] : null;
+
+  if (match) {
+    return match[1];
+  }
+
+  // Decoupled core plugins can be loaded by alternative paths
+  const decoupledPluginRegex = /\/?public\/app\/plugins\/(?:datasource|panel)\/([^\/]+)\//;
+  const decoupledPluginMatch = path.match(decoupledPluginRegex);
+
+  if (decoupledPluginMatch) {
+    return decoupledPluginMatch[1];
+  }
+
+  return null;
 }
 
 function getCacheKey(address: string): string | undefined {

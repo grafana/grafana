@@ -7,12 +7,13 @@ import { Checkbox, useStyles2 } from '@grafana/ui';
 
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
-import { isSharedWithMe } from './utils';
+import { isSharedWithMe, canEditItemType } from './utils';
 
 export default function CheckboxCell({
   row: { original: row },
   isSelected,
   onItemSelectionChange,
+  permissions,
 }: DashboardsTreeCellProps) {
   const item = row.item;
 
@@ -29,6 +30,11 @@ export default function CheckboxCell({
   }
 
   if (isSharedWithMe(item.uid)) {
+    return <CheckboxSpacer />;
+  }
+
+  // Check if user can edit this specific item type
+  if (permissions && !canEditItemType(item.kind, permissions)) {
     return <CheckboxSpacer />;
   }
 

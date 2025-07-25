@@ -10,7 +10,7 @@ import { AnnoKeyManagerKind, ManagerKind } from '../../../features/apiserver/typ
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
-import { ROOT_FOLDER_ITEM } from './utils';
+import { getRootFolderItem } from './utils';
 
 type GetFolderChildrenQuery = ReturnType<ReturnType<typeof folderAPIv1beta1.endpoints.getFolderChildren.select>>;
 type GetFolderChildrenRequest = {
@@ -151,7 +151,7 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
     }
 
     const rootFlatTree = createFlatList(rootFolderToken, state.responseByParent[rootFolderToken], 1);
-    rootFlatTree.unshift(ROOT_FOLDER_ITEM);
+    rootFlatTree.unshift(getRootFolderItem());
 
     return rootFlatTree;
   }, [state, isBrowsing, openFolders]);

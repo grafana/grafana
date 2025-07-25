@@ -15,6 +15,9 @@
           ],
           "mute_time_intervals": [
             "test-interval", "persisted-interval"
+          ],
+          "active_time_intervals": [
+            "test-interval", "persisted-interval"
           ]
         }
       ]

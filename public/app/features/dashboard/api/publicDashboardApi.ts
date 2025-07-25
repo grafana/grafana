@@ -43,7 +43,7 @@ export const publicDashboardApi = createApi({
         try {
           await queryFulfilled;
         } catch (e) {
-          if (isFetchBaseQueryError(e) && isFetchError(e.error)) {
+          if (isFetchBaseQueryError(e) && isFetchError(e.error) && config.publicDashboardsEnabled) {
             dispatch(notifyApp(createErrorNotification(e.error.data.message)));
           }
         }

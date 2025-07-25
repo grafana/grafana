@@ -29,7 +29,12 @@ type DataKeyStorage interface {
 	CreateDataKey(ctx context.Context, dataKey *SecretDataKey) error
 	GetDataKey(ctx context.Context, namespace, uid string) (*SecretDataKey, error)
 	GetCurrentDataKey(ctx context.Context, namespace, label string) (*SecretDataKey, error)
-	GetAllDataKeys(ctx context.Context, namespace string) ([]*SecretDataKey, error)
+	ListDataKeys(ctx context.Context, namespace string) ([]*SecretDataKey, error)
 	DisableDataKeys(ctx context.Context, namespace string) error
 	DeleteDataKey(ctx context.Context, namespace, uid string) error
+}
+
+// GlobalDataKeyStorage is an interface for namespace unbounded operations.
+type GlobalDataKeyStorage interface {
+	DisableAllDataKeys(ctx context.Context) error
 }

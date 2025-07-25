@@ -175,7 +175,8 @@ func (r *rowsWrapper) Next() bool {
 
 		r.row, err = r.a.scanRow(r.rows, r.history)
 		if err != nil {
-			if len(r.rejected) > 1000 || r.row == nil {
+			r.a.log.Error("error scanning dashboard", "error", err)
+			if len(r.rejected) > 0 || r.row == nil {
 				r.err = fmt.Errorf("too many rejected rows (%d) %w", len(r.rejected), err)
 				return false
 			}
@@ -263,6 +264,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data, &apiVersion,
 	)
+
 	switch apiVersion.String {
 	case "":
 		apiVersion.String = dashboardV0.VERSION // default value

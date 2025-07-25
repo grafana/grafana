@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { GroupConditionVisibility, ItemsWithConditionalRendering } from './types';
+import { translatedItemType } from './utils';
 
 interface Props {
   itemType: ItemsWithConditionalRendering;
@@ -28,7 +29,7 @@ export const ConditionalRenderingGroupVisibility = ({ itemType, value, onChange 
   return (
     <Field
       label={t('dashboard.conditional-rendering.conditions.group.visibility.label', '{{type}} visibility', {
-        type: capitalize(itemType),
+        type: capitalize(translatedItemType(itemType)),
       })}
       className={styles.container}
     >

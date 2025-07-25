@@ -24,3 +24,43 @@ export const getRepoHref = (github?: RepositorySpec['github']) => {
   }
   return `${github.url}/tree/${github.branch}`;
 };
+
+export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
+  if (!spec || !spec.type) {
+    return undefined;
+  }
+
+  switch (spec.type) {
+    case 'github': {
+      const url = spec.github?.url;
+      const branch = spec.github?.branch;
+      if (!url) {
+        return undefined;
+      }
+      return branch ? `${url}/tree/${branch}` : url;
+    }
+
+    case 'gitlab': {
+      const url = spec.gitlab?.url;
+      const branch = spec.gitlab?.branch;
+      if (!url) {
+        return undefined;
+      }
+      return branch ? `${url}/-/tree/${branch}` : url;
+    }
+    case 'bitbucket': {
+      const url = spec.bitbucket?.url;
+      const branch = spec.bitbucket?.branch;
+      if (!url) {
+        return undefined;
+      }
+      return branch ? `${url}/src/${branch}` : url;
+    }
+    case 'git': {
+      // Return a generic URL for pure git repositories
+      return spec.git?.url;
+    }
+    default:
+      return undefined;
+  }
+};

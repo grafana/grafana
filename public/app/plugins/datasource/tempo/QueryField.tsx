@@ -161,6 +161,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             app={app}
             onClearResults={this.onClearResults}
             addVariablesToOptions={this.props.addVariablesToOptions}
+            range={this.props.range}
           />
         )}
         {query.queryType === 'serviceMap' && (
@@ -174,6 +175,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             onChange={onChange}
             app={app}
             onClearResults={this.onClearResults}
+            range={this.props.range}
           />
         )}
       </>

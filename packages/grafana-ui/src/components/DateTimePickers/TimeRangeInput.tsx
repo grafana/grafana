@@ -13,7 +13,7 @@ import { getInputStyles } from '../Input/Input';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeRangeLabel } from './TimeRangePicker/TimeRangeLabel';
 import { WeekStart } from './WeekStartPicker';
-import { quickOptions } from './options';
+import { getQuickOptions } from './options';
 import { isValidTimeRange } from './utils';
 
 export interface TimeRangeInputProps {
@@ -123,7 +123,7 @@ export const TimeRangeInput = ({
               timeZone={timeZone}
               value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
               onChange={onRangeChange}
-              quickOptions={quickOptions}
+              quickOptions={getQuickOptions()}
               onChangeTimeZone={onChangeTimeZone}
               className={styles.content}
               hideTimeZone={hideTimeZone}

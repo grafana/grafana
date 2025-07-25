@@ -23,6 +23,12 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
 describe('browse-dashboards DashboardsTree', () => {
   const WIDTH = 800;
   const HEIGHT = 600;
+  const mockPermissions = {
+    canEditFolders: true,
+    canEditDashboards: true,
+    canDeleteFolders: true,
+    canDeleteDashboards: true,
+  };
 
   const folder = wellFormedFolder(1);
   const emptyFolderIndicator = wellFormedEmptyFolder();
@@ -36,10 +42,20 @@ describe('browse-dashboards DashboardsTree', () => {
     config.sharedWithMeFolderUID = 'sharedwithme';
   });
 
+  afterEach(() => {
+    // Reset permissions back to defaults
+    Object.assign(mockPermissions, {
+      canEditFolders: true,
+      canEditDashboards: true,
+      canDeleteFolders: true,
+      canDeleteDashboards: true,
+    });
+  });
+
   it('renders a dashboard item', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[dashboard]}
         isSelected={isSelected}
         width={WIDTH}
@@ -57,9 +73,14 @@ describe('browse-dashboards DashboardsTree', () => {
   });
 
   it('does not render checkbox when disabled', () => {
+    mockPermissions.canEditFolders = false;
+    mockPermissions.canEditDashboards = false;
+    mockPermissions.canDeleteFolders = false;
+    mockPermissions.canDeleteDashboards = false;
+
     render(
       <DashboardsTree
-        canSelect={false}
+        permissions={mockPermissions}
         items={[dashboard]}
         isSelected={isSelected}
         width={WIDTH}
@@ -79,7 +100,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a folder item', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -98,7 +119,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders a folder link', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -119,7 +140,7 @@ describe('browse-dashboards DashboardsTree', () => {
 
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[sharedWithMe, folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -140,7 +161,7 @@ describe('browse-dashboards DashboardsTree', () => {
 
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[sharedWithMe, folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -162,7 +183,7 @@ describe('browse-dashboards DashboardsTree', () => {
     const handler = jest.fn();
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[folder]}
         isSelected={isSelected}
         width={WIDTH}
@@ -183,7 +204,7 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders empty folder indicators', () => {
     render(
       <DashboardsTree
-        canSelect
+        permissions={mockPermissions}
         items={[emptyFolderIndicator]}
         isSelected={isSelected}
         width={WIDTH}

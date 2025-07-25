@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,8 +23,8 @@ func TestDecryptService(t *testing.T) {
 		mockErr := errors.New("mock error")
 		mockStorage := &MockDecryptStorage{}
 		mockStorage.On("Decrypt", mock.Anything, mock.Anything, mock.Anything).Return(secretv1beta1.ExposedSecureValue(""), mockErr)
-		decryptedValuesResp := map[string]service.DecryptResult{
-			"secure-value-1": service.NewDecryptResultErr(mockErr),
+		decryptedValuesResp := map[string]contracts.DecryptResult{
+			"secure-value-1": contracts.NewDecryptResultErr(mockErr),
 		}
 
 		decryptService := &OSSDecryptService{
@@ -49,9 +49,9 @@ func TestDecryptService(t *testing.T) {
 		mockStorage.On("Decrypt", mock.Anything, xkube.Namespace("default"), "secure-value-2").
 			Return(exposedSecureValue2, nil)
 
-		decryptedValuesResp := map[string]service.DecryptResult{
-			"secure-value-1": service.NewDecryptResultValue(&exposedSecureValue1),
-			"secure-value-2": service.NewDecryptResultValue(&exposedSecureValue2),
+		decryptedValuesResp := map[string]contracts.DecryptResult{
+			"secure-value-1": contracts.NewDecryptResultValue(&exposedSecureValue1),
+			"secure-value-2": contracts.NewDecryptResultValue(&exposedSecureValue2),
 		}
 
 		decryptService := &OSSDecryptService{
@@ -75,9 +75,9 @@ func TestDecryptService(t *testing.T) {
 		mockStorage.On("Decrypt", mock.Anything, xkube.Namespace("default"), "secure-value-2").
 			Return(secretv1beta1.ExposedSecureValue(""), mockErr)
 
-		decryptedValuesResp := map[string]service.DecryptResult{
-			"secure-value-1": service.NewDecryptResultValue(&exposedSecureValue),
-			"secure-value-2": service.NewDecryptResultErr(mockErr),
+		decryptedValuesResp := map[string]contracts.DecryptResult{
+			"secure-value-1": contracts.NewDecryptResultValue(&exposedSecureValue),
+			"secure-value-2": contracts.NewDecryptResultErr(mockErr),
 		}
 
 		decryptService := &OSSDecryptService{

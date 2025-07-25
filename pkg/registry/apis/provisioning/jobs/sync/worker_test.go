@@ -225,6 +225,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Sync execution succeeds
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true // Add specific sync options validation if needed
 				}), mockRepoResources, mock.Anything, pr).Return("new-ref", nil)
@@ -277,6 +278,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Sync execution fails
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				syncError := errors.New("sync operation failed")
 				s.On("Sync", mock.Anything, rw, mock.MatchedBy(func(opts provisioning.SyncJobOptions) bool {
 					return true // Add specific sync options validation if needed
@@ -317,6 +319,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
@@ -348,6 +351,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
@@ -407,6 +411,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
@@ -459,6 +464,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				mockClients := resources.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 			},
@@ -489,6 +495,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Sync succeeds
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+				pr.On("StrictMaxErrors", 20).Return()
 				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
 				pr.On("Complete", mock.Anything, nil).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
 

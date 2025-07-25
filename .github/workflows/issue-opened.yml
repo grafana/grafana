@@ -117,3 +117,41 @@ jobs:
             }
         env:
           SLACK_WEBHOOK_URL:  ${{ env.AUTOTRIAGER_SLACK_WEBHOOK_URL }}
+  auto-label-internal-issues:
+    needs: [main]
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      id-token: write
+    steps:
+        - name: "Get vault secrets"
+          id: vault-secrets
+          uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+          with:
+            # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
+            repo_secrets: |
+              GITHUB_APP_ID=plugins_platform_issue_triager_github_bot:app_id
+              GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem  
+        - name: Generate token
+          id: generate_token
+          uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+          with:
+            app-id: ${{ env.GITHUB_APP_ID }}
+            private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+            permission-members: read
+        - name: Check if member of grafana org
+          id: check-if-grafana-org-member
+          continue-on-error: true
+          run: gh api https://api.github.com/orgs/grafana/members/${{ env.ACTOR }} >/dev/null 2>&1 && echo "is_grafana_org_member=true" >> "$GITHUB_OUTPUT"
+          env:
+              GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+              ACTOR: ${{ github.actor }}
+        - name: "Auto label internal issues"
+          if:  steps.check-if-grafana-org-member.outputs.is_grafana_org_member == 'true' || github.event.issue.author_association == 'MEMBER' || github.event.issue.author_association == 'OWNER'
+          run: gh issue edit "$NUMBER" --add-label "$LABELS"
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_REPO: ${{ github.repository }}
+            NUMBER: ${{ github.event.issue.number }}
+            LABELS: internal

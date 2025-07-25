@@ -114,6 +114,9 @@ type Writer interface {
 
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
+
+	// Move a file from one path to another in the remote repository
+	Move(ctx context.Context, oldPath, newPath, ref, message string) error
 }
 
 type ReaderWriter interface {

@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=alpine:3.21
-ARG GO_IMAGE=golang:1.24.4-alpine
+ARG GO_IMAGE=golang:1.24.5-alpine
 
 # ----- Go build stage
 FROM ${GO_IMAGE} AS go-dev-builder

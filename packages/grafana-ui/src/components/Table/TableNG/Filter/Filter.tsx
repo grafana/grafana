@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
@@ -61,6 +62,7 @@ export const Filter = ({
       className={styles.headerFilter}
       ref={ref}
       type="button"
+      data-testid={selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton}
       onClick={(ev) => {
         setPopoverVisible(true);
         ev.stopPropagation();

@@ -37,6 +37,13 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
 jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   return {
     useCreateRepositoryFilesWithPathMutation: jest.fn(),
+    provisioningAPIv0alpha1: {
+      endpoints: {
+        listRepository: {
+          select: jest.fn().mockReturnValue(() => ({ data: { items: [] } })),
+        },
+      },
+    },
   };
 });
 
@@ -139,7 +146,6 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     { label: 'Commit directly', value: 'write' },
     { label: 'Create a branch', value: 'branch' },
   ],
-  isGitHub: true,
   initialValues: {
     title: '',
     comment: '',

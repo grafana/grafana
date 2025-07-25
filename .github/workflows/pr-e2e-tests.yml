@@ -286,6 +286,7 @@ jobs:
               /home/bench/tests/playwright-results.json
 
       - name: Upload HTML report
+        id: upload-html
         uses: actions/upload-artifact@v4
         with:
           name: playwright-html-${{ github.run_number }}
@@ -304,10 +305,13 @@ jobs:
       - name: Show test results
         env:
           FAILED: ${{ steps.check-jobs.outputs.any-failed }}
+          REPORT_URL: ${{ steps.upload-html.outputs.artifact-url }}
         # sed removes the leading `../../src/` from the paths
         run: |
-          npx playwright merge-reports --reporter list ./all-blob-reports | sed 's|\(\.\./\)\{1,\}src/|/|g'
+          npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
           if [ "$FAILED" = "true" ]; then
+            echo ""
+            echo "Download the test report from $REPORT_URL"
             exit 1
           fi
 

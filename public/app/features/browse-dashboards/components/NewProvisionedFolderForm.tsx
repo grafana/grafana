@@ -12,6 +12,7 @@ import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/ap
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
+import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types/folders';
@@ -26,14 +27,13 @@ interface FormProps extends Props {
   repository?: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   folder?: Folder;
-  isGitHub: boolean;
 }
 interface Props {
   parentFolder?: FolderDTO;
   onDismiss?: () => void;
 }
 
-function FormContent({ initialValues, repository, workflowOptions, folder, isGitHub, onDismiss }: FormProps) {
+function FormContent({ initialValues, repository, workflowOptions, folder, onDismiss }: FormProps) {
   const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
@@ -61,6 +61,17 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
           ),
         ],
       });
+
+      const prUrl = request.data?.urls?.newPullRequestURL;
+      if (workflow === 'branch' && prUrl) {
+        const url = buildResourceBranchRedirectUrl({
+          paramName: 'new_pull_request_url',
+          paramValue: prUrl,
+          repoType: request.data?.repository?.type,
+        });
+        navigate(url);
+        return;
+      }
 
       // TODO: Update when the upsert type is fixed
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -159,7 +170,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
             isNew={false}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            repository={repository}
             hidePath
           />
 
@@ -197,7 +208,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
 }
 
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'create',
     title: '', // Empty title for new folders
@@ -215,7 +226,6 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
       repository={repository}
       workflowOptions={workflowOptions}
       folder={folder}
-      isGitHub={isGitHub}
     />
   );
 }

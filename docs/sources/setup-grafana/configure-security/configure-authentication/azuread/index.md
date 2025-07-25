@@ -271,6 +271,10 @@ resource "grafana_sso_settings" "azuread_sso_settings" {
     allow_assign_grafana_admin    = false
     skip_org_role_sync            = false
     use_pkce                      = true
+    custom = {
+      domain_hint = "contoso.com"
+      force_use_graph_api = "true"
+    }
   }
 }
 ```

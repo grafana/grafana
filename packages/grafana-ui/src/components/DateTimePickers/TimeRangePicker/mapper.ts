@@ -7,6 +7,7 @@ export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): T
   return rangeUtil.convertRawToRange({ from: option.from, to: option.to }, timeZone, undefined, commonFormat);
 };
 
+// TODO: Should we keep these format presets somewhere common?
 const rangeFormatShort: Intl.DateTimeFormatOptions = {
   dateStyle: 'short',
   timeStyle: 'short',

@@ -164,6 +164,7 @@ export const LogsPanel = ({
     fontSize,
     syntaxHighlighting,
     detailsMode: detailsModeProp,
+    noInteractions,
     ...options
   },
   id,
@@ -566,6 +567,7 @@ export const LogsPanel = ({
               logs={deduplicatedRows}
               logSupportsContext={showContextToggle}
               loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+              noInteractions={noInteractions}
               onClickFilterLabel={
                 isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
               }

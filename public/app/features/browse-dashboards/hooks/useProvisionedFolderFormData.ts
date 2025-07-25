@@ -19,7 +19,6 @@ export interface ProvisionedFolderFormDataResult {
   repository?: RepositoryView;
   folder?: Folder;
   workflowOptions: Array<{ label: string; value: string }>;
-  isGitHub: boolean;
   initialValues?: BaseProvisionedFormData;
 }
 
@@ -34,7 +33,6 @@ export function useProvisionedFolderFormData({
   const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
-  const isGitHub = repository?.type === 'github';
   const timestamp = generateTimestamp();
 
   const initialValues = useMemo(() => {
@@ -57,7 +55,6 @@ export function useProvisionedFolderFormData({
     repository,
     folder,
     workflowOptions,
-    isGitHub,
     initialValues,
   };
 }

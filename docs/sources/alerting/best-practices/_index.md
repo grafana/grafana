@@ -8,7 +8,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Best Practices
+menuTitle: Best practices
 title: Grafana Alerting best practices
 weight: 170
 ---

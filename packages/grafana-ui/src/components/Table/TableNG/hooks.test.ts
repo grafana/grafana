@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { varPreLine } from 'uwrap';
 
-import { Field, FieldType } from '@grafana/data';
+import { cacheFieldDisplayNames, createDataFrame, Field, FieldType } from '@grafana/data';
 
 import {
   useFilteredRows,
@@ -226,11 +226,11 @@ describe('TableNG hooks', () => {
 
   describe('useFooterCalcs', () => {
     const rows = [
-      { Field1: 1, Text: 'a', __depth: 0, __index: 0 },
-      { Field1: 2, Text: 'b', __depth: 0, __index: 1 },
-      { Field1: 3, Text: 'c', __depth: 0, __index: 2 },
-      { Field2: 3, Text: 'd', __depth: 0, __index: 3 },
-      { Field2: 10, Text: 'e', __depth: 0, __index: 4 },
+      { 'Field 1': 1, Text: 'a', __depth: 0, __index: 0 },
+      { 'Field 1': 2, Text: 'b', __depth: 0, __index: 1 },
+      { 'Field 1': 3, Text: 'c', __depth: 0, __index: 2 },
+      { 'Field 2': 3, Text: 'd', __depth: 0, __index: 3 },
+      { 'Field 2': 10, Text: 'e', __depth: 0, __index: 4 },
     ];
 
     const numericField: Field = {
@@ -239,6 +239,7 @@ describe('TableNG hooks', () => {
       values: [1, 2, 3],
       config: {
         custom: {},
+        displayName: 'Field 1',
       },
       display: (value: unknown) => ({
         text: String(value),
@@ -247,7 +248,6 @@ describe('TableNG hooks', () => {
         prefix: undefined,
         suffix: undefined,
       }),
-      state: {},
       getLinks: undefined,
     };
 
@@ -255,7 +255,10 @@ describe('TableNG hooks', () => {
       name: 'Field2',
       type: FieldType.number,
       values: [3, 10],
-      config: { custom: {} },
+      config: {
+        custom: {},
+        displayName: 'Field 2',
+      },
       display: (value: unknown) => ({
         text: String(value),
         numeric: Number(value),
@@ -263,7 +266,6 @@ describe('TableNG hooks', () => {
         prefix: undefined,
         suffix: undefined,
       }),
-      state: {},
       getLinks: undefined,
     };
 
@@ -279,107 +281,150 @@ describe('TableNG hooks', () => {
         prefix: undefined,
         suffix: undefined,
       }),
-      state: {},
       getLinks: undefined,
     };
 
     it('should calculate sum for numeric fields', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, numericField], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, numericField] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'] },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual(['Total', '6']); // 1 + 2 + 3
     });
 
     it('should calculate mean for numeric fields', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, numericField], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, numericField] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['mean'] },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual(['Mean', '2']); // (1 + 2 + 3) / 3
     });
 
     it('should return an empty string for non-numeric fields', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, textField], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, textField] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'] },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual(['Total', '']);
     });
 
     it('should return empty array if no footerOptions are provided', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, textField], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: undefined,
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual([]);
     });
 
     it('should return empty array when footer is disabled', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, textField], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: false,
           footerOptions: { show: true, reducer: ['sum'] },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual([]);
     });
 
     it('should return empty array when reducer is undefined', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, textField], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, textField] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: undefined },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual([]);
     });
 
     it('should return empty array when reducer is empty', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, textField], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: [] },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual([]);
     });
 
     it('should return empty string if fields array doesnt include this field', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, numericField, numericField2], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: ['Field2', 'Field3'] },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual(['Total', '', '13']);
     });
 
     it('should return the calculation if fields array includes this field', () => {
-      const { result } = renderHook(() =>
-        useFooterCalcs(rows, [textField, numericField, numericField2], {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: ['Field1', 'Field2', 'Field3'] },
-        })
-      );
+        });
+      });
 
       expect(result.current).toEqual(['Total', '6', '13']);
+    });
+
+    it('should return the calculation if fields array includes this field by either name or display name', () => {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [textField, numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
+          enabled: true,
+          footerOptions: { show: true, reducer: ['sum'], fields: ['Field1', 'Field 2'] },
+        });
+      });
+
+      expect(result.current).toEqual(['Total', '6', '13']);
+    });
+
+    it('should not return the reducer label in the first column if there is a calc to render', () => {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
+          enabled: true,
+          footerOptions: { show: true, reducer: ['sum'], fields: [] },
+        });
+      });
+
+      expect(result.current).toEqual(['6', '13']);
     });
   });
 

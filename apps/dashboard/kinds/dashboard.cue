@@ -33,7 +33,6 @@ dashboard: {
 	kind:       "Dashboard"
 	pluralName: "Dashboards"
 	current:    "v1beta1"
-
 	codegen: {
 		ts: {
 			enabled: true

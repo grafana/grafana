@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,11 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type K8sClientFactory func(ctx context.Context, version string) client.K8sHandler
@@ -44,8 +45,9 @@ func NewK8sClientWithFallback(
 	sorter sort.Service,
 	dual dualwrite.Service,
 	reg prometheus.Registerer,
+	features featuremgmt.FeatureToggles,
 ) *K8sClientWithFallback {
-	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual)
+	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, features)
 	return &K8sClientWithFallback{
 		K8sHandler:    newClientFunc(context.Background(), dashboardv0.VERSION),
 		newClientFunc: newClientFunc,
@@ -112,6 +114,7 @@ func newK8sClientFactory(
 	resourceClient resource.ResourceClient,
 	sorter sort.Service,
 	dual dualwrite.Service,
+	features featuremgmt.FeatureToggles,
 ) K8sClientFactory {
 	clientCache := make(map[string]client.K8sHandler)
 	cacheMutex := &sync.RWMutex{}
@@ -149,7 +152,7 @@ func newK8sClientFactory(
 		}
 
 		span.AddEvent("Creating new client")
-		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter)
+		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter, features)
 		clientCache[version] = newClient
 
 		return newClient

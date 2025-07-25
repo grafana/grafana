@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
@@ -108,7 +109,11 @@ export const FilterPopup = ({
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div className={styles.filterContainer} onClick={stopPropagation}>
+      <div
+        className={styles.filterContainer}
+        onClick={stopPropagation}
+        data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
+      >
         <Stack direction="column">
           <Stack alignItems="center">
             {field && <Label className={styles.label}>{getDisplayName(field)}</Label>}

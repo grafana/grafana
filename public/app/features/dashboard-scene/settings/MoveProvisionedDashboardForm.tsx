@@ -8,8 +8,8 @@ import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
+  RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
-  useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -19,16 +19,18 @@ import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
 
+import { buildResourceBranchRedirectUrl } from './utils';
+
 export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
-  isGitHub: boolean;
   isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
   targetFolderUID?: string;
   targetFolderTitle?: string;
+  repository?: RepositoryView;
   onDismiss: () => void;
   onSuccess: (folderUID: string, folderTitle: string) => void;
 }
@@ -38,16 +40,17 @@ export function MoveProvisionedDashboardForm({
   defaultValues,
   loadedFromRef,
   readOnly,
-  isGitHub,
   isNew,
   workflowOptions,
   targetFolderUID,
   targetFolderTitle,
+  repository,
   onDismiss,
   onSuccess,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { editPanel: panelEditor } = dashboard.useState();
+
   const { handleSubmit, watch } = methods;
   const appEvents = getAppEvents();
 
@@ -60,8 +63,7 @@ export function MoveProvisionedDashboardForm({
 
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
 
-  const [createFile, createRequest] = useCreateRepositoryFilesWithPathMutation();
-  const [deleteFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
+  const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
 
   const navigate = useNavigate();
@@ -99,32 +101,15 @@ export function MoveProvisionedDashboardForm({
     const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
 
     try {
-      await createFile({
+      await moveFile({
         name: repo,
         path: targetPath,
         ref: branchRef,
         message: commitMessage,
         body: currentFileData.resource.file,
-      }).unwrap();
-
-      await deleteFile({
-        name: repo,
-        path: path,
-        ref: branchRef,
-        message: commitMessage,
+        originalPath: path,
       }).unwrap();
     } catch (error) {
-      if (createRequest.isSuccess && !deleteRequest.isSuccess) {
-        appEvents.publish({
-          type: AppEvents.alertWarning.name,
-          payload: [
-            t(
-              'dashboard-scene.move-provisioned-dashboard-form.partial-failure-warning',
-              'Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.'
-            ),
-          ],
-        });
-      }
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error],
@@ -142,12 +127,17 @@ export function MoveProvisionedDashboardForm({
 
   const onBranchSuccess = () => {
     panelEditor?.onDiscard();
-    navigate(`/dashboards?new_pull_request_url=${createRequest.data?.urls?.newPullRequestURL}`);
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'new_pull_request_url',
+      paramValue: moveRequest?.data?.urls?.newPullRequestURL,
+      repoType: moveRequest?.data?.repository?.type,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({
     dashboard,
-    request: createRequest,
+    request: moveRequest,
     workflow,
     handlers: {
       onBranchSuccess,
@@ -155,7 +145,7 @@ export function MoveProvisionedDashboardForm({
     },
   });
 
-  const isLoading = createRequest.isLoading || deleteRequest.isLoading;
+  const isLoading = moveRequest.isLoading;
 
   return (
     <Drawer
@@ -213,7 +203,7 @@ export function MoveProvisionedDashboardForm({
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}
-              isGitHub={isGitHub}
+              repository={repository}
             />
 
             <Stack gap={2}>

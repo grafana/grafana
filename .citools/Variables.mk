@@ -12,6 +12,9 @@ $(shell \
 endef
 
 
+# Tool: "air"
+air = "$(call compile_tool,air,github.com/air-verse/air)"
+
 # Tool: "bra"
 bra = "$(call compile_tool,bra,github.com/unknwon/bra)"
 

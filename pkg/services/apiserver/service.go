@@ -17,14 +17,17 @@ import (
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -37,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -105,6 +109,9 @@ type service struct {
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
+	appInstallers                     []appsdkapiserver.AppInstaller
+	builderMetrics                    *builder.BuilderMetrics
+	dualWriterMetrics                 *grafanarest.DualWriterMetrics
 }
 
 func ProvideService(
@@ -126,6 +133,8 @@ func ProvideService(
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
+	appInstallers []appsdkapiserver.AppInstaller,
+	builderMetrics *builder.BuilderMetrics,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -138,7 +147,7 @@ func ProvideService(
 		rr:                                rr,
 		stopCh:                            make(chan struct{}),
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
@@ -153,6 +162,9 @@ func ProvideService(
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
+		appInstallers:                     appInstallers,
+		builderMetrics:                    builderMetrics,
+		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -244,7 +256,7 @@ func (s *service) start(ctx context.Context) error {
 	builders := s.builders
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 
-	// Install schemas
+	// Install schemas for existing builders
 	for _, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
@@ -266,14 +278,29 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
+	// Add schemas from app installers to the scheme before creating options
+	additionalGroupVersions, err := appinstaller.AddToScheme(s.appInstallers, s.scheme)
+	if err != nil {
+		return err
+	}
+	groupVersions = append(groupVersions, additionalGroupVersions...)
+
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
-	err := applyGrafanaConfig(s.cfg, s.features, o)
+
+	// Register admission plugins from app installers after options are created
+	if err := appinstaller.RegisterAdmissionPlugins(ctx, s.appInstallers, o); err != nil {
+		return err
+	}
+
+	// Register authorizers from app installers
+	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
+
+	err = applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
 	}
 
 	if errs := o.Validate(); len(errs) != 0 {
-		// TODO: handle multiple errors
 		return errs[0]
 	}
 
@@ -281,6 +308,7 @@ func (s *service) start(ctx context.Context) error {
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
+
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
@@ -303,12 +331,14 @@ func (s *service) start(ctx context.Context) error {
 	} else {
 		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
-
-		// Use unified storage client
 		serverConfig.RESTOptionsGetter = getter
 	}
 
-	// Add OpenAPI specs for each group+version
+	defGetters := []common.GetOpenAPIDefinitions{
+		appinstaller.BuildOpenAPIDefGetter(s.appInstallers),
+	}
+
+	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,
 		serverConfig,
@@ -318,6 +348,8 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
 		s.buildHandlerChainFuncFromBuilders,
+		groupVersions,
+		defGetters,
 	)
 	if err != nil {
 		return err
@@ -325,24 +357,45 @@ func (s *service) start(ctx context.Context) error {
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
+	if err := appinstaller.RegisterPostStartHooks(s.appInstallers, serverConfig); err != nil {
+		return fmt.Errorf("failed to register post start hooks for app installers: %w", err)
+	}
+
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
 	if err != nil {
 		return err
 	}
 
-	// Install the API group+version
+	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
-		// Required for the dual writer initialization
 		s.metrics,
 		request.GetNamespaceMapper(s.cfg),
-		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), // NOTE: will be removed and replaced with the dual writer utility
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
 		s.storageStatus,
 		optsregister,
 		s.features,
+		s.dualWriterMetrics,
+		s.builderMetrics,
 	)
 	if err != nil {
+		return err
+	}
+
+	if err := appinstaller.InstallAPIs(
+		ctx,
+		s.appInstallers,
+		server,
+		serverConfig.RESTOptionsGetter,
+		o.StorageOptions,
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.serverLockService,
+		request.GetNamespaceMapper(s.cfg),
+		s.storageStatus,
+		s.dualWriterMetrics,
+		s.builderMetrics,
+	); err != nil {
 		return err
 	}
 
