@@ -65,7 +65,7 @@ SCIM uses a specific process to establish and maintain user identity between the
 2. **Identity linking based on lookup results:**
 
    - **If there's a single matching result:** The identity provider retrieves the user's unique ID at Grafana, saves it, confirms it can fetch the user's information, and updates the user's information in Grafana
-   - **If there are no matching results:** The identity provider attempts to create the user in Grafana. If successful, it retrieves and saves the user's unique ID for future operations. If there's a conflict with an existing user, the identity provider flags the error and Grafana logs the error message
+   - **If there are no matching results:** The identity provider attempts to create the user in Grafana. If successful, it retrieves and saves the user's unique ID for future operations. If a user with the same email address already exists in Grafana, the user is updated and will be managed by SCIM from that point forward.
    - The identity provider learns the relationship between the found Grafana user and the Grafana internal ID
    - The identity provider updates Grafana with the External ID
    - Grafana updates the authentication validations to expect this External ID
@@ -80,10 +80,6 @@ SCIM uses a specific process to establish and maintain user identity between the
 This process ensures secure and consistent user identification across both systems, preventing security issues that could arise from email changes or other user attribute modifications.
 
 ### Existing Grafana users
-
-{{< admonition type="note" >}}
-Existing users must be assigned to the Grafana app in the identity provider to maintain access once SCIM is enabled.
-{{< /admonition >}}
 
 For users who already exist in the Grafana instance:
 
@@ -287,19 +283,6 @@ Team membership maintenance:
 ## Troubleshooting
 
 ### User provisioning issues
-
-#### Error: "User already exists in Grafana"
-
-**Cause:** The unique identifier field is not working as expected, causing conflicts during user creation.
-
-**Solution:** Test the unique identifier field to ensure it returns a single, unique user:
-
-```bash
-curl --location 'https://{$GRAFANA_URL}/apis/scim.grafana.app/v0alpha1/namespaces/{$STACK_ID}/Users?filter=userName eq "username@email.com"' \
---header 'Authorization: Bearer glsa_xxxxxxxxxxxxxxxxxxxxxxxx'
-```
-
-The response should return exactly one user. If not, configure a different unique identifier field in your identity provider, or remove the duplicate users from Grafana.
 
 #### Error: "invalid namespace"
 
