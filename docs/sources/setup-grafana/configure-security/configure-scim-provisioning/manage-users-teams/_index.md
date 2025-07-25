@@ -149,7 +149,7 @@ The migration process uses the same [user identification mechanism](#how-scim-id
    - Configure the unique identifier field to match your IDP setup
 
 {{< admonition type="note" >}}
-If you want to allow only SCIM provisioned users to log in then enable the `[auth.scim][reject_non_provisioned_users]` option.
+To restrict login access to only SCIM-provisioned users, enable the `[auth.scim][reject_non_provisioned_users]` option. Cloud Portal users can always sign in regardless of this setting.
 
 ```ini
 [auth.scim]

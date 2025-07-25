@@ -80,7 +80,7 @@ The table below describes all SCIM configuration options. Like any other Grafana
 | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
 | `user_sync_enabled`            | Yes      | Enable SCIM user provisioning. When enabled, Grafana will create, update, and deactivate users based on SCIM requests from your identity provider.                                         | `false` |
 | `group_sync_enabled`           | No       | Enable SCIM group provisioning. When enabled, Grafana will create, update, and delete teams based on SCIM requests from your identity provider. Cannot be enabled if Team Sync is enabled. | `false` |
-| `reject_non_provisioned_users` | No       | Allow only SCIM provisioned users to sign in to Grafana.                                                                                                                                   | `false` |
+| `reject_non_provisioned_users` | No       | When enabled, prevents non-SCIM provisioned users from signing in. Cloud Portal users can always sign in regardless of this setting.                                                       | `false` |
 
 {{< admonition type="warning" >}}
 **Team Sync Compatibility**:
