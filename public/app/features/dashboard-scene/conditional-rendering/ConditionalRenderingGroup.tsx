@@ -18,6 +18,8 @@ import {
   GroupConditionItemType,
   GroupConditionVisibility,
   GroupConditionValue,
+  ConditionEvaluationResult,
+  ConditionalRenderingConditions,
 } from './types';
 
 export interface ConditionalRenderingGroupState extends ConditionalRenderingBaseState<GroupConditionValue> {
@@ -42,25 +44,30 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     return undefined;
   }
 
-  public evaluate(): boolean {
+  public constructor(state: Omit<ConditionalRenderingGroupState, 'result' | 'force'>) {
+    super({ ...state, result: true, force: true });
+  }
+
+  public evaluate(): ConditionEvaluationResult {
     if (this.state.value.length === 0) {
-      return true;
+      return this.getForceTrue();
     }
 
-    const value =
-      this.state.condition === 'and'
-        ? this.state.value.every((entry) => entry.evaluate())
-        : this.state.value.some((entry) => entry.evaluate());
+    const shouldShow = this.state.visibility === 'show';
 
-    return this.state.visibility === 'show' ? value : !value;
+    return this.getActualResult(
+      this.state.condition === 'and'
+        ? this.state.value.every((entry) => this._evaluateCondition(entry, shouldShow))
+        : this.state.value.some((entry) => this._evaluateCondition(entry, shouldShow))
+    );
   }
 
   public changeVisibility(visibility: GroupConditionVisibility) {
-    this.setStateAndNotify({ visibility });
+    this.setStateAndRecalculate({ visibility });
   }
 
   public changeCondition(condition: GroupConditionCondition) {
-    this.setStateAndNotify({ condition });
+    this.setStateAndRecalculate({ condition });
   }
 
   public addItem(itemType: GroupConditionItemType) {
@@ -79,11 +86,11 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
       item.activate();
     }
 
-    this.notifyChange();
+    this.recalculateResult();
   }
 
   public removeItem(key: string) {
-    this.setStateAndNotify({ value: this.state.value.filter((condition) => condition.state.key !== key) });
+    this.setStateAndRecalculate({ value: this.state.value.filter((condition) => condition.state.key !== key) });
   }
 
   public serialize(): ConditionalRenderingGroupKind {
@@ -101,6 +108,20 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
           .filter((item) => item.kind !== 'ConditionalRenderingGroup'),
       },
     };
+  }
+
+  // This function evaluates a given condition
+  // If the `force` flag is set, that means we should respect the result of the condition and we don't care about the `shouldShow` flag
+  // This helps with cases where a condition returns a result for an arbitrary case and not an evaluation per-se
+  // i.e. a variable condition where the variable is not found, a data condition where there is no data provider etc.
+  private _evaluateCondition(entry: ConditionalRenderingConditions, shouldShow: boolean): boolean {
+    const { result, force } = entry.state;
+
+    if (force) {
+      return result;
+    }
+
+    return shouldShow ? result : !result;
   }
 
   public static deserialize(model: ConditionalRenderingGroupKind): ConditionalRenderingGroup {

@@ -8,7 +8,11 @@ import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/
 import { Field, Select, useStyles2 } from '@grafana/ui';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { ConditionalRenderingSerializerRegistryItem, TimeRangeSizeConditionValue } from './types';
+import {
+  ConditionalRenderingSerializerRegistryItem,
+  ConditionEvaluationResult,
+  TimeRangeSizeConditionValue,
+} from './types';
 
 type ConditionalRenderingTimeRangeSizeState = ConditionalRenderingBaseState<TimeRangeSizeConditionValue>;
 
@@ -33,33 +37,29 @@ export class ConditionalRenderingTimeRangeSize extends ConditionalRenderingBase<
     );
   }
 
-  public constructor(state: ConditionalRenderingTimeRangeSizeState) {
-    super(state);
+  public constructor(state: Omit<ConditionalRenderingTimeRangeSizeState, 'result' | 'force'>) {
+    super({ ...state, result: true, force: true });
 
     this.addActivationHandler(() => this._activationHandler());
   }
 
   private _activationHandler() {
-    this._subs.add(sceneGraph.getTimeRange(this).subscribeToState(() => this.notifyChange()));
+    this._subs.add(sceneGraph.getTimeRange(this).subscribeToState(() => this.recalculateResult()));
   }
 
-  public evaluate(): boolean {
+  public evaluate(): ConditionEvaluationResult {
     try {
       if (!validateIntervalRegex.test(this.state.value)) {
-        return true;
+        return this.getForceTrue();
       }
 
       const interval = rangeUtil.intervalToSeconds(this.state.value);
       const timeRange = sceneGraph.getTimeRange(this);
 
-      if (timeRange.state.value.to.unix() - timeRange.state.value.from.unix() <= interval) {
-        return true;
-      }
+      return this.getActualResult(timeRange.state.value.to.unix() - timeRange.state.value.from.unix() <= interval);
     } catch {
-      return false;
+      return this.getForceFalse();
     }
-
-    return false;
   }
 
   public serialize(): ConditionalRenderingTimeRangeSizeKind {
@@ -201,10 +201,10 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
       <Select
         isClearable={false}
         allowCustomValue
-        onCreateOption={(value) => model.setStateAndNotify({ value })}
+        onCreateOption={(value) => model.setStateAndRecalculate({ value })}
         value={value}
         options={options}
-        onChange={({ value }) => model.setStateAndNotify({ value })}
+        onChange={({ value }) => model.setStateAndRecalculate({ value })}
       />
     </Field>
   );

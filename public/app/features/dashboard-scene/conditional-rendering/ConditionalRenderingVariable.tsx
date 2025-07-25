@@ -8,6 +8,7 @@ import { Box, Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import {
   ConditionalRenderingSerializerRegistryItem,
+  ConditionEvaluationResult,
   VariableConditionValue,
   VariableConditionValueOperator,
 } from './types';
@@ -38,20 +39,24 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
   protected _variableDependency = new VariableDependencyConfig(this, {
     onAnyVariableChanged: (v) => {
       if (v.state.name === this.state.value.name) {
-        this.notifyChange();
+        this.recalculateResult();
       }
     },
   });
 
-  public evaluate(): boolean {
+  public constructor(state: Omit<ConditionalRenderingVariableState, 'result' | 'force'>) {
+    super({ ...state, result: true, force: true });
+  }
+
+  public evaluate(): ConditionEvaluationResult {
     if (!this.state.value.name) {
-      return true;
+      return this.getForceTrue();
     }
 
     const variable = sceneGraph.getVariables(this).getByName(this.state.value.name);
 
     if (!variable) {
-      return false;
+      return this.getForceTrue();
     }
 
     const variableValue = variable.getValue() ?? '';
@@ -60,7 +65,7 @@ export class ConditionalRenderingVariable extends ConditionalRenderingBase<Condi
       ? variableValue.includes(this.state.value.value)
       : variableValue === this.state.value.value;
 
-    return this.state.value.operator === '!=' ? !hit : hit;
+    return this.getActualResult(this.state.value.operator === '!=' ? !hit : hit);
   }
 
   public serialize(): ConditionalRenderingVariableKind {
@@ -118,7 +123,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
             placeholder={t('dashboard.conditional-rendering.conditions.variable.name', 'Name')}
             options={variableNames}
             value={value.name}
-            onChange={(option) => model.setStateAndNotify({ value: { ...value, name: option.value } })}
+            onChange={(option) => model.setStateAndRecalculate({ value: { ...value, name: option.value } })}
           />
         </Box>
 
@@ -127,13 +132,13 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
           minWidth={10}
           options={operatorOptions}
           value={value.operator}
-          onChange={(option) => model.setStateAndNotify({ value: { ...value, operator: option.value } })}
+          onChange={(option) => model.setStateAndRecalculate({ value: { ...value, operator: option.value } })}
         />
       </Stack>
       <Input
         placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
         value={value.value}
-        onChange={(e) => model.setStateAndNotify({ value: { ...value, value: e.currentTarget.value } })}
+        onChange={(e) => model.setStateAndRecalculate({ value: { ...value, value: e.currentTarget.value } })}
       />
     </Stack>
   );

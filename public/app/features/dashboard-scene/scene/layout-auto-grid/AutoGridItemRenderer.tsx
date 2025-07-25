@@ -18,24 +18,31 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
     useIsConditionallyHidden(model);
   const styles = useStyles2(getStyles);
 
-  if (isConditionallyHidden && !isEditing) {
-    return null;
-  }
-
   const isDragging = !!draggingKey;
   const isDragged = draggingKey === key;
 
   return repeatedPanels ? (
     <>
       {repeatedPanels.map((item) => (
-        <div className={cx(conditionalRenderingClass, styles.wrapper)} key={item.state.key}>
+        <div
+          className={cx(
+            conditionalRenderingClass,
+            styles.wrapper,
+            isConditionallyHidden && !isEditing && styles.hidden
+          )}
+          key={item.state.key}
+        >
           <item.Component model={item} />
           {conditionalRenderingOverlay}
         </div>
       ))}
     </>
   ) : (
-    <div ref={model.containerRef} data-auto-grid-item-drop-target={isDragging ? key : undefined}>
+    <div
+      ref={model.containerRef}
+      data-auto-grid-item-drop-target={isDragging ? key : undefined}
+      className={cx(isConditionallyHidden && !isEditing && styles.hidden)}
+    >
       {isDragged && <div className={styles.draggedPlaceholder} />}
 
       <div className={cx(!isDragged && conditionalRenderingClass, styles.wrapper, isDragged && styles.draggedWrapper)}>
@@ -71,5 +78,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: `0 0 ${theme.spacing(0.5)} ${theme.colors.primary.border}`,
     background: `${theme.colors.primary.transparent}`,
     zIndex: -1,
+  }),
+  hidden: css({
+    display: 'none',
   }),
 });

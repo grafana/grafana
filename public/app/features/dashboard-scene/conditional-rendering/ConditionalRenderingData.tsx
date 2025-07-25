@@ -1,15 +1,18 @@
 import { useMemo } from 'react';
 
-import { PanelData } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneDataProvider, sceneGraph, VizPanel } from '@grafana/scenes';
 import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
-import { ConditionalRenderingSerializerRegistryItem, DataConditionValue, ItemsWithConditionalRendering } from './types';
+import {
+  ConditionalRenderingSerializerRegistryItem,
+  ConditionEvaluationResult,
+  DataConditionValue,
+  ItemsWithConditionalRendering,
+} from './types';
 
 type ConditionalRenderingDataState = ConditionalRenderingBaseState<DataConditionValue>;
 
@@ -36,8 +39,10 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
     );
   }
 
-  public constructor(state: ConditionalRenderingDataState) {
-    super(state);
+  private _dataProvider: SceneDataProvider | undefined = undefined;
+
+  public constructor(state: Omit<ConditionalRenderingDataState, 'result' | 'force'>) {
+    super({ ...state, result: true, force: true });
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -47,46 +52,46 @@ export class ConditionalRenderingData extends ConditionalRenderingBase<Condition
       return;
     }
 
-    const item = this.getItem();
+    this._dataProvider = this._getItemDataProvider();
 
-    if (item instanceof AutoGridItem) {
-      const dataProvider = sceneGraph.getData(item.state.body);
-
-      if (!dataProvider) {
-        return;
-      }
-
-      this._subs.add(dataProvider.subscribeToState(() => this.notifyChange()));
+    if (!this._dataProvider) {
+      return;
     }
+
+    this._subs.add(this._dataProvider.subscribeToState(() => this.recalculateResult()));
   }
 
-  public evaluate(): boolean {
-    if (!this.isItemSupported()) {
-      return true;
+  public evaluate(): ConditionEvaluationResult {
+    if (
+      !this.isItemSupported() ||
+      !this._dataProvider ||
+      !this._dataProvider.state.data ||
+      this._dataProvider.state.data.state === LoadingState.Loading ||
+      this._dataProvider.state.data.state === LoadingState.NotStarted
+    ) {
+      return this.getForceTrue();
     }
 
     const hasData = this._hasData();
-    return (this.state.value && hasData) || (!this.state.value && !hasData);
+    return this.getActualResult((this.state.value && hasData) || (!this.state.value && !hasData));
   }
 
   public serialize(): ConditionalRenderingDataKind {
     return { kind: 'ConditionalRenderingData', spec: { value: this.state.value } };
   }
 
-  private _hasData(): boolean {
+  private _getItemDataProvider(): SceneDataProvider | undefined {
     const item = this.getItem();
 
-    let data: PanelData | undefined;
-
-    if (item instanceof AutoGridItem) {
-      data = sceneGraph.getData(item.state.body).state.data;
+    if ('body' in item.state && item.state.body instanceof VizPanel) {
+      return sceneGraph.getData(item.state.body);
     }
 
-    if (!data) {
-      return false;
-    }
+    return undefined;
+  }
 
-    const series = data?.series ?? [];
+  private _hasData(): boolean {
+    const series = this._dataProvider?.state.data?.series ?? [];
 
     for (let seriesIdx = 0; seriesIdx < series.length; seriesIdx++) {
       if (series[seriesIdx].length > 0) {
@@ -126,7 +131,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
     <Combobox
       options={enableConditionOptions}
       value={enableConditionOption}
-      onChange={({ value }) => model.setStateAndNotify({ value: Boolean(value) })}
+      onChange={({ value }) => model.setStateAndRecalculate({ value: Boolean(value) })}
     />
   );
 }
