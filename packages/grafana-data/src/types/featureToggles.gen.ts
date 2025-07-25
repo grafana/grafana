@@ -995,7 +995,7 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
-  * Enables create, delete, and update mutations for resoruces owned by IAM identity
+  * Enables create, delete, and update mutations for resources owned by IAM identity
   */
   kubernetesAuthnMutation?: boolean;
   /**

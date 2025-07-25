@@ -1717,7 +1717,7 @@ var (
 		},
 		{
 			Name:              "kubernetesAuthnMutation",
-			Description:       "Enables create, delete, and update mutations for resoruces owned by IAM identity",
+			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
