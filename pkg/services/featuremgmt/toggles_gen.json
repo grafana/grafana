@@ -1672,6 +1672,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthnMutation",
+        "resourceVersion": "1753453186265",
+        "creationTimestamp": "2025-07-25T14:12:51Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-25 14:19:46.265568 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables create, delete, and update mutations for resoruces owned by IAM identity",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzApis",
         "resourceVersion": "1753285129398",
         "creationTimestamp": "2025-06-18T07:43:01Z"
