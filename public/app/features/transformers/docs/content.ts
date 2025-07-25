@@ -521,7 +521,7 @@ Use this transformation to customize the output of a string field. This transfor
 - **Kebab case** - Formats all characters in the string in lowercase and uses dashes instead of spaces between words.
 - **Trim** - Removes all leading and trailing spaces from the string.
 - **Substring** - Returns a substring of the string, using the specified start and end positions.
-- **Affix** - Add a prefix or suffix to the field. Allows pasting of values of other fields using {fieldName} with padding modifiers .
+- **Affix** - Add a prefix or suffix to the field. Allows pasting of values of other fields using {fieldName} with padding modifiers (see Add field from calculation:Template).
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.`;
     },
