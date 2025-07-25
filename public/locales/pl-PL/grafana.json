@@ -7204,6 +7204,7 @@
           "start-time": "Czas rozpoczęcia:"
         }
       },
+      "share-span": "",
       "warnings": "Ostrzeżenia"
     },
     "span-filters": {
@@ -11017,15 +11018,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11141,10 +11142,10 @@
       "title-instant-updates-requests-webhooks": "Błyskawiczne aktualizacje i żądania pull dzięki webhookom.",
       "title-visual-previews-in-pull-requests": "Podglądy wizualne w żądaniach pull z renderowaniem obrazów"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Specyfikacja zadania",
-      "summary": "Podsumowanie",
-      "title-error": "Błąd"
+      "summary": "Podsumowanie"
     },
     "features-list": {
       "actions": {
@@ -11289,10 +11290,12 @@
       "starting": "Uruchamianie…",
       "status": {
         "title-error-running-job": "Błąd uruchamiania zadania",
-        "title-job-completed-successfully": "Zadanie zakończone pomyślnie",
         "title-warning-running-job": ""
       },
-      "summary": "Podsumowanie"
+      "summary": "Podsumowanie",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11458,6 +11461,7 @@
       "go-to": "Przejdź do",
       "make-sure": "Pamiętaj, aby uwzględnić te uprawnienia"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Podczas tego procesu nie będzie można tworzyć, edytować ani usuwać zasobów. W ostatnim kroku zasoby znikną.",
       "alert-point-2": "Po zakończeniu aprowizacji zasoby pojawią się ponownie i będą zarządzane za pośrednictwem zewnętrznej pamięci masowej.",
