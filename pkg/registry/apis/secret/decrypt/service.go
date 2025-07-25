@@ -101,7 +101,7 @@ func readTLSFromConfig(cfg *setting.Cfg) TLSConfig {
 		CertFile:           apiServer.Key("proxy_client_cert_file").MustString(""),
 		KeyFile:            apiServer.Key("proxy_client_key_file").MustString(""),
 		CAFile:             apiServer.Key("apiservice_ca_bundle_file").MustString(""),
-		ServerName:         cfg.SecretsManagement.DecryptServerAddress,
+		ServerName:         cfg.SecretsManagement.DecryptServerTLSServerName,
 		InsecureSkipVerify: cfg.SecretsManagement.DecryptServerTLSSkipVerify,
 	}
 }
