@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -33,6 +34,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -242,10 +244,11 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}
 
 	sqlStore := db.InitTestDB(t)
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	// Use enhanced fake folder service from foldertest package
+	fakeFolderService := foldertest.NewFakeService()
 	b := &fakeBus{}
 	logger := &logtest.Fake{}
-	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	store := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures()
 
 	gen := models.RuleGen
@@ -258,15 +261,38 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	parentFolderUid := uuid.NewString()
 	parentFolderTitle := "Very Parent Folder"
-	createFolder(t, store, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
 	rule1FolderTitle := "folder-" + rule1.Title
 	rule2FolderTitle := "folder-" + rule2.Title
 	rule3FolderTitle := "folder-" + rule3.Title
-	createFolder(t, store, rule1.NamespaceUID, rule1FolderTitle, rule1.OrgID, parentFolderUid)
-	createFolder(t, store, rule2.NamespaceUID, rule2FolderTitle, rule2.OrgID, "")
-	createFolder(t, store, rule3.NamespaceUID, rule3FolderTitle, rule3.OrgID, "")
 
-	createFolder(t, store, rule2.NamespaceUID, "same UID folder", gen.GenerateRef().OrgID, "") // create a folder with the same UID but in the different org
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule1.NamespaceUID,
+		Title:     rule1FolderTitle,
+		OrgID:     rule1.OrgID,
+		ParentUID: parentFolderUid,
+		Fullpath:  rule1FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule2.NamespaceUID,
+		Title:     rule2FolderTitle,
+		OrgID:     rule2.OrgID,
+		ParentUID: "",
+		Fullpath:  rule2FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       rule3.NamespaceUID,
+		Title:     rule3FolderTitle,
+		OrgID:     rule3.OrgID,
+		ParentUID: "",
+		Fullpath:  rule3FolderTitle,
+	})
+	fakeFolderService.AddFolder(&folder.Folder{
+		UID:       parentFolderUid,
+		Title:     parentFolderTitle,
+		OrgID:     rule1.OrgID,
+		ParentUID: "",
+		Fullpath:  parentFolderTitle,
+	})
 
 	tc := []struct {
 		name         string
@@ -343,7 +369,14 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}
 
 	t.Run("when nested folders are enabled folders should contain full path", func(t *testing.T) {
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		fakeFolderService.AddFolder(&folder.Folder{
+			UID:       rule1.NamespaceUID,
+			Title:     rule1FolderTitle,
+			OrgID:     rule1.OrgID,
+			ParentUID: parentFolderUid,
+			Fullpath:  parentFolderTitle + "/" + rule1FolderTitle,
+		})
+
 		query := &models.GetAlertRulesForSchedulingQuery{
 			PopulateFolders: true,
 		}
@@ -1606,7 +1639,8 @@ func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, 
 		IsGrafanaAdmin: true,
 	}
 
-	_, err := store.FolderService.Create(context.Background(), &folder.CreateFolderCommand{
+	ctx := identity.WithRequester(context.Background(), u)
+	_, err := store.FolderService.Create(ctx, &folder.CreateFolderCommand{
 		UID:          uid,
 		OrgID:        orgID,
 		Title:        title,
@@ -1624,7 +1658,7 @@ func setupFolderService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, features
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
+	return testutil.SetupTestFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
 }
 
 func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {

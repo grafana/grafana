@@ -10,29 +10,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -662,17 +654,27 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 	var orgID int64 = 1
 
 	for _, tc := range testCases {
-		tc.signedInUserPermissions = append(tc.signedInUserPermissions, accesscontrol.Permission{
-			Action: dashboards.ActionFoldersCreate,
-		}, accesscontrol.Permission{
-			Action: dashboards.ActionFoldersWrite,
-			Scope:  dashboards.ScopeFoldersAll,
-		}, accesscontrol.Permission{
-			Action: dashboards.ActionFoldersRead,
-			Scope:  "folders:uid:unrelated"}, accesscontrol.Permission{
-			Action: dashboards.ActionDashboardsCreate,
-			Scope:  "folders:uid:unrelated"})
-		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.signedInUserPermissions)}}
+		// Create a helper user with permissions to create folders
+		helperUser := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule,
+			Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
+				{
+					Action: dashboards.ActionFoldersCreate,
+				},
+				{
+					Action: dashboards.ActionFoldersWrite,
+					Scope:  dashboards.ScopeFoldersAll,
+				},
+			}),
+			},
+		}
+
+		var userPermissions map[string][]string
+		if tc.signedInUserPermissions != nil {
+			userPermissions = accesscontrol.GroupScopesByActionContext(context.Background(), tc.signedInUserPermissions)
+		} else {
+			userPermissions = make(map[string][]string)
+		}
+		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{orgID: userPermissions}}
 
 		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
 			m := features.GetEnabled(context.Background())
@@ -682,7 +684,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			}
 
 			t.Run(tc.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
-				db := setupNestedTest(t, usr, tc.signedInUserPermissions, orgID, features)
+				db := setupNestedTest(t, helperUser, []accesscontrol.Permission{}, orgID, features)
 				recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
 				require.NoError(t, err)
 				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, features, recursiveQueriesAreSupported, db.GetDialect())
@@ -818,29 +820,67 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
 
-	fStore := folderimpl.ProvideStore(db)
-	folderSvc := folderimpl.ProvideService(
-		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(db),
-		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	// Create folders directly in the database
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		// Create parent folder
+		parentFolder := &dashboards.Dashboard{
+			OrgID:    orgID,
+			UID:      "parent",
+			Title:    "parent",
+			Slug:     "parent",
+			IsFolder: true,
+			Data:     simplejson.New(),
+			Created:  time.Now(),
+			Updated:  time.Now(),
+		}
+		_, err := sess.Insert(parentFolder)
+		if err != nil {
+			return err
+		}
 
-	// create parent folder
-	parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          "parent",
-		OrgID:        orgID,
-		Title:        "parent",
-		SignedInUser: usr,
+		// Create subfolder
+		subFolder := &dashboards.Dashboard{
+			OrgID:     orgID,
+			UID:       "subfolder",
+			Title:     "subfolder",
+			Slug:      "subfolder",
+			IsFolder:  true,
+			FolderUID: "parent",
+			Data:      simplejson.New(),
+			Created:   time.Now(),
+			Updated:   time.Now(),
+		}
+		_, err = sess.Insert(subFolder)
+		return err
 	})
 	require.NoError(t, err)
 
-	// create subfolder
-	subfolder, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          "subfolder",
-		ParentUID:    "parent",
-		OrgID:        orgID,
-		Title:        "subfolder",
-		SignedInUser: usr,
-	})
-	require.NoError(t, err)
+	// Create folder objects for later use
+	parent := &folder.Folder{
+		ID:        1,
+		UID:       "parent",
+		Title:     "parent",
+		URL:       "/dashboards/f/parent/parent",
+		Version:   0,
+		Created:   time.Now(),
+		Updated:   time.Now(),
+		UpdatedBy: 0,
+		CreatedBy: 0,
+		HasACL:    false,
+	}
+
+	subfolder := &folder.Folder{
+		ID:        2,
+		UID:       "subfolder",
+		Title:     "subfolder",
+		URL:       "/dashboards/f/subfolder/subfolder",
+		Version:   0,
+		Created:   time.Now(),
+		Updated:   time.Now(),
+		UpdatedBy: 0,
+		CreatedBy: 0,
+		HasACL:    false,
+	}
 
 	// create a root level dashboard
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{

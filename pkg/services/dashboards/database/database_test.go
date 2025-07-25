@@ -639,8 +639,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		err := dashboardStore.DeleteDashboardsInFolders(context.Background(), &dashboards.DeleteDashboardsInFolderRequest{OrgID: folder.OrgID, FolderUIDs: []string{folder.UID}})
 		require.NoError(t, err)
-
-		// TODO: add get tests to ensure they are not there anymore
 	})
 }
 

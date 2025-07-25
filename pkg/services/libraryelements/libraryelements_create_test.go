@@ -43,8 +43,8 @@ func TestIntegration_CreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "uid_for_ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             sc.initialResult.Result.Meta.Updated,
@@ -94,8 +94,8 @@ func TestIntegration_CreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "uid_for_ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
@@ -173,8 +173,8 @@ func TestIntegration_CreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: model.LibraryElementDTOMeta{
-						FolderName:          "ScenarioFolder",
-						FolderUID:           "uid_for_ScenarioFolder",
+						FolderName:          sc.folder.Title,
+						FolderUID:           sc.folder.UID,
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
