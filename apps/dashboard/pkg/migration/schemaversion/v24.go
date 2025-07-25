@@ -1,0 +1,404 @@
+package schemaversion
+
+import (
+	"strconv"
+)
+
+type v24Migrator struct {
+	panelProvider PanelPluginInfoProvider
+	panelPlugins  []PanelPluginInfo
+}
+
+func V24(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
+	migrator := &v24Migrator{
+		panelProvider: panelProvider,
+		panelPlugins:  panelProvider.GetPanels(),
+	}
+
+	return migrator.migrate
+}
+
+func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
+	dashboard["schemaVersion"] = 24
+
+	panels, ok := dashboard["panels"].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	for _, panel := range panels {
+		panelMap, ok := panel.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		wasAngularTable := panelMap["type"] == "table"
+		wasReactTable := panelMap["table"] == "table2"
+
+		if wasAngularTable && panelMap["styles"] == nil {
+			continue
+		}
+
+		if !wasAngularTable || wasReactTable {
+			continue
+		}
+
+		if wasAngularTable {
+			panelMap["type"] = "table-old"
+		} else {
+			panelMap["type"] = "table"
+		}
+
+		if panelMap["type"] == "table-old" {
+			// Find if the panel plugin exists
+			tablePanelPlugin := m.panelProvider.GetPanelPlugin("table")
+			if tablePanelPlugin.ID == "" {
+				return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION)
+			}
+			panelMap["pluginVersion"] = tablePanelPlugin.Version
+			err := tablePanelChangedHandler(panelMap)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func tablePanelChangedHandler(panel map[string]interface{}) error {
+	prevOptions := getOptionsToRemember(panel)
+
+	transformations := migrateTransformations(panel, prevOptions)
+
+	// Find the default style (pattern '/.*/')
+	prevDefaults := findDefaultStyle(prevOptions)
+	defaults := migrateDefaults(prevDefaults)
+
+	// Filter styles that don't have pattern '/.*/'
+	overrides := findNonDefaultStyles(prevOptions)
+
+	panel["transformations"] = transformations
+	panel["fieldConfig"] = map[string]interface{}{
+		"defaults":  defaults,
+		"overrides": overrides,
+	}
+
+	return nil
+}
+
+// findDefaultStyle finds the style with pattern '/.*/' (default style)
+func findDefaultStyle(prevOptions map[string]interface{}) map[string]interface{} {
+	if styles, ok := prevOptions["styles"].([]interface{}); ok {
+		for _, style := range styles {
+			if styleMap, ok := style.(map[string]interface{}); ok {
+				if pattern, ok := styleMap["pattern"].(string); ok && pattern == "/.*/" {
+					return styleMap
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// findNonDefaultStyles finds all styles that don't have pattern '/.*/'
+func findNonDefaultStyles(prevOptions map[string]interface{}) []interface{} {
+	var overrides []interface{}
+	if styles, ok := prevOptions["styles"].([]interface{}); ok {
+		for _, style := range styles {
+			if styleMap, ok := style.(map[string]interface{}); ok {
+				if pattern, ok := styleMap["pattern"].(string); ok && pattern != "/.*/" {
+					override := migrateTableStyleToOverride(styleMap)
+					overrides = append(overrides, override)
+				}
+			}
+		}
+	}
+	return overrides
+}
+
+// migrateTransformations converts old table transformations to new format
+func migrateTransformations(panel map[string]interface{}, oldOpts map[string]interface{}) []interface{} {
+	transformations := []interface{}{}
+	if existing, ok := panel["transformations"].([]interface{}); ok {
+		transformations = existing
+	}
+
+	// Check if oldOpts has a transform that we can map
+	if transform, ok := oldOpts["transform"].(string); ok {
+		if newTransformID, exists := transformsMap[transform]; exists {
+			opts := map[string]interface{}{
+				"reducers": []interface{}{},
+			}
+
+			// Handle timeseries_aggregations specifically
+			if transform == "timeseries_aggregations" {
+				opts["includeTimeField"] = false
+
+				// Map columns to reducers
+				if columns, ok := oldOpts["columns"].([]interface{}); ok {
+					var reducers []interface{}
+					for _, column := range columns {
+						if columnMap, ok := column.(map[string]interface{}); ok {
+							if value, ok := columnMap["value"].(string); ok {
+								if reducer, exists := columnsMap[value]; exists {
+									reducers = append(reducers, reducer)
+								}
+							}
+						}
+					}
+					opts["reducers"] = reducers
+				}
+			}
+
+			// Add the transformation
+			transformation := map[string]interface{}{
+				"id":      newTransformID,
+				"options": opts,
+			}
+			transformations = append(transformations, transformation)
+		}
+	}
+
+	return transformations
+}
+
+// transformsMap maps old transform names to new transformation IDs
+var transformsMap = map[string]string{
+	"timeseries_to_rows":      "seriesToRows",
+	"timeseries_to_columns":   "seriesToColumns",
+	"timeseries_aggregations": "reduce",
+	"table":                   "merge",
+}
+
+// columnsMap maps old column values to new reducer names
+var columnsMap = map[string]string{
+	"avg":     "mean",
+	"min":     "min",
+	"max":     "max",
+	"total":   "sum",
+	"current": "lastNotNull",
+	"count":   "count",
+}
+
+// migrateTableStyleToOverride converts a table style to a field config override
+func migrateTableStyleToOverride(style map[string]interface{}) map[string]interface{} {
+	pattern, _ := style["pattern"].(string)
+
+	// Determine field matcher ID based on pattern
+	fieldMatcherID := "byName"
+	if pattern != "" && len(pattern) >= 2 && pattern[0] == '/' && pattern[len(pattern)-1] == '/' {
+		fieldMatcherID = "byRegexp"
+	}
+
+	override := map[string]interface{}{
+		"matcher": map[string]interface{}{
+			"id":      fieldMatcherID,
+			"options": pattern,
+		},
+		"properties": []interface{}{},
+	}
+
+	properties := override["properties"].([]interface{})
+
+	// Add display name
+	if alias, ok := style["alias"].(string); ok && alias != "" {
+		properties = append(properties, map[string]interface{}{
+			"id":    "displayName",
+			"value": alias,
+		})
+	}
+
+	// Add unit
+	if unit, ok := style["unit"].(string); ok && unit != "" {
+		properties = append(properties, map[string]interface{}{
+			"id":    "unit",
+			"value": unit,
+		})
+	}
+
+	// Add decimals
+	if decimals, ok := style["decimals"].(float64); ok {
+		properties = append(properties, map[string]interface{}{
+			"id":    "decimals",
+			"value": int(decimals),
+		})
+	}
+
+	// Handle date type
+	if styleType, ok := style["type"].(string); ok && styleType == "date" {
+		if dateFormat, ok := style["dateFormat"].(string); ok {
+			properties = append(properties, map[string]interface{}{
+				"id":    "unit",
+				"value": "time: " + dateFormat,
+			})
+		}
+	}
+
+	// Handle hidden type
+	if styleType, ok := style["type"].(string); ok && styleType == "hidden" {
+		properties = append(properties, map[string]interface{}{
+			"id":    "custom.hidden",
+			"value": true,
+		})
+	}
+
+	// Handle links
+	if link, ok := style["link"].(bool); ok && link {
+		linkTooltip, _ := style["linkTooltip"].(string)
+		linkUrl, _ := style["linkUrl"].(string)
+		linkTargetBlank, _ := style["linkTargetBlank"].(bool)
+
+		properties = append(properties, map[string]interface{}{
+			"id": "links",
+			"value": []interface{}{
+				map[string]interface{}{
+					"title":       linkTooltip,
+					"url":         linkUrl,
+					"targetBlank": linkTargetBlank,
+				},
+			},
+		})
+	}
+
+	// Handle color mode
+	if colorMode, ok := style["colorMode"].(string); ok && colorMode != "" {
+		if newColorMode, exists := colorModeMap[colorMode]; exists {
+			properties = append(properties, map[string]interface{}{
+				"id": "custom.cellOptions",
+				"value": map[string]interface{}{
+					"type": newColorMode,
+				},
+			})
+		}
+	}
+
+	// Handle alignment
+	if align, ok := style["align"].(string); ok && align != "" {
+		alignValue := align
+		if align == "auto" {
+			alignValue = ""
+		}
+		properties = append(properties, map[string]interface{}{
+			"id":    "custom.align",
+			"value": alignValue,
+		})
+	}
+
+	// Handle thresholds
+	if thresholds, ok := style["thresholds"].([]interface{}); ok && len(thresholds) > 0 {
+		if colors, ok := style["colors"].([]interface{}); ok && len(colors) > 0 {
+			steps := generateThresholds(thresholds, colors)
+			properties = append(properties, map[string]interface{}{
+				"id": "thresholds",
+				"value": map[string]interface{}{
+					"mode":  "absolute",
+					"steps": steps,
+				},
+			})
+		}
+	}
+
+	override["properties"] = properties
+	return override
+}
+
+// migrateDefaults converts default table styles to field config defaults
+func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{} {
+	defaults := map[string]interface{}{
+		"custom": map[string]interface{}{},
+	}
+
+	if prevDefaults == nil {
+		return defaults
+	}
+
+	// Add unit
+	if unit, ok := prevDefaults["unit"].(string); ok && unit != "" {
+		defaults["unit"] = unit
+	}
+
+	// Add decimals
+	if decimals, ok := prevDefaults["decimals"].(float64); ok {
+		defaults["decimals"] = int(decimals)
+	}
+
+	// Add display name
+	if alias, ok := prevDefaults["alias"].(string); ok && alias != "" {
+		defaults["displayName"] = alias
+	}
+
+	// Handle alignment
+	if align, ok := prevDefaults["align"].(string); ok && align != "" {
+		alignValue := align
+		if align == "auto" {
+			alignValue = ""
+		}
+		defaults["custom"].(map[string]interface{})["align"] = alignValue
+	}
+
+	// Handle thresholds
+	if thresholds, ok := prevDefaults["thresholds"].([]interface{}); ok && len(thresholds) > 0 {
+		if colors, ok := prevDefaults["colors"].([]interface{}); ok && len(colors) > 0 {
+			steps := generateThresholds(thresholds, colors)
+			defaults["thresholds"] = map[string]interface{}{
+				"mode":  "absolute",
+				"steps": steps,
+			}
+		}
+	}
+
+	// Handle color mode
+	if colorMode, ok := prevDefaults["colorMode"].(string); ok && colorMode != "" {
+		if newColorMode, exists := colorModeMap[colorMode]; exists {
+			defaults["custom"].(map[string]interface{})["cellOptions"] = map[string]interface{}{
+				"type": newColorMode,
+			}
+		}
+	}
+
+	return defaults
+}
+
+// generateThresholds creates threshold steps from thresholds and colors arrays
+func generateThresholds(thresholds []interface{}, colors []interface{}) []interface{} {
+	steps := []interface{}{
+		map[string]interface{}{
+			"color": colors[0],
+			"value": -1e9, // -Infinity equivalent
+		},
+	}
+
+	for i, threshold := range thresholds {
+		color := colors[i+1]
+		if i+1 < len(colors) {
+			color = colors[i+1]
+		}
+
+		var value float64
+		switch v := threshold.(type) {
+		case string:
+			if parsed, err := strconv.ParseFloat(v, 64); err == nil {
+				value = parsed
+			}
+		case float64:
+			value = v
+		case int:
+			value = float64(v)
+		}
+
+		steps = append(steps, map[string]interface{}{
+			"color": color,
+			"value": value,
+		})
+	}
+
+	return steps
+}
+
+// colorModeMap maps old color modes to new ones
+var colorModeMap = map[string]string{
+	"cell":  "color-background",
+	"row":   "color-background",
+	"value": "color-text",
+}

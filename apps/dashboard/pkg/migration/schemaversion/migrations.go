@@ -5,11 +5,21 @@ import (
 )
 
 const (
-	MIN_VERSION    = 25
+	MIN_VERSION    = 23
 	LATEST_VERSION = 41
 )
 
 type SchemaVersionMigrationFunc func(map[string]interface{}) error
+
+var AutoMigrateAngular = map[string]string{
+	"graph":                    "timeseries",
+	"table-old":                "table",
+	"singlestat":               "stat",
+	"grafana-singlestat-panel": "stat",
+	"grafana-piechart-panel":   "piechart",
+	"grafana-worldmap-panel":   "geomap",
+	"natel-discrete-panel":     "state-timeline",
+}
 
 type DataSourceInfo struct {
 	Default    bool
@@ -38,6 +48,8 @@ type PanelPluginInfoProvider interface {
 
 func GetMigrations(dsInfoProvider DataSourceInfoProvider, panelProvider PanelPluginInfoProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
+		24: V24(panelProvider),
+		25: V25,
 		26: V26,
 		27: V27,
 		28: V28(panelProvider),

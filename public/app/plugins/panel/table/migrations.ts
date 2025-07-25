@@ -186,7 +186,7 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
-  if (style.thresholds?.length) {
+  if (style.thresholds?.length && style.colors?.length) {
     override.properties.push({
       id: 'thresholds',
       value: {
