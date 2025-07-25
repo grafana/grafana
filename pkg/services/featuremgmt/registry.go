@@ -1852,6 +1852,13 @@ var (
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "dashboardLevelTimeMacros",
+			Description:  "Supports __from and __to macros that always use the dashboard level time range",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
