@@ -269,13 +269,11 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
           }
         }
 
-        if (!config.featureToggles.canvasPanelPanZoom) {
-          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
-          targetedElement.options.constraint = {
-            vertical: VerticalConstraint.Top,
-            horizontal: HorizontalConstraint.Left,
-          };
-        }
+        targetedElement.tempConstraint = { ...targetedElement.options.constraint };
+        targetedElement.options.constraint = {
+          vertical: VerticalConstraint.Top,
+          horizontal: HorizontalConstraint.Left,
+        };
         targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
       }
     })
@@ -289,15 +287,22 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
           }
         }
       }
+      for (let event of e.events) {
+        const targetedElement = findElementByTarget(event.target, scene.root.elements);
+        if (targetedElement) {
+          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
+          targetedElement.options.constraint = {
+            vertical: VerticalConstraint.Top,
+            horizontal: HorizontalConstraint.Left,
+          };
+          targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
+        }
+      }
     })
     .on('resize', (event) => {
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
       if (targetedElement) {
-        if (config.featureToggles.canvasPanelPanZoom) {
-          targetedElement.applyResize(event);
-        } else {
-          targetedElement.applyResize(event, scene.scale);
-        }
+        targetedElement.applyResize(event, scene.scale ?? 1);
 
         if (scene.connections.connectionsNeedUpdate(targetedElement) && scene.moveableActionCallback) {
           scene.moveableActionCallback(true);
@@ -310,7 +315,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       for (let event of e.events) {
         const targetedElement = findElementByTarget(event.target, scene.root.elements);
         if (targetedElement) {
-          targetedElement.applyResize(event);
+          targetedElement.applyResize(event, scene.scale ?? 1);
 
           if (!needsUpdate) {
             needsUpdate = scene.connections.connectionsNeedUpdate(targetedElement);
@@ -328,7 +333,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
 
       if (targetedElement) {
-        if (targetedElement.tempConstraint && !config.featureToggles.canvasPanelPanZoom) {
+        if (targetedElement.tempConstraint) {
           targetedElement.options.constraint = targetedElement.tempConstraint;
           targetedElement.tempConstraint = undefined;
         }

@@ -54,6 +54,9 @@ export class ElementState implements LayerElement {
   // Temp stored constraint for visualization purposes (switch to top / left constraint to simplify some functionality)
   tempConstraint: Constraint | undefined;
 
+  // Flag to track if element is currently being resized
+  isResizing = false;
+
   // Filled in by ref
   div?: HTMLDivElement;
 
@@ -566,7 +569,7 @@ export class ElementState implements LayerElement {
         break;
       case VerticalConstraint.Center:
         const elementCenter = elementContainer ? relativeTop + height / 2 : 0;
-        const parentCenter = parentContainer ? parentContainer.height / 2 : 0;
+        const parentCenter = scene.height / 2; // Use scene height instead of scaled viewport height
         const distanceFromCenter = parentCenter - elementCenter;
         placement.top = distanceFromCenter;
         placement.height = height;
@@ -592,7 +595,7 @@ export class ElementState implements LayerElement {
         break;
       case HorizontalConstraint.Center:
         const elementCenter = elementContainer ? relativeLeft + width / 2 : 0;
-        const parentCenter = parentContainer ? parentContainer.width / 2 : 0;
+        const parentCenter = scene.width / 2; // Use scene width instead of scaled viewport width
         const distanceFromCenter = parentCenter - elementCenter;
         placement.left = distanceFromCenter;
         placement.width = width;
@@ -848,6 +851,9 @@ export class ElementState implements LayerElement {
     } else if (dirTB === 1) {
       placement.height = event.height;
       style.height = `${placement.height}px`;
+    }
+    if (config.featureToggles.canvasPanelPanZoom) {
+      style.transform = `translate(${placement.left ?? 0}px, ${placement.top ?? 0}px) rotate(${placement.rotation ?? 0}deg)`;
     }
   };
 
