@@ -2,26 +2,37 @@ name: Verify Storybook (Playwright)
 
 on:
   pull_request:
-    paths:
-      - 'packages/grafana-ui/**'
-      - 'e2e-playwright/storybook/**'
-      - '!docs/**'
-      - '!*.md'
   push:
     branches:
       - main
-    paths:
-      - 'packages/grafana-ui/**'
-      - 'e2e-playwright/storybook/**'
-      - '!docs/**'
-      - '!*.md'
+      - release-*.*.*
 
 permissions: {}
 
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/storybook-verification-playwright.yml
+
   verify-storybook:
     name: Verify Storybook (Playwright)
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     permissions:
       contents: read
 
