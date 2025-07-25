@@ -37,9 +37,142 @@ import {
   LineCounterEntry,
 } from './types';
 
-/* ---------------------------- Cell calculations --------------------------- */
-export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
+/* ----------------------------- Cell options and attributes ---------------------------- */
+const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
 
+/**
+ * @internal
+ * Returns the cell options for a field, migrating from legacy displayMode if necessary.
+ * TODO: remove live migration in favor of doing it in dashboard or panel migrator
+ */
+export function getCellOptions(field: Field): TableCellOptions {
+  if (field.config.custom?.displayMode) {
+    return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
+  }
+
+  return field.config.custom?.cellOptions ?? DEFAULT_CELL_OPTIONS;
+}
+
+/**
+ * @internal
+ * returns the display name of a field.
+ * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
+ * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
+ * before we begin.
+ */
+export const getDisplayName = (field: Field): string => {
+  return field.state?.displayName ?? field.name;
+};
+
+/**
+ * @internal
+ * Returns true if text overflow handling should be applied to the cell.
+ */
+export function shouldTextOverflow(field: Field): boolean {
+  const cellOptions = getCellOptions(field);
+  const eligibleCellType =
+    // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
+    // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
+    (field.type === FieldType.string &&
+      cellOptions.type !== TableCellDisplayMode.Image &&
+      cellOptions.type !== TableCellDisplayMode.Pill) ||
+    // regardless of the underlying cell type, data links cells have text overflow.
+    cellOptions.type === TableCellDisplayMode.DataLinks;
+
+  return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
+}
+
+// we only want to infer justifyContent and textAlign for these cellTypes
+const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
+  TableCellDisplayMode.Auto,
+  TableCellDisplayMode.ColorText,
+  TableCellDisplayMode.ColorBackground,
+]);
+
+export type TextAlign = 'left' | 'right' | 'center';
+
+/**
+ * @internal
+ * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
+ */
+export function getAlignment(field: Field): TextAlign {
+  const align: FieldTextAlignment | undefined = field.config.custom?.align;
+
+  if (!align || align === 'auto') {
+    if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
+      return 'right';
+    }
+    return 'left';
+  }
+
+  return align;
+}
+
+/**
+ * @internal
+ * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
+ */
+export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
+  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
+}
+
+/**
+ * @internal
+ * Returns true if cell inspection is enabled for the field.
+ */
+export function isCellInspectEnabled(field: Field): boolean {
+  return field.config?.custom?.inspect ?? false;
+}
+
+/**
+ * @internal
+ * Returns true if text wrapping should be applied to the cell.
+ */
+export function shouldTextWrap(field: Field): boolean {
+  const cellOptions = getCellOptions(field);
+  // @ts-ignore - a handful of cellTypes have boolean wrapText, but not all of them.
+  // we should be very careful to only use boolean type for cellOptions.wrapText.
+  // TBH we will probably move this up to a field option which is showIf rendered anyway,
+  // but that'll be a migration to do, so it needs to happen post-GA.
+  return Boolean(cellOptions?.wrapText);
+}
+
+/**
+ * @internal
+ * returns true if we should show the tooltip for data links and/or actions for this cell.
+ */
+export function showDataLinksActionTooltip(field: Field, cellType = getCellOptions(field).type) {
+  return (
+    cellType !== TableCellDisplayMode.DataLinks &&
+    cellType !== TableCellDisplayMode.Actions &&
+    (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
+  );
+}
+
+/**
+ * @internal
+ * returns only fields that are not nested tables and not explicitly hidden
+ */
+export function getVisibleFields(fields: Field[]): Field[] {
+  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
+}
+
+/**
+ * @internal
+ * returns a map of column types by display name
+ */
+export function getColumnTypes(fields: Field[]): ColumnTypes {
+  return fields.reduce<ColumnTypes>((acc, field) => {
+    switch (field.type) {
+      case FieldType.nestedFrames:
+        return { ...acc, ...getColumnTypes(field.values[0]?.[0]?.fields ?? []) };
+      default:
+        return { ...acc, [getDisplayName(field)]: field.type };
+    }
+  }, {});
+}
+
+/* ----------------------------- Height and width ---------------------------- */
 /**
  * @internal
  * Returns the default row height based on the theme and cell height setting.
@@ -58,27 +191,6 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
   }
 
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
-}
-
-/**
- * @internal
- * Returns true if cell inspection (hover to see full content) is enabled for the field.
- */
-export function isCellInspectEnabled(field: Field): boolean {
-  return field.config?.custom?.inspect ?? false;
-}
-
-/**
- * @internal
- * Returns true if text wrapping should be applied to the cell.
- */
-export function shouldTextWrap(field: Field): boolean {
-  const cellOptions = getCellOptions(field);
-  // @ts-ignore - a handful of cellTypes have boolean wrapText, but not all of them.
-  // we should be very careful to only use boolean type for cellOptions.wrapText.
-  // TBH we will probably move this up to a field option which is showIf rendered anyway,
-  // but that'll be a migration to do, so it needs to happen post-GA.
-  return Boolean(cellOptions?.wrapText);
 }
 
 /**
@@ -196,115 +308,152 @@ export function getRowHeight(
 
 /**
  * @internal
- * Returns true if text overflow handling should be applied to the cell.
+ * calculates the width of each field, with the following logic:
+ * 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
+ * 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
  */
-export function shouldTextOverflow(field: Field): boolean {
-  const cellOptions = getCellOptions(field);
-  const eligibleCellType =
-    // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-    // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
-    (field.type === FieldType.string &&
-      cellOptions.type !== TableCellDisplayMode.Image &&
-      cellOptions.type !== TableCellDisplayMode.Pill) ||
-    // regardless of the underlying cell type, data links cells have text overflow.
-    cellOptions.type === TableCellDisplayMode.DataLinks;
+export function computeColWidths(fields: Field[], availWidth: number): number[] {
+  let autoCount = 0;
+  let definedWidth = 0;
 
-  return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
+  return (
+    fields
+      // first pass to add up how many fields have pre-defined widths and what that width totals to.
+      .map((field) => {
+        const width: number = field.config.custom?.width ?? 0;
+
+        if (width === 0) {
+          autoCount++;
+        } else {
+          definedWidth += width;
+        }
+
+        return width;
+      })
+      // second pass once `autoCount` and `definedWidth` are known.
+      .map(
+        (width, i) =>
+          width ||
+          Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
+      )
+  );
 }
 
-// we only want to infer justifyContent and textAlign for these cellTypes
-const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
-  TableCellDisplayMode.Auto,
-  TableCellDisplayMode.ColorText,
-  TableCellDisplayMode.ColorBackground,
-]);
+/* ----------------------------- Sorting ---------------------------- */
 
-export type TextAlign = 'left' | 'right' | 'center';
+// The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
+// within strings and sorts numerically instead of lexicographically.
+const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
+const strCompare: Comparator = (a, b) => compare(String(a ?? ''), String(b ?? ''));
+const numCompare: Comparator = (a, b) => {
+  if (a === b) {
+    return 0;
+  }
+  if (a == null) {
+    return -1;
+  }
+  if (b == null) {
+    return 1;
+  }
+  return Number(a) - Number(b);
+};
+const frameCompare: Comparator = (a, b) => {
+  // @ts-ignore The compared vals are DataFrameWithValue. the value is the rendered stat (first, last, etc.)
+  return (a?.value ?? 0) - (b?.value ?? 0);
+};
 
 /**
  * @internal
- * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
+ * returns the appropriate sort comparator based on the field type.
  */
-export function getAlignment(field: Field): TextAlign {
-  const align: FieldTextAlignment | undefined = field.config.custom?.align;
+export function getComparator(sortColumnType: FieldType): Comparator {
+  switch (sortColumnType) {
+    // Handle sorting for frame type fields (sparklines)
+    case FieldType.frame:
+      return frameCompare;
+    case FieldType.time:
+    case FieldType.number:
+    case FieldType.boolean:
+      return numCompare;
+    case FieldType.string:
+    case FieldType.enum:
+    default:
+      return strCompare;
+  }
+}
 
-  if (!align || align === 'auto') {
-    if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
-      return 'right';
-    }
-    return 'left';
+/**
+ * @internal
+ * returns the sorted rows based on the sort columns
+ */
+export function applySort(
+  rows: TableRow[],
+  fields: Field[],
+  sortColumns: SortColumn[],
+  columnTypes: ColumnTypes = getColumnTypes(fields),
+  hasNestedFrames: boolean = getIsNestedTable(fields)
+): TableRow[] {
+  if (sortColumns.length === 0) {
+    return rows;
   }
 
-  return align;
-}
+  const compareRows = (a: TableRow, b: TableRow): number => {
+    let result = 0;
+    for (let i = 0; i < sortColumns.length; i++) {
+      const { columnKey, direction } = sortColumns[i];
+      const compare = getComparator(columnTypes[columnKey]);
+      const sortDir = direction === 'ASC' ? 1 : -1;
 
-/**
- * @internal
- * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
- */
-export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
-  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
-}
-
-const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
-
-/**
- * @internal
- * Returns the cell options for a field, migrating from legacy displayMode if necessary.
- * TODO: remove live migration in favor of doing it in dashboard or panel migrator
- */
-export function getCellOptions(field: Field): TableCellOptions {
-  if (field.config.custom?.displayMode) {
-    return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
-  }
-
-  return field.config.custom?.cellOptions ?? DEFAULT_CELL_OPTIONS;
-}
-
-/**
- * @internal
- * Getting gauge or sparkline values to align is very tricky without looking at all values and passing them through display processor.
- * For very large tables that could pretty expensive. So this is kind of a compromise. We look at the first 1000 rows and cache the longest value.
- * If we have a cached value we just check if the current value is longer and update the alignmentFactor. This can obviously still lead to
- * unaligned gauges but it should a lot less common.
- **/
-export function getAlignmentFactor(
-  field: Field,
-  displayValue: DisplayValue,
-  rowIndex: number
-): DisplayValueAlignmentFactors {
-  let alignmentFactor = field.state?.alignmentFactors;
-
-  if (alignmentFactor) {
-    // check if current alignmentFactor is still the longest
-    if (formattedValueToString(alignmentFactor).length < formattedValueToString(displayValue).length) {
-      alignmentFactor = { ...displayValue };
-      field.state!.alignmentFactors = alignmentFactor;
-    }
-    return alignmentFactor;
-  } else {
-    // look at the next 1000 rows
-    alignmentFactor = { ...displayValue };
-    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
-
-    for (let i = rowIndex + 1; i < maxIndex; i++) {
-      const nextDisplayValue = field.display?.(field.values[i]) ?? field.values[i];
-      if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
-        alignmentFactor.text = displayValue.text;
+      result = sortDir * compare(a[columnKey], b[columnKey]);
+      if (result !== 0) {
+        break;
       }
     }
+    return result;
+  };
 
-    if (field.state) {
-      field.state.alignmentFactors = alignmentFactor;
-    } else {
-      field.state = { alignmentFactors: alignmentFactor };
-    }
-
-    return alignmentFactor;
+  // Handle nested tables
+  if (hasNestedFrames) {
+    return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
   }
+
+  // Regular sort for tables without nesting
+  return [...rows].sort(compareRows);
 }
 
-/* ------------------------- Cell color calculation ------------------------- */
+/* ----------------------------- Mapping ---------------------------- */
+/**
+ * @internal
+ */
+export const frameToRecords = (frame: DataFrame): TableRow[] => {
+  const fnBody = `
+    const rows = Array(frame.length);
+    const values = frame.fields.map(f => f.values);
+    let rowCount = 0;
+    for (let i = 0; i < frame.length; i++) {
+      rows[rowCount] = {
+        __depth: 0,
+        __index: i,
+        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
+      };
+      rowCount += 1;
+      if (rows[rowCount-1]['__nestedFrames']){
+        const childFrame = rows[rowCount-1]['__nestedFrames'];
+        rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
+        rowCount += 1;
+      }
+    }
+    return rows;
+  `;
+
+  // Creates a function that converts a DataFrame into an array of TableRows
+  // Uses new Function() for performance as it's faster than creating rows using loops
+  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+  return convert(frame);
+};
+
+/* ------------------------- Color ------------------------- */
+
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
 const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
 
@@ -354,158 +503,23 @@ export function getCellColors(
 
 /**
  * @internal
- * Extracts numeric pixel value from theme spacing
+ * if applyToRow is true in any field, return a function that gets the row background color
  */
-export const extractPixelValue = (spacing: string | number): number => {
-  return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
-};
-
-/* ------------------------------- Data links ------------------------------- */
-/**
- * @internal
- */
-export const getCellLinks = (field: Field, rowIdx: number) => {
-  let links: Array<LinkModel<unknown>> | undefined;
-  if (field.getLinks) {
-    links = field.getLinks({
-      valueRowIndex: rowIdx,
-    });
-  }
-
-  if (!links) {
-    return;
-  }
-
-  for (let i = 0; i < links?.length; i++) {
-    if (links[i].onClick) {
-      const origOnClick = links[i].onClick;
-
-      links[i].onClick = (event: MouseEvent) => {
-        // Allow opening in new tab
-        if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
-          event.preventDefault();
-          origOnClick!(event, {
-            field,
-            rowIndex: rowIdx,
-          });
-        }
-      };
+export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
+  for (const field of fields) {
+    const cellOptions = getCellOptions(field);
+    const fieldDisplay = field.display;
+    if (
+      fieldDisplay !== undefined &&
+      cellOptions.type === TableCellDisplayMode.ColorBackground &&
+      cellOptions.applyToRow === true
+    ) {
+      return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
     }
   }
-
-  return links.filter((link) => link.href || link.onClick != null);
-};
-
-/* ----------------------------- Data grid sorting ---------------------------- */
-/**
- * @internal
- */
-export function applySort(
-  rows: TableRow[],
-  fields: Field[],
-  sortColumns: SortColumn[],
-  columnTypes: ColumnTypes = getColumnTypes(fields),
-  hasNestedFrames: boolean = getIsNestedTable(fields)
-): TableRow[] {
-  if (sortColumns.length === 0) {
-    return rows;
-  }
-
-  const compareRows = (a: TableRow, b: TableRow): number => {
-    let result = 0;
-    for (let i = 0; i < sortColumns.length; i++) {
-      const { columnKey, direction } = sortColumns[i];
-      const compare = getComparator(columnTypes[columnKey]);
-      const sortDir = direction === 'ASC' ? 1 : -1;
-
-      result = sortDir * compare(a[columnKey], b[columnKey]);
-      if (result !== 0) {
-        break;
-      }
-    }
-    return result;
-  };
-
-  // Handle nested tables
-  if (hasNestedFrames) {
-    return processNestedTableRows(rows, (parents) => [...parents].sort(compareRows));
-  }
-
-  // Regular sort for tables without nesting
-  return [...rows].sort(compareRows);
 }
 
-/* ----------------------------- Data grid mapping ---------------------------- */
-/**
- * @internal
- */
-export const frameToRecords = (frame: DataFrame): TableRow[] => {
-  const fnBody = `
-    const rows = Array(frame.length);
-    const values = frame.fields.map(f => f.values);
-    let rowCount = 0;
-    for (let i = 0; i < frame.length; i++) {
-      rows[rowCount] = {
-        __depth: 0,
-        __index: i,
-        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
-      };
-      rowCount += 1;
-      if (rows[rowCount-1]['__nestedFrames']){
-        const childFrame = rows[rowCount-1]['__nestedFrames'];
-        rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
-        rowCount += 1;
-      }
-    }
-    return rows;
-  `;
-
-  // Creates a function that converts a DataFrame into an array of TableRows
-  // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
-  return convert(frame);
-};
-
-/* ----------------------------- Data grid comparator ---------------------------- */
-// The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
-// within strings and sorts numerically instead of lexicographically.
-const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
-const strCompare: Comparator = (a, b) => compare(String(a ?? ''), String(b ?? ''));
-const numCompare: Comparator = (a, b) => {
-  if (a === b) {
-    return 0;
-  }
-  if (a == null) {
-    return -1;
-  }
-  if (b == null) {
-    return 1;
-  }
-  return Number(a) - Number(b);
-};
-const frameCompare: Comparator = (a, b) => {
-  // @ts-ignore The compared vals are DataFrameWithValue. the value is the rendered stat (first, last, etc.)
-  return (a?.value ?? 0) - (b?.value ?? 0);
-};
-
-/**
- * @internal
- */
-export function getComparator(sortColumnType: FieldType): Comparator {
-  switch (sortColumnType) {
-    // Handle sorting for frame type fields (sparklines)
-    case FieldType.frame:
-      return frameCompare;
-    case FieldType.time:
-    case FieldType.number:
-    case FieldType.boolean:
-      return numCompare;
-    case FieldType.string:
-    case FieldType.enum:
-    default:
-      return strCompare;
-  }
-}
+/* ---------------------------- Migration ---------------------------- */
 
 type TableCellGaugeDisplayModes =
   | TableCellDisplayMode.BasicGauge
@@ -528,9 +542,9 @@ const TABLE_CELL_COLOR_BACKGROUND_DISPLAY_MODES_TO_DISPLAY_MODES: Record<
   [TableCellDisplayMode.ColorBackgroundSolid]: TableCellBackgroundDisplayMode.Basic,
 };
 
-/* ---------------------------- Miscellaneous ---------------------------- */
 /**
- * Migrates table cell display mode to new object format.
+ * Migrates table cell display mode to new object format. after tableNextGen is fully rolled out,
+ * this can be moved to become a true migration instead of a runtime conversion.
  *
  * @param displayMode The display mode of the cell
  * @returns TableCellOptions object in the correct format
@@ -566,6 +580,7 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
   }
 }
 
+/* ----------------------------- Nested tables ---------------------------- */
 /**
  * @internal
  * Returns true if the DataFrame contains nested frames
@@ -611,99 +626,95 @@ export const processNestedTableRows = (
   return result;
 };
 
+/* ------------------------------- Data links ------------------------------- */
 /**
  * @internal
- * returns the display name of a field.
- * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
- * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
- * before we begin.
  */
-export const getDisplayName = (field: Field): string => {
-  return field.state?.displayName ?? field.name;
+export const getCellLinks = (field: Field, rowIdx: number) => {
+  let links: Array<LinkModel<unknown>> | undefined;
+  if (field.getLinks) {
+    links = field.getLinks({
+      valueRowIndex: rowIdx,
+    });
+  }
+
+  if (!links) {
+    return;
+  }
+
+  for (let i = 0; i < links?.length; i++) {
+    if (links[i].onClick) {
+      const origOnClick = links[i].onClick;
+
+      links[i].onClick = (event: MouseEvent) => {
+        // Allow opening in new tab
+        if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
+          event.preventDefault();
+          origOnClick!(event, {
+            field,
+            rowIndex: rowIdx,
+          });
+        }
+      };
+    }
+  }
+
+  return links.filter((link) => link.href || link.onClick != null);
 };
 
+/* ----------------------------- Sparklines and gauges ---------------------------- */
 /**
  * @internal
- * returns only fields that are not nested tables and not explicitly hidden
- */
-export function getVisibleFields(fields: Field[]): Field[] {
-  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
-}
+ * Getting gauge or sparkline values to align is very tricky without looking at all values and passing them through display processor.
+ * For very large tables that could pretty expensive. So this is kind of a compromise. We look at the first 1000 rows and cache the longest value.
+ * If we have a cached value we just check if the current value is longer and update the alignmentFactor. This can obviously still lead to
+ * unaligned gauges but it should a lot less common.
+ **/
+export function getAlignmentFactor(
+  field: Field,
+  displayValue: DisplayValue,
+  rowIndex: number
+): DisplayValueAlignmentFactors {
+  let alignmentFactor = field.state?.alignmentFactors;
 
-/**
- * @internal
- * returns a map of column types by display name
- */
-export function getColumnTypes(fields: Field[]): ColumnTypes {
-  return fields.reduce<ColumnTypes>((acc, field) => {
-    switch (field.type) {
-      case FieldType.nestedFrames:
-        return { ...acc, ...getColumnTypes(field.values[0]?.[0]?.fields ?? []) };
-      default:
-        return { ...acc, [getDisplayName(field)]: field.type };
+  if (alignmentFactor) {
+    // check if current alignmentFactor is still the longest
+    if (formattedValueToString(alignmentFactor).length < formattedValueToString(displayValue).length) {
+      alignmentFactor = { ...displayValue };
+      field.state!.alignmentFactors = alignmentFactor;
     }
-  }, {});
-}
+    return alignmentFactor;
+  } else {
+    // look at the next 1000 rows
+    alignmentFactor = { ...displayValue };
+    const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
-/**
- * @internal
- * calculates the width of each field, with the following logic:
- * 1. manual sizing minWidth is hard-coded to 50px, we set this in RDG since it enforces the hard limit correctly
- * 2. if minWidth is configured in fieldConfig (or defaults to 150), it serves as the bottom of the auto-size clamp
- */
-export function computeColWidths(fields: Field[], availWidth: number) {
-  let autoCount = 0;
-  let definedWidth = 0;
-
-  return (
-    fields
-      // first pass to add up how many fields have pre-defined widths and what that width totals to.
-      .map((field) => {
-        const width: number = field.config.custom?.width ?? 0;
-
-        if (width === 0) {
-          autoCount++;
-        } else {
-          definedWidth += width;
-        }
-
-        return width;
-      })
-      // second pass once `autoCount` and `definedWidth` are known.
-      .map(
-        (width, i) =>
-          width ||
-          Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
-      )
-  );
-}
-
-/**
- * @internal
- * if applyToRow is true in any field, return a function that gets the row background color
- */
-export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowIndex: number) => CellColors) | void {
-  for (const field of fields) {
-    const cellOptions = getCellOptions(field);
-    const fieldDisplay = field.display;
-    if (
-      fieldDisplay !== undefined &&
-      cellOptions.type === TableCellDisplayMode.ColorBackground &&
-      cellOptions.applyToRow === true
-    ) {
-      return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
+    for (let i = rowIndex + 1; i < maxIndex; i++) {
+      const nextDisplayValue = field.display?.(field.values[i]) ?? field.values[i];
+      if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
+        alignmentFactor.text = displayValue.text;
+      }
     }
+
+    if (field.state) {
+      field.state.alignmentFactors = alignmentFactor;
+    } else {
+      field.state = { alignmentFactors: alignmentFactor };
+    }
+
+    return alignmentFactor;
   }
 }
 
-/** @internal */
-export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDisplayMode) {
-  return (
-    cellType !== TableCellDisplayMode.DataLinks &&
-    cellType !== TableCellDisplayMode.Actions &&
-    (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
-  );
-}
+/**
+ * @internal
+ * Extracts numeric pixel value from theme spacing
+ */
+export const extractPixelValue = (spacing: string | number): number => {
+  return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
+};
+
+/* ---------------------------- JSON ---------------------------- */
 
 export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue => {
   let displayValue: string;

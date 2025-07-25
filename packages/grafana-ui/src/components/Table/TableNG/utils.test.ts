@@ -1,4 +1,5 @@
 import {
+  ActionType,
   createDataFrame,
   createTheme,
   DataFrame,
@@ -7,6 +8,7 @@ import {
   Field,
   FieldType,
   GrafanaTheme2,
+  HttpRequestMethod,
   LinkModel,
   ValueLinkConfig,
 } from '@grafana/data';
@@ -17,572 +19,35 @@ import { TableCellDisplayMode } from '../types';
 import { COLUMN, TABLE } from './constants';
 import { LineCounterEntry } from './types';
 import {
+  buildHeaderLineCounters,
+  buildRowLineCounters,
+  computeColWidths,
+  createTypographyContext,
+  displayJsonValue,
   extractPixelValue,
   frameToRecords,
+  getAlignment,
   getAlignmentFactor,
   getCellColors,
   getCellLinks,
   getCellOptions,
+  getColumnTypes,
   getComparator,
   getDefaultRowHeight,
+  getDisplayName,
   getIsNestedTable,
-  getAlignment,
   getJustifyContent,
-  migrateTableDisplayModeToCellOptions,
-  getColumnTypes,
-  computeColWidths,
   getRowHeight,
-  buildRowLineCounters,
-  buildHeaderLineCounters,
   getTextLineCounter,
-  createTypographyContext,
+  getVisibleFields,
+  isCellInspectEnabled,
+  migrateTableDisplayModeToCellOptions,
+  shouldTextOverflow,
+  shouldTextWrap,
+  showDataLinksActionTooltip,
 } from './utils';
 
 describe('TableNG utils', () => {
-  describe('alignment', () => {
-    it.each(['left', 'center', 'right'] as const)('should return "%s" when configured', (align) => {
-      expect(
-        getAlignment({
-          name: 'Value',
-          type: FieldType.string,
-          values: [],
-          config: {
-            custom: {
-              align,
-            },
-          },
-        })
-      ).toBe(align);
-    });
-
-    it.each([
-      { type: FieldType.string, align: 'left' },
-      { type: FieldType.number, align: 'right' },
-      { type: FieldType.boolean, align: 'left' },
-      { type: FieldType.time, align: 'left' },
-    ])('should return "$align" for field type $type by default', ({ type, align }) => {
-      expect(
-        getAlignment({
-          name: 'Test',
-          type,
-          values: [],
-          config: {
-            custom: {},
-          },
-        })
-      ).toBe(align);
-    });
-
-    it.each([
-      { cellType: undefined, align: 'right' },
-      { cellType: TableCellDisplayMode.Auto, align: 'right' },
-      { cellType: TableCellDisplayMode.ColorText, align: 'right' },
-      { cellType: TableCellDisplayMode.ColorBackground, align: 'right' },
-      { cellType: TableCellDisplayMode.Gauge, align: 'left' },
-      { cellType: TableCellDisplayMode.JSONView, align: 'left' },
-      { cellType: TableCellDisplayMode.DataLinks, align: 'left' },
-    ])('numeric field should return "$align" for cell type "$cellType"', ({ align, cellType }) => {
-      expect(
-        getAlignment({
-          name: 'Test',
-          type: FieldType.number,
-          values: [],
-          config: {
-            custom: {
-              ...(cellType !== undefined
-                ? {
-                    cellOptions: {
-                      type: cellType,
-                    },
-                  }
-                : {}),
-            },
-          },
-        })
-      ).toBe(align);
-    });
-
-    describe('mapping to getJustifyContent', () => {
-      it.each([
-        { align: 'left', expected: 'flex-start' },
-        { align: 'center', expected: 'center' },
-        { align: 'right', expected: 'flex-end' },
-      ] as const)(`should map align "$align" to justifyContent "$expected"`, ({ align, expected }) => {
-        expect(getJustifyContent(align)).toBe(expected);
-      });
-    });
-  });
-
-  describe('cell display mode', () => {
-    const theme = {
-      colors: {
-        isDark: true,
-        mode: 'dark',
-        primary: {
-          text: '#FFFFFF',
-          main: '#FF0000',
-        },
-        background: {
-          canvas: '#000000',
-          primary: '#111111',
-        },
-        text: {
-          primary: '#FFFFFF',
-        },
-        action: {
-          hover: '#FF0000',
-        },
-      },
-    } as unknown as GrafanaTheme2;
-
-    it('should handle color background mode', () => {
-      const field = {
-        type: TableCellDisplayMode.ColorBackground as const,
-        mode: TableCellBackgroundDisplayMode.Basic,
-      };
-
-      const displayValue = {
-        text: '100',
-        numeric: 100,
-        color: '#ff0000',
-      };
-
-      const colors = getCellColors(theme, field, displayValue);
-      expect(colors.bgColor).toBe('rgb(255, 0, 0)');
-      expect(colors.textColor).toBe('rgb(247, 248, 250)');
-    });
-
-    it('should handle color background gradient mode', () => {
-      const field = {
-        type: TableCellDisplayMode.ColorBackground as const,
-        mode: TableCellBackgroundDisplayMode.Gradient,
-      };
-
-      const displayValue = {
-        text: '100',
-        numeric: 100,
-        color: '#ff0000',
-      };
-
-      const colors = getCellColors(theme, field, displayValue);
-      expect(colors.bgColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
-      expect(colors.textColor).toBe('rgb(247, 248, 250)');
-    });
-  });
-
-  describe('frame to records conversion', () => {
-    it('should convert DataFrame to TableRows', () => {
-      const frame = createDataFrame({
-        fields: [
-          { name: 'time', values: [1, 2] },
-          { name: 'value', values: [10, 20] },
-        ],
-      });
-
-      const records = frameToRecords(frame);
-      expect(records).toHaveLength(2);
-      expect(records[0]).toEqual({
-        __depth: 0,
-        __index: 0,
-        time: 1,
-        value: 10,
-      });
-    });
-  });
-
-  describe('getAlignmentFactor', () => {
-    it('should create a new alignment factor when none exists', () => {
-      // Create a field with no existing alignment factor
-      const field: Field = {
-        name: 'test',
-        type: FieldType.number,
-        config: {},
-        values: [1, 22, 333, 4444],
-        // No state property initially
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-        }),
-      };
-
-      // Create a display value
-      const displayValue: DisplayValue = {
-        text: '1',
-        numeric: 1,
-      };
-
-      // Call getAlignmentFactor with the first row
-      const result = getAlignmentFactor(field, displayValue, 0);
-
-      // Verify the result has the text property
-      expect(result).toEqual(
-        expect.objectContaining({
-          text: '1',
-        })
-      );
-
-      // Verify that field.state was created and contains the alignment factor
-      expect(field.state).toBeDefined();
-      expect(field.state?.alignmentFactors).toBeDefined();
-      expect(field.state?.alignmentFactors).toEqual(
-        expect.objectContaining({
-          text: '1',
-        })
-      );
-    });
-
-    it('should update alignment factor when a longer value is found', () => {
-      // Create a field with an existing alignment factor
-      const field: Field = {
-        name: 'test',
-        type: FieldType.number,
-        config: {},
-        values: [1, 22, 333, 4444],
-        state: {
-          alignmentFactors: {
-            text: '1',
-          },
-        },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-        }),
-      };
-
-      // Create a display value that is longer than the existing alignment factor
-      const displayValue: DisplayValue = {
-        text: '4444',
-        numeric: 4444,
-      };
-
-      // Call getAlignmentFactor
-      const result = getAlignmentFactor(field, displayValue, 3);
-
-      // Verify the result is updated to the longer value
-      expect(result).toEqual(
-        expect.objectContaining({
-          text: '4444',
-        })
-      );
-
-      // Verify that field.state.alignmentFactors was updated
-      expect(field.state?.alignmentFactors).toEqual(
-        expect.objectContaining({
-          text: '4444',
-        })
-      );
-    });
-
-    it('should not update alignment factor when a shorter value is found', () => {
-      // Create a field with an existing alignment factor for a long value
-      const field: Field = {
-        name: 'test',
-        type: FieldType.number,
-        config: {},
-        values: [1, 22, 333, 4444],
-        state: {
-          alignmentFactors: {
-            text: '4444',
-          },
-        },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-        }),
-      };
-
-      // Create a display value that is shorter than the existing alignment factor
-      const displayValue: DisplayValue = {
-        text: '1',
-        numeric: 1,
-      };
-
-      // Call getAlignmentFactor
-      const result = getAlignmentFactor(field, displayValue, 0);
-
-      // Verify the result is still the longer value
-      expect(result).toEqual(
-        expect.objectContaining({
-          text: '4444',
-        })
-      );
-
-      // Verify that field.state.alignmentFactors was not changed
-      expect(field.state?.alignmentFactors).toEqual(
-        expect.objectContaining({
-          text: '4444',
-        })
-      );
-    });
-
-    it('should add alignment factor to existing field state', () => {
-      // Create a field with existing state but no alignment factors yet
-      const field: Field = {
-        name: 'test',
-        type: FieldType.number,
-        config: {},
-        values: [1, 22, 333, 4444],
-        // Field has state but no alignmentFactors
-        state: {
-          // Use a valid property for FieldState
-          // For example, if calcs is a valid property:
-          calcs: { sum: 4460 },
-          // Or if noValue is a valid property:
-          // noValue: true
-        },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-        }),
-      };
-
-      // Create a display value
-      const displayValue: DisplayValue = {
-        text: '1',
-        numeric: 1,
-      };
-
-      // Call getAlignmentFactor with the first row
-      const result = getAlignmentFactor(field, displayValue, 0);
-
-      // Verify the result has the text property
-      expect(result).toEqual(
-        expect.objectContaining({
-          text: '1',
-        })
-      );
-
-      // Verify that field.state was preserved and alignment factor was added
-      expect(field.state).toBeDefined();
-      // Check for the valid property we used
-      expect(field.state?.calcs).toBeDefined();
-      expect(field.state?.alignmentFactors).toBeDefined();
-      expect(field.state?.alignmentFactors).toEqual(
-        expect.objectContaining({
-          text: '1',
-        })
-      );
-    });
-
-    it.todo('alignmentFactor.text = displayValue.text;');
-  });
-
-  describe('getColumnTypes', () => {
-    it('builds the expected record with column types', () => {
-      const fields: Field[] = [
-        {
-          name: 'name',
-          type: FieldType.string,
-          display: (v) => ({ text: v as string, numeric: NaN }),
-          config: {},
-          values: [],
-        },
-        {
-          name: 'age',
-          type: FieldType.number,
-          display: (v) => ({ text: (v as number).toString(), numeric: v as number }),
-          config: {},
-          values: [],
-        },
-        {
-          name: 'active',
-          type: FieldType.boolean,
-          display: (v) => ({ text: (v as boolean).toString(), numeric: NaN }),
-          config: {},
-          values: [],
-        },
-      ];
-      const result = getColumnTypes(fields);
-
-      expect(result).toEqual({
-        name: FieldType.string,
-        age: FieldType.number,
-        active: FieldType.boolean,
-      });
-    });
-
-    it('should recursively build column types when nested fields are present', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          {
-            type: FieldType.nestedFrames,
-            name: 'nestedCol',
-            config: {},
-            values: [
-              [
-                createDataFrame({
-                  fields: [
-                    { name: 'time', values: [1, 2] },
-                    { name: 'value', values: [10, 20] },
-                  ],
-                }),
-              ],
-              [
-                createDataFrame({
-                  fields: [
-                    { name: 'time', values: [3, 4] },
-                    { name: 'value', values: [30, 40] },
-                  ],
-                }),
-              ],
-            ],
-          },
-        ],
-        length: 0,
-        name: 'test',
-      };
-
-      expect(getColumnTypes(frame.fields)).toEqual({
-        stringCol: FieldType.string,
-        time: FieldType.time,
-        value: FieldType.number,
-      });
-    });
-
-    it('does not throw if nestedFrames has no values', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          {
-            type: FieldType.nestedFrames,
-            name: 'nestedCol',
-            config: {},
-            values: [],
-          },
-        ],
-        length: 0,
-        name: 'test',
-      };
-
-      expect(getColumnTypes(frame.fields)).toEqual({
-        stringCol: FieldType.string,
-      });
-    });
-  });
-
-  describe('getIsNestedTable', () => {
-    it('should detect nested frames', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          { type: FieldType.nestedFrames, name: 'nestedCol', config: {}, values: [] },
-        ],
-        length: 0,
-        name: 'test',
-      };
-      expect(getIsNestedTable(frame.fields)).toBe(true);
-    });
-
-    it('should return false for regular frames', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          { type: FieldType.number, name: 'numberCol', config: {}, values: [] },
-        ],
-        length: 0,
-        name: 'test',
-      };
-      expect(getIsNestedTable(frame.fields)).toBe(false);
-    });
-  });
-
-  describe('getComparator', () => {
-    it('should compare numbers correctly', () => {
-      const comparator = getComparator(FieldType.number);
-      expect(comparator(1, 2)).toBeLessThan(0);
-      expect(comparator(2, 1)).toBeGreaterThan(0);
-      expect(comparator(1, 1)).toBe(0);
-    });
-
-    it('should handle undefined values', () => {
-      const comparator = getComparator(FieldType.number);
-      expect(comparator(undefined, 1)).toBeLessThan(0);
-      expect(comparator(1, undefined)).toBeGreaterThan(0);
-      expect(comparator(undefined, undefined)).toBe(0);
-    });
-
-    it('should compare strings case-insensitively', () => {
-      const comparator = getComparator(FieldType.string);
-      expect(comparator('a', 'B')).toBeLessThan(0);
-      expect(comparator('B', 'a')).toBeGreaterThan(0);
-      expect(comparator('a', 'a')).toBe(0);
-    });
-
-    it('should handle time values', () => {
-      const comparator = getComparator(FieldType.time);
-      const t1 = 1672531200000; // 2023-01-01
-      const t2 = 1672617600000; // 2023-01-02
-
-      expect(comparator(t1, t2)).toBeLessThan(0);
-      expect(comparator(t2, t1)).toBeGreaterThan(0);
-      expect(comparator(t1, t1)).toBe(0);
-    });
-
-    it('should handle boolean values', () => {
-      const comparator = getComparator(FieldType.boolean);
-      expect(comparator(false, true)).toBeLessThan(0);
-      expect(comparator(true, false)).toBeGreaterThan(0);
-      expect(comparator(true, true)).toBe(0);
-    });
-
-    it('should compare frame values', () => {
-      const comparator = getComparator(FieldType.frame);
-
-      // simulate using `first`.
-      const frame1: DataFrameWithValue = {
-        value: 1,
-        ...createDataFrame({ fields: [{ name: 'a', values: [1, 2, 3, 4] }] }),
-      };
-      const frame2: DataFrameWithValue = {
-        value: 4,
-        ...createDataFrame({ fields: [{ name: 'a', values: [4, 3, 2, 1] }] }),
-      };
-      const frame3: DataFrameWithValue = {
-        value: 4,
-        ...createDataFrame({ fields: [{ name: 'a', values: [4, 5, 6, 7] }] }),
-      };
-
-      expect(comparator(frame1, frame2)).toBeLessThan(0);
-      expect(comparator(frame2, frame1)).toBeGreaterThan(0);
-      expect(comparator(frame2, frame2)).toBe(0);
-      expect(comparator(frame2, frame3)).toBe(0); // equivalent start values
-    });
-  });
-
-  describe('migrateTableDisplayModeToCellOptions', () => {
-    it('should migrate basic to gauge mode', () => {
-      const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.BasicGauge);
-      expect(result).toEqual({
-        type: TableCellDisplayMode.Gauge,
-        mode: BarGaugeDisplayMode.Basic,
-      });
-    });
-
-    it('should migrate gradient-gauge to gauge mode with gradient', () => {
-      const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.GradientGauge);
-      expect(result).toEqual({
-        type: TableCellDisplayMode.Gauge,
-        mode: BarGaugeDisplayMode.Gradient,
-      });
-    });
-
-    it('should migrate color-background to color background with gradient', () => {
-      const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.ColorBackground);
-      expect(result).toEqual({
-        type: TableCellDisplayMode.ColorBackground,
-        mode: TableCellBackgroundDisplayMode.Gradient,
-      });
-    });
-
-    it('should handle other display modes', () => {
-      const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.ColorText);
-      expect(result).toEqual({
-        type: TableCellDisplayMode.ColorText,
-      });
-    });
-  });
-
   describe('getCellOptions', () => {
     it('should return default options when no custom config is provided', () => {
       const field: Field = {
@@ -699,6 +164,1050 @@ describe('TableNG utils', () => {
 
       expect(options.type).toBe(TableCellDisplayMode.JSONView);
     });
+  });
+
+  describe('getDisplayName', () => {
+    it('returns the display name set in the state if present', () => {
+      expect(
+        getDisplayName({
+          name: 'test',
+          type: FieldType.string,
+          config: {},
+          values: [],
+          state: {
+            displayName: 'Custom Display Name',
+          },
+        })
+      ).toBe('Custom Display Name');
+    });
+
+    it('returns the field name if no display name is set', () => {
+      expect(
+        getDisplayName({
+          name: 'test',
+          type: FieldType.string,
+          config: {},
+          values: [],
+        })
+      ).toBe('test');
+    });
+  });
+
+  describe('shouldTextOverflow', () => {
+    it.each([
+      { type: FieldType.string, displayMode: TableCellDisplayMode.Auto, expected: true },
+      { type: FieldType.number, displayMode: TableCellDisplayMode.Auto, expected: false },
+      { type: FieldType.string, displayMode: TableCellDisplayMode.Pill, expected: false },
+      { type: FieldType.string, displayMode: TableCellDisplayMode.Image, expected: false },
+      { type: FieldType.string, displayMode: TableCellDisplayMode.DataLinks, expected: true },
+    ] as const)('returns $expected for $displayMode $type fields', ({ displayMode, type, expected }) => {
+      expect(
+        shouldTextOverflow({
+          name: 'Value',
+          type: type,
+          values: [],
+          config: {
+            custom: {
+              cellOptions: {
+                type: displayMode,
+              },
+            },
+          },
+        })
+      ).toBe(expected);
+    });
+
+    it('returns false if text wrapping is enabled', () => {
+      expect(
+        shouldTextOverflow({
+          name: 'Value',
+          type: FieldType.string,
+          values: [],
+          config: {
+            custom: {
+              cellOptions: {
+                type: TableCellDisplayMode.Auto,
+                wrapText: true,
+              },
+            },
+          },
+        })
+      ).toBe(false);
+    });
+
+    it('returns false if cell inspection is enabled', () => {
+      expect(
+        shouldTextOverflow({
+          name: 'Value',
+          type: FieldType.string,
+          values: [],
+          config: {
+            custom: {
+              inspect: true,
+              cellOptions: {
+                type: TableCellDisplayMode.Auto,
+              },
+            },
+          },
+        })
+      ).toBe(false);
+    });
+  });
+
+  describe('getAlignment', () => {
+    it.each(['left', 'center', 'right'] as const)('should return "%s" when configured', (align) => {
+      expect(
+        getAlignment({
+          name: 'Value',
+          type: FieldType.string,
+          values: [],
+          config: {
+            custom: {
+              align,
+            },
+          },
+        })
+      ).toBe(align);
+    });
+
+    it.each([
+      { type: FieldType.string, align: 'left' },
+      { type: FieldType.number, align: 'right' },
+      { type: FieldType.boolean, align: 'left' },
+      { type: FieldType.time, align: 'left' },
+    ])('should return "$align" for field type $type by default', ({ type, align }) => {
+      expect(
+        getAlignment({
+          name: 'Test',
+          type,
+          values: [],
+          config: {
+            custom: {},
+          },
+        })
+      ).toBe(align);
+    });
+
+    it.each([
+      { cellType: undefined, align: 'right' },
+      { cellType: TableCellDisplayMode.Auto, align: 'right' },
+      { cellType: TableCellDisplayMode.ColorText, align: 'right' },
+      { cellType: TableCellDisplayMode.ColorBackground, align: 'right' },
+      { cellType: TableCellDisplayMode.Gauge, align: 'left' },
+      { cellType: TableCellDisplayMode.JSONView, align: 'left' },
+      { cellType: TableCellDisplayMode.DataLinks, align: 'left' },
+    ])('numeric field should return "$align" for cell type "$cellType"', ({ align, cellType }) => {
+      expect(
+        getAlignment({
+          name: 'Test',
+          type: FieldType.number,
+          values: [],
+          config: {
+            custom: {
+              ...(cellType !== undefined
+                ? {
+                    cellOptions: {
+                      type: cellType,
+                    },
+                  }
+                : {}),
+            },
+          },
+        })
+      ).toBe(align);
+    });
+  });
+
+  describe('getJustifyContent', () => {
+    it.each([
+      { align: 'left', expected: 'flex-start' },
+      { align: 'center', expected: 'center' },
+      { align: 'right', expected: 'flex-end' },
+    ] as const)(`should map align "$align" to justifyContent "$expected"`, ({ align, expected }) => {
+      expect(getJustifyContent(align)).toBe(expected);
+    });
+  });
+
+  describe('isCellInspectEnabled', () => {
+    it.each([
+      { value: undefined, expected: false },
+      { value: true, expected: true },
+      { value: false, expected: false },
+    ])('returns $expected with value $value', ({ value, expected }) => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {
+          custom: {
+            inspect: value,
+          },
+        },
+        values: [],
+      };
+
+      expect(isCellInspectEnabled(field)).toBe(expected);
+    });
+  });
+
+  describe('shouldTextWrap', () => {
+    it.each([
+      { value: undefined, expected: false },
+      { value: true, expected: true },
+      { value: false, expected: false },
+    ])('returns $expected with value $value', ({ value, expected }) => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {
+          custom: {
+            cellOptions: {
+              wrapText: value,
+            },
+          },
+        },
+        values: [],
+      };
+
+      expect(shouldTextWrap(field)).toBe(expected);
+    });
+  });
+
+  describe('showDataLinksActionTooltip', () => {
+    it.each([
+      {
+        expected: true,
+        case: 'multiple links',
+        field: {
+          name: 'test',
+          type: FieldType.string,
+          config: {
+            links: [
+              { title: 'Link 1', url: 'http://example.com/1' },
+              { title: 'Link 2', url: 'http://example.com/2' },
+            ],
+          },
+          values: [],
+        },
+      },
+      {
+        expected: true,
+        case: 'multiple actions',
+        field: {
+          name: 'test',
+          type: FieldType.string,
+          config: {
+            actions: [
+              {
+                type: ActionType.Fetch,
+                title: 'Action 1',
+                fetch: {
+                  method: HttpRequestMethod.GET,
+                  url: 'http://example.com/action1',
+                },
+              },
+              {
+                type: ActionType.Fetch,
+                title: 'Action 2',
+                fetch: {
+                  method: HttpRequestMethod.GET,
+                  url: 'http://example.com/action2',
+                },
+              },
+            ],
+          },
+          values: [],
+        },
+      },
+      {
+        expected: true,
+        case: 'single link + single action',
+        field: {
+          name: 'test',
+          type: FieldType.string,
+          config: {
+            links: [{ title: 'Link 1', url: 'http://example.com/1' }],
+            actions: [
+              {
+                type: ActionType.Fetch,
+                title: 'Action 1',
+                fetch: {
+                  method: HttpRequestMethod.GET,
+                  url: 'http://example.com/action1',
+                },
+              },
+            ],
+          },
+          values: [],
+        },
+      },
+      {
+        expected: false,
+        case: 'single link',
+        field: {
+          name: 'test',
+          type: FieldType.string,
+          config: {
+            links: [{ title: 'Link 1', url: 'http://example.com/1' }],
+          },
+          values: [],
+        },
+      },
+      {
+        expected: false,
+        case: 'single action',
+        field: {
+          name: 'test',
+          type: FieldType.string,
+          config: {
+            actions: [
+              {
+                type: ActionType.Fetch,
+                title: 'Action 1',
+                fetch: {
+                  method: HttpRequestMethod.GET,
+                  url: 'http://example.com/action1',
+                },
+              },
+            ],
+          },
+          values: [],
+        },
+      },
+      {
+        expected: false,
+        case: 'no links or actions',
+        field: {
+          name: 'test',
+          type: FieldType.string,
+          config: {
+            links: [],
+            actions: [],
+          },
+          values: [],
+        },
+      },
+      {
+        expected: false,
+        case: 'datalink cell',
+        field: {
+          name: 'test',
+          type: FieldType.string,
+          config: {
+            links: [
+              { title: 'Link 1', url: 'http://example.com/1' },
+              { title: 'Link 2', url: 'http://example.com/2' },
+            ],
+            custom: {
+              cellOptions: {
+                type: TableCellDisplayMode.DataLinks,
+              },
+            },
+          },
+          values: [],
+        },
+      },
+      {
+        expected: false,
+        case: 'action cell',
+        field: {
+          name: 'test',
+          type: FieldType.string,
+          config: {
+            actions: [
+              {
+                type: ActionType.Fetch,
+                title: 'Action 1',
+                fetch: {
+                  method: HttpRequestMethod.GET,
+                  url: 'http://example.com/action1',
+                },
+              },
+              {
+                type: ActionType.Fetch,
+                title: 'Action 2',
+                fetch: {
+                  method: HttpRequestMethod.GET,
+                  url: 'http://example.com/action2',
+                },
+              },
+            ],
+            custom: {
+              cellOptions: {
+                type: TableCellDisplayMode.Actions,
+              },
+            },
+          },
+          values: [],
+        },
+      },
+    ] satisfies Array<{ expected: boolean; case: string; field: Field }>)(
+      'returns $expected if the cell has $case',
+      ({ field, expected }) => {
+        expect(showDataLinksActionTooltip(field)).toBe(expected);
+      }
+    );
+  });
+
+  describe('getVisibleFields', () => {
+    it('returns all fields which are not of type nestedFrames and are not hidden', () => {
+      const fields: Field[] = [
+        { name: 'field1', type: FieldType.string, config: {}, values: [] },
+        {
+          name: 'nestedField',
+          type: FieldType.nestedFrames,
+          config: {},
+          values: [],
+        },
+        {
+          name: 'hiddenField',
+          type: FieldType.string,
+          config: { custom: { hidden: true } },
+          values: [],
+        },
+        { name: 'field2', type: FieldType.number, config: {}, values: [] },
+      ];
+
+      const visibleFields = getVisibleFields(fields);
+      expect(visibleFields).toHaveLength(2);
+      expect(visibleFields[0].name).toBe('field1');
+      expect(visibleFields[1].name).toBe('field2');
+    });
+  });
+
+  describe('getColumnTypes', () => {
+    it('builds the expected record with column types', () => {
+      const fields: Field[] = [
+        {
+          name: 'name',
+          type: FieldType.string,
+          display: (v) => ({ text: v as string, numeric: NaN }),
+          config: {},
+          values: [],
+        },
+        {
+          name: 'age',
+          type: FieldType.number,
+          display: (v) => ({ text: (v as number).toString(), numeric: v as number }),
+          config: {},
+          values: [],
+        },
+        {
+          name: 'active',
+          type: FieldType.boolean,
+          display: (v) => ({ text: (v as boolean).toString(), numeric: NaN }),
+          config: {},
+          values: [],
+        },
+      ];
+      const result = getColumnTypes(fields);
+
+      expect(result).toEqual({
+        name: FieldType.string,
+        age: FieldType.number,
+        active: FieldType.boolean,
+      });
+    });
+
+    it('should recursively build column types when nested fields are present', () => {
+      const frame: DataFrame = {
+        fields: [
+          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
+          {
+            type: FieldType.nestedFrames,
+            name: 'nestedCol',
+            config: {},
+            values: [
+              [
+                createDataFrame({
+                  fields: [
+                    { name: 'time', values: [1, 2] },
+                    { name: 'value', values: [10, 20] },
+                  ],
+                }),
+              ],
+              [
+                createDataFrame({
+                  fields: [
+                    { name: 'time', values: [3, 4] },
+                    { name: 'value', values: [30, 40] },
+                  ],
+                }),
+              ],
+            ],
+          },
+        ],
+        length: 0,
+        name: 'test',
+      };
+
+      expect(getColumnTypes(frame.fields)).toEqual({
+        stringCol: FieldType.string,
+        time: FieldType.time,
+        value: FieldType.number,
+      });
+    });
+
+    it('does not throw if nestedFrames has no values', () => {
+      const frame: DataFrame = {
+        fields: [
+          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
+          {
+            type: FieldType.nestedFrames,
+            name: 'nestedCol',
+            config: {},
+            values: [],
+          },
+        ],
+        length: 0,
+        name: 'test',
+      };
+
+      expect(getColumnTypes(frame.fields)).toEqual({
+        stringCol: FieldType.string,
+      });
+    });
+  });
+
+  describe('getDefaultRowHeight', () => {
+    const theme = createTheme();
+
+    it('returns correct height for TableCellHeight.Sm', () => {
+      const result = getDefaultRowHeight(theme, TableCellHeight.Sm);
+      expect(result).toBe(36);
+    });
+
+    it('returns correct height for TableCellHeight.Md', () => {
+      const result = getDefaultRowHeight(theme, TableCellHeight.Md);
+      expect(result).toBe(42);
+    });
+
+    it('returns correct height for TableCellHeight.Lg', () => {
+      const result = getDefaultRowHeight(theme, TableCellHeight.Lg);
+      expect(result).toBe(TABLE.MAX_CELL_HEIGHT);
+    });
+
+    it('calculates height based on theme when cellHeight is undefined', () => {
+      const result = getDefaultRowHeight(theme, undefined as unknown as TableCellHeight);
+
+      // Calculate the expected result based on the theme values
+      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
+
+      expect(result).toBe(expected);
+    });
+  });
+
+  describe('createTypographyCtx', () => {
+    // we can't test the effectiveness of this typography context in unit tests, only that it
+    // actually executed the JS correctly. If you called `count` with a sensible value and width,
+    // it wouldn't give you a very reasonable answer in Jest's DOM environment for some reason.
+    it('creates the context using uwrap', () => {
+      const ctx = createTypographyContext(14, 'sans-serif');
+      expect(ctx).toEqual(
+        expect.objectContaining({
+          font: '14px sans-serif',
+          ctx: expect.any(CanvasRenderingContext2D),
+          count: expect.any(Function),
+          avgCharWidth: expect.any(Number),
+        })
+      );
+      expect(ctx.count('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
+    });
+  });
+
+  describe('getTextLineCounter', () => {
+    const ctx = {
+      font: '14px sans-serif',
+      ctx: {} as CanvasRenderingContext2D,
+      count: jest.fn(() => 1),
+      avgCharWidth: 7,
+    };
+
+    const counter = getTextLineCounter(ctx);
+
+    it('should return 1 if the value is falsy', () => {
+      expect(counter('', 100)).toBe(1);
+      expect(counter(null, 100)).toBe(1);
+      expect(counter(undefined, 100)).toBe(1);
+      expect(counter(0, 100)).toBe(1);
+    });
+
+    it('should use typographyCtx.count to count the lines of the stringified value', () => {
+      ctx.count.mockReturnValue(3);
+      expect(counter('foo', 100)).toBe(3);
+      expect(ctx.count).toHaveBeenCalledWith('foo', 100);
+
+      ctx.count.mockReturnValue(2);
+      expect(counter(3456, 50)).toBe(2);
+      expect(ctx.count).toHaveBeenCalledWith('3456', 50);
+    });
+  });
+
+  describe('buildHeaderLineCounters', () => {
+    const ctx = {
+      font: '14px sans-serif',
+      ctx: {} as CanvasRenderingContext2D,
+      count: jest.fn(() => 2),
+      avgCharWidth: 7,
+    };
+
+    it('returns an array of line counters for each column', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapHeaderText: true } } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
+      ];
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters[0].counter).toBeInstanceOf(Function);
+      expect(counters[0].fieldIdxs).toEqual([0, 1]);
+    });
+
+    it('does not return the index of columns which are not wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
+      ];
+
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters[0].fieldIdxs).toEqual([1]);
+    });
+
+    it('returns an empty array if no columns are wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
+      ];
+
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters).toEqual([]);
+    });
+  });
+
+  describe('buildRowLineCounters', () => {
+    const ctx = {
+      font: '14px sans-serif',
+      ctx: {} as CanvasRenderingContext2D,
+      count: jest.fn(() => 2),
+      avgCharWidth: 7,
+    };
+
+    it('returns an array of line counters for each column', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        {
+          name: 'Address',
+          type: FieldType.string,
+          values: [],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters[0].counter).toBeInstanceOf(Function);
+      expect(counters[0].fieldIdxs).toEqual([0, 1]);
+    });
+
+    it('does not return the index of columns which are not wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        {
+          name: 'Address',
+          type: FieldType.string,
+          values: [],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
+      ];
+
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters[0].fieldIdxs).toEqual([1]);
+    });
+
+    it('does not enable text counting for non-string fields', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+      ];
+
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters).toEqual([]);
+    });
+
+    it('returns an empty array if no columns are wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
+      ];
+
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters).toEqual([]);
+    });
+  });
+
+  describe('getRowHeight', () => {
+    let fields: Field[];
+    let counters: LineCounterEntry[];
+
+    beforeEach(() => {
+      fields = [
+        {
+          name: 'Name',
+          type: FieldType.string,
+          values: ['foo', 'bar', 'baz', 'longer one here', 'shorter'],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
+        {
+          name: 'Age',
+          type: FieldType.number,
+          values: [1, 2, 3, 123456, 789122349932],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
+      ];
+      counters = [
+        { counter: jest.fn((value, _length: number) => String(value).split(' ').length), fieldIdxs: [0] }, // Mocked to count words as lines
+        { counter: jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)), fieldIdxs: [1] }, // Mocked to return a line for every 3 digits of a number
+      ];
+    });
+
+    it('should use the default height for single-line rows', () => {
+      // 1 line @ 20px, 10px vertical padding = 30, minimum is 36
+      expect(getRowHeight(fields, 0, [30, 30], 36, counters, 20, 10)).toBe(36);
+    });
+
+    it('should use the default height for multi-line rows which are shorter than the default height', () => {
+      // 3 lines @ 5px, 5px vertical padding = 20, minimum is 36
+      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 5, 5)).toBe(36);
+    });
+
+    it('should return the row height using line counters for multi-line', () => {
+      // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding
+      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(70);
+
+      // 4 lines @ 15px (789 122 349 932), 15px vertical padding
+      expect(getRowHeight(fields, 4, [30, 30], 36, counters, 15, 15)).toBe(75);
+    });
+
+    it('should take colWidths into account when calculating max wrap cell', () => {
+      getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
+      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50);
+      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60);
+    });
+
+    // this is used to calc wrapped header height
+    it('should use the display name if the rowIdx is -1', () => {
+      getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
+      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50);
+      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60);
+    });
+
+    it('should ignore columns which do not have line counters', () => {
+      const height = getRowHeight(fields, 3, [30, 30], 36, [counters[1]], 20, 10);
+      // 2 lines @ 20px, 10px vertical padding (not 3 lines, since we don't line count Name)
+      expect(height).toBe(50);
+    });
+
+    it('should return the default height if there are no counters to apply', () => {
+      const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
+      expect(height).toBe(36);
+    });
+  });
+
+  describe('computeColWidths', () => {
+    it('returns the configured widths if all columns set them', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 100 } },
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 200 } },
+            },
+          ],
+          500
+        )
+      ).toEqual([100, 200]);
+    });
+
+    it('fills the available space if a column has no width set', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { width: 200 } },
+            },
+          ],
+          500
+        )
+      ).toEqual([300, 200]);
+    });
+
+    it('applies minimum width when auto width would dip below it', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { minWidth: 100 } },
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: { custom: { minWidth: 100 } },
+            },
+          ],
+          100
+        )
+      ).toEqual([100, 100]);
+    });
+
+    it('should use the global column default width when nothing is set', () => {
+      expect(
+        computeColWidths(
+          [
+            {
+              name: 'A',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+            {
+              name: 'B',
+              type: FieldType.string,
+              values: [],
+              config: {},
+            },
+          ],
+          // we have two columns but have set the table to the width of one default column.
+          COLUMN.DEFAULT_WIDTH
+        )
+      ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
+    });
+  });
+
+  describe('getComparator', () => {
+    it('should compare numbers correctly', () => {
+      const comparator = getComparator(FieldType.number);
+      expect(comparator(1, 2)).toBeLessThan(0);
+      expect(comparator(2, 1)).toBeGreaterThan(0);
+      expect(comparator(1, 1)).toBe(0);
+    });
+
+    it('should handle undefined values', () => {
+      const comparator = getComparator(FieldType.number);
+      expect(comparator(undefined, 1)).toBeLessThan(0);
+      expect(comparator(1, undefined)).toBeGreaterThan(0);
+      expect(comparator(undefined, undefined)).toBe(0);
+    });
+
+    it('should compare strings case-insensitively', () => {
+      const comparator = getComparator(FieldType.string);
+      expect(comparator('a', 'B')).toBeLessThan(0);
+      expect(comparator('B', 'a')).toBeGreaterThan(0);
+      expect(comparator('a', 'a')).toBe(0);
+    });
+
+    it('should handle time values', () => {
+      const comparator = getComparator(FieldType.time);
+      const t1 = 1672531200000; // 2023-01-01
+      const t2 = 1672617600000; // 2023-01-02
+
+      expect(comparator(t1, t2)).toBeLessThan(0);
+      expect(comparator(t2, t1)).toBeGreaterThan(0);
+      expect(comparator(t1, t1)).toBe(0);
+    });
+
+    it('should handle boolean values', () => {
+      const comparator = getComparator(FieldType.boolean);
+      expect(comparator(false, true)).toBeLessThan(0);
+      expect(comparator(true, false)).toBeGreaterThan(0);
+      expect(comparator(true, true)).toBe(0);
+    });
+
+    it('should compare frame values', () => {
+      const comparator = getComparator(FieldType.frame);
+
+      // simulate using `first`.
+      const frame1: DataFrameWithValue = {
+        value: 1,
+        ...createDataFrame({ fields: [{ name: 'a', values: [1, 2, 3, 4] }] }),
+      };
+      const frame2: DataFrameWithValue = {
+        value: 4,
+        ...createDataFrame({ fields: [{ name: 'a', values: [4, 3, 2, 1] }] }),
+      };
+      const frame3: DataFrameWithValue = {
+        value: 4,
+        ...createDataFrame({ fields: [{ name: 'a', values: [4, 5, 6, 7] }] }),
+      };
+
+      expect(comparator(frame1, frame2)).toBeLessThan(0);
+      expect(comparator(frame2, frame1)).toBeGreaterThan(0);
+      expect(comparator(frame2, frame2)).toBe(0);
+      expect(comparator(frame2, frame3)).toBe(0); // equivalent start values
+    });
+  });
+
+  describe('applySort', () => {
+    // TODO
+  });
+
+  describe('frameToRecords', () => {
+    it('should convert DataFrame to TableRows', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 2] },
+          { name: 'value', values: [10, 20] },
+        ],
+      });
+
+      const records = frameToRecords(frame);
+      expect(records).toHaveLength(2);
+      expect(records[0]).toEqual({
+        __depth: 0,
+        __index: 0,
+        time: 1,
+        value: 10,
+      });
+    });
+  });
+
+  describe('getCellColors', () => {
+    const theme = {
+      colors: {
+        isDark: true,
+        mode: 'dark',
+        primary: {
+          text: '#FFFFFF',
+          main: '#FF0000',
+        },
+        background: {
+          canvas: '#000000',
+          primary: '#111111',
+        },
+        text: {
+          primary: '#FFFFFF',
+        },
+        action: {
+          hover: '#FF0000',
+        },
+      },
+    } as unknown as GrafanaTheme2;
+
+    it('should handle color background mode', () => {
+      const field = {
+        type: TableCellDisplayMode.ColorBackground as const,
+        mode: TableCellBackgroundDisplayMode.Basic,
+      };
+
+      const displayValue = {
+        text: '100',
+        numeric: 100,
+        color: '#ff0000',
+      };
+
+      const colors = getCellColors(theme, field, displayValue);
+      expect(colors.bgColor).toBe('rgb(255, 0, 0)');
+      expect(colors.textColor).toBe('rgb(247, 248, 250)');
+    });
+
+    it('should handle color background gradient mode', () => {
+      const field = {
+        type: TableCellDisplayMode.ColorBackground as const,
+        mode: TableCellBackgroundDisplayMode.Gradient,
+      };
+
+      const displayValue = {
+        text: '100',
+        numeric: 100,
+        color: '#ff0000',
+      };
+
+      const colors = getCellColors(theme, field, displayValue);
+      expect(colors.bgColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
+      expect(colors.textColor).toBe('rgb(247, 248, 250)');
+    });
+  });
+
+  describe('getApplyToRowBgFn', () => {
+    // TODO
+  });
+
+  describe('migrateTableDisplayModeToCellOptions', () => {
+    it('should migrate basic to gauge mode', () => {
+      const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.BasicGauge);
+      expect(result).toEqual({
+        type: TableCellDisplayMode.Gauge,
+        mode: BarGaugeDisplayMode.Basic,
+      });
+    });
+
+    it('should migrate gradient-gauge to gauge mode with gradient', () => {
+      const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.GradientGauge);
+      expect(result).toEqual({
+        type: TableCellDisplayMode.Gauge,
+        mode: BarGaugeDisplayMode.Gradient,
+      });
+    });
+
+    it('should migrate color-background to color background with gradient', () => {
+      const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.ColorBackground);
+      expect(result).toEqual({
+        type: TableCellDisplayMode.ColorBackground,
+        mode: TableCellBackgroundDisplayMode.Gradient,
+      });
+    });
+
+    it('should handle other display modes', () => {
+      const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.ColorText);
+      expect(result).toEqual({
+        type: TableCellDisplayMode.ColorText,
+      });
+    });
+  });
+
+  describe('getIsNestedTable', () => {
+    it('should detect nested frames', () => {
+      const frame: DataFrame = {
+        fields: [
+          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
+          { type: FieldType.nestedFrames, name: 'nestedCol', config: {}, values: [] },
+        ],
+        length: 0,
+        name: 'test',
+      };
+      expect(getIsNestedTable(frame.fields)).toBe(true);
+    });
+
+    it('should return false for regular frames', () => {
+      const frame: DataFrame = {
+        fields: [
+          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
+          { type: FieldType.number, name: 'numberCol', config: {}, values: [] },
+        ],
+        length: 0,
+        name: 'test',
+      };
+      expect(getIsNestedTable(frame.fields)).toBe(false);
+    });
+  });
+
+  describe('processNestedTableRows', () => {
+    // TODO
   });
 
   describe('getCellLinks', () => {
@@ -898,6 +1407,183 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('getAlignmentFactor', () => {
+    it('should create a new alignment factor when none exists', () => {
+      // Create a field with no existing alignment factor
+      const field: Field = {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [1, 22, 333, 4444],
+        // No state property initially
+        display: (value: unknown) => ({
+          text: String(value),
+          numeric: Number(value),
+        }),
+      };
+
+      // Create a display value
+      const displayValue: DisplayValue = {
+        text: '1',
+        numeric: 1,
+      };
+
+      // Call getAlignmentFactor with the first row
+      const result = getAlignmentFactor(field, displayValue, 0);
+
+      // Verify the result has the text property
+      expect(result).toEqual(
+        expect.objectContaining({
+          text: '1',
+        })
+      );
+
+      // Verify that field.state was created and contains the alignment factor
+      expect(field.state).toBeDefined();
+      expect(field.state?.alignmentFactors).toBeDefined();
+      expect(field.state?.alignmentFactors).toEqual(
+        expect.objectContaining({
+          text: '1',
+        })
+      );
+    });
+
+    it('should update alignment factor when a longer value is found', () => {
+      // Create a field with an existing alignment factor
+      const field: Field = {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [1, 22, 333, 4444],
+        state: {
+          alignmentFactors: {
+            text: '1',
+          },
+        },
+        display: (value: unknown) => ({
+          text: String(value),
+          numeric: Number(value),
+        }),
+      };
+
+      // Create a display value that is longer than the existing alignment factor
+      const displayValue: DisplayValue = {
+        text: '4444',
+        numeric: 4444,
+      };
+
+      // Call getAlignmentFactor
+      const result = getAlignmentFactor(field, displayValue, 3);
+
+      // Verify the result is updated to the longer value
+      expect(result).toEqual(
+        expect.objectContaining({
+          text: '4444',
+        })
+      );
+
+      // Verify that field.state.alignmentFactors was updated
+      expect(field.state?.alignmentFactors).toEqual(
+        expect.objectContaining({
+          text: '4444',
+        })
+      );
+    });
+
+    it('should not update alignment factor when a shorter value is found', () => {
+      // Create a field with an existing alignment factor for a long value
+      const field: Field = {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [1, 22, 333, 4444],
+        state: {
+          alignmentFactors: {
+            text: '4444',
+          },
+        },
+        display: (value: unknown) => ({
+          text: String(value),
+          numeric: Number(value),
+        }),
+      };
+
+      // Create a display value that is shorter than the existing alignment factor
+      const displayValue: DisplayValue = {
+        text: '1',
+        numeric: 1,
+      };
+
+      // Call getAlignmentFactor
+      const result = getAlignmentFactor(field, displayValue, 0);
+
+      // Verify the result is still the longer value
+      expect(result).toEqual(
+        expect.objectContaining({
+          text: '4444',
+        })
+      );
+
+      // Verify that field.state.alignmentFactors was not changed
+      expect(field.state?.alignmentFactors).toEqual(
+        expect.objectContaining({
+          text: '4444',
+        })
+      );
+    });
+
+    it('should add alignment factor to existing field state', () => {
+      // Create a field with existing state but no alignment factors yet
+      const field: Field = {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: [1, 22, 333, 4444],
+        // Field has state but no alignmentFactors
+        state: {
+          // Use a valid property for FieldState
+          // For example, if calcs is a valid property:
+          calcs: { sum: 4460 },
+          // Or if noValue is a valid property:
+          // noValue: true
+        },
+        display: (value: unknown) => ({
+          text: String(value),
+          numeric: Number(value),
+        }),
+      };
+
+      // Create a display value
+      const displayValue: DisplayValue = {
+        text: '1',
+        numeric: 1,
+      };
+
+      // Call getAlignmentFactor with the first row
+      const result = getAlignmentFactor(field, displayValue, 0);
+
+      // Verify the result has the text property
+      expect(result).toEqual(
+        expect.objectContaining({
+          text: '1',
+        })
+      );
+
+      // Verify that field.state was preserved and alignment factor was added
+      expect(field.state).toBeDefined();
+      // Check for the valid property we used
+      expect(field.state?.calcs).toBeDefined();
+      expect(field.state?.alignmentFactors).toBeDefined();
+      expect(field.state?.alignmentFactors).toEqual(
+        expect.objectContaining({
+          text: '1',
+        })
+      );
+    });
+
+    it.todo('alignmentFactor.text = displayValue.text;');
+  });
+
   describe('extractPixelValue', () => {
     it('should extract numeric value from pixel string', () => {
       expect(extractPixelValue('100px')).toBe(100);
@@ -950,321 +1636,30 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('getDefaultRowHeight', () => {
-    const theme = createTheme();
-
-    it('returns correct height for TableCellHeight.Sm', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Sm);
-      expect(result).toBe(36);
-    });
-
-    it('returns correct height for TableCellHeight.Md', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Md);
-      expect(result).toBe(42);
-    });
-
-    it('returns correct height for TableCellHeight.Lg', () => {
-      const result = getDefaultRowHeight(theme, TableCellHeight.Lg);
-      expect(result).toBe(TABLE.MAX_CELL_HEIGHT);
-    });
-
-    it('calculates height based on theme when cellHeight is undefined', () => {
-      const result = getDefaultRowHeight(theme, undefined as unknown as TableCellHeight);
-
-      // Calculate the expected result based on the theme values
-      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
-
-      expect(result).toBe(expected);
-    });
-  });
-
-  describe('createTypographyCtx', () => {
-    // we can't test the effectiveness of this typography context in unit tests, only that it
-    // actually executed the JS correctly. If you called `count` with a sensible value and width,
-    // it wouldn't give you a very reasonable answer in Jest's DOM environment for some reason.
-    it('creates the context using uwrap', () => {
-      const ctx = createTypographyContext(14, 'sans-serif');
-      expect(ctx).toEqual(
-        expect.objectContaining({
-          font: '14px sans-serif',
-          ctx: expect.any(CanvasRenderingContext2D),
-          count: expect.any(Function),
-          avgCharWidth: expect.any(Number),
-        })
-      );
-      expect(ctx.count('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
-    });
-  });
-
-  describe('getTextLineCounter', () => {
-    const ctx = {
-      font: '14px sans-serif',
-      ctx: {} as CanvasRenderingContext2D,
-      count: jest.fn(() => 1),
-      avgCharWidth: 7,
-    };
-
-    const counter = getTextLineCounter(ctx);
-
-    it('should return 1 if the value is falsy', () => {
-      expect(counter('', 100)).toBe(1);
-      expect(counter(null, 100)).toBe(1);
-      expect(counter(undefined, 100)).toBe(1);
-      expect(counter(0, 100)).toBe(1);
-    });
-
-    it('should use typographyCtx.count to count the lines of the stringified value', () => {
-      ctx.count.mockReturnValue(3);
-      expect(counter('foo', 100)).toBe(3);
-      expect(ctx.count).toHaveBeenCalledWith('foo', 100);
-
-      ctx.count.mockReturnValue(2);
-      expect(counter(3456, 50)).toBe(2);
-      expect(ctx.count).toHaveBeenCalledWith('3456', 50);
-    });
-  });
-
-  describe('buildHeaderLineCounters', () => {
-    const ctx = {
-      font: '14px sans-serif',
-      ctx: {} as CanvasRenderingContext2D,
-      count: jest.fn(() => 2),
-      avgCharWidth: 7,
-    };
-
-    it('returns an array of line counters for each column', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapHeaderText: true } } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
-      ];
-      const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters[0].counter).toBeInstanceOf(Function);
-      expect(counters[0].fieldIdxs).toEqual([0, 1]);
-    });
-
-    it('does not return the index of columns which are not wrapped', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
-      ];
-
-      const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters[0].fieldIdxs).toEqual([1]);
-    });
-
-    it('returns an empty array if no columns are wrapped', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
-      ];
-
-      const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters).toEqual([]);
-    });
-  });
-
-  describe('buildRowLineCounters', () => {
-    const ctx = {
-      font: '14px sans-serif',
-      ctx: {} as CanvasRenderingContext2D,
-      count: jest.fn(() => 2),
-      avgCharWidth: 7,
-    };
-
-    it('returns an array of line counters for each column', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
-      ];
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters[0].counter).toBeInstanceOf(Function);
-      expect(counters[0].fieldIdxs).toEqual([0, 1]);
-    });
-
-    it('does not return the index of columns which are not wrapped', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
-      ];
-
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters[0].fieldIdxs).toEqual([1]);
-    });
-
-    it('returns an empty array if no columns are wrapped', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
-      ];
-
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters).toEqual([]);
-    });
-  });
-
-  describe('getRowHeight', () => {
-    let fields: Field[];
-    let counters: LineCounterEntry[];
-
-    beforeEach(() => {
-      fields = [
-        {
-          name: 'Name',
-          type: FieldType.string,
-          values: ['foo', 'bar', 'baz', 'longer one here', 'shorter'],
-          config: { custom: { cellOptions: { wrapText: true } } },
-        },
-        {
-          name: 'Age',
-          type: FieldType.number,
-          values: [1, 2, 3, 123456, 789122349932],
-          config: { custom: { cellOptions: { wrapText: true } } },
-        },
-      ];
-      counters = [
-        { counter: jest.fn((value, _length: number) => String(value).split(' ').length), fieldIdxs: [0] }, // Mocked to count words as lines
-        { counter: jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)), fieldIdxs: [1] }, // Mocked to return a line for every 3 digits of a number
-      ];
-    });
-
-    it('should use the default height for single-line rows', () => {
-      // 1 line @ 20px, 10px vertical padding = 30, minimum is 36
-      expect(getRowHeight(fields, 0, [30, 30], 36, counters, 20, 10)).toBe(36);
-    });
-
-    it('should use the default height for multi-line rows which are shorter than the default height', () => {
-      // 3 lines @ 5px, 5px vertical padding = 20, minimum is 36
-      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 5, 5)).toBe(36);
-    });
-
-    it('should return the row height using line counters for multi-line', () => {
-      // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding
-      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(70);
-
-      // 4 lines @ 15px (789 122 349 932), 15px vertical padding
-      expect(getRowHeight(fields, 4, [30, 30], 36, counters, 15, 15)).toBe(75);
-    });
-
-    it('should take colWidths into account when calculating max wrap cell', () => {
-      getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50);
-      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60);
-    });
-
-    // this is used to calc wrapped header height
-    it('should use the display name if the rowIdx is -1', () => {
-      getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50);
-      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60);
-    });
-
-    it('should ignore columns which do not have line counters', () => {
-      const height = getRowHeight(fields, 3, [30, 30], 36, [counters[1]], 20, 10);
-      // 2 lines @ 20px, 10px vertical padding (not 3 lines, since we don't line count Name)
-      expect(height).toBe(50);
-    });
-
-    it('should return the default height if there are no counters to apply', () => {
-      const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
-      expect(height).toBe(36);
-    });
-  });
-
-  describe('computeColWidths', () => {
-    it('returns the configured widths if all columns set them', () => {
-      expect(
-        computeColWidths(
-          [
-            {
-              name: 'A',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { width: 100 } },
-            },
-            {
-              name: 'B',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { width: 200 } },
-            },
-          ],
-          500
-        )
-      ).toEqual([100, 200]);
-    });
-
-    it('fills the available space if a column has no width set', () => {
-      expect(
-        computeColWidths(
-          [
-            {
-              name: 'A',
-              type: FieldType.string,
-              values: [],
-              config: {},
-            },
-            {
-              name: 'B',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { width: 200 } },
-            },
-          ],
-          500
-        )
-      ).toEqual([300, 200]);
-    });
-
-    it('applies minimum width when auto width would dip below it', () => {
-      expect(
-        computeColWidths(
-          [
-            {
-              name: 'A',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { minWidth: 100 } },
-            },
-            {
-              name: 'B',
-              type: FieldType.string,
-              values: [],
-              config: { custom: { minWidth: 100 } },
-            },
-          ],
-          100
-        )
-      ).toEqual([100, 100]);
-    });
-
-    it('should use the global column default width when nothing is set', () => {
-      expect(
-        computeColWidths(
-          [
-            {
-              name: 'A',
-              type: FieldType.string,
-              values: [],
-              config: {},
-            },
-            {
-              name: 'B',
-              type: FieldType.string,
-              values: [],
-              config: {},
-            },
-          ],
-          // we have two columns but have set the table to the width of one default column.
-          COLUMN.DEFAULT_WIDTH
-        )
-      ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
-    });
-  });
-
   describe('displayJsonValue', () => {
-    it.todo('should parse and then stringify string values');
-    it.todo('should not throw for non-serializable string values');
-    it.todo('should stringify non-string values');
-    it.todo('should not throw for non-serializable non-string values');
+    it('should parse and then stringify and format string-based JSON values', () => {
+      const value = '{"key": "value"}';
+      const result = displayJsonValue(value);
+      expect(result.text).toBe('{\n "key": "value"\n}');
+    });
+
+    it('should not throw for non-serializable string values', () => {
+      const value = '{"key": "value}';
+      const result = displayJsonValue(value);
+      expect(result.text).toBe('{"key": "value}');
+    });
+
+    it('should stringify non-string values', () => {
+      const value = { key: 'value' };
+      const result = displayJsonValue(value);
+      expect(result.text).toBe('{\n "key": "value"\n}');
+    });
+
+    it('should not throw for non-serializable non-string values', () => {
+      const value = { key: 'value', circular: {} };
+      value.circular = value; // create a circular reference
+      const result = displayJsonValue(value);
+      expect(result.text).toBe('[object Object]'); // TODO: maybe we want to handle this differently?
+    });
   });
 });
