@@ -76,7 +76,7 @@ describe('LabelsApiClient', () => {
           start: expect.any(String),
           end: expect.any(String),
         },
-        defaultCacheHeaders,
+        defaultCacheHeaders
       );
     });
 
@@ -93,7 +93,7 @@ describe('LabelsApiClient', () => {
           start: expect.any(String),
           end: expect.any(String),
         },
-        defaultCacheHeaders,
+        defaultCacheHeaders
       );
     });
   });
@@ -113,7 +113,7 @@ describe('LabelsApiClient', () => {
           end: expect.any(String),
           limit: 40000,
         },
-        defaultCacheHeaders,
+        defaultCacheHeaders
       );
     });
 
@@ -130,7 +130,7 @@ describe('LabelsApiClient', () => {
           end: expect.any(String),
           limit: 40000,
         },
-        defaultCacheHeaders,
+        defaultCacheHeaders
       );
     });
   });
@@ -336,7 +336,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{__name__!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
       expect(result).toEqual(['label1', 'label2']);
     });
@@ -351,7 +351,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{__name__!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
       expect(result).toEqual(['label1', 'label2']);
     });
@@ -379,7 +379,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{__name__="metric1",job!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
       expect(result).toEqual(['grafana', 'prometheus']);
     });
@@ -394,7 +394,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{job!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
 
@@ -408,7 +408,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{job!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
 
@@ -428,7 +428,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{__name__="metric1",job!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
 
       // Reset mock to verify it's not called again
@@ -454,7 +454,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{__name__="metric1",job!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
 
@@ -472,7 +472,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{__name__="metric1",instance="test",job!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
 
@@ -490,7 +490,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{__name__="metric.name",instance="test",job!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
 
@@ -508,7 +508,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{"label with space"="space","label with space"!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
     });
 
@@ -524,7 +524,7 @@ describe('SeriesApiClient', () => {
       const response = await client.queryLabelValues(
         mockTimeRange,
         '"label with space"',
-        '{a_legacy_label="legacy",__name__="a.utf8.metric 🤘"}',
+        '{a_legacy_label="legacy",__name__="a.utf8.metric 🤘"}'
       );
 
       expect(mockRequest).toHaveBeenCalledTimes(1);
@@ -533,7 +533,7 @@ describe('SeriesApiClient', () => {
         expect.objectContaining({
           'match[]': '{a_legacy_label="legacy",__name__="a.utf8.metric 🤘","label with space"!=""}',
         }),
-        expect.any(Object),
+        expect.any(Object)
       );
       expect(response).toEqual(['space']);
     });
@@ -897,7 +897,7 @@ describe('BaseResourceClient', () => {
           'match[]': '{job="grafana"}',
           limit: 40000,
         },
-        { headers: { 'X-Grafana-Cache': 'private, max-age=60' } },
+        { headers: { 'X-Grafana-Cache': 'private, max-age=60' } }
       );
       expect(result).toEqual([{ __name__: 'metric1' }]);
     });
@@ -915,7 +915,7 @@ describe('BaseResourceClient', () => {
           'match[]': '{job="grafana"}',
           limit: 1000,
         },
-        { headers: { 'X-Grafana-Cache': 'private, max-age=60' } },
+        { headers: { 'X-Grafana-Cache': 'private, max-age=60' } }
       );
     });
 
