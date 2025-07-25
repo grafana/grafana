@@ -10,7 +10,6 @@ import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
-  useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -64,8 +63,7 @@ export function MoveProvisionedDashboardForm({
 
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
 
-  const [createFile, createRequest] = useCreateRepositoryFilesWithPathMutation();
-  const [deleteFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
+  const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
 
   const navigate = useNavigate();
@@ -103,32 +101,15 @@ export function MoveProvisionedDashboardForm({
     const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
 
     try {
-      await createFile({
+      await moveFile({
         name: repo,
         path: targetPath,
         ref: branchRef,
         message: commitMessage,
         body: currentFileData.resource.file,
-      }).unwrap();
-
-      await deleteFile({
-        name: repo,
-        path: path,
-        ref: branchRef,
-        message: commitMessage,
+        originalPath: path,
       }).unwrap();
     } catch (error) {
-      if (createRequest.isSuccess && !deleteRequest.isSuccess) {
-        appEvents.publish({
-          type: AppEvents.alertWarning.name,
-          payload: [
-            t(
-              'dashboard-scene.move-provisioned-dashboard-form.partial-failure-warning',
-              'Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.'
-            ),
-          ],
-        });
-      }
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error],
@@ -148,15 +129,15 @@ export function MoveProvisionedDashboardForm({
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
       paramName: 'new_pull_request_url',
-      paramValue: createRequest?.data?.urls?.newPullRequestURL,
-      repoType: createRequest?.data?.repository?.type,
+      paramValue: moveRequest?.data?.urls?.newPullRequestURL,
+      repoType: moveRequest?.data?.repository?.type,
     });
     navigate(url);
   };
 
   useProvisionedRequestHandler({
     dashboard,
-    request: createRequest,
+    request: moveRequest,
     workflow,
     handlers: {
       onBranchSuccess,
@@ -164,7 +145,7 @@ export function MoveProvisionedDashboardForm({
     },
   });
 
-  const isLoading = createRequest.isLoading || deleteRequest.isLoading;
+  const isLoading = moveRequest.isLoading;
 
   return (
     <Drawer
