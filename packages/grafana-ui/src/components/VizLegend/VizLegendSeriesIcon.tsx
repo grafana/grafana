@@ -13,12 +13,13 @@ interface Props {
   gradient?: string;
   readonly?: boolean;
   lineStyle?: LineStyle;
+  disabled?: boolean;
 }
 
 /**
  * @internal
  */
-export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly, lineStyle }: Props) => {
+export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly, lineStyle, disabled }: Props) => {
   const { onSeriesColorChange } = usePanelContext();
   const onChange = useCallback(
     (color: string) => {
@@ -38,12 +39,13 @@ export const VizLegendSeriesIcon = memo(({ seriesName, color, gradient, readonly
             onClick={showColorPicker}
             onMouseLeave={hideColorPicker}
             lineStyle={lineStyle}
+            disabled={disabled}
           />
         )}
       </SeriesColorPicker>
     );
   }
-  return <SeriesIcon color={color} gradient={gradient} lineStyle={lineStyle} />;
+  return <SeriesIcon color={color} gradient={gradient} lineStyle={lineStyle} disabled={disabled} />;
 });
 
 VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';
