@@ -430,7 +430,7 @@ export function useRowHeight({
       // regular rows
       let result = cache[row.__index];
       if (!result) {
-        result = getRowHeight(
+        result = cache[row.__index] = getRowHeight(
           fields,
           row.__index,
           colWidths,
@@ -439,9 +439,7 @@ export function useRowHeight({
           TABLE.LINE_HEIGHT,
           TABLE.CELL_PADDING * 2
         );
-        cache[row.__index] = result;
       }
-
       return result;
     };
   }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, colWidths, lineCounters, expandedRows]);

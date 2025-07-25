@@ -104,7 +104,7 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
     font,
     avgCharWidth,
     estimateLines: getTextLineEstimator(avgCharWidth),
-    wrappedCount: (value, width) => count(String(value), width),
+    wrappedCount: count as LineCounter,
   };
 }
 
@@ -214,7 +214,7 @@ export function getRowHeight(
     // set both an "estimate" and a "counter" function. if the cell we find to be the max was estimated, we will
     // get the "true" value right before calculating the row height by hanging onto a reference to the counter fn.
     const count = estimate ?? counter;
-    const isEstimating = typeof estimate === 'function';
+    const isEstimating = estimate !== undefined;
 
     for (const fieldIdx of fieldIdxs) {
       const field = fields[fieldIdx];
@@ -239,7 +239,7 @@ export function getRowHeight(
 
   // if we finished this row height loop with an estimate, we need to call
   // the `getValue` method to unwrap and get the accurate line count.
-  if (typeof accurateCounter === 'function') {
+  if (accurateCounter !== undefined) {
     maxLines = accurateCounter(maxValue, maxWidth);
   }
 
