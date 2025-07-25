@@ -1064,6 +1064,7 @@ describe('TableNG utils', () => {
 
   describe('applySort', () => {
     // TODO
+    it.todo('does not modify the __index of the rows');
   });
 
   describe('frameToRecords', () => {
