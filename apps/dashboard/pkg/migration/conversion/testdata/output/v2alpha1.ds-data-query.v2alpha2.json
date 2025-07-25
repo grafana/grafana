@@ -972,10 +972,116 @@
     },
     "title": "Test: V2alpha1 dashboard with annotations",
     "variables": [
-      null,
-      null,
-      null,
-      null
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "variable-ds-prometheus",
+          "current": {
+            "text": null,
+            "value": null
+          },
+          "hide": "dontHide",
+          "refresh": "",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "datasource": {
+              "name": "gdev-prometheus"
+            },
+            "spec": {
+              "expr": "up"
+            }
+          },
+          "regex": "",
+          "sort": "",
+          "options": null,
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "variable-no-ds",
+          "current": {
+            "text": null,
+            "value": null
+          },
+          "hide": "dontHide",
+          "refresh": "",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana-testdata-datasource",
+            "version": "v0",
+            "spec": {
+              "csv": "1,2,3,4",
+              "scenarioId": "csv_metric_values"
+            }
+          },
+          "regex": "",
+          "sort": "",
+          "options": null,
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "variable-no-ds-empty-query",
+          "current": {
+            "text": null,
+            "value": null
+          },
+          "hide": "dontHide",
+          "refresh": "",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana-testdata-datasource",
+            "version": "v0",
+            "spec": {}
+          },
+          "regex": "",
+          "sort": "",
+          "options": null,
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "variable-no-default-ds",
+          "current": {
+            "text": null,
+            "value": null
+          },
+          "hide": "dontHide",
+          "refresh": "",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "spec": {
+              "expr": "up"
+            }
+          },
+          "regex": "",
+          "sort": "",
+          "options": null,
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": false
+        }
+      }
     ]
   },
   "status": {

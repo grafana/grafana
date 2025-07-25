@@ -944,7 +944,7 @@
             "uid": "gdev-prometheus"
           },
           "enable": true,
-          "hide": false,
+          "hide": "dontHide",
           "name": "variable-ds-prometheus",
           "query": {
             "kind": "prometheus",
@@ -954,11 +954,11 @@
           }
         }
       },
-      {
+      { 
         "kind": "QueryVariable",
         "spec": {
           "enable": true,
-          "hide": false,
+          "hide": "dontHide",
           "name": "variable-no-ds",
           "query": {
             "kind": "grafana-testdata-datasource",
@@ -973,7 +973,7 @@
         "kind": "QueryVariable",
         "spec": {
           "enable": true,
-          "hide": false,
+          "hide": "dontHide",
           "name": "variable-no-ds-empty-query",
           "query": {
             "kind": "grafana-testdata-datasource",
@@ -985,7 +985,7 @@
         "kind": "QueryVariable",
         "spec": {
           "enable": true,
-          "hide": false,
+          "hide": "dontHide",
           "name": "variable-no-default-ds",
           "query": {
             "kind": "prometheus",
