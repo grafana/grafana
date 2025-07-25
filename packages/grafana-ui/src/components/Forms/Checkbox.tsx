@@ -39,7 +39,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     );
     const styles = useStyles2(getCheckboxStyles, invalid);
 
-    const ariaChecked = indeterminate ? 'mixed' : undefined;
+    const ariaChecked = indeterminate ? 'mixed' : value;
 
     return (
       <label className={cx(styles.wrapper, className)}>
