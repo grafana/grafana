@@ -74,7 +74,7 @@ import {
   shouldTextOverflow,
   shouldTextWrap,
   TextAlign,
-  showDataLinksActionTooltip,
+  withDataLinksActionTooltip,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -344,7 +344,7 @@ export function TableNG(props: TableNGProps) {
 
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
-        const withTooltip = showDataLinksActionTooltip(field, cellType);
+        const withTooltip = withDataLinksActionTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
         const isMonospace = cellType === TableCellDisplayMode.JSONView;
