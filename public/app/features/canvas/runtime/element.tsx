@@ -403,6 +403,8 @@ export class ElementState implements LayerElement {
       this.oneClickMode = OneClickMode.Link;
     } else if (this.options.actions?.some((action) => action.oneClick === true)) {
       this.oneClickMode = OneClickMode.Action;
+    } else {
+      this.oneClickMode = OneClickMode.Off;
     }
 
     if (frames) {
