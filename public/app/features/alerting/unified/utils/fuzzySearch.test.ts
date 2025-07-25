@@ -1,4 +1,4 @@
-import { createFuzzyMatcher, fuzzyFilter, fuzzyMatches, getFallbackFilter, shouldUseFuzzySearch } from './fuzzySearch';
+import { fuzzyFilter, fuzzyMatches, getFallbackFilter, shouldUseFuzzySearch } from './fuzzySearch';
 
 describe('fuzzySearch', () => {
   describe('shouldUseFuzzySearch', () => {
