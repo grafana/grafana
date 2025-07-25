@@ -1,5 +1,5 @@
+import { grafanaOncallPrivateApiRTK } from '@grafana/hackathon-13-registrar-private/rtk-query';
 import { GrafanaManagedReceiverConfig } from '../../../../../../plugins/datasource/alertmanager/types';
-import { OnCallIntegrationDTO } from '../../../api/onCallApi';
 import { getIrmIfPresentOrOnCallPluginId, getIsIrmPluginPresent } from '../../../utils/config';
 import { createBridgeURL } from '../../PluginBridge';
 
@@ -22,7 +22,7 @@ export const onCallReceiverMeta: ReceiverPluginMetadata = {
 };
 
 export function getOnCallMetadata(
-  onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
+  onCallIntegrations: grafanaOncallPrivateApiRTK.AlertReceiveChannelPolymorphicRead[],
   receiver: GrafanaManagedReceiverConfig,
   hasAlertManagerConfigData = true
 ): ReceiverPluginMetadata {
@@ -55,9 +55,12 @@ export function getOnCallMetadata(
 
   return {
     ...onCallReceiverMeta,
-    description: matchingOnCallIntegration?.display_name,
+    description:
+      matchingOnCallIntegration && 'display_name' in matchingOnCallIntegration
+        ? matchingOnCallIntegration.display_name
+        : undefined,
     externalUrl: matchingOnCallIntegration
-      ? createBridgeURL(getIrmIfPresentOrOnCallPluginId(), `/integrations/${matchingOnCallIntegration.value}`)
+      ? createBridgeURL(getIrmIfPresentOrOnCallPluginId(), `/integrations/${matchingOnCallIntegration.integration_url}`)
       : undefined,
     warning: matchingOnCallIntegration ? undefined : `${pluginName} Integration no longer exists`,
   };
