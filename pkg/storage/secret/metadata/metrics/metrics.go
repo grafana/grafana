@@ -249,7 +249,6 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueMetadataGetCount,
 				m.SecureValueMetadataListDuration,
 				m.SecureValueMetadataListCount,
-				m.SecureValueGetForDecryptDuration,
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
 				m.DecryptDuration,
