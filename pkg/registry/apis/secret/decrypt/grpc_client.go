@@ -48,12 +48,19 @@ func NewGRPCDecryptClientWithTLS(
 	address string,
 	tlsConfig TLSConfig,
 ) (*GRPCDecryptClient, error) {
-	creds, err := createTLSCredentials(tlsConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup TLS: %w", err)
+	var opts []grpc.DialOption
+	if tlsConfig.UseTLS {
+		creds, err := createTLSCredentials(tlsConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to setup TLS: %w", err)
+		}
+
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	} else {
+		opts = append(opts, grpc.WithInsecure())
 	}
 
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.NewClient(address, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to grpc decrypt server at %s: %w", address, err)
 	}
