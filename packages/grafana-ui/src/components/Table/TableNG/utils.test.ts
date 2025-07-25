@@ -1074,7 +1074,12 @@ describe('TableNG utils', () => {
     it('returns an array of line counters for each column', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        {
+          name: 'Address',
+          type: FieldType.string,
+          values: [],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
       ];
       const counters = buildRowLineCounters(fields, ctx);
       expect(counters[0].counter).toBeInstanceOf(Function);
@@ -1084,11 +1089,26 @@ describe('TableNG utils', () => {
     it('does not return the index of columns which are not wrapped', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+        {
+          name: 'Address',
+          type: FieldType.string,
+          values: [],
+          config: { custom: { cellOptions: { wrapText: true } } },
+        },
       ];
 
       const counters = buildRowLineCounters(fields, ctx);
       expect(counters[0].fieldIdxs).toEqual([1]);
+    });
+
+    it('does not enable text counting for non-string fields', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
+      ];
+
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters).toEqual([]);
     });
 
     it('returns an empty array if no columns are wrapped', () => {
