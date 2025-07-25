@@ -143,10 +143,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagPluginsDetailsRightPanel
-	// Enables right panel for the plugins details page
-	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
-
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
