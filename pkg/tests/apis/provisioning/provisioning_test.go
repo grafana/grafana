@@ -831,7 +831,14 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "delete-job-test-repo"
-  	// Copy multiple test files to the repository
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+		"SyncTarget":  "instance",
+	})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+	// Copy multiple test files to the repository
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
 	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "dashboard2.json")
 	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/dashboard3.json")
@@ -965,6 +972,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			state := mustNestedString(deleteJob.Object, "status", "state")
 			assert.Equal(collect, "error", state, "delete job should have failed due to non-existent file")
 		}, time.Second*10, time.Millisecond*100, "Expected delete job to fail with error state")
+	})
+}
+
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
