@@ -245,9 +245,8 @@ require (
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
+	github.com/thomaspoignant/go-feature-flag v1.45.0 // @grafana/grafana-backend-group
 )
-
-require github.com/thomaspoignant/go-feature-flag v1.45.0
 
 require (
 	cel.dev/expr v0.23.1 // indirect
