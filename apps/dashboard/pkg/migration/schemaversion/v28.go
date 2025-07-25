@@ -96,7 +96,9 @@ func (m *v28Migrator) processPanels(panels []interface{}) error {
 		// Process nested panels if this is a row panel
 		if p["type"] == "row" {
 			if nestedPanels, ok := p["panels"].([]interface{}); ok {
-				m.processPanels(nestedPanels)
+				if err := m.processPanels(nestedPanels); err != nil {
+					return err
+				}
 			}
 			continue
 		}
