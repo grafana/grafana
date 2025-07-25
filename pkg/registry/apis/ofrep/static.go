@@ -3,7 +3,7 @@ package ofrep
 import (
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
 func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
@@ -15,7 +15,7 @@ func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter
 	}
 
 	if !isAuthedUser {
-		var publicOnly []featuremgmt.OFREPFlag
+		var publicOnly []goffmodel.OFREPFlagBulkEvaluateSuccessResponse
 
 		for _, flag := range result.Flags {
 			if isPublicFlag(flag.Key) {
