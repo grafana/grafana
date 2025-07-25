@@ -43,8 +43,16 @@ export abstract class BaseResourceClient {
     this.seriesLimit = this.datasource.seriesLimit;
   }
 
+  /**
+   * Returns the effective limit to use for API requests.
+   * Uses the provided limit if specified, otherwise falls back to the datasource's configured series limit.
+   * When zero is provided, it returns zero (which means no limit in Prometheus API).
+   *
+   * @param {number} [limit] - Optional limit parameter from the API call
+   * @returns {number} The limit to use - either the provided limit or datasource's default series limit
+   */
   protected getEffectiveLimit(limit?: number): number {
-    return limit || this.seriesLimit;
+    return limit ?? this.seriesLimit;
   }
 
   protected async requestLabels(
@@ -93,10 +101,23 @@ export class LabelsApiClient extends BaseResourceClient implements ResourceApiCl
     this.labelKeys = await this.queryLabelKeys(timeRange);
   };
 
-  public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
-    this.metrics = await this.queryLabelValues(timeRange, METRIC_LABEL);
+  /**
+   * Fetches all available metrics from Prometheus using the labels values endpoint for __name__.
+   * Also processes and identifies histogram metrics (those ending with '_bucket').
+   * Results are cached and stored in the client instance for future use.
+   *
+   * @param {TimeRange} timeRange - Time range to search for metrics
+   * @param {number} [limit] - Optional maximum number of metrics to return, uses datasource default if not specified
+   * @returns {Promise<{metrics: string[], histogramMetrics: string[]}>} Object containing all metrics and filtered histogram metrics
+   */
+  public queryMetrics = async (
+    timeRange: TimeRange,
+    limit?: number
+  ): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
+    const effectiveLimit = this.getEffectiveLimit(limit);
+    this.metrics = await this.queryLabelValues(timeRange, METRIC_LABEL, undefined, effectiveLimit);
     this.histogramMetrics = processHistogramMetrics(this.metrics);
-    this._cache.setLabelValues(timeRange, undefined, DEFAULT_SERIES_LIMIT, this.metrics);
+    this._cache.setLabelValues(timeRange, undefined, effectiveLimit, this.metrics);
     return { metrics: this.metrics, histogramMetrics: this.histogramMetrics };
   };
 
