@@ -184,7 +184,6 @@ The following image shows a table visualization with value mappings. If you want
 1. Scroll to the **Value mappings** section and expand it.
 1. Click **Add value mappings**.
 1. Click **Add a new mapping** and then select one of the following:
-
    - **Value** - Enter a single value to match.
    - **Range** - Enter the beginning and ending values of a range to match.
    - **Regex** - Enter a regular expression pattern to match.

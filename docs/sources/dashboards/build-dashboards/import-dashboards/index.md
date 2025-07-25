@@ -40,7 +40,6 @@ To import a dashboard, follow these steps:
 1. Click **Dashboards** in the primary menu.
 1. Click **New** and select **Import** in the drop-down menu.
 1. Perform one of the following steps:
-
    - Upload a dashboard JSON file.
    - Paste a [Grafana.com dashboard](#discover-dashboards-on-grafanacom) URL or ID into the field provided.
    - Paste dashboard JSON text directly into the text area.

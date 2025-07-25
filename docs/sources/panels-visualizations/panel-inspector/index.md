@@ -43,7 +43,6 @@ Grafana generates a CSV file that contains your data, including any transformati
 1. Click **Data**.
 
    If your panel contains multiple queries or queries multiple nodes, then you have additional options.
-
    - **Select result**: Choose which result set data you want to view.
    - **Transform data**
    - **Join by time**: View raw data from all your queries at once, one result set per column. Click a column heading to reorder the data.

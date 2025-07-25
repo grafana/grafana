@@ -14,22 +14,18 @@ The end goal is for the Resource APIs to become the only interface for managing 
 ## 1. Key Differences from Legacy API Endpoints
 
 - **URL structure & versioning:**
-
   - **Resource APIs:** Follow Kubernetes conventions (`/apis/<group>/<version>/namespaces/<namespace>/<resource>/<name>`). Includes explicit API versions (e.g., `v0alpha1`, `v1`, `v2beta1`) in the path, allowing for controlled evolution and multiple versions of a resource API to co-exist.
   - **Legacy APIs:** Variable path structures (e.g., `/api/dashboards/uid/:uid`, `/api/ruler/grafana/api/v1/rules/:uid/:uid`). Less explicit versioning.
 
 - **Resource schemas:**
-
   - **Resource APIs:** Each resource has a well-defined schema (`spec`) and is wrapped with an envelope with common metadata, all APIs come with an always-in-sync OpenAPI spec.
   - **Legacy APIs:** Structures vary
 
 - **Namespacing / org context:**
-
   - **Resource APIs:** Uses explicit namespaces in the path (`/namespaces/<namespace>/...`) mapping to Grafana Organization IDs in OSS/Enterprise and Grafana Cloud Stack IDs in Grafana Cloud for scoping.
   - **Legacy APIs:** Org context determined implicitly (session, API key), not usually part of the URL structure.
 
 - **Consistency of convenience features:**
-
   - **Resource APIs:** Convenience features such as resource history, restore and observability-as-code tooling come out of the box; a single implementation of convenience features works across all resources because of the standardization
   - **Legacy APIs:** Different APIs support different convenience features; implementations are feature-specific
 

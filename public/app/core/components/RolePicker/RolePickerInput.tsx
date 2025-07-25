@@ -116,7 +116,9 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
         <Tooltip
           content={
             <div className={styles.tooltip}>
-              {appliedRoles?.map((role) => <p key={role.uid}>{role.group + ':' + (role.displayName || role.name)}</p>)}
+              {appliedRoles?.map((role) => (
+                <p key={role.uid}>{role.group + ':' + (role.displayName || role.name)}</p>
+              ))}
             </div>
           }
         >

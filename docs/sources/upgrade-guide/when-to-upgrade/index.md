@@ -124,14 +124,12 @@ Here is an overview of version support through 2026:
 The level of support changes as new versions of Grafana are released. Here are the key details:
 
 - **Full Support**:
-
   - All new features
   - All bug fixes
   - Security patches
   - Regular updates
 
 - **Security & Critical Bugs Only**:
-
   - Security vulnerability patches
   - Critical bug fixes that cause feature degradation
   - No new features
