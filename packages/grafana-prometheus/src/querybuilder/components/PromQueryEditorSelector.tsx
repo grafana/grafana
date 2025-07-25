@@ -170,18 +170,16 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
     if (!isEqual(query, props.query)) {
       setDataIsStale(true);
 
-      if (queryBuilderOnly) {
-        if (isValidPromQLMinusGrafanaGlobalVariables(query.expr)) {
-          if (editorMode === QueryEditorMode.Builder) {
-            onRunQuery();
-          } else {
-            // For code editor add a delay before running query rather than do it for
-            // every character.
-            delayTrigger.start();
-          }
+      if (isValidPromQLMinusGrafanaGlobalVariables(query.expr)) {
+        if (editorMode === QueryEditorMode.Builder) {
+          onRunQuery();
         } else {
-          delayTrigger.reset();
+          // For code editor add a delay before running query rather than do it for
+          // every character.
+          delayTrigger.start();
         }
+      } else {
+        delayTrigger.reset();
       }
     }
     onChange(query);
