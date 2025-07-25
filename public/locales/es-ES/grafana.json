@@ -7160,6 +7160,7 @@
           "start-time": "Hora de comienzo:"
         }
       },
+      "share-span": "",
       "warnings": "Advertencias"
     },
     "span-filters": {
@@ -10951,15 +10952,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11069,10 +11070,10 @@
       "title-instant-updates-requests-webhooks": "Actualizaciones instantáneas y solicitudes de extracción con webhooks.",
       "title-visual-previews-in-pull-requests": "Vistas previas visuales en solicitudes de extracción con renderizado de imágenes"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Especificación del trabajo",
-      "summary": "Resumen",
-      "title-error": "Error"
+      "summary": "Resumen"
     },
     "features-list": {
       "actions": {
@@ -11217,10 +11218,12 @@
       "starting": "Empezando...",
       "status": {
         "title-error-running-job": "Error al ejecutar el trabajo",
-        "title-job-completed-successfully": "Trabajo completado con éxito",
         "title-warning-running-job": ""
       },
-      "summary": "Resumen"
+      "summary": "Resumen",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11386,6 +11389,7 @@
       "go-to": "Ir a",
       "make-sure": "Asegúrate de incluir estos permisos"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Los recursos no se podrán crear, editar ni eliminar durante este proceso. En el último paso, desaparecerán.",
       "alert-point-2": "Una vez que se complete el aprovisionamiento, los recursos volverán a aparecer y se gestionarán a través de un almacenamiento externo.",

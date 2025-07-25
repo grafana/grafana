@@ -30,7 +30,7 @@ export function RepositoryList({ items }: Props) {
           <ConnectRepositoryButton items={items} />
         </Stack>
       )}
-      <Stack direction={'column'}>
+      <Stack direction={'column'} gap={2}>
         {filteredItems.length ? (
           filteredItems.map((item) => <RepositoryCard key={item.metadata?.name} repository={item} />)
         ) : (
