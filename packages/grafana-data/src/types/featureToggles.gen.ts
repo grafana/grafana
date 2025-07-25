@@ -166,11 +166,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables right panel for the plugins details page
-  * @default true
-  */
-  pluginsDetailsRightPanel?: boolean;
-  /**
   * Enables previous SQL data source dataset dropdown behavior
   */
   sqlDatasourceDatabaseSelection?: boolean;
