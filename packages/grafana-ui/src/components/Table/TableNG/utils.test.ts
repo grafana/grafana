@@ -15,7 +15,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { LineCounter } from './types';
+import { LineCounterEntry } from './types';
 import {
   extractPixelValue,
   frameToRecords,
@@ -1038,33 +1038,28 @@ describe('TableNG utils', () => {
         { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
       ];
       const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters).toHaveLength(2);
-
-      // mocked the value as "2" above.
-      expect(counters[0]!('Name', 100)).toBe(2);
-      expect(counters[1]!('Age', 100)).toBe(2);
+      expect(counters[0].counter).toBeInstanceOf(Function);
+      expect(counters[0].fieldIdxs).toEqual([0, 1]);
     });
 
-    it('returns the same line counter instance for every field', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: { wrapHeaderText: true } } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
-      ];
-      const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters[0]).toBe(counters[1]);
-    });
-
-    it('returns null in the array for fields which do not have header text wrapping', () => {
+    it('does not return the index of columns which are not wrapped', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
         { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
       ];
 
       const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters).toHaveLength(2);
+      expect(counters[0].fieldIdxs).toEqual([1]);
+    });
 
-      expect(counters[0]).toBeNull();
-      expect(counters[1]).toBeInstanceOf(Function);
+    it('returns an empty array if no columns are wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
+      ];
+
+      const counters = buildHeaderLineCounters(fields, ctx);
+      expect(counters).toEqual([]);
     });
   });
 
@@ -1082,39 +1077,34 @@ describe('TableNG utils', () => {
         { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
       ];
       const counters = buildRowLineCounters(fields, ctx);
-      expect(counters).toHaveLength(2);
-
-      // mocked the value as "2" above.
-      expect(counters[0]!('Name', 100)).toBe(2);
-      expect(counters[1]!('Age', 100)).toBe(2);
+      expect(counters[0].counter).toBeInstanceOf(Function);
+      expect(counters[0].fieldIdxs).toEqual([0, 1]);
     });
 
-    it('returns the same line counter instance for every field', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
-      ];
-      const counters = buildRowLineCounters(fields, ctx);
-      expect(counters[0]).toBe(counters[1]);
-    });
-
-    it('returns null in the array for fields which do not have header text wrapping', () => {
+    it('does not return the index of columns which are not wrapped', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
         { name: 'Age', type: FieldType.number, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
       ];
 
       const counters = buildRowLineCounters(fields, ctx);
-      expect(counters).toHaveLength(2);
+      expect(counters[0].fieldIdxs).toEqual([1]);
+    });
 
-      expect(counters[0]).toBeNull();
-      expect(counters[1]).toBeInstanceOf(Function);
+    it('returns an empty array if no columns are wrapped', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
+      ];
+
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters).toEqual([]);
     });
   });
 
   describe('getRowHeight', () => {
     let fields: Field[];
-    let counters: LineCounter[];
+    let counters: LineCounterEntry[];
 
     beforeEach(() => {
       fields = [
@@ -1132,8 +1122,8 @@ describe('TableNG utils', () => {
         },
       ];
       counters = [
-        jest.fn((value, _length: number) => String(value).split(' ').length), // Mocked to count words as lines
-        jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)), // Mocked to return a line for every 3 digits of a number
+        { counter: jest.fn((value, _length: number) => String(value).split(' ').length), fieldIdxs: [0] }, // Mocked to count words as lines
+        { counter: jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)), fieldIdxs: [1] }, // Mocked to return a line for every 3 digits of a number
       ];
     });
 
@@ -1157,21 +1147,26 @@ describe('TableNG utils', () => {
 
     it('should take colWidths into account when calculating max wrap cell', () => {
       getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
-      expect(counters[0]).toHaveBeenCalledWith('longer one here', 50);
-      expect(counters[1]).toHaveBeenCalledWith(123456, 60);
+      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50);
+      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60);
     });
 
     // this is used to calc wrapped header height
     it('should use the display name if the rowIdx is -1', () => {
       getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
-      expect(counters[0]).toHaveBeenCalledWith('Name', 50);
-      expect(counters[1]).toHaveBeenCalledWith('Age', 60);
+      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50);
+      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60);
     });
 
     it('should ignore columns which do not have line counters', () => {
-      const height = getRowHeight(fields, 3, [30, 30], 36, [null, counters[1]], 20, 10);
+      const height = getRowHeight(fields, 3, [30, 30], 36, [counters[1]], 20, 10);
       // 2 lines @ 20px, 10px vertical padding (not 3 lines, since we don't line count Name)
       expect(height).toBe(50);
+    });
+
+    it('should return the default height if there are no counters to apply', () => {
+      const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
+      expect(height).toBe(36);
     });
   });
 

@@ -34,6 +34,7 @@ import {
   Comparator,
   TypographyCtx,
   LineCounter,
+  LineCounterEntry,
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -120,35 +121,39 @@ export function getTextLineCounter(typographyCtx: TypographyCtx): LineCounter {
 /**
  * @internal return a text line counter for every field which has wrapHeaderText enabled.
  */
-export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): Array<LineCounter | null> {
-  let textLineCounter: LineCounter;
-  return fields.map((field) => {
-    if (!field.config?.custom?.wrapHeaderText) {
-      return null;
+export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] {
+  const wrappedColIdxs = fields.reduce((acc, field, idx) => {
+    if (field.config?.custom?.wrapHeaderText) {
+      acc.push(idx);
     }
-    if (!textLineCounter) {
-      textLineCounter = getTextLineCounter(typographyCtx);
-    }
-    return textLineCounter;
-  });
+    return acc;
+  }, [] as number[]);
+
+  if (wrappedColIdxs.length === 0) {
+    return [];
+  }
+
+  return [{ counter: getTextLineCounter(typographyCtx), fieldIdxs: wrappedColIdxs }];
 }
 
 /**
  * @internal return a text line counter for every field which has wrapHeaderText enabled.
  */
-export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyCtx): Array<LineCounter | null> {
-  let textLineCounter: LineCounter;
-  return fields.map((field) => {
-    if (!shouldTextWrap(field)) {
-      return null;
+export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] {
+  const result: Record<string, LineCounterEntry> = {};
+
+  for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
+    const field = fields[fieldIdx];
+    if (shouldTextWrap(field)) {
+      // TODO: Pills, DataLinks, and JSON will have custom line counters here.
+      if (field.type === FieldType.string) {
+        result.textCounter = result.textCounter ?? { counter: getTextLineCounter(typographyCtx), fieldIdxs: [] };
+        result.textCounter.fieldIdxs.push(fieldIdx);
+      }
     }
-    // TODO: Pills and DataLinks will have custom line counters here. we can also provide a monospace TypographyCtx
-    // for situations where that's appropriate as well.
-    if (!textLineCounter) {
-      textLineCounter = getTextLineCounter(typographyCtx);
-    }
-    return textLineCounter;
-  });
+  }
+
+  return Object.values(result);
 }
 
 /**
@@ -161,22 +166,21 @@ export function getRowHeight(
   rowIdx: number,
   columnWidths: number[],
   defaultHeight: number,
-  lineCounters: Array<LineCounter | null>,
+  lineCounters: LineCounterEntry[],
   lineHeight = TABLE.LINE_HEIGHT,
   verticalPadding = 0
 ): number {
   let maxLines = 1;
 
-  for (let i = 0; i < fields.length; i++) {
-    const lineCounter = lineCounters[i];
-    if (lineCounter) {
-      const field = fields[i];
+  for (const { counter, fieldIdxs } of lineCounters) {
+    for (const fieldIdx of fieldIdxs) {
+      const field = fields[fieldIdx];
       // special case: for the header, provide `-1` as the row index.
       const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellValueRaw != null) {
-        const approxLine = lineCounter(cellValueRaw, columnWidths[i]);
-        if (approxLine > maxLines) {
-          maxLines = approxLine;
+        const approxLines = counter(cellValueRaw, columnWidths[fieldIdx]);
+        if (approxLines > maxLines) {
+          maxLines = approxLines;
         }
       }
     }

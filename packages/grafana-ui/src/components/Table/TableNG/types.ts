@@ -271,3 +271,7 @@ export interface TypographyCtx {
 }
 
 export type LineCounter = (value: unknown, colWidth: number) => number;
+export interface LineCounterEntry {
+  counter: LineCounter;
+  fieldIdxs: number[];
+}
