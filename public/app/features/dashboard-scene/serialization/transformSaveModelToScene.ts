@@ -500,17 +500,9 @@ function getDashboardInteractionCallback(uid: string, title: string) {
   return (e: SceneInteractionProfileEvent) => {
     let interactionType = '';
 
-    if (e.origin === 'SceneTimeRange') {
-      interactionType = 'time-range-change';
-    } else if (e.origin === 'SceneRefreshPicker') {
-      interactionType = 'refresh';
-    } else if (e.origin === 'DashboardScene') {
-      interactionType = 'view';
-    } else if (e.origin.indexOf('Variable') > -1) {
-      interactionType = 'variable-change';
-    }
     reportInteraction('dashboard-render', {
-      interactionType,
+      interactionType: e.origin,
+      uid,
       duration: e.duration,
       networkDuration: e.networkDuration,
       totalJSHeapSize: e.totalJSHeapSize,
