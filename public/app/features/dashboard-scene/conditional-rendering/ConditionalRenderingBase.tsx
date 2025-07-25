@@ -4,8 +4,16 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 
+import { dashboardEditActions } from '../edit-pane/shared';
+
 import { ConditionalRendering } from './ConditionalRendering';
-import { ConditionalRenderingKindTypes, ConditionValues, ItemsWithConditionalRendering } from './types';
+import { ConditionalRenderingGroup } from './ConditionalRenderingGroup';
+import {
+  ConditionalRenderingConditions,
+  ConditionalRenderingKindTypes,
+  ConditionValues,
+  ItemsWithConditionalRendering,
+} from './types';
 
 export interface ConditionalRenderingBaseState<V = ConditionValues> extends SceneObjectState {
   value: V;
@@ -74,6 +82,22 @@ export abstract class ConditionalRenderingBase<
     this.notifyChange();
   }
 
+  public findRule() {
+    return this.getRenderingGroup().getRule(this.state.key!);
+  }
+
+  public undoDeleted(index: number, rule: ConditionalRenderingConditions) {
+    const group = this.getRenderingGroup();
+    const restoredState = [...group.state.value];
+    restoredState.splice(index, 0, rule);
+    group.setStateAndNotify({ value: restoredState });
+  }
+
+  private getRenderingGroup(): ConditionalRenderingGroup {
+    // TODO: Adjust once nested rules are introduced to get relevant ConditionalRenderingGroup
+    return this._getConditionalLogicRoot().state.rootGroup;
+  }
+
   private _getConditionalLogicRoot(): ConditionalRendering {
     return sceneGraph.getAncestor(this, ConditionalRendering);
   }
@@ -115,7 +139,20 @@ function ConditionalRenderingBaseRenderer<T extends ConditionalRenderingBase>({
         <IconButton
           aria-label={t('dashboard.conditional-rendering.conditions.shared.delete-condition', 'Delete Condition')}
           name="trash-alt"
-          onClick={() => model.onDelete()}
+          onClick={() => {
+            const { rule, ruleIndex } = model.findRule();
+
+            dashboardEditActions.edit({
+              description: t('dashboard.conditional-rendering.conditions.shared.delete-condition', 'Delete Condition'),
+              source: model,
+              perform: () => model.onDelete(),
+              undo: () => {
+                if (rule) {
+                  model.undoDeleted(ruleIndex, rule);
+                }
+              },
+            });
+          }}
         />
       </Stack>
     </Stack>

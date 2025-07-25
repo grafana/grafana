@@ -1,3 +1,6 @@
+import { lowerCase } from 'lodash';
+
+import { t } from '@grafana/i18n';
 import { SceneObject } from '@grafana/scenes';
 
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
@@ -17,3 +20,14 @@ export function getItemType(object: SceneObject): ItemsWithConditionalRendering 
 
   return 'element';
 }
+
+export const translatedItemType = (item: ItemsWithConditionalRendering) => {
+  const translations: { [key in ItemsWithConditionalRendering]: string } = {
+    panel: lowerCase(t('dashboard.edit-pane.elements.panel', 'Panel')),
+    row: lowerCase(t('dashboard.edit-pane.elements.row', 'Row')),
+    tab: lowerCase(t('dashboard.edit-pane.elements.tab', 'Tab')),
+    element: lowerCase(t('dashboard.edit-pane.elements.element', 'Element')),
+  };
+
+  return translations[item] || item;
+};
