@@ -52,7 +52,7 @@ Grafana ships with the MySQL data source by default, so no additional installati
 {{< admonition type="caution" >}}
 When adding a data source, ensure the database user you specify has only `SELECT` permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb;` or `DROP TABLE user;`, which could get executed.
 
-To minimize this risk, it is strongly recommended to create a dedicated MySQL user for Grafana with restricted permissions.
+To minimize this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
 {{< /admonition >}}
 
 Example:
