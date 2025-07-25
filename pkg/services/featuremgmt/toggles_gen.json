@@ -2348,7 +2348,8 @@
       "metadata": {
         "name": "pluginsDetailsRightPanel",
         "resourceVersion": "1753285129398",
-        "creationTimestamp": "2024-08-13T09:55:30Z"
+        "creationTimestamp": "2024-08-13T09:55:30Z",
+        "deletionTimestamp": "2025-07-25T08:56:36Z"
       },
       "spec": {
         "description": "Enables right panel for the plugins details page",
