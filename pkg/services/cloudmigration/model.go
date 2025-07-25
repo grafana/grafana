@@ -18,6 +18,7 @@ var (
 )
 
 // CloudMigration domain structs
+// Database migrations are managed in services/sqlstore/migrations/cloud_migrations.go
 
 // CloudMigrationSession represents a configured migration token
 type CloudMigrationSession struct {
@@ -43,6 +44,7 @@ type CloudMigrationSnapshot struct {
 	LocalDir       string `xorm:"local_directory"`
 	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
 	ErrorString    string `xorm:"error_string"`
+	Data           []byte `xorm:"data"`
 	Created        time.Time
 	Updated        time.Time
 	Finished       time.Time
