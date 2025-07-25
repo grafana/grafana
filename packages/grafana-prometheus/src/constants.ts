@@ -42,8 +42,3 @@ export const GET_AND_POST_METADATA_ENDPOINTS = [
   'api/v1/labels',
   'suggestions',
 ];
-
-/**
- * @deprecated
- */
-export const REMOVE_SERIES_LIMIT = 'none';
