@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Értékelési csoport szerkesztése"
     },
     "group-loader": {
-      "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben"
+      "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "A csoport törlése folyamatban van"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Előnézet frissítése",
+      "empty-state": "",
       "label-preview": "Előnézet",
       "refresh": "Frissítés"
     },
@@ -7157,6 +7160,7 @@
           "start-time": "Kezdés időpontja:"
         }
       },
+      "share-span": "",
       "warnings": "Figyelmeztetések"
     },
     "span-filters": {
@@ -8597,7 +8601,10 @@
         "no-data": ""
       },
       "no-values-label": "Nincsenek értékek",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Címkék"
@@ -9330,6 +9337,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Nincs megjeleníthető mező.",
+      "open-assistant": "",
       "pin-line": "Napló kitűzése",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9356,9 @@
       "copy-log": "Naplósor másolása",
       "hide-details": "Napló részleteinek megjelenítése",
       "icon-label": "Naplómenü",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Napló rögzítése",
       "show-context": "Kontextus megjelenítése",
       "show-details": "Napló részleteinek elrejtése",
@@ -10941,15 +10952,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11070,10 @@
       "title-instant-updates-requests-webhooks": "Azonnali frissítések és lekérések webkapcsokkal.",
       "title-visual-previews-in-pull-requests": "Vizuális előnézetek a lekérésekben képalkotással"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Feladat részletei",
-      "summary": "Összegzés",
-      "title-error": "Hiba"
+      "summary": "Összegzés"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11218,12 @@
       "starting": "Kezdés…",
       "status": {
         "title-error-running-job": "Hiba történt a feladat futtatásakor",
-        "title-job-completed-successfully": "A feladat sikeresen befejeződött"
+        "title-warning-running-job": ""
       },
-      "summary": "Összegzés"
+      "summary": "Összegzés",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11375,6 +11389,7 @@
       "go-to": "Tovább ide:",
       "make-sure": "Mindenképpen foglalja bele ezeket az engedélyeket"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "A folyamat során nem lehet erőforrásokat létrehozni, szerkeszteni vagy törölni. Az utolsó lépésben el fognak tűnni.",
       "alert-point-2": "A kiépítés befejezése után az erőforrások újra megjelennek, és külső tárolóeszközön keresztül kezelhetők.",

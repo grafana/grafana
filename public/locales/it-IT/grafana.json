@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Modifica il gruppo di valutazione"
     },
     "group-loader": {
-      "group-load-failed": "Impossibile caricare le regole dal gruppo {{ groupName }} in {{ namespaceName }}"
+      "group-load-failed": "Impossibile caricare le regole dal gruppo {{ groupName }} in {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Il gruppo è in fase di eliminazione"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Aggiorna anteprima",
+      "empty-state": "",
       "label-preview": "Anteprima",
       "refresh": "Aggiorna"
     },
@@ -7157,6 +7160,7 @@
           "start-time": ""
         }
       },
+      "share-span": "",
       "warnings": "Allarmi"
     },
     "span-filters": {
@@ -8597,7 +8601,10 @@
         "no-data": ""
       },
       "no-values-label": "Nessun valore",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tag"
@@ -9330,6 +9337,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9356,9 @@
       "copy-log": "Copia la riga del registro",
       "hide-details": "Mostra i dettagli del registro",
       "icon-label": "Menu registro",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Fissa registro",
       "show-context": "Mostra contesto",
       "show-details": "Nascondi i dettagli del registro",
@@ -10941,15 +10952,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11070,10 @@
       "title-instant-updates-requests-webhooks": "Aggiornamenti istantanei e richieste di pull con webhook.",
       "title-visual-previews-in-pull-requests": "Anteprime visive nelle richieste di pull con rendering delle immagini"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Specifiche dell'attività",
-      "summary": "Indice",
-      "title-error": "Errore"
+      "summary": "Indice"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11218,12 @@
       "starting": "Avvio in corso...",
       "status": {
         "title-error-running-job": "Errore durante l'esecuzione dell'attività",
-        "title-job-completed-successfully": "Attività completata con successo"
+        "title-warning-running-job": ""
       },
-      "summary": "Indice"
+      "summary": "Indice",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11375,6 +11389,7 @@
       "go-to": "Vai a",
       "make-sure": "Assicurati di includere queste autorizzazioni"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Le risorse non potranno essere create, modificate o eliminate durante questo processo. Nell'ultimo passaggio, scompariranno.",
       "alert-point-2": "Una volta completato il provisioning, le risorse riappariranno e verranno gestite tramite la memoria esterna.",

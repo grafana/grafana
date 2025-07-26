@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Redigera utvärderingsgrupp"
     },
     "group-loader": {
-      "group-load-failed": "Det gick inte att ladda reglerna från gruppen {{ groupName }} i {{ namespaceName }}"
+      "group-load-failed": "Det gick inte att ladda reglerna från gruppen {{ groupName }} i {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Gruppen raderas"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Uppdatera förhandsgranskning",
+      "empty-state": "",
       "label-preview": "Förhandsgranska",
       "refresh": "Uppdatera"
     },
@@ -7157,6 +7160,7 @@
           "start-time": "Starttid:"
         }
       },
+      "share-span": "",
       "warnings": "Varningar"
     },
     "span-filters": {
@@ -8597,7 +8601,10 @@
         "no-data": ""
       },
       "no-values-label": "Inga värden",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Taggar"
@@ -9330,6 +9337,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9356,9 @@
       "copy-log": "Kopiera loggrad",
       "hide-details": "Visa loggdetaljer",
       "icon-label": "Loggmeny",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Fäst logg",
       "show-context": "Visa sammanhang",
       "show-details": "Dölj loggdetaljer",
@@ -10941,15 +10952,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11070,10 @@
       "title-instant-updates-requests-webhooks": "Omedelbara uppdateringar och pull-förfrågningar med webhooks.",
       "title-visual-previews-in-pull-requests": "Visuella förhandsgranskningar i pull-förfrågningar med bildrendering"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Jobbeskrivning",
-      "summary": "Sammanfattning",
-      "title-error": "Fel"
+      "summary": "Sammanfattning"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11218,12 @@
       "starting": "Startar …",
       "status": {
         "title-error-running-job": "Ett fel uppstod när ett jobb kördes",
-        "title-job-completed-successfully": "Jobbet har slutförts"
+        "title-warning-running-job": ""
       },
-      "summary": "Sammanfattning"
+      "summary": "Sammanfattning",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11375,6 +11389,7 @@
       "go-to": "Gå till",
       "make-sure": "Se till att inkludera dessa behörigheter"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Resurser kan inte skapas, redigeras eller raderas under den här processen. I det sista steget kommer de att försvinna.",
       "alert-point-2": "När provisionering är klar kommer resurserna att visas igen och kan hanteras via extern lagring.",

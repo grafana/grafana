@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "Edit grup evaluasi"
     },
     "group-loader": {
-      "group-load-failed": "Gagal memuat aturan dari grup {{ groupName }} di {{ namespaceName }}"
+      "group-load-failed": "Gagal memuat aturan dari grup {{ groupName }} di {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Grup sedang dihapus"
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Refresh pratinjau",
+      "empty-state": "",
       "label-preview": "Pratinjau",
       "refresh": "Muat ulang"
     },
@@ -7135,6 +7138,7 @@
           "start-time": "Waktu Mulai:"
         }
       },
+      "share-span": "",
       "warnings": "Peringatan"
     },
     "span-filters": {
@@ -8575,7 +8579,10 @@
         "no-data": ""
       },
       "no-values-label": "Tidak ada nilai",
-      "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris"
+      "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tag"
@@ -9300,6 +9307,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Tidak ada bidang untuk ditampilkan.",
+      "open-assistant": "",
       "pin-line": "Sematkan log",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9318,6 +9326,9 @@
       "copy-log": "Salin baris log",
       "hide-details": "Tampilkan detail log",
       "icon-label": "Menu log",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Sematkan log",
       "show-context": "Tampilkan konteks",
       "show-details": "Sembunyikan detail log",
@@ -10908,15 +10919,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11023,10 +11034,10 @@
       "title-instant-updates-requests-webhooks": "Pembaruan instan dan permintaan pull dengan webhook.",
       "title-visual-previews-in-pull-requests": "Pratinjau visual dalam permintaan pull dengan rendering gambar"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Spesifikasi Pekerjaan",
-      "summary": "Ringkasan",
-      "title-error": "Kesalahan"
+      "summary": "Ringkasan"
     },
     "features-list": {
       "actions": {
@@ -11171,9 +11182,12 @@
       "starting": "Memulai...",
       "status": {
         "title-error-running-job": "Kesalahan saat menjalankan pekerjaan",
-        "title-job-completed-successfully": "Pekerjaan berhasil diselesaikan"
+        "title-warning-running-job": ""
       },
-      "summary": "Ringkasan"
+      "summary": "Ringkasan",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11339,6 +11353,7 @@
       "go-to": "Buka",
       "make-sure": "Pastikan Anda menyertakan izin ini"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Sumber daya tidak akan dapat dibuat, diedit, atau dihapus selama proses ini. Pada langkah terakhir, sumber daya akan menghilang.",
       "alert-point-2": "Setelah penyediaan selesai, sumber daya akan muncul kembali dan dikelola melalui penyimpanan eksternal.",
