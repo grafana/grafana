@@ -133,8 +133,8 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, namespace string, names
 		return nil, errors.New("missing auth info in context")
 	}
 
-	// Up until here the identity is the one set by the ST service, but when the request goes out to the gRPC server,
-	// the aggregator will use the CAP for the HG which contains a different service identity.
+	// Up until here the identity is the one set by the internal service, but when the request goes out to the gRPC server,
+	// the aggregator will use the access token which contains a different service identity for grafana as a whole.
 	// This is used for logging purposes only.
 	serviceIdentityList, ok := authInfo.GetExtra()[authnlib.ServiceIdentityKey]
 	if !ok || len(serviceIdentityList) != 1 {
@@ -154,7 +154,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, namespace string, names
 	// Decryption will still use the service identity from the auth token,
 	// but we also pass the service identity from the request metadata for auditing purposes.
 	md := metadata.New(map[string]string{
-		contracts.HeaderGrafanaSTServiceIdentityName: serviceIdentity,
+		contracts.HeaderGrafanaServiceIdentityName: serviceIdentity,
 	})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 

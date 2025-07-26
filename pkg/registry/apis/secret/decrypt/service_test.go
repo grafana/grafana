@@ -249,7 +249,7 @@ func TestDecryptService(t *testing.T) {
 		md, ok := metadata.FromIncomingContext(requestContext)
 		require.True(t, ok)
 		require.NotEmpty(t, md)
-		require.Equal(t, svcIdentity, md[strings.ToLower(contracts.HeaderGrafanaSTServiceIdentityName)][0])
+		require.Equal(t, svcIdentity, md[strings.ToLower(contracts.HeaderGrafanaServiceIdentityName)][0])
 		require.Equal(t, respTokenExchanged, md[strings.ToLower(clients.ExtJWTAuthenticationHeaderName)][0])
 	})
 }

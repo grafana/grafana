@@ -264,7 +264,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Needs to be incoming because we are pretending we received the metadata from a gRPC request
 		ctx = grpcmetadata.NewIncomingContext(authCtx, grpcmetadata.New(map[string]string{
-			contracts.HeaderGrafanaSTServiceIdentityName: stSvcIdentity,
+			contracts.HeaderGrafanaServiceIdentityName: stSvcIdentity,
 		}))
 
 		// Setup service
