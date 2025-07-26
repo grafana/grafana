@@ -202,7 +202,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 }
 
 func getTestDBType() string {
-	dbType := "sqlite3"
+	dbType := "sqlite"
 
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
 		dbType = db
@@ -260,7 +260,7 @@ type testDB struct {
 // We assume the database credentials we are given in environment variables are those of a super user who can create databases.
 func createTemporaryDatabase(tb TestingTB) (*testDB, error) {
 	dbType := getTestDBType()
-	if dbType == "sqlite3" {
+	if dbType == "sqlite" {
 		// SQLite doesn't have a concept of a database server, so we always create a new file with no connections required.
 		return newSQLite3DB(tb)
 	}
@@ -269,7 +269,7 @@ func createTemporaryDatabase(tb TestingTB) (*testDB, error) {
 	// We use databases rather than schemas as MySQL has no concept of schemas, so this aligns them more closely.
 	var driver, connString string
 	switch dbType {
-	case "sqlite3":
+	case "sqlite":
 		panic("unreachable; handled above")
 	case "mysql":
 		driver, connString = newMySQLConnString(env("MYSQL_DB", "grafana_tests"))
@@ -353,7 +353,7 @@ func newMySQLConnString(dbname string) (driver, connString string) {
 
 func newSQLite3DB(tb TestingTB) (*testDB, error) {
 	if os.Getenv("SQLITE_INMEMORY") == "true" {
-		return &testDB{Driver: "sqlite3", Conn: "file::memory:"}, nil
+		return &testDB{Driver: "sqlite", Conn: "file::memory:?_pragma=busy_timeout(5000)"}, nil
 	}
 
 	tmp, err := os.CreateTemp("", "grafana-test-sqlite-*.db")
@@ -369,9 +369,9 @@ func newSQLite3DB(tb TestingTB) (*testDB, error) {
 	// For tests, set sync=OFF for faster commits. Reference: https://www.sqlite.org/pragma.html#pragma_synchronous
 	// Sync is used in more production-y environments to avoid the database becoming corrupted. Test databases are fine to break.
 	return &testDB{
-		Driver: "sqlite3",
+		Driver: "sqlite",
 		Path:   tmp.Name(),
-		Conn:   fmt.Sprintf("file:%s?cache=private&mode=rwc&_journal_mode=WAL&_synchronous=OFF", tmp.Name()),
+		Conn:   fmt.Sprintf("file:%s?cache=private&mode=rwc&_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(OFF)", tmp.Name()),
 	}, nil
 }
 

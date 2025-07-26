@@ -26,7 +26,7 @@ type TestDB struct {
 }
 
 func GetTestDBType() string {
-	dbType := "sqlite3"
+	dbType := "sqlite"
 
 	// environment variable present for test db?
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
@@ -41,7 +41,7 @@ func GetTestDB(dbType string) (*TestDB, error) {
 		return mySQLTestDB()
 	case "postgres":
 		return postgresTestDB()
-	case "sqlite3":
+	case "sqlite":
 		return sqLite3TestDB()
 	}
 
@@ -51,14 +51,14 @@ func GetTestDB(dbType string) (*TestDB, error) {
 func sqLite3TestDB() (*TestDB, error) {
 	if os.Getenv("SQLITE_INMEMORY") == "true" {
 		return &TestDB{
-			DriverName: "sqlite3",
-			ConnStr:    "file::memory:",
+			DriverName: "sqlite",
+			ConnStr:    "file::memory:?_pragma=busy_timeout(5000)",
 			Cleanup:    func() {},
 		}, nil
 	}
 
 	ret := &TestDB{
-		DriverName: "sqlite3",
+		DriverName: "sqlite",
 		Cleanup:    func() {},
 	}
 
@@ -109,10 +109,10 @@ func sqLite3TestDB() (*TestDB, error) {
 		}
 	}
 
-	ret.ConnStr = "file:" + sqliteDb + "?cache=private&mode=rwc"
+	ret.ConnStr = "file:" + sqliteDb + "?cache=private&mode=rwc&_pragma=busy_timeout(5000)"
 	if os.Getenv("SQLITE_JOURNAL_MODE") != "false" {
 		// For tests, set sync=OFF for faster commits. Reference: https://www.sqlite.org/pragma.html#pragma_synchronous.
-		ret.ConnStr += "&_journal_mode=WAL&_synchronous=OFF"
+		ret.ConnStr += "&_pragma=journal_mode(WAL)&_pragma=synchronous(OFF)"
 	}
 	ret.Path = sqliteDb
 

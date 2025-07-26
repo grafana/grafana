@@ -124,6 +124,11 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 
 	dbCfg.LogQueries = sec.Key("log_queries").MustBool(false)
 
+	// For compatibility with existing code
+	if dbCfg.Type == "sqlite3" {
+		dbCfg.Type = "sqlite"
+	}
+
 	return nil
 }
 
@@ -198,10 +203,10 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 			return err
 		}
 
-		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", dbCfg.Path, dbCfg.CacheMode)
+		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc&_pragma=busy_timeout(5000)", dbCfg.Path, dbCfg.CacheMode)
 
 		if dbCfg.WALEnabled {
-			cnnstr += "&_journal_mode=WAL"
+			cnnstr += "&_pragma=journal_mode(WAL)"
 		}
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)

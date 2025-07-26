@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mattn/go-sqlite3"
+	"modernc.org/sqlite"
+	sqlitelib "modernc.org/sqlite/lib"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -140,9 +141,9 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 }
 
 func (db *SQLite3) isThisError(err error, errcode int) bool {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		if int(driverErr.ExtendedCode) == errcode {
+	var sqliteErr *sqlite.Error
+	if errors.As(err, &sqliteErr) {
+		if sqliteErr.Code() == errcode {
 			return true
 		}
 	}
@@ -151,15 +152,15 @@ func (db *SQLite3) isThisError(err error, errcode int) bool {
 }
 
 func (db *SQLite3) ErrorMessage(err error) string {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		return driverErr.Error()
+	var sqliteErr *sqlite.Error
+	if errors.As(err, &sqliteErr) {
+		return sqliteErr.Error()
 	}
 	return ""
 }
 
 func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
-	return db.isThisError(err, int(sqlite3.ErrConstraintUnique)) || db.isThisError(err, int(sqlite3.ErrConstraintPrimaryKey))
+	return db.isThisError(err, sqlitelib.SQLITE_CONSTRAINT_UNIQUE) || db.isThisError(err, sqlitelib.SQLITE_CONSTRAINT_PRIMARYKEY)
 }
 
 func (db *SQLite3) IsDeadlock(err error) bool {

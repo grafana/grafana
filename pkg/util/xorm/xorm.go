@@ -36,7 +36,7 @@ func regDrvsNDialects() bool {
 		"mymysql":  {"mysql", func() core.Driver { return &mymysqlDriver{} }, func() core.Dialect { return &mysql{} }},
 		"postgres": {"postgres", func() core.Driver { return &pqDriver{} }, func() core.Dialect { return &postgres{} }},
 		"pgx":      {"postgres", func() core.Driver { return &pqDriverPgx{} }, func() core.Dialect { return &postgres{} }},
-		"sqlite3":  {"sqlite3", func() core.Driver { return &sqlite3Driver{} }, func() core.Dialect { return &sqlite3{} }},
+		"sqlite":   {"sqlite", func() core.Driver { return &sqlite3Driver{} }, func() core.Dialect { return &sqlite3{} }},
 	}
 
 	for driverName, v := range providedDrvsNDialects {

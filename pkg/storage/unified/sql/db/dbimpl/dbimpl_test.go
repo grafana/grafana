@@ -31,7 +31,7 @@ type (
 // setupDBForGrafana modifies `m` in the following way:
 //
 //	[database]
-//	type = sqlite3
+//	type = sqlite
 //	path = unique-random-path
 //
 // After that, it initializes a temporary SQLite filesystem-backed database that
@@ -42,10 +42,10 @@ func setupDBForGrafana(t *testing.T, ctx context.Context, m cfgMap) {
 		dbSection = cfgSectionMap{}
 		m["database"] = dbSection
 	}
-	dbSection["type"] = "sqlite3"
+	dbSection["type"] = "sqlite"
 	dbSection["path"] = t.TempDir() + "/" + uuid.New().String()
 
-	db, err := sql.Open("sqlite3", "file:"+dbSection["path"])
+	db, err := sql.Open("sqlite", "file:"+dbSection["path"])
 	require.NoError(t, err)
 
 	_, err = db.ExecContext(ctx, `

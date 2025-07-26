@@ -277,18 +277,6 @@ func setBuildEnv(opts BuildOpts) error {
 		return err
 	}
 
-	if opts.goos == GoOSWindows {
-		// require windows >=7
-		if err := os.Setenv("CGO_CFLAGS", "-D_WIN32_WINNT=0x0601"); err != nil {
-			return err
-		}
-	}
-
-	if opts.goarch != "amd64" || opts.goos != GoOSLinux {
-		// needed for all other archs
-		opts.cgo = true
-	}
-
 	if strings.HasPrefix(opts.goarch, "armv") {
 		if err := os.Setenv("GOARCH", "arm"); err != nil {
 			return err

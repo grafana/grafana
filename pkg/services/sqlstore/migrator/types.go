@@ -9,7 +9,7 @@ import (
 
 const (
 	Postgres = "postgres"
-	SQLite   = "sqlite3"
+	SQLite   = "sqlite"
 	MySQL    = "mysql"
 	MSSQL    = "mssql"
 )

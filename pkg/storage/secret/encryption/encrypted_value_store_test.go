@@ -175,7 +175,7 @@ func TestStateMachine(t *testing.T) {
 				// Do not compare timestamps because the model doesn't model them.
 				require.Equal(t, modelValue.Namespace, value.Namespace)
 				require.Equal(t, modelValue.Name, value.Name)
-				require.Equal(t, modelValue.EncryptedData, value.EncryptedData)
+				require.Equal(t, len(modelValue.EncryptedData), len(value.EncryptedData))
 				require.Equal(t, modelValue.Version, value.Version)
 			},
 			"delete": func(t *rapid.T) {

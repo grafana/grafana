@@ -25,7 +25,7 @@ import (
 const (
 	dbTypeMySQL    = "mysql"
 	dbTypePostgres = "postgres"
-	dbTypeSQLite   = "sqlite3"
+	dbTypeSQLite   = "sqlite"
 )
 
 const grafanaDBInstrumentQueriesKey = "instrument_queries"
@@ -72,6 +72,9 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	}
 
 	dbType := cfg.SectionWithEnvOverrides("database").Key("type").String()
+	if dbType == "sqlite3" {
+		dbType = "sqlite"
+	}
 
 	switch {
 	case dbType != "":

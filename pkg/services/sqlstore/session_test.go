@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
+	"unsafe"
 
-	"github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
+	"modernc.org/sqlite"
+	sqlitelib "modernc.org/sqlite/lib"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -35,7 +38,7 @@ func TestIntegration_RetryingDisabled(t *testing.T) {
 		})
 
 		for _, e := range retryErrors {
-			t.Run(fmt.Sprintf("%s should return the sqlite3.Error %v immediately", name, e), func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s should return the sqlite.Error %v immediately", name, e), func(t *testing.T) {
 				i := 0
 				callback := func(sess *DBSession) error {
 					i++
@@ -70,7 +73,7 @@ func TestIntegration_RetryingOnFailures(t *testing.T) {
 	}
 
 	for name, f := range funcToTest {
-		t.Run(fmt.Sprintf("%s should return the error immediately if it's other than sqlite3.ErrLocked or sqlite3.ErrBusy", name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s should return the error immediately if it's other than sqlite.SQLITE_LOCKED or sqlite.SQLITE_BUSY", name), func(t *testing.T) {
 			i := 0
 			callback := func(sess *DBSession) error {
 				i++
@@ -138,11 +141,23 @@ func getRetryErrors(t *testing.T, store *SQLStore) []error {
 	var retryErrors []error
 	switch store.GetDialect().DriverName() {
 	case migrator.SQLite:
-		retryErrors = []error{sqlite3.Error{Code: sqlite3.ErrBusy}, sqlite3.Error{Code: sqlite3.ErrLocked}}
+		retryErrors = []error{
+			mockSqliteError(sqlitelib.SQLITE_BUSY),
+			mockSqliteError(sqlitelib.SQLITE_LOCKED),
+			mockSqliteError(sqlitelib.SQLITE_LOCKED_SHAREDCACHE),
+		}
 	}
 
 	if len(retryErrors) == 0 {
 		t.Skip("This test only works with sqlite")
 	}
 	return retryErrors
+}
+
+func mockSqliteError(code int) error {
+	sqliteErr := &sqlite.Error{}
+	elem := reflect.ValueOf(sqliteErr).Elem()
+	codeField := elem.FieldByName("code")
+	reflect.NewAt(codeField.Type(), unsafe.Pointer(codeField.UnsafeAddr())).Elem().SetInt(int64(code)) //nolint:gosec
+	return sqliteErr
 }
