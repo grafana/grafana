@@ -273,4 +273,19 @@ export interface TypographyCtx {
 }
 
 export type LineCounter = (value: unknown, width: number) => number;
-export type LineCounterEntry = { counter: LineCounter; estimate?: LineCounter; fieldIdxs: number[] };
+export interface LineCounterEntry {
+  /**
+   * given a values and the available width, returns the line count for that value
+   */
+  counter: LineCounter;
+  /**
+   * if getting an accurate line count is expensive, you can provide an estimate method
+   * which will be used when looping over the row. the counter method will only be invoked
+   * for the cell which is the maximum line count for the row.
+   */
+  estimate?: LineCounter;
+  /**
+   * indicates which field indexes of the visible fields this line counter applies to.
+   */
+  fieldIdxs: number[];
+}
