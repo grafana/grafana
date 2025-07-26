@@ -1180,6 +1180,26 @@ describe('TableNG utils', () => {
       const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
       expect(height).toBe(36);
     });
+
+    describe('estimations vs. precise counts', () => {
+      beforeEach(() => {
+        counters = [
+          { counter: jest.fn((value, _length: number) => String(value).split(' ').length), fieldIdxs: [0] }, // Mocked to count words as lines
+          {
+            estimate: jest.fn((value) => String(value).length), // Mocked to return a line for every digits of a number
+            counter: jest.fn((value, _length: number) => Math.ceil(String(value).length / 3)),
+            fieldIdxs: [1],
+          },
+        ];
+      });
+
+      // 2 lines @ 20px (123,456), 10px vertical padding. when we did this before, 'longer one here' would win, making it 70px.
+      // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `counter` function
+      // is used to calculate the height. (2 lines). this is a very forced case, but we just want to prove that it actually works.
+      it('uses the estimate value rather than the precise value to select the row height', () => {
+        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
+      });
+    });
   });
 
   describe('computeColWidths', () => {
