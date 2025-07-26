@@ -311,6 +311,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 }
 
 func createAuthContext(ctx context.Context, namespace string, permissions []string, svc string, identityType types.IdentityType) context.Context {
+	ctx = logging.Context(ctx, logging.DefaultLogger)
+
 	requester := &identity.StaticRequester{
 		Type:      identityType,
 		Namespace: namespace,
