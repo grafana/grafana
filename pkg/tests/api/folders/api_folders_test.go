@@ -35,6 +35,7 @@ func TestGetFolders(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		EnableFeatureToggles:  []string{featuremgmt.FlagKubernetesClientDashboardsFolders},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
