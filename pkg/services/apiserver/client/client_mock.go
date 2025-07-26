@@ -96,8 +96,5 @@ type MockTestRestConfig struct {
 }
 
 func (r MockTestRestConfig) GetRestConfig(ctx context.Context) (*rest.Config, error) {
-	if r.cfg == nil {
-		return &rest.Config{}, nil
-	}
 	return r.cfg, nil
 }

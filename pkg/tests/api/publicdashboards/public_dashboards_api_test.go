@@ -1,4 +1,4 @@
-package dashboards
+package publicdashboards
 
 import (
 	"bytes"
@@ -17,7 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestPublicDashboardsAPI(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -415,7 +420,7 @@ func doRequest(t *testing.T, client *httpClient, method, path string, body []byt
 
 	resp, err := client.client.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck
 
 	respBody, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)

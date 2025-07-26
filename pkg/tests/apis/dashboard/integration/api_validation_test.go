@@ -136,7 +136,6 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -187,7 +186,6 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
 					featuremgmt.FlagKubernetesDashboards,
 				},

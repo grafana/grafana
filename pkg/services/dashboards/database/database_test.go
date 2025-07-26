@@ -10,27 +10,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	libmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -762,6 +754,59 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	assert.Equal(t, dashB.ID, results[0].ID)
 }
 
+// has to be added to both the folder & the dashboard table
+func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, sqlStore db.DB, title string, orgId int64, parentUID string, tags ...interface{}) *dashboards.Dashboard {
+	t.Helper()
+
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:     orgId,
+		FolderUID: parentUID,
+		IsFolder:  true,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+			"tags":  tags,
+		}),
+	}
+	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
+	require.NoError(t, err)
+	require.NotNil(t, dash)
+	dash.Data.Set("id", dash.ID)
+	dash.Data.Set("uid", dash.UID)
+
+	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		type folder struct {
+			ID          int64     `xorm:"pk autoincr 'id'"`
+			OrgID       int64     `xorm:"org_id"`
+			UID         string    `xorm:"uid"`
+			ParentUID   *string   `xorm:"parent_uid"`
+			Title       string    `xorm:"title"`
+			Description string    `xorm:"description"`
+			Created     time.Time `xorm:"created"`
+			Updated     time.Time `xorm:"updated"`
+		}
+
+		f := &folder{
+			OrgID:       orgId,
+			UID:         dash.UID,
+			Title:       title,
+			Description: "",
+			Created:     time.Now(),
+			Updated:     time.Now(),
+		}
+
+		if parentUID != "" {
+			f.ParentUID = &parentUID
+		}
+
+		_, err := sess.Insert(f)
+		return err
+	})
+	require.NoError(t, err)
+
+	return dash
+}
+
 func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -776,13 +821,6 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false, []string{"tag1", "tag2"})
 
-	ac := acimpl.ProvideAccessControl(features)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
 	user := &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
@@ -795,23 +833,10 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 		},
 	}
 
-	f0, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
-		OrgID:        orgID,
-		Title:        "f0",
-		SignedInUser: user,
-	})
-	require.NoError(t, err)
-
+	f0 := insertTestFolder(t, dashboardStore, sqlStore, "f0", orgID, "")
 	insertTestDashboard(t, dashboardStore, "dashboard under f0", orgID, 0, f0.UID, false, []string{"tag3"})
 
-	subfolder, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
-		OrgID:        orgID,
-		Title:        "subfolder",
-		ParentUID:    f0.UID,
-		SignedInUser: user,
-	})
-	require.NoError(t, err)
-
+	subfolder := insertTestFolder(t, dashboardStore, sqlStore, "subfolder", orgID, f0.UID)
 	insertTestDashboard(t, dashboardStore, "dashboard under subfolder", orgID, 0, subfolder.UID, false)
 
 	type res struct {
@@ -913,14 +938,6 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore)
-
-	folderServiceWithFlagOn := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
 	user := &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
@@ -933,31 +950,13 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 	}
 
-	f0, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
-		OrgID:        orgID,
-		Title:        "f0",
-		SignedInUser: user,
-	})
-	require.NoError(t, err)
-	// nolint:staticcheck
-	insertTestDashboard(t, dashboardStore, "dashboard under f0", orgID, f0.ID, f0.UID, false)
+	f0 := insertTestFolder(t, dashboardStore, sqlStore, "f0", orgID, "")
+	insertTestDashboard(t, dashboardStore, "dashboard under f0", orgID, 0, f0.UID, false)
 
-	f1, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
-		OrgID:        orgID,
-		Title:        "f1",
-		SignedInUser: user,
-	})
-	require.NoError(t, err)
-	// nolint:staticcheck
-	insertTestDashboard(t, dashboardStore, "dashboard under f1", orgID, f1.ID, f1.UID, false)
+	f1 := insertTestFolder(t, dashboardStore, sqlStore, "f1", orgID, "")
+	insertTestDashboard(t, dashboardStore, "dashboard under f1", orgID, 0, f1.UID, false)
 
-	subfolder, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
-		OrgID:        orgID,
-		Title:        "subfolder",
-		ParentUID:    f0.UID,
-		SignedInUser: user,
-	})
-	require.NoError(t, err)
+	subfolder := insertTestFolder(t, dashboardStore, sqlStore, "subfolder", orgID, f0.UID)
 
 	type res struct {
 		title       string

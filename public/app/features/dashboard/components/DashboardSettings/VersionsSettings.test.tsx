@@ -109,7 +109,7 @@ describe('VersionSettings', () => {
 
   test('renders buttons if versions >= VERSIONS_FETCH_LIMIT', async () => {
     historySrv.getHistoryList = jest.fn().mockResolvedValue({
-      continueToken: versions.continueToken,
+      continueToken: 'next-page-token',
       versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
     });
 
@@ -134,13 +134,13 @@ describe('VersionSettings', () => {
       .fn()
       .mockImplementationOnce(() =>
         Promise.resolve({
-          continueToken: versions.continueToken,
+          continueToken: 'next-page-token',
           versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
         })
       )
       .mockImplementationOnce(() =>
         Promise.resolve({
-          continueToken: versions.continueToken,
+          continueToken: '',
           versions: versions.versions.slice(VERSIONS_FETCH_LIMIT),
         })
       );
