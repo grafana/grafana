@@ -1,3 +1,5 @@
+import { SortColumn } from 'react-data-grid';
+
 import {
   createDataFrame,
   createTheme,
@@ -34,8 +36,9 @@ import {
   getRowHeight,
   buildRowLineCounters,
   buildHeaderLineCounters,
-  getTextLineCounter,
+  getTextLineEstimator,
   createTypographyContext,
+  applySort,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -996,31 +999,15 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('getTextLineCounter', () => {
-    const ctx = {
-      font: '14px sans-serif',
-      ctx: {} as CanvasRenderingContext2D,
-      count: jest.fn(() => 1),
-      avgCharWidth: 7,
-    };
+  describe('getTextLineEstimator', () => {
+    const counter = getTextLineEstimator(10);
 
-    const counter = getTextLineCounter(ctx);
-
-    it('should return 1 if the value is falsy', () => {
-      expect(counter('', 100)).toBe(1);
-      expect(counter(null, 100)).toBe(1);
-      expect(counter(undefined, 100)).toBe(1);
-      expect(counter(0, 100)).toBe(1);
+    it('returns 1 if there are no strings or dashes within the string', () => {
+      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5)).toBe(1);
     });
 
-    it('should use typographyCtx.count to count the lines of the stringified value', () => {
-      ctx.count.mockReturnValue(3);
-      expect(counter('foo', 100)).toBe(3);
-      expect(ctx.count).toHaveBeenCalledWith('foo', 100);
-
-      ctx.count.mockReturnValue(2);
-      expect(counter(3456, 50)).toBe(2);
-      expect(ctx.count).toHaveBeenCalledWith('3456', 50);
+    it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
+      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200)).toBe(2.5);
     });
   });
 
@@ -1030,6 +1017,8 @@ describe('TableNG utils', () => {
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
       avgCharWidth: 7,
+      wrappedCount: jest.fn(() => 2),
+      estimateLines: jest.fn(() => 2),
     };
 
     it('returns an array of line counters for each column', () => {
@@ -1038,8 +1027,8 @@ describe('TableNG utils', () => {
         { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapHeaderText: true } } },
       ];
       const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters[0].counter).toBeInstanceOf(Function);
-      expect(counters[0].fieldIdxs).toEqual([0, 1]);
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].fieldIdxs).toEqual([0, 1]);
     });
 
     it('does not return the index of columns which are not wrapped', () => {
@@ -1049,17 +1038,17 @@ describe('TableNG utils', () => {
       ];
 
       const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters[0].fieldIdxs).toEqual([1]);
+      expect(counters![0].fieldIdxs).toEqual([1]);
     });
 
-    it('returns an empty array if no columns are wrapped', () => {
+    it('returns undefined if no columns are wrapped', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
         { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
       ];
 
       const counters = buildHeaderLineCounters(fields, ctx);
-      expect(counters).toEqual([]);
+      expect(counters).toBeUndefined();
     });
   });
 
@@ -1068,6 +1057,8 @@ describe('TableNG utils', () => {
       font: '14px sans-serif',
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
+      wrappedCount: jest.fn(() => 2),
+      estimateLines: jest.fn(() => 2),
       avgCharWidth: 7,
     };
 
@@ -1082,8 +1073,8 @@ describe('TableNG utils', () => {
         },
       ];
       const counters = buildRowLineCounters(fields, ctx);
-      expect(counters[0].counter).toBeInstanceOf(Function);
-      expect(counters[0].fieldIdxs).toEqual([0, 1]);
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].fieldIdxs).toEqual([0, 1]);
     });
 
     it('does not return the index of columns which are not wrapped', () => {
@@ -1098,7 +1089,7 @@ describe('TableNG utils', () => {
       ];
 
       const counters = buildRowLineCounters(fields, ctx);
-      expect(counters[0].fieldIdxs).toEqual([1]);
+      expect(counters![0].fieldIdxs).toEqual([1]);
     });
 
     it('does not enable text counting for non-string fields', () => {
@@ -1108,17 +1099,18 @@ describe('TableNG utils', () => {
       ];
 
       const counters = buildRowLineCounters(fields, ctx);
+      // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
       expect(counters).toEqual([]);
     });
 
-    it('returns an empty array if no columns are wrapped', () => {
+    it('returns an undefined if no columns are wrapped', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
         { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
       ];
 
       const counters = buildRowLineCounters(fields, ctx);
-      expect(counters).toEqual([]);
+      expect(counters).toBeUndefined();
     });
   });
 
@@ -1286,5 +1278,40 @@ describe('TableNG utils', () => {
     it.todo('should not throw for non-serializable string values');
     it.todo('should stringify non-string values');
     it.todo('should not throw for non-serializable non-string values');
+  });
+
+  describe('applySort', () => {
+    it('sorts by nanos', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2], nanos: [100, 99, 0] },
+          { name: 'value', values: [10, 20, 30] },
+        ],
+      });
+
+      const sortColumns: SortColumn[] = [
+        {
+          columnKey: 'time',
+          direction: 'ASC',
+        },
+      ];
+
+      const records = applySort(frameToRecords(frame), frame.fields, sortColumns);
+
+      expect(records).toMatchObject([
+        {
+          time: 1,
+          value: 20,
+        },
+        {
+          time: 1,
+          value: 10,
+        },
+        {
+          time: 2,
+          value: 30,
+        },
+      ]);
+    });
   });
 });

@@ -207,7 +207,7 @@ export function getRowHeight(
   let maxLines = 1;
   let maxValue = '';
   let maxWidth = 0;
-  let accurateCounter: LineCounter | undefined;
+  let preciseCounter: LineCounter | undefined;
 
   for (const { estimate, counter, fieldIdxs } of lineCounters) {
     // for some of the line counters, getting the precise count of the lines is expensive. those line counters
@@ -227,7 +227,7 @@ export function getRowHeight(
           maxLines = approxLines;
           maxValue = cellValueRaw;
           maxWidth = colWidth;
-          accurateCounter = isEstimating ? counter : undefined;
+          preciseCounter = isEstimating ? counter : undefined;
         }
       }
     }
@@ -238,9 +238,9 @@ export function getRowHeight(
   }
 
   // if we finished this row height loop with an estimate, we need to call
-  // the `getValue` method to unwrap and get the accurate line count.
-  if (accurateCounter !== undefined) {
-    maxLines = accurateCounter(maxValue, maxWidth);
+  // the `preciseCounter` method to get the exact line count.
+  if (preciseCounter !== undefined) {
+    maxLines = preciseCounter(maxValue, maxWidth);
   }
 
   // we want a round number of lines for rendering
@@ -465,18 +465,33 @@ export function applySort(
     return rows;
   }
 
+  const sortNanos = sortColumns.map(
+    (c) => fields.find((f) => f.type === FieldType.time && getDisplayName(f) === c.columnKey)?.nanos
+  );
+
   const compareRows = (a: TableRow, b: TableRow): number => {
     let result = 0;
+
     for (let i = 0; i < sortColumns.length; i++) {
       const { columnKey, direction } = sortColumns[i];
       const compare = getComparator(columnTypes[columnKey]);
       const sortDir = direction === 'ASC' ? 1 : -1;
 
       result = sortDir * compare(a[columnKey], b[columnKey]);
+
+      if (result === 0) {
+        const nanos = sortNanos[i];
+
+        if (nanos !== undefined) {
+          result = sortDir * (nanos[a.__index] - nanos[b.__index]);
+        }
+      }
+
       if (result !== 0) {
         break;
       }
     }
+
     return result;
   };
 

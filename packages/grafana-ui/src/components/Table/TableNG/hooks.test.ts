@@ -477,7 +477,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5, count: jest.fn(() => 2) },
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5, wrappedCount: jest.fn(() => 2) },
           sortColumns: [],
         });
       });
@@ -510,7 +510,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, count: countFn },
+          typographyCtx: { ...typographyCtx, wrappedCount: countFn },
           sortColumns: [],
           showTypeIcons: false,
         });
@@ -539,7 +539,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, count: countFn },
+          typographyCtx: { ...typographyCtx, wrappedCount: countFn },
           sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
           showTypeIcons: true,
         });
@@ -742,41 +742,29 @@ describe('TableNG hooks', () => {
         expect(result.current(rows[0])).toBe(50);
       });
 
-      it('handles subtleties of column widths', () => {
-        const { result, rerender } = renderHook(
-          ({ columnWidths }) => {
-            const rowHeight = useRowHeight({
-              fields: fieldsWithWrappedText,
-              columnWidths,
-              defaultHeight: 40,
-              // mock count to return 2 if the width is less than 100px.
-              typographyCtx: { ...typographyCtx, count: jest.fn((_val, width) => (width < 100 ? 2 : 1)) },
-              hasNestedFrames: false,
-              expandedRows: new Set(),
-            });
-            if (typeof rowHeight !== 'function') {
-              throw new Error('Expected rowHeight to be a function');
-            }
-            return rowHeight;
-          },
-          {
-            initialProps: { columnWidths: [100 + TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT, 100, 100] },
+      it('adjusts the width of the columns based on the cell padding and border', () => {
+        fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
+
+        const wrappedCountFn = jest.fn(() => 2);
+        const estimateLinesFn = jest.fn(() => 2);
+        const { result } = renderHook(() => {
+          const rowHeight = useRowHeight({
+            fields: fieldsWithWrappedText,
+            columnWidths: [100, 100, 100],
+            defaultHeight: 40,
+            typographyCtx: { ...typographyCtx, wrappedCount: wrappedCountFn, estimateLines: estimateLinesFn },
+            hasNestedFrames: false,
+            expandedRows: new Set(),
+          });
+          if (typeof rowHeight !== 'function') {
+            throw new Error('Expected rowHeight to be a function');
           }
-        );
+          return rowHeight;
+        });
 
-        expect(result.current(rows[0])).toBe(40);
+        expect(result.current(rows[0])).toEqual(expect.any(Number));
 
-        // 2 rows, per the mocked count function
-        rerender({ columnWidths: [90, 100, 100] });
-        expect(result.current(rows[0])).toBe(TABLE.LINE_HEIGHT * 2 + TABLE.CELL_PADDING * 2);
-
-        // back to single row
-        rerender({ columnWidths: [150, 100, 100] });
-        expect(result.current(rows[0])).toBe(40);
-
-        // column widths are adjusted to account for the TABLE.CELL_PADDING and TABLE.BORDER_RIGHT on either side.
-        rerender({ columnWidths: [100 + TABLE.CELL_PADDING * 2, 100, 100] });
-        expect(result.current(rows[0])).toBe(TABLE.LINE_HEIGHT * 2 + TABLE.CELL_PADDING * 2);
+        expect(estimateLinesFn).toHaveBeenCalledWith('Annie Lennox', 100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT);
       });
     });
   });
