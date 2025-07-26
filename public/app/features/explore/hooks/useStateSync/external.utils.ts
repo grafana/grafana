@@ -13,6 +13,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     range: toURLRange(pane.range.raw),
     // don't include panelsState in the url unless a piece of state is actually set
     panelsState: pruneObject(pane.panelsState),
+    compact: pane.compact,
   };
 }
 
