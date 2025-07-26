@@ -42,6 +42,7 @@
     "geomap-route-layer": (import '../dev-dashboards/panel-geomap/geomap-route-layer.json'),
     "geomap-spatial-operations-transformer": (import '../dev-dashboards/panel-geomap/geomap-spatial-operations-transformer.json'),
     "geomap-v91": (import '../dev-dashboards/panel-geomap/geomap-v91.json'),
+    "geomap-vector": (import '../dev-dashboards/panel-geomap/geomap-vector.json'),
     "geomap_multi-layers": (import '../dev-dashboards/panel-geomap/geomap_multi-layers.json'),
     "global-variables-and-interpolation": (import '../dev-dashboards/feature-templating/global-variables-and-interpolation.json'),
     "graph-gradient-area-fills": (import '../dev-dashboards/panel-graph/graph-gradient-area-fills.json'),
