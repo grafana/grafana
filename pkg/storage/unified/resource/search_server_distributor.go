@@ -131,11 +131,13 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {
+		ds.log.Debug("error hashing namespace", "err", err, "namespace", namespace)
 		return ctx, nil, err
 	}
 
 	rs, err := ds.ring.GetWithOptions(ringHasher.Sum32(), searchRingRead, ring.WithReplicationFactor(ds.ring.ReplicationFactor()))
 	if err != nil {
+		ds.log.Debug("error getting replication set from ring", "err", err, "namespace", namespace)
 		return ctx, nil, err
 	}
 
@@ -143,6 +145,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 	inst := rs.Instances[rand.Intn(len(rs.Instances))]
 	client, err := ds.clientPool.GetClientForInstance(inst)
 	if err != nil {
+		ds.log.Debug("error getting instance client from pool", "err", err, "namespace", namespace, "searchApiInstanceId", inst.Id)
 		return ctx, nil, err
 	}
 
@@ -153,7 +156,10 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 
 	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", inst.Id, "namespace", namespace)
 
-	_ = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", inst.Id))
+	err = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", inst.Id))
+	if err != nil {
+		ds.log.Debug("error setting grpc header", err, "err")
+	}
 
 	return userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), namespace), client.(*RingClient).Client, nil
 }

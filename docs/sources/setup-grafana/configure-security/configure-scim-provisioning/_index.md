@@ -68,12 +68,10 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
 1. **Use the same identity provider for user provisioning and for authentication flow**: You must use the same identity provider for both authentication and user provisioning.
 
 2. **Authentication restrictions**:
-
    - Users attempting to log in through other methods (LDAP, OAuth) will be blocked
    - By default, users who are not provisioned through SCIM cannot access Grafana
 
 3. **Security restriction**: When using SAML, the login authentication flow requires the SAML assertion exchange between the Identity Provider and Grafana to include the `userUID` SAML assertion with the user's unique identifier at the Identity Provider.
-
    - Configure `userUID` SAML assertion in [Azure AD](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
    - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
 
