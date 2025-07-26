@@ -130,7 +130,10 @@ datasources:
     user:
     # <string> Sets the database name, if necessary.
     database:
-    # <bool> Enables basic authorization.
+    # <bool> Enables basic authorization (ignored unless
+    # access is direct). If proxied data source requires
+    # basic auth, add a custom HTTP Authorization header
+    # instead (see section below).
     basicAuth:
     # <string> Sets the basic authorization username.
     basicAuthUser:
