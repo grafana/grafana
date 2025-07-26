@@ -593,7 +593,7 @@ type PostableGrafanaRule struct {
 	// If set to 0, the value is reset to the default.
 	// required: false
 	// example: 3
-	MissingSeriesEvalsToResolve *int `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
+	MissingSeriesEvalsToResolve *int64 `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
 }
 
 // swagger:model
@@ -616,7 +616,7 @@ type GettableGrafanaRule struct {
 	Record                      *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
 	Metadata                    *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	GUID                        string                         `json:"guid" yaml:"guid"`
-	MissingSeriesEvalsToResolve *int                           `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
+	MissingSeriesEvalsToResolve *int64                         `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty"`
 }
 
 // UserInfo represents user-related information, including a unique identifier and a name.

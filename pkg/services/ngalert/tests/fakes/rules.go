@@ -185,13 +185,14 @@ func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.Get
 	return ruleList, nil
 }
 
-func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
+// TODO: implement pagination for this fake
+func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, string, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
 
 	if err := f.Hook(*q); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	hasDashboard := func(r *models.AlertRule, dashboardUID string, panelID int64) bool {
@@ -235,7 +236,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		ruleList = append(ruleList, r)
 	}
 
-	return ruleList, nil
+	return ruleList, "", nil
 }
 
 func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ identity.Requester) (map[string]*folder.Folder, error) {

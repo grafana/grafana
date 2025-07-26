@@ -105,6 +105,11 @@ func (sch *schedule) buildSequence(groupKey groupKey, groupItems []readyToRunIte
 }
 
 func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) bool {
+	// the no group group shouldn't be evaluated sequentially
+	if len(groupItems) > 0 && models.IsNoGroupRuleGroup(groupItems[0].rule.RuleGroup) {
+		return false
+	}
+
 	// if jitter by rule is enabled, we can't evaluate rules sequentially
 	if sch.jitterEvaluations == JitterByRule {
 		return false

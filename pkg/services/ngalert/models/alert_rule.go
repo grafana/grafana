@@ -268,6 +268,55 @@ func NewUserUID(requester interface{ GetIdentifier() string }) *UserUID {
 	return &userUID
 }
 
+const (
+	NoGroupPrefix     = "no_group_for_rule_"
+	NoGroupNameLength = 200
+)
+
+// NoGroupRuleGroup is a special rule group that is used to represent rules that do not belong to any group.
+type NoGroupRuleGroup struct {
+	ruleUID string
+}
+
+func NewNoGroupRuleGroup(ruleUID string) (*NoGroupRuleGroup, error) {
+	// Generate a "no group" string that exceeds 190 char limit to fail validation
+	// This is to ensure that the rule group is not created in the database.
+	if len(ruleUID) > NoGroupNameLength-len(NoGroupPrefix) {
+		return nil, fmt.Errorf("rule UID is too long: %s", ruleUID)
+	}
+	return &NoGroupRuleGroup{ruleUID: ruleUID}, nil
+}
+
+func (ruleGroup *NoGroupRuleGroup) String() string {
+	sb := strings.Builder{}
+	sb.WriteString(NoGroupPrefix)
+	sb.WriteString(ruleGroup.ruleUID)
+	for sb.Len() < NoGroupNameLength {
+		sb.WriteRune('*')
+	}
+	return sb.String()
+}
+
+func (ruleGroup *NoGroupRuleGroup) GetRuleUID() string {
+	return ruleGroup.ruleUID
+}
+
+func IsNoGroupRuleGroup(ruleGroup string) bool {
+	return strings.HasPrefix(ruleGroup, NoGroupPrefix) && len(ruleGroup) == NoGroupNameLength &&
+		strings.Count(ruleGroup, "*") >= (NoGroupNameLength-len(NoGroupPrefix)-util.MaxUIDLength)
+}
+
+func ParseNoRuleGroup(ruleGroup string) (*NoGroupRuleGroup, error) {
+	if !IsNoGroupRuleGroup(ruleGroup) {
+		return nil, fmt.Errorf("rule group %s is not a no group rule group", ruleGroup)
+	}
+	ruleUID := strings.TrimRight(strings.TrimPrefix(ruleGroup, NoGroupPrefix), "*")
+	if err := util.ValidateUID(ruleUID); err != nil {
+		return nil, fmt.Errorf("rule group %s is not a no group rule group, rule uid could not be parsed: %w", ruleGroup, err)
+	}
+	return &NoGroupRuleGroup{ruleUID: ruleUID}, nil
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID int64
@@ -303,7 +352,7 @@ type AlertRule struct {
 	// required before resolving an alert state (a dimension) when data is missing.
 	// If nil, alerts resolve after 2 missing evaluation intervals
 	// (i.e., resolution occurs during the second evaluation where data is absent).
-	MissingSeriesEvalsToResolve *int
+	MissingSeriesEvalsToResolve *int64
 }
 
 type AlertRuleMetadata struct {
@@ -597,7 +646,7 @@ func (alertRule *AlertRule) GetGroupKey() AlertRuleGroupKey {
 // to wait before resolving an alert rule instance when its data is missing.
 // If not configured, it returns the default value (2), which means the alert
 // resolves after missing for two evaluation intervals.
-func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int {
+func (alertRule *AlertRule) GetMissingSeriesEvalsToResolve() int64 {
 	if alertRule.MissingSeriesEvalsToResolve == nil {
 		return 2 // default value
 	}
@@ -848,6 +897,14 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 	OrgID int64
 }
 
+type RuleTypeFilter int
+
+const (
+	RuleTypeFilterAll RuleTypeFilter = iota
+	RuleTypeFilterAlerting
+	RuleTypeFilterRecording
+)
+
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
@@ -865,6 +922,11 @@ type ListAlertRulesQuery struct {
 	TimeIntervalName string
 
 	HasPrometheusRuleDefinition *bool
+
+	RuleType RuleTypeFilter
+
+	Limit         int64
+	ContinueToken string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

@@ -34,7 +34,7 @@ type OrgReader interface {
 
 // RuleReader represents the ability to fetch alert rules.
 type RuleReader interface {
-	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
+	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, string, error)
 }
 
 // Historian maintains an audit log of alert state history.
