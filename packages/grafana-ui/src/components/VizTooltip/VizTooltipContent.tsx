@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -34,21 +34,25 @@ export const VizTooltipContent = ({
 
   return (
     <div className={styles.wrapper} style={scrollableStyle}>
-      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle }, i) => (
-        <VizTooltipRow
-          key={i}
-          label={label}
-          value={value}
-          color={color}
-          colorIndicator={colorIndicator}
-          colorPlacement={colorPlacement}
-          isActive={isActive}
-          justify={'space-between'}
-          isPinned={isPinned}
-          lineStyle={lineStyle}
-          showValueScroll={!scrollable}
-        />
-      ))}
+      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle, customizer }, i) => {
+        const defaultRow = (
+          <VizTooltipRow
+            key={i}
+            label={label}
+            value={value}
+            color={color}
+            colorIndicator={colorIndicator}
+            colorPlacement={colorPlacement}
+            isActive={isActive}
+            justify={'space-between'}
+            isPinned={isPinned}
+            lineStyle={lineStyle}
+            showValueScroll={!scrollable}
+          />
+        );
+
+        return customizer ? React.createElement(customizer.component, { ...customizer.props, defaultRow }) : defaultRow;
+      })}
       {children}
     </div>
   );
