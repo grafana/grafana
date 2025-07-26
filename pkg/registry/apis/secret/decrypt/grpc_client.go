@@ -4,22 +4,30 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/fullstorydev/grpchan"
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/authn/clients"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 type GRPCDecryptClient struct {
 	conn   *grpc.ClientConn
 	client decryptv1beta1.SecureValueDecrypterClient
 }
+
+var _ contracts.DecryptService = &GRPCDecryptClient{}
 
 type TLSConfig struct {
 	UseTLS             bool
@@ -30,34 +38,54 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCDecryptClient(address string, logger log.Logger) (*GRPCDecryptClient, error) {
-	return NewGRPCDecryptClientWithTLS(address, logger, nil)
+func NewGRPCDecryptClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, namespace, address string) (*GRPCDecryptClient, error) {
+	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, namespace, address, TLSConfig{})
 }
 
-func NewGRPCDecryptClientWithTLS(address string, logger log.Logger, tlsConfig *TLSConfig) (*GRPCDecryptClient, error) {
-	opts := []grpc.DialOption{}
+func NewGRPCDecryptClientWithTLS(
+	tokenExchanger authnlib.TokenExchanger,
+	tracer trace.Tracer,
+	namespace string,
+	address string,
+	tlsConfig TLSConfig,
+) (*GRPCDecryptClient, error) {
+	var opts []grpc.DialOption
+	if tlsConfig.UseTLS {
+		creds, err := createTLSCredentials(tlsConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to setup TLS: %w", err)
+		}
 
-	creds, err := createTLSCredentials(tlsConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup TLS: %w", err)
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	} else {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	opts = append(opts, grpc.WithTransportCredentials(creds))
-
-	conn, err := grpc.Dial(address, opts...)
+	conn, err := grpc.NewClient(address, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to grpc decrypt server at %s: %w", address, err)
 	}
 
-	client := decryptv1beta1.NewSecureValueDecrypterClient(conn)
+	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
+		tokenExchanger,
+		authnlib.WithClientInterceptorTracer(tracer),
+		authnlib.WithClientInterceptorNamespace(namespace),
+		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
+	)
+
+	clientConn := grpchan.InterceptClientConn(
+		conn,
+		tokenExchangerInterceptor.UnaryClientInterceptor,
+		tokenExchangerInterceptor.StreamClientInterceptor,
+	)
 
 	return &GRPCDecryptClient{
 		conn:   conn,
-		client: client,
+		client: decryptv1beta1.NewSecureValueDecrypterClient(clientConn),
 	}, nil
 }
 
-func createTLSCredentials(config *TLSConfig) (credentials.TransportCredentials, error) {
+func createTLSCredentials(config TLSConfig) (credentials.TransportCredentials, error) {
 	tlsConfig := &tls.Config{}
 
 	if config.CAFile != "" {
@@ -99,18 +127,34 @@ func (g *GRPCDecryptClient) Close() error {
 	return nil
 }
 
-func (g *GRPCDecryptClient) GetConnection() *grpc.ClientConn {
-	return g.conn
-}
+func (g *GRPCDecryptClient) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, errors.New("missing auth info in context")
+	}
 
-func (g *GRPCDecryptClient) DecryptSecureValues(ctx context.Context, namespace string, names []string, accessToken string) (map[string]*decryptv1beta1.Result, error) {
+	// Up until here the identity is the one set by the ST service, but when the request goes out to the gRPC server,
+	// the aggregator will use the CAP for the HG which contains a different service identity.
+	// This is used for logging purposes only.
+	serviceIdentityList, ok := authInfo.GetExtra()[authnlib.ServiceIdentityKey]
+	if !ok || len(serviceIdentityList) != 1 {
+		return nil, errors.New("invalid service identity in auth info")
+	}
+
+	serviceIdentity := serviceIdentityList[0]
+	if len(serviceIdentity) == 0 {
+		return nil, errors.New("empty service identity in auth info")
+	}
+
 	req := &decryptv1beta1.SecureValueDecryptRequest{
 		Namespace: namespace,
 		Names:     names,
 	}
 
+	// Decryption will still use the service identity from the auth token,
+	// but we also pass the service identity from the request metadata for auditing purposes.
 	md := metadata.New(map[string]string{
-		clients.ExtJWTAuthenticationHeaderName: accessToken,
+		contracts.HeaderGrafanaSTServiceIdentityName: serviceIdentity,
 	})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
@@ -119,5 +163,16 @@ func (g *GRPCDecryptClient) DecryptSecureValues(ctx context.Context, namespace s
 		return nil, fmt.Errorf("grpc decrypt failed: %w", err)
 	}
 
-	return resp.DecryptedValues, nil
+	results := make(map[string]contracts.DecryptResult, len(resp.GetDecryptedValues()))
+
+	for name, result := range resp.GetDecryptedValues() {
+		if result.GetErrorMessage() != "" {
+			results[name] = contracts.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
+		} else {
+			exposedSecureValue := secretv1beta1.NewExposedSecureValue(result.GetValue())
+			results[name] = contracts.NewDecryptResultValue(&exposedSecureValue)
+		}
+	}
+
+	return results, nil
 }

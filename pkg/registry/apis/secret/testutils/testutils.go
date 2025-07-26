@@ -59,6 +59,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	}
 
 	tracer := noop.NewTracerProvider().Tracer("test")
+
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
 	database := database.ProvideDatabase(testDB, tracer)
@@ -127,7 +128,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		DecryptServerType: "local",
 	}
 
-	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
+	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
 	require.NoError(t, err)
 
 	return Sut{

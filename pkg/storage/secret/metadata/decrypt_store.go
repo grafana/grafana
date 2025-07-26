@@ -7,12 +7,13 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -65,14 +66,31 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	defer func() {
 		span.SetAttributes(attribute.String("decrypter.identity", decrypterIdentity))
 
+		args := []any{
+			"namespace", namespace.String(),
+			"secret_name", name,
+			"decrypter_identity", decrypterIdentity,
+		}
+
+		// If the request is coming from ST HG, the service identity used for decryption is still from the signed token,
+		// but for auditing purposes we also log the service identity passed in the request metadata.
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			if svcIdentities := md.Get(contracts.HeaderGrafanaSTServiceIdentityName); len(svcIdentities) > 0 {
+				args = append(args, "grafana_st_decrypter_identity", svcIdentities[0])
+				span.SetAttributes(attribute.String("grafana_st_decrypter.identity", svcIdentities[0]))
+			}
+		}
+
 		if decryptErr == nil {
-			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_success", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity)
+			args = append(args, "operation", "decrypt_secret_success")
 		} else {
 			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
-
-			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_error", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity, "error", decryptErr)
+			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error())
 		}
+
+		logging.FromContext(ctx).Info("Secrets Audit Log", args...)
+
 		success := decryptErr == nil
 		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 		s.metrics.DecryptRequestCount.WithLabelValues(strconv.FormatBool(success)).Inc()
