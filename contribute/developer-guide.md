@@ -94,7 +94,7 @@ After `yarn start` has built the assets, it will continue to do so whenever any 
 
 #### Plugins
 
-If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
+If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins/datasource` directory) they require running additional commands to watch and rebuild them.
 
 - azuremonitor
 - cloud-monitoring
