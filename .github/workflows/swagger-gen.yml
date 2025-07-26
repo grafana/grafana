@@ -1,0 +1,51 @@
+name: Swagger generated code
+
+on:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+  pull_request:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify committed API specs match
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'grafana/grafana' }}
+    permissions:
+      contents: read # clone the repository
+      id-token: write # required for Vault access
+    steps:
+      # Set up repository clone
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Setup Enterprise
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+
+      - name: Generate Swagger specs
+        run: make swagger-clean && make openapi3-gen
+      - name: Check for changes
+        run: |
+          git add -f public/api-merged.json public/openapi3.json
+          if [ -z "$(git diff --name-only --cached)" ]; then
+            echo "No changes detected in API specs."
+          else
+            echo "Changes detected in API specs. Please review the changes."
+            echo "You can regenerate them locally with: make swagger-clean && make openapi3-gen"
+            exit 1
+          fi

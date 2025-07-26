@@ -55,7 +55,7 @@ while IFS=" " read -r -a package; do
   # (non-zero if any of the packages failed the checks)
   if [ "$STATUS" -gt 0 ]; then
     EXIT_CODE=1
-    GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes<br />"
+    GITHUB_MESSAGE="${GITHUB_MESSAGE}**<code>${PACKAGE_PATH}</code>** has possible breaking changes<br />"
     GITHUB_LEVITATE_MARKDOWN+="<h3>${PACKAGE_PATH}</h3>${CURRENT_REPORT}<br>"
   fi
 
@@ -66,6 +66,11 @@ echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
 echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
+
+if [[ "$IS_FORK" == "true" ]]; then
+  cat ./levitate/levitate.md >> "$GITHUB_STEP_SUMMARY"
+  exit $EXIT_CODE
+fi
 
 # We will exit the workflow accordingly at another step
 exit 0

@@ -1,6 +1,5 @@
 import PackageJson from '@npmcli/package-json';
 import { mkdir } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
 
 const cwd = process.cwd();
 
@@ -8,18 +7,17 @@ try {
   const pkgJson = await PackageJson.load(cwd);
   const cjsIndex = pkgJson.content.publishConfig?.main ?? pkgJson.content.main;
   const esmIndex = pkgJson.content.publishConfig?.module ?? pkgJson.content.module;
-  const cjsTypes = pkgJson.content.publishConfig?.types ?? pkgJson.content.types;
-  const esmTypes = `./${join(dirname(esmIndex), 'index.d.mts')}`;
+  const typesIndex = pkgJson.content.publishConfig?.types ?? pkgJson.content.types;
 
   const exports = {
     './package.json': './package.json',
     '.': {
       import: {
-        types: esmTypes,
+        types: typesIndex,
         default: esmIndex,
       },
       require: {
-        types: cjsTypes,
+        types: typesIndex,
         default: cjsIndex,
       },
     },
@@ -33,9 +31,17 @@ try {
     };
   }
 
+  // Fix for @grafana/i18n so eslint-plugin can be imported by consumers
+  if (pkgJson.content.name === '@grafana/i18n') {
+    exports['./eslint-plugin'] = {
+      import: './dist/eslint/index.cjs',
+      require: './dist/eslint/index.cjs',
+    };
+  }
+
   pkgJson.update({
     main: cjsIndex,
-    types: cjsTypes,
+    types: typesIndex,
     module: esmIndex,
     exports,
   });
@@ -52,12 +58,12 @@ try {
         ...pkgJson.content.exports,
         [`./${aliasName}`]: {
           import: {
-            types: esmTypes.replace('index', aliasName),
+            types: typesIndex.replace('index', aliasName),
             default: esmIndex.replace('index', aliasName),
           },
           require: {
-            types: cjsTypes.replace('index', aliasName),
-            default: cjsTypes.replace('index', aliasName),
+            types: typesIndex.replace('index', aliasName),
+            default: cjsIndex.replace('index', aliasName),
           },
         },
       },
@@ -80,7 +86,7 @@ async function createAliasPackageJsonFiles(packageJsonContent, aliasName) {
     const pkgJson = await PackageJson.create(pkgJsonPath, {
       data: {
         name: pkgName,
-        types: `../dist/cjs/${aliasName}.d.cts`,
+        types: `../dist/types/${aliasName}.d.ts`,
         main: `../dist/cjs/${aliasName}.cjs`,
         module: `../dist/esm/${aliasName}.mjs`,
       },

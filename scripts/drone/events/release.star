@@ -3,11 +3,6 @@ This module returns all the pipelines used in the event of a release along with 
 """
 
 load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "integration_test_services_volumes",
-)
-load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
     "github_app_pipeline_volumes",
@@ -16,19 +11,9 @@ load(
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
-    "download_grabpl_step",
-    "identify_runner_step",
-    "memcached_integration_tests_steps",
-    "mysql_integration_tests_steps",
-    "postgres_integration_tests_steps",
     "publish_grafanacom_step",
     "publish_linux_packages_step",
-    "redis_integration_tests_steps",
-    "remote_alertmanager_integration_tests_steps",
-    "verify_gen_cue_step",
-    "verify_gen_jsonnet_step",
     "verify_grafanacom_step",
-    "wire_install_step",
     "yarn_install_step",
 )
 load(
@@ -254,47 +239,6 @@ def publish_npm_pipelines():
             environment = {"EDITION": "oss"},
         ),
     ]
-
-def integration_test_pipelines():
-    """
-    Trigger integration tests on release builds
-
-    These pipelines should be triggered when we have a release that does a lot of
-    cherry-picking and we still want to have all the integration tests run on that
-    particular build.
-
-    Returns:
-      List of Drone pipelines
-    """
-    trigger = {
-        "event": ["promote"],
-        "target": "integration-tests",
-    }
-    pipelines = []
-    volumes = integration_test_services_volumes()
-    integration_test_steps = postgres_integration_tests_steps() + \
-                             mysql_integration_tests_steps("mysql80", "8.0") + \
-                             redis_integration_tests_steps() + \
-                             memcached_integration_tests_steps() + \
-                             remote_alertmanager_integration_tests_steps()
-
-    pipelines.append(pipeline(
-        name = "integration-tests",
-        trigger = trigger,
-        services = integration_test_services(),
-        steps = [
-                    download_grabpl_step(),
-                    identify_runner_step(),
-                    verify_gen_cue_step(),
-                    verify_gen_jsonnet_step(),
-                    wire_install_step(),
-                ] +
-                integration_test_steps,
-        environment = {"EDITION": "oss"},
-        volumes = volumes,
-    ))
-
-    return pipelines
 
 def verify_release_pipeline(
         name = "verify-prerelease-assets",

@@ -7874,11 +7874,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "scripts/cli/generateSassVariableFiles.ts:5381": [
-      [0, 0, 0, "\'@grafana/ui/src/themes/_variables.dark.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "0"],
-      [0, 0, 0, "\'@grafana/ui/src/themes/_variables.light.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "1"],
-      [0, 0, 0, "\'@grafana/ui/src/themes/_variables.scss.tmpl\' import is restricted from being used by a pattern. Import from the public export instead.", "2"]
     ]
   }`
 };

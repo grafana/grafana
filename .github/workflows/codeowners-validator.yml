@@ -2,11 +2,15 @@ name: "Codeowners Validator"
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, release-* ]
+
+permissions: {}
 
 jobs:
   codeowners-validator:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       # Checks-out your repository, which is validated in the next step
       - uses: actions/checkout@v4
@@ -23,7 +27,7 @@ jobs:
 
           # "The comma-separated list of experimental checks that should be executed. By default, all experimental checks are turned off. Possible values: notowned,avoid-shadowing"
           experimental_checks: "notowned,avoid-shadowing"
-          
+
           # The repository path in which CODEOWNERS file should be validated."
           repository_path: "."
 
@@ -37,4 +41,4 @@ jobs:
           owner_checker_allow_unowned_patterns: "false"
 
           # Specifies whether only teams are allowed as owners of files.
-          owner_checker_owners_must_be_teams: "false"          
+          owner_checker_owners_must_be_teams: "false"

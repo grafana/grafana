@@ -66,27 +66,6 @@ func NewAzureMonitorQuery() *AzureMonitorQuery {
 	return &AzureMonitorQuery{}
 }
 
-// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
-type AzureQueryType string
-
-const (
-	AzureQueryTypeAzureMonitor              AzureQueryType = "Azure Monitor"
-	AzureQueryTypeLogAnalytics              AzureQueryType = "Azure Log Analytics"
-	AzureQueryTypeAzureResourceGraph        AzureQueryType = "Azure Resource Graph"
-	AzureQueryTypeAzureTraces               AzureQueryType = "Azure Traces"
-	AzureQueryTypeSubscriptionsQuery        AzureQueryType = "Azure Subscriptions"
-	AzureQueryTypeResourceGroupsQuery       AzureQueryType = "Azure Resource Groups"
-	AzureQueryTypeNamespacesQuery           AzureQueryType = "Azure Namespaces"
-	AzureQueryTypeResourceNamesQuery        AzureQueryType = "Azure Resource Names"
-	AzureQueryTypeMetricNamesQuery          AzureQueryType = "Azure Metric Names"
-	AzureQueryTypeWorkspacesQuery           AzureQueryType = "Azure Workspaces"
-	AzureQueryTypeLocationsQuery            AzureQueryType = "Azure Regions"
-	AzureQueryTypeGrafanaTemplateVariableFn AzureQueryType = "Grafana Template Variable Function"
-	AzureQueryTypeTraceExemplar             AzureQueryType = "traceql"
-	AzureQueryTypeCustomNamespacesQuery     AzureQueryType = "Azure Custom Namespaces"
-	AzureQueryTypeCustomMetricNamesQuery    AzureQueryType = "Azure Custom Metric Names"
-)
-
 type AzureMetricQuery struct {
 	// Array of resource URIs to be queried.
 	Resources []AzureMonitorResource `json:"resources,omitempty"`
@@ -133,6 +112,35 @@ func NewAzureMetricQuery() *AzureMetricQuery {
 	return &AzureMetricQuery{}
 }
 
+type AzureMonitorResource struct {
+	Subscription    *string `json:"subscription,omitempty"`
+	ResourceGroup   *string `json:"resourceGroup,omitempty"`
+	ResourceName    *string `json:"resourceName,omitempty"`
+	MetricNamespace *string `json:"metricNamespace,omitempty"`
+	Region          *string `json:"region,omitempty"`
+}
+
+// NewAzureMonitorResource creates a new AzureMonitorResource object.
+func NewAzureMonitorResource() *AzureMonitorResource {
+	return &AzureMonitorResource{}
+}
+
+type AzureMetricDimension struct {
+	// Name of Dimension to be filtered on.
+	Dimension *string `json:"dimension,omitempty"`
+	// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
+	Operator *string `json:"operator,omitempty"`
+	// Values to match with the filter.
+	Filters []string `json:"filters,omitempty"`
+	// @deprecated filter is deprecated in favour of filters to support multiselect.
+	Filter *string `json:"filter,omitempty"`
+}
+
+// NewAzureMetricDimension creates a new AzureMetricDimension object.
+func NewAzureMetricDimension() *AzureMetricDimension {
+	return &AzureMetricDimension{}
+}
+
 // Azure Monitor Logs sub-query properties
 type AzureLogsQuery struct {
 	// KQL query to be executed.
@@ -158,6 +166,27 @@ type AzureLogsQuery struct {
 // NewAzureLogsQuery creates a new AzureLogsQuery object.
 func NewAzureLogsQuery() *AzureLogsQuery {
 	return &AzureLogsQuery{}
+}
+
+type ResultFormat string
+
+const (
+	ResultFormatTable      ResultFormat = "table"
+	ResultFormatTimeSeries ResultFormat = "time_series"
+	ResultFormatTrace      ResultFormat = "trace"
+	ResultFormatLogs       ResultFormat = "logs"
+)
+
+type AzureResourceGraphQuery struct {
+	// Azure Resource Graph KQL query to be executed.
+	Query *string `json:"query,omitempty"`
+	// Specifies the format results should be returned as. Defaults to table.
+	ResultFormat *string `json:"resultFormat,omitempty"`
+}
+
+// NewAzureResourceGraphQuery creates a new AzureResourceGraphQuery object.
+func NewAzureResourceGraphQuery() *AzureResourceGraphQuery {
+	return &AzureResourceGraphQuery{}
 }
 
 // Application Insights Traces sub-query properties
@@ -195,89 +224,11 @@ func NewAzureTracesFilter() *AzureTracesFilter {
 	return &AzureTracesFilter{}
 }
 
-type ResultFormat string
+type GrafanaTemplateVariableQuery = AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery
 
-const (
-	ResultFormatTable      ResultFormat = "table"
-	ResultFormatTimeSeries ResultFormat = "time_series"
-	ResultFormatTrace      ResultFormat = "trace"
-	ResultFormatLogs       ResultFormat = "logs"
-)
-
-type AzureResourceGraphQuery struct {
-	// Azure Resource Graph KQL query to be executed.
-	Query *string `json:"query,omitempty"`
-	// Specifies the format results should be returned as. Defaults to table.
-	ResultFormat *string `json:"resultFormat,omitempty"`
-}
-
-// NewAzureResourceGraphQuery creates a new AzureResourceGraphQuery object.
-func NewAzureResourceGraphQuery() *AzureResourceGraphQuery {
-	return &AzureResourceGraphQuery{}
-}
-
-type AzureMonitorResource struct {
-	Subscription    *string `json:"subscription,omitempty"`
-	ResourceGroup   *string `json:"resourceGroup,omitempty"`
-	ResourceName    *string `json:"resourceName,omitempty"`
-	MetricNamespace *string `json:"metricNamespace,omitempty"`
-	Region          *string `json:"region,omitempty"`
-}
-
-// NewAzureMonitorResource creates a new AzureMonitorResource object.
-func NewAzureMonitorResource() *AzureMonitorResource {
-	return &AzureMonitorResource{}
-}
-
-type AzureMetricDimension struct {
-	// Name of Dimension to be filtered on.
-	Dimension *string `json:"dimension,omitempty"`
-	// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
-	Operator *string `json:"operator,omitempty"`
-	// Values to match with the filter.
-	Filters []string `json:"filters,omitempty"`
-	// @deprecated filter is deprecated in favour of filters to support multiselect.
-	Filter *string `json:"filter,omitempty"`
-}
-
-// NewAzureMetricDimension creates a new AzureMetricDimension object.
-func NewAzureMetricDimension() *AzureMetricDimension {
-	return &AzureMetricDimension{}
-}
-
-type GrafanaTemplateVariableQueryType string
-
-const (
-	GrafanaTemplateVariableQueryTypeAppInsightsMetricNameQuery GrafanaTemplateVariableQueryType = "AppInsightsMetricNameQuery"
-	GrafanaTemplateVariableQueryTypeAppInsightsGroupByQuery    GrafanaTemplateVariableQueryType = "AppInsightsGroupByQuery"
-	GrafanaTemplateVariableQueryTypeSubscriptionsQuery         GrafanaTemplateVariableQueryType = "SubscriptionsQuery"
-	GrafanaTemplateVariableQueryTypeResourceGroupsQuery        GrafanaTemplateVariableQueryType = "ResourceGroupsQuery"
-	GrafanaTemplateVariableQueryTypeResourceNamesQuery         GrafanaTemplateVariableQueryType = "ResourceNamesQuery"
-	GrafanaTemplateVariableQueryTypeMetricNamespaceQuery       GrafanaTemplateVariableQueryType = "MetricNamespaceQuery"
-	GrafanaTemplateVariableQueryTypeMetricNamesQuery           GrafanaTemplateVariableQueryType = "MetricNamesQuery"
-	GrafanaTemplateVariableQueryTypeWorkspacesQuery            GrafanaTemplateVariableQueryType = "WorkspacesQuery"
-	GrafanaTemplateVariableQueryTypeUnknownQuery               GrafanaTemplateVariableQueryType = "UnknownQuery"
-)
-
-type BaseGrafanaTemplateVariableQuery struct {
-	RawQuery *string `json:"rawQuery,omitempty"`
-}
-
-// NewBaseGrafanaTemplateVariableQuery creates a new BaseGrafanaTemplateVariableQuery object.
-func NewBaseGrafanaTemplateVariableQuery() *BaseGrafanaTemplateVariableQuery {
-	return &BaseGrafanaTemplateVariableQuery{}
-}
-
-type UnknownQuery struct {
-	RawQuery *string `json:"rawQuery,omitempty"`
-	Kind     string  `json:"kind"`
-}
-
-// NewUnknownQuery creates a new UnknownQuery object.
-func NewUnknownQuery() *UnknownQuery {
-	return &UnknownQuery{
-		Kind: "UnknownQuery",
-	}
+// NewGrafanaTemplateVariableQuery creates a new GrafanaTemplateVariableQuery object.
+func NewGrafanaTemplateVariableQuery() *GrafanaTemplateVariableQuery {
+	return NewAppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery()
 }
 
 type AppInsightsMetricNameQuery struct {
@@ -407,11 +358,60 @@ func NewWorkspacesQuery() *WorkspacesQuery {
 	}
 }
 
-type GrafanaTemplateVariableQuery = AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery
+type UnknownQuery struct {
+	RawQuery *string `json:"rawQuery,omitempty"`
+	Kind     string  `json:"kind"`
+}
 
-// NewGrafanaTemplateVariableQuery creates a new GrafanaTemplateVariableQuery object.
-func NewGrafanaTemplateVariableQuery() *GrafanaTemplateVariableQuery {
-	return NewAppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery()
+// NewUnknownQuery creates a new UnknownQuery object.
+func NewUnknownQuery() *UnknownQuery {
+	return &UnknownQuery{
+		Kind: "UnknownQuery",
+	}
+}
+
+// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
+type AzureQueryType string
+
+const (
+	AzureQueryTypeAzureMonitor              AzureQueryType = "Azure Monitor"
+	AzureQueryTypeLogAnalytics              AzureQueryType = "Azure Log Analytics"
+	AzureQueryTypeAzureResourceGraph        AzureQueryType = "Azure Resource Graph"
+	AzureQueryTypeAzureTraces               AzureQueryType = "Azure Traces"
+	AzureQueryTypeSubscriptionsQuery        AzureQueryType = "Azure Subscriptions"
+	AzureQueryTypeResourceGroupsQuery       AzureQueryType = "Azure Resource Groups"
+	AzureQueryTypeNamespacesQuery           AzureQueryType = "Azure Namespaces"
+	AzureQueryTypeResourceNamesQuery        AzureQueryType = "Azure Resource Names"
+	AzureQueryTypeMetricNamesQuery          AzureQueryType = "Azure Metric Names"
+	AzureQueryTypeWorkspacesQuery           AzureQueryType = "Azure Workspaces"
+	AzureQueryTypeLocationsQuery            AzureQueryType = "Azure Regions"
+	AzureQueryTypeGrafanaTemplateVariableFn AzureQueryType = "Grafana Template Variable Function"
+	AzureQueryTypeTraceExemplar             AzureQueryType = "traceql"
+	AzureQueryTypeCustomNamespacesQuery     AzureQueryType = "Azure Custom Namespaces"
+	AzureQueryTypeCustomMetricNamesQuery    AzureQueryType = "Azure Custom Metric Names"
+)
+
+type GrafanaTemplateVariableQueryType string
+
+const (
+	GrafanaTemplateVariableQueryTypeAppInsightsMetricNameQuery GrafanaTemplateVariableQueryType = "AppInsightsMetricNameQuery"
+	GrafanaTemplateVariableQueryTypeAppInsightsGroupByQuery    GrafanaTemplateVariableQueryType = "AppInsightsGroupByQuery"
+	GrafanaTemplateVariableQueryTypeSubscriptionsQuery         GrafanaTemplateVariableQueryType = "SubscriptionsQuery"
+	GrafanaTemplateVariableQueryTypeResourceGroupsQuery        GrafanaTemplateVariableQueryType = "ResourceGroupsQuery"
+	GrafanaTemplateVariableQueryTypeResourceNamesQuery         GrafanaTemplateVariableQueryType = "ResourceNamesQuery"
+	GrafanaTemplateVariableQueryTypeMetricNamespaceQuery       GrafanaTemplateVariableQueryType = "MetricNamespaceQuery"
+	GrafanaTemplateVariableQueryTypeMetricNamesQuery           GrafanaTemplateVariableQueryType = "MetricNamesQuery"
+	GrafanaTemplateVariableQueryTypeWorkspacesQuery            GrafanaTemplateVariableQueryType = "WorkspacesQuery"
+	GrafanaTemplateVariableQueryTypeUnknownQuery               GrafanaTemplateVariableQueryType = "UnknownQuery"
+)
+
+type BaseGrafanaTemplateVariableQuery struct {
+	RawQuery *string `json:"rawQuery,omitempty"`
+}
+
+// NewBaseGrafanaTemplateVariableQuery creates a new BaseGrafanaTemplateVariableQuery object.
+func NewBaseGrafanaTemplateVariableQuery() *BaseGrafanaTemplateVariableQuery {
+	return &BaseGrafanaTemplateVariableQuery{}
 }
 
 type AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery struct {
@@ -464,7 +464,6 @@ func (resource AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscription
 	if resource.UnknownQuery != nil {
 		return json.Marshal(resource.UnknownQuery)
 	}
-
 	return nil, fmt.Errorf("no value for disjunction of refs")
 }
 

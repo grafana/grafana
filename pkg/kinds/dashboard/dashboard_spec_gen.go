@@ -29,18 +29,6 @@ const (
 	DashboardCursorSyncTooltip   DashboardCursorSync = 2
 )
 
-// Counterpart for TypeScript's TimeOption type.
-type TimeOption struct {
-	Display string `json:"display"`
-	From    string `json:"from"`
-	To      string `json:"to"`
-}
-
-// NewTimeOption creates a new TimeOption object.
-func NewTimeOption() *TimeOption {
-	return &TimeOption{}
-}
-
 // Time picker configuration
 // It defines the default config for the time picker and the refresh picker for the specific dashboard.
 type TimePickerConfig struct {
@@ -62,434 +50,16 @@ func NewTimePickerConfig() *TimePickerConfig {
 	}
 }
 
-// Schema for panel targets is specified by datasource
-// plugins. We use a placeholder definition, which the Go
-// schema loader either left open/as-is with the Base
-// variant of the Dashboard and Panel families, or filled
-// with types derived from plugins in the Instance variant.
-// When working directly from CUE, importers can extend this
-// type directly to achieve the same effect.
-type Target map[string]any
-
-// Ref to a DataSource instance
-type DataSourceRef struct {
-	// The plugin type-id
-	Type *string `json:"type,omitempty"`
-	// Specific datasource instance
-	Uid *string `json:"uid,omitempty"`
+// Counterpart for TypeScript's TimeOption type.
+type TimeOption struct {
+	Display string `json:"display"`
+	From    string `json:"from"`
+	To      string `json:"to"`
 }
 
-// NewDataSourceRef creates a new DataSourceRef object.
-func NewDataSourceRef() *DataSourceRef {
-	return &DataSourceRef{}
-}
-
-// Position and dimensions of a panel in the grid
-type GridPos struct {
-	// Panel height. The height is the number of rows from the top edge of the panel.
-	H uint32 `json:"h"`
-	// Panel width. The width is the number of columns from the left edge of the panel.
-	W uint32 `json:"w"`
-	// Panel x. The x coordinate is the number of columns from the left edge of the grid
-	X uint32 `json:"x"`
-	// Panel y. The y coordinate is the number of rows from the top edge of the grid
-	Y uint32 `json:"y"`
-	// Whether the panel is fixed within the grid. If true, the panel will not be affected by other panels' interactions
-	Static *bool `json:"static,omitempty"`
-}
-
-// NewGridPos creates a new GridPos object.
-func NewGridPos() *GridPos {
-	return &GridPos{
-		H: 9,
-		W: 12,
-		X: 0,
-		Y: 0,
-	}
-}
-
-// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-type DashboardLinkType string
-
-const (
-	DashboardLinkTypeLink       DashboardLinkType = "link"
-	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
-)
-
-// Links with references to other dashboards or external resources
-type DashboardLink struct {
-	// Title to display with the link
-	Title string `json:"title"`
-	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-	Type DashboardLinkType `json:"type"`
-	// Icon name to be displayed with the link
-	Icon string `json:"icon"`
-	// Tooltip to display when the user hovers their mouse over it
-	Tooltip string `json:"tooltip"`
-	// Link URL. Only required/valid if the type is link
-	Url *string `json:"url,omitempty"`
-	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
-	Tags []string `json:"tags"`
-	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
-	AsDropdown bool `json:"asDropdown"`
-	// If true, the link will be opened in a new tab
-	TargetBlank bool `json:"targetBlank"`
-	// If true, includes current template variables values in the link as query params
-	IncludeVars bool `json:"includeVars"`
-	// If true, includes current time range in the link as query params
-	KeepTime bool `json:"keepTime"`
-}
-
-// NewDashboardLink creates a new DashboardLink object.
-func NewDashboardLink() *DashboardLink {
-	return &DashboardLink{
-		AsDropdown:  false,
-		TargetBlank: false,
-		IncludeVars: false,
-		KeepTime:    false,
-	}
-}
-
-// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
-// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
-type MatcherConfig struct {
-	// The matcher id. This is used to find the matcher implementation from registry.
-	Id string `json:"id"`
-	// The matcher options. This is specific to the matcher implementation.
-	Options any `json:"options,omitempty"`
-}
-
-// NewMatcherConfig creates a new MatcherConfig object.
-func NewMatcherConfig() *MatcherConfig {
-	return &MatcherConfig{
-		Id: "",
-	}
-}
-
-// Transformations allow to manipulate data returned by a query before the system applies a visualization.
-// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
-// use the output of one transformation as the input to another transformation, etc.
-type DataTransformerConfig struct {
-	// Unique identifier of transformer
-	Id string `json:"id"`
-	// Disabled transformations are skipped
-	Disabled *bool `json:"disabled,omitempty"`
-	// Optional frame matcher. When missing it will be applied to all results
-	Filter *MatcherConfig `json:"filter,omitempty"`
-	// Where to pull DataFrames from as input to transformation
-	// replaced with common.DataTopic
-	Topic *DataTransformerConfigTopic `json:"topic,omitempty"`
-	// Options to be passed to the transformer
-	// Valid options depend on the transformer id
-	Options any `json:"options"`
-}
-
-// NewDataTransformerConfig creates a new DataTransformerConfig object.
-func NewDataTransformerConfig() *DataTransformerConfig {
-	return &DataTransformerConfig{}
-}
-
-// A library panel is a reusable panel that you can use in any dashboard.
-// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
-// Library panels streamline reuse of panels across multiple dashboards.
-type LibraryPanelRef struct {
-	// Library panel name
-	Name string `json:"name"`
-	// Library panel uid
-	Uid string `json:"uid"`
-}
-
-// NewLibraryPanelRef creates a new LibraryPanelRef object.
-func NewLibraryPanelRef() *LibraryPanelRef {
-	return &LibraryPanelRef{}
-}
-
-// Result used as replacement with text and color when the value matches
-type ValueMappingResult struct {
-	// Text to display when the value matches
-	Text *string `json:"text,omitempty"`
-	// Text to use when the value matches
-	Color *string `json:"color,omitempty"`
-	// Icon to display when the value matches. Only specific visualizations.
-	Icon *string `json:"icon,omitempty"`
-	// Position in the mapping array. Only used internally.
-	Index *int32 `json:"index,omitempty"`
-}
-
-// NewValueMappingResult creates a new ValueMappingResult object.
-func NewValueMappingResult() *ValueMappingResult {
-	return &ValueMappingResult{}
-}
-
-// Maps text values to a color or different display text and color.
-// For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
-type ValueMap struct {
-	Type string `json:"type"`
-	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
-	Options map[string]ValueMappingResult `json:"options"`
-}
-
-// NewValueMap creates a new ValueMap object.
-func NewValueMap() *ValueMap {
-	return &ValueMap{
-		Type: "value",
-	}
-}
-
-// Maps numerical ranges to a display text and color.
-// For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
-type RangeMap struct {
-	Type string `json:"type"`
-	// Range to match against and the result to apply when the value is within the range
-	Options DashboardRangeMapOptions `json:"options"`
-}
-
-// NewRangeMap creates a new RangeMap object.
-func NewRangeMap() *RangeMap {
-	return &RangeMap{
-		Type:    "range",
-		Options: *NewDashboardRangeMapOptions(),
-	}
-}
-
-// Maps regular expressions to replacement text and a color.
-// For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
-type RegexMap struct {
-	Type string `json:"type"`
-	// Regular expression to match against and the result to apply when the value matches the regex
-	Options DashboardRegexMapOptions `json:"options"`
-}
-
-// NewRegexMap creates a new RegexMap object.
-func NewRegexMap() *RegexMap {
-	return &RegexMap{
-		Type:    "regex",
-		Options: *NewDashboardRegexMapOptions(),
-	}
-}
-
-// Special value types supported by the `SpecialValueMap`
-type SpecialValueMatch string
-
-const (
-	SpecialValueMatchTrue       SpecialValueMatch = "true"
-	SpecialValueMatchFalse      SpecialValueMatch = "false"
-	SpecialValueMatchNull       SpecialValueMatch = "null"
-	SpecialValueMatchNaN        SpecialValueMatch = "nan"
-	SpecialValueMatchNullAndNan SpecialValueMatch = "null+nan"
-	SpecialValueMatchEmpty      SpecialValueMatch = "empty"
-)
-
-// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
-// See SpecialValueMatch to see the list of special values.
-// For example, you can configure a special value mapping so that null values appear as N/A.
-type SpecialValueMap struct {
-	Type    string                          `json:"type"`
-	Options DashboardSpecialValueMapOptions `json:"options"`
-}
-
-// NewSpecialValueMap creates a new SpecialValueMap object.
-func NewSpecialValueMap() *SpecialValueMap {
-	return &SpecialValueMap{
-		Type:    "special",
-		Options: *NewDashboardSpecialValueMapOptions(),
-	}
-}
-
-// Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
-type ValueMapping = ValueMapOrRangeMapOrRegexMapOrSpecialValueMap
-
-// NewValueMapping creates a new ValueMapping object.
-func NewValueMapping() *ValueMapping {
-	return NewValueMapOrRangeMapOrRegexMapOrSpecialValueMap()
-}
-
-// Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
-type ThresholdsMode string
-
-const (
-	ThresholdsModeAbsolute   ThresholdsMode = "absolute"
-	ThresholdsModePercentage ThresholdsMode = "percentage"
-)
-
-// User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
-// They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
-type Threshold struct {
-	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
-	// Nulls currently appear here when serializing -Infinity to JSON.
-	Value *float64 `json:"value"`
-	// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
-	Color string `json:"color"`
-}
-
-// NewThreshold creates a new Threshold object.
-func NewThreshold() *Threshold {
-	return &Threshold{}
-}
-
-// Thresholds configuration for the panel
-type ThresholdsConfig struct {
-	// Thresholds mode.
-	Mode ThresholdsMode `json:"mode"`
-	// Must be sorted by 'value', first value is always -Infinity
-	Steps []Threshold `json:"steps"`
-}
-
-// NewThresholdsConfig creates a new ThresholdsConfig object.
-func NewThresholdsConfig() *ThresholdsConfig {
-	return &ThresholdsConfig{}
-}
-
-// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
-// Continuous color interpolates a color using the percentage of a value relative to min and max.
-// Accepted values are:
-// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
-// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
-// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
-// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
-// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
-// `continuous-YlRd`: Continuous Yellow-Red palette mode
-// `continuous-BlPu`: Continuous Blue-Purple palette mode
-// `continuous-YlBl`: Continuous Yellow-Blue palette mode
-// `continuous-blues`: Continuous Blue palette mode
-// `continuous-reds`: Continuous Red palette mode
-// `continuous-greens`: Continuous Green palette mode
-// `continuous-purples`: Continuous Purple palette mode
-// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
-// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-type FieldColorModeId string
-
-const (
-	FieldColorModeIdThresholds           FieldColorModeId = "thresholds"
-	FieldColorModeIdPaletteClassic       FieldColorModeId = "palette-classic"
-	FieldColorModeIdPaletteClassicByName FieldColorModeId = "palette-classic-by-name"
-	FieldColorModeIdContinuousGrYlRd     FieldColorModeId = "continuous-GrYlRd"
-	FieldColorModeIdContinuousRdYlGr     FieldColorModeId = "continuous-RdYlGr"
-	FieldColorModeIdContinuousBlYlRd     FieldColorModeId = "continuous-BlYlRd"
-	FieldColorModeIdContinuousYlRd       FieldColorModeId = "continuous-YlRd"
-	FieldColorModeIdContinuousBlPu       FieldColorModeId = "continuous-BlPu"
-	FieldColorModeIdContinuousYlBl       FieldColorModeId = "continuous-YlBl"
-	FieldColorModeIdContinuousBlues      FieldColorModeId = "continuous-blues"
-	FieldColorModeIdContinuousReds       FieldColorModeId = "continuous-reds"
-	FieldColorModeIdContinuousGreens     FieldColorModeId = "continuous-greens"
-	FieldColorModeIdContinuousPurples    FieldColorModeId = "continuous-purples"
-	FieldColorModeIdFixed                FieldColorModeId = "fixed"
-	FieldColorModeIdShades               FieldColorModeId = "shades"
-)
-
-// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
-type FieldColorSeriesByMode string
-
-const (
-	FieldColorSeriesByModeMin  FieldColorSeriesByMode = "min"
-	FieldColorSeriesByModeMax  FieldColorSeriesByMode = "max"
-	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
-)
-
-// Map a field to a color.
-type FieldColor struct {
-	// The main color scheme mode.
-	Mode FieldColorModeId `json:"mode"`
-	// The fixed color value for fixed or shades color modes.
-	FixedColor *string `json:"fixedColor,omitempty"`
-	// Some visualizations need to know how to assign a series color from by value color schemes.
-	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
-}
-
-// NewFieldColor creates a new FieldColor object.
-func NewFieldColor() *FieldColor {
-	return &FieldColor{}
-}
-
-// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
-// Each column within this structure is called a field. A field can represent a single time series or table column.
-// Field options allow you to change how the data is displayed in your visualizations.
-type FieldConfig struct {
-	// The display value for this field.  This supports template variables blank is auto
-	DisplayName *string `json:"displayName,omitempty"`
-	// This can be used by data sources that return and explicit naming structure for values and labels
-	// When this property is configured, this value is used rather than the default naming strategy.
-	DisplayNameFromDS *string `json:"displayNameFromDS,omitempty"`
-	// Human readable field metadata
-	Description *string `json:"description,omitempty"`
-	// An explicit path to the field in the datasource.  When the frame meta includes a path,
-	// This will default to `${frame.meta.path}/${field.name}
-	//
-	// When defined, this value can be used as an identifier within the datasource scope, and
-	// may be used to update the results
-	Path *string `json:"path,omitempty"`
-	// True if data source can write a value to the path. Auth/authz are supported separately
-	Writeable *bool `json:"writeable,omitempty"`
-	// True if data source field supports ad-hoc filters
-	Filterable *bool `json:"filterable,omitempty"`
-	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
-	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
-	// As custom unit, you can use the following formats:
-	// `suffix:<suffix>` for custom unit that should go after value.
-	// `prefix:<prefix>` for custom unit that should go before value.
-	// `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`.
-	// `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.
-	// `count:<unit>` for a custom count unit.
-	// `currency:<unit>` for custom a currency unit.
-	Unit *string `json:"unit,omitempty"`
-	// Specify the number of decimals Grafana includes in the rendered value.
-	// If you leave this field blank, Grafana automatically truncates the number of decimals based on the value.
-	// For example 1.1234 will display as 1.12 and 100.456 will display as 100.
-	// To display all decimals, set the unit to `String`.
-	Decimals *float64 `json:"decimals,omitempty"`
-	// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	Min *float64 `json:"min,omitempty"`
-	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	Max *float64 `json:"max,omitempty"`
-	// Convert input values into a display string
-	Mappings []ValueMapping `json:"mappings,omitempty"`
-	// Map numeric values to states
-	Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
-	// Panel color configuration
-	Color *FieldColor `json:"color,omitempty"`
-	// The behavior when clicking on a result
-	Links []any `json:"links,omitempty"`
-	// Alternative to empty string
-	NoValue *string `json:"noValue,omitempty"`
-	// custom is specified by the FieldConfig field
-	// in panel plugin schemas.
-	Custom map[string]any `json:"custom,omitempty"`
-}
-
-// NewFieldConfig creates a new FieldConfig object.
-func NewFieldConfig() *FieldConfig {
-	return &FieldConfig{}
-}
-
-type DynamicConfigValue struct {
-	Id    string `json:"id"`
-	Value any    `json:"value,omitempty"`
-}
-
-// NewDynamicConfigValue creates a new DynamicConfigValue object.
-func NewDynamicConfigValue() *DynamicConfigValue {
-	return &DynamicConfigValue{
-		Id: "",
-	}
-}
-
-// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
-// Each column within this structure is called a field. A field can represent a single time series or table column.
-// Field options allow you to change how the data is displayed in your visualizations.
-type FieldConfigSource struct {
-	// Defaults are the options applied to all fields.
-	Defaults FieldConfig `json:"defaults"`
-	// Overrides are the options applied to specific fields overriding the defaults.
-	Overrides []DashboardFieldConfigSourceOverrides `json:"overrides"`
-}
-
-// NewFieldConfigSource creates a new FieldConfigSource object.
-func NewFieldConfigSource() *FieldConfigSource {
-	return &FieldConfigSource{
-		Defaults: *NewFieldConfig(),
-	}
+// NewTimeOption creates a new TimeOption object.
+func NewTimeOption() *TimeOption {
+	return &TimeOption{}
 }
 
 // Dashboard panels are the basic visualization building blocks.
@@ -568,6 +138,450 @@ func NewPanel() *Panel {
 	}
 }
 
+// Schema for panel targets is specified by datasource
+// plugins. We use a placeholder definition, which the Go
+// schema loader either left open/as-is with the Base
+// variant of the Dashboard and Panel families, or filled
+// with types derived from plugins in the Instance variant.
+// When working directly from CUE, importers can extend this
+// type directly to achieve the same effect.
+type Target map[string]any
+
+// Ref to a DataSource instance
+type DataSourceRef struct {
+	// The plugin type-id
+	Type *string `json:"type,omitempty"`
+	// Specific datasource instance
+	Uid *string `json:"uid,omitempty"`
+}
+
+// NewDataSourceRef creates a new DataSourceRef object.
+func NewDataSourceRef() *DataSourceRef {
+	return &DataSourceRef{}
+}
+
+// Position and dimensions of a panel in the grid
+type GridPos struct {
+	// Panel height. The height is the number of rows from the top edge of the panel.
+	H uint32 `json:"h"`
+	// Panel width. The width is the number of columns from the left edge of the panel.
+	W uint32 `json:"w"`
+	// Panel x. The x coordinate is the number of columns from the left edge of the grid
+	X uint32 `json:"x"`
+	// Panel y. The y coordinate is the number of rows from the top edge of the grid
+	Y uint32 `json:"y"`
+	// Whether the panel is fixed within the grid. If true, the panel will not be affected by other panels' interactions
+	Static *bool `json:"static,omitempty"`
+}
+
+// NewGridPos creates a new GridPos object.
+func NewGridPos() *GridPos {
+	return &GridPos{
+		H: 9,
+		W: 12,
+		X: 0,
+		Y: 0,
+	}
+}
+
+// Links with references to other dashboards or external resources
+type DashboardLink struct {
+	// Title to display with the link
+	Title string `json:"title"`
+	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+	Type DashboardLinkType `json:"type"`
+	// Icon name to be displayed with the link
+	Icon string `json:"icon"`
+	// Tooltip to display when the user hovers their mouse over it
+	Tooltip string `json:"tooltip"`
+	// Link URL. Only required/valid if the type is link
+	Url *string `json:"url,omitempty"`
+	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+	Tags []string `json:"tags"`
+	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+	AsDropdown bool `json:"asDropdown"`
+	// If true, the link will be opened in a new tab
+	TargetBlank bool `json:"targetBlank"`
+	// If true, includes current template variables values in the link as query params
+	IncludeVars bool `json:"includeVars"`
+	// If true, includes current time range in the link as query params
+	KeepTime bool `json:"keepTime"`
+}
+
+// NewDashboardLink creates a new DashboardLink object.
+func NewDashboardLink() *DashboardLink {
+	return &DashboardLink{
+		AsDropdown:  false,
+		TargetBlank: false,
+		IncludeVars: false,
+		KeepTime:    false,
+	}
+}
+
+// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+type DashboardLinkType string
+
+const (
+	DashboardLinkTypeLink       DashboardLinkType = "link"
+	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
+)
+
+// Transformations allow to manipulate data returned by a query before the system applies a visualization.
+// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
+// use the output of one transformation as the input to another transformation, etc.
+type DataTransformerConfig struct {
+	// Unique identifier of transformer
+	Id string `json:"id"`
+	// Disabled transformations are skipped
+	Disabled *bool `json:"disabled,omitempty"`
+	// Optional frame matcher. When missing it will be applied to all results
+	Filter *MatcherConfig `json:"filter,omitempty"`
+	// Where to pull DataFrames from as input to transformation
+	// replaced with common.DataTopic
+	Topic *DataTransformerConfigTopic `json:"topic,omitempty"`
+	// Options to be passed to the transformer
+	// Valid options depend on the transformer id
+	Options any `json:"options"`
+}
+
+// NewDataTransformerConfig creates a new DataTransformerConfig object.
+func NewDataTransformerConfig() *DataTransformerConfig {
+	return &DataTransformerConfig{}
+}
+
+// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+type MatcherConfig struct {
+	// The matcher id. This is used to find the matcher implementation from registry.
+	Id string `json:"id"`
+	// The matcher options. This is specific to the matcher implementation.
+	Options any `json:"options,omitempty"`
+}
+
+// NewMatcherConfig creates a new MatcherConfig object.
+func NewMatcherConfig() *MatcherConfig {
+	return &MatcherConfig{
+		Id: "",
+	}
+}
+
+// A library panel is a reusable panel that you can use in any dashboard.
+// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+// Library panels streamline reuse of panels across multiple dashboards.
+type LibraryPanelRef struct {
+	// Library panel name
+	Name string `json:"name"`
+	// Library panel uid
+	Uid string `json:"uid"`
+}
+
+// NewLibraryPanelRef creates a new LibraryPanelRef object.
+func NewLibraryPanelRef() *LibraryPanelRef {
+	return &LibraryPanelRef{}
+}
+
+// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+// Each column within this structure is called a field. A field can represent a single time series or table column.
+// Field options allow you to change how the data is displayed in your visualizations.
+type FieldConfigSource struct {
+	// Defaults are the options applied to all fields.
+	Defaults FieldConfig `json:"defaults"`
+	// Overrides are the options applied to specific fields overriding the defaults.
+	Overrides []DashboardFieldConfigSourceOverrides `json:"overrides"`
+}
+
+// NewFieldConfigSource creates a new FieldConfigSource object.
+func NewFieldConfigSource() *FieldConfigSource {
+	return &FieldConfigSource{
+		Defaults: *NewFieldConfig(),
+	}
+}
+
+// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+// Each column within this structure is called a field. A field can represent a single time series or table column.
+// Field options allow you to change how the data is displayed in your visualizations.
+type FieldConfig struct {
+	// The display value for this field.  This supports template variables blank is auto
+	DisplayName *string `json:"displayName,omitempty"`
+	// This can be used by data sources that return and explicit naming structure for values and labels
+	// When this property is configured, this value is used rather than the default naming strategy.
+	DisplayNameFromDS *string `json:"displayNameFromDS,omitempty"`
+	// Human readable field metadata
+	Description *string `json:"description,omitempty"`
+	// An explicit path to the field in the datasource.  When the frame meta includes a path,
+	// This will default to `${frame.meta.path}/${field.name}
+	//
+	// When defined, this value can be used as an identifier within the datasource scope, and
+	// may be used to update the results
+	Path *string `json:"path,omitempty"`
+	// True if data source can write a value to the path. Auth/authz are supported separately
+	Writeable *bool `json:"writeable,omitempty"`
+	// True if data source field supports ad-hoc filters
+	Filterable *bool `json:"filterable,omitempty"`
+	// Unit a field should use. The unit you select is applied to all fields except time.
+	// You can use the units ID availables in Grafana or a custom unit.
+	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
+	// As custom unit, you can use the following formats:
+	// `suffix:<suffix>` for custom unit that should go after value.
+	// `prefix:<prefix>` for custom unit that should go before value.
+	// `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`.
+	// `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.
+	// `count:<unit>` for a custom count unit.
+	// `currency:<unit>` for custom a currency unit.
+	Unit *string `json:"unit,omitempty"`
+	// Specify the number of decimals Grafana includes in the rendered value.
+	// If you leave this field blank, Grafana automatically truncates the number of decimals based on the value.
+	// For example 1.1234 will display as 1.12 and 100.456 will display as 100.
+	// To display all decimals, set the unit to `String`.
+	Decimals *float64 `json:"decimals,omitempty"`
+	// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+	Min *float64 `json:"min,omitempty"`
+	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+	Max *float64 `json:"max,omitempty"`
+	// Convert input values into a display string
+	Mappings []ValueMapping `json:"mappings,omitempty"`
+	// Map numeric values to states
+	Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
+	// Panel color configuration
+	Color *FieldColor `json:"color,omitempty"`
+	// The behavior when clicking on a result
+	Links []any `json:"links,omitempty"`
+	// Alternative to empty string
+	NoValue *string `json:"noValue,omitempty"`
+	// custom is specified by the FieldConfig field
+	// in panel plugin schemas.
+	Custom map[string]any `json:"custom,omitempty"`
+}
+
+// NewFieldConfig creates a new FieldConfig object.
+func NewFieldConfig() *FieldConfig {
+	return &FieldConfig{}
+}
+
+// Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
+type ValueMapping = ValueMapOrRangeMapOrRegexMapOrSpecialValueMap
+
+// NewValueMapping creates a new ValueMapping object.
+func NewValueMapping() *ValueMapping {
+	return NewValueMapOrRangeMapOrRegexMapOrSpecialValueMap()
+}
+
+// Maps text values to a color or different display text and color.
+// For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+type ValueMap struct {
+	Type MappingType `json:"type"`
+	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
+	Options map[string]ValueMappingResult `json:"options"`
+}
+
+// NewValueMap creates a new ValueMap object.
+func NewValueMap() *ValueMap {
+	return &ValueMap{
+		Type: MappingTypeValueToText,
+	}
+}
+
+// Supported value mapping types
+// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+type MappingType string
+
+const (
+	MappingTypeValueToText  MappingType = "value"
+	MappingTypeRangeToText  MappingType = "range"
+	MappingTypeRegexToText  MappingType = "regex"
+	MappingTypeSpecialValue MappingType = "special"
+)
+
+// Result used as replacement with text and color when the value matches
+type ValueMappingResult struct {
+	// Text to display when the value matches
+	Text *string `json:"text,omitempty"`
+	// Text to use when the value matches
+	Color *string `json:"color,omitempty"`
+	// Icon to display when the value matches. Only specific visualizations.
+	Icon *string `json:"icon,omitempty"`
+	// Position in the mapping array. Only used internally.
+	Index *int32 `json:"index,omitempty"`
+}
+
+// NewValueMappingResult creates a new ValueMappingResult object.
+func NewValueMappingResult() *ValueMappingResult {
+	return &ValueMappingResult{}
+}
+
+// Maps numerical ranges to a display text and color.
+// For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+type RangeMap struct {
+	Type MappingType `json:"type"`
+	// Range to match against and the result to apply when the value is within the range
+	Options DashboardRangeMapOptions `json:"options"`
+}
+
+// NewRangeMap creates a new RangeMap object.
+func NewRangeMap() *RangeMap {
+	return &RangeMap{
+		Type:    MappingTypeRangeToText,
+		Options: *NewDashboardRangeMapOptions(),
+	}
+}
+
+// Maps regular expressions to replacement text and a color.
+// For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+type RegexMap struct {
+	Type MappingType `json:"type"`
+	// Regular expression to match against and the result to apply when the value matches the regex
+	Options DashboardRegexMapOptions `json:"options"`
+}
+
+// NewRegexMap creates a new RegexMap object.
+func NewRegexMap() *RegexMap {
+	return &RegexMap{
+		Type:    MappingTypeRegexToText,
+		Options: *NewDashboardRegexMapOptions(),
+	}
+}
+
+// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
+// See SpecialValueMatch to see the list of special values.
+// For example, you can configure a special value mapping so that null values appear as N/A.
+type SpecialValueMap struct {
+	Type    MappingType                     `json:"type"`
+	Options DashboardSpecialValueMapOptions `json:"options"`
+}
+
+// NewSpecialValueMap creates a new SpecialValueMap object.
+func NewSpecialValueMap() *SpecialValueMap {
+	return &SpecialValueMap{
+		Type:    MappingTypeSpecialValue,
+		Options: *NewDashboardSpecialValueMapOptions(),
+	}
+}
+
+// Special value types supported by the `SpecialValueMap`
+type SpecialValueMatch string
+
+const (
+	SpecialValueMatchTrue       SpecialValueMatch = "true"
+	SpecialValueMatchFalse      SpecialValueMatch = "false"
+	SpecialValueMatchNull       SpecialValueMatch = "null"
+	SpecialValueMatchNaN        SpecialValueMatch = "nan"
+	SpecialValueMatchNullAndNan SpecialValueMatch = "null+nan"
+	SpecialValueMatchEmpty      SpecialValueMatch = "empty"
+)
+
+// Thresholds configuration for the panel
+type ThresholdsConfig struct {
+	// Thresholds mode.
+	Mode ThresholdsMode `json:"mode"`
+	// Must be sorted by 'value', first value is always -Infinity
+	Steps []Threshold `json:"steps"`
+}
+
+// NewThresholdsConfig creates a new ThresholdsConfig object.
+func NewThresholdsConfig() *ThresholdsConfig {
+	return &ThresholdsConfig{}
+}
+
+// Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
+type ThresholdsMode string
+
+const (
+	ThresholdsModeAbsolute   ThresholdsMode = "absolute"
+	ThresholdsModePercentage ThresholdsMode = "percentage"
+)
+
+// User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
+// They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
+type Threshold struct {
+	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
+	// Nulls currently appear here when serializing -Infinity to JSON.
+	Value *float64 `json:"value"`
+	// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
+	Color string `json:"color"`
+}
+
+// NewThreshold creates a new Threshold object.
+func NewThreshold() *Threshold {
+	return &Threshold{}
+}
+
+// Map a field to a color.
+type FieldColor struct {
+	// The main color scheme mode.
+	Mode FieldColorModeId `json:"mode"`
+	// The fixed color value for fixed or shades color modes.
+	FixedColor *string `json:"fixedColor,omitempty"`
+	// Some visualizations need to know how to assign a series color from by value color schemes.
+	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
+}
+
+// NewFieldColor creates a new FieldColor object.
+func NewFieldColor() *FieldColor {
+	return &FieldColor{}
+}
+
+// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
+// Continuous color interpolates a color using the percentage of a value relative to min and max.
+// Accepted values are:
+// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
+// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
+// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
+// `continuous-YlRd`: Continuous Yellow-Red palette mode
+// `continuous-BlPu`: Continuous Blue-Purple palette mode
+// `continuous-YlBl`: Continuous Yellow-Blue palette mode
+// `continuous-blues`: Continuous Blue palette mode
+// `continuous-reds`: Continuous Red palette mode
+// `continuous-greens`: Continuous Green palette mode
+// `continuous-purples`: Continuous Purple palette mode
+// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
+// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
+type FieldColorModeId string
+
+const (
+	FieldColorModeIdThresholds           FieldColorModeId = "thresholds"
+	FieldColorModeIdPaletteClassic       FieldColorModeId = "palette-classic"
+	FieldColorModeIdPaletteClassicByName FieldColorModeId = "palette-classic-by-name"
+	FieldColorModeIdContinuousGrYlRd     FieldColorModeId = "continuous-GrYlRd"
+	FieldColorModeIdContinuousRdYlGr     FieldColorModeId = "continuous-RdYlGr"
+	FieldColorModeIdContinuousBlYlRd     FieldColorModeId = "continuous-BlYlRd"
+	FieldColorModeIdContinuousYlRd       FieldColorModeId = "continuous-YlRd"
+	FieldColorModeIdContinuousBlPu       FieldColorModeId = "continuous-BlPu"
+	FieldColorModeIdContinuousYlBl       FieldColorModeId = "continuous-YlBl"
+	FieldColorModeIdContinuousBlues      FieldColorModeId = "continuous-blues"
+	FieldColorModeIdContinuousReds       FieldColorModeId = "continuous-reds"
+	FieldColorModeIdContinuousGreens     FieldColorModeId = "continuous-greens"
+	FieldColorModeIdContinuousPurples    FieldColorModeId = "continuous-purples"
+	FieldColorModeIdFixed                FieldColorModeId = "fixed"
+	FieldColorModeIdShades               FieldColorModeId = "shades"
+)
+
+// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
+type FieldColorSeriesByMode string
+
+const (
+	FieldColorSeriesByModeMin  FieldColorSeriesByMode = "min"
+	FieldColorSeriesByModeMax  FieldColorSeriesByMode = "max"
+	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
+)
+
+type DynamicConfigValue struct {
+	Id    string `json:"id"`
+	Value any    `json:"value,omitempty"`
+}
+
+// NewDynamicConfigValue creates a new DynamicConfigValue object.
+func NewDynamicConfigValue() *DynamicConfigValue {
+	return &DynamicConfigValue{
+		Id: "",
+	}
+}
+
 // Row panel
 type RowPanel struct {
 	// The panel type
@@ -593,6 +607,55 @@ func NewRowPanel() *RowPanel {
 	return &RowPanel{
 		Type:      "row",
 		Collapsed: false,
+	}
+}
+
+// A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
+type VariableModel struct {
+	// Type of variable
+	Type VariableType `json:"type"`
+	// Name of variable
+	Name string `json:"name"`
+	// Optional display name
+	Label *string `json:"label,omitempty"`
+	// Visibility configuration for the variable
+	Hide *VariableHide `json:"hide,omitempty"`
+	// Whether the variable value should be managed by URL query params or not
+	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`
+	// Description of variable. It can be defined but `null`.
+	Description *string `json:"description,omitempty"`
+	// Query used to fetch values for a variable
+	Query *StringOrMap `json:"query,omitempty"`
+	// Data source used to fetch values for a variable. It can be defined but `null`.
+	Datasource *DataSourceRef `json:"datasource,omitempty"`
+	// Shows current selected variable text/value on the dashboard
+	Current *VariableOption `json:"current,omitempty"`
+	// Whether multiple values can be selected or not from variable value list
+	Multi *bool `json:"multi,omitempty"`
+	// Allow custom values to be entered in the variable
+	AllowCustomValue *bool `json:"allowCustomValue,omitempty"`
+	// Options that can be selected for a variable.
+	Options []VariableOption `json:"options,omitempty"`
+	// Options to config when to refresh a variable
+	Refresh *VariableRefresh `json:"refresh,omitempty"`
+	// Options sort order
+	Sort *VariableSort `json:"sort,omitempty"`
+	// Whether all value option is available or not
+	IncludeAll *bool `json:"includeAll,omitempty"`
+	// Custom all value
+	AllValue *string `json:"allValue,omitempty"`
+	// Optional field, if you want to extract part of a series name or metric node segment.
+	// Named capture groups can be used to separate the display text and value.
+	Regex *string `json:"regex,omitempty"`
+}
+
+// NewVariableModel creates a new VariableModel object.
+func NewVariableModel() *VariableModel {
+	return &VariableModel{
+		SkipUrlSync:      (func(input bool) *bool { return &input })(false),
+		Multi:            (func(input bool) *bool { return &input })(false),
+		AllowCustomValue: (func(input bool) *bool { return &input })(true),
+		IncludeAll:       (func(input bool) *bool { return &input })(false),
 	}
 }
 
@@ -685,52 +748,51 @@ const (
 	VariableSortNaturalDesc                     VariableSort = 8
 )
 
-// A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
-type VariableModel struct {
-	// Type of variable
-	Type VariableType `json:"type"`
-	// Name of variable
-	Name string `json:"name"`
-	// Optional display name
-	Label *string `json:"label,omitempty"`
-	// Visibility configuration for the variable
-	Hide *VariableHide `json:"hide,omitempty"`
-	// Whether the variable value should be managed by URL query params or not
-	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`
-	// Description of variable. It can be defined but `null`.
-	Description *string `json:"description,omitempty"`
-	// Query used to fetch values for a variable
-	Query *StringOrMap `json:"query,omitempty"`
-	// Data source used to fetch values for a variable. It can be defined but `null`.
-	Datasource *DataSourceRef `json:"datasource,omitempty"`
-	// Shows current selected variable text/value on the dashboard
-	Current *VariableOption `json:"current,omitempty"`
-	// Whether multiple values can be selected or not from variable value list
-	Multi *bool `json:"multi,omitempty"`
-	// Allow custom values to be entered in the variable
-	AllowCustomValue *bool `json:"allowCustomValue,omitempty"`
-	// Options that can be selected for a variable.
-	Options []VariableOption `json:"options,omitempty"`
-	// Options to config when to refresh a variable
-	Refresh *VariableRefresh `json:"refresh,omitempty"`
-	// Options sort order
-	Sort *VariableSort `json:"sort,omitempty"`
-	// Whether all value option is available or not
-	IncludeAll *bool `json:"includeAll,omitempty"`
-	// Custom all value
-	AllValue *string `json:"allValue,omitempty"`
-	// Optional field, if you want to extract part of a series name or metric node segment.
-	// Named capture groups can be used to separate the display text and value.
-	Regex *string `json:"regex,omitempty"`
+// Contains the list of annotations that are associated with the dashboard.
+// Annotations are used to overlay event markers and overlay event tags on graphs.
+// Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
+// See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
+type AnnotationContainer struct {
+	// List of annotations
+	List []AnnotationQuery `json:"list,omitempty"`
 }
 
-// NewVariableModel creates a new VariableModel object.
-func NewVariableModel() *VariableModel {
-	return &VariableModel{
-		SkipUrlSync:      (func(input bool) *bool { return &input })(false),
-		Multi:            (func(input bool) *bool { return &input })(false),
-		AllowCustomValue: (func(input bool) *bool { return &input })(true),
-		IncludeAll:       (func(input bool) *bool { return &input })(false),
+// NewAnnotationContainer creates a new AnnotationContainer object.
+func NewAnnotationContainer() *AnnotationContainer {
+	return &AnnotationContainer{}
+}
+
+// TODO docs
+// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
+type AnnotationQuery struct {
+	// Name of annotation.
+	Name string `json:"name"`
+	// Datasource where the annotations data is
+	Datasource DataSourceRef `json:"datasource"`
+	// When enabled the annotation query is issued with every dashboard refresh
+	Enable bool `json:"enable"`
+	// Annotation queries can be toggled on or off at the top of the dashboard.
+	// When hide is true, the toggle is not shown in the dashboard.
+	Hide *bool `json:"hide,omitempty"`
+	// Color to use for the annotation event markers
+	IconColor string `json:"iconColor"`
+	// Filters to apply when fetching annotations
+	Filter *AnnotationPanelFilter `json:"filter,omitempty"`
+	// TODO.. this should just be a normal query target
+	Target *AnnotationTarget `json:"target,omitempty"`
+	// TODO -- this should not exist here, it is based on the --grafana-- datasource
+	Type *string `json:"type,omitempty"`
+	// Set to 1 for the standard annotation query all dashboards have by default.
+	BuiltIn *float64 `json:"builtIn,omitempty"`
+}
+
+// NewAnnotationQuery creates a new AnnotationQuery object.
+func NewAnnotationQuery() *AnnotationQuery {
+	return &AnnotationQuery{
+		Datasource: *NewDataSourceRef(),
+		Enable:     true,
+		Hide:       (func(input bool) *bool { return &input })(false),
+		BuiltIn:    (func(input float64) *float64 { return &input })(0),
 	}
 }
 
@@ -768,54 +830,6 @@ type AnnotationTarget struct {
 // NewAnnotationTarget creates a new AnnotationTarget object.
 func NewAnnotationTarget() *AnnotationTarget {
 	return &AnnotationTarget{}
-}
-
-// TODO docs
-// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
-type AnnotationQuery struct {
-	// Name of annotation.
-	Name string `json:"name"`
-	// Datasource where the annotations data is
-	Datasource DataSourceRef `json:"datasource"`
-	// When enabled the annotation query is issued with every dashboard refresh
-	Enable bool `json:"enable"`
-	// Annotation queries can be toggled on or off at the top of the dashboard.
-	// When hide is true, the toggle is not shown in the dashboard.
-	Hide *bool `json:"hide,omitempty"`
-	// Color to use for the annotation event markers
-	IconColor string `json:"iconColor"`
-	// Filters to apply when fetching annotations
-	Filter *AnnotationPanelFilter `json:"filter,omitempty"`
-	// TODO.. this should just be a normal query target
-	Target *AnnotationTarget `json:"target,omitempty"`
-	// TODO -- this should not exist here, it is based on the --grafana-- datasource
-	Type *string `json:"type,omitempty"`
-	// Set to 1 for the standard annotation query all dashboards have by default.
-	BuiltIn *float64 `json:"builtIn,omitempty"`
-}
-
-// NewAnnotationQuery creates a new AnnotationQuery object.
-func NewAnnotationQuery() *AnnotationQuery {
-	return &AnnotationQuery{
-		Datasource: *NewDataSourceRef(),
-		Enable:     true,
-		Hide:       (func(input bool) *bool { return &input })(false),
-		BuiltIn:    (func(input float64) *float64 { return &input })(0),
-	}
-}
-
-// Contains the list of annotations that are associated with the dashboard.
-// Annotations are used to overlay event markers and overlay event tags on graphs.
-// Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
-// See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
-type AnnotationContainer struct {
-	// List of annotations
-	List []AnnotationQuery `json:"list,omitempty"`
-}
-
-// NewAnnotationContainer creates a new AnnotationContainer object.
-func NewAnnotationContainer() *AnnotationContainer {
-	return &AnnotationContainer{}
 }
 
 // A dashboard snapshot shares an interactive dashboard publicly.
@@ -928,20 +942,17 @@ func NewSpec() *Spec {
 	}
 }
 
-type DataTransformerConfigTopic string
+type DashboardFieldConfigSourceOverrides struct {
+	Matcher    MatcherConfig        `json:"matcher"`
+	Properties []DynamicConfigValue `json:"properties"`
+}
 
-const (
-	DataTransformerConfigTopicSeries      DataTransformerConfigTopic = "series"
-	DataTransformerConfigTopicAnnotations DataTransformerConfigTopic = "annotations"
-	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
-)
-
-type PanelRepeatDirection string
-
-const (
-	PanelRepeatDirectionH PanelRepeatDirection = "h"
-	PanelRepeatDirectionV PanelRepeatDirection = "v"
-)
+// NewDashboardFieldConfigSourceOverrides creates a new DashboardFieldConfigSourceOverrides object.
+func NewDashboardFieldConfigSourceOverrides() *DashboardFieldConfigSourceOverrides {
+	return &DashboardFieldConfigSourceOverrides{
+		Matcher: *NewMatcherConfig(),
+	}
+}
 
 type DashboardRangeMapOptions struct {
 	// Min value of the range. It can be null which means -Infinity
@@ -987,18 +998,6 @@ func NewDashboardSpecialValueMapOptions() *DashboardSpecialValueMapOptions {
 	}
 }
 
-type DashboardFieldConfigSourceOverrides struct {
-	Matcher    MatcherConfig        `json:"matcher"`
-	Properties []DynamicConfigValue `json:"properties"`
-}
-
-// NewDashboardFieldConfigSourceOverrides creates a new DashboardFieldConfigSourceOverrides object.
-func NewDashboardFieldConfigSourceOverrides() *DashboardFieldConfigSourceOverrides {
-	return &DashboardFieldConfigSourceOverrides{
-		Matcher: *NewMatcherConfig(),
-	}
-}
-
 type DashboardSpecTime struct {
 	From string `json:"from"`
 	To   string `json:"to"`
@@ -1021,6 +1020,21 @@ type DashboardSpecTemplating struct {
 func NewDashboardSpecTemplating() *DashboardSpecTemplating {
 	return &DashboardSpecTemplating{}
 }
+
+type PanelRepeatDirection string
+
+const (
+	PanelRepeatDirectionH PanelRepeatDirection = "h"
+	PanelRepeatDirectionV PanelRepeatDirection = "v"
+)
+
+type DataTransformerConfigTopic string
+
+const (
+	DataTransformerConfigTopicSeries      DataTransformerConfigTopic = "series"
+	DataTransformerConfigTopicAnnotations DataTransformerConfigTopic = "annotations"
+	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
+)
 
 type ValueMapOrRangeMapOrRegexMapOrSpecialValueMap struct {
 	ValueMap        *ValueMap        `json:"ValueMap,omitempty"`
@@ -1048,7 +1062,6 @@ func (resource ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) MarshalJSON() ([]b
 	if resource.SpecialValueMap != nil {
 		return json.Marshal(resource.SpecialValueMap)
 	}
-
 	return nil, fmt.Errorf("no value for disjunction of refs")
 }
 
@@ -1107,60 +1120,6 @@ func (resource *ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) UnmarshalJSON(raw
 	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
 }
 
-type StringOrArrayOfString struct {
-	String        *string  `json:"String,omitempty"`
-	ArrayOfString []string `json:"ArrayOfString,omitempty"`
-}
-
-// NewStringOrArrayOfString creates a new StringOrArrayOfString object.
-func NewStringOrArrayOfString() *StringOrArrayOfString {
-	return &StringOrArrayOfString{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrArrayOfString` as JSON.
-func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
-	if resource.String != nil {
-		return json.Marshal(resource.String)
-	}
-
-	if resource.ArrayOfString != nil {
-		return json.Marshal(resource.ArrayOfString)
-	}
-
-	return nil, fmt.Errorf("no value for disjunction of scalars")
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.
-func (resource *StringOrArrayOfString) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	var errList []error
-
-	// String
-	var String string
-	if err := json.Unmarshal(raw, &String); err != nil {
-		errList = append(errList, err)
-		resource.String = nil
-	} else {
-		resource.String = &String
-		return nil
-	}
-
-	// ArrayOfString
-	var ArrayOfString []string
-	if err := json.Unmarshal(raw, &ArrayOfString); err != nil {
-		errList = append(errList, err)
-		resource.ArrayOfString = nil
-	} else {
-		resource.ArrayOfString = ArrayOfString
-		return nil
-	}
-
-	return errors.Join(errList...)
-}
-
 type StringOrMap struct {
 	String *string        `json:"String,omitempty"`
 	Map    map[string]any `json:"Map,omitempty"`
@@ -1209,6 +1168,60 @@ func (resource *StringOrMap) UnmarshalJSON(raw []byte) error {
 		resource.Map = nil
 	} else {
 		resource.Map = Map
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+type StringOrArrayOfString struct {
+	String        *string  `json:"String,omitempty"`
+	ArrayOfString []string `json:"ArrayOfString,omitempty"`
+}
+
+// NewStringOrArrayOfString creates a new StringOrArrayOfString object.
+func NewStringOrArrayOfString() *StringOrArrayOfString {
+	return &StringOrArrayOfString{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrArrayOfString` as JSON.
+func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.ArrayOfString != nil {
+		return json.Marshal(resource.ArrayOfString)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of scalars")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.
+func (resource *StringOrArrayOfString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// ArrayOfString
+	var ArrayOfString []string
+	if err := json.Unmarshal(raw, &ArrayOfString); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfString = nil
+	} else {
+		resource.ArrayOfString = ArrayOfString
 		return nil
 	}
 
