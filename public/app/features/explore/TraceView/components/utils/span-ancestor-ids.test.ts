@@ -17,59 +17,53 @@ import { TraceSpan } from '../types/trace';
 import spanAncestorIdsSpy from './span-ancestor-ids';
 
 describe('spanAncestorIdsSpy', () => {
-  const ownSpanID = 'ownSpanID';
-  const firstParentSpanID = 'firstParentSpanID';
-  const firstParentFirstGrandparentSpanID = 'firstParentFirstGrandparentSpanID';
-  const firstParentSecondGrandparentSpanID = 'firstParentSecondGrandparentSpanID';
-  const secondParentSpanID = 'secondParentSpanID';
-  const rootSpanID = 'rootSpanID';
-  const span = {
+  const rootSpan = { spanID: 'rootSpanID' };
+  const firstParentFirstGrandparentSpan = {
+    spanID: 'firstParentFirstGrandparentSpanID',
     references: [
       {
-        span: {
-          spanID: firstParentSpanID,
-          references: [
-            {
-              span: {
-                spanID: firstParentFirstGrandparentSpanID,
-                references: [
-                  {
-                    span: {
-                      spanID: rootSpanID,
-                    },
-                  },
-                ],
-              },
-              refType: 'not an ancestor ref type',
-            },
-            {
-              span: {
-                spanID: firstParentSecondGrandparentSpanID,
-                references: [
-                  {
-                    span: {
-                      spanID: rootSpanID,
-                    },
-                    refType: 'FOLLOWS_FROM',
-                  },
-                ],
-              },
-              refType: 'CHILD_OF',
-            },
-          ],
-        },
-        refType: 'CHILD_OF',
+        span: rootSpan,
+      }
+    ],
+  };
+  const firstParentSecondGrandparentSpan = {
+    spanID: 'firstParentSecondGrandparentSpanID',
+    references: [
+      {
+        span: rootSpan,
+        refType: 'FOLLOWS_FROM',
+      },
+    ],
+  };
+  const firstParentSpan = {
+    spanID: 'firstParentSpanID',
+    references: [
+      {
+        span: firstParentFirstGrandparentSpan,
+        refType: 'not an ancestor ref type',
       },
       {
-        span: {
-          spanID: secondParentSpanID,
-        },
+        span: firstParentSecondGrandparentSpan,
         refType: 'CHILD_OF',
       },
     ],
-    spanID: ownSpanID,
   };
-  const expectedAncestorIds = [firstParentSpanID, firstParentSecondGrandparentSpanID, rootSpanID];
+  const secondParentSpan = { spanID: 'secondParentSpanID' };
+  const span = {
+    spanID: 'ownSpanID',
+    references: [
+      {
+        span: firstParentSpan,
+        refType: 'CHILD_OF',
+      },
+      {
+        span: secondParentSpan,
+        refType: 'CHILD_OF'
+      },
+    ],
+  };
+
+  const expectedAncestorIds = [firstParentSpan.spanID, firstParentSecondGrandparentSpan.spanID, rootSpan.spanID];
 
   it('returns an empty array if given falsy span', () => {
     expect(spanAncestorIdsSpy(null)).toEqual([]);
@@ -94,5 +88,43 @@ describe('spanAncestorIdsSpy', () => {
       references: [{ refType: 'CHILD_OF' }, { refType: 'FOLLOWS_FROM', span: {} }, ...span.references],
     };
     expect(spanAncestorIdsSpy(spanWithSomeEmptyReferences as TraceSpan)).toEqual(expectedAncestorIds);
+  });
+
+  it('does not infinitely loop', () => {
+    const spanWithLoopedReference = {
+      ...span,
+      references: [
+        {
+          ...span.references[0],
+          span: {
+            ...firstParentSpan,
+            references: [
+              firstParentSpan.references[0], //firstParentFirstGrandparentSpan
+              {
+                ...firstParentSpan.references[1],
+                span: {
+                  ...firstParentSecondGrandparentSpan,
+                  references: [
+                    {
+                      ...firstParentSecondGrandparentSpan.references[0],
+                      span: {
+                        ...rootSpan,
+                        references: [
+                          {
+                            span: span, // This isn't a true infinite loop, but it's good enough to validate the test
+                            refType: 'FOLLOWS_FROM',
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    };
+    expect(spanAncestorIdsSpy(spanWithLoopedReference as TraceSpan)).toEqual(expectedAncestorIds);
   });
 });
