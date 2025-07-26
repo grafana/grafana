@@ -170,8 +170,8 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
       // count and call the counter only for the field which will take up the most space based on its
       if (field.type === FieldType.string) {
         result.textCounter = result.textCounter ?? {
-          counter: typographyCtx.estimateLines,
-          estimate: typographyCtx.wrappedCount,
+          counter: typographyCtx.wrappedCount,
+          estimate: typographyCtx.estimateLines,
           fieldIdxs: [],
         };
         result.textCounter.fieldIdxs.push(fieldIdx);
