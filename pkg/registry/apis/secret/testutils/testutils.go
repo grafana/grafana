@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +34,6 @@ import (
 
 type SetupConfig struct {
 	KeeperService contracts.KeeperService
-	Logger        logging.Logger
 }
 
 func defaultSetupCfg() SetupConfig {
@@ -45,12 +43,6 @@ func defaultSetupCfg() SetupConfig {
 func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig) {
 	return func(setupCfg *SetupConfig) {
 		setupCfg.KeeperService = keeperService
-	}
-}
-
-func WithLogger(logger logging.Logger) func(*SetupConfig) {
-	return func(setupCfg *SetupConfig) {
-		setupCfg.Logger = logger
 	}
 }
 
@@ -128,12 +120,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
-	logger := logging.DefaultLogger
-	if setupCfg.Logger != nil {
-		logger = setupCfg.Logger
-	}
-
-	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, logger, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
+	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
 	testCfg := setting.NewCfg()
@@ -141,7 +128,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		DecryptServerType: "local",
 	}
 
-	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
+	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
 	require.NoError(t, err)
 
 	return Sut{

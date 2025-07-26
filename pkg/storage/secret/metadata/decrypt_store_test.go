@@ -268,8 +268,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		}))
 
 		// Setup service
-		fakeLogger := &mockLogger{}
-		sut := testutils.Setup(t, testutils.WithLogger(fakeLogger))
+		sut := testutils.Setup(t)
 
 		// Create a secure value
 		spec := secretv1beta1.SecureValueSpec{
@@ -284,7 +283,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		_, err := sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
 		require.NoError(t, err)
 
-		exposed, err := sut.DecryptStorage.Decrypt(ctx, "default", "sv-test")
+		fakeLogger := &mockLogger{}
+		logging.DefaultLogger = fakeLogger
+
+		loggerCtx := logging.Context(ctx, fakeLogger)
+
+		exposed, err := sut.DecryptStorage.Decrypt(loggerCtx, "default", "sv-test")
 		require.NoError(t, err)
 		require.NotEmpty(t, exposed)
 		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
@@ -334,4 +338,8 @@ type mockLogger struct {
 func (m *mockLogger) Info(msg string, args ...any) {
 	m.InfoMsgs = append(m.InfoMsgs, msg)
 	m.InfoArgs = append(m.InfoArgs, args)
+}
+
+func (m *mockLogger) WithContext(ctx context.Context) logging.Logger {
+	return m
 }

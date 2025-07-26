@@ -22,7 +22,6 @@ import (
 
 func ProvideDecryptStorage(
 	tracer trace.Tracer,
-	logger logging.Logger,
 	keeperService contracts.KeeperService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -35,7 +34,6 @@ func ProvideDecryptStorage(
 
 	return &decryptStorage{
 		tracer:                     tracer,
-		logger:                     logger,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -47,7 +45,6 @@ func ProvideDecryptStorage(
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
 	tracer                     trace.Tracer
-	logger                     logging.Logger
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -92,7 +89,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 			args = append(args, "operation", "decrypt_secret_error", "error", decryptErr.Error())
 		}
 
-		s.logger.Info("Secrets Audit Log", args...)
+		logging.FromContext(ctx).Info("Secrets Audit Log", args...)
 
 		success := decryptErr == nil
 		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())

@@ -5,42 +5,14 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 )
 
-func ProvideDecryptService(
-	cfg *setting.Cfg,
-	tracer trace.Tracer,
-	keeperService contracts.KeeperService,
-	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
-	decryptAuthorizer contracts.DecryptAuthorizer,
-	reg prometheus.Registerer,
-) (contracts.DecryptService, error) {
-	existingDecryptStorage, err := metadata.ProvideDecryptStorage(
-		tracer,
-		logging.DefaultLogger.With("logger", "decrypt.storage"),
-		keeperService,
-		keeperMetadataStorage,
-		secureValueMetadataStorage,
-		decryptAuthorizer,
-		reg,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewDecryptService(cfg, tracer, existingDecryptStorage)
-}
-
-func NewDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage contracts.DecryptStorage) (contracts.DecryptService, error) {
+func ProvideDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage contracts.DecryptStorage) (contracts.DecryptService, error) {
 	switch cfg.SecretsManagement.DecryptServerType {
 	case "grpc":
 		grpcClientConfig := grpcutils.ReadGrpcClientConfig(cfg)

@@ -46,7 +46,7 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "local"
 
-		decryptService, err := NewDecryptService(cfg, tracer, mockStorage)
+		decryptService, err := ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
 		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1")
@@ -75,7 +75,7 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "local"
 
-		decryptService, err := NewDecryptService(cfg, tracer, mockStorage)
+		decryptService, err := ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
 		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1", "secure-value-2")
@@ -103,7 +103,7 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "local"
 
-		decryptService, err := NewDecryptService(cfg, tracer, mockStorage)
+		decryptService, err := ProvideDecryptService(cfg, tracer, mockStorage)
 		require.NoError(t, err)
 
 		resp, err := decryptService.Decrypt(ctx, "default", "secure-value-1", "secure-value-2")
@@ -118,7 +118,7 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "unsupported"
 
-		decryptService, err := NewDecryptService(cfg, tracer, nil)
+		decryptService, err := ProvideDecryptService(cfg, tracer, nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unsupported storage type")
 		require.Nil(t, decryptService)
@@ -131,7 +131,7 @@ func TestDecryptService(t *testing.T) {
 		cfg.SecretsManagement.DecryptServerType = "grpc"
 		cfg.SecretsManagement.DecryptServerAddress = "127.0.0.1:10000"
 
-		_, err := NewDecryptService(cfg, tracer, nil)
+		_, err := ProvideDecryptService(cfg, tracer, nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "grpc_client_authentication.token and grpc_client_authentication.token_exchange_url are required")
 	})
@@ -142,7 +142,7 @@ func TestDecryptService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.SecretsManagement.DecryptServerType = "grpc"
 
-		_, err := NewDecryptService(cfg, tracer, nil)
+		_, err := ProvideDecryptService(cfg, tracer, nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "decrypt_server_address is required")
 	})
@@ -229,7 +229,7 @@ func TestDecryptService(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create and test decryption, using the mock grpc server as we dont test the business logic here
-		decryptService, err := NewDecryptService(cfg, tracer, nil)
+		decryptService, err := ProvideDecryptService(cfg, tracer, nil)
 		require.NoError(t, err)
 		require.NotNil(t, decryptService)
 
