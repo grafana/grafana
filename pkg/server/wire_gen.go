@@ -740,7 +740,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	legacyDataSourceLookup := service7.ProvideLegacyDataSourceLookup(service15)
-	queryAPIBuilder, err := query2.RegisterAPIService(featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
+	queryAPIBuilder, err := query2.RegisterAPIService(cfg, featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
 	if err != nil {
 		return nil, err
 	}
@@ -1298,7 +1298,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	legacyDataSourceLookup := service7.ProvideLegacyDataSourceLookup(service15)
-	queryAPIBuilder, err := query2.RegisterAPIService(featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
+	queryAPIBuilder, err := query2.RegisterAPIService(cfg, featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
 	if err != nil {
 		return nil, err
 	}
