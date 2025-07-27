@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, VariableDependencyConfig } from '@grafana/scenes';
-import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { ConditionalRenderingVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Box, Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';

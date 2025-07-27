@@ -111,14 +111,6 @@ DashboardLink: {
 	keepTime: bool | *false
 }
 
-DataSourceRef: {
-	// The plugin type-id
-	type?: string
-
-	// Specific datasource instance
-	uid?: string
-}
-
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
 DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames="Series|Annotations|AlertStates")
@@ -373,27 +365,27 @@ Kind: {
 
 // --- Kinds ---
 VizConfigSpec: {
-	pluginVersion: string
 	options: [string]: _
 	fieldConfig: FieldConfigSource
 }
 
 VizConfigKind: {
-	// The kind of a VizConfigKind is the plugin ID
-	kind: string
+	kind: "VizConfig"
+	// The group is the plugin ID
+	group: string
+	version: string
 	spec: VizConfigSpec
 }
 
 AnnotationQuerySpec: {
-	datasource?: DataSourceRef
-	query?:      DataQueryKind
+	query:      DataQueryKind
 	enable:      bool
 	hide:        bool
 	iconColor:   string
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
-	legacyOptions?:     [string]: _ //Catch-all field for datasource-specific properties
+	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 }
 
 AnnotationQueryKind: {
@@ -412,15 +404,19 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-	// The kind of a DataQueryKind is the datasource type
-	kind: string
+	kind: "DataQuery"
+	group: string
+	version: string | *"v0"
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	datasource?: {
+		name?: string
+	}
 	spec: [string]: _
 }
 
 PanelQuerySpec: {
 	query:       DataQueryKind
-	datasource?: DataSourceRef
-
 	refId:  string
 	hidden: bool
 }
@@ -723,7 +719,6 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
-	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""
 	sort:         VariableSort
@@ -861,7 +856,6 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
 	name:        string | *""
-	datasource?: DataSourceRef
 	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
@@ -878,13 +872,16 @@ GroupByVariableSpec: {
 // Group variable kind
 GroupByVariableKind: {
 	kind: "GroupByVariable"
+	group: string
+	datasource?: {
+		name?: string
+	}
 	spec: GroupByVariableSpec
 }
 
 // Adhoc variable specification
 AdhocVariableSpec: {
 	name:        string | *""
-	datasource?: DataSourceRef
 	baseFilters: [...AdHocFilterWithLabels] | *[]
 	filters: [...AdHocFilterWithLabels] | *[]
 	defaultKeys: [...MetricFindValue] | *[]
@@ -920,6 +917,10 @@ AdHocFilterWithLabels: {
 // Adhoc variable kind
 AdhocVariableKind: {
 	kind: "AdhocVariable"
+	group: string
+	datasource?: {
+		name?: string
+	}
 	spec: AdhocVariableSpec
 }
 

@@ -23,49 +23,42 @@ func NewDashboardAnnotationQueryKind() *DashboardAnnotationQueryKind {
 
 // +k8s:openapi-gen=true
 type DashboardAnnotationQuerySpec struct {
-	Datasource *DashboardDataSourceRef         `json:"datasource,omitempty"`
-	Query      *DashboardDataQueryKind         `json:"query,omitempty"`
-	Enable     bool                            `json:"enable"`
-	Hide       bool                            `json:"hide"`
-	IconColor  string                          `json:"iconColor"`
-	Name       string                          `json:"name"`
-	BuiltIn    *bool                           `json:"builtIn,omitempty"`
-	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
-	// Catch-all field for datasource-specific properties
+	Query     DashboardDataQueryKind          `json:"query"`
+	Enable    bool                            `json:"enable"`
+	Hide      bool                            `json:"hide"`
+	IconColor string                          `json:"iconColor"`
+	Name      string                          `json:"name"`
+	BuiltIn   *bool                           `json:"builtIn,omitempty"`
+	Filter    *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	LegacyOptions map[string]interface{} `json:"legacyOptions,omitempty"`
 }
 
 // NewDashboardAnnotationQuerySpec creates a new DashboardAnnotationQuerySpec object.
 func NewDashboardAnnotationQuerySpec() *DashboardAnnotationQuerySpec {
 	return &DashboardAnnotationQuerySpec{
+		Query:   *NewDashboardDataQueryKind(),
 		BuiltIn: (func(input bool) *bool { return &input })(false),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardDataSourceRef struct {
-	// The plugin type-id
-	Type *string `json:"type,omitempty"`
-	// Specific datasource instance
-	Uid *string `json:"uid,omitempty"`
-}
-
-// NewDashboardDataSourceRef creates a new DashboardDataSourceRef object.
-func NewDashboardDataSourceRef() *DashboardDataSourceRef {
-	return &DashboardDataSourceRef{}
-}
-
-// +k8s:openapi-gen=true
 type DashboardDataQueryKind struct {
-	// The kind of a DataQueryKind is the datasource type
-	Kind string                 `json:"kind"`
-	Spec map[string]interface{} `json:"spec"`
+	Kind    string `json:"kind"`
+	Group   string `json:"group"`
+	Version string `json:"version"`
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	Datasource *DashboardV2alpha2DataQueryKindDatasource `json:"datasource,omitempty"`
+	Spec       map[string]interface{}                    `json:"spec"`
 }
 
 // NewDashboardDataQueryKind creates a new DashboardDataQueryKind object.
 func NewDashboardDataQueryKind() *DashboardDataQueryKind {
 	return &DashboardDataQueryKind{
-		Spec: map[string]interface{}{},
+		Kind:    "DataQuery",
+		Version: "v0",
+		Spec:    map[string]interface{}{},
 	}
 }
 
@@ -199,10 +192,9 @@ func NewDashboardPanelQueryKind() *DashboardPanelQueryKind {
 
 // +k8s:openapi-gen=true
 type DashboardPanelQuerySpec struct {
-	Query      DashboardDataQueryKind  `json:"query"`
-	Datasource *DashboardDataSourceRef `json:"datasource,omitempty"`
-	RefId      string                  `json:"refId"`
-	Hidden     bool                    `json:"hidden"`
+	Query  DashboardDataQueryKind `json:"query"`
+	RefId  string                 `json:"refId"`
+	Hidden bool                   `json:"hidden"`
 }
 
 // NewDashboardPanelQuerySpec creates a new DashboardPanelQuerySpec object.
@@ -295,14 +287,17 @@ func NewDashboardQueryOptionsSpec() *DashboardQueryOptionsSpec {
 
 // +k8s:openapi-gen=true
 type DashboardVizConfigKind struct {
-	// The kind of a VizConfigKind is the plugin ID
-	Kind string                 `json:"kind"`
-	Spec DashboardVizConfigSpec `json:"spec"`
+	Kind string `json:"kind"`
+	// The group is the plugin ID
+	Group   string                 `json:"group"`
+	Version string                 `json:"version"`
+	Spec    DashboardVizConfigSpec `json:"spec"`
 }
 
 // NewDashboardVizConfigKind creates a new DashboardVizConfigKind object.
 func NewDashboardVizConfigKind() *DashboardVizConfigKind {
 	return &DashboardVizConfigKind{
+		Kind: "VizConfig",
 		Spec: *NewDashboardVizConfigSpec(),
 	}
 }
@@ -310,9 +305,8 @@ func NewDashboardVizConfigKind() *DashboardVizConfigKind {
 // --- Kinds ---
 // +k8s:openapi-gen=true
 type DashboardVizConfigSpec struct {
-	PluginVersion string                     `json:"pluginVersion"`
-	Options       map[string]interface{}     `json:"options"`
-	FieldConfig   DashboardFieldConfigSource `json:"fieldConfig"`
+	Options     map[string]interface{}     `json:"options"`
+	FieldConfig DashboardFieldConfigSource `json:"fieldConfig"`
 }
 
 // NewDashboardVizConfigSpec creates a new DashboardVizConfigSpec object.
@@ -1229,7 +1223,6 @@ type DashboardQueryVariableSpec struct {
 	Refresh            DashboardVariableRefresh                      `json:"refresh"`
 	SkipUrlSync        bool                                          `json:"skipUrlSync"`
 	Description        *string                                       `json:"description,omitempty"`
-	Datasource         *DashboardDataSourceRef                       `json:"datasource,omitempty"`
 	Query              DashboardDataQueryKind                        `json:"query"`
 	Regex              string                                        `json:"regex"`
 	Sort               DashboardVariableSort                         `json:"sort"`
@@ -1591,8 +1584,10 @@ func NewDashboardCustomVariableSpec() *DashboardCustomVariableSpec {
 // Group variable kind
 // +k8s:openapi-gen=true
 type DashboardGroupByVariableKind struct {
-	Kind string                       `json:"kind"`
-	Spec DashboardGroupByVariableSpec `json:"spec"`
+	Kind       string                                          `json:"kind"`
+	Group      string                                          `json:"group"`
+	Datasource *DashboardV2alpha2GroupByVariableKindDatasource `json:"datasource,omitempty"`
+	Spec       DashboardGroupByVariableSpec                    `json:"spec"`
 }
 
 // NewDashboardGroupByVariableKind creates a new DashboardGroupByVariableKind object.
@@ -1607,7 +1602,6 @@ func NewDashboardGroupByVariableKind() *DashboardGroupByVariableKind {
 // +k8s:openapi-gen=true
 type DashboardGroupByVariableSpec struct {
 	Name         string                    `json:"name"`
-	Datasource   *DashboardDataSourceRef   `json:"datasource,omitempty"`
 	DefaultValue *DashboardVariableOption  `json:"defaultValue,omitempty"`
 	Current      DashboardVariableOption   `json:"current"`
 	Options      []DashboardVariableOption `json:"options"`
@@ -1640,8 +1634,10 @@ func NewDashboardGroupByVariableSpec() *DashboardGroupByVariableSpec {
 // Adhoc variable kind
 // +k8s:openapi-gen=true
 type DashboardAdhocVariableKind struct {
-	Kind string                     `json:"kind"`
-	Spec DashboardAdhocVariableSpec `json:"spec"`
+	Kind       string                                        `json:"kind"`
+	Group      string                                        `json:"group"`
+	Datasource *DashboardV2alpha2AdhocVariableKindDatasource `json:"datasource,omitempty"`
+	Spec       DashboardAdhocVariableSpec                    `json:"spec"`
 }
 
 // NewDashboardAdhocVariableKind creates a new DashboardAdhocVariableKind object.
@@ -1656,7 +1652,6 @@ func NewDashboardAdhocVariableKind() *DashboardAdhocVariableKind {
 // +k8s:openapi-gen=true
 type DashboardAdhocVariableSpec struct {
 	Name             string                           `json:"name"`
-	Datasource       *DashboardDataSourceRef          `json:"datasource,omitempty"`
 	BaseFilters      []DashboardAdHocFilterWithLabels `json:"baseFilters"`
 	Filters          []DashboardAdHocFilterWithLabels `json:"filters"`
 	DefaultKeys      []DashboardMetricFindValue       `json:"defaultKeys"`
@@ -1771,6 +1766,16 @@ func NewDashboardSpec() *DashboardSpec {
 }
 
 // +k8s:openapi-gen=true
+type DashboardV2alpha2DataQueryKindDatasource struct {
+	Name *string `json:"name,omitempty"`
+}
+
+// NewDashboardV2alpha2DataQueryKindDatasource creates a new DashboardV2alpha2DataQueryKindDatasource object.
+func NewDashboardV2alpha2DataQueryKindDatasource() *DashboardV2alpha2DataQueryKindDatasource {
+	return &DashboardV2alpha2DataQueryKindDatasource{}
+}
+
+// +k8s:openapi-gen=true
 type DashboardV2alpha2FieldConfigSourceOverrides struct {
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
@@ -1829,6 +1834,26 @@ func NewDashboardV2alpha2SpecialValueMapOptions() *DashboardV2alpha2SpecialValue
 	return &DashboardV2alpha2SpecialValueMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
+}
+
+// +k8s:openapi-gen=true
+type DashboardV2alpha2GroupByVariableKindDatasource struct {
+	Name *string `json:"name,omitempty"`
+}
+
+// NewDashboardV2alpha2GroupByVariableKindDatasource creates a new DashboardV2alpha2GroupByVariableKindDatasource object.
+func NewDashboardV2alpha2GroupByVariableKindDatasource() *DashboardV2alpha2GroupByVariableKindDatasource {
+	return &DashboardV2alpha2GroupByVariableKindDatasource{}
+}
+
+// +k8s:openapi-gen=true
+type DashboardV2alpha2AdhocVariableKindDatasource struct {
+	Name *string `json:"name,omitempty"`
+}
+
+// NewDashboardV2alpha2AdhocVariableKindDatasource creates a new DashboardV2alpha2AdhocVariableKindDatasource object.
+func NewDashboardV2alpha2AdhocVariableKindDatasource() *DashboardV2alpha2AdhocVariableKindDatasource {
+	return &DashboardV2alpha2AdhocVariableKindDatasource{}
 }
 
 // +k8s:openapi-gen=true

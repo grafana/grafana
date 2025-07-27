@@ -5,7 +5,8 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import {
   AnnotationQueryKind,
   Spec as DashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+  defaultDataQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -15,6 +16,8 @@ import { useDispatch, useSelector, StoreState } from 'app/types/store';
 import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
 
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
+
+type FormData = SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string };
 
 export function ImportDashboardOverviewV2() {
   const [uidReset, setUidReset] = useState(false);
@@ -34,24 +37,29 @@ export function ImportDashboardOverviewV2() {
     dispatch(clearLoadedDashboard());
   }
 
-  async function onSubmit(form: SaveDashboardCommand<DashboardV2Spec>) {
+  async function onSubmit(form: FormData) {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
     const dashboardWithDataSources: DashboardV2Spec = {
       ...dashboard,
       title: form.dashboard.title,
       annotations: dashboard.annotations?.map((annotation: AnnotationQueryKind) => {
-        if (annotation.spec.query?.kind) {
-          const dsType = annotation.spec.query.kind;
+        const dsType = annotation.spec.query?.spec.group;
+        if (dsType) {
           if (form[`datasource-${dsType}` as keyof typeof form]) {
             const ds = form[`datasource-${dsType}` as keyof typeof form] as { uid: string; type: string };
             return {
               ...annotation,
               spec: {
                 ...annotation.spec,
-                datasource: {
-                  uid: ds.uid,
-                  type: ds.type,
+                query: {
+                  kind: 'DataQuery',
+                  group: dsType,
+                  version: defaultDataQueryKind().version,
+                  datasource: { name: ds.uid },
+                  spec: {
+                    ...annotation.spec.query?.spec,
+                  },
                 },
               },
             };
@@ -61,18 +69,23 @@ export function ImportDashboardOverviewV2() {
       }),
       variables: dashboard.variables?.map((variable) => {
         if (variable.kind === 'QueryVariable') {
-          if (variable.spec.query?.kind) {
-            const dsType = variable.spec.query.kind;
+          const dsType = variable.spec.query?.spec.group;
+          if (dsType) {
             if (form[`datasource-${dsType}` as keyof typeof form]) {
               const ds = form[`datasource-${dsType}` as keyof typeof form] as { uid: string; type: string };
               return {
                 ...variable,
                 spec: {
                   ...variable.spec,
-                  datasource: {
-                    ...variable.spec.datasource,
-                    uid: ds.uid,
-                    type: ds.type,
+                  query: {
+                    ...variable.spec.query,
+                    spec: {
+                      ...variable.spec.query.spec,
+                      group: ds.type,
+                      datasource: {
+                        name: ds.uid,
+                      },
+                    },
                   },
                   options: [],
                   current: {
@@ -157,7 +170,7 @@ export function ImportDashboardOverviewV2() {
 
   return (
     <>
-      <Form<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>
+      <Form<FormData>
         onSubmit={onSubmit}
         defaultValues={{ dashboard, k8s: { annotations: { 'grafana.app/folder': folder.uid } } }}
         validateOnMount
