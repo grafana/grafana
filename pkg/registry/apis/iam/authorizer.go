@@ -57,6 +57,7 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 			Attr:     "id",
 			Mapping: map[string]string{
 				utils.VerbCreate: accesscontrol.ActionOrgUsersWrite,
+				utils.VerbUpdate: accesscontrol.ActionOrgUsersWrite,
 				utils.VerbDelete: accesscontrol.ActionOrgUsersWrite,
 				utils.VerbGet:    accesscontrol.ActionOrgUsersRead,
 				utils.VerbList:   accesscontrol.ActionOrgUsersRead,
