@@ -1864,7 +1864,7 @@ func (tx *Tx) QueryRowStruct(query string, st interface{}) *Row {
 
 const (
 	POSTGRES = "postgres"
-	SQLITE   = "sqlite3"
+	SQLITE   = "sqlite"
 	MYSQL    = "mysql"
 	MSSQL    = "mssql"
 	ORACLE   = "oracle"

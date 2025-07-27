@@ -5,10 +5,13 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
+	"unsafe"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/mattn/go-sqlite3"
+	"modernc.org/sqlite"
+	sqlitelib "modernc.org/sqlite/lib"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -242,7 +245,8 @@ func TestBackend_create(t *testing.T) {
 		)
 		b.SQLMock.ExpectCommit()
 		b.SQLMock.ExpectBegin()
-		b.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite3.Error{Code: sqlite3.ErrConstraint, ExtendedCode: sqlite3.ErrConstraintUnique})
+
+		b.SQLMock.ExpectExec("insert resource").WillReturnError(mockSqliteError(sqlitelib.SQLITE_CONSTRAINT_UNIQUE))
 		b.SQLMock.ExpectRollback()
 
 		// First we insert the resource successfully. This is what the happy path test does as well.
@@ -855,4 +859,12 @@ func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, e
 	}
 
 	return historyRows
+}
+
+func mockSqliteError(code int) error {
+	sqliteErr := &sqlite.Error{}
+	elem := reflect.ValueOf(sqliteErr).Elem()
+	codeField := elem.FieldByName("code")
+	reflect.NewAt(codeField.Type(), unsafe.Pointer(codeField.UnsafeAddr())).Elem().SetInt(int64(code)) //nolint:gosec
+	return sqliteErr
 }

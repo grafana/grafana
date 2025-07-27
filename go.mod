@@ -132,7 +132,6 @@ require (
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.1.1 // @grafana/alerting-backend
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
-	github.com/mattn/go-sqlite3 v1.14.22 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
 	github.com/microsoft/go-mssqldb v1.8.0 // @grafana/partner-datasources
 	github.com/migueleliasweb/go-github-mock v1.1.0 // @grafana/grafana-app-platform-squad
@@ -196,7 +195,7 @@ require (
 	gocloud.dev v0.42.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.42.0 // @grafana/grafana-operator-experience-squad
 	golang.org/x/crypto v0.39.0 // @grafana/grafana-backend-group
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // @grafana/alerting-backend
+	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // @grafana/alerting-backend
 	golang.org/x/mod v0.25.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.41.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.30.0 // @grafana/identity-access-team
@@ -221,6 +220,7 @@ require (
 	k8s.io/kube-aggregator v0.33.3 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20241210054802-24370beab758 // @grafana/partner-datasources
+	modernc.org/sqlite v1.38.1 // @grafana/grafana-backend-group
 	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // @grafana-app-platform-squad
@@ -456,6 +456,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-ieproxy v0.0.12 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/maypok86/otter v1.2.4 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/mdlayher/vsock v1.2.1 // indirect
@@ -572,7 +573,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
@@ -588,10 +589,9 @@ require (
 	gopkg.in/telebot.v3 v3.2.1 // indirect
 	k8s.io/apiextensions-apiserver v0.33.2 // indirect
 	k8s.io/kms v0.33.3 // indirect
-	modernc.org/libc v1.65.0 // indirect
+	modernc.org/libc v1.66.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.10.0 // indirect
-	modernc.org/sqlite v1.37.0 // indirect
+	modernc.org/memory v1.11.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.2 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/yaml v1.5.0 // indirect
@@ -603,8 +603,6 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250620093340-be61a673dee6
-
-exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1

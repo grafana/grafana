@@ -9,10 +9,10 @@ import (
 )
 
 func TestSequenceGenerator(t *testing.T) {
-	eng, err := NewEngine("sqlite3", ":memory:")
+	eng, err := NewEngine("sqlite", ":memory:")
 	require.NoError(t, err)
 	require.NotNil(t, eng)
-	require.Equal(t, "sqlite3", eng.DriverName())
+	require.Equal(t, "sqlite", eng.DriverName())
 
 	_, err = eng.Exec("CREATE TABLE `autoincrement_sequences` (`name` STRING(128) NOT NULL PRIMARY KEY, `next_value` INT64 NOT NULL)")
 	require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestSequenceGenerator(t *testing.T) {
 }
 
 func TestBatchSequenceAllocation(t *testing.T) {
-	eng, err := NewEngine("sqlite3", ":memory:")
+	eng, err := NewEngine("sqlite", ":memory:")
 	require.NoError(t, err)
 
 	_, err = eng.Exec("CREATE TABLE `autoincrement_sequences` (`name` STRING(128) NOT NULL PRIMARY KEY, `next_value` INT64 NOT NULL)")
@@ -69,7 +69,7 @@ func TestBatchSequenceAllocation(t *testing.T) {
 }
 
 func TestConcurrentSequenceAccess(t *testing.T) {
-	eng, err := NewEngine("sqlite3", ":memory:")
+	eng, err := NewEngine("sqlite", ":memory:")
 	require.NoError(t, err)
 
 	_, err = eng.Exec("CREATE TABLE `autoincrement_sequences` (`name` STRING(128) NOT NULL PRIMARY KEY, `next_value` INT64 NOT NULL)")

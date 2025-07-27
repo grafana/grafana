@@ -12,12 +12,13 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"modernc.org/sqlite"
+	sqlitelib "modernc.org/sqlite/lib"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -389,9 +390,9 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 // IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
 func IsRowAlreadyExistsError(err error) bool {
-	var sqlite sqlite3.Error
+	var sqlite *sqlite.Error
 	if errors.As(err, &sqlite) {
-		return sqlite.ExtendedCode == sqlite3.ErrConstraintUnique
+		return sqlite.Code() == sqlitelib.SQLITE_CONSTRAINT_UNIQUE
 	}
 
 	var pg *pgconn.PgError

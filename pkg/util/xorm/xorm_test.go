@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
+	_ "modernc.org/sqlite"
 )
 
 func TestBasicOperationsWithSqlite(t *testing.T) {
-	eng, err := NewEngine("sqlite3", ":memory:")
+	eng, err := NewEngine("sqlite", ":memory:")
 	require.NoError(t, err)
 	require.NotNil(t, eng)
-	require.Equal(t, "sqlite3", eng.DriverName())
+	require.Equal(t, "sqlite", eng.DriverName())
 
 	_, err = eng.Exec("CREATE TABLE test_struct (id int primary key, comment text, json text)")
 	require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestRandomID(t *testing.T) {
 		Comment string
 	}
 
-	eng, err := NewEngine("sqlite3", ":memory:")
+	eng, err := NewEngine("sqlite", ":memory:")
 	require.NoError(t, err)
 	require.NoError(t, eng.Sync(new(RandomIDRecord)))
 

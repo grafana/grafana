@@ -21,7 +21,7 @@ func DialectForDriver(driverName string) Dialect {
 		return MySQL
 	case "postgres", "pgx":
 		return PostgreSQL
-	case "sqlite", "sqlite3":
+	case "sqlite":
 		return SQLite
 	default:
 		return nil

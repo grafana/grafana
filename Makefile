@@ -299,7 +299,7 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "backend unit tests ($(SHARD)/$(SHARDS))"
-	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -v -short -timeout=30m \
+	$(GO) test $(GO_RACE_FLAG) $(GO_TEST_FLAGS) -short -timeout=30m \
 		$(shell ./scripts/ci/backend-tests/shard.sh -n$(SHARD) -m$(SHARDS) -s)
 
 .PHONY: test-go-unit-pretty

@@ -16,7 +16,6 @@ const (
 	DriverPostgres = "postgres"
 	DriverMySQL    = "mysql"
 	DriverSQLite   = "sqlite"
-	DriverSQLite3  = "sqlite3"
 )
 
 // DBProvider provides access to a SQL Database.

@@ -120,7 +120,7 @@ func isHighAvailabilityEnabled(dbCfg, resourceAPICfg *setting.DynamicSection) bo
 
 	// SQLite is not possible to run in HA, so we force it to false.
 	databaseType := dbCfg.Key("type").String()
-	if databaseType == migrator.SQLite {
+	if databaseType == migrator.SQLite || databaseType == "sqlite3" {
 		isHA = false
 	}
 
