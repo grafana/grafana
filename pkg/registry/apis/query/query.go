@@ -147,6 +147,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 							}
 						}
 					}
+					connectLogger.Error("Query Service is returning a 500 error", "response", o, "isQueryDataResponse", ok)
 				}
 			},
 
