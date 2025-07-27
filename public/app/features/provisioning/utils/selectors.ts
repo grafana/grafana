@@ -1,8 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { Repository, provisioningAPIv0alpha1 as provisioningAPI } from 'app/api/clients/provisioning/v0alpha1';
 import { RootState } from 'app/store/configureStore';
-
-import { Repository, provisioningAPIv0alpha1 as provisioningAPI } from '../../../api/clients/provisioning/v0alpha1';
 
 const emptyRepos: Repository[] = [];
 

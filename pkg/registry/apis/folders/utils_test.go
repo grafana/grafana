@@ -12,7 +12,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
-func TestSubParent(t *testing.T) {
+func TestGetFolderParents(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    *folders.Folder
@@ -65,13 +65,10 @@ func TestSubParent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &subParentsREST{
-				getter: gm,
-			}
 			if tt.setuFn != nil {
 				tt.setuFn(m)
 			}
-			parents := r.parents(context.TODO(), tt.input)
+			parents := getFolderParents(context.TODO(), gm, tt.input)
 			require.Equal(t, tt.expected, parents)
 		})
 	}

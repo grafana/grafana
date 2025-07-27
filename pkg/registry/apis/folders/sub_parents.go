@@ -3,6 +3,8 @@ package folders
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"k8s.io/apiserver/pkg/storage"
 	"net/http"
 	"slices"
 
@@ -44,63 +46,30 @@ func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	folder, ok := obj.(*folders.Folder)
-	if !ok {
-		return nil, fmt.Errorf("expecting folder, found: %T", folder)
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		info := r.parents(ctx, folder)
+		if name == folder.GeneralFolderUID || name == folder.SharedWithMeFolderUID {
+			responder.Object(http.StatusOK, &folders.FolderInfoList{
+				Items: []folders.FolderInfo{},
+			})
+			return
+		}
+
+		obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
+		if storage.IsNotFound(err) {
+			responder.Object(http.StatusNotFound, nil)
+		}
+		if err != nil {
+			responder.Error(err)
+		}
+
+		folderObj, ok := obj.(*folders.Folder)
+		if !ok {
+			responder.Error(fmt.Errorf("expecting folder, found: %T", folderObj))
+		}
+
+		info := getFolderParents(ctx, r.getter, folderObj)
 		// Start from the root
 		slices.Reverse(info.Items)
 		responder.Object(http.StatusOK, info)
 	}), nil
-}
-
-func (r *subParentsREST) parents(ctx context.Context, folder *folders.Folder) *folders.FolderInfoList {
-	info := &folders.FolderInfoList{
-		Items: []folders.FolderInfo{},
-	}
-	for folder != nil {
-		parent := getParent(folder)
-		descr := ""
-		if folder.Spec.Description != nil {
-			descr = *folder.Spec.Description
-		}
-		info.Items = append(info.Items, folders.FolderInfo{
-			Name:        folder.Name,
-			Title:       folder.Spec.Title,
-			Description: descr,
-			Parent:      parent,
-		})
-		if parent == "" {
-			break
-		}
-
-		obj, err := r.getter.Get(ctx, parent, &metav1.GetOptions{})
-		if err != nil {
-			info.Items = append(info.Items, folders.FolderInfo{
-				Name:        parent,
-				Detached:    true,
-				Description: err.Error(),
-			})
-			break
-		}
-
-		parentFolder, ok := obj.(*folders.Folder)
-		if !ok {
-			info.Items = append(info.Items, folders.FolderInfo{
-				Name:        parent,
-				Detached:    true,
-				Description: fmt.Sprintf("expected folder, found: %T", obj),
-			})
-			break
-		}
-		folder = parentFolder
-	}
-	return info
 }
