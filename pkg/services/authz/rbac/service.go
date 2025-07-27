@@ -138,6 +138,8 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		attribute.String("folder", checkReq.ParentFolder),
 	)
 
+	// ------ cache
+	ctx = initMarkCacheSkipState(ctx) // Initialize cache state for this request
 	permDenialKey := userPermDenialCacheKey(checkReq.Namespace.Value, checkReq.UserUID, checkReq.Action, checkReq.Name, checkReq.ParentFolder)
 	if _, ok := s.permDenialCache.Get(ctx, permDenialKey); ok {
 		s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
@@ -161,6 +163,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	}
 	s.metrics.permissionCacheUsage.WithLabelValues("false", checkReq.Action).Inc()
 
+	// ----- check db
 	permissions, err := s.getIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
 	if err != nil {
 		ctxLogger.Error("could not get user permissions", "subject", req.GetSubject(), "error", err)
@@ -175,6 +178,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 		return deny, err
 	}
 
+	// update cache deny
 	if !allowed {
 		s.permDenialCache.Set(ctx, permDenialKey, true)
 	}
@@ -184,6 +188,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 }
 
 func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	ctx = initMarkCacheSkipState(ctx) // Initialize cache state for this request
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.List")
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx).New(
