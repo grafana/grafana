@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,19 +13,13 @@ import (
 type DependencyRegisterer struct{}
 
 func RegisterDependencies(
-	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	secretDBMigrator contracts.SecretDBMigrator,
 	accessControlService accesscontrol.Service,
 ) (*DependencyRegisterer, error) {
-	// Permissions for requests in multi-tenant mode will come from HG.
+	// Permissions for requests in multi-tenant mode will come from HG, hence we still need to register them regardless.
 	if err := registerAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("registering access control roles: %w", err)
-	}
-
-	// TODO: Remove once the DB schema is more stable.
-	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return nil, nil
 	}
 
 	// We shouldn't need to create the DB in HG, as that will use the MT api server.
