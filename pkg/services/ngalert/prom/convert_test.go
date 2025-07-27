@@ -144,6 +144,22 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:      "rule group with empty name",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name: "",
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "rule group name must not be empty",
+		},
+		{
 			name:      "recording rule",
 			orgID:     1,
 			namespace: "namespaceUID",
