@@ -96,7 +96,7 @@ func (s *FakeService) Get(ctx context.Context, q *folder.GetFolderQuery) (*folde
 	return s.ExpectedFolder, s.ExpectedError
 }
 func (s *FakeService) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
-	return s.Get(ctx, q)
+	return s.ExpectedFolder, s.ExpectedError
 }
 
 func (s *FakeService) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {

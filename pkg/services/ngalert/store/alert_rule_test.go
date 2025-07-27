@@ -244,7 +244,6 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}
 
 	sqlStore := db.InitTestDB(t)
-	// Use enhanced fake folder service from foldertest package
 	fakeFolderService := foldertest.NewFakeService()
 	b := &fakeBus{}
 	logger := &logtest.Fake{}
@@ -1658,7 +1657,7 @@ func setupFolderService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, features
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return testutil.SetupTestFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
+	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
 }
 
 func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {

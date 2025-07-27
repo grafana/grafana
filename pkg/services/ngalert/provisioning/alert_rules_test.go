@@ -33,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// note: additional integration tests are in /pkg/tests/api/alerting/api_provisioning_test.go
+
 func TestIntegrationAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
