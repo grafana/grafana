@@ -2488,7 +2488,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurovat",
-      "draft-new-rule": "Navrhnout nové pravidlo",
       "ds-error": {
         "title": "Nelze načíst pravidla pro tento zdroj dat"
       },
@@ -2514,6 +2513,7 @@
       "new-alert-rule": "Nové pravidlo výstrahy",
       "new-datasource-recording-rule": "Nové pravidlo nahrávání zdroje dat",
       "new-grafana-recording-rule": "Nové pravidlo nahrávání Grafany",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Zobrazit více…"
       },
@@ -4604,6 +4604,10 @@
     },
     "edit-actions": {
       "add": "Přidat {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Přesunout {{typeName}}",
       "panel-background": "Změnit pozadí panelu",
       "panel-description": "Změnit popis panelu",
@@ -4618,6 +4622,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Nástěnka",
+        "element": "",
         "local-variable": "Lokální proměnná",
         "multiple-elements": "Více prvků",
         "multiple-elements-delete-text": "Opravdu chcete odstranit tyto prvky?",
@@ -5831,7 +5836,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
