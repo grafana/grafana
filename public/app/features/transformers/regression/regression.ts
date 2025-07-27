@@ -37,7 +37,7 @@ export const DEGREES = [
 
 export const getRegressionTransformer: () => SynchronousDataTransformerInfo<RegressionTransformerOptions> = () => ({
   id: DataTransformerID.regression,
-  name: t('transformers.regression.name.regression-analysis', 'Regression analysis'),
+  name: t('transformers.regression.name.trendline', 'Trendline'),
   description: t(
     'transformers.regression.description.create-new-data-frame',
     'Create a new data frame containing values predicted by a statistical model.'
@@ -117,10 +117,10 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
           return frames;
       }
 
-      let frameName = `${t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear')} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
+      let frameName = `${t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear')} ${t('transformers.regression-transformer-editor.trendline', 'trendline')}`;
       if (modelType === ModelType.polynomial) {
         const degreeData = DEGREES.find((deg) => deg.value === degree);
-        frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial').toLocaleLowerCase()} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
+        frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial').toLocaleLowerCase()} ${t('transformers.regression-transformer-editor.trendline', 'trendline')}`;
       }
 
       const newFrame: DataFrame = {
@@ -129,7 +129,7 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
         fields: [
           { name: xField.name, type: xField.type, values: predictionPoints, config: {} },
           {
-            name: `${getFieldDisplayName(yField, predictFromFrame, frames)} predicted`,
+            name: `${getFieldDisplayName(yField, predictFromFrame, frames)}`,
             type: yField.type,
             values: predictionPoints.map((x) => result.predict(x - normalizationSubtrahend)),
             config: {},
