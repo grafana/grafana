@@ -77,7 +77,7 @@ export function SecondaryActions({
               aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
               variant="canvas"
               onClick={() => openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary)}
-              icon="plus"
+              icon="ai"
             >
               <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add query from library</Trans>
             </ToolbarButton>
