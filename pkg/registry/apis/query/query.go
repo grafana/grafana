@@ -202,6 +202,10 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper) (*backend.QueryDataResponse, error) {
 	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
+		if query.TimeRange == nil {
+			// if there is no locally specified per-query time-range, use the global per-request time-range
+			query.TimeRange = &raw.TimeRange
+		}
 		jsonBytes, err := json.Marshal(query)
 		if err != nil {
 			b.log.Error("error marshalling", err)
