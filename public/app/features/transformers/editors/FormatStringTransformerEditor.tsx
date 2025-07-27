@@ -11,12 +11,14 @@ import {
   StandardEditorsRegistryItem,
   FieldNamePickerConfigSettings,
   TransformerCategory,
+  StringFieldConfigSettings,
 } from '@grafana/data';
 import { FormatStringOutput, FormatStringTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
+import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 
 import darkImage from '../images/dark/formatString.svg';
 import lightImage from '../images/light/formatString.svg';
@@ -86,7 +88,31 @@ function FormatStringTransfomerEditor({
     [onChange, options]
   );
 
+  const onPrefixChange = useCallback(
+    (value?: string) => {
+      onChange({
+        ...options,
+        stringPrefix: value ?? '',
+      });
+    },
+    [onChange, options]
+  );
+
+  const onSuffixChange = useCallback(
+    (value?: string) => {
+      onChange({
+        ...options,
+        stringSuffix: value ?? '',
+      });
+    },
+    [onChange, options]
+  );
+
   const ops = Object.values(FormatStringOutput).map((value) => ({ label: value, value }));
+
+  const dummyStringSettings = {
+    settings: {},
+  } as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
   return (
     <>
@@ -118,6 +144,29 @@ function FormatStringTransfomerEditor({
           </InlineField>
         </InlineFieldRow>
       )}
+      {options.outputFormat === FormatStringOutput.Affix && (
+        <InlineFieldRow>
+          <InlineField label={t('transformers.format-string-transfomer-editor.label-prefix', 'Prefix')} labelWidth={15}>
+            <StringValueEditor
+              context={{ data: input }}
+              value={options.stringPrefix ?? ''} 
+              onChange={onPrefixChange} 
+              item={dummyStringSettings}
+              preserveWhitespace={true}
+              />
+          </InlineField>
+
+          <InlineField label={t('transformers.format-string-transfomer-editor.label-suffix', 'Suffix')} labelWidth={15}>
+            <StringValueEditor
+              context={{ data: input }}
+              value={options.stringSuffix ?? ''} 
+              onChange={onSuffixChange} 
+              item={dummyStringSettings}
+              preserveWhitespace={true}
+              />              
+          </InlineField>
+        </InlineFieldRow>
+      )}      
     </>
   );
 }
