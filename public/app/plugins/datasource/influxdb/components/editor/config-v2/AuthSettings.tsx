@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   onUpdateDatasourceOption,
@@ -46,11 +46,26 @@ type AuthOptionState = {
   withCredentials: boolean;
 };
 
+// Determine the size of the Auth radio buttons based on screen size
+export function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, [query]);
+
+  return matches;
+}
+
+const isSmallScreen = useMediaQuery('(max-width: 600px)');
+const radioSize = isSmallScreen ? 'sm' : 'md';
+
 export const AuthSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
   const styles = useStyles2(getInlineLabelStyles);
-
-  // console.log('options:', options);
 
   const authProps = useMemo(
     () =>
@@ -151,7 +166,7 @@ export const AuthSettings = (props: Props) => {
                   options={AUTH_RADIO_BUTTON_OPTIONS}
                   value={selectedMethod}
                   onChange={handleAuthMethodChange}
-                  size="sm"
+                  size={radioSize}
                 />
               </Box>
             </Field>
