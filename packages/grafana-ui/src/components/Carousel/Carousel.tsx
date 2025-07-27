@@ -107,7 +107,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
             onClick={() => openPreview(index)}
             className={cx(resetButtonStyles, styles.imageButton)}
           >
-            <img src={image.path} alt={image.name} onError={() => handleImageError(image.path)} />
+            <img src={image.path} alt="" onError={() => handleImageError(image.path)} />
             <p>{image.name}</p>
           </button>
         ))}

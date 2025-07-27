@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
+import { Card } from '../../Card/Card';
 
 import { Grid } from './Grid';
 import mdx from './Grid.mdx';
@@ -17,8 +17,6 @@ const meta: Meta<typeof Grid> = {
     docs: {
       page: mdx,
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   args: {
     gap: 1,
@@ -26,13 +24,12 @@ const meta: Meta<typeof Grid> = {
 };
 
 export const ColumnsNumber: StoryFn<typeof Grid> = (args) => {
-  const theme = useTheme2();
   return (
     <Grid {...args}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center', ...dimensions[i] }}>
-          N# {i}
-        </div>
+        <Card key={i} style={dimensions[i]}>
+          <Card.Heading>N# {i}</Card.Heading>
+        </Card>
       ))}
     </Grid>
   );
@@ -56,13 +53,12 @@ ColumnsNumber.parameters = {
 };
 
 export const ColumnsMinWidth: StoryFn<typeof Grid> = (args) => {
-  const theme = useTheme2();
   return (
     <Grid {...args}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center' }}>
-          N# {i}
-        </div>
+        <Card key={i}>
+          <Card.Heading>N# {i}</Card.Heading>
+        </Card>
       ))}
     </Grid>
   );

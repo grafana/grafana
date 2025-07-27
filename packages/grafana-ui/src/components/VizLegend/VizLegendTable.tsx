@@ -89,7 +89,6 @@ export const VizLegendTable = <T extends unknown>({
     <table className={cx(styles.table, className)}>
       <thead>
         <tr>
-          {!isSortable && <th></th>}
           {Object.keys(header).map((columnTitle) => (
             <th
               title={header[columnTitle]}

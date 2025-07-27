@@ -3,6 +3,7 @@ import { StoryFn, Meta } from '@storybook/react';
 import * as React from 'react';
 
 import { IconButton } from '../IconButton/IconButton';
+import { Text } from '../Text/Text';
 
 import { ContextMenu, ContextMenuProps } from './ContextMenu';
 import mdx from './ContextMenu.mdx';
@@ -19,8 +20,6 @@ const meta: Meta<typeof ContextMenu> = {
     controls: {
       exclude: ['renderMenuItems', 'renderHeader', 'onClose', 'children'],
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   args: {
     x: 200,
@@ -31,7 +30,7 @@ const meta: Meta<typeof ContextMenu> = {
 };
 
 const renderHeader = (): React.ReactNode => {
-  return <h6>Menu</h6>;
+  return <Text variant="h6">Menu</Text>;
 };
 
 export const Basic: StoryFn<typeof ContextMenu> = (args: ContextMenuProps) => {

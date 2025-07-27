@@ -21,8 +21,6 @@ const meta: Meta = {
     controls: {
       exclude: ['className', 'onClick', 'onCancel', 'onConfirm'],
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   args: {
     buttonText: 'Edit',

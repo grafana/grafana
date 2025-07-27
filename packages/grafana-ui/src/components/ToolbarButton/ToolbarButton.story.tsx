@@ -18,8 +18,6 @@ const meta: Meta<typeof ToolbarButton> = {
     controls: {
       exclude: ['imgSrc', 'imgAlt', 'narrow'],
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   args: {
     variant: 'default',
@@ -132,12 +130,12 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
           <ToolbarButton variant="active" icon="clock-nine" tooltip="Time picker">
             2020-10-02
           </ToolbarButton>
-          <ToolbarButton variant="active" icon="search-minus" />
+          <ToolbarButton aria-label="Zoom out" variant="active" icon="search-minus" />
         </ButtonGroup>
         <br />
         <ButtonGroup>
-          <ToolbarButton variant="canvas" icon="sync" />
-          <ToolbarButton variant="canvas" isOpen={false} narrow />
+          <ToolbarButton aria-label="Refresh" variant="canvas" icon="sync" />
+          <ToolbarButton aria-label="Open menu" variant="canvas" isOpen={false} narrow />
         </ButtonGroup>
         <br />
         Inside button group
@@ -146,13 +144,13 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
             <ToolbarButton variant="primary" icon="sync">
               Run query
             </ToolbarButton>
-            <ToolbarButton isOpen={false} narrow variant="primary" />
+            <ToolbarButton aria-label="Open menu" isOpen={false} narrow variant="primary" />
           </ButtonGroup>
           <ButtonGroup>
             <ToolbarButton variant="destructive" icon="sync">
               Run query
             </ToolbarButton>
-            <ToolbarButton isOpen={false} narrow variant="destructive" />
+            <ToolbarButton aria-label="Open menu" isOpen={false} narrow variant="destructive" />
           </ButtonGroup>
         </Stack>
       </Stack>

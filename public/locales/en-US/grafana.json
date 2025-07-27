@@ -8282,6 +8282,7 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
+      "aria-label-delete": "Delete",
       "cancel": "Cancel",
       "confirmText-delete": "Delete"
     },

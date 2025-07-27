@@ -8,10 +8,6 @@ import { TableInputCSV } from './TableInputCSV';
 const meta: Meta<typeof TableInputCSV> = {
   title: 'Inputs/Deprecated/TableInputCSV',
   component: TableInputCSV,
-  parameters: {
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
-  },
 };
 
 export const basic: StoryFn<typeof TableInputCSV> = () => {

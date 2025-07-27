@@ -1,4 +1,5 @@
 import { Meta, StoryFn } from '@storybook/react';
+import { useId } from 'react';
 
 import { Button } from '../Button/Button';
 import { Input } from '../Input/Input';
@@ -21,8 +22,6 @@ const meta: Meta<typeof FieldSet> = {
     controls: {
       exclude: ['children'],
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   argTypes: {
     label: { control: 'text' },
@@ -30,22 +29,26 @@ const meta: Meta<typeof FieldSet> = {
 };
 
 export const Basic: StoryFn<typeof FieldSet> = (args: Props) => {
+  const nameId = useId();
+  const emailId = useId();
+  const colorId = useId();
+  const fontSizeId = useId();
   return (
     <Form onSubmit={() => console.log('Submit')}>
       {() => (
         <>
           <FieldSet {...args}>
             <Field label="Name">
-              <Input name="name" />
+              <Input name="name" id={nameId} />
             </Field>
             <Field label="Email">
-              <Input name="email" />
+              <Input name="email" id={emailId} />
             </Field>
             <Field label="Color">
-              <Input name="color" />
+              <Input name="color" id={colorId} />
             </Field>
             <Field label="Font size">
-              <Input name="fontsize" />
+              <Input name="fontsize" id={fontSizeId} />
             </Field>
           </FieldSet>
           <Button variant="primary">Save</Button>
