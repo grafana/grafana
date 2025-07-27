@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ builder.APIGroupBuilder = (*QueryAPIBuilder)(nil)
@@ -93,7 +94,9 @@ func NewQueryAPIBuilder(
 	}, nil
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles,
+func RegisterAPIService(
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dataSourcesService datasources.DataSourceService,
 	pluginStore pluginstore.Store,
