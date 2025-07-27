@@ -83,11 +83,11 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
 
 let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
-  { value: { type: TableCellDisplayMode.Sparkline }, label: 'Sparkline' },
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
-  { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
   { value: { type: TableCellDisplayMode.DataLinks }, label: 'Data links' },
+  { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
+  { value: { type: TableCellDisplayMode.Sparkline }, label: 'Sparkline' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
   { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },

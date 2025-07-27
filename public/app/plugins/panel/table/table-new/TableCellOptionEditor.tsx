@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { merge } from 'lodash';
 import { useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TableCellOptions } from '@grafana/schema';
-import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
+import { Combobox, ComboboxOption, Field, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
@@ -28,15 +29,31 @@ interface Props {
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
   const styles = useStyles2(getStyles);
-  const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
+  const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
+    { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
+    { value: TableCellDisplayMode.ColorText, label: t('table.cell-types.color-text', 'Colored text') },
+    {
+      value: TableCellDisplayMode.ColorBackground,
+      label: t('table.cell-types.color-background', 'Colored background'),
+    },
+    { value: TableCellDisplayMode.DataLinks, label: t('table.cell-types.data-links', 'Data links') },
+    { value: TableCellDisplayMode.Gauge, label: t('table.cell-types.gauge', 'Gauge') },
+    { value: TableCellDisplayMode.Sparkline, label: t('table.cell-types.sparkline', 'Sparkline') },
+    { value: TableCellDisplayMode.JSONView, label: t('table.cell-types.json', 'JSON View') },
+    { value: TableCellDisplayMode.Pill, label: t('table.cell-types.pill', 'Pill') },
+    { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
+    { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
+  ];
+  const currentMode = cellDisplayModeOptions.find((o) => o.value === cellType)!;
+
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
   // Update display mode on change
-  const onCellTypeChange = (v: SelectableValue<TableCellOptions>) => {
-    if (v.value !== undefined) {
+  const onCellTypeChange = (v: ComboboxOption<TableCellOptions['type']>) => {
+    if (v !== null) {
       // Set the new type of cell starting
       // with default settings
-      value = v.value;
+      value = { type: v.value };
 
       // When changing cell type see if there were previously stored
       // settings and merge those with the changed value
@@ -60,7 +77,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   return (
     <div className={styles.fixBottomMargin}>
       <Field>
-        <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
+        <Combobox options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
       {(cellType === TableCellDisplayMode.Auto || cellType === TableCellDisplayMode.ColorText) && (
         <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
@@ -81,21 +98,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   );
 };
 
-let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
-  { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
-  { value: { type: TableCellDisplayMode.Sparkline }, label: 'Sparkline' },
-  { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
-  { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
-  { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
-  { value: { type: TableCellDisplayMode.DataLinks }, label: 'Data links' },
-  { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
-  { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
-  { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
-  { value: { type: TableCellDisplayMode.Pill }, label: 'Pill' },
-];
-
 const getStyles = (theme: GrafanaTheme2) => ({
   fixBottomMargin: css({
+    position: 'relative',
     marginBottom: theme.spacing(-2),
   }),
 });

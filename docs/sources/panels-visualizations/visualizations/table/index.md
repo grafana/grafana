@@ -236,11 +236,11 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | Cell type                                 | Description                                                                                                                |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | [Auto](#auto)                             | A basic text and number cell. |
-| [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [Colored text](#colored-text)             | If thresholds, value mappings, or color schemes are set, then the cell text is displayed in the appropriate color. |
 | [Colored background](#colored-background) | If thresholds, value mappings, or color schemes are set, then the cell background is displayed in the appropriate color. |
-| [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
 | Data links                                | If you've configured data links, when the cell type is **Auto**, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly, use a **Cell option > Cell type > Data links** field override. |
+| [Gauge](#gauge)                           | Values are displayed as a horizontal bar gauge. You can set the [Gauge display mode](#gauge-display-mode) and the [Value display](#value-display) options. |
+| [Sparkline](#sparkline)                   | Shows values rendered as a sparkline. |
 | [JSON View](#json-view)                   | Shows values formatted as code. |
 | [Image](#image)                           | Displays an image when the value is a URL or a base64 encoded image. |
 | [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
@@ -253,32 +253,6 @@ This is a basic text and number cell.
 It has the following cell options:
 
 {{< docs/shared lookup="visualizations/cell-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-#### Sparkline
-
-This cell type shows values rendered as a sparkline.
-To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
-
-![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
-
-The sparkline cell type options are described in the following table.
-For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
-
-<!-- prettier-ignore-start -->
-| Option              | Description                                                                |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
-| Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
-| Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
-| Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
-| Fill opacity        | The series area fill color using the **Fill opacity** slider. |
-| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li></ul>                                                                                                    |
-| Line style          | Choose from:<ul><li>**Solid**</li><li>**Dash** - Select the length and gap for the line dashes. Default dash spacing is 10, 10.</li><li>**Dots** - Select the gap for the dot spacing. Default dot spacing is 0, 10.</li></ul> |
-| Connect null values | How null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected. Choose from:<ul><li>**Never** - Time series data points with gaps in the data are never connected.</li><li>**Always** - Time series data points with gaps in the data are always connected.</li><li>**Threshold** - Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size or within a known range, and gaps outside this range should no longer be connected.</li></ul> |
-| Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
-| Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
-| Bar alignment       | Set the position of the bar relative to a data point. |
-<!-- prettier-ignore-end -->
 
 #### Colored text
 
@@ -344,6 +318,32 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 | Value color | Labels are colored by value. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-value-color-v11.3.png" alt="Table with labels in value color" >}} |
 | Text color | Labels match the theme text color. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-text-color-v11.3.png" alt="Table with labels in theme color" >}} |
 | Hidden | Labels are hidden. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-hidden-v11.3.png" alt="Table with labels hidden" >}} |
+<!-- prettier-ignore-end -->
+
+#### Sparkline
+
+This cell type shows values rendered as a sparkline.
+To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
+
+![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
+
+The sparkline cell type options are described in the following table.
+For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
+
+<!-- prettier-ignore-start -->
+| Option              | Description                                                                |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
+| Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
+| Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
+| Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
+| Fill opacity        | The series area fill color using the **Fill opacity** slider. |
+| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li></ul>                                                                                                    |
+| Line style          | Choose from:<ul><li>**Solid**</li><li>**Dash** - Select the length and gap for the line dashes. Default dash spacing is 10, 10.</li><li>**Dots** - Select the gap for the dot spacing. Default dot spacing is 0, 10.</li></ul> |
+| Connect null values | How null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected. Choose from:<ul><li>**Never** - Time series data points with gaps in the data are never connected.</li><li>**Always** - Time series data points with gaps in the data are always connected.</li><li>**Threshold** - Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size or within a known range, and gaps outside this range should no longer be connected.</li></ul> |
+| Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
+| Point size          | Set the size of the points, from 1 to 40 pixels in diameter. |
+| Bar alignment       | Set the position of the bar relative to a data point. |
 <!-- prettier-ignore-end -->
 
 #### JSON View
