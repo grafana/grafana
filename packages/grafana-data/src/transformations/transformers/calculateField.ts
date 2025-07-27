@@ -3,6 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
+import { ScopedVars } from '../../types/ScopedVars';
 import { NullValueMode } from '../../types/data';
 import { DataFrame, FieldType, Field } from '../../types/dataFrame';
 import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
@@ -75,6 +76,7 @@ interface IndexOptions {
 
 interface TemplateExpressionOptions {
   expression: string;
+  replaceFn: Function;
 }
 
 const defaultReduceOptions: ReduceOptions = {
@@ -257,7 +259,42 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
               };
             });
           case CalculateFieldMode.TemplateExpression:
-            return data;
+            return data.map((frame) => {
+              if (options.template?.expression !== undefined) {
+                let newFieldVals: Array<string | undefined>;
+                if (options.template?.replaceFn !== undefined) {
+                  newFieldVals = Array.from({ length: frame.length }, (_, i) => {
+                    const fieldVars: ScopedVars = {};
+                    frame.fields.forEach((field) => {
+                      fieldVars[field.name] = {
+                        value: field.values[i],
+                      };
+                    });
+                    const outVal = options.template?.replaceFn(options.template.expression, fieldVars);
+                    console.log('replacefn exists', i, outVal);
+                    return outVal;
+                  });
+                } else {
+                  console.log('replacefn not exists');
+                  newFieldVals = Array.from({ length: frame.length }, () => {
+                    return options.template?.expression;
+                  });
+                }
+                console.log('newFieldVals', newFieldVals);
+                const f: Field = {
+                  name: options.alias ?? 'Field',
+                  type: FieldType.string,
+                  values: newFieldVals,
+                  config: {},
+                };
+                return {
+                  ...frame,
+                  fields: options.replaceFields ? [f] : [...frame.fields, f],
+                };
+              } else {
+                return frame;
+              }
+            });
         }
 
         // Nothing configured
