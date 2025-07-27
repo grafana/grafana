@@ -34,12 +34,16 @@ export function usePluginLinks({
   return useMemo(() => {
     const isInsidePlugin = Boolean(pluginContext);
     const pluginId = pluginContext?.meta.id ?? '';
+    const isCoreGrafanaPlugin = pluginContext?.meta.module.startsWith('core:') ?? false;
     const pointLog = log.child({
       pluginId,
       extensionPointId,
     });
 
-    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, log: pointLog })) {
+    if (
+      isGrafanaDevMode() &&
+      !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, isCoreGrafanaPlugin, log: pointLog })
+    ) {
       return {
         isLoading: false,
         links: [],

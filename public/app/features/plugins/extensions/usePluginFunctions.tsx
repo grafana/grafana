@@ -24,6 +24,7 @@ export function usePluginFunctions<Signature>({
 
   return useMemo(() => {
     const isInsidePlugin = Boolean(pluginContext);
+    const isCoreGrafanaPlugin = pluginContext?.meta.module.startsWith('core:') ?? false;
     const results: Array<PluginExtensionFunction<Signature>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
@@ -32,7 +33,10 @@ export function usePluginFunctions<Signature>({
       extensionPointId,
     });
 
-    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, log: pointLog })) {
+    if (
+      isGrafanaDevMode() &&
+      !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, isCoreGrafanaPlugin, log: pointLog })
+    ) {
       return {
         isLoading: false,
         functions: [],

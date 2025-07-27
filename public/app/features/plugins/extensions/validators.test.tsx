@@ -217,6 +217,7 @@ describe('Plugin Extension Validators', () => {
           extensionPointId,
           pluginId,
           isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
+          isCoreGrafanaPlugin: false,
           log: createLogMock(),
         })
       ).toBe(true);
@@ -244,9 +245,22 @@ describe('Plugin Extension Validators', () => {
           extensionPointId,
           pluginId,
           isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
+          isCoreGrafanaPlugin: false,
           log: createLogMock(),
         })
       ).toBe(false);
+    });
+
+    it('should return FALSE true if the extension point id is set by a core plugin', () => {
+      expect(
+        isExtensionPointIdValid({
+          extensionPointId: 'traces',
+          pluginId: 'traces',
+          isInsidePlugin: true,
+          isCoreGrafanaPlugin: true,
+          log: createLogMock(),
+        })
+      ).toBe(true);
     });
   });
 
