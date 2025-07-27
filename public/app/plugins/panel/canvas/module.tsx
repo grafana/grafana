@@ -1,6 +1,7 @@
 import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
@@ -12,7 +13,7 @@ import { canvasMigrationHandler } from './migrations';
 import { Options } from './panelcfg.gen';
 
 export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
-  const category = [t('canvas.category-canvas', 'Canvas')];
+  let category = [t('canvas.category-canvas', 'Canvas')];
   builder.addBooleanSwitch({
     path: 'inlineEditing',
     name: t('canvas.name-inline-editing', 'Inline editing'),
@@ -55,6 +56,27 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     ),
     defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
+  });
+
+  category = [t('canvas.category-tooltip', 'Tooltip')];
+
+  builder.addRadio({
+    path: 'tooltip.mode',
+    name: t('canvas.tooltip-options.name-tooltip-mode', 'Tooltip mode'),
+    category,
+    defaultValue: TooltipDisplayMode.Single,
+    settings: {
+      options: [
+        {
+          value: TooltipDisplayMode.Single,
+          label: t('canvas.tooltip-options.tooltip-mode-options.label-enabled', 'Enabled'),
+        },
+        {
+          value: TooltipDisplayMode.None,
+          label: t('canvas.tooltip-options.tooltip-mode-options.label-disabled', 'Disabled'),
+        },
+      ],
+    },
   });
 };
 

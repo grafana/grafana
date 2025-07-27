@@ -88,6 +88,9 @@ composableKinds: PanelCfg: {
 					border?:     LineConfig
 					connections?: [...CanvasConnection]
 				} @cuetsy(kind="interface")
+				CanvasTooltip: {
+				  mode: ui.TooltipDisplayMode
+			  } @cuetsy(kind="interface")
 
 				Options: {
 					// Enable inline editing
@@ -108,6 +111,8 @@ composableKinds: PanelCfg: {
 						// The list of canvas elements attached to the root element
 						elements: [...CanvasElementOptions]
 					} @cuetsy(kind="interface")
+					// Controls tooltip options
+					tooltip: CanvasTooltip
 				} @cuetsy(kind="interface")
 			}
 		}]
