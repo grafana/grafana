@@ -12,7 +12,7 @@ import (
 )
 
 func TestServicebuildPipeLine(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name              string
 		req               *Request
 		expectedOrder     []string
@@ -235,7 +235,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 	}
 	s := Service{
 		features: featuremgmt.WithFeatures(featuremgmt.FlagExpressionParser),
-		cfg:      setting.NewCfg(),
+		cfg:      setting.ProvideService(setting.NewCfg()),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

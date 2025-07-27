@@ -70,6 +70,11 @@ var provisioningExtras = wire.NewSet(
 	extras.ProvideProvisioningOSSExtras,
 )
 
+var configProviderExtras = wire.NewSet(
+	setting.ProvideService,
+	wire.Bind(new(setting.ConfigProvider), new(*setting.OSSConfigProvider)),
+)
+
 var wireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
@@ -142,6 +147,7 @@ var wireExtsBasicSet = wire.NewSet(
 	gsmKMSProviders.ProvideOSSKMSProviders,
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
+	configProviderExtras,
 )
 
 var wireExtsSet = wire.NewSet(

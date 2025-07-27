@@ -593,7 +593,7 @@ func TestValidate(t *testing.T) {
 			})
 
 			expressions := expr.ProvideService(
-				&setting.Cfg{ExpressionsEnabled: true},
+				setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true}),
 				nil,
 				nil,
 				featuremgmt.WithFeatures(),
@@ -723,7 +723,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				setting.UnifiedAlertingSettings{},
 				cacheService,
 				expr.ProvideService(
-					&setting.Cfg{ExpressionsEnabled: true},
+					setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true}),
 					nil,
 					nil,
 					featuremgmt.WithFeatures(),

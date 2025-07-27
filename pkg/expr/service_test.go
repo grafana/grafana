@@ -190,7 +190,7 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 
 			// Create service with our configured limit
 			s := &Service{
-				cfg:      cfg,
+				cfg:      setting.ProvideService(cfg),
 				features: features,
 				converter: &ResultConverter{
 					Features: features,
@@ -246,7 +246,7 @@ func newMockQueryService(responses map[string]backend.DataResponse, queries []Qu
 
 	features := featuremgmt.WithFeatures()
 	return &Service{
-		cfg:          setting.NewCfg(),
+		cfg:          setting.ProvideService(setting.NewCfg()),
 		dataService:  me,
 		pCtxProvider: pCtxProvider,
 		features:     featuremgmt.WithFeatures(),

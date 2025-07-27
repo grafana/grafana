@@ -556,7 +556,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 	}
 
 	exprService := expr.ProvideService(
-		&setting.Cfg{ExpressionsEnabled: true},
+		setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true}),
 		pc,
 		pCtxProvider,
 		featuremgmt.WithFeatures(),
