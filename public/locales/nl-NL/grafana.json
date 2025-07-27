@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configureren",
-      "draft-new-rule": "Een nieuwe regel opstellen",
       "ds-error": {
         "title": "Kan geen regels laden voor deze gegevensbron"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "new-datasource-recording-rule": "Nieuwe gegevensbron voor opnameregel",
       "new-grafana-recording-rule": "Nieuwe Grafana-opnameregel",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Meer weergeven..."
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} toevoegen",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "{{typeName}} verplaatsen ",
       "panel-background": "Paneelachtergrond wijzigen",
       "panel-description": "Paneelbeschrijving wijzigen",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "",
         "local-variable": "Lokale variabele",
         "multiple-elements": "Meerdere elementen",
         "multiple-elements-delete-text": "Weet je zeker dat je deze elementen wilt verwijderen?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
