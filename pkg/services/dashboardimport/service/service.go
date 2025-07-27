@@ -146,14 +146,6 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	}
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 
-	// in the k8s flow, we connect the library panels in pkg/registry/apis/dashboard/legacy/sql_dashboards.go
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		err = s.libraryPanelService.ConnectLibraryPanelsForDashboard(ctx, req.User, savedDashboard)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	revision := savedDashboard.Data.Get("revision").MustInt64(0)
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	return &dashboardimport.ImportDashboardResponse{

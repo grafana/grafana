@@ -290,11 +290,6 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Route the folder and dashboard service requests to k8s
-  * @default true
-  */
-  kubernetesClientDashboardsFolders?: boolean;
-  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
