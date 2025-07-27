@@ -1,29 +1,96 @@
 import { css } from '@emotion/css';
-import { useMemo, useRef, useEffect, useState } from 'react';
+import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Stack, Button, Tooltip, Icon } from '@grafana/ui';
 
+import { ExpressionQueryEditorProps } from '../ExpressionQueryEditor';
 import { SqlExpressionQuery } from '../types';
 import { fetchSQLFields } from '../utils/metaSqlExpr';
 
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 
+// Conditionally import GenAI features only when feature flag is enabled
+const getGenAIFeatures = () => {
+  if (config.featureToggles.sqlExpressions) {
+    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
+    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
+    return {
+      useSQLSuggestions,
+      useSQLExplanations,
+    };
+  }
+  // When feature flag is off, return no-op functions that don't render anything
+  return {
+    useSQLSuggestions: () => ({
+      handleApplySuggestion: () => {},
+      handleHistoryUpdate: () => {},
+      handleCloseDrawer: () => {},
+      handleOpenDrawer: () => {},
+      isDrawerOpen: false,
+      suggestions: [],
+    }),
+    useSQLExplanations: () => ({
+      explanation: '',
+      handleCloseExplanation: () => {},
+      handleOpenExplanation: () => {},
+      handleExplain: () => {},
+      isExplanationOpen: false,
+      shouldShowViewExplanation: true, // Hide the explain button when feature is off
+      updatePrevExpression: () => {},
+    }),
+  };
+};
+
+// Lazy load the GenAI components to avoid circular dependencies
+const GenAISQLSuggestionsButton = lazy(() =>
+  import('./GenAI/GenAISQLSuggestionsButton').then((module) => ({
+    default: module.GenAISQLSuggestionsButton,
+  }))
+);
+
+const GenAISQLExplainButton = lazy(() =>
+  import('./GenAI/GenAISQLExplainButton').then((module) => ({
+    default: module.GenAISQLExplainButton,
+  }))
+);
+
+const SuggestionsDrawerButton = lazy(() =>
+  import('./GenAI/SuggestionsDrawerButton').then((module) => ({
+    default: module.SuggestionsDrawerButton,
+  }))
+);
+
+const GenAISuggestionsDrawer = lazy(() =>
+  import('./GenAI/GenAISuggestionsDrawer').then((module) => ({
+    default: module.GenAISuggestionsDrawer,
+  }))
+);
+
+const GenAIExplanationDrawer = lazy(() =>
+  import('./GenAI/GenAIExplanationDrawer').then((module) => ({
+    default: module.GenAIExplanationDrawer,
+  }))
+);
+
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
 
-interface Props {
+export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
   query: SqlExpressionQuery;
   queries: DataQuery[] | undefined;
   onChange: (query: SqlExpressionQuery) => void;
   /** Should the `format` property be set to `alerting`? */
   alerting?: boolean;
+  metadata?: ExpressionQueryEditorProps;
 }
 
-export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries }: Props) => {
+export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const completionProvider = useMemo(
     () =>
@@ -48,12 +115,73 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries }: 
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });
 
+  // Conditionally use GenAI features based on feature flag
+  const { useSQLSuggestions, useSQLExplanations } = getGenAIFeatures();
+
+  const { handleApplySuggestion, handleHistoryUpdate, handleCloseDrawer, handleOpenDrawer, isDrawerOpen, suggestions } =
+    useSQLSuggestions();
+
+  const {
+    explanation,
+    handleCloseExplanation,
+    handleOpenExplanation,
+    handleExplain,
+    isExplanationOpen,
+    shouldShowViewExplanation,
+    updatePrevExpression,
+  } = useSQLExplanations(query.expression || '');
+
+  const queryContext = useMemo(
+    () => ({
+      alerting,
+      panelId: metadata?.data?.request?.panelPluginId,
+      queries: metadata?.queries,
+      dashboardContext: {
+        dashboardTitle: metadata?.data?.request?.dashboardTitle ?? '',
+        panelName: metadata?.data?.request?.panelName ?? '',
+      },
+      datasources: metadata?.queries?.map((query) => query.datasource?.type ?? '') ?? [],
+      totalRows: metadata?.data?.series.reduce((sum, frame) => sum + frame.length, 0),
+      requestTime: metadata?.data?.request?.endTime
+        ? metadata?.data?.request?.endTime - metadata?.data?.request?.startTime
+        : -1,
+      numberOfQueries: metadata?.data?.request?.targets?.length ?? 0,
+      seriesData: metadata?.data?.series,
+    }),
+    [alerting, metadata]
+  );
+
+  const errorContext = useMemo(() => {
+    if (!metadata?.data) {
+      return [];
+    }
+
+    const errors: string[] = [];
+
+    // Handle multiple errors (preferred)
+    if (metadata.data.errors?.length) {
+      errors.push(...metadata.data.errors.map((err) => err.message).filter((msg): msg is string => Boolean(msg)));
+    }
+    // Handle legacy single error
+    else if (metadata.data.error?.message) {
+      errors.push(metadata.data.error.message);
+    }
+
+    return errors;
+  }, [metadata?.data]);
+
   const onEditorChange = (expression: string) => {
     onChange({
       ...query,
       expression,
       format: alerting ? 'alerting' : undefined,
     });
+    updatePrevExpression(expression);
+  };
+
+  const onApplySuggestion = (suggestion: string) => {
+    onEditorChange(suggestion);
+    handleApplySuggestion(suggestion);
   };
 
   // Set up resize observer to handle container resizing
@@ -81,23 +209,111 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries }: 
   }, []);
 
   return (
-    <div ref={containerRef} className={styles.editorContainer}>
-      <SQLEditor
-        query={query.expression || initialQuery}
-        onChange={onEditorChange}
-        height={dimensions.height - EDITOR_BORDER_ADJUSTMENT}
-        language={EDITOR_LANGUAGE_DEFINITION}
-      />
-    </div>
+    <>
+      <Stack direction="column" gap={1.5}>
+        {config.featureToggles.sqlExpressions && (
+          <div className={styles.sqlButtons}>
+            <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+              <Tooltip
+                content={t(
+                  'expressions.sql-expr.tooltip-experimental',
+                  'SQL Expressions LLM integration is experimental. Please report any issues to the Grafana team.'
+                )}
+                placement="top"
+                interactive={true}
+              >
+                <Icon name="ai-sparkle" />
+              </Tooltip>
+              <Suspense fallback={null}>
+                {shouldShowViewExplanation ? (
+                  <Button
+                    fill="outline"
+                    icon="gf-movepane-right"
+                    onClick={handleOpenExplanation}
+                    size="sm"
+                    variant="secondary"
+                  >
+                    <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
+                  </Button>
+                ) : (
+                  <GenAISQLExplainButton
+                    currentQuery={query.expression || ''}
+                    onExplain={handleExplain}
+                    queryContext={queryContext}
+                    refIds={vars}
+                    // schemas={schemas} // Will be added when schema extraction is implemented
+                  />
+                )}
+              </Suspense>
+              <Suspense fallback={null}>
+                <GenAISQLSuggestionsButton
+                  currentQuery={query.expression || ''}
+                  initialQuery={initialQuery}
+                  onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
+                  onHistoryUpdate={handleHistoryUpdate}
+                  queryContext={queryContext}
+                  refIds={vars}
+                  errorContext={errorContext} // Will be added when error tracking is implemented
+                  // schemas={schemas} // Will be added when schema extraction is implemented
+                />
+              </Suspense>
+            </Stack>
+            {suggestions.length > 0 && (
+              <Suspense fallback={null}>
+                <SuggestionsDrawerButton handleOpenDrawer={handleOpenDrawer} suggestions={suggestions} />
+              </Suspense>
+            )}
+          </div>
+        )}
+
+        <div ref={containerRef} className={styles.editorContainer}>
+          <SQLEditor
+            query={query.expression || initialQuery}
+            onChange={onEditorChange}
+            height={dimensions.height - EDITOR_BORDER_ADJUSTMENT}
+            language={EDITOR_LANGUAGE_DEFINITION}
+          />
+        </div>
+      </Stack>
+      {config.featureToggles.sqlExpressions && (
+        <>
+          <Suspense fallback={null}>
+            <GenAISuggestionsDrawer
+              isOpen={isDrawerOpen}
+              onApplySuggestion={onApplySuggestion}
+              onClose={handleCloseDrawer}
+              suggestions={suggestions}
+            />
+          </Suspense>
+          <Suspense fallback={null}>
+            <GenAIExplanationDrawer
+              isOpen={isExplanationOpen}
+              onClose={handleCloseExplanation}
+              explanation={explanation}
+            />
+          </Suspense>
+        </>
+      )}
+    </>
   );
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   editorContainer: css({
     height: '240px',
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
+  }),
+  sqlButtons: css({
+    // This is NOT ideal. The alternative is to expose SQL buttons as a separate component,
+    // Then consume them in ExpressionQueryEditor. This requires a lot of refactoring and
+    // can be prioritized later.
+    marginTop: theme.spacing(-4),
+    gap: theme.spacing(1),
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   }),
 });
 
