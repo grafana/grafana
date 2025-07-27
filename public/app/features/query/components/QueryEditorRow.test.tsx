@@ -5,14 +5,27 @@ import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from
 import { DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { DataSourceType } from '../../alerting/unified/utils/datasource';
-
-import { filterPanelDataToQuery, Props, QueryEditorRow } from './QueryEditorRow';
+import { filterPanelDataToQuery, Props, QueryEditorRow, QueryLibraryBadgeWrapper } from './QueryEditorRow';
 
 const mockDS = mockDataSource({
   name: 'test',
-  type: DataSourceType.Alertmanager,
+  type: 'testdata',
 });
+
+// Mock the QueryLibraryContext
+const mockQueryLibraryContext = {
+  queryLibraryEnabled: true,
+};
+
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: () => mockQueryLibraryContext,
+}));
+
+// Mock the internationalization function
+jest.mock('@grafana/i18n', () => ({
+  ...jest.requireActual('@grafana/i18n'),
+  t: (key: string, defaultValue: string) => defaultValue,
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -390,5 +403,32 @@ describe('QueryEditorRow', () => {
     await waitFor(() => {
       expect(screen.queryByText('Error!!')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('QueryLibraryBadge', () => {
+  beforeEach(() => {
+    mockQueryLibraryContext.queryLibraryEnabled = true;
+  });
+
+  it('should display badge when queryLibraryEnabled is true and queryRef is provided', () => {
+    render(<QueryLibraryBadgeWrapper queryRef="library-query-123" />);
+    expect(screen.getByText('Editing From Query Library')).toBeInTheDocument();
+  });
+
+  it('should not display badge when queryLibraryEnabled is false', () => {
+    mockQueryLibraryContext.queryLibraryEnabled = false;
+    render(<QueryLibraryBadgeWrapper queryRef="library-query-123" />);
+    expect(screen.queryByText('Editing From Query Library')).not.toBeInTheDocument();
+  });
+
+  it('should not display badge when queryRef is not provided', () => {
+    render(<QueryLibraryBadgeWrapper />);
+    expect(screen.queryByText('Editing From Query Library')).not.toBeInTheDocument();
+  });
+
+  it('should not display badge when queryRef is empty string', () => {
+    render(<QueryLibraryBadgeWrapper queryRef="" />);
+    expect(screen.queryByText('Editing From Query Library')).not.toBeInTheDocument();
   });
 });

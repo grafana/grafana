@@ -11,6 +11,7 @@ import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { changeDatasource } from './state/datasource';
+import { updateQueryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -29,21 +30,21 @@ const makeSelectors = (exploreId: string) => {
       exploreItemSelector,
       (s) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
+    getQueryRef: createSelector(exploreItemSelector, (s) => s!.queryRef),
   };
 };
 
 export const QueryRows = ({ exploreId }: Props) => {
   const dispatch = useDispatch();
-  const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
-    () => makeSelectors(exploreId),
-    [exploreId]
-  );
+  const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge, getQueryRef } =
+    useMemo(() => makeSelectors(exploreId), [exploreId]);
 
   const queries = useSelector(getQueries);
   const dsSettings = useSelector(getDatasourceInstanceSettings);
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
+  const queryRef = useSelector(getQueryRef);
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
@@ -86,6 +87,10 @@ export const QueryRows = ({ exploreId }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
+  const onCancelQueryLibraryEdit = useCallback(() => {
+    dispatch(updateQueryRefAction({ exploreId, queryRef: undefined }));
+  }, [dispatch, exploreId]);
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
@@ -102,6 +107,8 @@ export const QueryRows = ({ exploreId }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      queryRef={queryRef}
+      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}
