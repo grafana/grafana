@@ -217,6 +217,15 @@ func TestDataKeyQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlDataKeyDisableAll: {
+				{
+					Name: "disable",
+					Data: &disableAllDataKeys{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Updated:     time.Unix(1735689600, 0).UTC(),
+					},
+				},
+			},
 		},
 	})
 }
