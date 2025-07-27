@@ -2415,6 +2415,19 @@
     },
     {
       "metadata": {
+        "name": "postgresDSUsePGX",
+        "resourceVersion": "1753174666056",
+        "creationTimestamp": "2025-05-26T06:54:18Z",
+        "deletionTimestamp": "2025-06-03T12:45:07Z"
+      },
+      "spec": {
+        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "preferLibraryPanelTitle",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-17T11:21:21Z"
