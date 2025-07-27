@@ -1567,7 +1567,18 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
-		amCfg := apimodels.AlertmanagerUserConfig{}
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"route": {
+					"receiver": "default"
+				},
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
 		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -1584,6 +1595,26 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
 		require.Contains(t, string(response.Body()), "format should be 'key=value,key2=value2'")
+	})
+
+	t.Run("should return error when alertmanager config has empty route", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(mergeMatchersHeader, "env=prod")
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "failed to parse alertmanager config")
 	})
 }
 
