@@ -24,11 +24,11 @@ export function createPromDS(dataSourceID: string, name: string): void {
 }
 
 export function getResources() {
-  cy.intercept(/__name__/g, metricResponse);
+  cy.intercept(/__name__/g, metricResponse).as('getMetricNames');
 
-  cy.intercept(/metadata/g, metadataResponse);
+  cy.intercept(/metadata/g, metadataResponse).as('getMetadata');
 
-  cy.intercept(/labels/g, labelsResponse);
+  cy.intercept(/labels/g, labelsResponse).as('getLabels');
 }
 
 const metricResponse = {

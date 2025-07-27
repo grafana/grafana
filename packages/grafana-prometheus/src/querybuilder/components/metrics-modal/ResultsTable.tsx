@@ -1,6 +1,6 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/ResultsTable.tsx
 import { css } from '@emotion/css';
-import { ReactElement } from 'react';
+import { ReactElement, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,21 +10,50 @@ import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
 
-import { tracking } from './state/helpers';
-import { MetricsModalState } from './state/state';
-import { MetricData, MetricsData } from './types';
+import { useMetricsModal } from './MetricsModalContext';
+import { MetricData } from './types';
 
 type ResultsTableProps = {
-  metrics: MetricsData;
   onChange: (query: PromVisualQuery) => void;
   onClose: () => void;
   query: PromVisualQuery;
-  state: MetricsModalState;
-  disableTextWrap: boolean;
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const { metrics, onChange, onClose, query, state, disableTextWrap } = props;
+  const { onChange, onClose, query } = props;
+  const {
+    isLoading,
+    metricsData,
+    settings: { hasMetadata, fullMetaSearch, disableTextWrap },
+    pagination: { pageNum, resultsPerPage },
+    selectedTypes,
+    searchedText,
+  } = useMetricsModal();
+
+  const slicedMetrics = useMemo(() => {
+    let filteredMetrics = metricsData;
+    if (selectedTypes.length > 0) {
+      filteredMetrics = metricsData.filter((m: MetricData, idx) => {
+        // Matches type
+        const matchesSelectedType = selectedTypes.some((t) => {
+          if (m.type && t.value) {
+            return m.type.includes(t.value);
+          }
+
+          if (!m.type && t.value === 'no type') {
+            return true;
+          }
+
+          return false;
+        });
+
+        // when a user filters for type, only return metrics with defined types
+        return matchesSelectedType;
+      });
+    }
+
+    return filteredMetrics.slice((pageNum - 1) * resultsPerPage, (pageNum - 1) * resultsPerPage + resultsPerPage);
+  }, [metricsData, pageNum, resultsPerPage, selectedTypes]);
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
@@ -32,20 +61,19 @@ export function ResultsTable(props: ResultsTableProps) {
   function selectMetric(metric: MetricData) {
     if (metric.value) {
       onChange({ ...query, metric: metric.value });
-      tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
       onClose();
     }
   }
 
   function metaRows(metric: MetricData) {
-    if (state.fullMetaSearch && metric) {
+    if (fullMetaSearch && metric) {
       return (
         <>
           <td>{displayType(metric.type ?? '')}</td>
           <td>
             <Highlighter
               textToHighlight={metric.description ?? ''}
-              searchWords={state.metaHaystackMatches}
+              searchWords={[searchedText]}
               autoEscape
               highlightClassName={styles.matchHighLight}
             />
@@ -105,7 +133,7 @@ export function ResultsTable(props: ResultsTableProps) {
   function noMetricsMessages(): ReactElement {
     let message;
 
-    if (!state.fuzzySearchQuery) {
+    if (!searchedText) {
       message = t(
         'grafana-prometheus.querybuilder.results-table.message-no-metrics-found',
         'There are no metrics found in the data source.'
@@ -119,7 +147,7 @@ export function ResultsTable(props: ResultsTableProps) {
       );
     }
 
-    if (state.fuzzySearchQuery || state.selectedTypes.length > 0) {
+    if (searchedText || selectedTypes.length > 0) {
       message = t(
         'grafana-prometheus.querybuilder.results-table.message-expand-search',
         'There are no metrics found. Try to expand your search and filters.'
@@ -133,21 +161,6 @@ export function ResultsTable(props: ResultsTableProps) {
     );
   }
 
-  function textHighlight(state: MetricsModalState) {
-    if (state.useBackend) {
-      // highlight the input only for the backend search
-      // this highlight is equivalent to how the metric select highlights
-      // look into matching on regex input
-      return [state.fuzzySearchQuery];
-    } else if (state.fullMetaSearch) {
-      // highlight the matches in the ufuzzy metaHaystack
-      return state.metaHaystackMatches;
-    } else {
-      // highlight the ufuzzy name matches
-      return state.nameHaystackMatches;
-    }
-  }
-
   return (
     <table className={styles.table}>
       <thead className={styles.stickyHeader}>
@@ -155,7 +168,7 @@ export function ResultsTable(props: ResultsTableProps) {
           <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>
             <Trans i18nKey="grafana-prometheus.querybuilder.results-table.name">Name</Trans>
           </th>
-          {state.hasMetadata && (
+          {hasMetadata && (
             <>
               <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>
                 <Trans i18nKey="grafana-prometheus.querybuilder.results-table.type">Type</Trans>
@@ -165,24 +178,24 @@ export function ResultsTable(props: ResultsTableProps) {
               </th>
             </>
           )}
-          <th className={styles.selectButtonWidth}> </th>
+          <th className={styles.selectButtonWidth}></th>
         </tr>
       </thead>
       <tbody>
         <>
-          {metrics.length > 0 &&
-            metrics.map((metric: MetricData, idx: number) => {
+          {slicedMetrics.length > 0 &&
+            slicedMetrics.map((metric: MetricData, idx: number) => {
               return (
                 <tr key={metric?.value ?? idx} className={styles.row}>
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
-                      searchWords={textHighlight(state)}
+                      searchWords={[searchedText]}
                       autoEscape
                       highlightClassName={styles.matchHighLight}
                     />
                   </td>
-                  {state.hasMetadata && metaRows(metric)}
+                  {hasMetadata && metaRows(metric)}
                   <td>
                     <Button
                       size="md"
@@ -196,7 +209,7 @@ export function ResultsTable(props: ResultsTableProps) {
                 </tr>
               );
             })}
-          {metrics.length === 0 && !state.isLoading && noMetricsMessages()}
+          {slicedMetrics.length === 0 && !isLoading && noMetricsMessages()}
         </>
       </tbody>
     </table>

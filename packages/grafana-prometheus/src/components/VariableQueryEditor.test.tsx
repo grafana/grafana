@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { dateTime, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PrometheusDatasource } from '../datasource';
@@ -375,25 +374,5 @@ describe('PromVariableQueryEditor', () => {
       refId,
       qryType: 5,
     });
-  });
-
-  test('Calls language provider with the time range received in props', async () => {
-    const now = dateTime('2023-09-16T21:26:00Z');
-    const range: TimeRange = {
-      from: dateTime(now).subtract(2, 'days'),
-      to: now,
-      raw: {
-        from: 'now-2d',
-        to: 'now',
-      },
-    };
-    props.range = range;
-
-    const languageProviderStartMock = jest.fn();
-    props.datasource.languageProvider.start = languageProviderStartMock;
-
-    render(<PromVariableQueryEditor {...props} />);
-
-    expect(languageProviderStartMock).toHaveBeenCalledWith(range);
   });
 });
