@@ -73,6 +73,11 @@ export class K8sDashboardV2API
         dashboard.metadata.annotations[AnnoKeyFolder] = '';
       }
 
+      // Ensure a consistent dashboard slug
+      if (!dashboard.access.slug) {
+        dashboard.access.slug = kbn.slugifyForUrl(dashboard.spec.title.trim());
+      }
+
       return dashboard;
     } catch (e) {
       const status = getStatusFromError(e);
@@ -145,11 +150,13 @@ export class K8sDashboardV2API
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {
+    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
-        slug: kbn.slugifyForUrl(v.spec.title.trim()),
+        slug,
       })
     );
 
@@ -164,7 +171,7 @@ export class K8sDashboardV2API
       id: dashId,
       status: 'success',
       url,
-      slug: '',
+      slug,
     };
   }
 

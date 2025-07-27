@@ -85,11 +85,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
+    const slug = kbn.slugifyForUrl(v.spec.title.trim());
+
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
-        slug: kbn.slugifyForUrl(v.spec.title.trim()),
+        slug,
       })
     );
 
@@ -99,7 +101,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       id: v.spec.id ?? 0,
       status: 'success',
       url,
-      slug: '',
+      slug,
     };
   }
 
@@ -123,6 +125,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const result: DashboardDTO = {
         meta: {
           ...dash.access,
+          slug: kbn.slugifyForUrl(dash.spec.title.trim()),
           isNew: false,
           isFolder: false,
           uid: dash.metadata.name,
