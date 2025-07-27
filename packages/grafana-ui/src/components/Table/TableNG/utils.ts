@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
+import { varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -25,7 +26,16 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { CellColors, TableRow, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
+import {
+  CellColors,
+  TableRow,
+  ColumnTypes,
+  FrameToRowsConverter,
+  Comparator,
+  TypographyCtx,
+  LineCounter,
+  LineCounterEntry,
+} from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
@@ -71,58 +81,171 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(cellOptions?.wrapText);
 }
 
-// matches characters which CSS
+/**
+ * @internal creates a typography context based on a font size and family. used to measure text
+ * and estimate size of text in cells.
+ */
+export function createTypographyContext(fontSize: number, fontFamily: string, letterSpacing = 0.15): TypographyCtx {
+  const font = `${fontSize}px ${fontFamily}`;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
+
+  ctx.letterSpacing = `${letterSpacing}px`;
+  ctx.font = font;
+  const txt =
+    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
+  const txtWidth = ctx.measureText(txt).width;
+  const avgCharWidth = txtWidth / txt.length + letterSpacing;
+  const { count } = varPreLine(ctx);
+
+  return {
+    count,
+    ctx,
+    font,
+    avgCharWidth,
+    estimateLines: getTextLineEstimator(avgCharWidth),
+    wrappedCount: count as LineCounter,
+  };
+}
+
+/**
+ * @internal returns a line counter which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
+ */
+export function getTextLineEstimator(avgCharWidth: number): LineCounter {
+  return (value, width) => {
+    if (!value) {
+      return 1;
+    }
+
+    // we don't have string breaking enabled in the table,
+    // so an unbroken string is by definition a single line.
+    const strValue = String(value);
+    if (!spaceRegex.test(strValue)) {
+      return 1;
+    }
+
+    const charsPerLine = width / avgCharWidth;
+    return strValue.length / charsPerLine;
+  };
+}
+
+/**
+ * @internal return a text line counter for every field which has wrapHeaderText enabled.
+ */
+export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
+  const wrappedColIdxs = fields.reduce((acc, field, idx) => {
+    if (field.config?.custom?.wrapHeaderText) {
+      acc.push(idx);
+    }
+    return acc;
+  }, [] as number[]);
+
+  if (wrappedColIdxs.length === 0) {
+    return undefined;
+  }
+
+  // don't bother with estimating the line counts for the headers, because it's punishing
+  // when we get it wrong and there won't be that many compared to how many rows a table might contain.
+  return [{ counter: typographyCtx.wrappedCount, fieldIdxs: wrappedColIdxs }];
+}
+
 const spaceRegex = /[\s-]/;
 
-export interface GetMaxWrapCellOptions {
-  colWidths: number[];
-  avgCharWidth: number;
-  wrappedColIdxs: boolean[];
+/**
+ * @internal return a text line counter for every field which has wrapHeaderText enabled. we do this once as we're rendering
+ * the table, and then getRowHeight uses the output of this to caluclate the height of each row.
+ */
+export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
+  const result: Record<string, LineCounterEntry> = {};
+  let wrappedFields = 0;
+
+  for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
+    const field = fields[fieldIdx];
+    if (shouldTextWrap(field)) {
+      wrappedFields++;
+      // TODO: Pills, DataLinks, and JSON will have custom line counters here.
+
+      // for string fields, we really want to find the longest field ahead of time to reduce the number of calls to `count`.
+      // calling `count` is going to get a perfectly accurate line count, but it is expensive, so we'd rather estimate the line
+      // count and call the counter only for the field which will take up the most space based on its
+      if (field.type === FieldType.string) {
+        result.textCounter = result.textCounter ?? {
+          counter: typographyCtx.wrappedCount,
+          estimate: typographyCtx.estimateLines,
+          fieldIdxs: [],
+        };
+        result.textCounter.fieldIdxs.push(fieldIdx);
+      }
+    }
+  }
+
+  if (wrappedFields === 0) {
+    return undefined;
+  }
+
+  return Object.values(result);
 }
 
 /**
  * @internal
- * loop through the fields and their values, determine which cell is going to determine the
- * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
+ * loop through the fields and their values, determine which cell is going to determine the height of the row based
+ * on its content and width, and return the height in pixels of that row, with vertial padding applied.
  */
-export function getMaxWrapCell(
+export function getRowHeight(
   fields: Field[],
   rowIdx: number,
-  { colWidths, avgCharWidth, wrappedColIdxs }: GetMaxWrapCellOptions
-): {
-  text: string;
-  idx: number;
-  numLines: number;
-} {
+  columnWidths: number[],
+  defaultHeight: number,
+  lineCounters?: LineCounterEntry[],
+  lineHeight = TABLE.LINE_HEIGHT,
+  verticalPadding = 0
+): number {
+  if (!lineCounters?.length) {
+    return defaultHeight;
+  }
+
   let maxLines = 1;
-  let maxLinesIdx = -1;
-  let maxLinesText = '';
+  let maxValue = '';
+  let maxWidth = 0;
+  let preciseCounter: LineCounter | undefined;
 
-  // TODO: consider changing how we store this, using a record by column key instead of an array
-  for (let i = 0; i < colWidths.length; i++) {
-    if (wrappedColIdxs[i]) {
-      const field = fields[i];
+  for (const { estimate, counter, fieldIdxs } of lineCounters) {
+    // for some of the line counters, getting the precise count of the lines is expensive. those line counters
+    // set both an "estimate" and a "counter" function. if the cell we find to be the max was estimated, we will
+    // get the "true" value right before calculating the row height by hanging onto a reference to the counter fn.
+    const count = estimate ?? counter;
+    const isEstimating = estimate !== undefined;
+
+    for (const fieldIdx of fieldIdxs) {
+      const field = fields[fieldIdx];
       // special case: for the header, provide `-1` as the row index.
-      const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
-
-      if (cellTextRaw != null) {
-        const cellText = String(cellTextRaw);
-
-        if (spaceRegex.test(cellText)) {
-          const charsPerLine = colWidths[i] / avgCharWidth;
-          const approxLines = cellText.length / charsPerLine;
-
-          if (approxLines > maxLines) {
-            maxLines = approxLines;
-            maxLinesIdx = i;
-            maxLinesText = cellText;
-          }
+      const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
+      if (cellValueRaw != null) {
+        const colWidth = columnWidths[fieldIdx];
+        const approxLines = count(cellValueRaw, colWidth);
+        if (approxLines > maxLines) {
+          maxLines = approxLines;
+          maxValue = cellValueRaw;
+          maxWidth = colWidth;
+          preciseCounter = isEstimating ? counter : undefined;
         }
       }
     }
   }
 
-  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
+  if (maxLines === 1) {
+    return defaultHeight;
+  }
+
+  // if we finished this row height loop with an estimate, we need to call
+  // the `preciseCounter` method to get the exact line count.
+  if (preciseCounter !== undefined) {
+    maxLines = preciseCounter(maxValue, maxWidth);
+  }
+
+  // we want a round number of lines for rendering
+  const totalHeight = Math.ceil(maxLines) * lineHeight + verticalPadding;
+  return Math.max(totalHeight, defaultHeight);
 }
 
 /**
