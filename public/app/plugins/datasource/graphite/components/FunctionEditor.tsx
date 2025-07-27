@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -28,6 +28,14 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const FunctionEditor = ({ onMoveLeft, onMoveRight, func, ...props }: FunctionEditorProps) => {
   const styles = useStyles2(getStyles);
+  const modifiedStyle = {
+    label: css({
+      overflowWrap: 'anywhere',
+      height: '100%',
+      display: 'flex%',
+    }),
+  };
+  const className = cx(styles.label, modifiedStyle.label);
 
   const renderContent: PopoverContent = ({ updatePopperPosition }) => (
     <FunctionEditorControls
@@ -52,7 +60,7 @@ const FunctionEditor = ({ onMoveLeft, onMoveRight, func, ...props }: FunctionEdi
         </Tooltip>
       )}
       <Tooltip content={renderContent} placement="top" interactive>
-        <span className={styles.label}>{func.def.name}</span>
+        <span className={className}>{func.def.name}</span>
       </Tooltip>
     </>
   );
