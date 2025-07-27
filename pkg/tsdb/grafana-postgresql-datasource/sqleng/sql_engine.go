@@ -37,7 +37,16 @@ type SqlQueryResultTransformer interface {
 	GetConverterList() []sqlutil.StringConverter
 }
 
+type ConnectionType string
+
+const (
+	ConnectionTypeDefault          ConnectionType = "default"
+	ConnectionTypeConnectionString ConnectionType = "connectionString"
+)
+
 type JsonData struct {
+	ConnectionType ConnectionType `json:"connectionType"`
+
 	MaxOpenConns            int    `json:"maxOpenConns"`
 	MaxIdleConns            int    `json:"maxIdleConns"`
 	ConnMaxLifetime         int    `json:"connMaxLifetime"`
