@@ -84,4 +84,13 @@ export class ScopesApiClient {
       return [];
     }
   };
+
+  public fetchScopeNode = async (scopeNodeId: string): Promise<ScopeNode | undefined> => {
+    try {
+      const response = await getBackendSrv().get<ScopeNode>(apiUrl + `/scopenodes/${scopeNodeId}`);
+      return response;
+    } catch (err) {
+      return undefined;
+    }
+  };
 }
