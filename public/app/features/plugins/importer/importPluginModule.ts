@@ -67,17 +67,31 @@ export async function importPluginModule({
   }
 
   return SystemJS.import(modulePath).catch((e) => {
-    let error = new Error('Could not load plugin: ' + e);
-    console.error(error);
-    pluginsLogger.logError(error, {
-      path,
-      pluginId,
-      pluginVersion: version ?? '',
-      expectedHash: moduleHash ?? '',
-      loadingStrategy: loadingStrategy.toString(),
-      sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-      newPluginLoadingEnabled: String(Boolean(config.featureToggles.enablePluginImporter)),
-    });
-    throw error;
+    // If rendererDisableAppPluginsPreload is enabled log a specific error message
+    if (config.featureToggles.rendererDisableAppPluginsPreload) {
+      let error = new Error('Plugin loading skipped due to rendererDisableAppPluginsPreload: ' + e);
+      console.error(error);
+      pluginsLogger.logError(error, {
+        path,
+        pluginId,
+        pluginVersion: version ?? '',
+        loadingStrategy: loadingStrategy.toString(),
+      });
+
+      throw error;
+    } else {
+      let error = new Error('Could not load plugin: ' + e);
+      console.error(error);
+      pluginsLogger.logError(error, {
+        path,
+        pluginId,
+        pluginVersion: version ?? '',
+        expectedHash: moduleHash ?? '',
+        loadingStrategy: loadingStrategy.toString(),
+        sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
+        newPluginLoadingEnabled: String(Boolean(config.featureToggles.enablePluginImporter)),
+      });
+      throw error;
+    }
   });
 }
