@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
-import { CoreApp, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { CoreApp, QueryEditorProps, SelectableValue, TimeRange } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -54,6 +54,34 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
         queryType: DEFAULT_QUERY_TYPE,
       });
     }
+
+    // indentify the service map can use native histograms
+    const timeRange = this.props.range;
+    const nativeHistograms = await this.checkNativeHistograms(timeRange);
+
+    this.props.onChange({
+      ...this.props.query,
+      serviceMapUseNativeHistograms: nativeHistograms,
+    });
+    // Migrate to native histograms
+    // this will ensure that on navigating to the query option service map from a url,
+    // the service map will be rendered with the native histograms when
+    // querytype is serviceMap
+    // the serviceMapUseNativeHistograms is undefined
+    // and nativeHistograms is true
+    if (
+      this.props.query.queryType === 'serviceMap' &&
+      this.props.query.serviceMapUseNativeHistograms === undefined &&
+      nativeHistograms
+    ) {
+      this.props.onRunQuery();
+    }
+  }
+
+  async checkNativeHistograms(timeRange?: TimeRange): Promise<boolean> {
+    const { datasource } = this.props;
+    const nativeHistograms = await datasource.getNativeHistograms(timeRange);
+    return nativeHistograms;
   }
 
   onClearResults = () => {
