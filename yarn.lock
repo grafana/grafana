@@ -2666,6 +2666,7 @@ __metadata:
     typescript: "npm:5.8.3"
     webpack: "npm:5.97.1"
   peerDependencies:
+    "@grafana/assistant": ^0.0.7
     "@grafana/runtime": "*"
   languageName: unknown
   linkType: soft
@@ -3306,6 +3307,7 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.8.3"
   peerDependencies:
+    "@grafana/assistant": ^0.0.7
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown

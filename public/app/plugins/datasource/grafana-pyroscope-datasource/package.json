@@ -39,6 +39,7 @@
     "webpack": "5.97.1"
   },
   "peerDependencies": {
+    "@grafana/assistant": "^0.0.7",
     "@grafana/runtime": "*"
   },
   "scripts": {
