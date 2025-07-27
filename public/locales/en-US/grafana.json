@@ -8588,6 +8588,19 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "cell-type": {
+        "actions": "Actions",
+        "auto": "Auto",
+        "color-background": "Colored background",
+        "color-text": "Colored text",
+        "data-links": "Data links",
+        "gauge": "Gauge",
+        "image": "Image",
+        "json": "JSON View",
+        "markdown": "Markdown",
+        "pill": "Pill",
+        "sparkline": "Sparkline"
+      },
       "copy": "Copy to Clipboard",
       "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
@@ -12510,6 +12523,7 @@
     "category-table": "Table",
     "category-table-footer": "Table footer",
     "cell-height-options": {
+      "label-auto": "Auto",
       "label-large": "Large",
       "label-medium": "Medium",
       "label-small": "Small"

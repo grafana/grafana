@@ -18,37 +18,16 @@ import {
   FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
-  TableCellHeight,
 } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
-import { COLUMN, TABLE } from './constants';
+import { COLUMN } from './constants';
 import { CellColors, TableRow, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
-
-/**
- * @internal
- * Returns the default row height based on the theme and cell height setting.
- */
-export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCellHeight): number {
-  const bodyFontSize = theme.typography.fontSize;
-  const lineHeight = theme.typography.body.lineHeight;
-
-  switch (cellHeight) {
-    case TableCellHeight.Sm:
-      return 36;
-    case TableCellHeight.Md:
-      return 42;
-    case TableCellHeight.Lg:
-      return TABLE.MAX_CELL_HEIGHT;
-  }
-
-  return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
-}
 
 /**
  * @internal
@@ -136,7 +115,8 @@ export function shouldTextOverflow(field: Field): boolean {
     // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
     (field.type === FieldType.string &&
       cellOptions.type !== TableCellDisplayMode.Image &&
-      cellOptions.type !== TableCellDisplayMode.Pill) ||
+      cellOptions.type !== TableCellDisplayMode.Pill &&
+      cellOptions.type !== TableCellDisplayMode.Markdown) ||
     // regardless of the underlying cell type, data links cells have text overflow.
     cellOptions.type === TableCellDisplayMode.DataLinks;
 

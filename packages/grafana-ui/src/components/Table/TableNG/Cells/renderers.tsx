@@ -11,6 +11,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
+import { MarkdownCell } from './MarkdownCell';
 import { PillCell } from './PillCell';
 import { SparklineCell } from './SparklineCell';
 
@@ -78,6 +79,10 @@ const CUSTOM_RENDERER: TableCellRenderer = (props) => {
   return <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />;
 };
 
+const MARKDOWN_RENDERER: TableCellRenderer = (props) => (
+  <MarkdownCell field={props.field} rowIdx={props.rowIdx} disableSanitizeHtml={props.disableSanitizeHtml} />
+);
+
 const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.Sparkline]: SPARKLINE_RENDERER,
   [TableCellDisplayMode.Gauge]: GAUGE_RENDERER,
@@ -89,6 +94,7 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.ColorText]: AUTO_RENDERER,
   [TableCellDisplayMode.ColorBackground]: AUTO_RENDERER,
   [TableCellDisplayMode.Auto]: AUTO_RENDERER,
+  [TableCellDisplayMode.Markdown]: MARKDOWN_RENDERER,
   [TableCellDisplayMode.Pill]: PILL_RENDERER,
 };
 

@@ -128,7 +128,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         category,
         defaultValue: defaultOptions.showHeader,
       })
-      .addRadio({
+      .addSelect({
         path: 'cellHeight',
         name: t('table-new.name-cell-height', 'Cell height'),
         category,
@@ -138,6 +138,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             { value: TableCellHeight.Sm, label: t('table-new.cell-height-options.label-small', 'Small') },
             { value: TableCellHeight.Md, label: t('table-new.cell-height-options.label-medium', 'Medium') },
             { value: TableCellHeight.Lg, label: t('table-new.cell-height-options.label-large', 'Large') },
+            { value: TableCellHeight.Auto, label: t('table-new.cell-height-options.label-auto', 'Auto') },
           ],
         },
       })

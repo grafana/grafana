@@ -136,7 +136,7 @@ export function useSortedRows(
 export interface PaginatedRowsOptions {
   height: number;
   width: number;
-  rowHeight: number | ((row: TableRow) => number);
+  rowHeight: number | string | ((row: TableRow) => number);
   headerHeight: number;
   footerHeight: number;
   paginationHeight?: number;
@@ -173,6 +173,11 @@ export function usePaginatedRows(
 
     if (typeof rowHeight === 'number') {
       return rowHeight;
+    }
+
+    // when using auto-sized rows, we're just going to have to pick a number.
+    if (typeof rowHeight === 'string') {
+      return TABLE.MAX_CELL_HEIGHT;
     }
 
     // we'll just measure 100 rows to estimate
@@ -364,7 +369,7 @@ interface UseHeaderHeightOptions {
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
-  defaultHeight: number;
+  defaultHeight: number | string;
   sortColumns: SortColumn[];
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
@@ -429,12 +434,14 @@ export function useHeaderHeight({
     if (!enabled) {
       return 0;
     }
+
+    const defaultNumericHeight = typeof defaultHeight === 'number' ? defaultHeight : TABLE.MAX_CELL_HEIGHT;
     if (!hasWrappedColHeaders) {
-      return defaultHeight - TABLE.CELL_PADDING;
+      return defaultNumericHeight - TABLE.CELL_PADDING;
     }
 
     const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
+    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultNumericHeight) - TABLE.CELL_PADDING;
   }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
 
   return headerHeight;
@@ -444,7 +451,7 @@ interface UseRowHeightOptions {
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
-  defaultHeight: number;
+  defaultHeight: number | string;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
@@ -456,7 +463,7 @@ export function useRowHeight({
   defaultHeight,
   expandedRows,
   typographyCtx: { calcRowHeight, avgCharWidth },
-}: UseRowHeightOptions): number | ((row: TableRow) => number) {
+}: UseRowHeightOptions): number | string | ((row: TableRow) => number) {
   const [wrappedColIdxs, hasWrappedCols] = useMemo(() => {
     let hasWrappedCols = false;
     return [
@@ -494,7 +501,7 @@ export function useRowHeight({
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
-    if (!hasNestedFrames && !hasWrappedCols) {
+    if ((!hasNestedFrames && !hasWrappedCols) || typeof defaultHeight === 'string') {
       return defaultHeight;
     }
 
