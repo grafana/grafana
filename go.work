@@ -1,10 +1,17 @@
-go 1.24.4
+go 1.24.5
 
 // The `skip:golangci-lint` comment tag is used to exclude the package from the `golangci-lint` GitHub Action.
 // The module at the root of the repo (`.`) is excluded because ./pkg/... is included manually in the `golangci-lint` configuration.
 
 use (
 	. // skip:golangci-lint
+	./.citools/bra
+	./.citools/cog
+	./.citools/cue
+	./.citools/golangci-lint
+	./.citools/jb
+	./.citools/lefthook
+	./.citools/swagger
 	./apps/advisor
 	./apps/alerting/notifications
 	./apps/investigations
