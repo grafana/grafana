@@ -1,7 +1,7 @@
 package notifier
 
 import (
-	alertingLogging "github.com/grafana/alerting/logging"
+	alertingLogging "github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )

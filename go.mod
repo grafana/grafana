@@ -69,7 +69,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.3 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250725130805-615c8286e14b // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250307175047-1d263576d356 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250721184729-1593a38e4933 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250314102521-a77865c746c0 // indirect; @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -534,7 +534,6 @@ require (
 	github.com/grafana/authlib/claims v0.0.0-20241202085737-df90af04f335
 	github.com/grafana/grafana/apps/investigation v0.0.0-20250217164911-78ef9fd9d9ab
 	github.com/jeremywohl/flatten v1.0.1
-	github.com/linkedin/goavro/v2 v2.14.0
 )
 
 require (
