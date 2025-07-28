@@ -472,14 +472,12 @@ You can style the selected connection using the following options:
 - **Direction** - Control the appearance of the arrow head. Choose your source from **Fixed** or **Field**. The default value is **Forward** regardless of the source type.
 
   If the direction source is **Fixed**, choose from:
-
   - **Forward** - The arrow head points in the direction in which the connection was drawn.
   - **Reverse** - The arrow head points in the opposite direction of which the connection was drawn.
   - **Both** - Adds arrow heads to both ends of the connection.
   - **None** - Removes the arrow head.
 
   If the direction source is **Field**, select a field that contains numeric values:
-
   - **Positive values** - Display forward arrows.
   - **Negative values** - Display reverse arrows.
   - **Zero** - Display no arrow heads.
