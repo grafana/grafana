@@ -12,9 +12,8 @@ use (
 	./.citools/jb
 	./.citools/lefthook
 	./.citools/swagger
-	./apps/advisor
 	./apps/alerting/notifications
-	./apps/investigations
+	./apps/investigation
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
