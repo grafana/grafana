@@ -93,7 +93,10 @@ func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute
+		return !opts.PushOnWrites &&
+			opts.Timeout == 10*time.Minute &&
+			opts.Mode == repository.StageModeCommitOnlyOnce &&
+			opts.CommitOnlyOnceMessage == "Delete from Grafana "+job.Name
 	}), mock.Anything).Return(errors.New("delete job submitted targeting repository that is not a ReaderWriter"))
 
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
@@ -145,7 +148,10 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute
+		return !opts.PushOnWrites &&
+			opts.Timeout == 10*time.Minute &&
+			opts.Mode == repository.StageModeCommitOnlyOnce &&
+			opts.CommitOnlyOnceMessage == "Delete from Grafana "+job.Name
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
 	})
