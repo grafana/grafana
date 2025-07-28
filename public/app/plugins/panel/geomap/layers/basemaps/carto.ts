@@ -51,10 +51,13 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
         style += '_nolabels';
       }
       const scale = window.devicePixelRatio > 1 ? '@2x' : '';
+      const noRepeat = options.noRepeat ?? false;
+
       return new TileLayer({
         source: new XYZ({
           attributions: `<a href="https://carto.com/attribution/">©CARTO</a> <a href="https://www.openstreetmap.org/copyright">©OpenStreetMap</a> contributors`,
           url: `https://{1-4}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}${scale}.png`,
+          wrapX: !noRepeat,
         }),
       });
     },

@@ -98,7 +98,7 @@ func V27(dashboard map[string]interface{}) error {
 // removeRepeatedPanels filters out panels with repeatPanelId or repeatByRow properties
 // and cleans up repeated panels in collapsed rows
 func removeRepeatedPanels(panels []interface{}) []interface{} {
-	newPanels := make([]interface{}, 0, len(panels))
+	newPanels := []interface{}{}
 
 	for _, panel := range panels {
 		p, ok := panel.(map[string]interface{})
@@ -137,29 +137,24 @@ func removeRepeatedPanels(panels []interface{}) []interface{} {
 
 // migrateConstantVariable converts constant variables to textbox variables with proper current/options structure
 func migrateConstantVariable(variable map[string]interface{}) {
-	// Only process constant variables
 	if variableType, ok := variable["type"].(string); !ok || variableType != "constant" {
 		return
 	}
 
-	// Get query value, default to empty string if field doesn't exist or is not a string
 	query := ""
 	if queryVal, ok := variable["query"].(string); ok {
 		query = queryVal
 	}
 	variable["query"] = query
 
-	// Create current option
 	current := map[string]interface{}{
 		"selected": true,
 		"text":     query,
 		"value":    query,
 	}
 
-	// Create options array
 	options := []interface{}{current}
 
-	// Update variable properties
 	variable["current"] = current
 	variable["options"] = options
 

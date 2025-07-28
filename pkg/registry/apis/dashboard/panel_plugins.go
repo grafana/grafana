@@ -32,15 +32,22 @@ func (p *PluginStorePanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
 }
 
 func (p *PluginStorePanelProvider) GetPanelPlugin(id string) schemaversion.PanelPluginInfo {
-	plugins := p.pluginStore.Plugins(context.Background(), plugins.TypePanel)
+	plugins := p.GetPanels()
+
+	panelPlugin := schemaversion.PanelPluginInfo{}
 
 	for _, plugin := range plugins {
 		if plugin.ID == id {
-			return schemaversion.PanelPluginInfo{
+			panelPlugin = schemaversion.PanelPluginInfo{
 				ID:      plugin.ID,
-				Version: plugin.Info.Version,
+				Version: plugin.Version,
 			}
 		}
 	}
-	return schemaversion.PanelPluginInfo{}
+
+	if panelPlugin.ID == "" {
+		return schemaversion.PanelPluginInfo{}
+	}
+
+	return panelPlugin
 }
