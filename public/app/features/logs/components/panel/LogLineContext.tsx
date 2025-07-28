@@ -17,6 +17,7 @@ import {
   LogRowModel,
   AbsoluteTimeRange,
   EventBusSrv,
+  store,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -73,6 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 interface LogLineContextProps {
   log: LogRowModel;
+  logOptionsStorageKey?: string;
   open: boolean;
   timeZone: TimeZone;
   onClose: () => void;
@@ -88,8 +90,6 @@ interface LogLineContextProps {
   displayedFields: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  wrapLogMessage: boolean;
-  showTime: boolean;
 }
 
 const PAGE_SIZE = 100;
@@ -97,6 +97,7 @@ const PAGE_SIZE = 100;
 export const LogLineContext = memo(
   ({
     log,
+    logOptionsStorageKey,
     open,
     logsSortOrder,
     timeZone,
@@ -107,8 +108,6 @@ export const LogLineContext = memo(
     displayedFields,
     onClickShowField,
     onClickHideField,
-    showTime,
-    wrapLogMessage,
   }: LogLineContextProps) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
@@ -271,11 +270,13 @@ export const LogLineContext = memo(
               onClickHideField={onClickHideField}
               onClickShowField={onClickShowField}
               showControls
-              showTime={showTime}
+              showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
               sortOrder={logsSortOrder}
               timeRange={timeRange}
               timeZone={timeZone}
-              wrapLogMessage={wrapLogMessage}
+              wrapLogMessage={
+                logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true
+              }
             />
           )}
         </div>

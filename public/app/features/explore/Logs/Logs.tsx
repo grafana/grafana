@@ -788,13 +788,12 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           getRowContext={(row, options) => getRowContext(row, contextRow, options)}
           getRowContextQuery={getRowContextQuery}
           getLogRowContextUi={getLogRowContextUi}
+          logOptionsStorageKey={SETTING_KEY_ROOT}
           logsSortOrder={logsSortOrder}
           timeZone={timeZone}
           displayedFields={displayedFields}
           onClickShowField={showField}
           onClickHideField={hideField}
-          showTime={showTime}
-          wrapLogMessage={wrapLogMessage}
         />
       )}
       <PanelChrome
