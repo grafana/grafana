@@ -28,7 +28,7 @@ export interface ImageGenerationResult {
  */
 export async function generateDashboardImage({
   dashboard,
-  scale = config.rendererDefaultImageScale || 1,
+  scale = config.rendererDefaultImageScale || 2,
 }: ImageGenerationOptions): Promise<ImageGenerationResult> {
   try {
     // Check if renderer plugin is available
