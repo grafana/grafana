@@ -107,6 +107,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	encryptedValueStorage, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
+	// Initialize global encrypted value storage with a fake db
+	globalEncryptedValueStorage, err := encryptionstorage.ProvideGlobalEncryptedValueStorage(database, tracer)
+	require.NoError(t, err)
+
 	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
@@ -125,26 +129,28 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
 
 	return Sut{
-		SecureValueService:         secureValueService,
-		SecureValueMetadataStorage: secureValueMetadataStorage,
-		DecryptStorage:             decryptStorage,
-		DecryptService:             decryptService,
-		EncryptedValueStorage:      encryptedValueStorage,
-		SQLKeeper:                  sqlKeeper,
-		Database:                   database,
-		AccessClient:               accessClient,
+		SecureValueService:          secureValueService,
+		SecureValueMetadataStorage:  secureValueMetadataStorage,
+		DecryptStorage:              decryptStorage,
+		DecryptService:              decryptService,
+		EncryptedValueStorage:       encryptedValueStorage,
+		GlobalEncryptedValueStorage: globalEncryptedValueStorage,
+		SQLKeeper:                   sqlKeeper,
+		Database:                    database,
+		AccessClient:                accessClient,
 	}
 }
 
 type Sut struct {
-	SecureValueService         contracts.SecureValueService
-	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
-	DecryptStorage             contracts.DecryptStorage
-	DecryptService             service.DecryptService
-	EncryptedValueStorage      contracts.EncryptedValueStorage
-	SQLKeeper                  *sqlkeeper.SQLKeeper
-	Database                   *database.Database
-	AccessClient               types.AccessClient
+	SecureValueService          contracts.SecureValueService
+	SecureValueMetadataStorage  contracts.SecureValueMetadataStorage
+	DecryptStorage              contracts.DecryptStorage
+	DecryptService              contracts.DecryptService
+	EncryptedValueStorage       contracts.EncryptedValueStorage
+	GlobalEncryptedValueStorage contracts.GlobalEncryptedValueStorage
+	SQLKeeper                   *sqlkeeper.SQLKeeper
+	Database                    *database.Database
+	AccessClient                types.AccessClient
 }
 
 type CreateSvConfig struct {

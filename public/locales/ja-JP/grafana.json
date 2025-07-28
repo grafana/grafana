@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "評価グループを編集"
     },
     "group-loader": {
-      "group-load-failed": "{{ namespaceName }}の{{ groupName }}グループからルールを読み込めませんでした"
+      "group-load-failed": "{{ namespaceName }}の{{ groupName }}グループからルールを読み込めませんでした",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "グループを削除中です"
@@ -2456,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "構成",
-      "draft-new-rule": "新しいルールの下書きを作成",
       "ds-error": {
         "title": "このデータソースのルールを読み込めません"
       },
@@ -2482,6 +2483,7 @@
       "new-alert-rule": "新しいアラートルール",
       "new-datasource-recording-rule": "新しいデータソース記録ルール",
       "new-grafana-recording-rule": "新しいGrafana記録ルール",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "もっと見る..."
       },
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "プレビューを更新",
+      "empty-state": "",
       "label-preview": "プレビュー",
       "refresh": "更新"
     },
@@ -3466,7 +3469,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "キャンセル",
       "cannot-move-folders": "フォルダは移動できません",
       "confirmation-text": "削除",
@@ -3498,6 +3500,23 @@
     },
     "browse-view": {
       "this-folder-is-empty": "このフォルダは空です"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "button-done": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "progress-title": "",
+      "success-message": ""
+    },
+    "bulk-move-resources-form": {
+      "deleting": "",
+      "progress": ""
     },
     "counts": {
       "alertRule_other": "{{count}}件のアラートルール",
@@ -4528,6 +4547,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}}を追加",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "{{typeName}}を移動",
       "panel-background": "パネルの背景を変更",
       "panel-description": "パネルの説明を変更",
@@ -4542,6 +4565,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "ダッシュボード",
+        "element": "",
         "local-variable": "ローカル変数",
         "multiple-elements": "複数の要素",
         "multiple-elements-delete-text": "これらの要素を削除してもよろしいですか？",
@@ -5749,7 +5773,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7119,6 +7142,7 @@
           "start-time": "開始時間:"
         }
       },
+      "share-span": "",
       "warnings": "警告"
     },
     "span-filters": {
@@ -7698,6 +7722,409 @@
       }
     }
   },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "",
+            "name-g-unit": "",
+            "name-meters-sec": ""
+          },
+          "name": ""
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "",
+            "name-arc-seconds": "",
+            "name-degrees": "",
+            "name-gradian": "",
+            "name-radians": ""
+          },
+          "name": ""
+        },
+        "area": {
+          "formats": {
+            "name-acres": "",
+            "name-hectares": "",
+            "name-square-feet": "",
+            "name-square-meters": "",
+            "name-square-miles": ""
+          },
+          "name": ""
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "",
+            "name-true-false": "",
+            "name-yes-no": ""
+          },
+          "name": ""
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "",
+            "name-flops": "",
+            "name-gflops": "",
+            "name-mflops": "",
+            "name-pflops": "",
+            "name-tflops": "",
+            "name-yflops": "",
+            "name-zflops": ""
+          },
+          "name": ""
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "",
+            "name-g-nm3": "",
+            "name-mg-dl": "",
+            "name-mg-m3": "",
+            "name-mg-nm3": "",
+            "name-mmol-l": "",
+            "name-ng-m3": "",
+            "name-ng-nm3": "",
+            "name-ppb": "",
+            "name-ppm": "",
+            "name-ug-m3": "",
+            "name-ug-nm3": ""
+          },
+          "name": ""
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "",
+            "name-brl": "",
+            "name-btc": "",
+            "name-chf": "",
+            "name-czk": "",
+            "name-dkk": "",
+            "name-eur": "",
+            "name-gbp": "",
+            "name-idr": "",
+            "name-ils": "",
+            "name-inr": "",
+            "name-isk": "",
+            "name-jpy": "",
+            "name-krw": "",
+            "name-mbtc": "",
+            "name-myr": "",
+            "name-nok": "",
+            "name-php": "",
+            "name-pln": "",
+            "name-pyg": "",
+            "name-rub": "",
+            "name-sek": "",
+            "name-try": "",
+            "name-uah": "",
+            "name-ubtc": "",
+            "name-usd": "",
+            "name-uyu": "",
+            "name-vnd": "",
+            "name-xpf": "",
+            "name-zar": ""
+          },
+          "name": ""
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "",
+            "name-bits-si": "",
+            "name-bytes-iec": "",
+            "name-bytes-si": "",
+            "name-gibibytes": "",
+            "name-gigabytes": "",
+            "name-kibibytes": "",
+            "name-kilobytes": "",
+            "name-mebibytes": "",
+            "name-megabytes": "",
+            "name-pebibytes": "",
+            "name-petabytes": "",
+            "name-tebibytes": "",
+            "name-terabytes": ""
+          },
+          "name": ""
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "",
+            "name-bits-sec-si": "",
+            "name-bytes-sec-iec": "",
+            "name-bytes-sec-si": "",
+            "name-gibibits-sec": "",
+            "name-gibibytes-sec": "",
+            "name-gigabits-sec": "",
+            "name-gigabytes-sec": "",
+            "name-kibibits-sec": "",
+            "name-kibibytes-sec": "",
+            "name-kilobits-sec": "",
+            "name-kilobytes-sec": "",
+            "name-mebibits-sec": "",
+            "name-mebibytes-sec": "",
+            "name-megabits-sec": "",
+            "name-megabytes-sec": "",
+            "name-packets-sec": "",
+            "name-pebibits-sec": "",
+            "name-pebibytes-sec": "",
+            "name-petabits-sec": "",
+            "name-petabytes-sec": "",
+            "name-tebibits-sec": "",
+            "name-tebibytes-sec": "",
+            "name-terabits-sec": "",
+            "name-terabytes-sec": ""
+          },
+          "name": ""
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "",
+            "name-datetime-iso": "",
+            "name-datetime-iso-no-date": "",
+            "name-datetime-local": "",
+            "name-datetime-local-no-date": "",
+            "name-datetime-us": "",
+            "name-datetime-us-no-date": "",
+            "name-from-now": ""
+          },
+          "name": ""
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "",
+            "name-ampere-hour": "",
+            "name-decibel-milliwatt": "",
+            "name-electron-volt": "",
+            "name-farad": "",
+            "name-femtofarad": "",
+            "name-gigawatt": "",
+            "name-henry": "",
+            "name-joule": "",
+            "name-kiloampere": "",
+            "name-kiloampere-hour": "",
+            "name-kiloohm": "",
+            "name-kilovolt": "",
+            "name-kilovolt-ampere": "",
+            "name-kilovolt-ampere-reactive": "",
+            "name-kilowatt": "",
+            "name-kilowatt-hour": "",
+            "name-kilowatt-min": "",
+            "name-lumens": "",
+            "name-megaohm": "",
+            "name-megawatt": "",
+            "name-megawatt-hour": "",
+            "name-microfarad": "",
+            "name-microhenry": "",
+            "name-milliampere": "",
+            "name-milliampere-hour": "",
+            "name-millihenry": "",
+            "name-milliohm": "",
+            "name-millivolt": "",
+            "name-milliwatt": "",
+            "name-nanofarad": "",
+            "name-ohm": "",
+            "name-picofarad": "",
+            "name-volt": "",
+            "name-volt-ampere": "",
+            "name-volt-ampere-reactive": "",
+            "name-watt": "",
+            "name-watt-hour": "",
+            "name-watt-hour-per-kg": "",
+            "name-watt-square-meter": ""
+          },
+          "name": ""
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "",
+            "name-cubic-feet-sec": "",
+            "name-cubic-meters-sec": "",
+            "name-gallons-min": "",
+            "name-litre-hour": "",
+            "name-litre-min": "",
+            "name-lux": "",
+            "name-millilitre-min": ""
+          },
+          "name": ""
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "",
+            "name-kilonewtons": "",
+            "name-newton-meters": "",
+            "name-newtons": ""
+          },
+          "name": ""
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "",
+            "name-gigahashes-sec": "",
+            "name-hashes-sec": "",
+            "name-kilohashes-sec": "",
+            "name-megahashes-sec": "",
+            "name-petahashes-sec": "",
+            "name-terahashes-sec": ""
+          },
+          "name": ""
+        },
+        "length": {
+          "formats": {
+            "name-feet": "",
+            "name-inch": "",
+            "name-kilometer": "",
+            "name-meter": "",
+            "name-mile": "",
+            "name-millimeter": ""
+          },
+          "name": ""
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "",
+            "name-kilogram": "",
+            "name-metric-ton": "",
+            "name-milligram": "",
+            "name-pound": ""
+          },
+          "name": ""
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "",
+            "name-decibel": "",
+            "name-hexadecimal": "",
+            "name-hexadecimal-0x": "",
+            "name-humidity": "",
+            "name-locale": "",
+            "name-number": "",
+            "name-percent-1": "",
+            "name-percent-100": "",
+            "name-pixels": "",
+            "name-scientific": "",
+            "name-short": "",
+            "name-si-short": "",
+            "name-string": ""
+          },
+          "name": ""
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "",
+            "name-hectopascals": "",
+            "name-inches-mercury": "",
+            "name-kilobars": "",
+            "name-kilopascals": "",
+            "name-millibars": "",
+            "name-pascals": "",
+            "name-psi": ""
+          },
+          "name": ""
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "",
+            "name-curie": "",
+            "name-exposure": "",
+            "name-gray": "",
+            "name-microsievert": "",
+            "name-microsievert-hour": "",
+            "name-millisievert": "",
+            "name-millisievert-hour": "",
+            "name-rad": "",
+            "name-rem": "",
+            "name-roentgen": "",
+            "name-sievert": "",
+            "name-sievert-hour": ""
+          },
+          "name": ""
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "",
+            "name-gigahertz": "",
+            "name-hertz": "",
+            "name-kilohertz": "",
+            "name-megahertz": "",
+            "name-radians-sec": "",
+            "name-rpm": ""
+          },
+          "name": ""
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "",
+            "name-fahrenheit": "",
+            "name-kelvin": ""
+          },
+          "name": ""
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "",
+            "name-counts-sec": "",
+            "name-events-min": "",
+            "name-events-sec": "",
+            "name-io-ops-sec": "",
+            "name-messages-min": "",
+            "name-messages-sec": "",
+            "name-ops-min": "",
+            "name-ops-sec": "",
+            "name-reads-min": "",
+            "name-reads-sec": "",
+            "name-records-min": "",
+            "name-records-sec": "",
+            "name-requests-min": "",
+            "name-requests-sec": "",
+            "name-rows-min": "",
+            "name-rows-sec": "",
+            "name-writes-min": "",
+            "name-writes-sec": ""
+          },
+          "name": ""
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "",
+            "name-clock-s": "",
+            "name-days": "",
+            "name-duration-dhms": "",
+            "name-duration-hms": "",
+            "name-duration-ms": "",
+            "name-duration-s": "",
+            "name-hertz": "",
+            "name-hours": "",
+            "name-microseconds": "",
+            "name-milliseconds": "",
+            "name-minutes": "",
+            "name-nanoseconds": "",
+            "name-seconds": "",
+            "name-timeticks": ""
+          },
+          "name": ""
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "",
+            "name-knot": "",
+            "name-meters-second": "",
+            "name-miles-hour": ""
+          },
+          "name": ""
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "",
+            "name-cubic-meter": "",
+            "name-gallons": "",
+            "name-litre": "",
+            "name-millilitre": "",
+            "name-normal-cubic-meter": ""
+          },
+          "name": ""
+        }
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -8156,7 +8583,10 @@
         "no-data": ""
       },
       "no-values-label": "値がありません",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "タグ"
@@ -8881,8 +9311,11 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "表示するフィールドがありません。",
+      "open-assistant": "",
       "pin-line": "ログをピン留め",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "表示する結果がありません。"
       },
@@ -8897,6 +9330,9 @@
       "copy-log": "ログ行をコピー",
       "hide-details": "ログの詳細を表示",
       "icon-label": "ログメニュー",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "ログをピン留めする",
       "show-context": "コンテキストを表示",
       "show-details": "ログの詳細を非表示",
@@ -10487,16 +10923,38 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
       "message": "この機能は現在開発中です。最高の体験と最新の改善を利用するには、Grafanaの<2>ナイトリービルド</2>の使用をお勧めします。"
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "このリポジトリ接続にわかりやすい名前を追加します",
@@ -10507,7 +10965,9 @@
       "label-display-name": "表示名",
       "placeholder-my-repository-connection": "自分のリポジトリ接続",
       "text-loading-resource-information": "リソース情報読み込み中...",
-      "files-count_other": "{{count}}個のファイル"
+      "dashboards-count_other": "",
+      "files-count_other": "{{count}}個のファイル",
+      "folders-count_other": ""
     },
     "check-repository": {
       "check": "確認"
@@ -10518,36 +10978,20 @@
       "button-save": "保存",
       "button-saving": "保存中…",
       "description-enabled": "自動取得を有効にすると、対象を変更できなくなります。",
-      "description-path": "Gitリポジトリ内のサブディレクトリへのパス",
       "description-read-only": "Grafanaではリソースを変更できません。",
-      "description-repository-url": "GitHubリポジトリURLを入力してください",
       "description-title": "わかりやすい設定名",
       "error-required": "このフィールドは必須です。",
       "error-save-repository": "リポジトリ設定の保存に失敗しました",
-      "error-valid-github-url": "有効なGitHubリポジトリURLを入力してください",
       "label-automatic-pulling": "自動取得",
-      "label-branch": "ブランチ",
       "label-enabled": "有効化",
-      "label-github-token": "GitHubトークン",
       "label-interval-seconds": "間隔（秒）",
-      "label-local-path": "ローカルパス",
-      "label-path": "パス",
-      "label-pr-workflow": "保存時にプルリクエストオプションを有効にする",
       "label-repository-type": "リポジトリタイプ",
-      "label-repository-url": "リポジトリURL",
       "label-target": "ターゲット",
       "label-title": "タイトル",
       "option-entire-instance": "インスタンス全体",
-      "option-github": "GitHub",
-      "option-local": "ローカル",
       "option-managed-folder": "管理フォルダ",
-      "placeholder-branch": "メイン",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "私の設定",
-      "placeholder-select-repository-type": "リポジトリタイプを選択"
+      "placeholder-my-config": "私の設定"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "変更がコミットされたらすぐにGrafanaでリアルタイムに更新を受け取れるように、<0>Webhookを設定</0>します。変更が公開される前に、プルリクエストを使用して変更を確認・承認します。",
@@ -10561,26 +11005,7 @@
     },
     "connect-repository-button": {
       "configure": "構成",
-      "configure-file": "ファイルのプロビジョニングを設定",
-      "configure-git-sync": "Git Syncを設定",
       "repository-limit-info-alert": "リポジトリの上限に達しました（{{count}}）"
-    },
-    "connect-step": {
-      "description-branch": "GitHubリポジトリで使用するブランチ",
-      "description-github-path": "これはダッシュボードが保存・プロビジョニングされるGitHubリポジトリ内のサブディレクトリへのパスです",
-      "description-paste-your-git-hub-personal-access-token": "GitHubの個人アクセストークンを貼り付けてください",
-      "description-repository-url": "GitHubリポジトリのURLを貼り付けてください",
-      "error-field-required": "このフィールドは必須です。",
-      "error-invalid-github-url": "有効なGitHubリポジトリURLを入力してください",
-      "label-access-token": "GitHubアクセストークン",
-      "label-branch": "ブランチ名",
-      "label-local-path": "ローカルパス",
-      "label-path": "リポジトリ内のサブディレクトリへのパス",
-      "label-repository-url": "GithubのリポジトリURL",
-      "placeholder-branch": "メイン",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "削除",
@@ -10613,17 +11038,17 @@
       "title-instant-updates-requests-webhooks": "Webhookによるリアルタイム更新とプルリクエスト。",
       "title-visual-previews-in-pull-requests": "画像レンダリングによるプルリクエストの視覚的プレビュー"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "ジョブ仕様",
-      "summary": "概要",
-      "title-error": "エラー"
+      "summary": "概要"
     },
     "features-list": {
       "actions": {
         "set-up-required-feature-toggles": "必要な機能切り替えを設定"
       },
-      "manage-dashboards-provision-updates-automatically": "GitHubでコードとしてダッシュボードを管理し、更新を自動的にプロビジョニング",
-      "manage-your-dashboards-with-remote-provisioning": "GitSyncの利用を開始",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "バージョン管理されたストレージにダッシュボードを保存して、整理と履歴追跡を改善"
     },
     "file-history-page": {
@@ -10644,18 +11069,16 @@
     },
     "finish-step": {
       "description-enable-previews": "プルリクエストによるダッシュボードの変更の画像プレビューを追加します。Grafanaダッシュボードの画像はGitリポジトリで共有され、リポジトリにアクセスできる全ユーザーが閲覧できます。",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "画像レンダリングが必要です。<2>画像レンダリングを設定</2>",
-      "description-often-shall-instance-updates-git-hub": "インスタンスはどのくらいの頻度でGitHubから更新を取得しますか？",
-      "description-pr-enable-description": "ユーザーが変更保存時にプルリクエストを開くかどうかを選択できるようにします。リポジトリがメインブランチへの直接変更を許可していない場合でも、プルリクエストが必要になる可能性があります。",
+      "description-preview-requirements": "",
       "description-read-only": "Grafanaではリソースを変更できません。",
-      "description-webhooks-enable": "ユーザーが変更保存時にプルリクエストを開くかどうかを選択できるようにします。リポジトリがメインブランチへの直接変更を許可していない場合でも、プルリクエストが必要になる可能性があります。",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "プルリクエストでダッシュボードのプレビューを有効にする",
-      "label-pr-workflow": "保存時にプルリクエストオプションを有効にする",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "読み出しのみ",
-      "label-update-instance-interval-seconds": "インスタンス間隔の更新（秒）",
-      "placeholder": "60",
-      "text-setup-later": "こちらは後からいつでも設定できます",
-      "title-enhance-github": "GitHub体験を向上させる"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "クエリに一致する結果なし",
@@ -10686,6 +11109,57 @@
       "header": "プロビジョニング",
       "subtitle-provisioning-feature": "プロビジョニング接続を表示・管理"
     },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
     "history-view": {
       "not-found": "見つかりません"
     },
@@ -10712,9 +11186,17 @@
       "starting": "開始中...",
       "status": {
         "title-error-running-job": "実行エラー",
-        "title-job-completed-successfully": "ジョブが正常に完了しました"
+        "title-warning-running-job": ""
       },
-      "summary": "概要"
+      "summary": "概要",
+      "title": {
+        "error-fetching-active-job": ""
+      }
+    },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
     },
     "mode-options": {
       "folder": {
@@ -10740,7 +11222,7 @@
     },
     "repository-actions": {
       "settings": "設定",
-      "source-code": "ソースコード"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10805,6 +11287,24 @@
       "title-legacy-storage": "レガシーストレージ",
       "title-queued-for-deletion": "削除待ちリストに追加されました"
     },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
+    },
     "resource-view": {
       "base": "ベース",
       "dashboard-preview": "ダッシュボードプレビュー",
@@ -10834,6 +11334,11 @@
       "label-current-step": "現在のステップ",
       "label-pending-step": "保留中のステップ"
     },
+    "sync-job": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": ""
+    },
     "sync-repository": {
       "body-edit-configuration": "設定を編集",
       "button-edit": "編集",
@@ -10844,9 +11349,6 @@
       "tooltip-unhealthy-repository": "問題のあるリポジトリをプルできません"
     },
     "synchronize-step": {
-      "error-no-job-id": "ジョブを開始できませんでした",
-      "error-no-repository-name": "リポジトリ名が指定されていません",
-      "error-starting-job": "ジョブ開始時のエラー",
       "synchronization-description": "各履歴値のコミットを含める",
       "synchronization-options": "同期オプション"
     },
@@ -10855,6 +11357,7 @@
       "go-to": "進む",
       "make-sure": "これらの権限を必ず含めてください"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "このプロセス中はリソースの作成、編集、削除を行えません。最後のステップになると、リソースが消えます。",
       "alert-point-2": "プロビジョニングが完了すると、リソースが再表示され、外部ストレージを通じて管理されます。",

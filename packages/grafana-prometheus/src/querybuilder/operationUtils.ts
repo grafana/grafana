@@ -3,6 +3,7 @@ import { capitalize } from 'lodash';
 import pluralize from 'pluralize';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import {
   QueryBuilderLabelFilter,
@@ -265,11 +266,23 @@ export function getAggregationExplainer(aggregationName: string, mode: 'by' | 'w
 
     switch (mode) {
       case 'by':
-        return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
+        return t(
+          'grafana-prometheus.querybuilder.operation-utils.getAggregationExplainer.label-by',
+          'Calculates {{aggregationName}} over dimensions while preserving {{labelWord}} {{labels}}.',
+          { aggregationName, labelWord, labels }
+        );
       case 'without':
-        return `Calculates ${aggregationName} over the dimensions ${labels}. All other labels are preserved.`;
+        return t(
+          'grafana-prometheus.querybuilder.operation-utils.getAggregationExplainer.label-without',
+          'Calculates {{aggregationName}} over the dimensions {{labels}}. All other labels are preserved.',
+          { aggregationName, labels }
+        );
       default:
-        return `Calculates ${aggregationName} over the dimensions.`;
+        return t(
+          'grafana-prometheus.querybuilder.operation-utils.getAggregationExplainer.label-default',
+          'Calculates {{aggregationName}} over the dimensions.',
+          { aggregationName }
+        );
     }
   };
 }

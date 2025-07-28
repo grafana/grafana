@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
 func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
@@ -170,6 +171,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 	}
 	// Delete the retry annotation to mark the check as processed
 	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
+
 	return checks.SetAnnotations(ctx, client, obj, annotations)
 }
 
@@ -197,7 +199,10 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 						}
 					}()
 					logger := log.With("step", step.ID())
-					stepErr, err = step.Run(ctx, logger, spec, item)
+					// Create a copy of the context with a cloned HTTP request to prevent
+					// concurrent modifications to the same header map
+					safeCtx := contexthandler.CopyWithReqContext(ctx)
+					stepErr, err = step.Run(safeCtx, logger, spec, item)
 				}()
 				mu.Lock()
 				defer mu.Unlock()

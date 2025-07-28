@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -129,11 +128,6 @@ func (s *Server) Init() error {
 	}
 
 	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {
-		return err
-	}
-
-	// Initialize the OpenFeature feature flag system
-	if err := featuremgmt.InitOpenFeatureWithCfg(s.cfg); err != nil {
 		return err
 	}
 

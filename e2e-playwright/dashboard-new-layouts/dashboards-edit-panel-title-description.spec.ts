@@ -51,8 +51,10 @@ test.describe(
 
       // Get the tooltip ID from the aria-describedby attribute
       const tooltipId = await descriptionIcon.getAttribute('aria-describedby');
-      const tooltip = page.locator(`[id="${tooltipId}"]`);
-      await expect(tooltip).toHaveText(`${newDescription}\n`);
+      await expect(async () => {
+        const tooltip = page.locator(`[id="${tooltipId}"]`);
+        await expect(tooltip).toHaveText(`${newDescription}\n`);
+      }).toPass();
     });
   }
 );
