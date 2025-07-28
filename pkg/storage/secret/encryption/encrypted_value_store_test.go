@@ -173,7 +173,6 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		obtainedEVs, err = sut.GlobalEncryptedValueStorage.ListAll(t.Context(), contracts.ListOpts{}, &pastTime)
 		require.NoError(t, err)
 		require.Empty(t, obtainedEVs)
-
 	})
 
 	t.Run("counting encrypted values returns their total", func(t *testing.T) {
