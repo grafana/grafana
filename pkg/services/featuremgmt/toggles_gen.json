@@ -91,6 +91,21 @@
     },
     {
       "metadata": {
+        "name": "alertingAIFeedback",
+        "resourceVersion": "1752820131286",
+        "creationTimestamp": "2025-07-18T06:28:51Z"
+      },
+      "spec": {
+        "description": "Enable AI-generated feedback from the Grafana UI.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAIGenAlertRules",
         "resourceVersion": "1752215431801",
         "creationTimestamp": "2025-07-07T14:40:14Z",
@@ -334,6 +349,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingProvenanceLockWrites",
+        "resourceVersion": "1753284360846",
+        "creationTimestamp": "2025-07-23T15:26:00Z"
+      },
+      "spec": {
+        "description": "Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -1854,12 +1883,15 @@
     {
       "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-03-31T13:59:07Z"
+        "resourceVersion": "1753261256848",
+        "creationTimestamp": "2025-03-31T13:59:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-23 09:00:56.848352786 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Specifies the locale so the correct format for numbers and dates can be shown",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
@@ -3077,6 +3109,19 @@
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
         "stage": "privatePreview",
         "codeowner": "@grafana/grafana-datasources-core-services"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sqlExpressionsColumnAutoComplete",
+        "resourceVersion": "1751471729972",
+        "creationTimestamp": "2025-07-02T15:55:29Z"
+      },
+      "spec": {
+        "description": "Enables column autocomplete for SQL Expressions",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
       }
     },
     {

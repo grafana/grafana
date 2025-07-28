@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "AI Alert Rule Button failed to load",
+        "feedback-button": "AI Feedback Button failed to load",
         "improve-annotations-button": "AI Improve Annotations Button failed to load",
         "improve-labels-button": "AI Improve Labels Button failed to load",
         "template-button": "AI Template Button failed to load",
@@ -1551,7 +1552,8 @@
       "title": "Edit evaluation group"
     },
     "group-loader": {
-      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
+      "no-rules": "No rules found in this group"
     },
     "group-status": {
       "content-the-group-is-being-deleted": "The group is being deleted"
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Refresh preview",
+      "empty-state": "Add template content to see preview",
       "label-preview": "Preview",
       "refresh": "Refresh"
     },
@@ -7157,6 +7160,7 @@
           "start-time": "Start Time:"
         }
       },
+      "share-span": "Share",
       "warnings": "Warnings"
     },
     "span-filters": {
@@ -8597,7 +8601,10 @@
         "no-data": "No data"
       },
       "no-values-label": "No values",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sparkline": {
+        "no-data": "no data"
+      }
     },
     "tags": {
       "list-label": "Tags"
@@ -9330,6 +9337,7 @@
       "move-displayed-field-down": "Move down",
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
@@ -9348,6 +9356,9 @@
       "copy-log": "Copy log line",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
+      "log-line": "Log line",
+      "log-line-explainer": "Explain this log line in a concise way",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
       "show-details": "Hide log details",
@@ -11059,10 +11070,10 @@
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
+    "error-title-default": "Error",
     "expanded-row": {
       "job-specification": "Job Specification",
-      "summary": "Summary",
-      "title-error": "Error"
+      "summary": "Summary"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11218,12 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
-        "title-job-completed-successfully": "Job completed successfully"
+        "title-warning-running-job": "Job completed with warnings"
       },
-      "summary": "Summary"
+      "summary": "Summary",
+      "title": {
+        "error-fetching-active-job": "Error fetching active job"
+      }
     },
     "local": {
       "path-description": "Local file system path to the repository",
@@ -11375,6 +11389,7 @@
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
+    "warning-title-default": "Warning",
     "wizard": {
       "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
       "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
