@@ -223,6 +223,7 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 		dataSourceRequestValidator: validations.ProvideValidator(),
 		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
 		headers:                    headers,
+		concurrentQueryLimit:       16, // TODO: make it configurable
 	}
 	return s.QueryData(ctx, nil, false, reqDTO)
 }
