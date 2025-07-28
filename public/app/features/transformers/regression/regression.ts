@@ -37,7 +37,7 @@ export const DEGREES = [
 
 export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTransformerOptions> = {
   id: DataTransformerID.regression,
-  name: 'Regression analysis',
+  name: 'Trendline',
   description: 'Create a new data frame containing values predicted by a statistical model.',
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => RegressionTransformer.transformer(options, ctx)(data))),
@@ -126,7 +126,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
         fields: [
           { name: xField.name, type: xField.type, values: predictionPoints, config: {} },
           {
-            name: `${getFieldDisplayName(yField, predictFromFrame, frames)} predicted`,
+            name: `${getFieldDisplayName(yField, predictFromFrame, frames)}`,
             type: yField.type,
             values: predictionPoints.map((x) => result.predict(x - normalizationSubtrahend)),
             config: {},
