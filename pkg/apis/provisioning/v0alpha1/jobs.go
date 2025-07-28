@@ -37,6 +37,9 @@ const (
 
 	// JobActionMigrate acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
 	JobActionMigrate JobAction = "migrate"
+
+	// JobActionDelete deletes files in the remote repository
+	JobActionDelete JobAction = "delete"
 )
 
 // +enum
@@ -81,6 +84,9 @@ type JobSpec struct {
 
 	// Required when the action is `migrate`
 	Migrate *MigrateJobOptions `json:"migrate,omitempty"`
+
+	// Delete when the action is `delete`
+	Delete *DeleteJobOptions `json:"delete,omitempty"`
 }
 
 type PullRequestJobOptions struct {
@@ -103,12 +109,17 @@ type SyncJobOptions struct {
 }
 
 type ExportJobOptions struct {
+	// Message to use when committing the changes in a single commit
+	Message string `json:"message,omitempty"`
+
 	// The source folder (or empty) to export
 	Folder string `json:"folder,omitempty"`
 
+	// FIXME: we should validate this in admission hooks
 	// Target branch for export (only git)
 	Branch string `json:"branch,omitempty"`
 
+	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
 }
@@ -116,6 +127,20 @@ type ExportJobOptions struct {
 type MigrateJobOptions struct {
 	// Preserve history (if possible)
 	History bool `json:"history,omitempty"`
+
+	// Message to use when committing the changes in a single commit
+	Message string `json:"message,omitempty"`
+}
+
+type DeleteJobOptions struct {
+	// Ref to the branch or commit hash to delete from
+	Ref string `json:"ref,omitempty"`
+	// Paths to be deleted. Examples:
+	// - dashboard.json (for a file)
+	// - a/b/c/other-dashboard.json (for a file)
+	// - nested/deep/ (for a directory)
+	// FIXME: we should validate this in admission hooks
+	Paths []string `json:"paths,omitempty"`
 }
 
 // The job status

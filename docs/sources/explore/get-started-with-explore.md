@@ -53,7 +53,6 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 - **Outline** - Keeps track of the queries and visualization panels created in Explore. Refer to [Content outline](#content-outline) for more detail.
 
 - **Toolbar** - Provides quick access to frequently used tools and settings.
-
   - **Data source picker** - Select a data source from the dropdown menu, or use absolute time.
   - **Split** - Click to compare visualizations side by side. Refer to [Split and compare](#split-and-compare) for additional detail.
   - **Add** - Click to add your exploration to a dashboard. You can also use this to declare an incident,create a forecast, detect outliers and to run an investigation.
