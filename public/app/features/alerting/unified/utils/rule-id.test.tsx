@@ -13,7 +13,15 @@ import {
   RulerRecordingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { equal, getRuleIdFromPathname, hashRule, hashRulerRule, parse, stringifyIdentifier } from './rule-id';
+import {
+  equal,
+  getRuleIdFromPathname,
+  hashQuery,
+  hashRule,
+  hashRulerRule,
+  parse,
+  stringifyIdentifier,
+} from './rule-id';
 
 const alertingRule = {
   prom: {
@@ -256,5 +264,113 @@ describe('useRuleIdFromPathname', () => {
     );
 
     expect(result.current).toBe('abc%25def');
+  });
+});
+
+describe('hashQuery', () => {
+  it('should produce the same hash for queries with different whitespace formatting', () => {
+    const query1 = `sum by (client,origin,destination,met_val)(
+  sum_over_time(
+    {client=~"PRU|RVSI"}
+  )
+)`;
+    const query2 = `sum by (client,origin,destination,met_val)(sum_over_time({client=~"PRU|RVSI"}))`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for queries with and without outer parentheses', () => {
+    const query1 = `sum by (client)(rate(requests_total[5m]))`;
+    const query2 = `(sum by (client)(rate(requests_total[5m])))`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for queries with different quote types in label formats', () => {
+    const query1 = `label_format origin=\`{{.app_host}}\``;
+    const query2 = `label_format origin="{{.app_host}}"`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for queries with escaped vs unescaped quotes', () => {
+    const query1 = `label_format met_val=\`{{"REQ_SENT"}}\``;
+    const query2 = `label_format met_val="{{\"REQ_SENT\"}}"`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should handle complex Loki recording rules with all formatting differences', () => {
+    const query1 = `sum by (client,origin,destination,metric_type)(
+  sum_over_time(
+    {client=~"FOO|BAR|BAZ", service_name="app_sessions"}
+    |= "server"
+    |= "component"
+    | logfmt
+    | label_format origin=\`{{.host_name}}\`
+    | label_format destination=\`{{.component_name}}\`
+    | label_format metric_type=\`{{"REQUEST_COUNT"}}\`
+    | keep client,destination,origin,metric_type,response_time
+    | unwrap response_time
+  [5m])
+) > 0`;
+
+    const query2 = `(sum by (client,origin,destination,metric_type)(sum_over_time({client=~"FOO|BAR|BAZ", service_name="app_sessions"} |= "server" |= "component" | logfmt | label_format origin="{{.host_name}}" | label_format destination="{{.component_name}}" | label_format metric_type="{{\"REQUEST_COUNT\"}}" | keep client,destination,origin,metric_type,response_time | unwrap response_time[5m])) > 0)`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce the same hash for queries with reordered label matchers', () => {
+    const query1 = `{job="prometheus", instance="localhost:9090"}`;
+    const query2 = `{instance="localhost:9090", job="prometheus"}`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should handle multiple types of brackets and quotes', () => {
+    const query1 = `rate(http_requests_total{method="GET"}[5m])`;
+    const query2 = `rate(http_requests_total{method=\`GET\`}[5m])`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should normalize backslashes properly', () => {
+    const query1 = `label_format path="{{.file_path}}"`;
+    const query2 = `label_format path="{{\.file_path}}"`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should handle empty queries', () => {
+    expect(hashQuery('')).toBe('');
+  });
+
+  it('should handle queries with only parentheses', () => {
+    expect(hashQuery('()')).toBe('');
+  });
+
+  it('should handle complex nested parentheses and brackets', () => {
+    const query1 = `((sum(rate(requests[5m]))))`;
+    const query2 = `sum(rate(requests[5m]))`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should handle mixed quote escaping scenarios', () => {
+    const query1 = `label_format msg=\`{{"error: \\"timeout\\""}}\``;
+    const query2 = `label_format msg="{{\"error: \\\"timeout\\\"\"}}"`;
+
+    expect(hashQuery(query1)).toBe(hashQuery(query2));
+  });
+
+  it('should produce consistent results for character sorting', () => {
+    const query1 = `abc{x="1",y="2"}`;
+    const query2 = `abc{y="2",x="1"}`;
+
+    const hash1 = hashQuery(query1);
+    const hash2 = hashQuery(query2);
+
+    expect(hash1).toBe(hash2);
+    expect(hash1).toBe(hash1.split('').sort().join(''));
   });
 });
