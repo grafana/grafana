@@ -57,7 +57,6 @@ import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps 
 import {
   applySort,
   computeColWidths,
-  createTypographyContext,
   displayJsonValue,
   frameToRecords,
   getAlignment,
@@ -171,10 +170,7 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
     [width, hasNestedFrames, scrollbarWidth]
   );
-  const typographyCtx = useMemo(
-    () => createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
-    [theme]
-  );
+
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -182,7 +178,8 @@ export function TableNG(props: TableNGProps) {
     enabled: hasHeader,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,
-    typographyCtx,
+    gridRef,
+    theme,
   });
   const rowHeight = useRowHeight({
     columnWidths: widths,
@@ -190,7 +187,7 @@ export function TableNG(props: TableNGProps) {
     hasNestedFrames,
     defaultHeight: defaultRowHeight,
     expandedRows,
-    typographyCtx,
+    theme,
   });
 
   const {

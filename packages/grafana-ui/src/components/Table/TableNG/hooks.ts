@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, GrafanaTheme2, reduceField } from '@grafana/data';
 
 import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
+import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
 import {
   getDisplayName,
   processNestedTableRows,
@@ -15,6 +15,8 @@ import {
   getRowHeight,
   buildHeaderLineCounters,
   buildRowLineCounters,
+  createTypographyContext,
+  extractPixelValue,
 } from './utils';
 
 // Helper function to get displayed value
@@ -320,8 +322,9 @@ interface UseHeaderHeightOptions {
   fields: Field[];
   columnWidths: number[];
   sortColumns: SortColumn[];
-  typographyCtx: TypographyCtx;
+  theme: GrafanaTheme2;
   showTypeIcons?: boolean;
+  gridRef?: RefObject<DataGridHandle>;
 }
 
 export function useHeaderHeight({
@@ -329,13 +332,39 @@ export function useHeaderHeight({
   enabled,
   columnWidths,
   sortColumns,
-  typographyCtx,
   showTypeIcons = false,
+  gridRef,
+  theme,
 }: UseHeaderHeightOptions): number {
-  const perIconSpace = ICON_WIDTH + ICON_GAP;
+  // theme.typography.body.letterSpacing isn't perfectly accurate due to rounding between ems and pxs. This can
+  // be a problem for header height calculations, given that we are often dealing with smaller widths, more spaces,
+  // acronyms, etc. this logic gets the letterSpacing style attribute directly from a header cell element.
+  const [headerLetterSpacing, setHeaderLetterSpacing] = useState<number | undefined>(undefined);
+  useLayoutEffect(() => {
+    const el = gridRef?.current?.element;
+    if (!enabled || !el) {
+      return;
+    }
+
+    const headerCell = el.querySelector('[role="columnheader"]');
+    if (headerCell == null) {
+      return;
+    }
+
+    // > 0.01071em 0.14994px
+    // console.log(theme.typography.body.letterSpacing, window.getComputedStyle(headerCell).letterSpacing);
+
+    setHeaderLetterSpacing(extractPixelValue(window.getComputedStyle(headerCell).letterSpacing));
+  }, [theme, enabled, gridRef]);
+
+  const typographyCtx = useMemo(
+    () => createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily, headerLetterSpacing),
+    [theme, headerLetterSpacing]
+  );
 
   const lineCounters = useMemo(() => buildHeaderLineCounters(fields, typographyCtx), [fields, typographyCtx]);
 
+  const perIconSpace = ICON_WIDTH + ICON_GAP;
   const columnAvailableWidths = useMemo(
     () =>
       columnWidths.map((c, idx) => {
@@ -382,7 +411,7 @@ interface UseRowHeightOptions {
   hasNestedFrames: boolean;
   defaultHeight: number;
   expandedRows: Set<number>;
-  typographyCtx: TypographyCtx;
+  theme: GrafanaTheme2;
 }
 
 export function useRowHeight({
@@ -391,8 +420,12 @@ export function useRowHeight({
   hasNestedFrames,
   defaultHeight,
   expandedRows,
-  typographyCtx,
+  theme,
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {
+  const typographyCtx = useMemo(
+    () => createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
+    [theme]
+  );
   const lineCounters = useMemo(() => buildRowLineCounters(fields, typographyCtx), [fields, typographyCtx]);
   const hasWrappedCols = useMemo(() => lineCounters?.length ?? 0 > 0, [lineCounters]);
 
