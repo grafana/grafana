@@ -32,7 +32,12 @@ var updateGoldenFiles = false
 // Use the docker/blocks/mysql_tests/docker-compose.yaml to spin up a
 // preconfigured MySQL server suitable for running these tests.
 func TestIntegrationMySQLSnapshots(t *testing.T) {
-	// the logic in this function is copied from mysql_tests.go
+	if testing.
+		// the logic in this function is copied from mysql_tests.go
+		Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	shouldRunTest := func() bool {
 		if testing.Short() {
 			return false

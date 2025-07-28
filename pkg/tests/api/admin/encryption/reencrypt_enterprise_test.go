@@ -18,6 +18,9 @@ import (
 )
 
 func TestIntegration_AdminApiReencrypt_Enterprise(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	getSecretsFunctions := map[string]func(*testing.T, *server.TestEnv) map[int]secret{}
 	getSecretsFunctions["settings"] = func(t *testing.T, env *server.TestEnv) map[int]secret {
 		return getSettingSecrets(t, env.SQLStore)

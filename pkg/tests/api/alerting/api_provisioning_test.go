@@ -77,6 +77,9 @@ func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder s
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -559,6 +562,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 }
 
 func TestIntegrationProvisioningRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -980,6 +986,9 @@ func createTestRequest(method string, url string, user string, body string) *htt
 }
 
 func TestIntegrationExportFileProvision(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1068,6 +1077,9 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 }
 
 func TestIntegrationExportFileProvisionMixed(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1114,6 +1126,9 @@ func TestIntegrationExportFileProvisionMixed(t *testing.T) {
 }
 
 func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
