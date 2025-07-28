@@ -191,7 +191,7 @@ compilation-stats.json
 /docs/sources/packages_api
 
 # wire generated files
-**/wire_gen.go
+/pkg/server/enterprise_wire_gen.go
 
 # Auto-generated internationalization files
 public/locales/_build/

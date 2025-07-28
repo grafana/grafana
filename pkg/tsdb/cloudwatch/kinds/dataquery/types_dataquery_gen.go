@@ -29,6 +29,7 @@ const (
 	MetricEditorModeN1 MetricEditorMode = 1
 )
 
+<<<<<<< HEAD
 // Defines values for MetricQueryType.
 const (
 	MetricQueryTypeN0 MetricQueryType = 0
@@ -42,6 +43,45 @@ const (
 )
 
 // Defines values for QueryEditorExpressionType.
+=======
+type SQLExpression struct {
+	// SELECT part of the SQL expression
+	Select *QueryEditorFunctionExpression `json:"select,omitempty"`
+	// FROM part of the SQL expression
+	From *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression `json:"from,omitempty"`
+	// WHERE part of the SQL expression
+	Where *QueryEditorArrayExpression `json:"where,omitempty"`
+	// GROUP BY part of the SQL expression
+	GroupBy *QueryEditorArrayExpression `json:"groupBy,omitempty"`
+	// ORDER BY part of the SQL expression
+	OrderBy *QueryEditorFunctionExpression `json:"orderBy,omitempty"`
+	// The sort order of the SQL expression, `ASC` or `DESC`
+	OrderByDirection *string `json:"orderByDirection,omitempty"`
+	// LIMIT part of the SQL expression
+	Limit *int64 `json:"limit,omitempty"`
+}
+
+// NewSQLExpression creates a new SQLExpression object.
+func NewSQLExpression() *SQLExpression {
+	return &SQLExpression{}
+}
+
+type QueryEditorFunctionExpression struct {
+	Type       QueryEditorExpressionType                `json:"type"`
+	Name       *string                                  `json:"name,omitempty"`
+	Parameters []QueryEditorFunctionParameterExpression `json:"parameters,omitempty"`
+}
+
+// NewQueryEditorFunctionExpression creates a new QueryEditorFunctionExpression object.
+func NewQueryEditorFunctionExpression() *QueryEditorFunctionExpression {
+	return &QueryEditorFunctionExpression{
+		Type: QueryEditorExpressionTypeFunction,
+	}
+}
+
+type QueryEditorExpressionType string
+
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 const (
 	QueryEditorExpressionTypeAnd               QueryEditorExpressionType = "and"
 	QueryEditorExpressionTypeFunction          QueryEditorExpressionType = "function"
@@ -52,6 +92,7 @@ const (
 	QueryEditorExpressionTypeProperty          QueryEditorExpressionType = "property"
 )
 
+<<<<<<< HEAD
 // Defines values for QueryEditorFunctionExpressionType.
 const (
 	QueryEditorFunctionExpressionTypeAnd               QueryEditorFunctionExpressionType = "and"
@@ -106,12 +147,183 @@ const (
 	QueryEditorPropertyExpressionTypeOr                QueryEditorPropertyExpressionType = "or"
 	QueryEditorPropertyExpressionTypeProperty          QueryEditorPropertyExpressionType = "property"
 )
+=======
+type QueryEditorFunctionParameterExpression struct {
+	Type QueryEditorExpressionType `json:"type"`
+	Name *string                   `json:"name,omitempty"`
+}
+
+// NewQueryEditorFunctionParameterExpression creates a new QueryEditorFunctionParameterExpression object.
+func NewQueryEditorFunctionParameterExpression() *QueryEditorFunctionParameterExpression {
+	return &QueryEditorFunctionParameterExpression{
+		Type: QueryEditorExpressionTypeFunctionParameter,
+	}
+}
+
+type QueryEditorPropertyExpression struct {
+	Type     QueryEditorExpressionType `json:"type"`
+	Property QueryEditorProperty       `json:"property"`
+}
+
+// NewQueryEditorPropertyExpression creates a new QueryEditorPropertyExpression object.
+func NewQueryEditorPropertyExpression() *QueryEditorPropertyExpression {
+	return &QueryEditorPropertyExpression{
+		Type:     QueryEditorExpressionTypeProperty,
+		Property: *NewQueryEditorProperty(),
+	}
+}
+
+type QueryEditorProperty struct {
+	Type QueryEditorPropertyType `json:"type"`
+	Name *string                 `json:"name,omitempty"`
+}
+
+// NewQueryEditorProperty creates a new QueryEditorProperty object.
+func NewQueryEditorProperty() *QueryEditorProperty {
+	return &QueryEditorProperty{}
+}
+
+type QueryEditorPropertyType string
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 
 // Defines values for QueryEditorPropertyType.
 const (
 	QueryEditorPropertyTypeString QueryEditorPropertyType = "string"
 )
 
+<<<<<<< HEAD
+=======
+type QueryEditorArrayExpression struct {
+	Type        QueryEditorArrayExpressionType                                  `json:"type"`
+	Expressions ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression `json:"expressions"`
+}
+
+// NewQueryEditorArrayExpression creates a new QueryEditorArrayExpression object.
+func NewQueryEditorArrayExpression() *QueryEditorArrayExpression {
+	return &QueryEditorArrayExpression{
+		Expressions: *NewArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression(),
+	}
+}
+
+type QueryEditorExpression any
+
+type QueryEditorGroupByExpression struct {
+	Type     QueryEditorExpressionType `json:"type"`
+	Property QueryEditorProperty       `json:"property"`
+}
+
+// NewQueryEditorGroupByExpression creates a new QueryEditorGroupByExpression object.
+func NewQueryEditorGroupByExpression() *QueryEditorGroupByExpression {
+	return &QueryEditorGroupByExpression{
+		Type:     QueryEditorExpressionTypeGroupBy,
+		Property: *NewQueryEditorProperty(),
+	}
+}
+
+type QueryEditorOperatorExpression struct {
+	Type     QueryEditorExpressionType `json:"type"`
+	Property QueryEditorProperty       `json:"property"`
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+	Operator QueryEditorOperator `json:"operator"`
+}
+
+// NewQueryEditorOperatorExpression creates a new QueryEditorOperatorExpression object.
+func NewQueryEditorOperatorExpression() *QueryEditorOperatorExpression {
+	return &QueryEditorOperatorExpression{
+		Type:     QueryEditorExpressionTypeOperator,
+		Property: *NewQueryEditorProperty(),
+		Operator: *NewQueryEditorOperator(),
+	}
+}
+
+// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
+type QueryEditorOperator struct {
+	Name  *string                                              `json:"name,omitempty"`
+	Value *StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType `json:"value,omitempty"`
+}
+
+// NewQueryEditorOperator creates a new QueryEditorOperator object.
+func NewQueryEditorOperator() *QueryEditorOperator {
+	return &QueryEditorOperator{}
+}
+
+type QueryEditorOperatorType = StringOrBoolOrInt64
+
+// NewQueryEditorOperatorType creates a new QueryEditorOperatorType object.
+func NewQueryEditorOperatorType() *QueryEditorOperatorType {
+	return NewStringOrBoolOrInt64()
+}
+
+type QueryEditorOperatorValueType = StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType
+
+// NewQueryEditorOperatorValueType creates a new QueryEditorOperatorValueType object.
+func NewQueryEditorOperatorValueType() *QueryEditorOperatorValueType {
+	return NewStringOrBoolOrInt64OrArrayOfQueryEditorOperatorType()
+}
+
+type LogsQueryLanguage string
+
+const (
+	LogsQueryLanguageCWLI LogsQueryLanguage = "CWLI"
+	LogsQueryLanguageSQL  LogsQueryLanguage = "SQL"
+	LogsQueryLanguagePPL  LogsQueryLanguage = "PPL"
+)
+
+// Shape of a CloudWatch Logs query
+type CloudWatchLogsQuery struct {
+	// Whether a query is a Metrics, Logs, or Annotations query
+	QueryMode CloudWatchQueryMode `json:"queryMode"`
+	Id        string              `json:"id"`
+	// AWS region to query for the logs
+	Region string `json:"region"`
+	// The CloudWatch Logs Insights query to execute
+	Expression *string `json:"expression,omitempty"`
+	// Fields to group the results by, this field is automatically populated whenever the query is updated
+	StatsGroups []string `json:"statsGroups,omitempty"`
+	// Log groups to query
+	LogGroups []LogGroup `json:"logGroups,omitempty"`
+	// @deprecated use logGroups
+	LogGroupNames []string `json:"logGroupNames,omitempty"`
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId string `json:"refId"`
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+	// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
+	QueryLanguage *LogsQueryLanguage `json:"queryLanguage,omitempty"`
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource any `json:"datasource,omitempty"`
+}
+
+// NewCloudWatchLogsQuery creates a new CloudWatchLogsQuery object.
+func NewCloudWatchLogsQuery() *CloudWatchLogsQuery {
+	return &CloudWatchLogsQuery{}
+}
+
+type LogGroup struct {
+	// ARN of the log group
+	Arn string `json:"arn"`
+	// Name of the log group
+	Name string `json:"name"`
+	// AccountId of the log group
+	AccountId *string `json:"accountId,omitempty"`
+	// Label of the log group
+	AccountLabel *string `json:"accountLabel,omitempty"`
+}
+
+// NewLogGroup creates a new LogGroup object.
+func NewLogGroup() *LogGroup {
+	return &LogGroup{}
+}
+
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 // Shape of a CloudWatch Annotation query
 //
 // TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
@@ -435,10 +647,22 @@ type QueryEditorProperty struct {
 	Type QueryEditorPropertyType `json:"type"`
 }
 
+<<<<<<< HEAD
 // QueryEditorPropertyExpression defines model for QueryEditorPropertyExpression.
 type QueryEditorPropertyExpression struct {
 	Property QueryEditorProperty               `json:"property"`
 	Type     QueryEditorPropertyExpressionType `json:"type"`
+=======
+// MarshalJSON implements a custom JSON marshalling logic to encode `QueryEditorPropertyExpressionOrQueryEditorFunctionExpression` as JSON.
+func (resource QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) MarshalJSON() ([]byte, error) {
+	if resource.QueryEditorPropertyExpression != nil {
+		return json.Marshal(resource.QueryEditorPropertyExpression)
+	}
+	if resource.QueryEditorFunctionExpression != nil {
+		return json.Marshal(resource.QueryEditorFunctionExpression)
+	}
+	return nil, fmt.Errorf("no value for disjunction of refs")
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 }
 
 // QueryEditorPropertyExpressionType defines model for QueryEditorPropertyExpression.Type.
@@ -457,8 +681,231 @@ type SQLExpression struct {
 	Limit   *int64                         `json:"limit,omitempty"`
 	OrderBy *QueryEditorFunctionExpression `json:"orderBy,omitempty"`
 
+<<<<<<< HEAD
 	// The sort order of the SQL expression, `ASC` or `DESC`
 	OrderByDirection *string                        `json:"orderByDirection,omitempty"`
 	Select           *QueryEditorFunctionExpression `json:"select,omitempty"`
 	Where            *QueryEditorArrayExpression    `json:"where,omitempty"`
+=======
+		resource.QueryEditorFunctionExpression = &queryEditorFunctionExpression
+		return nil
+	case "property":
+		var queryEditorPropertyExpression QueryEditorPropertyExpression
+		if err := json.Unmarshal(raw, &queryEditorPropertyExpression); err != nil {
+			return err
+		}
+
+		resource.QueryEditorPropertyExpression = &queryEditorPropertyExpression
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+}
+
+type ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression struct {
+	ArrayOfQueryEditorExpression      []QueryEditorExpression      `json:"ArrayOfQueryEditorExpression,omitempty"`
+	ArrayOfQueryEditorArrayExpression []QueryEditorArrayExpression `json:"ArrayOfQueryEditorArrayExpression,omitempty"`
+}
+
+// NewArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression creates a new ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression object.
+func NewArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression() *ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression {
+	return &ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression` as JSON.
+func (resource ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression) MarshalJSON() ([]byte, error) {
+	if resource.ArrayOfQueryEditorExpression != nil {
+		return json.Marshal(resource.ArrayOfQueryEditorExpression)
+	}
+
+	if resource.ArrayOfQueryEditorArrayExpression != nil {
+		return json.Marshal(resource.ArrayOfQueryEditorArrayExpression)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of scalars")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression` from JSON.
+func (resource *ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// ArrayOfQueryEditorExpression
+	var ArrayOfQueryEditorExpression []QueryEditorExpression
+	if err := json.Unmarshal(raw, &ArrayOfQueryEditorExpression); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfQueryEditorExpression = nil
+	} else {
+		resource.ArrayOfQueryEditorExpression = ArrayOfQueryEditorExpression
+		return nil
+	}
+
+	// ArrayOfQueryEditorArrayExpression
+	var ArrayOfQueryEditorArrayExpression []QueryEditorArrayExpression
+	if err := json.Unmarshal(raw, &ArrayOfQueryEditorArrayExpression); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfQueryEditorArrayExpression = nil
+	} else {
+		resource.ArrayOfQueryEditorArrayExpression = ArrayOfQueryEditorArrayExpression
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+type StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType struct {
+	String                         *string                   `json:"String,omitempty"`
+	Bool                           *bool                     `json:"Bool,omitempty"`
+	Int64                          *int64                    `json:"Int64,omitempty"`
+	ArrayOfQueryEditorOperatorType []QueryEditorOperatorType `json:"ArrayOfQueryEditorOperatorType,omitempty"`
+}
+
+// NewStringOrBoolOrInt64OrArrayOfQueryEditorOperatorType creates a new StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType object.
+func NewStringOrBoolOrInt64OrArrayOfQueryEditorOperatorType() *StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType {
+	return &StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType` as JSON.
+func (resource StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+
+	if resource.Int64 != nil {
+		return json.Marshal(resource.Int64)
+	}
+
+	if resource.ArrayOfQueryEditorOperatorType != nil {
+		return json.Marshal(resource.ArrayOfQueryEditorOperatorType)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of scalars")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType` from JSON.
+func (resource *StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// Bool
+	var Bool bool
+	if err := json.Unmarshal(raw, &Bool); err != nil {
+		errList = append(errList, err)
+		resource.Bool = nil
+	} else {
+		resource.Bool = &Bool
+		return nil
+	}
+
+	// Int64
+	var Int64 int64
+	if err := json.Unmarshal(raw, &Int64); err != nil {
+		errList = append(errList, err)
+		resource.Int64 = nil
+	} else {
+		resource.Int64 = &Int64
+		return nil
+	}
+
+	// ArrayOfQueryEditorOperatorType
+	var ArrayOfQueryEditorOperatorType []QueryEditorOperatorType
+	if err := json.Unmarshal(raw, &ArrayOfQueryEditorOperatorType); err != nil {
+		errList = append(errList, err)
+		resource.ArrayOfQueryEditorOperatorType = nil
+	} else {
+		resource.ArrayOfQueryEditorOperatorType = ArrayOfQueryEditorOperatorType
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+type StringOrBoolOrInt64 struct {
+	String *string `json:"String,omitempty"`
+	Bool   *bool   `json:"Bool,omitempty"`
+	Int64  *int64  `json:"Int64,omitempty"`
+}
+
+// NewStringOrBoolOrInt64 creates a new StringOrBoolOrInt64 object.
+func NewStringOrBoolOrInt64() *StringOrBoolOrInt64 {
+	return &StringOrBoolOrInt64{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrBoolOrInt64` as JSON.
+func (resource StringOrBoolOrInt64) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+
+	if resource.Int64 != nil {
+		return json.Marshal(resource.Int64)
+	}
+
+	return nil, fmt.Errorf("no value for disjunction of scalars")
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64` from JSON.
+func (resource *StringOrBoolOrInt64) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	// Bool
+	var Bool bool
+	if err := json.Unmarshal(raw, &Bool); err != nil {
+		errList = append(errList, err)
+		resource.Bool = nil
+	} else {
+		resource.Bool = &Bool
+		return nil
+	}
+
+	// Int64
+	var Int64 int64
+	if err := json.Unmarshal(raw, &Int64); err != nil {
+		errList = append(errList, err)
+		resource.Int64 = nil
+	} else {
+		resource.Int64 = &Int64
+		return nil
+	}
+
+	return errors.Join(errList...)
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 }

@@ -149,6 +149,7 @@ type DataQuery struct {
 	RefId string `json:"refId"`
 }
 
+<<<<<<< HEAD
 // Query filter representation.
 type Filter struct {
 	// Filter condition.
@@ -174,6 +175,10 @@ type LegacyCloudMonitoringAnnotationQuery struct {
 	MetricKind MetricKind `json:"metricKind"`
 	MetricType string     `json:"metricType"`
 
+=======
+// Time Series List sub-query properties.
+type TimeSeriesList struct {
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 	// GCP project to execute the query against.
 	ProjectName string `json:"projectName"`
 
@@ -250,8 +255,28 @@ type PromQLQuery struct {
 // Defines the supported queryTypes.
 type QueryType string
 
+<<<<<<< HEAD
 // SLO sub-query properties.
 type SLOQuery struct {
+=======
+// Defines the supported queryTypes.
+type QueryType string
+
+const (
+	QueryTypeTIMESERIESLIST  QueryType = "timeSeriesList"
+	QueryTypeTIMESERIESQUERY QueryType = "timeSeriesQuery"
+	QueryTypeSLO             QueryType = "slo"
+	QueryTypeANNOTATION      QueryType = "annotation"
+	QueryTypePROMQL          QueryType = "promQL"
+)
+
+// @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.
+type MetricQuery struct {
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+	// Alignment function to be used. Defaults to ALIGN_MEAN.
+	PerSeriesAligner *string `json:"perSeriesAligner,omitempty"`
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 	// Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
 	AlignmentPeriod *string `json:"alignmentPeriod,omitempty"`
 

@@ -13,7 +13,10 @@ import (
 	"time"
 )
 
+<<<<<<< HEAD
 // LibraryElementDTOMeta defines model for LibraryElementDTOMeta.
+=======
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 type LibraryElementDTOMeta struct {
 	ConnectedDashboards int64                     `json:"connectedDashboards"`
 	Created             time.Time                 `json:"created"`
@@ -31,7 +34,21 @@ type LibraryElementDTOMetaUser struct {
 	Name      string `json:"name"`
 }
 
+<<<<<<< HEAD
 // Spec defines model for Spec.
+=======
+type LibraryElementDTOMetaUser struct {
+	Id        int64  `json:"id"`
+	Name      string `json:"name"`
+	AvatarUrl string `json:"avatarUrl"`
+}
+
+// NewLibraryElementDTOMetaUser creates a new LibraryElementDTOMetaUser object.
+func NewLibraryElementDTOMetaUser() *LibraryElementDTOMetaUser {
+	return &LibraryElementDTOMetaUser{}
+}
+
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 type Spec struct {
 	// Panel description
 	Description *string `json:"description,omitempty"`

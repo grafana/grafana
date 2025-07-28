@@ -2,7 +2,7 @@ name: run-dashboard-search-e2e
 
 on:
   workflow_run:
-    workflows: 
+    workflows:
       - trigger-dashboard-search-e2e
     types:
       - completed
@@ -36,11 +36,11 @@ jobs:
       - run: go version
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
           cache: 'yarn'
       - name: Cache Node Modules
         id: cache-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             node_modules
@@ -56,7 +56,7 @@ jobs:
           runTests: false
       - name: Cache Grafana Build and Dependencies
         id: cache-grafana
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             bin/
@@ -74,9 +74,11 @@ jobs:
 
       - name: Get list of .ini files
         id: get_files
+        env:
+          WORKSPACE: ${{ github.workspace }}
         run: |
-          INI_FILES=$(ls ${{ github.workspace }}/e2e/dashboards-search-suite/*.ini | jq -R -s -c 'split("\n")[:-1]')
-          echo "ini_files=$INI_FILES" >> $GITHUB_OUTPUT
+          INI_FILES="$(find "$WORKSPACE"/e2e/dashboards-search-suite/ -type f -name '*.ini' | jq -R -s -c 'split("\n")[:-1]')"
+          echo "ini_files=$INI_FILES" >> "$GITHUB_OUTPUT"
         shell: bash
 
   run_tests:
@@ -95,8 +97,10 @@ jobs:
       steps:
         - name: Checkout repository
           uses: actions/checkout@v4
+          with:
+            persist-credentials: false
         - name: Restore Cached Node Modules
-          uses: actions/cache@v3
+          uses: actions/cache@v4
           with:
             path: |
               node_modules
@@ -104,7 +108,7 @@ jobs:
             key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
         - name: Restore Cached Grafana Build and Dependencies
-          uses: actions/cache@v3
+          uses: actions/cache@v4
           with:
             path: |
               bin/
@@ -120,11 +124,12 @@ jobs:
           env:
             INI_NAME: ${{ matrix.ini_file }}
           run: |
-            FILE_NAME=$(basename "$env.INI_NAME" .ini)
-            echo "FILE_NAME=$FILE_NAME" >> $GITHUB_OUTPUT
+            FILE_NAME="$(basename "$INI_NAME" .ini)"
+            echo "FILE_NAME=$FILE_NAME" >> "$GITHUB_OUTPUT"
         - name: Run tests for ${{ steps.set_file_name.outputs.FILE_NAME }}
           env:
             INI_NAME: ${{ matrix.ini_file }}
+            WORKSPACE: ${{ github.workspace }}
           run: |
-            cp -rf $INI_NAME ${{ github.workspace }}/scripts/grafana-server/custom.ini
+            cp -rf "$INI_NAME" "$WORKSPACE"/scripts/grafana-server/custom.ini
             yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"

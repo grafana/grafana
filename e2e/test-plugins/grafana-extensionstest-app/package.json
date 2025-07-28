@@ -1,6 +1,10 @@
 {
   "name": "@test-plugins/extensions-test-app",
+<<<<<<< HEAD
   "version": "11.5.7",
+=======
+  "version": "11.6.5",
+>>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
   "private": true,
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
