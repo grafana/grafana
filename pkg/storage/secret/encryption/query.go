@@ -17,10 +17,12 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlEncryptedValueCreate = mustTemplate("encrypted_value_create.sql")
-	sqlEncryptedValueRead   = mustTemplate("encrypted_value_read.sql")
-	sqlEncryptedValueUpdate = mustTemplate("encrypted_value_update.sql")
-	sqlEncryptedValueDelete = mustTemplate("encrypted_value_delete.sql")
+	sqlEncryptedValueCreate   = mustTemplate("encrypted_value_create.sql")
+	sqlEncryptedValueRead     = mustTemplate("encrypted_value_read.sql")
+	sqlEncryptedValueUpdate   = mustTemplate("encrypted_value_update.sql")
+	sqlEncryptedValueDelete   = mustTemplate("encrypted_value_delete.sql")
+	sqlEncryptedValueListAll  = mustTemplate("encrypted_value_list_all.sql")
+	sqlEncryptedValueCountAll = mustTemplate("encrypted_value_count_all.sql")
 
 	sqlDataKeyCreate      = mustTemplate("data_key_create.sql")
 	sqlDataKeyRead        = mustTemplate("data_key_read.sql")
@@ -92,6 +94,24 @@ type deleteEncryptedValue struct {
 func (r deleteEncryptedValue) Validate() error {
 	return nil // TODO
 }
+
+type listAllEncryptedValues struct {
+	sqltemplate.SQLTemplate
+	Limit        int64
+	Offset       int64
+	HasUntilTime bool
+	UntilTime    int64
+}
+
+func (r listAllEncryptedValues) Validate() error { return nil }
+
+type countAllEncryptedValues struct {
+	sqltemplate.SQLTemplate
+	HasUntilTime bool
+	UntilTime    int64
+}
+
+func (r countAllEncryptedValues) Validate() error { return nil }
 
 /*************************************/
 /**-- Data Key Queries --**/
