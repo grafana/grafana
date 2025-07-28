@@ -14,3 +14,11 @@ export interface TreeNode {
   query: string;
   children?: Record<string, TreeNode>;
 }
+export interface RecentScope extends Scope {
+  parentNode?: {
+    // id of the parent node
+    name: string;
+    // display title
+    title: string;
+  };
+}

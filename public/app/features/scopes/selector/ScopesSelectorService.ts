@@ -13,7 +13,7 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { NodesMap, ScopesMap, SelectedScope, TreeNode } from './types';
+import { NodesMap, RecentScope, ScopesMap, SelectedScope, TreeNode } from './types';
 
 export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -244,22 +244,35 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       for (const scope of fetchedScopes) {
         newScopesState[scope.metadata.name] = scope;
       }
-      this.addRecentScopes(fetchedScopes);
+
+      const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+      const parentNode =
+        scopeNode && scopeNode.spec.parentName ? this.state.nodes[scopeNode.spec.parentName] : undefined;
+      this.addRecentScopes(
+        fetchedScopes,
+        scopeNode && parentNode ? { name: parentNode.metadata.name, title: parentNode.spec.title } : undefined
+      );
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
 
   public removeAllScopes = () => this.applyScopes([]);
 
-  private addRecentScopes = (scopes: Scope[]) => {
+  private addRecentScopes = (scopes: Scope[], parentNode?: { name: string; title: string }) => {
     if (scopes.length === 0) {
       return;
+    }
+
+    const newScopes: RecentScope[] = scopes;
+    // Set parent node for the first scope
+    if (parentNode) {
+      newScopes[0].parentNode = parentNode;
     }
 
     const RECENT_SCOPES_MAX_LENGTH = 5;
 
     const recentScopes = this.getRecentScopes();
-    recentScopes.unshift(scopes);
+    recentScopes.unshift(newScopes);
     this.store.set(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
   };
 
@@ -267,12 +280,12 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * Returns recent scopes from local storage. It is array of array cause each item can represent application of
    * multiple different scopes.
    */
-  public getRecentScopes = (): Scope[][] => {
+  public getRecentScopes = (): RecentScope[][] => {
     const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
     const recentScopes = parseScopesFromLocalStorage(content);
 
     // Filter out the current selection from recent scopes to avoid duplicates
-    return recentScopes.filter((scopes: Scope[]) => {
+    return recentScopes.filter((scopes: RecentScope[]) => {
       if (scopes.length !== this.state.appliedScopes.length) {
         return true;
       }
@@ -350,7 +363,7 @@ function isScopeObj(obj: unknown): obj is Scope {
   );
 }
 
-function parseScopesFromLocalStorage(content: string | undefined): Scope[][] {
+function parseScopesFromLocalStorage(content: string | undefined): RecentScope[][] {
   let recentScopes;
   try {
     recentScopes = JSON.parse(content || '[]');

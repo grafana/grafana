@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { GrafanaTheme2, Scope } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, Stack, Text, Icon, Box } from '@grafana/ui';
 
+import { RecentScope } from './types';
+
 interface RecentScopesProps {
-  recentScopes: Scope[][];
+  recentScopes: RecentScope[][];
   onSelect: (scopeIds: string[]) => void;
 }
 
@@ -42,7 +44,12 @@ export const RecentScopes = ({ recentScopes, onSelect }: RecentScopesProps) => {
                   onSelect(recentScopeSet.map((s) => s.metadata.name));
                 }}
               >
-                <Text>{recentScopeSet.map((s) => s.spec.title).join(', ')}</Text>
+                <Text truncate>{recentScopeSet.map((s) => s.spec.title).join(', ')}</Text>
+                {recentScopeSet[0]?.parentNode?.title && (
+                  <Text truncate variant="body" color="secondary">
+                    {recentScopeSet[0]?.parentNode?.title}
+                  </Text>
+                )}
               </button>
             ))}
         </Stack>
@@ -58,9 +65,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     padding: 0,
     cursor: 'pointer',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
+    display: 'flex',
+    gap: theme.spacing(1),
+    alignItems: 'center',
   }),
   expandButton: css({
     display: 'flex',
