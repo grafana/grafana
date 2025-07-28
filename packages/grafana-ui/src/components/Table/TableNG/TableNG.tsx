@@ -59,6 +59,7 @@ import {
   computeColWidths,
   createTypographyContext,
   displayJsonValue,
+  extractPixelValue,
   frameToRecords,
   getAlignment,
   getApplyToRowBgFn,
@@ -172,7 +173,12 @@ export function TableNG(props: TableNGProps) {
     [width, hasNestedFrames, scrollbarWidth]
   );
   const typographyCtx = useMemo(
-    () => createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!)
+      ),
     [theme]
   );
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);

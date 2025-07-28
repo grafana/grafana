@@ -986,7 +986,7 @@ describe('TableNG utils', () => {
     // actually executed the JS correctly. If you called `count` with a sensible value and width,
     // it wouldn't give you a very reasonable answer in Jest's DOM environment for some reason.
     it('creates the context using uwrap', () => {
-      const ctx = createTypographyContext(14, 'sans-serif');
+      const ctx = createTypographyContext(14, 'sans-serif', 0.01);
       expect(ctx).toEqual(
         expect.objectContaining({
           font: '14px sans-serif',

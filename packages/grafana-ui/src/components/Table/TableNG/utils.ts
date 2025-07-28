@@ -85,12 +85,12 @@ export function shouldTextWrap(field: Field): boolean {
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
  */
-export function createTypographyContext(fontSize: number, fontFamily: string, letterSpacing = 0.15): TypographyCtx {
+export function createTypographyContext(fontSize: number, fontFamily: string, letterSpacing: number): TypographyCtx {
   const font = `${fontSize}px ${fontFamily}`;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
 
-  ctx.letterSpacing = `${letterSpacing}px`;
+  ctx.letterSpacing = `${letterSpacing}em`;
   ctx.font = font;
   const txt =
     "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
