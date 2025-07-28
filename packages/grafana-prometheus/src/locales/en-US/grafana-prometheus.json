@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Checking this option will favor the series endpoint with {{exampleParameter}} parameter over the label values endpoint with {{exampleParameter}} parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "(Disabled)",
+      "enabled-label": "Metrics browser"
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "Only includes unique labels",
