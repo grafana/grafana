@@ -233,11 +233,11 @@ func (ng *AlertNG) init() error {
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
 			ng.Cfg.UnifiedAlerting.SkipClustering = true
 
-			override = remote.RemotePrimaryFactory(cfg, notifier.NewFileStore(cfg.OrgID, ng.KVStore), crypto, autogenFn, m, ng.tracer, moaLogger)
+			override = remote.NewRemotePrimaryFactory(cfg, notifier.NewFileStore(cfg.OrgID, ng.KVStore), crypto, autogenFn, m, ng.tracer, moaLogger)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
-			override = remote.RemoteSecondaryFactory(cfg,
+			override = remote.NewRemoteSecondaryFactory(cfg,
 				notifier.NewFileStore(cfg.OrgID, ng.KVStore),
 				ng.store,
 				ng.store.Cfg.RemoteAlertmanager.SyncInterval,

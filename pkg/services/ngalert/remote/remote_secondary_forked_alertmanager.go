@@ -62,8 +62,8 @@ func (c *RemoteSecondaryConfig) Validate() error {
 	return nil
 }
 
-// RemoteSecondaryFactory is used to override the default factory function in the multi-org Alertmanager.
-func RemoteSecondaryFactory(
+// NewRemoteSecondaryFactory returns a function to override the default AM factory in the multi-org Alertmanager.
+func NewRemoteSecondaryFactory(
 	cfg AlertmanagerConfig,
 	stateStore stateStore,
 	cfgStore configStore,

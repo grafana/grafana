@@ -22,8 +22,8 @@ type RemotePrimaryForkedAlertmanager struct {
 	remote   remoteAlertmanager
 }
 
-// RemotePrimaryFactory is used to override the default factory function in the multi-org Alertmanager.
-func RemotePrimaryFactory(
+// NewRemotePrimaryFactory returns a function to override the default AM factory in the multi-org Alertmanager.
+func NewRemotePrimaryFactory(
 	cfg AlertmanagerConfig,
 	store stateStore,
 	crypto Crypto,
