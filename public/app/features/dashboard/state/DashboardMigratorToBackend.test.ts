@@ -1,8 +1,6 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { getPanelPlugin } from '@grafana/data/test';
-import { config } from 'app/core/config';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
@@ -107,11 +105,6 @@ describe('Backend / Frontend result comparison', () => {
     'testdata',
     'output'
   );
-
-  config.panels = {
-    stat: getPanelPlugin({ id: 'stat' }).meta,
-    gauge: getPanelPlugin({ id: 'gauge' }).meta,
-  };
 
   const jsonInputs = readdirSync(inputDir);
 
