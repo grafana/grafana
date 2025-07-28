@@ -8,12 +8,7 @@ import (
 	"github.com/mattn/go-sqlite3"
 )
 
-type Error = sqlite3.Error
-
-var (
-	ErrConstraintUnique     = sqlite3.ErrConstraintUnique
-	ErrConstraintPrimaryKey = sqlite3.ErrConstraintPrimaryKey
-)
+type Driver = sqlite3.SQLiteDriver
 
 func IsBusyOrLocked(err error) bool {
 	var sqliteErr sqlite3.Error
@@ -29,4 +24,15 @@ func IsUniqueConstraintViolation(err error) bool {
 		return sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique || sqliteErr.ExtendedCode == sqlite3.ErrConstraintPrimaryKey
 	}
 	return false
+}
+
+func ErrorMessage(err error) string {
+	if err == nil {
+		return ""
+	}
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		return sqliteErr.Error()
+	}
+	return err.Error()
 }

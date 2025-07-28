@@ -389,9 +389,8 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 // IsRowAlreadyExistsError checks if the error is the result of the row inserted already existing.
 func IsRowAlreadyExistsError(err error) bool {
-	var sqliteErr sqlite.Error
-	if errors.As(err, &sqliteErr) {
-		return sqlite.IsUniqueConstraintViolation(err)
+	if sqlite.IsUniqueConstraintViolation(err) {
+		return true
 	}
 
 	var pg *pgconn.PgError

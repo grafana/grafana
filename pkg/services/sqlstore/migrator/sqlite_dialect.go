@@ -1,7 +1,6 @@
 package migrator
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -139,11 +138,7 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 }
 
 func (db *SQLite3) ErrorMessage(err error) string {
-	var driverErr sqlite.Error
-	if errors.As(err, &driverErr) {
-		return driverErr.Error()
-	}
-	return ""
+	return sqlite.ErrorMessage(err)
 }
 
 func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
