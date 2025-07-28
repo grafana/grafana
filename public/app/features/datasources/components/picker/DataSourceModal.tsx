@@ -238,12 +238,13 @@ export function DataSourceModal({
 function getDataSourceModalStyles(theme: GrafanaTheme2) {
   return {
     modal: css({
-      width: '80%',
-      height: '80%',
+      height: '100%',
       maxWidth: '1200px',
-      maxHeight: '900px',
+      width: '80%',
 
       [theme.breakpoints.down('md')]: {
+        maxHeight: '100%',
+        top: 0,
         width: '100%',
       },
     }),
@@ -289,7 +290,6 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     }),
     builtInDataSources: css({
       flex: '1 1',
-      marginBottom: theme.spacing(4),
 
       [theme.breakpoints.down('md')]: {
         flex: 0,
