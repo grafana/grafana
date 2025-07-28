@@ -5,7 +5,7 @@ import { byRole, byTestId } from 'testing-library-selector';
 
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   RulerAlertingRuleDTO,

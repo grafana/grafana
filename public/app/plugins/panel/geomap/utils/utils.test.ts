@@ -15,10 +15,16 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 // Mock the dimensions module since it's imported by utils.ts
-jest.mock('app/features/dimensions', () => ({
+jest.mock('app/features/dimensions/color', () => ({
   getColorDimension: jest.fn(),
+}));
+jest.mock('app/features/dimensions/scalar', () => ({
   getScalarDimension: jest.fn(),
+}));
+jest.mock('app/features/dimensions/scale', () => ({
   getScaledDimension: jest.fn(),
+}));
+jest.mock('app/features/dimensions/text', () => ({
   getTextDimension: jest.fn(),
 }));
 
@@ -32,8 +38,8 @@ import { hasVariableDependencies, hasLayerData } from './utils';
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
 
-const createTestVectorSource = (hasFeature = false): VectorSource<Point> => {
-  const source = new VectorSource<Point>();
+const createTestVectorSource = (hasFeature = false): VectorSource<Feature<Point>> => {
+  const source = new VectorSource<Feature<Point>>();
   if (hasFeature) {
     source.addFeature(createTestFeature());
   }
@@ -41,12 +47,9 @@ const createTestVectorSource = (hasFeature = false): VectorSource<Point> => {
 };
 
 const createTestWebGLStyle = () => ({
-  symbol: {
-    symbolType: 'circle',
-    size: 8,
-    color: '#000000',
-    opacity: 1,
-  },
+  'circle-radius': 8,
+  'circle-fill-color': '#000000',
+  'circle-opacity': 1,
 });
 
 describe('hasVariableDependencies', () => {

@@ -83,6 +83,14 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
+        apps-secret:  
+          list-mode: lax
+          files:
+            - ./apps/secret/*
+            - ./apps/secret/**/*
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apps/secret is not allowed to import grafana core
         coreplugins:
           files:
             - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
@@ -101,6 +109,12 @@ linters:
             - '**/pkg/tsdb/tempo/**/*'
             - '**/pkg/tsdb/cloudwatch/*'
             - '**/pkg/tsdb/cloudwatch/**/*'
+            - '**/pkg/tsdb/loki/*'
+            - '**/pkg/tsdb/loki/**/*'
+            - '**/pkg/tsdb/zipkin/*'
+            - '**/pkg/tsdb/zipkin/**/*'
+            - '**/pkg/tsdb/jaeger/*'
+            - '**/pkg/tsdb/jaeger/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages

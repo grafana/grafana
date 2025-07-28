@@ -2,11 +2,11 @@ import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, getDefaultTimeRa
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
-import { createDetectedFieldValuesMetadataRequest } from './__mocks__/createDetectedFieldValuesMetadataRequest';
-import { createDetectedFieldsMetadataRequest } from './__mocks__/createDetectedFieldsMetadataRequest';
-import { createLokiDatasource } from './__mocks__/datasource';
-import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { createDetectedFieldValuesMetadataRequest } from './mocks/createDetectedFieldValuesMetadataRequest';
+import { createDetectedFieldsMetadataRequest } from './mocks/createDetectedFieldsMetadataRequest';
+import { createLokiDatasource } from './mocks/datasource';
+import { createMetadataRequest } from './mocks/metadataRequest';
 import {
   extractLogParserFromDataFrame,
   extractLabelKeysFromDataFrame,
@@ -681,14 +681,6 @@ describe('Query imports', () => {
   });
 
   describe('getParserAndLabelKeys()', () => {
-    const queryHintsFeatureToggle = config.featureToggles.lokiQueryHints;
-    beforeAll(() => {
-      config.featureToggles.lokiQueryHints = true;
-    });
-    afterAll(() => {
-      config.featureToggles.lokiQueryHints = queryHintsFeatureToggle;
-    });
-
     let datasource: LokiDatasource, languageProvider: LanguageProvider;
     const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
     const extractedLabelKeys = ['extracted', 'label'];
@@ -809,12 +801,6 @@ describe('Query imports', () => {
         },
         mockTimeRange
       );
-    });
-    it('does not call dataSample with feature toggle disabled', async () => {
-      config.featureToggles.lokiQueryHints = false;
-      jest.spyOn(datasource, 'getDataSamples');
-      languageProvider.getParserAndLabelKeys('{place="luna"}', { timeRange: mockTimeRange });
-      expect(datasource.getDataSamples).not.toHaveBeenCalled();
     });
   });
 });

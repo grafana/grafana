@@ -4,6 +4,7 @@ import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -61,7 +62,14 @@ export function AdHocVariableForm({
           htmlFor="data-source-picker"
           tooltip={infoText}
         >
-          <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
+          <DataSourcePicker
+            current={datasource}
+            onChange={onDataSourceChange}
+            width={30}
+            variables={true}
+            dashboard={config.featureToggles.dashboardDsAdHocFiltering}
+            noDefault
+          />
         </EditorField>
       </Box>
 
@@ -119,7 +127,7 @@ export function AdHocVariableForm({
       {datasourceSupported && onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue ?? true}
-          name="Allow custom values"
+          name={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.ad-hoc-variable-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'

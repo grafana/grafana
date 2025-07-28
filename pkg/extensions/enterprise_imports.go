@@ -28,6 +28,10 @@ import (
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
 	_ "github.com/stretchr/testify/require"
+	_ "gocloud.dev/secrets/awskms"
+	_ "gocloud.dev/secrets/azurekeyvault"
+	_ "gocloud.dev/secrets/gcpkms"
+	_ "gocloud.dev/secrets/hashivault"
 	_ "golang.org/x/time/rate"
 	_ "k8s.io/api"
 	_ "k8s.io/apimachinery/pkg/util/httpstream/spdy"
@@ -48,4 +52,5 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
+	_ "github.com/spyzhov/ajson"
 )

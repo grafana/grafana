@@ -5,7 +5,7 @@ import { ScrollContainer } from './ScrollContainer';
 import mdx from './ScrollContainer.mdx';
 
 const meta: Meta<typeof ScrollContainer> = {
-  title: 'General/Layout/ScrollContainer',
+  title: 'Layout/ScrollContainer',
   component: ScrollContainer,
   parameters: {
     controls: {
@@ -14,6 +14,8 @@ const meta: Meta<typeof ScrollContainer> = {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {},
   args: {

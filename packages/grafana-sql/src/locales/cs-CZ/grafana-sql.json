@@ -2,26 +2,26 @@
   "grafana-sql": {
     "components": {
       "confirm-modal": {
-        "builder-mode": "",
+        "builder-mode": "Režim nástroje pro tvorbu nezobrazuje změny provedené v kódu. Nástroj pro tvorbu dotazů zobrazí poslední změny provedené v režimu nástroje pro tvorbu.",
         "cancel": "Zrušit",
-        "clipboard": "",
-        "copy-code-and-switch": "",
-        "discard-code-and-switch": "",
+        "clipboard": "Chcete zkopírovat kód do schránky?",
+        "copy-code-and-switch": "Kopírovat kód a přepnout",
+        "discard-code-and-switch": "Zahodit kód a přepnout",
         "warning": "Varování"
       },
       "connection-limits": {
-        "auto-max-idle": "",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
-        "content-max-lifetime": "",
-        "content-max-open": "",
-        "max-idle": "",
-        "max-lifetime": "",
-        "max-open": "",
-        "title-connection-limits": ""
+        "auto-max-idle": "Auto. max. nečinný",
+        "content-auto-max-idle": "Pokud je tato možnost povolena, automaticky nastaví počet <1>Maximálních nečinných připojení</1> na stejnou hodnotu jako<3> Maximální otevřená připojení</3>. Pokud není nastaven počet maximálních otevřených připojení, bude nastaven na výchozí hodnotu ({{defaultMaxIdle}}).",
+        "content-max-idle": "Maximální počet připojení v nečinném připojovacím souboru. Pokud je <1>Maximální počet otevřených připojení</1> větší než 0, ale menší než <3>Maximální počet nečinných připojení</3>, pak bude <5>Maximální počet nečinných připojení</5> snížen tak, aby odpovídal limitu pro <8>Maximální počet otevřených připojení</8>. Pokud je nastaveno na 0, nejsou zachována žádná nečinná připojení.",
+        "content-max-lifetime": "Maximální doba v sekundách, po kterou může být připojení znovu použito. Pokud je nastaveno na 0, připojení jsou znovu používána opakovaně.",
+        "content-max-open": "Maximální počet otevřených připojení k databázi. Pokud je <1>Maximální počet nečinných připojení</1> větší než 0 a <3>Maximální počet otevřených připojení</3> je menší než <5>Maximální počet nečinných připojení</5>, pak bude <7>Maximální počet nečinných připojení</7> snížen tak, aby odpovídal limitu pro <9>Maximální počet otevřených připojení</9>. Pokud je nastaveno na 0, počet otevřených připojení není omezen.",
+        "max-idle": "Max. nečinný",
+        "max-lifetime": "Max. životnost",
+        "max-open": "Max. otevřený",
+        "title-connection-limits": "Omezení spojení"
       },
       "dataset-selector": {
-        "aria-label-dataset-selector": ""
+        "aria-label-dataset-selector": "Volič datové sady"
       },
       "error-boundary": {
         "fall-back": {
@@ -31,21 +31,21 @@
       "get-custom-operators": {
         "custom-operators": {
           "label": {
-            "macros": ""
+            "macros": "Makra"
           }
         }
       },
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "Seřadit podle",
-          "title-remove-group-by-column": ""
+          "title-remove-group-by-column": "Odebrat skupinu podle sloupce"
         }
       },
       "order-by-row": {
-        "aria-label-order-by": "",
+        "aria-label-order-by": "Řadit podle",
         "label-limit": "Limit",
-        "label-offset": "",
-        "label-order-by": ""
+        "label-offset": "Odchylka",
+        "label-order-by": "Řadit podle"
       },
       "preview": {
         "label-element": {
@@ -54,96 +54,100 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
-        "label-dataset": "",
+        "content-invalid-query": "Váš dotaz je neplatný. Podrobnosti najdete níže. <1></1>Tento dotaz však můžete stále spustit.",
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-dataset": "Soubor dat",
         "label-filter": "Filtrovat",
         "label-format": "Formát",
         "label-group": "Skupina",
-        "label-order": "",
+        "label-order": "Objednávka",
         "label-preview": "Náhled",
         "label-table": "Tabulka",
-        "placeholder-select-format": "",
+        "placeholder-select-format": "Zvolit formát",
         "run-query": "Spustit dotaz"
       },
       "query-toolbox": {
-        "content-hit-ctrlcmdreturn-to-run-query": "",
-        "tooltip-collapse": "",
-        "tooltip-expand": "",
-        "tooltip-format-query": ""
+        "content-hit-ctrlcmdreturn-to-run-query": "Stiskněte CTRL/CMD + Return pro spuštění dotazu",
+        "tooltip-collapse": "Sbalit editor",
+        "tooltip-expand": "Rozbalit editor",
+        "tooltip-format-query": "Formátovat dotaz"
       },
       "query-validator": {
-        "query-will-process": "",
-        "validating-query": ""
+        "query-will-process": "<0></0> Tento dotaz zpracuje <2>{{bytes}}</2> při spuštění.",
+        "validating-query": "Ověřování dotazu…"
       },
       "raw-editor": {
         "render-placeholder": {
-          "editing-in-expanded-code-editor": ""
+          "editing-in-expanded-code-editor": "Úpravy v rozšířeném editoru kódu"
         },
-        "title-query-num": ""
+        "title-query-num": "Dotaz {{queryNum}}"
       },
       "select-column": {
         "label-column": "Sloupec"
       },
       "select-custom-function-parameters": {
-        "aria-label-parameter": "",
+        "aria-label-parameter": "Parametr {{index}} pro sloupec {{columnIndex}}",
         "render-parameters": {
           "params": {
-            "title-remove-parameter": ""
+            "title-remove-parameter": "Odebrat parametr"
           }
         },
-        "title-add-parameter": ""
+        "title-add-parameter": "Přidat parametr"
       },
       "select-row": {
         "aggregate-options": {
           "options": {
             "label": {
-              "aggregations": "",
-              "macros": ""
+              "aggregations": "Agregace",
+              "macros": "Makra"
             }
           }
         },
         "label": {
-          "time": "",
+          "time": "čas",
           "value": "hodnota"
         },
         "label-alias": "Přezdívka",
-        "label-data-operations": "",
-        "title-add-column": "",
-        "title-remove-column": ""
+        "label-data-operations": "Datové operace",
+        "title-add-column": "Přidat sloupec",
+        "title-remove-column": "Odebrat sloupec"
       },
       "settings": {
-        "aria-label-conjunction": "",
+        "aria-label-conjunction": "Konjunkce",
         "aria-label-field": "Pole",
         "aria-label-operator": "Operátor",
-        "title-button-filter": ""
+        "title-button-filter": "{{ buttonLabel }} filtr"
       },
       "sql-query-editor-lazy": {
         "text-loading-editor": "Načítání editoru"
       },
       "table-selector": {
-        "aria-label-table-selector": "",
-        "placeholder-loading": "",
-        "placeholder-select-table": ""
+        "aria-label-table-selector": "Volič tabulky",
+        "placeholder-loading": "Načítání tabulek",
+        "placeholder-select-table": "Vyberte tabulku"
       },
       "tlssecrets-config": {
-        "content-tlsssl-client-certificate": "",
-        "content-tlsssl-client-key": "",
-        "content-tlsssl-root-certificate": "",
-        "tlsssl-client-certificate": "",
-        "tlsssl-client-key": "",
+        "content-tlsssl-client-certificate": "Pro ověření pomocí klientského certifikátu TLS/SSL zadejte klientský certifikát zde.",
+        "content-tlsssl-client-key": "Pro ověření pomocí klientského certifikátu TLS/SSL zadejte klíč zde.",
+        "content-tlsssl-root-certificate": "Pokud vybraný režim TLS/SSL vyžaduje kořenový certifikát serveru, zadejte ho zde",
+        "tlsssl-client-certificate": "Certifikát klienta TLS/SSL",
+        "tlsssl-client-key": "Klíč klienta TLS/SSL",
         "tlsssl-root-certificate": "Kořenový certifikát TLS/SSL"
       },
       "visual-editor": {
-        "label-filter-by-column-value": "",
-        "label-group-by-column": ""
+        "label-filter-by-column-value": "Filtrovat podle hodnoty sloupce",
+        "label-group-by-column": "Seřadit podle sloupce"
       },
       "widgets": {
-        "aria-label-macros-value-selector": ""
+        "aria-label-macros-value-selector": "Volič hodnoty maker"
       }
     },
     "utils": {
       "get-columns-width-indices": {
-        "label-selected-columns": ""
+        "label-selected-columns": "Vybrané sloupce"
       }
     }
   }

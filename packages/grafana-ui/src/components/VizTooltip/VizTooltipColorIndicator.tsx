@@ -56,11 +56,9 @@ export const VizTooltipColorIndicator = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   leading: css({
     marginRight: theme.spacing(0.5),
-    flex: 'none',
   }),
   trailing: css({
     marginLeft: theme.spacing(0.5),
-    flex: 'none',
   }),
   value: css({
     width: '12px',

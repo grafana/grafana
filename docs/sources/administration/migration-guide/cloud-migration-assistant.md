@@ -49,6 +49,7 @@ To use the Grafana migration assistant, you need:
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
 - [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing Grafana OSS/Enterprise instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
 - Internet access from your existing Grafana OSS/Enterprise instance.
+- If you are running Grafana in a [highly-available setup](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/), we recommend scaling Grafana down to one replica to avoid a [known bug](https://github.com/grafana/grafana/issues/107264).
 - If your network requires external services to be on an allowlist to allow access, add the following IPs and URLs to your allowlist:
   - [Hosted Grafana](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana)
   - [Hosted Alerts](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-alerts)
@@ -135,7 +136,6 @@ After a snapshot is created, a list of resources appears with resource Type and 
 1. Use the assistant's real-time progress tracking to monitor the migration. The status changes to 'Uploaded to cloud' for resources successfully copied to the cloud.
 
    From Grafana v12.0, you can group and sort resources during and after the migration:
-
    - Click **Name** to sort resources alphabetically.
    - Click **Type** to group and sort by resource type.
    - Click **Status** to group and sort by upload status (pending upload, uploaded successfully, or experienced errors).

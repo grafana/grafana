@@ -1,4 +1,5 @@
 import { isArray } from 'lodash';
+import moment from 'moment';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
@@ -6,6 +7,7 @@ import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
   DataQueryRequest,
+  dateMath,
   dateTime,
   getFrameDisplayName,
   MetricFindValue,
@@ -954,6 +956,31 @@ describe('graphiteDatasource', () => {
     it('does not extract metrics when the config does not match', async () => {
       await assertQueryExport('interpolate(alias(test.west.001.cpu))', []);
       await assertQueryExport('interpolate(alias(servers.west.001))', []);
+    });
+  });
+
+  describe('translateTime', () => {
+    it('does not mutate passed in date', async () => {
+      const date = new Date('2025-06-30T00:00:59.000Z');
+      const functionDate = moment(date);
+      const updatedDate = ctx.ds.translateTime(
+        dateMath.toDateTime(functionDate.toDate(), { roundUp: undefined, timezone: undefined })!,
+        true
+      );
+
+      expect(functionDate.toDate()).toEqual(date);
+      expect(updatedDate).not.toEqual(date.getTime());
+    });
+    it('does not mutate passed in relative date - string', async () => {
+      const date = 'now-1m';
+      const updatedDate = ctx.ds.translateTime(date, true);
+
+      expect(updatedDate).not.toEqual(date);
+    });
+    it('returns the input if the input is invalid', async () => {
+      const updatedDate = ctx.ds.translateTime('', true);
+
+      expect(updatedDate).toBe('');
     });
   });
 });

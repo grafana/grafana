@@ -3,16 +3,16 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	gh "github.com/google/go-github/v70/github"
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,10 +22,50 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
+
+// printFileTree prints the directory structure as a tree for debugging purposes
+func printFileTree(t *testing.T, rootPath string) {
+	t.Helper()
+	t.Logf("File tree for %s:", rootPath)
+
+	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+
+		if relPath == "." {
+			return nil
+		}
+
+		depth := strings.Count(relPath, string(filepath.Separator))
+		indent := strings.Repeat("  ", depth)
+
+		if d.IsDir() {
+			t.Logf("%s├── %s/", indent, d.Name())
+		} else {
+			info, err := d.Info()
+			if err != nil {
+				t.Logf("%s├── %s (error reading info)", indent, d.Name())
+			} else {
+				t.Logf("%s├── %s (%d bytes)", indent, d.Name(), info.Size())
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Logf("Error walking directory: %v", err)
+	}
+}
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	if testing.Short() {
@@ -85,6 +125,36 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 				Suffix("files/").
 				Do(context.Background())
 			require.NoError(t, rsp.Error())
+
+			// Verify that we can list refs
+			rsp = helper.AdminREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(name).
+				Suffix("refs").
+				Do(context.Background())
+
+			if expectedRepo.Spec.Type == provisioning.LocalRepositoryType {
+				require.ErrorContains(t, rsp.Error(), "does not support versioned operations")
+			} else {
+				require.NoError(t, rsp.Error())
+				refs := &provisioning.RefList{}
+				err = rsp.Into(refs)
+				require.NoError(t, err)
+				require.True(t, len(refs.Items) >= 1, "should have at least one ref")
+
+				var foundBranch bool
+				for _, ref := range refs.Items {
+					// FIXME: this assertion should be improved for all git types and take things from config
+					if ref.Name == "integration-test" {
+						require.Equal(t, "0f3370c212b04b9704e00f6926ef339bf91c7a1b", ref.Hash)
+						require.Equal(t, "https://github.com/grafana/grafana-git-sync-demo/tree/integration-test", ref.RefURL)
+						foundBranch = true
+					}
+				}
+
+				require.True(t, foundBranch, "branch should be found")
+			}
 		})
 	}
 
@@ -99,6 +169,22 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		err := rsp.Into(settings)
 		require.NoError(t, err)
 		require.Len(t, settings.Items, len(inputFiles))
+
+		// FIXME: this should be an enterprise integration test
+		if extensions.IsEnterprise {
+			require.ElementsMatch(t, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+				provisioning.GitRepositoryType,
+				provisioning.BitbucketRepositoryType,
+				provisioning.GitLabRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		} else {
+			require.ElementsMatch(t, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		}
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
@@ -173,7 +259,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	}, time.Second*10, time.Millisecond*10, "Expected to be able to start a sync job")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		//helper.TriggerJobProcessing(t)
+		// helper.TriggerJobProcessing(t)
 		result, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(jobObj.GetUID()))
 
@@ -211,50 +297,25 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatchHandler(ghmock.GetUser, ghAlwaysWrite(t, &gh.User{Name: gh.Ptr("github-user")})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, ghAlwaysWrite(t, []*gh.Hook{})),
-		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, ghAlwaysWrite(t, &gh.Hook{ID: gh.Ptr(int64(123))})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposByOwnerByRepo, ghAlwaysWrite(t, &gh.Repository{ID: gh.Ptr(int64(234))})),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposBranchesByOwnerByRepoByBranch,
-			ghAlwaysWrite(t, &gh.Branch{
-				Name:   gh.Ptr("main"),
-				Commit: &gh.RepositoryCommit{SHA: gh.Ptr("deadbeef")},
-			}),
-		),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
-			ghHandleTree(t, map[string][]*gh.TreeEntry{
-				"deadbeef": {
-					treeEntryDir("grafana", "subtree"),
-				},
-				"subtree": {
-					treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
-					treeEntryDir("subdir", "subtree2"),
-					treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
-				},
-			})),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposContentsByOwnerByRepoByPath,
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				pathRegex := regexp.MustCompile(`/repos/[^/]+/[^/]+/contents/(.*)`)
-				matches := pathRegex.FindStringSubmatch(r.URL.Path)
-				require.NotNil(t, matches, "no match for contents?")
-				path := matches[1]
+	// FIXME: instead of using an existing GitHub repository, we should create a new one for the tests and a branch
+	// This was the previous structure
+	// ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
+	// 	ghHandleTree(t, map[string][]*gh.TreeEntry{
+	// 		"deadbeef": {
+	// 			treeEntryDir("grafana", "subtree"),
+	// 		},
+	// 		"subtree": {
+	// 			treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
+	// 			treeEntryDir("subdir", "subtree2"),
+	// 			treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
+	// 		},
+	// 	})),
 
-				var err error
-				switch path {
-				case "grafana/dashboard.json":
-					_, err = w.Write(ghmock.MustMarshal(repoContent(path, helper.LoadFile("testdata/all-panels.json"))))
-				case "grafana/subdir/dashboard2.yaml":
-					_, err = w.Write(ghmock.MustMarshal(repoContent(path, helper.LoadFile("testdata/text-options.json"))))
-				default:
-					t.Fatalf("got unexpected path: %s", path)
-				}
-				require.NoError(t, err)
-			}),
-		),
-	)
+	// FIXME: uncomment these to implement webhook integration tests.
+	// helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
+	// 	ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, ghAlwaysWrite(t, []*gh.Hook{})),
+	// 	ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, ghAlwaysWrite(t, &gh.Hook{ID: gh.Ptr(int64(123))})),
+	// )
 
 	const repo = "github-create-test"
 	_, err := helper.Repositories.Resource.Create(ctx,
@@ -279,8 +340,10 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	for _, v := range found.Items {
 		names = append(names, v.GetName())
 	}
-	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
-	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+	require.Len(t, names, 3, "should have three dashboards")
+	assert.Contains(t, names, "adg5vbj", "should contain dashboard.json's contents")
+	assert.Contains(t, names, "admfz74", "should contain dashboard2.yaml's contents")
+	assert.Contains(t, names, "adn5mxb", "should contain dashboard2.yaml's contents")
 
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
@@ -513,16 +576,27 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	helper := runGrafana(t)
 	ctx := context.Background()
 
+	// The dashboard shouldn't exist yet
+	const allPanels = "n1jR8vnnz"
+	_, err := helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	require.Error(t, err, "no all-panels dashboard should exist")
+	require.True(t, apierrors.IsNotFound(err))
+
 	const repo = "local-tmp"
 	// Set up the repository and the file to import.
 	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "all-panels.json")
-
 	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo,
 		"SyncEnabled": true,
 	})
-	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+
+	// We create the repository
+	_, err = helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
 	require.NoError(t, err)
+
+	// Now, we import it, such that it may exist
+	// The sync may not be necessary as the sync may have happened automatically at this point
+	helper.SyncAndWait(t, repo, nil)
 
 	// Make sure the repo can read and validate the file
 	obj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "all-panels.json")
@@ -530,21 +604,14 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 
 	resource, _, err := unstructured.NestedMap(obj.Object, "resource")
 	require.NoError(t, err, "missing resource")
-	action, _, err := unstructured.NestedString(resource, "action")
 	require.NoError(t, err, "invalid action")
-
 	require.NotNil(t, resource["file"], "the raw file")
 	require.NotNil(t, resource["dryRun"], "dryRun result")
-	require.Equal(t, "create", action)
 
-	// But the dashboard shouldn't exist yet
-	const allPanels = "n1jR8vnnz"
-	_, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
-	require.Error(t, err, "no all-panels dashboard should exist")
-	require.True(t, apierrors.IsNotFound(err))
-
-	// Now, we import it, such that it may exist
-	helper.SyncAndWait(t, repo, nil)
+	action, _, err := unstructured.NestedString(resource, "action")
+	require.NoError(t, err, "invalid action")
+	// FIXME: there is no point in in returning action for a read / get request.
+	require.Equal(t, "update", action)
 
 	_, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
@@ -587,9 +654,13 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	_, err = helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
-	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2.yaml")
-	_, err = helper.DashboardsV2.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create v2 dashboard")
+	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
+	_, err = helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
+
+	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2alpha2.yaml")
+	_, err = helper.DashboardsV2alpha2.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2alpha2 dashboard")
 
 	// Now for the repository.
 	const repo = "local-repository"
@@ -620,15 +691,19 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		title      string
 		apiVersion string
 		name       string
+		fileName   string
 	}
+
+	printFileTree(t, helper.ProvisioningPath)
 
 	// Check that each file was exported with its stored version
 	for _, test := range []props{
-		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0"},
-		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1"},
-		{title: "Test dashboard. Created at v2", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2"},
+		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
+		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
+		{title: "Test dashboard. Created at v2alpha1", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2alpha1", fileName: "test-dashboard-created-at-v2alpha1.json"},
+		{title: "Test dashboard. Created at v2alpha2", apiVersion: "dashboard.grafana.app/v2alpha2", name: "test-v2alpha2", fileName: "test-dashboard-created-at-v2alpha2.json"},
 	} {
-		fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(test.title)+".json")
+		fpath := filepath.Join(helper.ProvisioningPath, test.fileName)
 		//nolint:gosec // we are ok with reading files in testdata
 		body, err := os.ReadFile(fpath)
 		require.NoError(t, err, "exported file was not created at path %s", fpath)
@@ -650,4 +725,534 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 		require.Nil(t, obj["status"], "should not have a status element")
 	}
+}
+
+func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "delete-test-repo"
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+		"SyncTarget":  "instance",
+	})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Copy the dashboards to the repository path
+	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
+	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "folder/dashboard2.json")
+	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/nested/dashboard3.json")
+	// make sure we don't fail when there is a .keep file in a folder
+	helper.CopyToProvisioningPath(t, "testdata/.keep", "folder/nested/.keep")
+
+	// Trigger and wait for a sync job to finish
+	helper.SyncAndWait(t, repo, nil)
+
+	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 3, len(dashboards.Items))
+
+	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 2, len(folders.Items))
+
+	t.Run("delete individual dashboard file, should delete from repo and grafana", func(t *testing.T) {
+		result := helper.AdminREST.Delete().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "dashboard1.json").
+			Do(ctx)
+		require.NoError(t, result.Error())
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
+		require.Error(t, err)
+		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, 2, len(dashboards.Items))
+	})
+
+	t.Run("delete folder, should delete from repo and grafana all nested resources too", func(t *testing.T) {
+		// need to delete directly through the url, because the k8s client doesn't support `/` in a subresource
+		// but that is needed by gitsync to know that it is a folder
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/", addr, repo)
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// should be deleted from the repo
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder")
+		require.Error(t, err)
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard2.json")
+		require.Error(t, err)
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "nested")
+		require.Error(t, err)
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "nested", "dashboard3.json")
+		require.Error(t, err)
+
+		// all should be deleted from grafana
+		for _, d := range dashboards.Items {
+			_, err = helper.DashboardsV1.Resource.Get(ctx, d.GetName(), metav1.GetOptions{})
+			require.Error(t, err)
+		}
+		for _, f := range folders.Items {
+			_, err = helper.Folders.Resource.Get(ctx, f.GetName(), metav1.GetOptions{})
+			require.Error(t, err)
+		}
+	})
+
+	t.Run("deleting a non-existent file should fail", func(t *testing.T) {
+		result := helper.AdminREST.Delete().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "non-existent.json").
+			Do(ctx)
+		require.Error(t, result.Error())
+	})
+}
+
+func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "delete-job-test-repo"
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+		"SyncTarget":  "instance",
+	})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+	// Copy multiple test files to the repository
+	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
+	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "dashboard2.json")
+	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/dashboard3.json")
+
+	// Trigger and wait for initial sync to populate resources
+	helper.SyncAndWait(t, repo, nil)
+
+	// Verify initial state - should have 3 dashboards and 1 folder
+	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 3, len(dashboards.Items), "should have 3 dashboards after sync")
+
+	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(folders.Items), "should have 1 folder after sync")
+
+	t.Run("delete single file", func(t *testing.T) {
+		// Create delete job for single file
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(asJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Paths: []string{"dashboard1.json"},
+				},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "should be able to create delete job")
+
+		// Wait for job to complete
+		helper.AwaitJobs(t, repo)
+
+		// Verify file is deleted from repository
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
+		require.Error(t, err, "file should be deleted from repository")
+		require.True(t, apierrors.IsNotFound(err), "should be not found error")
+
+		// Verify dashboard is removed from Grafana after sync
+		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, 2, len(dashboards.Items), "should have 2 dashboards after delete")
+
+		// Verify other files still exist
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
+		require.NoError(t, err, "other files should still exist")
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
+		require.NoError(t, err, "nested files should still exist")
+	})
+
+	t.Run("delete multiple files", func(t *testing.T) {
+		// Create delete job for multiple files
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(asJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Paths: []string{"dashboard2.json", "folder/dashboard3.json"},
+				},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "should be able to create delete job")
+
+		// Wait for job to complete
+		helper.AwaitJobs(t, repo)
+
+		// Verify files are deleted from repository
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
+		require.Error(t, err, "dashboard2.json should be deleted")
+		require.True(t, apierrors.IsNotFound(err))
+
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
+		require.Error(t, err, "folder/dashboard3.json should be deleted")
+		require.True(t, apierrors.IsNotFound(err))
+
+		// Verify all dashboards are removed from Grafana after sync
+		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, 0, len(dashboards.Items), "should have 0 dashboards after deleting all")
+	})
+
+	t.Run("delete non-existent file", func(t *testing.T) {
+		// Create delete job for non-existent file
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(asJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Paths: []string{"non-existent.json"},
+				},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "should be able to create delete job")
+
+		// Wait for job to complete - should fail due to strict error handling
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			list := &unstructured.UnstructuredList{}
+			err := helper.AdminREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("jobs").
+				Do(ctx).Into(list)
+			assert.NoError(collect, err, "should be able to list jobs")
+			assert.NotEmpty(collect, list.Items, "expect at least one job")
+
+			// Find the delete job specifically
+			var deleteJob *unstructured.Unstructured
+			for _, elem := range list.Items {
+				assert.Equal(collect, repo, elem.GetLabels()["provisioning.grafana.app/repository"], "should have repo label")
+
+				action := mustNestedString(elem.Object, "spec", "action")
+				if action == "delete" {
+					deleteJob = &elem
+					break
+				}
+			}
+			assert.NotNil(collect, deleteJob, "should find a delete job")
+
+			state := mustNestedString(deleteJob.Object, "status", "state")
+			assert.Equal(collect, "error", state, "delete job should have failed due to non-existent file")
+		}, time.Second*10, time.Millisecond*100, "Expected delete job to fail with error state")
+	})
+}
+
+func TestIntegrationProvisioning_MoveResources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	const repo = "move-test-repo"
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+		"SyncTarget":  "instance",
+	})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Copy test dashboards to the repository path for initial setup
+	const originalDashboard = "all-panels.json"
+	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", originalDashboard)
+
+	// Wait for sync to ensure the dashboard is created in Grafana
+	helper.SyncAndWait(t, repo, nil)
+
+	// Verify the original dashboard exists in Grafana (using the UID from all-panels.json)
+	const allPanelsUID = "n1jR8vnnz" // This is the UID from the all-panels.json file
+	obj, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	require.NoError(t, err, "original dashboard should exist in Grafana")
+	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+
+	t.Run("move file without content change", func(t *testing.T) {
+		const targetPath = "moved/simple-move.json"
+
+		// Perform the move operation using helper function
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetPath,
+			originalPath: originalDashboard,
+			message:      "move file without content change",
+		})
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
+
+		// Verify the file moved in the repository
+		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
+		require.NoError(t, err, "moved file should exist in repository")
+
+		// Check the content is preserved (verify it's still the all-panels dashboard)
+		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
+		require.NoError(t, err)
+		dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
+		require.NoError(t, err)
+		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, "Panel tests - All panels", title, "content should be preserved")
+
+		// Verify original file no longer exists
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", originalDashboard)
+		require.Error(t, err, "original file should no longer exist")
+
+		// Verify dashboard still exists in Grafana with same content but may have updated path references
+		helper.SyncAndWait(t, repo, nil)
+		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.NoError(t, err, "dashboard should still exist in Grafana after move")
+	})
+
+	t.Run("move file to nested path without ref", func(t *testing.T) {
+		// Test a different scenario: Move a file that was never synced to Grafana
+		// This might reveal the issue if dashboard creation fails during move
+		const sourceFile = "never-synced.json"
+		helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", sourceFile)
+
+		// DO NOT sync - move the file immediately without it ever being in Grafana
+		const targetPath = "deep/nested/timeline.json"
+
+		// Perform the move operation without the file ever being synced to Grafana
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetPath,
+			originalPath: sourceFile,
+			message:      "move never-synced file to nested path",
+		})
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move operation should succeed")
+
+		// Check folders were created and validate hierarchy
+		folderList, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "should be able to list folders")
+
+		// Build a map of folder names to their objects for easier lookup
+		folders := make(map[string]*unstructured.Unstructured)
+		for _, folder := range folderList.Items {
+			title, _, _ := unstructured.NestedString(folder.Object, "spec", "title")
+			folders[title] = &folder
+			parent, _, _ := unstructured.NestedString(folder.Object, "metadata", "annotations", "grafana.app/folder")
+			t.Logf("  - %s: %s (parent: %s)", folder.GetName(), title, parent)
+		}
+
+		// Validate expected folders exist with proper hierarchy
+		// Expected structure: deep -> deep/nested
+		deepFolderTitle := "deep"
+		nestedFolderTitle := "nested"
+
+		// Validate "deep" folder exists and has no parent (is top-level)
+		require.Contains(t, folders, deepFolderTitle, "deep folder should exist")
+		f := folders[deepFolderTitle]
+		deepFolderName := f.GetName()
+		title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
+		require.Equal(t, deepFolderTitle, title, "deep folder should have correct title")
+		parent, found, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/folder")
+		require.True(t, !found || parent == "", "deep folder should be top-level (no parent)")
+
+		// Validate "deep/nested" folder exists and has "deep" as parent
+		require.Contains(t, folders, nestedFolderTitle, "nested folder should exist")
+		f = folders[nestedFolderTitle]
+		nestedFolderName := f.GetName()
+		title, _, _ = unstructured.NestedString(f.Object, "spec", "title")
+		require.Equal(t, nestedFolderTitle, title, "nested folder should have correct title")
+		parent, _, _ = unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, deepFolderName, parent, "nested folder should have deep folder as parent")
+
+		// The key test: Check if dashboard was created in Grafana during move
+		const timelineUID = "mIJjFy8Kz"
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
+		require.NoError(t, err, "dashboard should exist in Grafana after moving never-synced file")
+		dashboardFolder, _, _ := unstructured.NestedString(dashboard.Object, "metadata", "annotations", "grafana.app/folder")
+
+		// Validate dashboard is in the correct nested folder
+		require.Equal(t, nestedFolderName, dashboardFolder, "dashboard should be in the nested folder")
+
+		// Verify the file moved in the repository
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "deep", "nested", "timeline.json")
+		require.NoError(t, err, "moved file should exist in nested repository path")
+
+		// Verify the original file no longer exists in the repository
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", sourceFile)
+		require.Error(t, err, "original file should no longer exist in repository")
+	})
+
+	t.Run("move file with content update", func(t *testing.T) {
+		const sourcePath = "moved/simple-move.json" // Use the file from previous test
+		const targetPath = "updated/content-updated.json"
+
+		// Use text-options.json content for the update
+		updatedContent := helper.LoadFile("testdata/text-options.json")
+
+		// Perform move with content update using helper function
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetPath,
+			originalPath: sourcePath,
+			message:      "move file with content update",
+			body:         string(updatedContent),
+		})
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "move with content update should succeed")
+
+		// Verify the moved file has updated content (should now be text-options dashboard)
+		movedObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "updated", "content-updated.json")
+		require.NoError(t, err, "moved file should exist in repository")
+
+		resource, _, err := unstructured.NestedMap(movedObj.Object, "resource")
+		require.NoError(t, err)
+		dryRun, _, err := unstructured.NestedMap(resource, "dryRun")
+		require.NoError(t, err)
+		title, _, err := unstructured.NestedString(dryRun, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, "Text options", title, "content should be updated to text-options dashboard")
+
+		// Check it has the expected UID from text-options.json
+		name, _, err := unstructured.NestedString(dryRun, "metadata", "name")
+		require.NoError(t, err)
+		require.Equal(t, "WZ7AhQiVz", name, "should have the UID from text-options.json")
+
+		// Verify source file no longer exists
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "simple-move.json")
+		require.Error(t, err, "source file should no longer exist")
+
+		// Sync and verify the updated dashboard exists in Grafana
+		helper.SyncAndWait(t, repo, nil)
+		const textOptionsUID = "WZ7AhQiVz" // UID from text-options.json
+		updatedDashboard, err := helper.DashboardsV1.Resource.Get(ctx, textOptionsUID, metav1.GetOptions{})
+		require.NoError(t, err, "updated dashboard should exist in Grafana")
+
+		// Verify the original dashboard was deleted from Grafana
+		_, err = helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		require.Error(t, err, "original dashboard should be deleted from Grafana")
+		require.True(t, apierrors.IsNotFound(err))
+
+		// Verify the new dashboard has the updated content
+		updatedTitle, _, err := unstructured.NestedString(updatedDashboard.Object, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, "Text options", updatedTitle)
+	})
+
+	t.Run("move directory", func(t *testing.T) {
+		// Create some files in a directory first using existing testdata files
+		helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "source-dir/timeline-demo.json")
+		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "source-dir/text-options.json")
+
+		// Sync to ensure files are recognized
+		helper.SyncAndWait(t, repo, nil)
+
+		const sourceDir = "source-dir/"
+		const targetDir = "moved-dir/"
+
+		// Move directory using helper function
+		resp := helper.postFilesRequest(t, repo, filesPostOptions{
+			targetPath:   targetDir,
+			originalPath: sourceDir,
+			message:      "move directory",
+		})
+		// nolint:errcheck
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move should succeed")
+
+		// Verify source directory no longer exists
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "source-dir")
+		require.Error(t, err, "source directory should no longer exist")
+
+		// Verify target directory and files exist
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved-dir", "timeline-demo.json")
+		require.NoError(t, err, "moved timeline-demo.json should exist")
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved-dir", "text-options.json")
+		require.NoError(t, err, "moved text-options.json should exist")
+	})
+
+	t.Run("error cases", func(t *testing.T) {
+		t.Run("missing originalPath parameter", func(t *testing.T) {
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "target.json").
+				Body([]byte(`{"test": "content"}`)).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.Error(t, result.Error(), "should fail without originalPath")
+		})
+
+		t.Run("file to directory type mismatch", func(t *testing.T) {
+			// First create a simple test file without slashes in the path
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "simple-test.json").
+				Body(helper.LoadFile("testdata/all-panels.json")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.NoError(t, result.Error(), "should create test file")
+
+			// Now try to move this file to a directory path using helper function
+			resp := helper.postFilesRequest(t, repo, filesPostOptions{
+				targetPath:   "target-dir/",
+				originalPath: "simple-test.json",
+				message:      "test move",
+			})
+			// nolint:errcheck
+			defer resp.Body.Close()
+			// Read response body to check error message
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			require.NotEqual(t, http.StatusOK, resp.StatusCode, "should fail when moving file to directory")
+			require.Contains(t, string(body), "cannot move between file and directory types")
+		})
+
+		t.Run("non-existent source file", func(t *testing.T) {
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("files", "target.json").
+				Param("originalPath", "non-existent.json").
+				Body([]byte("")).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.Error(t, result.Error(), "should fail when source file doesn't exist")
+		})
+	})
 }

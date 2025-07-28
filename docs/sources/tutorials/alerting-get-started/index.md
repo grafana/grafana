@@ -24,6 +24,8 @@ killercoda:
 
 In this tutorial, we walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
+{{< youtube id="YVhKNbQNNss" >}}
+
 In this tutorial you will:
 
 - Create a contact point.
@@ -55,17 +57,14 @@ After you have completed Part 1, don’t forget to explore the advanced but esse
 There are different ways you can follow along with this tutorial.
 
 - **Grafana Cloud**
-
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
 
   Continue to [Create a contact point](#create-a-contact-point).
 
 - **Interactive learning environment**
-
   - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/). It's a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
-
   - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
@@ -192,7 +191,6 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 1. Select the **TestData** data source from the drop-down menu.
 
 1. In the **Alert condition** section:
-
    - Keep **Random Walk** as the _Scenario_.
    - Keep `Last` as the value for the reducer function (`WHEN`), and `IS ABOVE 0` as the threshold value. This is the value above which the alert rule should trigger.
 

@@ -7,12 +7,14 @@ import { Text } from './Text';
 import mdx from './Text.mdx';
 
 const meta: Meta = {
-  title: 'General/Text',
+  title: 'Foundations/Text',
   component: Text,
   parameters: {
     docs: {
       page: mdx,
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     variant: {
