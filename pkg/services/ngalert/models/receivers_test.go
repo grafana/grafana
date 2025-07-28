@@ -101,9 +101,8 @@ func TestIntegration_Redact(t *testing.T) {
 }
 
 func TestIntegration_Validate(t *testing.T) {
-	if testing.
-		// Test that all known integration types are valid.
-		Short() {
+	// Test that all known integration types are valid.
+	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
 
