@@ -59,6 +59,7 @@ import {
   computeColWidths,
   createTypographyContext,
   displayJsonValue,
+  extractPixelValue,
   frameToRecords,
   getAlignment,
   getApplyToRowBgFn,
@@ -171,10 +172,15 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
     [width, hasNestedFrames, scrollbarWidth]
   );
-  const typographyCtx = useMemo(
-    () => createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily),
-    [theme]
-  );
+
+  const typographyCtx = useMemo(() => {
+    let letterSpacing: number | undefined = undefined;
+    if (theme.typography.body.letterSpacing) {
+      letterSpacing = extractPixelValue(theme.typography.body.letterSpacing);
+    }
+    return createTypographyContext(theme.typography.fontSize, theme.typography.fontFamily, letterSpacing);
+  }, [theme]);
+
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
   const headerHeight = useHeaderHeight({
     columnWidths: widths,

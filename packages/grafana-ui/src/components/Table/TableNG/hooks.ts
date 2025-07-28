@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, GrafanaTheme2, reduceField } from '@grafana/data';
 
 import { TableColumnResizeActionCallback } from '../types';
 
@@ -15,6 +15,7 @@ import {
   getRowHeight,
   buildHeaderLineCounters,
   buildRowLineCounters,
+  createTypographyContext,
 } from './utils';
 
 // Helper function to get displayed value
@@ -320,8 +321,8 @@ interface UseHeaderHeightOptions {
   fields: Field[];
   columnWidths: number[];
   sortColumns: SortColumn[];
-  typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  typographyCtx: TypographyCtx;
 }
 
 export function useHeaderHeight({
@@ -329,13 +330,12 @@ export function useHeaderHeight({
   enabled,
   columnWidths,
   sortColumns,
-  typographyCtx,
   showTypeIcons = false,
+  typographyCtx,
 }: UseHeaderHeightOptions): number {
-  const perIconSpace = ICON_WIDTH + ICON_GAP;
-
   const lineCounters = useMemo(() => buildHeaderLineCounters(fields, typographyCtx), [fields, typographyCtx]);
 
+  const perIconSpace = ICON_WIDTH + ICON_GAP;
   const columnAvailableWidths = useMemo(
     () =>
       columnWidths.map((c, idx) => {

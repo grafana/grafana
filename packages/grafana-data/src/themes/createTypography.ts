@@ -99,7 +99,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
       fontWeight,
       fontSize: pxToRem(size),
       lineHeight: lineHeight / size,
-      ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
+      ...(fontFamily === defaultFontFamily ? { letterSpacing: `${letterSpacing}px` } : {}),
       ...casing,
     };
   };
