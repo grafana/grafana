@@ -231,7 +231,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'smoke',
-      testDir: path.join(testDirRoot, '/smoke-tests'),
+      testDir: path.join(testDirRoot, '/smoke-tests-suite'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
