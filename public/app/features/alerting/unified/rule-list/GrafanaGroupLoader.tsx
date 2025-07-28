@@ -8,13 +8,11 @@ import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { prometheusApi } from '../api/prometheusApi';
 import { useContinuousPagination } from '../hooks/usePagination';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
+import { DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP, RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { LoadMoreButton } from './components/LoadMoreButton';
-
-const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP = 100;
 
 const { useGetGrafanaGroupsQuery } = prometheusApi;
 
