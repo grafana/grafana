@@ -40,6 +40,9 @@ import (
 )
 
 func TestIntegrationTestReceivers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
@@ -544,6 +547,9 @@ func TestIntegrationTestReceivers(t *testing.T) {
 }
 
 func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	t.Run("assert custom annotations and labels are sent", func(t *testing.T) {
@@ -831,6 +837,9 @@ func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
 }
 
 func TestIntegrationNotificationChannels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

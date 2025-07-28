@@ -51,6 +51,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationParseMetricRequest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
@@ -272,6 +275,9 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 }
 
 func TestIntegrationQueryDataMultipleSources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t, false, nil)
 		query1, err := simplejson.NewJson([]byte(`
@@ -455,6 +461,9 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 }
 
 func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("can run a simple datasource query with a mt ds client", func(t *testing.T) {
 		stubbedResponse := &backend.QueryDataResponse{Responses: make(backend.Responses)}
 		testClient := &testClient{

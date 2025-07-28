@@ -2644,6 +2644,9 @@ func TestCleanUpDashboard(t *testing.T) {
 }
 
 func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name            string
 		featureEnabled  bool

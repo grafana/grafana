@@ -42,6 +42,9 @@ import (
 )
 
 func TestIntegrationCallResource(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	staticRootPath, err := filepath.Abs("../../public/")
 	require.NoError(t, err)
 

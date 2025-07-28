@@ -14,6 +14,9 @@ import (
 )
 
 func TestIntegrationFetchOrgIds(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 
 	t.Run("returns empty result when no orgs exist", func(t *testing.T) {
