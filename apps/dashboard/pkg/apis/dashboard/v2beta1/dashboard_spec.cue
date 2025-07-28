@@ -1,8 +1,8 @@
 // This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY
-// Source: apps/dashboard/kinds/v2alpha2/dashboard_spec.cue
+// Source: apps/dashboard/kinds/v2beta1/dashboard_spec.cue
 // To sync changes, run: make generate in apps/dashboard
 
-package v2alpha2
+package v2beta1
 
 DashboardSpec: {
 	annotations: [...AnnotationQueryKind] | *[]

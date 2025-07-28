@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v2alpha2
+package v2beta1
 
 import (
 	json "encoding/json"
@@ -49,8 +49,8 @@ type DashboardDataQueryKind struct {
 	Version string `json:"version"`
 	// New type for datasource reference
 	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
-	Datasource *DashboardV2alpha2DataQueryKindDatasource `json:"datasource,omitempty"`
-	Spec       map[string]interface{}                    `json:"spec"`
+	Datasource *DashboardV2beta1DataQueryKindDatasource `json:"datasource,omitempty"`
+	Spec       map[string]interface{}                   `json:"spec"`
 }
 
 // NewDashboardDataQueryKind creates a new DashboardDataQueryKind object.
@@ -325,14 +325,14 @@ type DashboardFieldConfigSource struct {
 	// Defaults are the options applied to all fields.
 	Defaults DashboardFieldConfig `json:"defaults"`
 	// Overrides are the options applied to specific fields overriding the defaults.
-	Overrides []DashboardV2alpha2FieldConfigSourceOverrides `json:"overrides"`
+	Overrides []DashboardV2beta1FieldConfigSourceOverrides `json:"overrides"`
 }
 
 // NewDashboardFieldConfigSource creates a new DashboardFieldConfigSource object.
 func NewDashboardFieldConfigSource() *DashboardFieldConfigSource {
 	return &DashboardFieldConfigSource{
 		Defaults:  *NewDashboardFieldConfig(),
-		Overrides: []DashboardV2alpha2FieldConfigSourceOverrides{},
+		Overrides: []DashboardV2beta1FieldConfigSourceOverrides{},
 	}
 }
 
@@ -462,14 +462,14 @@ func NewDashboardValueMappingResult() *DashboardValueMappingResult {
 type DashboardRangeMap struct {
 	Type DashboardMappingType `json:"type"`
 	// Range to match against and the result to apply when the value is within the range
-	Options DashboardV2alpha2RangeMapOptions `json:"options"`
+	Options DashboardV2beta1RangeMapOptions `json:"options"`
 }
 
 // NewDashboardRangeMap creates a new DashboardRangeMap object.
 func NewDashboardRangeMap() *DashboardRangeMap {
 	return &DashboardRangeMap{
 		Type:    DashboardMappingTypeRange,
-		Options: *NewDashboardV2alpha2RangeMapOptions(),
+		Options: *NewDashboardV2beta1RangeMapOptions(),
 	}
 }
 
@@ -479,14 +479,14 @@ func NewDashboardRangeMap() *DashboardRangeMap {
 type DashboardRegexMap struct {
 	Type DashboardMappingType `json:"type"`
 	// Regular expression to match against and the result to apply when the value matches the regex
-	Options DashboardV2alpha2RegexMapOptions `json:"options"`
+	Options DashboardV2beta1RegexMapOptions `json:"options"`
 }
 
 // NewDashboardRegexMap creates a new DashboardRegexMap object.
 func NewDashboardRegexMap() *DashboardRegexMap {
 	return &DashboardRegexMap{
 		Type:    DashboardMappingTypeRegex,
-		Options: *NewDashboardV2alpha2RegexMapOptions(),
+		Options: *NewDashboardV2beta1RegexMapOptions(),
 	}
 }
 
@@ -495,15 +495,15 @@ func NewDashboardRegexMap() *DashboardRegexMap {
 // For example, you can configure a special value mapping so that null values appear as N/A.
 // +k8s:openapi-gen=true
 type DashboardSpecialValueMap struct {
-	Type    DashboardMappingType                    `json:"type"`
-	Options DashboardV2alpha2SpecialValueMapOptions `json:"options"`
+	Type    DashboardMappingType                   `json:"type"`
+	Options DashboardV2beta1SpecialValueMapOptions `json:"options"`
 }
 
 // NewDashboardSpecialValueMap creates a new DashboardSpecialValueMap object.
 func NewDashboardSpecialValueMap() *DashboardSpecialValueMap {
 	return &DashboardSpecialValueMap{
 		Type:    DashboardMappingTypeSpecial,
-		Options: *NewDashboardV2alpha2SpecialValueMapOptions(),
+		Options: *NewDashboardV2beta1SpecialValueMapOptions(),
 	}
 }
 
@@ -1584,10 +1584,10 @@ func NewDashboardCustomVariableSpec() *DashboardCustomVariableSpec {
 // Group variable kind
 // +k8s:openapi-gen=true
 type DashboardGroupByVariableKind struct {
-	Kind       string                                          `json:"kind"`
-	Group      string                                          `json:"group"`
-	Datasource *DashboardV2alpha2GroupByVariableKindDatasource `json:"datasource,omitempty"`
-	Spec       DashboardGroupByVariableSpec                    `json:"spec"`
+	Kind       string                                         `json:"kind"`
+	Group      string                                         `json:"group"`
+	Datasource *DashboardV2beta1GroupByVariableKindDatasource `json:"datasource,omitempty"`
+	Spec       DashboardGroupByVariableSpec                   `json:"spec"`
 }
 
 // NewDashboardGroupByVariableKind creates a new DashboardGroupByVariableKind object.
@@ -1634,10 +1634,10 @@ func NewDashboardGroupByVariableSpec() *DashboardGroupByVariableSpec {
 // Adhoc variable kind
 // +k8s:openapi-gen=true
 type DashboardAdhocVariableKind struct {
-	Kind       string                                        `json:"kind"`
-	Group      string                                        `json:"group"`
-	Datasource *DashboardV2alpha2AdhocVariableKindDatasource `json:"datasource,omitempty"`
-	Spec       DashboardAdhocVariableSpec                    `json:"spec"`
+	Kind       string                                       `json:"kind"`
+	Group      string                                       `json:"group"`
+	Datasource *DashboardV2beta1AdhocVariableKindDatasource `json:"datasource,omitempty"`
+	Spec       DashboardAdhocVariableSpec                   `json:"spec"`
 }
 
 // NewDashboardAdhocVariableKind creates a new DashboardAdhocVariableKind object.
@@ -1766,31 +1766,31 @@ func NewDashboardSpec() *DashboardSpec {
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha2DataQueryKindDatasource struct {
+type DashboardV2beta1DataQueryKindDatasource struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// NewDashboardV2alpha2DataQueryKindDatasource creates a new DashboardV2alpha2DataQueryKindDatasource object.
-func NewDashboardV2alpha2DataQueryKindDatasource() *DashboardV2alpha2DataQueryKindDatasource {
-	return &DashboardV2alpha2DataQueryKindDatasource{}
+// NewDashboardV2beta1DataQueryKindDatasource creates a new DashboardV2beta1DataQueryKindDatasource object.
+func NewDashboardV2beta1DataQueryKindDatasource() *DashboardV2beta1DataQueryKindDatasource {
+	return &DashboardV2beta1DataQueryKindDatasource{}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha2FieldConfigSourceOverrides struct {
+type DashboardV2beta1FieldConfigSourceOverrides struct {
 	Matcher    DashboardMatcherConfig        `json:"matcher"`
 	Properties []DashboardDynamicConfigValue `json:"properties"`
 }
 
-// NewDashboardV2alpha2FieldConfigSourceOverrides creates a new DashboardV2alpha2FieldConfigSourceOverrides object.
-func NewDashboardV2alpha2FieldConfigSourceOverrides() *DashboardV2alpha2FieldConfigSourceOverrides {
-	return &DashboardV2alpha2FieldConfigSourceOverrides{
+// NewDashboardV2beta1FieldConfigSourceOverrides creates a new DashboardV2beta1FieldConfigSourceOverrides object.
+func NewDashboardV2beta1FieldConfigSourceOverrides() *DashboardV2beta1FieldConfigSourceOverrides {
+	return &DashboardV2beta1FieldConfigSourceOverrides{
 		Matcher:    *NewDashboardMatcherConfig(),
 		Properties: []DashboardDynamicConfigValue{},
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha2RangeMapOptions struct {
+type DashboardV2beta1RangeMapOptions struct {
 	// Min value of the range. It can be null which means -Infinity
 	From *float64 `json:"from"`
 	// Max value of the range. It can be null which means +Infinity
@@ -1799,61 +1799,61 @@ type DashboardV2alpha2RangeMapOptions struct {
 	Result DashboardValueMappingResult `json:"result"`
 }
 
-// NewDashboardV2alpha2RangeMapOptions creates a new DashboardV2alpha2RangeMapOptions object.
-func NewDashboardV2alpha2RangeMapOptions() *DashboardV2alpha2RangeMapOptions {
-	return &DashboardV2alpha2RangeMapOptions{
+// NewDashboardV2beta1RangeMapOptions creates a new DashboardV2beta1RangeMapOptions object.
+func NewDashboardV2beta1RangeMapOptions() *DashboardV2beta1RangeMapOptions {
+	return &DashboardV2beta1RangeMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha2RegexMapOptions struct {
+type DashboardV2beta1RegexMapOptions struct {
 	// Regular expression to match against
 	Pattern string `json:"pattern"`
 	// Config to apply when the value matches the regex
 	Result DashboardValueMappingResult `json:"result"`
 }
 
-// NewDashboardV2alpha2RegexMapOptions creates a new DashboardV2alpha2RegexMapOptions object.
-func NewDashboardV2alpha2RegexMapOptions() *DashboardV2alpha2RegexMapOptions {
-	return &DashboardV2alpha2RegexMapOptions{
+// NewDashboardV2beta1RegexMapOptions creates a new DashboardV2beta1RegexMapOptions object.
+func NewDashboardV2beta1RegexMapOptions() *DashboardV2beta1RegexMapOptions {
+	return &DashboardV2beta1RegexMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha2SpecialValueMapOptions struct {
+type DashboardV2beta1SpecialValueMapOptions struct {
 	// Special value to match against
 	Match DashboardSpecialValueMatch `json:"match"`
 	// Config to apply when the value matches the special value
 	Result DashboardValueMappingResult `json:"result"`
 }
 
-// NewDashboardV2alpha2SpecialValueMapOptions creates a new DashboardV2alpha2SpecialValueMapOptions object.
-func NewDashboardV2alpha2SpecialValueMapOptions() *DashboardV2alpha2SpecialValueMapOptions {
-	return &DashboardV2alpha2SpecialValueMapOptions{
+// NewDashboardV2beta1SpecialValueMapOptions creates a new DashboardV2beta1SpecialValueMapOptions object.
+func NewDashboardV2beta1SpecialValueMapOptions() *DashboardV2beta1SpecialValueMapOptions {
+	return &DashboardV2beta1SpecialValueMapOptions{
 		Result: *NewDashboardValueMappingResult(),
 	}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha2GroupByVariableKindDatasource struct {
+type DashboardV2beta1GroupByVariableKindDatasource struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// NewDashboardV2alpha2GroupByVariableKindDatasource creates a new DashboardV2alpha2GroupByVariableKindDatasource object.
-func NewDashboardV2alpha2GroupByVariableKindDatasource() *DashboardV2alpha2GroupByVariableKindDatasource {
-	return &DashboardV2alpha2GroupByVariableKindDatasource{}
+// NewDashboardV2beta1GroupByVariableKindDatasource creates a new DashboardV2beta1GroupByVariableKindDatasource object.
+func NewDashboardV2beta1GroupByVariableKindDatasource() *DashboardV2beta1GroupByVariableKindDatasource {
+	return &DashboardV2beta1GroupByVariableKindDatasource{}
 }
 
 // +k8s:openapi-gen=true
-type DashboardV2alpha2AdhocVariableKindDatasource struct {
+type DashboardV2beta1AdhocVariableKindDatasource struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// NewDashboardV2alpha2AdhocVariableKindDatasource creates a new DashboardV2alpha2AdhocVariableKindDatasource object.
-func NewDashboardV2alpha2AdhocVariableKindDatasource() *DashboardV2alpha2AdhocVariableKindDatasource {
-	return &DashboardV2alpha2AdhocVariableKindDatasource{}
+// NewDashboardV2beta1AdhocVariableKindDatasource creates a new DashboardV2beta1AdhocVariableKindDatasource object.
+func NewDashboardV2beta1AdhocVariableKindDatasource() *DashboardV2beta1AdhocVariableKindDatasource {
+	return &DashboardV2beta1AdhocVariableKindDatasource{}
 }
 
 // +k8s:openapi-gen=true

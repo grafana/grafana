@@ -23,7 +23,7 @@ const legacyDashboard: DashboardDTO = {
 
 const v2Dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
-  apiVersion: 'v2alpha2',
+  apiVersion: 'v2beta1',
   metadata: {
     creationTimestamp: '2021-09-29T14:00:00Z',
     name: 'dashboard-uid',

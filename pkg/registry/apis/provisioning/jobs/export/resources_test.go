@@ -446,7 +446,7 @@ func TestExportResources_Dashboards_V2Alpha2(t *testing.T) {
 				"status": map[string]interface{}{
 					"conversion": map[string]interface{}{
 						"failed":        true,
-						"storedVersion": "v2alpha2",
+						"storedVersion": "v2beta1",
 					},
 				},
 			},
@@ -467,7 +467,7 @@ func TestExportResources_Dashboards_V2Alpha2(t *testing.T) {
 		resourceClients.On("ForResource", resources.DashboardResource).Return(mockClient, gvk, nil)
 
 		// Setup v2 client
-		v2Dashboard := createV2DashboardObject("v2-dashboard", "v2alpha2")
+		v2Dashboard := createV2DashboardObject("v2-dashboard", "v2beta1")
 		v2Client := &mockDynamicInterface{items: []unstructured.Unstructured{v2Dashboard}}
 		resourceClients.On("ForResource", resources.DashboardResourceV2alpha2).Return(v2Client, gvk, nil)
 
@@ -494,7 +494,7 @@ func TestExportResources_Dashboards_V2Alpha2_ClientError(t *testing.T) {
 				"status": map[string]interface{}{
 					"conversion": map[string]interface{}{
 						"failed":        true,
-						"storedVersion": "v2alpha2",
+						"storedVersion": "v2beta1",
 					},
 				},
 			},

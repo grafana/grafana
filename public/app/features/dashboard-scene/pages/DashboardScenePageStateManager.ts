@@ -204,7 +204,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
-    if (dryRun.apiVersion.split('/')[1] === 'v2alpha2') {
+    if (dryRun.apiVersion.split('/')[1] === 'v2beta1') {
       return {
         ...dryRun,
         kind: 'DashboardWithAccessInfo',

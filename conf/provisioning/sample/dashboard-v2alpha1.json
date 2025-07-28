@@ -926,7 +926,7 @@
       "to": "now"
     },
     "title": "Test: v2alpha1 dashboard with annotations",
-    "description": "this dasboard contains cases for migrating to v2alpha2",
+    "description": "this dasboard contains cases for migrating to v2beta1",
     "variables": [
       {
         "kind": "QueryVariable",

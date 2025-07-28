@@ -17,7 +17,7 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -444,7 +444,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 					},
 				},
 				{
-					name:          "v2alpha2 dashboard with correct spec should not throw on v2",
+					name:          "v2beta1 dashboard with correct spec should not throw on v2",
 					resourceInfo:  dashboardV2alpha2.DashboardResourceInfo,
 					expectSpecErr: false,
 					testObject: &unstructured.Unstructured{

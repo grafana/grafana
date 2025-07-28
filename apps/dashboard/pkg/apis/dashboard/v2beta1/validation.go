@@ -1,4 +1,4 @@
-package v2alpha2
+package v2beta1
 
 import (
 	_ "embed"

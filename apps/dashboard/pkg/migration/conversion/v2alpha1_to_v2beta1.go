@@ -4,31 +4,31 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashv2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
-// Schema Migration: v2alpha1 → v2alpha2
+// Schema Migration: v2alpha1 → v2beta1
 //
-// This file handles the conversion from Dashboard v2alpha1 to v2alpha2 schema.
+// This file handles the conversion from Dashboard v2alpha1 to v2beta1 schema.
 // The main changes between these versions are:
 //
 // 1. DataQueryKind Structure Changes:
 //    - v2alpha1: kind = datasource type (e.g., "prometheus", "elasticsearch")
-//    - v2alpha2: kind = "DataQuery" (hardcoded), group = datasource type, version = "v0"
+//    - v2beta1: kind = "DataQuery" (hardcoded), group = datasource type, version = "v0"
 //
 // 2. Datasource Reference Migration:
 //    - v2alpha1: Datasource references stored at spec level (PanelQuerySpec.datasource, AnnotationQuerySpec.datasource, etc.)
-//    - v2alpha2: Datasource references moved inside DataQueryKind.datasource
-//    - v2alpha1: {type?: string, uid?: string} → v2alpha2: {name?: string}
+//    - v2beta1: Datasource references moved inside DataQueryKind.datasource
+//    - v2alpha1: {type?: string, uid?: string} → v2beta1: {name?: string}
 //
 // 3. Query Requirements:
 //    - v2alpha1: AnnotationQuerySpec.query? is optional (can be nil)
-//    - v2alpha2: AnnotationQuerySpec.query is required
+//    - v2beta1: AnnotationQuerySpec.query is required
 //    - Conversion creates default query structure when v2alpha1 query is nil
 //
 // 4. DataSourceRef Usage:
 //    - v2alpha1: Used widely across different specs
-//    - v2alpha2: Kept only for backward compatibility in GroupBy and Adhoc variables
+//    - v2beta1: Kept only for backward compatibility in GroupBy and Adhoc variables
 //
 // 5. Datasource Mapping Strategy:
 //    - Type → Name (if type is available)
@@ -37,17 +37,17 @@ import (
 // The conversion preserves all dashboard functionality while restructuring
 // the data model to consolidate datasource references into the DataQueryKind.
 
-func ConvertDashboard_V2alpha1_to_V2alpha2(in *dashv2alpha1.Dashboard, out *dashv2alpha2.Dashboard, scope conversion.Scope) error {
+func ConvertDashboard_V2alpha1_to_V2alpha2(in *dashv2alpha1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.APIVersion = dashv2alpha2.VERSION
+	out.APIVersion = dashv2beta1.VERSION
 	out.Kind = in.Kind
 
 	return convertDashboardSpec_V2alpha1_to_V2alpha2(&in.Spec, &out.Spec, scope)
 }
 
-func convertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, out *dashv2alpha2.DashboardSpec, scope conversion.Scope) error {
+func convertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, out *dashv2beta1.DashboardSpec, scope conversion.Scope) error {
 	// Convert annotations
-	out.Annotations = make([]dashv2alpha2.DashboardAnnotationQueryKind, len(in.Annotations))
+	out.Annotations = make([]dashv2beta1.DashboardAnnotationQueryKind, len(in.Annotations))
 	for i, annotation := range in.Annotations {
 		if err := convertAnnotationQuery_V2alpha1_to_V2alpha2(&annotation, &out.Annotations[i], scope); err != nil {
 			return err
@@ -55,7 +55,7 @@ func convertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, o
 	}
 
 	// Copy simple fields
-	out.CursorSync = dashv2alpha2.DashboardDashboardCursorSync(in.CursorSync)
+	out.CursorSync = dashv2beta1.DashboardDashboardCursorSync(in.CursorSync)
 	out.Description = in.Description
 	out.Editable = in.Editable
 	out.LiveNow = in.LiveNow
@@ -65,9 +65,9 @@ func convertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, o
 	out.Title = in.Title
 
 	// Convert elements
-	out.Elements = make(map[string]dashv2alpha2.DashboardElement, len(in.Elements))
+	out.Elements = make(map[string]dashv2beta1.DashboardElement, len(in.Elements))
 	for key, element := range in.Elements {
-		var convertedElement dashv2alpha2.DashboardElement
+		var convertedElement dashv2beta1.DashboardElement
 		if err := convertElement_V2alpha1_to_V2alpha2(&element, &convertedElement, scope); err != nil {
 			return err
 		}
@@ -80,7 +80,7 @@ func convertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, o
 	}
 
 	// Convert links
-	out.Links = make([]dashv2alpha2.DashboardDashboardLink, len(in.Links))
+	out.Links = make([]dashv2beta1.DashboardDashboardLink, len(in.Links))
 	for i, link := range in.Links {
 		convertDashboardLink_V2alpha1_to_V2alpha2(&link, &out.Links[i])
 	}
@@ -91,7 +91,7 @@ func convertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, o
 	}
 
 	// Convert variables
-	out.Variables = make([]dashv2alpha2.DashboardVariableKind, len(in.Variables))
+	out.Variables = make([]dashv2beta1.DashboardVariableKind, len(in.Variables))
 	for i, variable := range in.Variables {
 		if err := convertVariable_V2alpha1_to_V2alpha2(&variable, &out.Variables[i], scope); err != nil {
 			return err
@@ -101,7 +101,7 @@ func convertDashboardSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardSpec, o
 	return nil
 }
 
-func convertAnnotationQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAnnotationQueryKind, out *dashv2alpha2.DashboardAnnotationQueryKind, scope conversion.Scope) error {
+func convertAnnotationQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAnnotationQueryKind, out *dashv2beta1.DashboardAnnotationQueryKind, scope conversion.Scope) error {
 	out.Kind = in.Kind
 
 	// Convert spec
@@ -110,7 +110,7 @@ func convertAnnotationQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAnnot
 	out.Spec.IconColor = in.Spec.IconColor
 	out.Spec.Name = in.Spec.Name
 	out.Spec.BuiltIn = in.Spec.BuiltIn
-	out.Spec.Filter = (*dashv2alpha2.DashboardAnnotationPanelFilter)(in.Spec.Filter)
+	out.Spec.Filter = (*dashv2beta1.DashboardAnnotationPanelFilter)(in.Spec.Filter)
 	out.Spec.LegacyOptions = in.Spec.LegacyOptions
 
 	// Convert query - move datasource from annotation spec to query
@@ -121,9 +121,9 @@ func convertAnnotationQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAnnot
 	return nil
 }
 
-func convertDataQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDataQueryKind, out *dashv2alpha2.DashboardDataQueryKind, datasource *dashv2alpha1.DashboardDataSourceRef, scope conversion.Scope) error {
+func convertDataQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDataQueryKind, out *dashv2beta1.DashboardDataQueryKind, datasource *dashv2alpha1.DashboardDataSourceRef, scope conversion.Scope) error {
 	if in == nil {
-		// v2alpha2 requires a query even if v2alpha1 had none, so create a default
+		// v2beta1 requires a query even if v2alpha1 had none, so create a default
 		out.Kind = "DataQuery"
 		out.Group = ""
 		out.Version = "v0"
@@ -137,7 +137,7 @@ func convertDataQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDataQueryKi
 
 	// Convert datasource reference
 	if datasource != nil {
-		out.Datasource = &dashv2alpha2.DashboardV2alpha2DataQueryKindDatasource{}
+		out.Datasource = &dashv2beta1.DashboardV2alpha2DataQueryKindDatasource{}
 		if datasource.Uid != nil {
 			out.Datasource.Name = datasource.Uid
 		}
@@ -146,21 +146,21 @@ func convertDataQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDataQueryKi
 	return nil
 }
 
-func convertElement_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardElement, out *dashv2alpha2.DashboardElement, scope conversion.Scope) error {
+func convertElement_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardElement, out *dashv2beta1.DashboardElement, scope conversion.Scope) error {
 	if in.PanelKind != nil {
-		out.PanelKind = &dashv2alpha2.DashboardPanelKind{}
+		out.PanelKind = &dashv2beta1.DashboardPanelKind{}
 		return convertPanelKind_V2alpha1_to_V2alpha2(in.PanelKind, out.PanelKind, scope)
 	}
 
 	if in.LibraryPanelKind != nil {
-		out.LibraryPanelKind = &dashv2alpha2.DashboardLibraryPanelKind{}
+		out.LibraryPanelKind = &dashv2beta1.DashboardLibraryPanelKind{}
 		return convertLibraryPanelKind_V2alpha1_to_V2alpha2(in.LibraryPanelKind, out.LibraryPanelKind, scope)
 	}
 
 	return nil
 }
 
-func convertPanelKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardPanelKind, out *dashv2alpha2.DashboardPanelKind, scope conversion.Scope) error {
+func convertPanelKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardPanelKind, out *dashv2beta1.DashboardPanelKind, scope conversion.Scope) error {
 	out.Kind = in.Kind
 
 	// Convert spec
@@ -170,7 +170,7 @@ func convertPanelKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardPanelKind, 
 	out.Spec.Transparent = in.Spec.Transparent
 
 	// Convert links
-	out.Spec.Links = make([]dashv2alpha2.DashboardDataLink, len(in.Spec.Links))
+	out.Spec.Links = make([]dashv2beta1.DashboardDataLink, len(in.Spec.Links))
 	for i, link := range in.Spec.Links {
 		convertDataLink_V2alpha1_to_V2alpha2(&link, &out.Spec.Links[i])
 	}
@@ -188,22 +188,22 @@ func convertPanelKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardPanelKind, 
 	return nil
 }
 
-func convertLibraryPanelKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardLibraryPanelKind, out *dashv2alpha2.DashboardLibraryPanelKind, scope conversion.Scope) error {
+func convertLibraryPanelKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardLibraryPanelKind, out *dashv2beta1.DashboardLibraryPanelKind, scope conversion.Scope) error {
 	out.Kind = in.Kind
 	out.Spec.Id = in.Spec.Id
 	out.Spec.Title = in.Spec.Title
-	out.Spec.LibraryPanel = dashv2alpha2.DashboardLibraryPanelRef{
+	out.Spec.LibraryPanel = dashv2beta1.DashboardLibraryPanelRef{
 		Name: in.Spec.LibraryPanel.Name,
 		Uid:  in.Spec.LibraryPanel.Uid,
 	}
 	return nil
 }
 
-func convertQueryGroup_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryGroupKind, out *dashv2alpha2.DashboardQueryGroupKind, scope conversion.Scope) error {
+func convertQueryGroup_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryGroupKind, out *dashv2beta1.DashboardQueryGroupKind, scope conversion.Scope) error {
 	out.Kind = in.Kind
 
 	// Convert queries
-	out.Spec.Queries = make([]dashv2alpha2.DashboardPanelQueryKind, len(in.Spec.Queries))
+	out.Spec.Queries = make([]dashv2beta1.DashboardPanelQueryKind, len(in.Spec.Queries))
 	for i, query := range in.Spec.Queries {
 		if err := convertPanelQuery_V2alpha1_to_V2alpha2(&query, &out.Spec.Queries[i], scope); err != nil {
 			return err
@@ -211,7 +211,7 @@ func convertQueryGroup_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryGroup
 	}
 
 	// Convert transformations
-	out.Spec.Transformations = make([]dashv2alpha2.DashboardTransformationKind, len(in.Spec.Transformations))
+	out.Spec.Transformations = make([]dashv2beta1.DashboardTransformationKind, len(in.Spec.Transformations))
 	for i, transformation := range in.Spec.Transformations {
 		convertTransformation_V2alpha1_to_V2alpha2(&transformation, &out.Spec.Transformations[i])
 	}
@@ -222,7 +222,7 @@ func convertQueryGroup_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryGroup
 	return nil
 }
 
-func convertPanelQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardPanelQueryKind, out *dashv2alpha2.DashboardPanelQueryKind, scope conversion.Scope) error {
+func convertPanelQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardPanelQueryKind, out *dashv2beta1.DashboardPanelQueryKind, scope conversion.Scope) error {
 	out.Kind = in.Kind // PanelQueryKind keeps "PanelQuery" as its kind
 	out.Spec.RefId = in.Spec.RefId
 	out.Spec.Hidden = in.Spec.Hidden
@@ -235,16 +235,16 @@ func convertPanelQuery_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardPanelQuery
 	return nil
 }
 
-func convertTransformation_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTransformationKind, out *dashv2alpha2.DashboardTransformationKind) {
+func convertTransformation_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTransformationKind, out *dashv2beta1.DashboardTransformationKind) {
 	out.Kind = in.Kind
 	out.Spec.Id = in.Spec.Id
 	out.Spec.Disabled = in.Spec.Disabled
-	out.Spec.Filter = (*dashv2alpha2.DashboardMatcherConfig)(in.Spec.Filter)
-	out.Spec.Topic = (*dashv2alpha2.DashboardDataTopic)(in.Spec.Topic)
+	out.Spec.Filter = (*dashv2beta1.DashboardMatcherConfig)(in.Spec.Filter)
+	out.Spec.Topic = (*dashv2beta1.DashboardDataTopic)(in.Spec.Topic)
 	out.Spec.Options = in.Spec.Options
 }
 
-func convertQueryOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryOptionsSpec, out *dashv2alpha2.DashboardQueryOptionsSpec) {
+func convertQueryOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryOptionsSpec, out *dashv2beta1.DashboardQueryOptionsSpec) {
 	out.TimeFrom = in.TimeFrom
 	out.MaxDataPoints = in.MaxDataPoints
 	out.TimeShift = in.TimeShift
@@ -254,11 +254,11 @@ func convertQueryOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryOpt
 	out.HideTimeOverride = in.HideTimeOverride
 }
 
-func convertVizConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVizConfigKind, out *dashv2alpha2.DashboardVizConfigKind) error {
+func convertVizConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVizConfigKind, out *dashv2beta1.DashboardVizConfigKind) error {
 	out.Kind = "VizConfig"
 	out.Group = in.Kind
 	out.Version = in.Spec.PluginVersion
-	out.Spec = dashv2alpha2.DashboardVizConfigSpec{
+	out.Spec = dashv2beta1.DashboardVizConfigSpec{
 		Options: in.Spec.Options,
 	}
 
@@ -268,19 +268,19 @@ func convertVizConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVizConfigKi
 	return nil
 }
 
-func convertFieldConfigSource_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardFieldConfigSource, out *dashv2alpha2.DashboardFieldConfigSource) {
+func convertFieldConfigSource_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardFieldConfigSource, out *dashv2beta1.DashboardFieldConfigSource) {
 	// Convert defaults
 	convertFieldConfig_V2alpha1_to_V2alpha2(&in.Defaults, &out.Defaults)
 
 	// Convert overrides
-	out.Overrides = make([]dashv2alpha2.DashboardV2alpha2FieldConfigSourceOverrides, len(in.Overrides))
+	out.Overrides = make([]dashv2beta1.DashboardV2alpha2FieldConfigSourceOverrides, len(in.Overrides))
 	for i, override := range in.Overrides {
 		convertFieldConfigOverride_V2alpha1_to_V2alpha2(&override, &out.Overrides[i])
 	}
 }
 
-func convertFieldConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardFieldConfig, out *dashv2alpha2.DashboardFieldConfig) {
-	*out = dashv2alpha2.DashboardFieldConfig{
+func convertFieldConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardFieldConfig, out *dashv2beta1.DashboardFieldConfig) {
+	*out = dashv2beta1.DashboardFieldConfig{
 		DisplayName:       in.DisplayName,
 		DisplayNameFromDS: in.DisplayNameFromDS,
 		Description:       in.Description,
@@ -298,12 +298,12 @@ func convertFieldConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardFieldConf
 
 	// Convert thresholds
 	if in.Thresholds != nil {
-		out.Thresholds = &dashv2alpha2.DashboardThresholdsConfig{
-			Mode:  dashv2alpha2.DashboardThresholdsMode(in.Thresholds.Mode),
-			Steps: make([]dashv2alpha2.DashboardThreshold, len(in.Thresholds.Steps)),
+		out.Thresholds = &dashv2beta1.DashboardThresholdsConfig{
+			Mode:  dashv2beta1.DashboardThresholdsMode(in.Thresholds.Mode),
+			Steps: make([]dashv2beta1.DashboardThreshold, len(in.Thresholds.Steps)),
 		}
 		for i, step := range in.Thresholds.Steps {
-			out.Thresholds.Steps[i] = dashv2alpha2.DashboardThreshold{
+			out.Thresholds.Steps[i] = dashv2beta1.DashboardThreshold{
 				Value: step.Value,
 				Color: step.Color,
 			}
@@ -312,45 +312,45 @@ func convertFieldConfig_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardFieldConf
 
 	// Convert color
 	if in.Color != nil {
-		out.Color = &dashv2alpha2.DashboardFieldColor{
-			Mode:       dashv2alpha2.DashboardFieldColorModeId(in.Color.Mode),
+		out.Color = &dashv2beta1.DashboardFieldColor{
+			Mode:       dashv2beta1.DashboardFieldColorModeId(in.Color.Mode),
 			FixedColor: in.Color.FixedColor,
-			SeriesBy:   (*dashv2alpha2.DashboardFieldColorSeriesByMode)(in.Color.SeriesBy),
+			SeriesBy:   (*dashv2beta1.DashboardFieldColorSeriesByMode)(in.Color.SeriesBy),
 		}
 	}
 
 	// Convert mappings
 	if in.Mappings != nil {
-		out.Mappings = make([]dashv2alpha2.DashboardValueMapping, len(in.Mappings))
+		out.Mappings = make([]dashv2beta1.DashboardValueMapping, len(in.Mappings))
 		for i, mapping := range in.Mappings {
 			convertValueMapping_V2alpha1_to_V2alpha2(&mapping, &out.Mappings[i])
 		}
 	}
 }
 
-func convertFieldConfigOverride_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, out *dashv2alpha2.DashboardV2alpha2FieldConfigSourceOverrides) {
-	out.Matcher = dashv2alpha2.DashboardMatcherConfig{
+func convertFieldConfigOverride_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides, out *dashv2beta1.DashboardV2alpha2FieldConfigSourceOverrides) {
+	out.Matcher = dashv2beta1.DashboardMatcherConfig{
 		Id:      in.Matcher.Id,
 		Options: in.Matcher.Options,
 	}
 
-	out.Properties = make([]dashv2alpha2.DashboardDynamicConfigValue, len(in.Properties))
+	out.Properties = make([]dashv2beta1.DashboardDynamicConfigValue, len(in.Properties))
 	for i, prop := range in.Properties {
-		out.Properties[i] = dashv2alpha2.DashboardDynamicConfigValue{
+		out.Properties[i] = dashv2beta1.DashboardDynamicConfigValue{
 			Id:    prop.Id,
 			Value: prop.Value,
 		}
 	}
 }
 
-func convertValueMapping_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardValueMapping, out *dashv2alpha2.DashboardValueMapping) {
+func convertValueMapping_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardValueMapping, out *dashv2beta1.DashboardValueMapping) {
 	if in.ValueMap != nil {
-		out.ValueMap = &dashv2alpha2.DashboardValueMap{
-			Type:    dashv2alpha2.DashboardMappingType(in.ValueMap.Type),
-			Options: make(map[string]dashv2alpha2.DashboardValueMappingResult, len(in.ValueMap.Options)),
+		out.ValueMap = &dashv2beta1.DashboardValueMap{
+			Type:    dashv2beta1.DashboardMappingType(in.ValueMap.Type),
+			Options: make(map[string]dashv2beta1.DashboardValueMappingResult, len(in.ValueMap.Options)),
 		}
 		for k, v := range in.ValueMap.Options {
-			out.ValueMap.Options[k] = dashv2alpha2.DashboardValueMappingResult{
+			out.ValueMap.Options[k] = dashv2beta1.DashboardValueMappingResult{
 				Text:  v.Text,
 				Color: v.Color,
 				Icon:  v.Icon,
@@ -360,12 +360,12 @@ func convertValueMapping_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardValueMap
 	}
 
 	if in.RangeMap != nil {
-		out.RangeMap = &dashv2alpha2.DashboardRangeMap{
-			Type: dashv2alpha2.DashboardMappingType(in.RangeMap.Type),
-			Options: dashv2alpha2.DashboardV2alpha2RangeMapOptions{
+		out.RangeMap = &dashv2beta1.DashboardRangeMap{
+			Type: dashv2beta1.DashboardMappingType(in.RangeMap.Type),
+			Options: dashv2beta1.DashboardV2alpha2RangeMapOptions{
 				From: in.RangeMap.Options.From,
 				To:   in.RangeMap.Options.To,
-				Result: dashv2alpha2.DashboardValueMappingResult{
+				Result: dashv2beta1.DashboardValueMappingResult{
 					Text:  in.RangeMap.Options.Result.Text,
 					Color: in.RangeMap.Options.Result.Color,
 					Icon:  in.RangeMap.Options.Result.Icon,
@@ -376,11 +376,11 @@ func convertValueMapping_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardValueMap
 	}
 
 	if in.RegexMap != nil {
-		out.RegexMap = &dashv2alpha2.DashboardRegexMap{
-			Type: dashv2alpha2.DashboardMappingType(in.RegexMap.Type),
-			Options: dashv2alpha2.DashboardV2alpha2RegexMapOptions{
+		out.RegexMap = &dashv2beta1.DashboardRegexMap{
+			Type: dashv2beta1.DashboardMappingType(in.RegexMap.Type),
+			Options: dashv2beta1.DashboardV2alpha2RegexMapOptions{
 				Pattern: in.RegexMap.Options.Pattern,
-				Result: dashv2alpha2.DashboardValueMappingResult{
+				Result: dashv2beta1.DashboardValueMappingResult{
 					Text:  in.RegexMap.Options.Result.Text,
 					Color: in.RegexMap.Options.Result.Color,
 					Icon:  in.RegexMap.Options.Result.Icon,
@@ -391,11 +391,11 @@ func convertValueMapping_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardValueMap
 	}
 
 	if in.SpecialValueMap != nil {
-		out.SpecialValueMap = &dashv2alpha2.DashboardSpecialValueMap{
-			Type: dashv2alpha2.DashboardMappingType(in.SpecialValueMap.Type),
-			Options: dashv2alpha2.DashboardV2alpha2SpecialValueMapOptions{
-				Match: dashv2alpha2.DashboardSpecialValueMatch(in.SpecialValueMap.Options.Match),
-				Result: dashv2alpha2.DashboardValueMappingResult{
+		out.SpecialValueMap = &dashv2beta1.DashboardSpecialValueMap{
+			Type: dashv2beta1.DashboardMappingType(in.SpecialValueMap.Type),
+			Options: dashv2beta1.DashboardV2alpha2SpecialValueMapOptions{
+				Match: dashv2beta1.DashboardSpecialValueMatch(in.SpecialValueMap.Options.Match),
+				Result: dashv2beta1.DashboardValueMappingResult{
 					Text:  in.SpecialValueMap.Options.Result.Text,
 					Color: in.SpecialValueMap.Options.Result.Color,
 					Icon:  in.SpecialValueMap.Options.Result.Icon,
@@ -406,30 +406,30 @@ func convertValueMapping_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardValueMap
 	}
 }
 
-func convertLayout_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2alpha2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
+func convertLayout_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
 	if in.GridLayoutKind != nil {
-		out.GridLayoutKind = &dashv2alpha2.DashboardGridLayoutKind{
+		out.GridLayoutKind = &dashv2beta1.DashboardGridLayoutKind{
 			Kind: in.GridLayoutKind.Kind,
 		}
 		return convertGridLayoutSpec_V2alpha1_to_V2alpha2(&in.GridLayoutKind.Spec, &out.GridLayoutKind.Spec, scope)
 	}
 
 	if in.RowsLayoutKind != nil {
-		out.RowsLayoutKind = &dashv2alpha2.DashboardRowsLayoutKind{
+		out.RowsLayoutKind = &dashv2beta1.DashboardRowsLayoutKind{
 			Kind: in.RowsLayoutKind.Kind,
 		}
 		return convertRowsLayoutSpec_V2alpha1_to_V2alpha2(&in.RowsLayoutKind.Spec, &out.RowsLayoutKind.Spec, scope)
 	}
 
 	if in.AutoGridLayoutKind != nil {
-		out.AutoGridLayoutKind = &dashv2alpha2.DashboardAutoGridLayoutKind{
+		out.AutoGridLayoutKind = &dashv2beta1.DashboardAutoGridLayoutKind{
 			Kind: in.AutoGridLayoutKind.Kind,
 		}
 		return convertAutoGridLayoutSpec_V2alpha1_to_V2alpha2(&in.AutoGridLayoutKind.Spec, &out.AutoGridLayoutKind.Spec, scope)
 	}
 
 	if in.TabsLayoutKind != nil {
-		out.TabsLayoutKind = &dashv2alpha2.DashboardTabsLayoutKind{
+		out.TabsLayoutKind = &dashv2beta1.DashboardTabsLayoutKind{
 			Kind: in.TabsLayoutKind.Kind,
 		}
 		return convertTabsLayoutSpec_V2alpha1_to_V2alpha2(&in.TabsLayoutKind.Spec, &out.TabsLayoutKind.Spec, scope)
@@ -438,17 +438,17 @@ func convertLayout_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutKind
 	return nil
 }
 
-func convertGridLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutSpec, out *dashv2alpha2.DashboardGridLayoutSpec, scope conversion.Scope) error {
-	out.Items = make([]dashv2alpha2.DashboardGridLayoutItemKind, len(in.Items))
+func convertGridLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutSpec, out *dashv2beta1.DashboardGridLayoutSpec, scope conversion.Scope) error {
+	out.Items = make([]dashv2beta1.DashboardGridLayoutItemKind, len(in.Items))
 	for i, item := range in.Items {
-		out.Items[i] = dashv2alpha2.DashboardGridLayoutItemKind{
+		out.Items[i] = dashv2beta1.DashboardGridLayoutItemKind{
 			Kind: item.Kind,
-			Spec: dashv2alpha2.DashboardGridLayoutItemSpec{
+			Spec: dashv2beta1.DashboardGridLayoutItemSpec{
 				X:      item.Spec.X,
 				Y:      item.Spec.Y,
 				Width:  item.Spec.Width,
 				Height: item.Spec.Height,
-				Element: dashv2alpha2.DashboardElementReference{
+				Element: dashv2beta1.DashboardElementReference{
 					Kind: item.Spec.Element.Kind,
 					Name: item.Spec.Element.Name,
 				},
@@ -459,12 +459,12 @@ func convertGridLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLa
 	return nil
 }
 
-func convertRowsLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardRowsLayoutSpec, out *dashv2alpha2.DashboardRowsLayoutSpec, scope conversion.Scope) error {
-	out.Rows = make([]dashv2alpha2.DashboardRowsLayoutRowKind, len(in.Rows))
+func convertRowsLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardRowsLayoutSpec, out *dashv2beta1.DashboardRowsLayoutSpec, scope conversion.Scope) error {
+	out.Rows = make([]dashv2beta1.DashboardRowsLayoutRowKind, len(in.Rows))
 	for i, row := range in.Rows {
-		out.Rows[i] = dashv2alpha2.DashboardRowsLayoutRowKind{
+		out.Rows[i] = dashv2beta1.DashboardRowsLayoutRowKind{
 			Kind: row.Kind,
-			Spec: dashv2alpha2.DashboardRowsLayoutRowSpec{
+			Spec: dashv2beta1.DashboardRowsLayoutRowSpec{
 				Title:                row.Spec.Title,
 				Collapse:             row.Spec.Collapse,
 				HideHeader:           row.Spec.HideHeader,
@@ -480,20 +480,20 @@ func convertRowsLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardRowsLa
 	return nil
 }
 
-func convertAutoGridLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAutoGridLayoutSpec, out *dashv2alpha2.DashboardAutoGridLayoutSpec, scope conversion.Scope) error {
+func convertAutoGridLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAutoGridLayoutSpec, out *dashv2beta1.DashboardAutoGridLayoutSpec, scope conversion.Scope) error {
 	out.MaxColumnCount = in.MaxColumnCount
-	out.ColumnWidthMode = dashv2alpha2.DashboardAutoGridLayoutSpecColumnWidthMode(in.ColumnWidthMode)
+	out.ColumnWidthMode = dashv2beta1.DashboardAutoGridLayoutSpecColumnWidthMode(in.ColumnWidthMode)
 	out.ColumnWidth = in.ColumnWidth
-	out.RowHeightMode = dashv2alpha2.DashboardAutoGridLayoutSpecRowHeightMode(in.RowHeightMode)
+	out.RowHeightMode = dashv2beta1.DashboardAutoGridLayoutSpecRowHeightMode(in.RowHeightMode)
 	out.RowHeight = in.RowHeight
 	out.FillScreen = in.FillScreen
 
-	out.Items = make([]dashv2alpha2.DashboardAutoGridLayoutItemKind, len(in.Items))
+	out.Items = make([]dashv2beta1.DashboardAutoGridLayoutItemKind, len(in.Items))
 	for i, item := range in.Items {
-		out.Items[i] = dashv2alpha2.DashboardAutoGridLayoutItemKind{
+		out.Items[i] = dashv2beta1.DashboardAutoGridLayoutItemKind{
 			Kind: item.Kind,
-			Spec: dashv2alpha2.DashboardAutoGridLayoutItemSpec{
-				Element: dashv2alpha2.DashboardElementReference{
+			Spec: dashv2beta1.DashboardAutoGridLayoutItemSpec{
+				Element: dashv2beta1.DashboardElementReference{
 					Kind: item.Spec.Element.Kind,
 					Name: item.Spec.Element.Name,
 				},
@@ -505,12 +505,12 @@ func convertAutoGridLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAu
 	return nil
 }
 
-func convertTabsLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTabsLayoutSpec, out *dashv2alpha2.DashboardTabsLayoutSpec, scope conversion.Scope) error {
-	out.Tabs = make([]dashv2alpha2.DashboardTabsLayoutTabKind, len(in.Tabs))
+func convertTabsLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTabsLayoutSpec, out *dashv2beta1.DashboardTabsLayoutSpec, scope conversion.Scope) error {
+	out.Tabs = make([]dashv2beta1.DashboardTabsLayoutTabKind, len(in.Tabs))
 	for i, tab := range in.Tabs {
-		out.Tabs[i] = dashv2alpha2.DashboardTabsLayoutTabKind{
+		out.Tabs[i] = dashv2beta1.DashboardTabsLayoutTabKind{
 			Kind: tab.Kind,
-			Spec: dashv2alpha2.DashboardTabsLayoutTabSpec{
+			Spec: dashv2beta1.DashboardTabsLayoutTabSpec{
 				Title:                tab.Spec.Title,
 				ConditionalRendering: convertConditionalRenderingGroupKind_V2alpha1_to_V2alpha2(tab.Spec.ConditionalRendering),
 				Repeat:               convertTabRepeatOptions_V2alpha1_to_V2alpha2(tab.Spec.Repeat),
@@ -523,9 +523,9 @@ func convertTabsLayoutSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTabsLa
 	return nil
 }
 
-func convertDashboardLink_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDashboardLink, out *dashv2alpha2.DashboardDashboardLink) {
+func convertDashboardLink_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDashboardLink, out *dashv2beta1.DashboardDashboardLink) {
 	out.Title = in.Title
-	out.Type = dashv2alpha2.DashboardDashboardLinkType(in.Type)
+	out.Type = dashv2beta1.DashboardDashboardLinkType(in.Type)
 	out.Icon = in.Icon
 	out.Tooltip = in.Tooltip
 	out.Url = in.Url
@@ -536,28 +536,28 @@ func convertDashboardLink_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDashboa
 	out.KeepTime = in.KeepTime
 }
 
-func convertDataLink_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDataLink, out *dashv2alpha2.DashboardDataLink) {
+func convertDataLink_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardDataLink, out *dashv2beta1.DashboardDataLink) {
 	out.Title = in.Title
 	out.Url = in.Url
 	out.TargetBlank = in.TargetBlank
 }
 
-func convertTimeSettings_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTimeSettingsSpec, out *dashv2alpha2.DashboardTimeSettingsSpec, scope conversion.Scope) error {
+func convertTimeSettings_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTimeSettingsSpec, out *dashv2beta1.DashboardTimeSettingsSpec, scope conversion.Scope) error {
 	out.Timezone = in.Timezone
 	out.From = in.From
 	out.To = in.To
 	out.AutoRefresh = in.AutoRefresh
 	out.AutoRefreshIntervals = in.AutoRefreshIntervals
 	out.HideTimepicker = in.HideTimepicker
-	out.WeekStart = (*dashv2alpha2.DashboardTimeSettingsSpecWeekStart)(in.WeekStart)
+	out.WeekStart = (*dashv2beta1.DashboardTimeSettingsSpecWeekStart)(in.WeekStart)
 	out.FiscalYearStartMonth = in.FiscalYearStartMonth
 	out.NowDelay = in.NowDelay
 
 	// Convert quick ranges
 	if in.QuickRanges != nil {
-		out.QuickRanges = make([]dashv2alpha2.DashboardTimeRangeOption, len(in.QuickRanges))
+		out.QuickRanges = make([]dashv2beta1.DashboardTimeRangeOption, len(in.QuickRanges))
 		for i, qr := range in.QuickRanges {
-			out.QuickRanges[i] = dashv2alpha2.DashboardTimeRangeOption{
+			out.QuickRanges[i] = dashv2beta1.DashboardTimeRangeOption{
 				Display: qr.Display,
 				From:    qr.From,
 				To:      qr.To,
@@ -568,23 +568,23 @@ func convertTimeSettings_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTimeSett
 	return nil
 }
 
-func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind, out *dashv2alpha2.DashboardVariableKind, scope conversion.Scope) error {
+func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind, out *dashv2beta1.DashboardVariableKind, scope conversion.Scope) error {
 	if in.QueryVariableKind != nil {
-		out.QueryVariableKind = &dashv2alpha2.DashboardQueryVariableKind{
+		out.QueryVariableKind = &dashv2beta1.DashboardQueryVariableKind{
 			Kind: in.QueryVariableKind.Kind,
 		}
 		return convertQueryVariableSpec_V2alpha1_to_V2alpha2(&in.QueryVariableKind.Spec, &out.QueryVariableKind.Spec, scope)
 	}
 
 	if in.TextVariableKind != nil {
-		out.TextVariableKind = &dashv2alpha2.DashboardTextVariableKind{
+		out.TextVariableKind = &dashv2beta1.DashboardTextVariableKind{
 			Kind: in.TextVariableKind.Kind,
-			Spec: dashv2alpha2.DashboardTextVariableSpec{
+			Spec: dashv2beta1.DashboardTextVariableSpec{
 				Name:        in.TextVariableKind.Spec.Name,
 				Current:     convertVariableOption_V2alpha1_to_V2alpha2(in.TextVariableKind.Spec.Current),
 				Query:       in.TextVariableKind.Spec.Query,
 				Label:       in.TextVariableKind.Spec.Label,
-				Hide:        dashv2alpha2.DashboardVariableHide(in.TextVariableKind.Spec.Hide),
+				Hide:        dashv2beta1.DashboardVariableHide(in.TextVariableKind.Spec.Hide),
 				SkipUrlSync: in.TextVariableKind.Spec.SkipUrlSync,
 				Description: in.TextVariableKind.Spec.Description,
 			},
@@ -592,14 +592,14 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 	}
 
 	if in.ConstantVariableKind != nil {
-		out.ConstantVariableKind = &dashv2alpha2.DashboardConstantVariableKind{
+		out.ConstantVariableKind = &dashv2beta1.DashboardConstantVariableKind{
 			Kind: in.ConstantVariableKind.Kind,
-			Spec: dashv2alpha2.DashboardConstantVariableSpec{
+			Spec: dashv2beta1.DashboardConstantVariableSpec{
 				Name:        in.ConstantVariableKind.Spec.Name,
 				Query:       in.ConstantVariableKind.Spec.Query,
 				Current:     convertVariableOption_V2alpha1_to_V2alpha2(in.ConstantVariableKind.Spec.Current),
 				Label:       in.ConstantVariableKind.Spec.Label,
-				Hide:        dashv2alpha2.DashboardVariableHide(in.ConstantVariableKind.Spec.Hide),
+				Hide:        dashv2beta1.DashboardVariableHide(in.ConstantVariableKind.Spec.Hide),
 				SkipUrlSync: in.ConstantVariableKind.Spec.SkipUrlSync,
 				Description: in.ConstantVariableKind.Spec.Description,
 			},
@@ -607,12 +607,12 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 	}
 
 	if in.DatasourceVariableKind != nil {
-		out.DatasourceVariableKind = &dashv2alpha2.DashboardDatasourceVariableKind{
+		out.DatasourceVariableKind = &dashv2beta1.DashboardDatasourceVariableKind{
 			Kind: in.DatasourceVariableKind.Kind,
-			Spec: dashv2alpha2.DashboardDatasourceVariableSpec{
+			Spec: dashv2beta1.DashboardDatasourceVariableSpec{
 				Name:             in.DatasourceVariableKind.Spec.Name,
 				PluginId:         in.DatasourceVariableKind.Spec.PluginId,
-				Refresh:          dashv2alpha2.DashboardVariableRefresh(in.DatasourceVariableKind.Spec.Refresh),
+				Refresh:          dashv2beta1.DashboardVariableRefresh(in.DatasourceVariableKind.Spec.Refresh),
 				Regex:            in.DatasourceVariableKind.Spec.Regex,
 				Current:          convertVariableOption_V2alpha1_to_V2alpha2(in.DatasourceVariableKind.Spec.Current),
 				Options:          convertVariableOptions_V2alpha1_to_V2alpha2(in.DatasourceVariableKind.Spec.Options),
@@ -620,7 +620,7 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 				IncludeAll:       in.DatasourceVariableKind.Spec.IncludeAll,
 				AllValue:         in.DatasourceVariableKind.Spec.AllValue,
 				Label:            in.DatasourceVariableKind.Spec.Label,
-				Hide:             dashv2alpha2.DashboardVariableHide(in.DatasourceVariableKind.Spec.Hide),
+				Hide:             dashv2beta1.DashboardVariableHide(in.DatasourceVariableKind.Spec.Hide),
 				SkipUrlSync:      in.DatasourceVariableKind.Spec.SkipUrlSync,
 				Description:      in.DatasourceVariableKind.Spec.Description,
 				AllowCustomValue: in.DatasourceVariableKind.Spec.AllowCustomValue,
@@ -629,9 +629,9 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 	}
 
 	if in.IntervalVariableKind != nil {
-		out.IntervalVariableKind = &dashv2alpha2.DashboardIntervalVariableKind{
+		out.IntervalVariableKind = &dashv2beta1.DashboardIntervalVariableKind{
 			Kind: in.IntervalVariableKind.Kind,
-			Spec: dashv2alpha2.DashboardIntervalVariableSpec{
+			Spec: dashv2beta1.DashboardIntervalVariableSpec{
 				Name:        in.IntervalVariableKind.Spec.Name,
 				Query:       in.IntervalVariableKind.Spec.Query,
 				Current:     convertVariableOption_V2alpha1_to_V2alpha2(in.IntervalVariableKind.Spec.Current),
@@ -639,9 +639,9 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 				Auto:        in.IntervalVariableKind.Spec.Auto,
 				AutoMin:     in.IntervalVariableKind.Spec.AutoMin,
 				AutoCount:   in.IntervalVariableKind.Spec.AutoCount,
-				Refresh:     dashv2alpha2.DashboardVariableRefresh(in.IntervalVariableKind.Spec.Refresh),
+				Refresh:     dashv2beta1.DashboardVariableRefresh(in.IntervalVariableKind.Spec.Refresh),
 				Label:       in.IntervalVariableKind.Spec.Label,
-				Hide:        dashv2alpha2.DashboardVariableHide(in.IntervalVariableKind.Spec.Hide),
+				Hide:        dashv2beta1.DashboardVariableHide(in.IntervalVariableKind.Spec.Hide),
 				SkipUrlSync: in.IntervalVariableKind.Spec.SkipUrlSync,
 				Description: in.IntervalVariableKind.Spec.Description,
 			},
@@ -649,9 +649,9 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 	}
 
 	if in.CustomVariableKind != nil {
-		out.CustomVariableKind = &dashv2alpha2.DashboardCustomVariableKind{
+		out.CustomVariableKind = &dashv2beta1.DashboardCustomVariableKind{
 			Kind: in.CustomVariableKind.Kind,
-			Spec: dashv2alpha2.DashboardCustomVariableSpec{
+			Spec: dashv2beta1.DashboardCustomVariableSpec{
 				Name:             in.CustomVariableKind.Spec.Name,
 				Query:            in.CustomVariableKind.Spec.Query,
 				Current:          convertVariableOption_V2alpha1_to_V2alpha2(in.CustomVariableKind.Spec.Current),
@@ -660,7 +660,7 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 				IncludeAll:       in.CustomVariableKind.Spec.IncludeAll,
 				AllValue:         in.CustomVariableKind.Spec.AllValue,
 				Label:            in.CustomVariableKind.Spec.Label,
-				Hide:             dashv2alpha2.DashboardVariableHide(in.CustomVariableKind.Spec.Hide),
+				Hide:             dashv2beta1.DashboardVariableHide(in.CustomVariableKind.Spec.Hide),
 				SkipUrlSync:      in.CustomVariableKind.Spec.SkipUrlSync,
 				Description:      in.CustomVariableKind.Spec.Description,
 				AllowCustomValue: in.CustomVariableKind.Spec.AllowCustomValue,
@@ -669,20 +669,20 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 	}
 
 	if in.GroupByVariableKind != nil {
-		out.GroupByVariableKind = &dashv2alpha2.DashboardGroupByVariableKind{
+		out.GroupByVariableKind = &dashv2beta1.DashboardGroupByVariableKind{
 			Kind:  in.GroupByVariableKind.Kind,
 			Group: *in.GroupByVariableKind.Spec.Datasource.Type,
-			Datasource: &dashv2alpha2.DashboardV2alpha2GroupByVariableKindDatasource{
+			Datasource: &dashv2beta1.DashboardV2alpha2GroupByVariableKindDatasource{
 				Name: in.GroupByVariableKind.Spec.Datasource.Uid,
 			},
-			Spec: dashv2alpha2.DashboardGroupByVariableSpec{
+			Spec: dashv2beta1.DashboardGroupByVariableSpec{
 				Name:         in.GroupByVariableKind.Spec.Name,
 				DefaultValue: convertVariableOptionPtr_V2alpha1_to_V2alpha2(in.GroupByVariableKind.Spec.DefaultValue),
 				Current:      convertVariableOption_V2alpha1_to_V2alpha2(in.GroupByVariableKind.Spec.Current),
 				Options:      convertVariableOptions_V2alpha1_to_V2alpha2(in.GroupByVariableKind.Spec.Options),
 				Multi:        in.GroupByVariableKind.Spec.Multi,
 				Label:        in.GroupByVariableKind.Spec.Label,
-				Hide:         dashv2alpha2.DashboardVariableHide(in.GroupByVariableKind.Spec.Hide),
+				Hide:         dashv2beta1.DashboardVariableHide(in.GroupByVariableKind.Spec.Hide),
 				SkipUrlSync:  in.GroupByVariableKind.Spec.SkipUrlSync,
 				Description:  in.GroupByVariableKind.Spec.Description,
 			},
@@ -690,19 +690,19 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 	}
 
 	if in.AdhocVariableKind != nil {
-		out.AdhocVariableKind = &dashv2alpha2.DashboardAdhocVariableKind{
+		out.AdhocVariableKind = &dashv2beta1.DashboardAdhocVariableKind{
 			Kind:  in.AdhocVariableKind.Kind,
 			Group: *in.AdhocVariableKind.Spec.Datasource.Type,
-			Datasource: &dashv2alpha2.DashboardV2alpha2AdhocVariableKindDatasource{
+			Datasource: &dashv2beta1.DashboardV2alpha2AdhocVariableKindDatasource{
 				Name: in.AdhocVariableKind.Spec.Datasource.Uid,
 			},
-			Spec: dashv2alpha2.DashboardAdhocVariableSpec{
+			Spec: dashv2beta1.DashboardAdhocVariableSpec{
 				Name:             in.AdhocVariableKind.Spec.Name,
 				BaseFilters:      convertAdHocFilters_V2alpha1_to_V2alpha2(in.AdhocVariableKind.Spec.BaseFilters),
 				Filters:          convertAdHocFilters_V2alpha1_to_V2alpha2(in.AdhocVariableKind.Spec.Filters),
 				DefaultKeys:      convertMetricFindValues_V2alpha1_to_V2alpha2(in.AdhocVariableKind.Spec.DefaultKeys),
 				Label:            in.AdhocVariableKind.Spec.Label,
-				Hide:             dashv2alpha2.DashboardVariableHide(in.AdhocVariableKind.Spec.Hide),
+				Hide:             dashv2beta1.DashboardVariableHide(in.AdhocVariableKind.Spec.Hide),
 				SkipUrlSync:      in.AdhocVariableKind.Spec.SkipUrlSync,
 				Description:      in.AdhocVariableKind.Spec.Description,
 				AllowCustomValue: in.AdhocVariableKind.Spec.AllowCustomValue,
@@ -713,16 +713,16 @@ func convertVariable_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableKind
 	return nil
 }
 
-func convertQueryVariableSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryVariableSpec, out *dashv2alpha2.DashboardQueryVariableSpec, scope conversion.Scope) error {
+func convertQueryVariableSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQueryVariableSpec, out *dashv2beta1.DashboardQueryVariableSpec, scope conversion.Scope) error {
 	out.Name = in.Name
 	out.Current = convertVariableOption_V2alpha1_to_V2alpha2(in.Current)
 	out.Label = in.Label
-	out.Hide = dashv2alpha2.DashboardVariableHide(in.Hide)
-	out.Refresh = dashv2alpha2.DashboardVariableRefresh(in.Refresh)
+	out.Hide = dashv2beta1.DashboardVariableHide(in.Hide)
+	out.Refresh = dashv2beta1.DashboardVariableRefresh(in.Refresh)
 	out.SkipUrlSync = in.SkipUrlSync
 	out.Description = in.Description
 	out.Regex = in.Regex
-	out.Sort = dashv2alpha2.DashboardVariableSort(in.Sort)
+	out.Sort = dashv2beta1.DashboardVariableSort(in.Sort)
 	out.Definition = in.Definition
 	out.Options = convertVariableOptions_V2alpha1_to_V2alpha2(in.Options)
 	out.Multi = in.Multi
@@ -731,7 +731,7 @@ func convertQueryVariableSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQue
 	out.Placeholder = in.Placeholder
 	out.AllowCustomValue = in.AllowCustomValue
 	out.StaticOptions = convertVariableOptions_V2alpha1_to_V2alpha2(in.StaticOptions)
-	out.StaticOptionsOrder = (*dashv2alpha2.DashboardQueryVariableSpecStaticOptionsOrder)(in.StaticOptionsOrder)
+	out.StaticOptionsOrder = (*dashv2beta1.DashboardQueryVariableSpecStaticOptionsOrder)(in.StaticOptionsOrder)
 
 	// Convert query - move datasource from variable spec to query
 	if err := convertDataQuery_V2alpha1_to_V2alpha2(&in.Query, &out.Query, in.Datasource, scope); err != nil {
@@ -741,15 +741,15 @@ func convertQueryVariableSpec_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardQue
 	return nil
 }
 
-func convertVariableOption_V2alpha1_to_V2alpha2(in dashv2alpha1.DashboardVariableOption) dashv2alpha2.DashboardVariableOption {
-	return dashv2alpha2.DashboardVariableOption{
+func convertVariableOption_V2alpha1_to_V2alpha2(in dashv2alpha1.DashboardVariableOption) dashv2beta1.DashboardVariableOption {
+	return dashv2beta1.DashboardVariableOption{
 		Selected: in.Selected,
-		Text:     dashv2alpha2.DashboardStringOrArrayOfString(in.Text),
-		Value:    dashv2alpha2.DashboardStringOrArrayOfString(in.Value),
+		Text:     dashv2beta1.DashboardStringOrArrayOfString(in.Text),
+		Value:    dashv2beta1.DashboardStringOrArrayOfString(in.Value),
 	}
 }
 
-func convertVariableOptionPtr_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableOption) *dashv2alpha2.DashboardVariableOption {
+func convertVariableOptionPtr_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVariableOption) *dashv2beta1.DashboardVariableOption {
 	if in == nil {
 		return nil
 	}
@@ -757,24 +757,24 @@ func convertVariableOptionPtr_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardVar
 	return &out
 }
 
-func convertVariableOptions_V2alpha1_to_V2alpha2(in []dashv2alpha1.DashboardVariableOption) []dashv2alpha2.DashboardVariableOption {
+func convertVariableOptions_V2alpha1_to_V2alpha2(in []dashv2alpha1.DashboardVariableOption) []dashv2beta1.DashboardVariableOption {
 	if in == nil {
 		return nil
 	}
-	out := make([]dashv2alpha2.DashboardVariableOption, len(in))
+	out := make([]dashv2beta1.DashboardVariableOption, len(in))
 	for i, option := range in {
 		out[i] = convertVariableOption_V2alpha1_to_V2alpha2(option)
 	}
 	return out
 }
 
-func convertAdHocFilters_V2alpha1_to_V2alpha2(in []dashv2alpha1.DashboardAdHocFilterWithLabels) []dashv2alpha2.DashboardAdHocFilterWithLabels {
+func convertAdHocFilters_V2alpha1_to_V2alpha2(in []dashv2alpha1.DashboardAdHocFilterWithLabels) []dashv2beta1.DashboardAdHocFilterWithLabels {
 	if in == nil {
 		return nil
 	}
-	out := make([]dashv2alpha2.DashboardAdHocFilterWithLabels, len(in))
+	out := make([]dashv2beta1.DashboardAdHocFilterWithLabels, len(in))
 	for i, filter := range in {
-		out[i] = dashv2alpha2.DashboardAdHocFilterWithLabels{
+		out[i] = dashv2beta1.DashboardAdHocFilterWithLabels{
 			Key:         filter.Key,
 			Operator:    filter.Operator,
 			Value:       filter.Value,
@@ -789,15 +789,15 @@ func convertAdHocFilters_V2alpha1_to_V2alpha2(in []dashv2alpha1.DashboardAdHocFi
 	return out
 }
 
-func convertMetricFindValues_V2alpha1_to_V2alpha2(in []dashv2alpha1.DashboardMetricFindValue) []dashv2alpha2.DashboardMetricFindValue {
+func convertMetricFindValues_V2alpha1_to_V2alpha2(in []dashv2alpha1.DashboardMetricFindValue) []dashv2beta1.DashboardMetricFindValue {
 	if in == nil {
 		return nil
 	}
-	out := make([]dashv2alpha2.DashboardMetricFindValue, len(in))
+	out := make([]dashv2beta1.DashboardMetricFindValue, len(in))
 	for i, value := range in {
-		out[i] = dashv2alpha2.DashboardMetricFindValue{
+		out[i] = dashv2beta1.DashboardMetricFindValue{
 			Text:       value.Text,
-			Value:      (*dashv2alpha2.DashboardStringOrFloat64)(value.Value),
+			Value:      (*dashv2beta1.DashboardStringOrFloat64)(value.Value),
 			Group:      value.Group,
 			Expandable: value.Expandable,
 		}
@@ -805,49 +805,49 @@ func convertMetricFindValues_V2alpha1_to_V2alpha2(in []dashv2alpha1.DashboardMet
 	return out
 }
 
-func convertRepeatOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardRepeatOptions) *dashv2alpha2.DashboardRepeatOptions {
+func convertRepeatOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardRepeatOptions) *dashv2beta1.DashboardRepeatOptions {
 	if in == nil {
 		return nil
 	}
-	return &dashv2alpha2.DashboardRepeatOptions{
+	return &dashv2beta1.DashboardRepeatOptions{
 		Mode:      in.Mode,
 		Value:     in.Value,
-		Direction: (*dashv2alpha2.DashboardRepeatOptionsDirection)(in.Direction),
+		Direction: (*dashv2beta1.DashboardRepeatOptionsDirection)(in.Direction),
 		MaxPerRow: in.MaxPerRow,
 	}
 }
 
-func convertRowRepeatOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardRowRepeatOptions) *dashv2alpha2.DashboardRowRepeatOptions {
+func convertRowRepeatOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardRowRepeatOptions) *dashv2beta1.DashboardRowRepeatOptions {
 	if in == nil {
 		return nil
 	}
-	return &dashv2alpha2.DashboardRowRepeatOptions{
+	return &dashv2beta1.DashboardRowRepeatOptions{
 		Mode:  in.Mode,
 		Value: in.Value,
 	}
 }
 
-func convertAutoGridRepeatOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAutoGridRepeatOptions) *dashv2alpha2.DashboardAutoGridRepeatOptions {
+func convertAutoGridRepeatOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardAutoGridRepeatOptions) *dashv2beta1.DashboardAutoGridRepeatOptions {
 	if in == nil {
 		return nil
 	}
-	return &dashv2alpha2.DashboardAutoGridRepeatOptions{
+	return &dashv2beta1.DashboardAutoGridRepeatOptions{
 		Mode:  in.Mode,
 		Value: in.Value,
 	}
 }
 
-func convertTabRepeatOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTabRepeatOptions) *dashv2alpha2.DashboardTabRepeatOptions {
+func convertTabRepeatOptions_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardTabRepeatOptions) *dashv2beta1.DashboardTabRepeatOptions {
 	if in == nil {
 		return nil
 	}
-	return &dashv2alpha2.DashboardTabRepeatOptions{
+	return &dashv2beta1.DashboardTabRepeatOptions{
 		Mode:  in.Mode,
 		Value: in.Value,
 	}
 }
 
-func convertConditionalRenderingGroupKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardConditionalRenderingGroupKind) *dashv2alpha2.DashboardConditionalRenderingGroupKind {
+func convertConditionalRenderingGroupKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardConditionalRenderingGroupKind) *dashv2beta1.DashboardConditionalRenderingGroupKind {
 	if in == nil {
 		return nil
 	}
@@ -856,11 +856,11 @@ func convertConditionalRenderingGroupKind_V2alpha1_to_V2alpha2(in *dashv2alpha1.
 	return nil
 }
 
-func convertRowLayout_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, out *dashv2alpha2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, scope conversion.Scope) error {
+func convertRowLayout_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, scope conversion.Scope) error {
 	// Handle the different union type orderings by converting through the main layout function
 	// Create a temporary variable with the correct type ordering
 	var tempIn dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-	var tempOut dashv2alpha2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
+	var tempOut dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
 
 	// Copy the layout data with the correct ordering
 	if in.GridLayoutKind != nil {
@@ -897,11 +897,11 @@ func convertRowLayout_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutK
 	return nil
 }
 
-func convertTabLayout_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2alpha2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
+func convertTabLayout_V2alpha1_to_V2alpha2(in *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
 	// Handle the different union type orderings by converting through the main layout function
 	// Create a temporary variable with the correct type ordering
 	var tempIn dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
-	var tempOut dashv2alpha2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
+	var tempOut dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind
 
 	// Copy the layout data with the correct ordering
 	if in.GridLayoutKind != nil {

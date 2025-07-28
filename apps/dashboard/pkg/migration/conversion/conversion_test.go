@@ -16,7 +16,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashv2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -31,7 +31,7 @@ func TestConversionMatrixExist(t *testing.T) {
 		&dashv0.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV0"}}},
 		&dashv1.Dashboard{Spec: common.Unstructured{Object: map[string]any{"title": "dashboardV1"}}},
 		&dashv2alpha1.Dashboard{Spec: dashv2alpha1.DashboardSpec{Title: "dashboardV2alpha1"}},
-		&dashv2alpha2.Dashboard{Spec: dashv2alpha2.DashboardSpec{Title: "dashboardV2alpha2"}},
+		&dashv2beta1.Dashboard{Spec: dashv2beta1.DashboardSpec{Title: "dashboardV2alpha2"}},
 	}
 
 	scheme := runtime.NewScheme()
@@ -129,8 +129,8 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 				var dash dashv2alpha1.Dashboard
 				err = json.Unmarshal(inputData, &dash)
 				sourceDash = &dash
-			case "v2alpha2":
-				var dash dashv2alpha2.Dashboard
+			case "v2beta1":
+				var dash dashv2beta1.Dashboard
 				err = json.Unmarshal(inputData, &dash)
 				sourceDash = &dash
 			default:
@@ -171,8 +171,8 @@ func TestDashboardConversionToAllVersions(t *testing.T) {
 							targetVersions[filename] = &dashv1.Dashboard{}
 						case "v2alpha1":
 							targetVersions[filename] = &dashv2alpha1.Dashboard{}
-						case "v2alpha2":
-							targetVersions[filename] = &dashv2alpha2.Dashboard{}
+						case "v2beta1":
+							targetVersions[filename] = &dashv2beta1.Dashboard{}
 						default:
 							t.Logf("Unknown version %s, skipping", version.VersionName)
 						}

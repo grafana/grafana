@@ -80,7 +80,7 @@ const mockDashboard: DashboardDTO = {
 };
 
 const mockDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-  apiVersion: 'v2alpha2',
+  apiVersion: 'v2beta1',
   kind: 'DashboardWithAccessInfo',
   spec: {
     ...defaultDashboardV2Spec(),

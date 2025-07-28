@@ -183,7 +183,7 @@ export function ensureV2Response(
   };
 
   return {
-    apiVersion: 'v2alpha2',
+    apiVersion: 'v2beta1',
     kind: 'DashboardWithAccessInfo',
     metadata: {
       creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid
