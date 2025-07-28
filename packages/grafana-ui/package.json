@@ -131,7 +131,7 @@
     "tslib": "2.8.1",
     "uplot": "1.6.32",
     "uuid": "11.1.0",
-    "uwrap": "0.1.1"
+    "uwrap": "0.1.2"
   },
   "devDependencies": {
     "@babel/core": "7.28.0",
