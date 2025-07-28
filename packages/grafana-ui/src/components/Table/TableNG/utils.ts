@@ -186,6 +186,11 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
   return Object.values(result);
 }
 
+// in some cases, the estimator might return a value that is less than 1, but when measured by the counter, it actually
+// realizes that it's a multi-line cell. to avoid this, we want to give a little buffer away from 1 before we fully trust
+// the estimator to have told us that a cell is single-line.
+export const SINGLE_LINE_ESTIMATE_THRESHOLD = 0.85;
+
 /**
  * @internal
  * loop through the fields and their values, determine which cell is going to determine the height of the row based
@@ -233,7 +238,9 @@ export function getRowHeight(
     }
   }
 
-  if (maxLines === -1) {
+  // if the value is -1 or the estimate for the max cell was less than the SINGLE_LINE_ESTIMATE_THRESHOLD, we trust
+  // that the estimator correctly identified that no text wrapping is needed for this row, skipping the preciseCounter.
+  if (maxLines < SINGLE_LINE_ESTIMATE_THRESHOLD) {
     return defaultHeight;
   }
 

@@ -39,6 +39,7 @@ import {
   getTextLineEstimator,
   createTypographyContext,
   applySort,
+  SINGLE_LINE_ESTIMATE_THRESHOLD,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1197,6 +1198,22 @@ describe('TableNG utils', () => {
       // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `counter` function is used
       // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
       it('uses the estimate value rather than the precise value to select the row height', () => {
+        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
+      });
+
+      it('returns doesnt bother getting the precise count if the estimates are all below the threshold', () => {
+        jest.mocked(counters[0].counter).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
+        jest.mocked(counters[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
+        expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(36);
+      });
+
+      it('uses the precise count if the estimate is above the threshold, even if its below 1', () => {
+        // NOTE: if this fails, just change the test to use a different value besides 0.1
+        expect(SINGLE_LINE_ESTIMATE_THRESHOLD + 0.1).toBeLessThan(1);
+
+        jest.mocked(counters[0].counter).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
+        jest.mocked(counters[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + 0.1);
+
         expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
       });
     });
