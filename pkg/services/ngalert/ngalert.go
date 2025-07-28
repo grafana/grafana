@@ -193,7 +193,8 @@ func (ng *AlertNG) init() error {
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-	if remotePrimary || remoteSecondary {
+	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
+	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		smtpCfg := remoteClient.SmtpConfig{
 			FromAddress:    ng.Cfg.Smtp.FromAddress,
@@ -245,6 +246,7 @@ func (ng *AlertNG) init() error {
 				m,
 				ng.tracer,
 				moaLogger,
+				remoteSecondaryWithRemoteState,
 			)
 		}
 
