@@ -45,7 +45,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.GetAllDataKeys(ctx, namespace)
+		keys, err := svc.store.ListDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -60,7 +60,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.GetAllDataKeys(ctx, namespace)
+		keys, err := svc.store.ListDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -139,12 +139,12 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	})
 
 	t.Run("deleting DEK when no id provided must fail", func(t *testing.T) {
-		beforeDelete, err := store.GetAllDataKeys(ctx, namespace)
+		beforeDelete, err := store.ListDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		err = store.DeleteDataKey(ctx, namespace, "")
 		require.Error(t, err)
 
-		afterDelete, err := store.GetAllDataKeys(ctx, namespace)
+		afterDelete, err := store.ListDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, beforeDelete, afterDelete)
 	})

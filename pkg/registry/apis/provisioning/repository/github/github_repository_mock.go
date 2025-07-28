@@ -453,6 +453,56 @@ func (_c *MockGithubRepository_ListRefs_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// Move provides a mock function with given fields: ctx, oldPath, newPath, ref, message
+func (_m *MockGithubRepository) Move(ctx context.Context, oldPath string, newPath string, ref string, message string) error {
+	ret := _m.Called(ctx, oldPath, newPath, ref, message)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Move")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = rf(ctx, oldPath, newPath, ref, message)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockGithubRepository_Move_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Move'
+type MockGithubRepository_Move_Call struct {
+	*mock.Call
+}
+
+// Move is a helper method to define mock.On call
+//   - ctx context.Context
+//   - oldPath string
+//   - newPath string
+//   - ref string
+//   - message string
+func (_e *MockGithubRepository_Expecter) Move(ctx interface{}, oldPath interface{}, newPath interface{}, ref interface{}, message interface{}) *MockGithubRepository_Move_Call {
+	return &MockGithubRepository_Move_Call{Call: _e.mock.On("Move", ctx, oldPath, newPath, ref, message)}
+}
+
+func (_c *MockGithubRepository_Move_Call) Run(run func(ctx context.Context, oldPath string, newPath string, ref string, message string)) *MockGithubRepository_Move_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_Move_Call) Return(_a0 error) *MockGithubRepository_Move_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockGithubRepository_Move_Call) RunAndReturn(run func(context.Context, string, string, string, string) error) *MockGithubRepository_Move_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // OnCreate provides a mock function with given fields: ctx
 func (_m *MockGithubRepository) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
 	ret := _m.Called(ctx)
