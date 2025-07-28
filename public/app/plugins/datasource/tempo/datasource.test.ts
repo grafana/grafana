@@ -1227,7 +1227,17 @@ describe('should provide functionality for ad-hoc filters', () => {
   });
 
   it('for getTagKeys', async () => {
-    const response = await datasource.getTagKeys();
+    const response = await datasource.getTagKeys({
+      filters: [],
+      timeRange: {
+        from: dateTime('2021-04-20T15:55:00Z'),
+        to: dateTime('2021-04-20T15:55:00Z'),
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      },
+    });
     expect(response).toEqual([{ text: 'span.label1' }, { text: 'span.label2' }]);
   });
 
