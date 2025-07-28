@@ -48,6 +48,12 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.PluginDataType,
 }
 
+const (
+	SmDatasourceType = "synthetic-monitoring-datasource"
+)
+
+var SkippedDatasourcesType = []string{SmDatasourceType}
+
 //nolint:gocyclo
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser, resourceTypes cloudmigration.ResourceTypes) (*cloudmigration.MigrateDataRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getMigrationDataJSON")
@@ -84,6 +90,11 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		}
 
 		for _, ds := range dataSources {
+			// This avoids datasources that has issues to be migrated
+			if slices.Contains(SkippedDatasourcesType, ds.Type) {
+				s.log.Error("datasource type skipped", "type", ds.Type, "name", ds.Name)
+				continue
+			}
 			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 				Type:  cloudmigration.DatasourceDataType,
 				RefID: ds.UID,
