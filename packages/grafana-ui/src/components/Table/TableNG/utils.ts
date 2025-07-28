@@ -11,9 +11,11 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
+  DisplayProcessor,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
+  FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
@@ -23,10 +25,10 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
+import { CellColors, TableRow, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export type CellHeightCalculator = (text: string, cellWidth: number) => number;
+export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
 
 /**
  * @internal
@@ -128,46 +130,51 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
-  let type = getCellOptions(field).type;
-
-  return (
-    field.type === FieldType.string &&
+  const cellOptions = getCellOptions(field);
+  const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-    // so we need to ensure we don't apply overflow hover states for type image
-    type !== TableCellDisplayMode.Image &&
-    type !== TableCellDisplayMode.Pill &&
-    !shouldTextWrap(field) &&
-    !isCellInspectEnabled(field)
-  );
+    // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
+    (field.type === FieldType.string &&
+      cellOptions.type !== TableCellDisplayMode.Image &&
+      cellOptions.type !== TableCellDisplayMode.Pill) ||
+    // regardless of the underlying cell type, data links cells have text overflow.
+    cellOptions.type === TableCellDisplayMode.DataLinks;
+
+  return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
+}
+
+// we only want to infer justifyContent and textAlign for these cellTypes
+const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
+  TableCellDisplayMode.Auto,
+  TableCellDisplayMode.ColorText,
+  TableCellDisplayMode.ColorBackground,
+]);
+
+export type TextAlign = 'left' | 'right' | 'center';
+
+/**
+ * @internal
+ * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
+ */
+export function getAlignment(field: Field): TextAlign {
+  const align: FieldTextAlignment | undefined = field.config.custom?.align;
+
+  if (!align || align === 'auto') {
+    if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
+      return 'right';
+    }
+    return 'left';
+  }
+
+  return align;
 }
 
 /**
  * @internal
- * Returns the text alignment for a field based on its type and configuration.
+ * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
  */
-export function getTextAlign(field?: Field): Property.JustifyContent {
-  if (!field) {
-    return 'flex-start';
-  }
-
-  if (field.config.custom) {
-    const custom: TableFieldOptionsType = field.config.custom;
-
-    switch (custom.align) {
-      case 'right':
-        return 'flex-end';
-      case 'left':
-        return 'flex-start';
-      case 'center':
-        return 'center';
-    }
-  }
-
-  if (field.type === FieldType.number) {
-    return 'flex-end';
-  }
-
-  return 'flex-start';
+export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
+  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
@@ -335,18 +342,33 @@ export function applySort(
     return rows;
   }
 
+  const sortNanos = sortColumns.map(
+    (c) => fields.find((f) => f.type === FieldType.time && getDisplayName(f) === c.columnKey)?.nanos
+  );
+
   const compareRows = (a: TableRow, b: TableRow): number => {
     let result = 0;
+
     for (let i = 0; i < sortColumns.length; i++) {
       const { columnKey, direction } = sortColumns[i];
       const compare = getComparator(columnTypes[columnKey]);
       const sortDir = direction === 'ASC' ? 1 : -1;
 
       result = sortDir * compare(a[columnKey], b[columnKey]);
+
+      if (result === 0) {
+        const nanos = sortNanos[i];
+
+        if (nanos !== undefined) {
+          result = sortDir * (nanos[a.__index] - nanos[b.__index]);
+        }
+      }
+
       if (result !== 0) {
         break;
       }
     }
+
     return result;
   };
 
@@ -537,7 +559,10 @@ export const processNestedTableRows = (
 
 /**
  * @internal
- * returns the display name of a field
+ * returns the display name of a field.
+ * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
+ * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
+ * before we begin.
  */
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
@@ -625,3 +650,27 @@ export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDis
     (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
   );
 }
+
+export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue => {
+  let displayValue: string;
+
+  // Handle string values that might be JSON
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      displayValue = JSON.stringify(parsed, null, ' ');
+    } catch {
+      displayValue = value; // Keep original if not valid JSON
+    }
+  } else {
+    // For non-string values, stringify them
+    try {
+      displayValue = JSON.stringify(value, null, ' ');
+    } catch (error) {
+      // Handle circular references or other stringify errors
+      displayValue = String(value);
+    }
+  }
+
+  return { text: displayValue, numeric: Number.NaN };
+};

@@ -14,6 +14,7 @@ import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDa
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
+import { BulkDeleteProvisionedResource } from '../BulkActions/BulkDeleteProvisionedResource';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
@@ -133,10 +134,14 @@ export function BrowseActions({ folderDTO }: Props) {
           onClose={() => setShowBulkDeleteProvisionedResource(false)}
           size="md"
         >
-          {/* TODO: Implement bulk delete for provisioned resources, PR will merge soon https://github.com/grafana/grafana/pull/107800 */}
-          <Trans i18nKey="browse-dashboards.action.bulk-delete-provisioned-resources-not-implemented">
-            Bulk delete for provisioned resources is not implemented yet.
-          </Trans>
+          <BulkDeleteProvisionedResource
+            selectedItems={selectedItems}
+            folderUid={folderDTO?.uid || ''}
+            onDismiss={() => {
+              setShowBulkDeleteProvisionedResource(false);
+              onActionComplete();
+            }}
+          />
         </Drawer>
       )}
     </>

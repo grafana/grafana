@@ -82,6 +82,10 @@ type connectionsProvider struct {
 	registry  queryV0.DataSourceApiServerRegistry
 }
 
+var (
+	_ DataSourceConnectionProvider = (*connectionsProvider)(nil)
+)
+
 func (q *connectionsProvider) GetConnection(ctx context.Context, namespace string, name string) (*queryV0.DataSourceConnection, error) {
 	info, err := authlib.ParseNamespace(namespace)
 	if err != nil {

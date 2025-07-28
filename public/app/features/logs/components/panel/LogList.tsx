@@ -59,6 +59,7 @@ export interface Props {
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
+  noInteractions?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterString?: (value: string, refId?: string) => void;
@@ -124,6 +125,7 @@ export const LogList = ({
   logs,
   logsMeta,
   logSupportsContext,
+  noInteractions,
   onClickFilterLabel,
   onClickFilterOutLabel,
   onClickFilterString,
@@ -165,6 +167,7 @@ export const LogList = ({
       logLineMenuCustomItems={logLineMenuCustomItems}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
+      noInteractions={noInteractions}
       onClickFilterLabel={onClickFilterLabel}
       onClickFilterOutLabel={onClickFilterOutLabel}
       onClickFilterString={onClickFilterString}
@@ -472,7 +475,7 @@ const LogListComponent = ({
               outerRef={scrollRef}
               overscanCount={5}
               ref={listRef}
-              style={{ overflowY: 'scroll' }}
+              style={wrapLogMessage ? { overflowY: 'scroll' } : { overflow: 'scroll' }}
               width="100%"
             >
               {Renderer}
