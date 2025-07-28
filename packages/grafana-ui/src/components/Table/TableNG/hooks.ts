@@ -255,6 +255,7 @@ export interface FooterCalcsOptions {
 
 export function useFooterCalcs(
   rows: TableRow[],
+  // it's very important that this is the _visible_ fields.
   fields: Field[],
   { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
 ): string[] {
@@ -265,6 +266,8 @@ export function useFooterCalcs(
       return [];
     }
 
+    const fieldNameSet = footerOptions.fields?.length ? new Set(footerOptions.fields) : null;
+
     return fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
@@ -274,24 +277,27 @@ export function useFooterCalcs(
         return index === 0 ? `${rows.length}` : '';
       }
 
+      let emptyValue = '';
       if (index === 0) {
         const footerCalcReducer = footerReducers[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
+        emptyValue = footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
       }
 
       if (field.type !== FieldType.number) {
-        return '';
+        return emptyValue;
       }
 
       // if field.display is undefined, don't throw
       const displayFn = field.display;
       if (!displayFn) {
-        return '';
+        return emptyValue;
       }
 
-      // If fields array is specified, only show footer for fields included in that array
-      if (footerOptions.fields?.length && !footerOptions.fields?.includes(getDisplayName(field))) {
-        return '';
+      // If fields array is specified, only show footer for fields included in that array.
+      // the array can include either the display name or the field name. we don't use a field matcher
+      // because that requires us to drill the data frame down here.
+      if (fieldNameSet && !fieldNameSet.has(getDisplayName(field)) && !fieldNameSet.has(field.name)) {
+        return emptyValue;
       }
 
       const calc = footerReducers[0];
@@ -439,7 +445,6 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: number;
-  headerHeight: number;
   expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
@@ -449,7 +454,6 @@ export function useRowHeight({
   fields,
   hasNestedFrames,
   defaultHeight,
-  headerHeight,
   expandedRows,
   typographyCtx: { calcRowHeight, avgCharWidth },
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {

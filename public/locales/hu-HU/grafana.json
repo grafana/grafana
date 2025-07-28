@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Értékelési csoport szerkesztése"
     },
     "group-loader": {
-      "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben"
+      "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "A csoport törlése folyamatban van"
@@ -2466,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurálás",
-      "draft-new-rule": "Új szabály felvázolása",
       "ds-error": {
         "title": "Nem lehet betölteni a szabályokat ehhez az adatforráshoz"
       },
@@ -2492,6 +2493,7 @@
       "new-alert-rule": "Új riasztási szabály",
       "new-datasource-recording-rule": "Új adatforrás-felvételkészítési szabály",
       "new-grafana-recording-rule": "Új Grafana-felvételkészítési szabály",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Továbbiak megjelenítése…"
       },
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Előnézet frissítése",
+      "empty-state": "",
       "label-preview": "Előnézet",
       "refresh": "Frissítés"
     },
@@ -3479,7 +3482,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "Mégse",
       "cannot-move-folders": "A mappák nem helyezhetők át",
       "confirmation-text": "Törlés",
@@ -3511,6 +3513,24 @@
     },
     "browse-view": {
       "this-folder-is-empty": "A mappa üres"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "button-done": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "progress-title": "",
+      "success-message": ""
+    },
+    "bulk-move-resources-form": {
+      "deleting": "",
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} riasztási szabály",
@@ -4546,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} hozzáadása",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "{{typeName}} áthelyezése",
       "panel-background": "Panel hátterének módosítása",
       "panel-description": "Panel leírásának módosítása",
@@ -4560,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Irányítópult",
+        "element": "",
         "local-variable": "Helyi változó",
         "multiple-elements": "Több elem",
         "multiple-elements-delete-text": "Biztosan törli ezeket az elemeket?",
@@ -5769,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7140,6 +7164,7 @@
           "start-time": "Kezdés időpontja:"
         }
       },
+      "share-span": "",
       "warnings": "Figyelmeztetések"
     },
     "span-filters": {
@@ -7719,6 +7744,409 @@
       }
     }
   },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "",
+            "name-g-unit": "",
+            "name-meters-sec": ""
+          },
+          "name": ""
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "",
+            "name-arc-seconds": "",
+            "name-degrees": "",
+            "name-gradian": "",
+            "name-radians": ""
+          },
+          "name": ""
+        },
+        "area": {
+          "formats": {
+            "name-acres": "",
+            "name-hectares": "",
+            "name-square-feet": "",
+            "name-square-meters": "",
+            "name-square-miles": ""
+          },
+          "name": ""
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "",
+            "name-true-false": "",
+            "name-yes-no": ""
+          },
+          "name": ""
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "",
+            "name-flops": "",
+            "name-gflops": "",
+            "name-mflops": "",
+            "name-pflops": "",
+            "name-tflops": "",
+            "name-yflops": "",
+            "name-zflops": ""
+          },
+          "name": ""
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "",
+            "name-g-nm3": "",
+            "name-mg-dl": "",
+            "name-mg-m3": "",
+            "name-mg-nm3": "",
+            "name-mmol-l": "",
+            "name-ng-m3": "",
+            "name-ng-nm3": "",
+            "name-ppb": "",
+            "name-ppm": "",
+            "name-ug-m3": "",
+            "name-ug-nm3": ""
+          },
+          "name": ""
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "",
+            "name-brl": "",
+            "name-btc": "",
+            "name-chf": "",
+            "name-czk": "",
+            "name-dkk": "",
+            "name-eur": "",
+            "name-gbp": "",
+            "name-idr": "",
+            "name-ils": "",
+            "name-inr": "",
+            "name-isk": "",
+            "name-jpy": "",
+            "name-krw": "",
+            "name-mbtc": "",
+            "name-myr": "",
+            "name-nok": "",
+            "name-php": "",
+            "name-pln": "",
+            "name-pyg": "",
+            "name-rub": "",
+            "name-sek": "",
+            "name-try": "",
+            "name-uah": "",
+            "name-ubtc": "",
+            "name-usd": "",
+            "name-uyu": "",
+            "name-vnd": "",
+            "name-xpf": "",
+            "name-zar": ""
+          },
+          "name": ""
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "",
+            "name-bits-si": "",
+            "name-bytes-iec": "",
+            "name-bytes-si": "",
+            "name-gibibytes": "",
+            "name-gigabytes": "",
+            "name-kibibytes": "",
+            "name-kilobytes": "",
+            "name-mebibytes": "",
+            "name-megabytes": "",
+            "name-pebibytes": "",
+            "name-petabytes": "",
+            "name-tebibytes": "",
+            "name-terabytes": ""
+          },
+          "name": ""
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "",
+            "name-bits-sec-si": "",
+            "name-bytes-sec-iec": "",
+            "name-bytes-sec-si": "",
+            "name-gibibits-sec": "",
+            "name-gibibytes-sec": "",
+            "name-gigabits-sec": "",
+            "name-gigabytes-sec": "",
+            "name-kibibits-sec": "",
+            "name-kibibytes-sec": "",
+            "name-kilobits-sec": "",
+            "name-kilobytes-sec": "",
+            "name-mebibits-sec": "",
+            "name-mebibytes-sec": "",
+            "name-megabits-sec": "",
+            "name-megabytes-sec": "",
+            "name-packets-sec": "",
+            "name-pebibits-sec": "",
+            "name-pebibytes-sec": "",
+            "name-petabits-sec": "",
+            "name-petabytes-sec": "",
+            "name-tebibits-sec": "",
+            "name-tebibytes-sec": "",
+            "name-terabits-sec": "",
+            "name-terabytes-sec": ""
+          },
+          "name": ""
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "",
+            "name-datetime-iso": "",
+            "name-datetime-iso-no-date": "",
+            "name-datetime-local": "",
+            "name-datetime-local-no-date": "",
+            "name-datetime-us": "",
+            "name-datetime-us-no-date": "",
+            "name-from-now": ""
+          },
+          "name": ""
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "",
+            "name-ampere-hour": "",
+            "name-decibel-milliwatt": "",
+            "name-electron-volt": "",
+            "name-farad": "",
+            "name-femtofarad": "",
+            "name-gigawatt": "",
+            "name-henry": "",
+            "name-joule": "",
+            "name-kiloampere": "",
+            "name-kiloampere-hour": "",
+            "name-kiloohm": "",
+            "name-kilovolt": "",
+            "name-kilovolt-ampere": "",
+            "name-kilovolt-ampere-reactive": "",
+            "name-kilowatt": "",
+            "name-kilowatt-hour": "",
+            "name-kilowatt-min": "",
+            "name-lumens": "",
+            "name-megaohm": "",
+            "name-megawatt": "",
+            "name-megawatt-hour": "",
+            "name-microfarad": "",
+            "name-microhenry": "",
+            "name-milliampere": "",
+            "name-milliampere-hour": "",
+            "name-millihenry": "",
+            "name-milliohm": "",
+            "name-millivolt": "",
+            "name-milliwatt": "",
+            "name-nanofarad": "",
+            "name-ohm": "",
+            "name-picofarad": "",
+            "name-volt": "",
+            "name-volt-ampere": "",
+            "name-volt-ampere-reactive": "",
+            "name-watt": "",
+            "name-watt-hour": "",
+            "name-watt-hour-per-kg": "",
+            "name-watt-square-meter": ""
+          },
+          "name": ""
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "",
+            "name-cubic-feet-sec": "",
+            "name-cubic-meters-sec": "",
+            "name-gallons-min": "",
+            "name-litre-hour": "",
+            "name-litre-min": "",
+            "name-lux": "",
+            "name-millilitre-min": ""
+          },
+          "name": ""
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "",
+            "name-kilonewtons": "",
+            "name-newton-meters": "",
+            "name-newtons": ""
+          },
+          "name": ""
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "",
+            "name-gigahashes-sec": "",
+            "name-hashes-sec": "",
+            "name-kilohashes-sec": "",
+            "name-megahashes-sec": "",
+            "name-petahashes-sec": "",
+            "name-terahashes-sec": ""
+          },
+          "name": ""
+        },
+        "length": {
+          "formats": {
+            "name-feet": "",
+            "name-inch": "",
+            "name-kilometer": "",
+            "name-meter": "",
+            "name-mile": "",
+            "name-millimeter": ""
+          },
+          "name": ""
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "",
+            "name-kilogram": "",
+            "name-metric-ton": "",
+            "name-milligram": "",
+            "name-pound": ""
+          },
+          "name": ""
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "",
+            "name-decibel": "",
+            "name-hexadecimal": "",
+            "name-hexadecimal-0x": "",
+            "name-humidity": "",
+            "name-locale": "",
+            "name-number": "",
+            "name-percent-1": "",
+            "name-percent-100": "",
+            "name-pixels": "",
+            "name-scientific": "",
+            "name-short": "",
+            "name-si-short": "",
+            "name-string": ""
+          },
+          "name": ""
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "",
+            "name-hectopascals": "",
+            "name-inches-mercury": "",
+            "name-kilobars": "",
+            "name-kilopascals": "",
+            "name-millibars": "",
+            "name-pascals": "",
+            "name-psi": ""
+          },
+          "name": ""
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "",
+            "name-curie": "",
+            "name-exposure": "",
+            "name-gray": "",
+            "name-microsievert": "",
+            "name-microsievert-hour": "",
+            "name-millisievert": "",
+            "name-millisievert-hour": "",
+            "name-rad": "",
+            "name-rem": "",
+            "name-roentgen": "",
+            "name-sievert": "",
+            "name-sievert-hour": ""
+          },
+          "name": ""
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "",
+            "name-gigahertz": "",
+            "name-hertz": "",
+            "name-kilohertz": "",
+            "name-megahertz": "",
+            "name-radians-sec": "",
+            "name-rpm": ""
+          },
+          "name": ""
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "",
+            "name-fahrenheit": "",
+            "name-kelvin": ""
+          },
+          "name": ""
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "",
+            "name-counts-sec": "",
+            "name-events-min": "",
+            "name-events-sec": "",
+            "name-io-ops-sec": "",
+            "name-messages-min": "",
+            "name-messages-sec": "",
+            "name-ops-min": "",
+            "name-ops-sec": "",
+            "name-reads-min": "",
+            "name-reads-sec": "",
+            "name-records-min": "",
+            "name-records-sec": "",
+            "name-requests-min": "",
+            "name-requests-sec": "",
+            "name-rows-min": "",
+            "name-rows-sec": "",
+            "name-writes-min": "",
+            "name-writes-sec": ""
+          },
+          "name": ""
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "",
+            "name-clock-s": "",
+            "name-days": "",
+            "name-duration-dhms": "",
+            "name-duration-hms": "",
+            "name-duration-ms": "",
+            "name-duration-s": "",
+            "name-hertz": "",
+            "name-hours": "",
+            "name-microseconds": "",
+            "name-milliseconds": "",
+            "name-minutes": "",
+            "name-nanoseconds": "",
+            "name-seconds": "",
+            "name-timeticks": ""
+          },
+          "name": ""
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "",
+            "name-knot": "",
+            "name-meters-second": "",
+            "name-miles-hour": ""
+          },
+          "name": ""
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "",
+            "name-cubic-meter": "",
+            "name-gallons": "",
+            "name-litre": "",
+            "name-millilitre": "",
+            "name-normal-cubic-meter": ""
+          },
+          "name": ""
+        }
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -8177,7 +8605,10 @@
         "no-data": ""
       },
       "no-values-label": "Nincsenek értékek",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Címkék"
@@ -8910,8 +9341,11 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Nincs megjeleníthető mező.",
+      "open-assistant": "",
       "pin-line": "Napló kitűzése",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "Nincs megjeleníthető találat."
       },
@@ -8926,6 +9360,9 @@
       "copy-log": "Naplósor másolása",
       "hide-details": "Napló részleteinek megjelenítése",
       "icon-label": "Naplómenü",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Napló rögzítése",
       "show-context": "Kontextus megjelenítése",
       "show-details": "Napló részleteinek elrejtése",
@@ -10519,16 +10956,38 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
       "message": "Ez a funkció jelenleg aktív fejlesztés alatt áll. A legjobb élmény és a legújabb fejlesztések érdekében javasoljuk a Grafana <2>éjszakai buildjének</2> használatát."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Adjon egy egyértelmű nevet ehhez az adattári kapcsolathoz",
@@ -10539,8 +10998,12 @@
       "label-display-name": "Megjelenített név",
       "placeholder-my-repository-connection": "Saját adattári kapcsolat",
       "text-loading-resource-information": "Erőforrás-információk betöltése…",
+      "dashboards-count_one": "",
+      "dashboards-count_other": "",
       "files-count_one": "{{count}} fájl",
-      "files-count_other": "{{count}} fájl"
+      "files-count_other": "{{count}} fájl",
+      "folders-count_one": "",
+      "folders-count_other": ""
     },
     "check-repository": {
       "check": "Ellenőrzés"
@@ -10551,36 +11014,20 @@
       "button-save": "Mentés",
       "button-saving": "Mentés...",
       "description-enabled": "Az automatikus lekérés engedélyezése után a cél nem módosítható.",
-      "description-path": "Egy alkönyvtár elérési útja a Git-tárban",
       "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
-      "description-repository-url": "Adja meg a GitHub-adattár URL-címét",
       "description-title": "A konfiguráció emberek által olvasható neve",
       "error-required": "A mező kitöltése kötelező.",
       "error-save-repository": "Az adattár beállításainak mentése sikertelen volt",
-      "error-valid-github-url": "Adjon meg egy érvényes GitHub-adattár-URL-címet",
       "label-automatic-pulling": "Automatikus lekérés",
-      "label-branch": "Ág",
       "label-enabled": "Engedélyezve",
-      "label-github-token": "GitHub-token",
       "label-interval-seconds": "Intervallum (másodperc)",
-      "label-local-path": "Helyi elérési út",
-      "label-path": "Útvonal",
-      "label-pr-workflow": "Lekérési kérelemopció engedélyezése mentéskor",
       "label-repository-type": "Adattár típusa",
-      "label-repository-url": "Adattár URL-címe",
       "label-target": "Cél",
       "label-title": "Cím",
       "option-entire-instance": "Teljes példány",
-      "option-github": "GitHub",
-      "option-local": "Helyi",
       "option-managed-folder": "Felügyelt mappa",
-      "placeholder-branch": "fő",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/adattár/elérési/útja",
-      "placeholder-my-config": "Saját konfiguráció",
-      "placeholder-select-repository-type": "Adattár típusának kijelölése"
+      "placeholder-my-config": "Saját konfiguráció"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Konfigurálja a webkapcsokat</0>, hogy azonnali frissítéseket kapjon a Grafanában, amint a változások végrehajtása megtörténik. Tekintse át és hagyja jóvá a módosításokat a lekérések használatával, mielőtt életbe lépnének.",
@@ -10594,26 +11041,7 @@
     },
     "connect-repository-button": {
       "configure": "Konfigurálás",
-      "configure-file": "Fájlkiépítés konfigurálása",
-      "configure-git-sync": "Git-szinkronizálás konfigurálása",
       "repository-limit-info-alert": "Elérte az adattár korlátját ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "A GitHub-adattárhoz használandó ág",
-      "description-github-path": "Ez annak az alkönyvtárnak az elérési útja az Ön GitHub-adattárában, amely az irányítópultok tárolására és kiépítésére szolgál",
-      "description-paste-your-git-hub-personal-access-token": "Illessze be a személyes GitHub-hozzáférési tokent",
-      "description-repository-url": "Illessze be a GitHub-adattár URL-címét",
-      "error-field-required": "A mező kitöltése kötelező.",
-      "error-invalid-github-url": "Adjon meg egy érvényes GitHub-adattár-URL-címet",
-      "label-access-token": "Hozzáférési GitHub-token",
-      "label-branch": "Ág neve",
-      "label-local-path": "Helyi elérési út",
-      "label-path": "Az alkönyvtár elérési útja az adattárban",
-      "label-repository-url": "GitHub-adattár URL-címe",
-      "placeholder-branch": "fő",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/adattár/elérési/útja"
     },
     "delete-repository-button": {
       "button-delete": "Törlés",
@@ -10646,17 +11074,17 @@
       "title-instant-updates-requests-webhooks": "Azonnali frissítések és lekérések webkapcsokkal.",
       "title-visual-previews-in-pull-requests": "Vizuális előnézetek a lekérésekben képalkotással"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Feladat részletei",
-      "summary": "Összegzés",
-      "title-error": "Hiba"
+      "summary": "Összegzés"
     },
     "features-list": {
       "actions": {
         "set-up-required-feature-toggles": "Kötelező funkcióváltások beállítása"
       },
-      "manage-dashboards-provision-updates-automatically": "Irányítópultok kezelése kódként a GitHubon, és a kiépítés automatikus frissítése",
-      "manage-your-dashboards-with-remote-provisioning": "Használat megkezdése a GitSynckel",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Tárolja az irányítópultokat verziókövetéses tárolóban a jobb rendszerezés és az előzmények nyomon követése érdekében"
     },
     "file-history-page": {
@@ -10677,18 +11105,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Hozzáadja az irányítópult változásainak előnézetét a lekérésekben. A Grafana-irányítópultok képei meg lesznek osztva a Git-tárban, és bárki számára láthatóak lesznek, aki hozzáféréssel rendelkezik az adattárhoz.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Képalkotást igényel. <2>Állítsa be a képalkotást</2>",
-      "description-often-shall-instance-updates-git-hub": "Milyen gyakran kérjen le frissítéseket a példány a GitHubról?",
-      "description-pr-enable-description": "Lehetővé teszi a felhasználók számára, hogy kiválasszák, megnyitják-e a lekérési kérelmet a módosítások mentésekor. Ha az adattár nem teszi lehetővé a főág közvetlen módosítását, akkor is szükség lehet lekérési kérelemre.",
+      "description-preview-requirements": "",
       "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
-      "description-webhooks-enable": "Lehetővé teszi a felhasználók számára, hogy kiválasszák, megnyitják-e a lekérési kérelmet a módosítások mentésekor. Ha az adattár nem teszi lehetővé a főág közvetlen módosítását, akkor is szükség lehet lekérési kérelemre.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Az irányítópult előnézeteinek engedélyezése a lekérésekben",
-      "label-pr-workflow": "Lekérési kérelemopció engedélyezése mentéskor",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Csak olvasható",
-      "label-update-instance-interval-seconds": "Példányfrissítési időköz (másodpercben)",
-      "placeholder": "60",
-      "text-setup-later": "Ez később bármikor beállítható",
-      "title-enhance-github": "Fokozza a GitHub-élményét"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nincs találat a lekérdezésre",
@@ -10719,6 +11145,57 @@
       "header": "Kiépítés",
       "subtitle-provisioning-feature": "Kiépítési kapcsolatok megtekintése és kezelése"
     },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
     "history-view": {
       "not-found": "Nem található"
     },
@@ -10745,9 +11222,17 @@
       "starting": "Kezdés…",
       "status": {
         "title-error-running-job": "Hiba történt a feladat futtatásakor",
-        "title-job-completed-successfully": "A feladat sikeresen befejeződött"
+        "title-warning-running-job": ""
       },
-      "summary": "Összegzés"
+      "summary": "Összegzés",
+      "title": {
+        "error-fetching-active-job": ""
+      }
+    },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
     },
     "mode-options": {
       "folder": {
@@ -10773,7 +11258,7 @@
     },
     "repository-actions": {
       "settings": "Beállítások",
-      "source-code": "Forráskód"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10838,6 +11323,24 @@
       "title-legacy-storage": "Örökölt tárolás",
       "title-queued-for-deletion": "Törlésre vár"
     },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
+    },
     "resource-view": {
       "base": "Alap",
       "dashboard-preview": "Irányítópult előnézete",
@@ -10867,6 +11370,11 @@
       "label-current-step": "Jelenlegi lépés",
       "label-pending-step": "Függőben lévő lépés"
     },
+    "sync-job": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": ""
+    },
     "sync-repository": {
       "body-edit-configuration": "A konfiguráció szerkesztése",
       "button-edit": "Szerkesztés",
@@ -10877,9 +11385,6 @@
       "tooltip-unhealthy-repository": "Nem lehet beolvasni egy nem megfelelő állapotú adattárat"
     },
     "synchronize-step": {
-      "error-no-job-id": "A feladat indítása nem sikerült",
-      "error-no-repository-name": "Nincs megadva az adattár neve",
-      "error-starting-job": "Hiba a feladat indításakor",
       "synchronization-description": "Változtatások belefoglalása minden előzményértékhez",
       "synchronization-options": "Szinkronizálási beállítások"
     },
@@ -10888,6 +11393,7 @@
       "go-to": "Tovább ide:",
       "make-sure": "Mindenképpen foglalja bele ezeket az engedélyeket"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "A folyamat során nem lehet erőforrásokat létrehozni, szerkeszteni vagy törölni. Az utolsó lépésben el fognak tűnni.",
       "alert-point-2": "A kiépítés befejezése után az erőforrások újra megjelennek, és külső tárolóeszközön keresztül kezelhetők.",

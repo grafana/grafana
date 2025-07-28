@@ -161,6 +161,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -177,6 +178,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -192,6 +194,7 @@ const injectedRtkApi = api
             ref: queryArg.ref,
             message: queryArg.message,
             skipDryRun: queryArg.skipDryRun,
+            originalPath: queryArg.originalPath,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -527,6 +530,8 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
   body: {
     [key: string]: any;
   };
@@ -543,6 +548,8 @@ export type CreateRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
   body: {
     [key: string]: any;
   };
@@ -559,6 +566,8 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   message?: string;
   /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
+  /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
+  originalPath?: string;
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {
@@ -749,9 +758,17 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type DeleteJobOptions = {
+  /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
+  paths?: string[];
+  /** Ref to the branch or commit hash to delete from */
+  ref?: string;
+};
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
 };
 export type PullRequestJobOptions = {
   /** The specific commit hash that triggered this notice */
@@ -768,20 +785,26 @@ export type SyncJobOptions = {
   incremental: boolean;
 };
 export type ExportJobOptions = {
-  /** Target branch for export (only git) */
+  /** FIXME: we should validate this in admission hooks Target branch for export (only git) */
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
+  /** Message to use when committing the changes in a single commit */
+  message?: string;
+  /** FIXME: we should validate this in admission hooks Prefix in target file system */
   /** Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {
   /** Possible enum values:
+     - `"delete"` deletes files in the remote repository
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
      - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'migrate' | 'pr' | 'pull' | 'push';
+  action?: 'delete' | 'migrate' | 'pr' | 'pull' | 'push';
+  /** Delete when the action is `delete` */
+  delete?: DeleteJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Pull request options */
@@ -819,8 +842,9 @@ export type JobStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state?: 'error' | 'pending' | 'success' | 'working';
+  state?: 'error' | 'pending' | 'success' | 'warning' | 'working';
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
 };
@@ -991,8 +1015,9 @@ export type SyncStatus = {
      - `"error"` Finished with errors
      - `"pending"` Job has been submitted, but not processed yet
      - `"success"` Finished with success
+     - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
-  state: 'error' | 'pending' | 'success' | 'working';
+  state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
 export type WebhookStatus = {
   encryptedSecret?: string;
@@ -1115,8 +1140,9 @@ export type ResourceObjects = {
     Possible enum values:
      - `"create"`
      - `"delete"`
+     - `"move"`
      - `"update"` */
-  action?: 'create' | 'delete' | 'update';
+  action?: 'create' | 'delete' | 'move' | 'update';
   /** The value returned from a dryRun request */
   dryRun?: Unstructured;
   /** The same value, currently saved in the grafana database */

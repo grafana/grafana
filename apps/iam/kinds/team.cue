@@ -4,20 +4,18 @@ import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
-team: {
+teamKind: {
 	kind:       "Team"
 	pluralName: "Teams"
 	current:    "v0alpha1"
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
+	}
+}
 
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			schema: {
-				spec: v0alpha1.TeamSpec
-			}
-		}
+teamv0alpha1: teamKind & {
+	schema: {
+		spec: v0alpha1.TeamSpec
 	}
 }

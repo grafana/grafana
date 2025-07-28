@@ -191,6 +191,18 @@ describe('expandRecordingRules()', () => {
     const result = expandRecordingRules(query, mapping);
     expect(result).toBe(expected);
   });
+
+  it('when there is an empty label value it should still be able to expand the rule', () => {
+    const query = `sum(max by (cluster, container) (pod_cpu:active:kube_limits{container!="", cluster=~"pink"}))`;
+    const mapping = {
+      'pod_cpu:active:kube_limits': {
+        expandedQuery: `kube_limits{job!="", resource="cpu"} * on (namespace, pod, cluster) group_left () max by (namespace, pod, cluster) ((kube_pod_status_phase{phase=~"Pending|Running"} == 1))`,
+      },
+    };
+    const expected = `sum(max by (cluster, container) (kube_limits{job!="", resource="cpu", container!="", cluster=~"pink"} * on (namespace, pod, cluster) group_left () max by (namespace, pod, cluster) ((kube_pod_status_phase{phase=~"Pending|Running", container!="", cluster=~"pink"} == 1))))`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
+  });
 });
 
 describe('escapeLabelValueInExactSelector()', () => {
