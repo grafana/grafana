@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Yapılandır",
-      "draft-new-rule": "Yeni bir kural taslağı oluştur",
       "ds-error": {
         "title": "Bu veri kaynağı için kurallar yüklenemiyor"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Yeni uyarı kuralı",
       "new-datasource-recording-rule": "Yeni veri kaynağı kayıt kuralı",
       "new-grafana-recording-rule": "Yeni Grafana kayıt kuralı",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Daha fazla göster..."
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} ekle",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Panel arka planını değiştir",
       "panel-description": "Panel açıklamasını değiştir",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Pano",
+        "element": "",
         "local-variable": "Yerel değişken",
         "multiple-elements": "Birden çok öge",
         "multiple-elements-delete-text": "Bu ögeleri silmek istediğinize emin misiniz?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
