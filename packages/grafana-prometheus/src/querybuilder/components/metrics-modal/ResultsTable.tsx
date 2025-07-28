@@ -67,13 +67,14 @@ export function ResultsTable(props: ResultsTableProps) {
 
   function metaRows(metric: MetricData) {
     if (fullMetaSearch && metric) {
+      const searchWords = searchedText.split(' ');
       return (
         <>
           <td>{displayType(metric.type ?? '')}</td>
           <td>
             <Highlighter
               textToHighlight={metric.description ?? ''}
-              searchWords={[searchedText]}
+              searchWords={searchWords}
               autoEscape
               highlightClassName={styles.matchHighLight}
             />
@@ -190,7 +191,7 @@ export function ResultsTable(props: ResultsTableProps) {
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
-                      searchWords={[searchedText]}
+                      searchWords={searchedText.split(' ')}
                       autoEscape
                       highlightClassName={styles.matchHighLight}
                     />
