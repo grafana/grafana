@@ -4395,8 +4395,6 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 func TestIntegrationRuleNotificationSettings(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
-
-		// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
 	}
 	testinfra.SQLiteIntegrationTest(t)
 
