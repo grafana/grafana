@@ -287,6 +287,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
           }
         }
       }
+      // Temporarily set Top-Left constraints on each group element for predictable resizing; restore originals on end.
       for (let event of e.events) {
         const targetedElement = findElementByTarget(event.target, scene.root.elements);
         if (targetedElement) {

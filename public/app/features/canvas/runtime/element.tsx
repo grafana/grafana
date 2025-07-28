@@ -829,7 +829,7 @@ export class ElementState implements LayerElement {
       placement.left! -= deltaX;
       placement.width = event.width;
       if (config.featureToggles.canvasPanelPanZoom) {
-        style.transform = `translate(${placement.left}px, ${placement.top}px)`;
+        style.transform = `translate(${placement.left}px, ${placement.top}px) rotate(${placement.rotation ?? 0}deg)`;
       } else {
         style.left = `${placement.left}px`;
       }
@@ -840,7 +840,7 @@ export class ElementState implements LayerElement {
       placement.top! -= deltaY;
       placement.height = event.height;
       if (config.featureToggles.canvasPanelPanZoom) {
-        style.transform = `translate(${placement.left}px, ${placement.top}px)`;
+        style.transform = `translate(${placement.left}px, ${placement.top}px) rotate(${placement.rotation ?? 0}deg)`;
       } else {
         style.top = `${placement.top}px`;
       }
@@ -848,9 +848,6 @@ export class ElementState implements LayerElement {
     } else if (dirTB === 1) {
       placement.height = event.height;
       style.height = `${placement.height}px`;
-    }
-    if (config.featureToggles.canvasPanelPanZoom) {
-      style.transform = `translate(${placement.left ?? 0}px, ${placement.top ?? 0}px) rotate(${placement.rotation ?? 0}deg)`;
     }
   };
 
