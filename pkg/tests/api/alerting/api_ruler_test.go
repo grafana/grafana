@@ -4723,8 +4723,6 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 func TestIntegrationRuleVersions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
-
-		// Setup Grafana and its Database
 	}
 	testinfra.SQLiteIntegrationTest(t)
 
