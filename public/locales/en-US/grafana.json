@@ -13443,7 +13443,7 @@
         "create-new-data-frame": "Create a new data frame containing values predicted by a statistical model."
       },
       "name": {
-        "regression-analysis": "Regression analysis"
+        "trendline": "Trendline"
       }
     },
     "regression-transformer-editor": {
@@ -13465,6 +13465,9 @@
         }
       },
       "regression": "regression",
+      "tags": {
+        "regression-analysis": "Regression analysis"
+      },
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {

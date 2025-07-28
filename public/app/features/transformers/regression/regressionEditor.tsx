@@ -171,5 +171,6 @@ export const getRegressionTransformerRegistryItem: () => TransformerRegistryItem
     help: getTransformationContent(DataTransformerID.regression).helperDocs,
     imageDark: darkImage,
     imageLight: lightImage,
+    tags: new Set([t('transformers.regression-transformer-editor.tags.regression-analysis', 'Regression analysis')]),
   };
 };
