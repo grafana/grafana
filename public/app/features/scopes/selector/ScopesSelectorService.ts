@@ -1,4 +1,4 @@
-import { Scope, store as storeImpl } from '@grafana/data';
+import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -214,8 +214,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     return this.collapseNode(scopeNodeId);
   };
 
-  changeScopes = (scopeNames: string[]) => {
-    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id })));
+  changeScopes = (scopeNames: string[], parentNodeId?: string) => {
+    return this.applyScopes(scopeNames.map((id) => ({ scopeId: id, parentNodeId })));
   };
 
   /**
@@ -248,17 +248,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
       const parentNode =
         scopeNode && scopeNode.spec.parentName ? this.state.nodes[scopeNode.spec.parentName] : undefined;
-      this.addRecentScopes(
-        fetchedScopes,
-        scopeNode && parentNode ? { name: parentNode.metadata.name, title: parentNode.spec.title } : undefined
-      );
+      this.addRecentScopes(fetchedScopes, scopeNode && parentNode ? parentNode : undefined);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
 
   public removeAllScopes = () => this.applyScopes([]);
 
-  private addRecentScopes = (scopes: Scope[], parentNode?: { name: string; title: string }) => {
+  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode) => {
     if (scopes.length === 0) {
       return;
     }
@@ -283,6 +280,19 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   public getRecentScopes = (): RecentScope[][] => {
     const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
     const recentScopes = parseScopesFromLocalStorage(content);
+
+    // Load parent nodes for recent scopes
+    const parentNodes = Object.fromEntries(
+      recentScopes
+        .map((scopes) => [scopes[0]?.parentNode?.metadata?.name, scopes[0]?.parentNode])
+        .filter(([key, parentNode]) => parentNode !== undefined && key !== undefined)
+    );
+
+    if (parentNodes.length) {
+      this.updateState({ nodes: { ...this.state.nodes, ...parentNodes } });
+    }
+
+    console.log(this.state.nodes);
 
     // Filter out the current selection from recent scopes to avoid duplicates
     return recentScopes.filter((scopes: RecentScope[]) => {

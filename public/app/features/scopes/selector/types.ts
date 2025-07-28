@@ -6,6 +6,7 @@ export type ScopesMap = Record<string, Scope>;
 export interface SelectedScope {
   scopeId: string;
   scopeNodeId?: string;
+  parentNodeId?: string;
 }
 
 export interface TreeNode {
@@ -15,10 +16,5 @@ export interface TreeNode {
   children?: Record<string, TreeNode>;
 }
 export interface RecentScope extends Scope {
-  parentNode?: {
-    // id of the parent node
-    name: string;
-    // display title
-    title: string;
-  };
+  parentNode?: ScopeNode;
 }
