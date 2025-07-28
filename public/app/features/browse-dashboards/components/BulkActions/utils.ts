@@ -35,7 +35,7 @@ export function getTargetFolderPathInRepo({ targetFolder }: { targetFolder?: Fol
   return folderAnnotations[AnnoKeySourcePath] || targetFolder.metadata.name || '';
 }
 
-export function getTargetResourcePath(currentPath: string, targetFolderPath: string): string {
+export function getResourceTargetPath(currentPath: string, targetFolderPath: string): string {
   // Handle folder paths that end with '/'
   const cleanCurrentPath = currentPath.replace(/\/$/, ''); // Remove trailing slash
   const filename = cleanCurrentPath.split('/').pop();

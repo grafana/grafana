@@ -33,7 +33,7 @@ import {
   BulkActionProvisionResourceProps,
   BulkSuccessResponse,
   getTargetFolderPathInRepo,
-  getTargetResourcePath,
+  getResourceTargetPath,
   MoveResultSuccessState,
 } from './utils';
 
@@ -64,10 +64,10 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const workflow = watch('workflow');
   const { handleSuccess } = useBulkActionRequest({ workflow, repository, successState, onDismiss });
 
-  // Get target folder data (similar to MoveProvisionedDashboardForm)
+  // Get target folder data
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
 
-  const getResourcePath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
+  const getResourceCurrentPath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
     const item = findItem(rootItems?.items || [], childrenByParentUID, uid);
     if (!item) {
       return undefined;
@@ -152,7 +152,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
       try {
         // 1. Get source path in repository
-        const currentPath = await getResourcePath(uid, isFolder);
+        const currentPath = await getResourceCurrentPath(uid, isFolder);
         if (!currentPath) {
           failures.push({
             status: 'failed',
@@ -174,10 +174,10 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           continue;
         }
 
-        const newPath = getTargetResourcePath(currentPath, targetFolderPathInRepo);
+        const newPath = getResourceTargetPath(currentPath, targetFolderPathInRepo);
         const fileBody = await createFileBody(isFolder, displayName, currentPath);
 
-        // Build move parameters (following MoveProvisionedDashboardForm pattern)
+        // Build move parameters
         const moveParams: CreateRepositoryFilesWithPathApiArg = {
           name: repository.name,
           path: newPath, // NEW target path
@@ -187,7 +187,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           body: fileBody, // File content
         };
 
-        // Perform move
+        // Call endpoint to move resource
         const response = await moveFile(moveParams).unwrap();
         successes.push({ index: i, item: moveParams, data: response });
       } catch (error: unknown) {
