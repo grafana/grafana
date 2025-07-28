@@ -16,6 +16,7 @@ import {
   CoreApp,
   LogRowModel,
   AbsoluteTimeRange,
+  EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -30,6 +31,7 @@ import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogList } from './LogList';
+import { ScrollToLogsEvent } from './virtualization';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -116,6 +118,7 @@ export const LogLineContext = memo(
     const allLogs = useMemo(() => [...aboveLogs, log, ...belowLogs], [log, belowLogs, aboveLogs]);
     const [aboveState, setAboveState] = useState(LoadingState.NotStarted);
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
+    const eventBusRef = useRef(new EventBusSrv());
 
     const dispatch = useDispatch();
     const theme = useTheme2();
@@ -160,10 +163,6 @@ export const LogLineContext = memo(
 
     const getContextLogs = useCallback(
       async (place: 'above' | 'below', refLog: LogRowModel): Promise<LogRowModel[]> => {
-        /*const refLog = allLogs.at(place === 'above' ? 0 : -1);
-    if (refLog == null) {
-      throw new Error('should never happen. the array always contains at least 1 item (the middle row)');
-    }*/
         const result = await getRowContext(normalizeLogRefId(refLog), {
           limit: PAGE_SIZE,
           direction: getLoadMoreDirection(place, logsSortOrder),
@@ -208,8 +207,7 @@ export const LogLineContext = memo(
 
     useEffect(() => {
       if (!initialized) {
-        loadMore('above', log);
-        loadMore('below', log);
+        Promise.all([loadMore('above', log), loadMore('below', log)]).then(() => {});
         setInitialized(true);
       }
     }, [initialized, loadMore, log]);
@@ -224,6 +222,14 @@ export const LogLineContext = memo(
       },
       [allLogs, loadMore]
     );
+
+    const onScrollCenterClick = useCallback(() => {
+      eventBusRef.current.publish(
+        new ScrollToLogsEvent({
+          scrollTo: log.uid,
+        })
+      );
+    }, [log.uid]);
 
     return (
       <Modal
@@ -256,6 +262,7 @@ export const LogLineContext = memo(
               detailsMode="inline"
               displayedFields={displayedFields}
               enableLogDetails={true}
+              eventBus={eventBusRef.current}
               infiniteScrollMode="unlimited"
               loadMore={handleLoadMore}
               logs={allLogs}
@@ -285,6 +292,9 @@ export const LogLineContext = memo(
         </div>
 
         <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onScrollCenterClick}>
+            <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
+          </Button>
           {contextQuery?.datasource?.uid && (
             <Button
               variant="secondary"
@@ -308,13 +318,12 @@ export const LogLineContext = memo(
                   })
                 );
                 onClose();
-                reportInteraction('grafana_explore_logs_log_context_open_split_view_clicked', {
+                reportInteraction('logs_log_line_context_open_in_split_clicked', {
                   datasourceType: log.datasourceType,
-                  logRowUid: log.uid,
                 });
               }}
             >
-              <Trans i18nKey="logs.log-row-context-modal.open-in-split-view">Open in split view</Trans>
+              <Trans i18nKey="logs.log-line-context.open-in-split-view">Open in split view</Trans>
             </Button>
           )}
         </Modal.ButtonRow>

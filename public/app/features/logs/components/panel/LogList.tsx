@@ -274,6 +274,20 @@ const LogListComponent = ({
   useKeyBindings();
   const { filterLogs, matchingUids, searchVisible } = useLogListSearchContext();
 
+  const levelFilteredLogs = useMemo(
+    () =>
+      filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
+    [filterLevels, processedLogs]
+  );
+
+  const filteredLogs = useMemo(
+    () =>
+      matchingUids && filterLogs
+        ? levelFilteredLogs.filter((log) => matchingUids.includes(log.uid))
+        : levelFilteredLogs,
+    [filterLogs, levelFilteredLogs, matchingUids]
+  );
+
   const debouncedResetAfterIndex = useMemo(() => {
     return debounce((index: number) => {
       listRef.current?.resetAfterIndex(index);
@@ -289,10 +303,10 @@ const LogListComponent = ({
 
   useEffect(() => {
     const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
-      handleScrollToEvent(e, logs.length, listRef.current)
+      handleScrollToEvent(e, filteredLogs, listRef.current)
     );
     return () => subscription.unsubscribe();
-  }, [eventBus, logs.length]);
+  }, [eventBus, filteredLogs]);
 
   useEffect(() => {
     if (loading) {
@@ -381,20 +395,6 @@ const LogListComponent = ({
   const handleLogDetailsResize = useCallback(() => {
     debouncedResetAfterIndex(0);
   }, [debouncedResetAfterIndex]);
-
-  const levelFilteredLogs = useMemo(
-    () =>
-      filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
-    [filterLevels, processedLogs]
-  );
-
-  const filteredLogs = useMemo(
-    () =>
-      matchingUids && filterLogs
-        ? levelFilteredLogs.filter((log) => matchingUids.includes(log.uid))
-        : levelFilteredLogs,
-    [filterLogs, levelFilteredLogs, matchingUids]
-  );
 
   const focusLogLine = useCallback(
     (log: LogListModel) => {
@@ -538,10 +538,16 @@ function getStyles(
   };
 }
 
-function handleScrollToEvent(event: ScrollToLogsEvent, logsCount: number, list: VariableSizeList | null) {
+function handleScrollToEvent(event: ScrollToLogsEvent, logs: LogListModel[], list: VariableSizeList | null) {
   if (event.payload.scrollTo === 'top') {
     list?.scrollTo(0);
+  } else if (event.payload.scrollTo === 'bottom') {
+    list?.scrollToItem(logs.length - 1);
   } else {
-    list?.scrollToItem(logsCount - 1);
+    // uid
+    const index = logs.findIndex((log) => log.uid === event.payload.scrollTo);
+    if (index >= 0) {
+      list?.scrollToItem(index, 'center');
+    }
   }
 }
