@@ -52,10 +52,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     loadingIndicator: css({
       height: theme.spacing(3),
     }),
+    wrapper: css({
+      border: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(0, 1, 1, 0),
+    }),
     logsContainer: css({
       height: '59vh',
-      border: `1px solid ${theme.colors.border.weak}`,
-      padding: theme.spacing(0, 0.5, 1, 0),
     }),
     flexColumn: css({
       display: 'flex',
@@ -252,33 +254,35 @@ export const LogLineContext = memo(
             />
           )}
         </div>
-        <div className={styles.logsContainer} ref={containerRef}>
-          {containerRef.current && (
-            <LogList
-              app={CoreApp.Unknown}
-              containerElement={containerRef.current}
-              dedupStrategy={LogsDedupStrategy.none}
-              detailsMode="inline"
-              displayedFields={displayedFields}
-              enableLogDetails={true}
-              eventBus={eventBusRef.current}
-              infiniteScrollMode="unlimited"
-              loadMore={handleLoadMore}
-              logs={allLogs}
-              loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
-              permalinkedLogId={log.uid}
-              onClickHideField={onClickHideField}
-              onClickShowField={onClickShowField}
-              showControls
-              showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
-              sortOrder={logsSortOrder}
-              timeRange={timeRange}
-              timeZone={timeZone}
-              wrapLogMessage={
-                logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true
-              }
-            />
-          )}
+        <div className={styles.wrapper}>
+          <div className={styles.logsContainer} ref={containerRef}>
+            {containerRef.current && (
+              <LogList
+                app={CoreApp.Unknown}
+                containerElement={containerRef.current}
+                dedupStrategy={LogsDedupStrategy.none}
+                detailsMode="inline"
+                displayedFields={displayedFields}
+                enableLogDetails={true}
+                eventBus={eventBusRef.current}
+                infiniteScrollMode="unlimited"
+                loadMore={handleLoadMore}
+                logs={allLogs}
+                loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
+                permalinkedLogId={log.uid}
+                onClickHideField={onClickHideField}
+                onClickShowField={onClickShowField}
+                showControls
+                showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
+                sortOrder={logsSortOrder}
+                timeRange={timeRange}
+                timeZone={timeZone}
+                wrapLogMessage={
+                  logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true
+                }
+              />
+            )}
+          </div>
         </div>
         <div className={styles.loadingIndicator}>
           {belowState === LoadingState.Loading && (
