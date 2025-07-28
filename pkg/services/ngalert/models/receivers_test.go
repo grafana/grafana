@@ -121,9 +121,8 @@ func TestIntegration_Validate(t *testing.T) {
 }
 
 func TestIntegration_WithExistingSecureFields(t *testing.T) {
-	if testing.
-		// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
-		Short() {
+	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
+	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
 
