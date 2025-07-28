@@ -11,9 +11,8 @@ import (
 )
 
 func TestIntegrationUnifiedStorageCommand(t *testing.T) {
-	if testing.
-		// setup datasources with password, basic_auth and none
-		Short() {
+	// setup datasources with password, basic_auth and none
+	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
 
