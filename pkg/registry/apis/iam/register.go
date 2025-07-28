@@ -57,17 +57,18 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:              store,
-		coreRolesStorage:   coreRolesStorage,
-		rolesStorage:       rolesStorage,
-		sso:                ssoService,
-		authorizer:         authorizer,
-		legacyAccessClient: legacyAccessClient,
-		accessClient:       accessClient,
-		display:            user.NewLegacyDisplayREST(store),
-		reg:                reg,
-		enableAuthZApis:    features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		enableDualWriter:   true,
+		store:               store,
+		coreRolesStorage:    coreRolesStorage,
+		rolesStorage:        rolesStorage,
+		sso:                 ssoService,
+		authorizer:          authorizer,
+		legacyAccessClient:  legacyAccessClient,
+		accessClient:        accessClient,
+		display:             user.NewLegacyDisplayREST(store),
+		reg:                 reg,
+		enableAuthZApis:     features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		enableAuthnMutation: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
+		enableDualWriter:    true,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -129,7 +130,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := legacyiamv0.UserResourceInfo
-	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient)
+	legacyStore := user.NewLegacyStore(b.store, b.legacyAccessClient, b.enableAuthnMutation)
 	storage[userResource.StoragePath()] = legacyStore
 
 	if b.enableDualWriter {

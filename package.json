@@ -185,7 +185,7 @@
     "esbuild": "0.25.8",
     "esbuild-loader": "4.3.0",
     "esbuild-plugin-browserslist": "^1.0.0",
-    "eslint": "9.31.0",
+    "eslint": "9.32.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "28.11.0",
@@ -202,7 +202,7 @@
     "eslint-webpack-plugin": "4.2.0",
     "expose-loader": "5.0.1",
     "fishery": "^2.2.2",
-    "fork-ts-checker-webpack-plugin": "9.0.2",
+    "fork-ts-checker-webpack-plugin": "9.1.0",
     "glob": "11.0.3",
     "html-loader": "5.1.0",
     "html-webpack-plugin": "5.6.3",
@@ -233,7 +233,7 @@
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
-    "prettier": "3.4.2",
+    "prettier": "3.6.2",
     "publint": "^0.3.12",
     "react-refresh": "0.14.0",
     "react-select-event": "5.5.1",
@@ -268,7 +268,7 @@
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
-    "@floating-ui/react": "0.27.13",
+    "@floating-ui/react": "0.27.14",
     "@formatjs/intl-durationformat": "^0.7.0",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/alerting": "workspace:*",
@@ -372,7 +372,7 @@
     "moveable": "0.53.0",
     "nanoid": "^5.0.9",
     "node-forge": "^1.3.1",
-    "ol": "10.6.0",
+    "ol": "10.6.1",
     "ol-ext": "4.0.33",
     "pluralize": "^8.0.0",
     "prismjs": "1.30.0",
@@ -463,7 +463,7 @@
   },
   "packageManager": "yarn@4.9.2",
   "dependenciesMeta": {
-    "prettier@3.4.2": {
+    "prettier@3.6.2": {
       "unplugged": true
     }
   },

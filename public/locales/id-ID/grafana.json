@@ -2458,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurasikan",
-      "draft-new-rule": "Buat draf aturan baru",
       "ds-error": {
         "title": "Tidak dapat memuat aturan untuk sumber data ini"
       },
@@ -2484,6 +2483,7 @@
       "new-alert-rule": "Aturan peringatan baru",
       "new-datasource-recording-rule": "Aturan Perekaman sumber data baru",
       "new-grafana-recording-rule": "Aturan Perekaman Grafana baru",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Tampilkan lebih banyak..."
       },
@@ -4547,6 +4547,10 @@
     },
     "edit-actions": {
       "add": "Tambahkan {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Pindahkan {{typeName}}",
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
@@ -4561,6 +4565,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dasbor",
+        "element": "",
         "local-variable": "Variabel lokal",
         "multiple-elements": "Beberapa elemen",
         "multiple-elements-delete-text": "Anda yakin ingin menghapus elemen ini?",
@@ -5768,7 +5773,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
