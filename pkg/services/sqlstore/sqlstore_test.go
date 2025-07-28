@@ -24,6 +24,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	store, _ := InitTestDB(t)
 
 	testCases := []struct {

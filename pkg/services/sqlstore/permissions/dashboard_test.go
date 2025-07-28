@@ -382,6 +382,9 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 }
 
 func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		desc           string
 		queryType      string
@@ -489,6 +492,9 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		desc                    string
 		queryType               string
@@ -601,6 +607,9 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 }
 
 func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		desc                    string
 		queryType               string

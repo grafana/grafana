@@ -109,6 +109,9 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 }
 
 func TestIntegrationDashboardFileReader(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	logger := log.New("test-logger")
 	cfg := &config{}
 

@@ -848,6 +848,9 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 }
 
 func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)

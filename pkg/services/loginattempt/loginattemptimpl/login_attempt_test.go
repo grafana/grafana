@@ -87,6 +87,9 @@ func TestService_Validate(t *testing.T) {
 }
 
 func TestIntegrationUserLoginAttempts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
@@ -185,6 +188,9 @@ func TestService_ValidateIPAddress(t *testing.T) {
 }
 
 func TestIntegrationIPLoginAttempts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableIPAddressLoginProtection = false

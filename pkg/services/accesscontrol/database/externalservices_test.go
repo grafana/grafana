@@ -13,6 +13,9 @@ import (
 )
 
 func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type run struct {
 		cmd     accesscontrol.SaveExternalServiceRoleCommand
 		wantErr bool
@@ -153,6 +156,9 @@ func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 }
 
 func TestIntegrationAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	extID := "app1"
 	tests := []struct {
 		name    string

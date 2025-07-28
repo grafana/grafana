@@ -34,6 +34,9 @@ import (
 )
 
 func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -62,6 +65,9 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 }
 
 func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -92,6 +98,9 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 }
 
 func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 

@@ -106,6 +106,9 @@ var (
 )
 
 func TestIntegrationConvertPrometheusEndpoints_RecordingRuleTargetDatasource(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -172,6 +175,9 @@ func TestIntegrationConvertPrometheusEndpoints_RecordingRuleTargetDatasource(t *
 }
 
 func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool, postContentType string) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -377,6 +383,9 @@ func TestIntegrationConvertPrometheusEndpoints(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -457,6 +466,9 @@ func TestIntegrationConvertPrometheusEndpoints_UpdateRule(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -538,6 +550,9 @@ func TestIntegrationConvertPrometheusEndpoints_Conflict(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -645,6 +660,9 @@ func TestIntegrationConvertPrometheusEndpoints_CreatePausedRules(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -741,6 +759,9 @@ func TestIntegrationConvertPrometheusEndpoints_FolderUIDHeader(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -850,6 +871,9 @@ func TestIntegrationConvertPrometheusEndpoints_Provenance(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	runTest := func(t *testing.T, enableLokiPaths bool) {
 		testinfra.SQLiteIntegrationTest(t)
 
@@ -1144,6 +1168,9 @@ func TestIntegrationConvertPrometheusEndpoints_Delete(t *testing.T) {
 }
 
 func TestIntegrationConvertPrometheusEndpoints_GroupLabels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

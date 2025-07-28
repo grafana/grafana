@@ -20,9 +20,13 @@ const (
 )
 
 func TestIntegrationConvertPrometheusNotificationSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

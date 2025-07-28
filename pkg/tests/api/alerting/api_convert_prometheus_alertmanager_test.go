@@ -32,9 +32,13 @@ inhibit_rules:
 `
 
 func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana with alerting import feature flag enabled
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana with alerting import feature flag enabled
 	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -333,6 +337,9 @@ receivers:
 }
 
 func TestIntegrationConvertPrometheusAlertmanagerEndpoints_FeatureFlagDisabled(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

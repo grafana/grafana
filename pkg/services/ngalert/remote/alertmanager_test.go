@@ -257,8 +257,13 @@ func TestGetRemoteState(t *testing.T) {
 }
 
 func TestIntegrationApplyConfig(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// errorHandler returns an error response for the readiness check and state sync.
+	}
 	const tenantID = "test"
-	// errorHandler returns an error response for the readiness check and state sync.
+
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
 		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))

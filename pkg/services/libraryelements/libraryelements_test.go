@@ -62,6 +62,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -140,6 +143,9 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 }
 
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{

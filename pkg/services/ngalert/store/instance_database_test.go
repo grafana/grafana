@@ -301,6 +301,9 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 }
 
 func TestIntegrationFullSync(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	batchSize := 1
 
 	ctx := context.Background()

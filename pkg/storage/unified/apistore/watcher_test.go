@@ -190,6 +190,9 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 }
 
 func TestIntegrationWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
 			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))

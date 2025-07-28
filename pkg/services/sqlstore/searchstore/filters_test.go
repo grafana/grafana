@@ -8,6 +8,9 @@ import (
 )
 
 func TestIntegrationFolderUIDFilter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		description          string
 		uids                 []string

@@ -149,6 +149,9 @@ func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 }
 
 func TestIntegration_StarMigrations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testDB := db.InitTestDB(t)
 
 	d := dashboards.Dashboard{
