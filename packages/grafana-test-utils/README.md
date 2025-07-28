@@ -4,7 +4,7 @@ This package is a collection of test utils and a mock API (using MSW) for use wi
 
 ## Matchers
 
-To add the matchers to your jest configs import them then extend expect. This should be done in the `setupFilesAfterEnv` file declared in `jest.config.{js,ts}`.
+To add the matchers to your Jest config, import them then extend `expect`. This should be done in the `setupFilesAfterEnv` file declared in `jest.config.{js,ts}`.
 
 ```ts
 // setupTests.ts
