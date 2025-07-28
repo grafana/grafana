@@ -61,7 +61,9 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
-        // Refetch dashboards and folders after deleting a provisioned repository
+        // Refetch dashboards and folders after deleting a provisioned repository.
+        // We need to add timeout to ensure that the deletion is processed before refetching since the deletion is done
+        // via a background job.
         setTimeout(() => {
           dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
         }, 1000);
