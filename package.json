@@ -237,7 +237,7 @@
     "react-select-event": "5.5.1",
     "redux-mock-store": "1.5.5",
     "rimraf": "6.0.1",
-    "sass": "1.83.4",
+    "sass": "1.89.2",
     "sass-loader": "16.0.5",
     "smtp-tester": "^2.1.0",
     "style-loader": "4.0.0",
