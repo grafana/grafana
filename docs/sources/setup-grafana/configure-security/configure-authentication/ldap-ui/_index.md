@@ -87,7 +87,6 @@ Map LDAP groups to Grafana roles.
 1. **Manage group mappings**:
 
    When managing group mappings, the following fields are available. To add a new group mapping, click the **Add group mapping** button.
-
    1. **Add a group DN mapping**: The name of the key used to extract the ID token.
    1. **Add an organization role mapping**: Select the Basic Role mapped to this group.
    1. **Add the organization ID membership mapping**: Map the group to an organization ID.

@@ -68,6 +68,9 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 }
 
 func TestIntegration_Redact(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	redactFn := func(key string) string {
 		return "TESTREDACTED"
 	}
@@ -99,6 +102,10 @@ func TestIntegration_Redact(t *testing.T) {
 
 func TestIntegration_Validate(t *testing.T) {
 	// Test that all known integration types are valid.
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
@@ -114,6 +121,10 @@ func TestIntegration_Validate(t *testing.T) {
 
 func TestIntegration_WithExistingSecureFields(t *testing.T) {
 	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	testCases := []struct {
 		name         string
 		integration  Integration
@@ -232,6 +243,10 @@ func TestIntegration_WithExistingSecureFields(t *testing.T) {
 
 func TestIntegrationConfig(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			config, err := IntegrationConfigFromType(integrationType)
@@ -263,6 +278,10 @@ func TestIntegrationConfig(t *testing.T) {
 
 func TestIntegration_SecureFields(t *testing.T) {
 	// Test that all known integration types have a config and correctly mark their secrets as secure.
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	for integrationType := range alertingNotify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
 			t.Run("contains SecureSettings", func(t *testing.T) {

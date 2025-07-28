@@ -2488,7 +2488,6 @@
     },
     "rule-list": {
       "configure-datasource": "Настроить",
-      "draft-new-rule": "Составить новое правило",
       "ds-error": {
         "title": "Невозможно загрузить правила для этого источника данных"
       },
@@ -2514,6 +2513,7 @@
       "new-alert-rule": "Новое правило оповещения",
       "new-datasource-recording-rule": "Новое правило записи источника данных",
       "new-grafana-recording-rule": "Новое правило записи Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Показать еще…"
       },
@@ -4604,6 +4604,10 @@
     },
     "edit-actions": {
       "add": "Добавить {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
@@ -4618,6 +4622,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Дашборд",
+        "element": "",
         "local-variable": "Локальная переменная",
         "multiple-elements": "Несколько элементов",
         "multiple-elements-delete-text": "Действительно удалить элементы?",
@@ -5831,7 +5836,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },

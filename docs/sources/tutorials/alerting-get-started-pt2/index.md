@@ -51,17 +51,14 @@ Learning about alert instances and notification policies is useful if you have m
 There are different ways you can follow along with this tutorial.
 
 - **Grafana Cloud**
-
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
 
   Continue to [Alert instances](#alert-instances).
 
 - **Interactive learning environment**
-
   - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Alert routing](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt2/). It's a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
-
   - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
@@ -252,7 +249,6 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
    The above CSV data simulates a data source returning multiple time series, each leading to the creation of an alert instance for that specific time series. Note that the data returned matches the example in the [Alert instance](#alert-instances) section.
 
 1. In the **Alert condition** section:
-
    - Keep `Last` as the value for the reducer function (`WHEN`), and `IS ABOVE 1000` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the queries.
