@@ -3869,7 +3869,7 @@ __metadata:
     typescript: "npm:5.8.3"
     uplot: "npm:1.6.32"
     uuid: "npm:11.1.0"
-    uwrap: "leeoniya/uwrap#9a4bc8647c5d85353ca2723e90aab82ecce05c63"
+    uwrap: "npm:0.1.2"
     webpack: "npm:5.97.1"
   peerDependencies:
     react: ^18.0.0
@@ -31767,10 +31767,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uwrap@leeoniya/uwrap#9a4bc8647c5d85353ca2723e90aab82ecce05c63":
-  version: 0.1.1
-  resolution: "uwrap@https://github.com/leeoniya/uwrap.git#commit=9a4bc8647c5d85353ca2723e90aab82ecce05c63"
-  checksum: 10/a43c66f8c70ec8594e6595b93fa5d6f0920608c9958748eed821dc45d2f04288f3ec0a392e1d738d536d695448b8ee4d44d6b57a8cbd43b6e4d2fe2a9b0ecfed
+"uwrap@npm:0.1.2":
+  version: 0.1.2
+  resolution: "uwrap@npm:0.1.2"
+  checksum: 10/621d9d148d903410ef555739baca1ba84500d59a5028611bc2fca53313ffd6c9b870e25dc5cad73b41f18fe72879a3d94a6b8ebc5e141c84a94188ee1c483492
   languageName: node
   linkType: hard
 
