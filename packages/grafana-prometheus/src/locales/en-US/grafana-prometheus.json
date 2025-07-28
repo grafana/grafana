@@ -492,7 +492,6 @@
         "message-expand-search": "There are no metrics found. Try to expand your search and filters.",
         "message-no-metrics-found": "There are no metrics found in the data source.",
         "name": "Name",
-        "select": "Select",
         "type": "Type"
       },
       "update-function-args": {

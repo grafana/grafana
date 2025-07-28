@@ -5,7 +5,7 @@ import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
@@ -179,7 +179,6 @@ export function ResultsTable(props: ResultsTableProps) {
               </th>
             </>
           )}
-          <th className={styles.selectButtonWidth}></th>
         </tr>
       </thead>
       <tbody>
@@ -187,7 +186,7 @@ export function ResultsTable(props: ResultsTableProps) {
           {slicedMetrics.length > 0 &&
             slicedMetrics.map((metric: MetricData, idx: number) => {
               return (
-                <tr key={metric?.value ?? idx} className={styles.row}>
+                <tr key={metric?.value ?? idx} className={styles.row} onClick={() => selectMetric(metric)}>
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
@@ -197,16 +196,6 @@ export function ResultsTable(props: ResultsTableProps) {
                     />
                   </td>
                   {hasMetadata && metaRows(metric)}
-                  <td>
-                    <Button
-                      size="md"
-                      variant="secondary"
-                      onClick={() => selectMetric(metric)}
-                      className={styles.centerButton}
-                    >
-                      <Trans i18nKey="grafana-prometheus.querybuilder.results-table.select">Select</Trans>
-                    </Button>
-                  </td>
                 </tr>
               );
             })}
@@ -235,8 +224,12 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     row: css({
       label: 'row',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      cursor: 'pointer',
       '&:last-child': {
         borderBottom: 0,
+      },
+      '&:hover': {
+        backgroundColor: theme.colors.background.secondary,
       },
     }),
     tableHeaderPadding: css({
@@ -259,9 +252,6 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     descriptionWidth: css({
       width: disableTextWrap ? undefined : '35%',
     }),
-    selectButtonWidth: css({
-      width: disableTextWrap ? undefined : '12.5%',
-    }),
     stickyHeader: css({
       position: 'sticky',
       top: 0,
@@ -273,11 +263,6 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     }),
     tooltipSpace: css({
       marginLeft: '4px',
-    }),
-    centerButton: css({
-      display: 'block',
-      margin: 'auto',
-      border: 'none',
     }),
   };
 };
