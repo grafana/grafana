@@ -1,3 +1,4 @@
+/// <reference types="systemjs" preserve="true" />
 import { ComponentType } from 'react';
 
 import { throwIfAngular } from '../utils/throwIfAngular';
