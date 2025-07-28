@@ -116,7 +116,6 @@ You can quickly experiment with multi-dimensional alerts using the [**TestData**
 1. Go to **Alerting** and create an alert rule
 1. Select **TestData** as the data source.
 1. Configure the TestData scenario
-
    - Scenario: **Random Walk**
    - Labels: `cpu=cpu-$seriesIndex`
    - Series count: 3

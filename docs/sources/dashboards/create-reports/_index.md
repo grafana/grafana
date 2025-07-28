@@ -147,7 +147,6 @@ To create a report, follow these steps:
    - [Recipients](#4-recipients)
    - [Attachments](#5-attachments)
 1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
-
    - The menu icon to access the following options:
      - **Download CSV**
      - **Preview PDF**
@@ -179,7 +178,6 @@ To create a report, follow these steps:
    - [Recipients](#4-recipients)
    - [Attachments](#5-attachments)
 1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
-
    - The menu icon to access the following options:
      - **Download CSV**
      - **Preview PDF**
@@ -358,7 +356,6 @@ You can also navigate to the list of all reports from the dashboard-specific lis
 To edit a report, follow these steps:
 
 1. Do one of the following:
-
    - In the main menu, click **Dashboards > Reporting**.
    - Navigate to the dashboard from which the report was generated and click **Share > Schedule report**.
 
@@ -373,12 +370,10 @@ You can pause and resume sending reports from the report list view.
 To do this, follow these steps:
 
 1. Do one of the following:
-
    - In the main menu, click **Dashboards > Reporting**.
    - Navigate to the dashboard from which the report was generated and click **Share > Schedule report**.
 
 1. On the row of the report you want to update, do one of the following:
-
    - Click the pause icon - The report won't be sent according to its schedule until it's resumed.
    - Click the resume icon - The report resumes on its previous schedule.
 
@@ -389,7 +384,6 @@ You can also pause or resume a report from **Update report** drawer.
 To delete a report, follow these steps:
 
 1. Do one of the following:
-
    - In the main menu, click **Dashboards > Reporting**.
    - Navigate to the dashboard from which the report was generated and click **Share > Schedule report**.
 

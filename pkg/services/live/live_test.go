@@ -30,6 +30,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration_provideLiveService_RedisUnavailable(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	cfg := setting.NewCfg()
 
 	cfg.LiveHAEngine = "testredisunavailable"

@@ -105,6 +105,7 @@ func NewMapperRegistry() MapperRegistry {
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams":     newResourceTranslation("teams", "uid", false),
 			"coreroles": newResourceTranslation("roles", "uid", false),
+			"roles":     newResourceTranslation("roles", "uid", false),
 		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),

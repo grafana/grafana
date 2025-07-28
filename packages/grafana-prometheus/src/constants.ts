@@ -1,4 +1,7 @@
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
+/**
+ * @deprecated
+ */
 export const SUGGESTIONS_LIMIT = 10000;
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
@@ -18,6 +21,8 @@ export const NON_NEGATIVE_INTEGER_REGEX = /^(0|[1-9]\d*)(\.\d+)?(e\+?\d+)?$/; //
 export const EMPTY_SELECTOR = '{}';
 
 export const DEFAULT_SERIES_LIMIT = 40000;
+
+export const DEFAULT_COMPLETION_LIMIT = 1000;
 
 /**
  * Only for /series endpoint. Don't use this anywhere else as it cause an expensive query
