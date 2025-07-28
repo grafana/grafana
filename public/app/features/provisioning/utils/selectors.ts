@@ -6,23 +6,24 @@ import { Repository, provisioningAPIv0alpha1 as provisioningAPI } from '../../..
 
 const emptyRepos: Repository[] = [];
 
-const baseSelector = provisioningAPI.endpoints.listRepository.select({});
+const getBaseSelector = () => provisioningAPI.endpoints.listRepository.select({});
 
-export const selectAllRepos = createSelector(baseSelector, (result) => result.data?.items || emptyRepos);
+export const selectAllRepos = () => createSelector(getBaseSelector(), (result) => result.data?.items || emptyRepos);
 
-export const selectFolderRepository = createSelector(
-  selectAllRepos,
-  (_, folderUid?: string) => folderUid,
-  (repositories: Repository[], folderUid) => {
-    if (!folderUid) {
-      return undefined;
+export const selectFolderRepository = () =>
+  createSelector(
+    selectAllRepos(),
+    (_, folderUid?: string) => folderUid,
+    (repositories: Repository[], folderUid) => {
+      if (!folderUid) {
+        return undefined;
+      }
+      return repositories.find((repo: Repository) => repo.metadata?.name === folderUid);
     }
-    return repositories.find((repo: Repository) => repo.metadata?.name === folderUid);
-  }
-);
+  );
 
 export const selectRepoByName = createSelector(
-  selectAllRepos,
+  selectAllRepos(),
   (state: RootState, id: string) => id,
   (repositories: Repository[], name) => repositories.find((repo: Repository) => repo.metadata?.name === name)
 );

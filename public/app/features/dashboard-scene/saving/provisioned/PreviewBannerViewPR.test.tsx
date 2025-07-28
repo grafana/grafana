@@ -18,11 +18,17 @@ jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
 }));
 
-jest.mock('app/features/provisioning/utils/selectors', () => ({
-  selectAllRepos: jest.fn(),
-  selectFolderRepository: jest.fn(),
-  selectRepoByName: jest.fn(),
-}));
+jest.mock('app/api/clients/provisioning/v0alpha1', () => {
+  return {
+    provisioningAPIv0alpha1: {
+      endpoints: {
+        listRepository: {
+          select: jest.fn(),
+        },
+      },
+    },
+  };
+});
 
 const mockTextUtil = jest.mocked(textUtil);
 
