@@ -32,7 +32,7 @@ describe('fuzzySearch', () => {
       });
 
       it('returns false for too many terms (>5)', () => {
-        expect(shouldUseFuzzySearch('one two three four five six')).toBe(false);
+        expect(shouldUseFuzzySearch('cpu mem disk net io err')).toBe(false);
       });
     });
   });
@@ -130,6 +130,12 @@ describe('fuzzySearch', () => {
 
       it('filters with multiple words', () => {
         const result = fuzzyFilter(testRules, (rule) => rule.name, 'api response');
+        expect(result).toHaveLength(1);
+        expect(result[0].name).toBe('API Response Time');
+      });
+
+      it('filters with non-consecutive words', () => {
+        const result = fuzzyFilter(testRules, (rule) => rule.name, 'api time');
         expect(result).toHaveLength(1);
         expect(result[0].name).toBe('API Response Time');
       });

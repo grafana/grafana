@@ -4,6 +4,12 @@ import uFuzzy from '@leeoniya/ufuzzy';
 const MAX_NEEDLE_SIZE = 25;
 const INFO_THRESHOLD = Infinity;
 const MAX_FUZZY_TERMS = 5;
+// Out-of-order limits for permutation control
+// These constants control uFuzzy's outOfOrder parameter which limits the number of term permutations
+// to search for when matching multi-term queries. This is crucial for performance optimization.
+const OUT_OF_ORDER_LIMIT_HIGH = 4;
+const OUT_OF_ORDER_LIMIT_LOW = 0;
+const OUT_OF_ORDER_THRESHOLD = 5;
 // https://catonmat.net/my-favorite-regex :)
 const REGEXP_NON_ASCII = /[^ -~]/m;
 // https://www.asciitable.com/
@@ -48,9 +54,29 @@ function performFuzzySearch(haystack: string[], searchTerm: string): number[] {
   const ufuzzy = createFuzzyMatcher();
   const needleTermsCount = ufuzzy.split(searchTerm).length;
 
-  // apply an outOfOrder limit which helps to limit the number of permutations to search for
-  // and prevents the browser from hanging
-  const outOfOrderLimit = needleTermsCount < 5 ? 4 : 0;
+  /**
+   * The outOfOrder parameter controls term permutation limits in uFuzzy's search algorithm.
+   *
+   * Why this is needed:
+   * - When searching for multi-term queries like "alert rule cpu", uFuzzy can match terms
+   *   in any order against the haystack (e.g., "cpu alert rule" would also match)
+   * - Without limits, the number of permutations grows factorially (n! permutations for n terms)
+   * - For example: 5 terms = 120 permutations, 6 terms = 720 permutations, etc.
+   * - This can cause severe performance degradation and browser freezing
+   *
+   * Parameter behavior:
+   * - outOfOrder = 0: Only exact term order matching (fastest, most restrictive)
+   * - outOfOrder > 0: Allows up to N terms to be out of their original order
+   * - Higher values = more permutations = slower but more flexible matching
+   *
+   * Our strategy:
+   * - For queries with fewer terms (< 5): Allow more flexibility (outOfOrder = 4)
+   * - For queries with many terms (≥ 5): Restrict to exact order only (outOfOrder = 0)
+   * - This balances search flexibility with performance, preventing browser hangs
+   *
+   * Reference: https://github.com/leeoniya/uFuzzy#api
+   */
+  const outOfOrderLimit = needleTermsCount < OUT_OF_ORDER_THRESHOLD ? OUT_OF_ORDER_LIMIT_HIGH : OUT_OF_ORDER_LIMIT_LOW;
 
   const [idxs, info, order] = ufuzzy.search(haystack, searchTerm, outOfOrderLimit, INFO_THRESHOLD);
 
