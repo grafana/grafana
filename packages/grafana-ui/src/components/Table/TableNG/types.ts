@@ -267,7 +267,6 @@ export interface TypographyCtx {
   ctx: CanvasRenderingContext2D;
   font: string;
   avgCharWidth: number;
-  count: Count;
   estimateLines: LineCounter;
   wrappedCount: LineCounter;
 }

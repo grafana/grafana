@@ -987,16 +987,18 @@ describe('TableNG utils', () => {
     // actually executed the JS correctly. If you called `count` with a sensible value and width,
     // it wouldn't give you a very reasonable answer in Jest's DOM environment for some reason.
     it('creates the context using uwrap', () => {
-      const ctx = createTypographyContext(14, 'sans-serif', 0.01);
+      const ctx = createTypographyContext(14, 'sans-serif', 0.15);
       expect(ctx).toEqual(
         expect.objectContaining({
           font: '14px sans-serif',
           ctx: expect.any(CanvasRenderingContext2D),
-          count: expect.any(Function),
+          wrappedCount: expect.any(Function),
+          estimateLines: expect.any(Function),
           avgCharWidth: expect.any(Number),
         })
       );
-      expect(ctx.count('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
+      expect(ctx.wrappedCount('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
+      expect(ctx.estimateLines('the quick brown fox jumps over the lazy dog', 100)).toEqual(expect.any(Number));
     });
   });
 

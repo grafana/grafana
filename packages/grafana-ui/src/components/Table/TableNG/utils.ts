@@ -1,7 +1,7 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { varPreLine } from 'uwrap';
+import { Count, varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -99,12 +99,24 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
   const { count } = varPreLine(ctx);
 
   return {
-    count,
     ctx,
     font,
     avgCharWidth,
     estimateLines: getTextLineEstimator(avgCharWidth),
-    wrappedCount: count as LineCounter,
+    wrappedCount: wrapUwrapCount(count),
+  };
+}
+
+/**
+ * @internal
+ */
+export function wrapUwrapCount(count: Count): LineCounter {
+  return (value, width) => {
+    if (value == null) {
+      return 1;
+    }
+
+    return count(String(value), width);
   };
 }
 
@@ -133,12 +145,12 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
  * @internal return a text line counter for every field which has wrapHeaderText enabled.
  */
 export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
-  const wrappedColIdxs = fields.reduce((acc, field, idx) => {
+  const wrappedColIdxs = fields.reduce((acc: number[], field, idx) => {
     if (field.config?.custom?.wrapHeaderText) {
       acc.push(idx);
     }
     return acc;
-  }, [] as number[]);
+  }, []);
 
   if (wrappedColIdxs.length === 0) {
     return undefined;
