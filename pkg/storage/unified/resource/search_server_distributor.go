@@ -33,6 +33,7 @@ func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.Featu
 		log:        log.New("index-server-distributor"),
 		ring:       ring,
 		clientPool: ringClientPool,
+		tracing:    tracer,
 	}
 
 	healthService, err := ProvideHealthService(distributorServer)
@@ -80,6 +81,7 @@ type distributorServer struct {
 	clientPool *ringclient.Pool
 	ring       *ring.Ring
 	log        log.Logger
+	tracing    trace.Tracer
 }
 
 var (
@@ -92,6 +94,7 @@ var (
 )
 
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	ds.tracing.Start(ctx, "distributor.Search")
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Search")
 	if err != nil {
 		return nil, err
@@ -101,6 +104,7 @@ func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceS
 }
 
 func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	ds.tracing.Start(ctx, "distributor.GetStats")
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "GetStats")
 	if err != nil {
 		return nil, err
@@ -110,6 +114,7 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	ds.tracing.Start(ctx, "distributor.CountManagedObjects")
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "CountManagedObjects")
 	if err != nil {
 		return nil, err
@@ -119,6 +124,7 @@ func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourc
 }
 
 func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	ds.tracing.Start(ctx, "distributor.ListManagedObjects")
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "ListManagedObjects")
 	if err != nil {
 		return nil, err
