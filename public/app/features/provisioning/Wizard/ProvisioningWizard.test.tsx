@@ -38,6 +38,22 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useCreateRepositoryJobsMutation: jest.fn(),
 }));
 
+jest.mock('app/features/browse-dashboards/state/actions', () => ({
+  refetchChildren: Object.assign(
+    jest.fn(() => ({ type: 'mock/refetchChildren' })),
+    {
+      fulfilled: { type: 'browse-dashboards/refetchChildren/fulfilled' },
+    }
+  ),
+  fetchNextChildrenPage: {
+    fulfilled: { type: 'browse-dashboards/fetchNextChildrenPage/fulfilled' },
+  },
+}));
+
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  PAGE_SIZE: 20,
+}));
+
 const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.MockedFunction<
   typeof useCreateOrUpdateRepository
 >;
