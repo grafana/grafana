@@ -117,10 +117,10 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
           return frames;
       }
 
-      let frameName = `${t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear')} ${t('transformers.regression-transformer-editor.trendline', 'trendline')}`;
+      let frameName = `${t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear')} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
       if (modelType === ModelType.polynomial) {
         const degreeData = DEGREES.find((deg) => deg.value === degree);
-        frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial').toLocaleLowerCase()} ${t('transformers.regression-transformer-editor.trendline', 'trendline')}`;
+        frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial').toLocaleLowerCase()} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
       }
 
       const newFrame: DataFrame = {
