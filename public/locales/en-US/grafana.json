@@ -3482,6 +3482,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
+      "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3515,22 +3516,32 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-action-resources-form": {
+      "button-done": "Done",
       "failed-alert_one": "{{count}} items failed",
-      "failed-alert_other": "{{count}} items failed"
+      "failed-alert_other": "{{count}} items failed",
+      "progress-title": "Success",
+      "repository-url": "All resources have been {{ action }} successfully"
     },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "button-done": "Done",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-path-not-found": "Path not found",
-      "progress-title": "Success",
-      "success-message": "All resources have been deleted successfully."
+      "error-path-not-found": "Path not found"
     },
     "bulk-move-resources-form": {
-      "deleting": "Deleting:",
-      "progress": "Progress: {{current}} of {{total}}"
+      "button-cancel": "Cancel",
+      "button-move": "Move",
+      "button-moving": "Moving...",
+      "deleting": "{{labelText}} {progress.item}",
+      "error-file-content-not-found": "File content not found",
+      "error-path-not-found": "Path not found",
+      "error-target-folder-not-selected": "Target folder data not found",
+      "error-target-folder-path-missing": "Target folder path is missing",
+      "error-title": "Target Folder Error",
+      "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "progress": "Progress: {{current}} of {{total}}",
+      "target-folder": "Target Folder"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",

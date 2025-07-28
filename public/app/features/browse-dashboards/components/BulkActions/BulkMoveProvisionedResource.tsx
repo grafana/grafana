@@ -3,12 +3,14 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
-import { Box, Button, Stack } from '@grafana/ui';
+import { config, FolderPicker, getBackendSrv } from '@grafana/runtime';
+import { Box, Button, Field, Stack } from '@grafana/ui';
+import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
-  DeleteRepositoryFilesWithPathApiArg,
-  DeleteRepositoryFilesWithPathApiResponse,
+  CreateRepositoryFilesWithPathApiArg,
+  CreateRepositoryFilesWithPathApiResponse,
   RepositoryView,
-  useDeleteRepositoryFilesWithPathMutation,
+  useCreateRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -31,6 +33,7 @@ import {
   BulkActionFormData,
   BulkActionProvisionResourceProps,
   BulkSuccessResponse,
+  getTargetFolderPathInRepo,
   MoveResultSuccessState,
 } from './utils';
 
@@ -43,6 +46,7 @@ interface FormProps extends BulkActionProvisionResourceProps {
 
 function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
   // States
+  const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
   const [progress, setProgress] = useState<ProgressState | null>(null);
   const [failureResults, setFailureResults] = useState<MoveResultFailed[] | undefined>();
   const [successState, setSuccessState] = useState<MoveResultSuccessState>({
@@ -52,7 +56,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Hooks
-  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
+  const [moveFile, moveRequest] = useCreateRepositoryFilesWithPathMutation();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const childrenByParentUID = useChildrenByParentUIDState();
   const rootItems = useSelector(rootItemsSelector);
@@ -60,12 +64,36 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const workflow = watch('workflow');
   const navigate = useNavigate();
 
+  // Get target folder data (similar to MoveProvisionedDashboardForm)
+  const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
+
   const getResourcePath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
     const item = findItem(rootItems?.items || [], childrenByParentUID, uid);
     if (!item) {
       return undefined;
     }
     return isFolder ? `${folderPath}/${item.title}/` : fetchProvisionedDashboardPath(uid);
+  };
+
+  const getTargetPath = (currentPath: string, targetFolderPath: string): string => {
+    // Handle folder paths that end with '/'
+    const cleanCurrentPath = currentPath.replace(/\/$/, ''); // Remove trailing slash
+    const filename = cleanCurrentPath.split('/').pop();
+
+    if (!filename) {
+      throw new Error(`Invalid path: ${currentPath}`);
+    }
+
+    // For folders, add back the trailing slash
+    const isFolder = currentPath.endsWith('/');
+    return isFolder ? `${targetFolderPath}/${filename}/` : `${targetFolderPath}/${filename}`;
+  };
+
+  const getDashboardBody = async (currentPath: string) => {
+    const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
+    const url = `${baseUrl}/repositories/${repository.name}/files/${currentPath}`;
+    const fileResponse = await getBackendSrv().get(url);
+    return fileResponse.resource?.file;
   };
 
   const handleSuccess = () => {
@@ -92,6 +120,21 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     setFailureResults(undefined);
     setHasSubmitted(true);
 
+    // Calculate target path using target folder annotations (following MoveProvisionedDashboardForm pattern)
+    if (!targetFolder) {
+      setFailureResults([
+        {
+          status: 'failed',
+          title: t('browse-dashboards.bulk-move-resources-form.error-title', 'Target Folder Error'),
+          errorMessage: t(
+            'browse-dashboards.bulk-move-resources-form.error-target-folder-not-selected',
+            'Target folder data not found'
+          ),
+        },
+      ]);
+      return;
+    }
+    const targetFolderPathInRepo = getTargetFolderPathInRepo({ targetFolder });
     const targets = collectSelectedItems(selectedItems, childrenByParentUID, rootItems?.items || []);
 
     if (targets.length > 0) {
@@ -103,12 +146,12 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     }
 
     const successes: BulkSuccessResponse<
-      DeleteRepositoryFilesWithPathApiArg,
-      DeleteRepositoryFilesWithPathApiResponse
+      CreateRepositoryFilesWithPathApiArg,
+      CreateRepositoryFilesWithPathApiResponse
     > = [];
     const failures: MoveResultFailed[] = [];
 
-    // Iterate through each selected item and delete it
+    // Iterate through each selected item and move it
     // We want sequential processing to avoid overwhelming the API
     for (let i = 0; i < targets.length; i++) {
       const { uid, isFolder, displayName } = targets[i];
@@ -119,28 +162,68 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       });
 
       try {
-        // get path in repository
-        const path = await getResourcePath(uid, isFolder);
-        if (!path) {
+        // 1. Get source path in repository
+        const currentPath = await getResourcePath(uid, isFolder);
+        if (!currentPath) {
           failures.push({
             status: 'failed',
             title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
-            errorMessage: t('browse-dashboards.bulk-delete-resources-form.error-path-not-found', 'Path not found'),
+            errorMessage: t('browse-dashboards.bulk-move-resources-form.error-path-not-found', 'Path not found'),
           });
           continue;
         }
 
-        // build params
-        const deleteParams: DeleteRepositoryFilesWithPathApiArg = {
+        if (!targetFolderPathInRepo) {
+          failures.push({
+            status: 'failed',
+            title: `${isFolder ? 'Folder' : 'Dashboard'}: ${displayName}`,
+            errorMessage: t(
+              'browse-dashboards.bulk-move-resources-form.error-target-folder-path-missing',
+              'Target folder path is missing'
+            ),
+          });
+          continue;
+        }
+
+        const newPath = getTargetPath(currentPath, targetFolderPathInRepo);
+
+        let fileBody;
+        if (isFolder) {
+          // For folders, create basic folder structure
+          fileBody = {
+            title: displayName,
+            type: 'folder',
+          };
+        } else {
+          // Get file content for dashboards (following MoveProvisionedDashboardForm pattern)
+          fileBody = await getDashboardBody(currentPath);
+
+          if (!fileBody) {
+            failures.push({
+              status: 'failed',
+              title: `Dashboard: ${displayName}`,
+              errorMessage: t(
+                'browse-dashboards.bulk-move-resources-form.error-file-content-not-found',
+                'File content not found'
+              ),
+            });
+            continue;
+          }
+        }
+
+        // Build move parameters (following MoveProvisionedDashboardForm pattern)
+        const moveParams: CreateRepositoryFilesWithPathApiArg = {
           name: repository.name,
-          path,
+          path: newPath, // NEW target path
           ref: workflow === 'write' ? undefined : data.ref,
-          message: data.comment || `Delete resource ${path}`,
+          message: data.comment || `Move resource ${displayName}`,
+          originalPath: currentPath, // CURRENT path (source)
+          body: fileBody, // File content
         };
 
-        // perform delete operation
-        const response = await deleteRepoFile(deleteParams).unwrap();
-        successes.push({ index: i, item: deleteParams, data: response });
+        // Perform move
+        const response = await moveFile(moveParams).unwrap();
+        successes.push({ index: i, item: moveParams, data: response });
       } catch (error: unknown) {
         failures.push({
           status: 'failed',
@@ -174,15 +257,15 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
           <Box paddingBottom={2}>
-            <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.delete-warning">
-              This will delete selected folders and their descendants. In total, this will affect:
+            <Trans i18nKey="browse-dashboards.bulk-move-resources-form.move-warning">
+              This will move selected folders and their descendants. In total, this will affect:
             </Trans>
             <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
           </Box>
 
           {hasSubmitted ? (
             <BulkActionPostSubmitStep
-              action="delete"
+              action="move"
               progress={progress}
               successState={successState}
               failureResults={failureResults}
@@ -191,6 +274,10 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
             />
           ) : (
             <>
+              {/* Target folder selection */}
+              <Field noMargin label={t('browse-dashboards.bulk-move-resources-form.target-folder', 'Target Folder')}>
+                <FolderPicker value={targetFolderUID} onChange={setTargetFolderUID} />
+              </Field>
               <ResourceEditFormSharedFields
                 resourceType="folder"
                 isNew={false}
@@ -201,13 +288,13 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
               />
 
               <Stack gap={2}>
-                <Button type="submit" disabled={request.isLoading || !!failureResults} variant="destructive">
-                  {request.isLoading
-                    ? t('browse-dashboards.bulk-delete-resources-form.button-deleting', 'Deleting...')
-                    : t('browse-dashboards.bulk-delete-resources-form.button-delete', 'Delete')}
+                <Button type="submit" disabled={moveRequest.isLoading || !!failureResults}>
+                  {moveRequest.isLoading
+                    ? t('browse-dashboards.bulk-move-resources-form.button-moving', 'Moving...')
+                    : t('browse-dashboards.bulk-move-resources-form.button-move', 'Move')}
                 </Button>
-                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={request.isLoading}>
-                  <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
+                <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={moveRequest.isLoading}>
+                  <Trans i18nKey="browse-dashboards.bulk-move-resources-form.button-cancel">Cancel</Trans>
                 </Button>
               </Stack>
             </>
@@ -218,11 +305,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   );
 }
 
-export function BulkDeleteProvisionedResource({
-  folderUid,
-  selectedItems,
-  onDismiss,
-}: BulkActionProvisionResourceProps) {
+export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
   const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
@@ -231,7 +314,7 @@ export function BulkDeleteProvisionedResource({
 
   const initialValues = {
     comment: '',
-    ref: `bulk-delete/${timestamp}`,
+    ref: `bulk-move/${timestamp}`,
     workflow: getDefaultWorkflow(repository),
   };
 
