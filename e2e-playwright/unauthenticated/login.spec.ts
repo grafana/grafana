@@ -1,9 +1,9 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 test(
-  'Scenario test: Can login successfully',
+  'Can login successfully',
   {
-    tag: ['@scenarios'],
+    tag: ['@smoke'],
   },
   async ({ selectors, page }) => {
     await page.goto(selectors.pages.Login.url);
