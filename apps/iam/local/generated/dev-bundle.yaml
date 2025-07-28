@@ -2251,11 +2251,23 @@ data:
     default_theme = dark
     [feature_toggles]
     grafanaAPIServerEnsureKubectlAccess = true
-    ; disable the experimental APIs flag to disable bundling of the example service locally
-    grafanaAPIServerWithExperimentalAPIs = false
+    kubernetesFolders = true
+    unifiedStorageSearch = true
+    unifiedStorageSearchUI = false
+    grafanaAPIServerWithExperimentalAPIs = true
+    kubernetesDashboardsAPI = true
+    kubernetesCliDashboards = true
+    unifiedStorageSearchSprinkles = true
+    kubernetesFoldersServiceV2 = true
+    unifiedStorageSearchPermissionFiltering = true
+    kubernetesClientDashboardsFolders = true
     kubernetesAggregator = true
     [grafana-apiserver]
     remote_services_file = /app-aggregator/apiservices.yaml
+    [unified_storage.folders.folder.grafana.app]
+    dualWriterMode = 2
+    [unified_storage.dashboards.dashboard.grafana.app]
+    dualWriterMode = 2
 ---
 apiVersion: v1
 kind: Service
