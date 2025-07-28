@@ -177,7 +177,7 @@ export function TableNG(props: TableNGProps) {
       createTypographyContext(
         theme.typography.fontSize,
         theme.typography.fontFamily,
-        extractPixelValue(theme.typography.body.letterSpacing!)
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
       ),
     [theme]
   );

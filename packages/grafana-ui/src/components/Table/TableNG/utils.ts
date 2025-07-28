@@ -85,17 +85,17 @@ export function shouldTextWrap(field: Field): boolean {
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
  */
-export function createTypographyContext(fontSize: number, fontFamily: string, letterSpacing: number): TypographyCtx {
+export function createTypographyContext(fontSize: number, fontFamily: string, letterSpacing = 0.15): TypographyCtx {
   const font = `${fontSize}px ${fontFamily}`;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
 
-  ctx.letterSpacing = `${letterSpacing}em`;
+  ctx.letterSpacing = `${letterSpacing}px`;
   ctx.font = font;
   const txt =
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
+    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.";
   const txtWidth = ctx.measureText(txt).width;
-  const avgCharWidth = txtWidth / txt.length + letterSpacing * fontSize;
+  const avgCharWidth = txtWidth / txt.length + letterSpacing;
   const { count } = varPreLine(ctx);
 
   return {
@@ -114,14 +114,14 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
 export function getTextLineEstimator(avgCharWidth: number): LineCounter {
   return (value, width) => {
     if (!value) {
-      return 1;
+      return -1;
     }
 
     // we don't have string breaking enabled in the table,
     // so an unbroken string is by definition a single line.
     const strValue = String(value);
     if (!spaceRegex.test(strValue)) {
-      return 1;
+      return -1;
     }
 
     const charsPerLine = width / avgCharWidth;
@@ -204,7 +204,7 @@ export function getRowHeight(
     return defaultHeight;
   }
 
-  let maxLines = 1;
+  let maxLines = -1;
   let maxValue = '';
   let maxWidth = 0;
   let preciseCounter: LineCounter | undefined;
@@ -233,7 +233,7 @@ export function getRowHeight(
     }
   }
 
-  if (maxLines === 1) {
+  if (maxLines === -1) {
     return defaultHeight;
   }
 
