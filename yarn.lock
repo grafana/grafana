@@ -2393,9 +2393,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.27.13":
-  version: 0.27.13
-  resolution: "@floating-ui/react@npm:0.27.13"
+"@floating-ui/react@npm:0.27.14":
+  version: 0.27.14
+  resolution: "@floating-ui/react@npm:0.27.14"
   dependencies:
     "@floating-ui/react-dom": "npm:^2.1.4"
     "@floating-ui/utils": "npm:^0.2.10"
@@ -2403,7 +2403,7 @@ __metadata:
   peerDependencies:
     react: ">=17.0.0"
     react-dom: ">=17.0.0"
-  checksum: 10/84a5247e74b7666c069680e8df69e0dcdbf846f6192760c1ec8c53361b2e316895bb43847fba92f6c82e563db45794aeb8755560e769c610ef4a1b956a52d105
+  checksum: 10/5466938bdd0db8f7939a640da459bfe8417388d95b1547c69a236f87e4b218992f4a2d7cee14642a6b64c88fbb8df7fced46a01e41b7feb12785e4181498669b
   languageName: node
   linkType: hard
 
@@ -3491,7 +3491,7 @@ __metadata:
   resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@floating-ui/react": "npm:0.27.13"
+    "@floating-ui/react": "npm:0.27.14"
     "@grafana/data": "npm:12.2.0-pre"
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/i18n": "npm:12.2.0-pre"
@@ -3736,7 +3736,7 @@ __metadata:
     "@emotion/react": "npm:11.14.0"
     "@emotion/serialize": "npm:1.3.3"
     "@faker-js/faker": "npm:^9.0.0"
-    "@floating-ui/react": "npm:0.27.13"
+    "@floating-ui/react": "npm:0.27.14"
     "@grafana/data": "npm:12.2.0-pre"
     "@grafana/e2e-selectors": "npm:12.2.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.13.2"
@@ -18144,7 +18144,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.27.13"
+    "@floating-ui/react": "npm:0.27.14"
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
