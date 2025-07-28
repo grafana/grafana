@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Segment, SegmentInput, useStyles2 } from '@grafana/ui';
@@ -23,18 +23,6 @@ type FieldEditorProps = {
  */
 export function FunctionParamEditor({ editableParam, onChange, onExpandedChange, autofocus }: FieldEditorProps) {
   const styles = useStyles2(getStyles);
-  const modifiedStyle = {
-    segment: css({
-      overflowWrap: 'anywhere',
-      height: '100%',
-    }),
-    input: css({
-      overflowWrap: 'anywhere',
-      height: '100%',
-    }),
-  };
-  const segmentClassName = cx(styles.segment, modifiedStyle.segment);
-  const inputClassName = cx(styles.input, modifiedStyle.input);
 
   if (editableParam.options?.length > 0) {
     return (
@@ -42,7 +30,7 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
         autofocus={autofocus}
         value={editableParam.value}
         inputPlaceholder={editableParam.name}
-        className={segmentClassName}
+        className={styles.segment}
         options={editableParam.options}
         placeholder={' +' + editableParam.name}
         onChange={(value) => {
@@ -58,7 +46,7 @@ export function FunctionParamEditor({ editableParam, onChange, onExpandedChange,
     return (
       <SegmentInput
         autofocus={autofocus}
-        className={inputClassName}
+        className={styles.input}
         value={editableParam.value || ''}
         placeholder={' +' + editableParam.name}
         inputPlaceholder={editableParam.name}
@@ -83,6 +71,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   segment: css({
     margin: 0,
     padding: 0,
+    overflowWrap: 'anywhere',
+    height: '100%',
   }),
   input: css({
     margin: 0,
@@ -90,5 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     input: {
       height: '25px',
     },
+    overflowWrap: 'anywhere',
+    height: '100%',
   }),
 });
