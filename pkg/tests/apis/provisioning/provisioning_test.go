@@ -1031,7 +1031,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 		// Wait for job to complete
 		helper.AwaitJobSuccess(t, ctx, obj)
-		
+
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
@@ -1048,14 +1048,14 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
-		
+
 		// Verify that dashboards have the correct source paths
 		foundPaths := make(map[string]bool)
 		for _, dashboard := range dashboards.Items {
 			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
 			foundPaths[sourcePath] = true
 		}
-		
+
 		require.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
 		require.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
 		require.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
@@ -1093,7 +1093,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 
 		// Wait for job to complete
 		helper.AwaitJobSuccess(t, ctx, obj)
-		
+
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
@@ -1118,14 +1118,14 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
-		
+
 		// Verify that dashboards have the correct source paths after cumulative moves
 		foundPaths := make(map[string]bool)
 		for _, dashboard := range dashboards.Items {
 			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
 			foundPaths[sourcePath] = true
 		}
-		
+
 		require.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard1 from first move")
 		require.True(t, foundPaths["archived/dashboard2.json"], "should have dashboard2 in archived location")
 		require.True(t, foundPaths["archived/folder/dashboard3.json"], "should have dashboard3 in archived nested location")
