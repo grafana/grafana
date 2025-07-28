@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	alertingImages "github.com/grafana/alerting/images"
-	alertingLogging "github.com/grafana/alerting/logging"
+	alertingLogging "github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/alerting/receivers"
 	alertingEmail "github.com/grafana/alerting/receivers/email"
 	alertingTemplates "github.com/grafana/alerting/templates"

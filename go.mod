@@ -547,6 +547,7 @@ require (
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/hashicorp/go-msgpack/v2 v2.1.2 // indirect
 	github.com/jaegertracing/jaeger-idl v0.5.0 // indirect
+	github.com/linkedin/goavro/v2 v2.14.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/sercand/kuberesolver/v6 v6.0.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
