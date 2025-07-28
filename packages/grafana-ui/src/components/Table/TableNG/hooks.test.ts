@@ -490,24 +490,26 @@ describe('TableNG hooks', () => {
 
       const { fields } = setupData();
 
+      let modifiedFields = fields.map((field) => {
+        if (field.name === 'name') {
+          return {
+            ...field,
+            name: 'Longer name that needs wrapping',
+            config: {
+              ...field.config,
+              custom: {
+                ...field.config?.custom,
+                wrapHeaderText: true,
+              },
+            },
+          };
+        }
+        return field;
+      });
+
       renderHook(() => {
         return useHeaderHeight({
-          fields: fields.map((field) => {
-            if (field.name === 'name') {
-              return {
-                ...field,
-                name: 'Longer name that needs wrapping',
-                config: {
-                  ...field.config,
-                  custom: {
-                    ...field.config?.custom,
-                    wrapHeaderText: true,
-                  },
-                },
-              };
-            }
-            return field;
-          }),
+          fields: modifiedFields,
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, wrappedCount: countFn },
@@ -516,27 +518,29 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86);
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0]);
+
+      modifiedFields = fields.map((field) => {
+        if (field.name === 'name') {
+          return {
+            ...field,
+            name: 'Longer name that needs wrapping',
+            config: {
+              ...field.config,
+              custom: {
+                ...field.config?.custom,
+                filterable: true,
+                wrapHeaderText: true,
+              },
+            },
+          };
+        }
+        return field;
+      });
 
       renderHook(() => {
         return useHeaderHeight({
-          fields: fields.map((field) => {
-            if (field.name === 'name') {
-              return {
-                ...field,
-                name: 'Longer name that needs wrapping',
-                config: {
-                  ...field.config,
-                  custom: {
-                    ...field.config?.custom,
-                    filterable: true,
-                    wrapHeaderText: true,
-                  },
-                },
-              };
-            }
-            return field;
-          }),
+          fields: modifiedFields,
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, wrappedCount: countFn },
@@ -545,7 +549,7 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26);
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0]);
     });
   });
 
@@ -764,7 +768,11 @@ describe('TableNG hooks', () => {
 
         expect(result.current(rows[0])).toEqual(expect.any(Number));
 
-        expect(estimateLinesFn).toHaveBeenCalledWith('Annie Lennox', 100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT);
+        expect(estimateLinesFn).toHaveBeenCalledWith(
+          'Annie Lennox',
+          100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
+          fieldsWithWrappedText[0]
+        );
       });
     });
   });

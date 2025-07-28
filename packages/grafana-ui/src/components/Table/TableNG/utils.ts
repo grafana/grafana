@@ -36,7 +36,6 @@ import {
   LineCounter,
   LineCounterEntry,
 } from './types';
-import { max } from 'lodash';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
@@ -92,6 +91,14 @@ export function getMaxWrappedLines(field: Field): number | undefined {
   return cellOptions?.maxWrappedLines;
 }
 
+function limitByMaxWrappedLines(lineCount: number, field: Field): number {
+  const maxWrappedLines = getMaxWrappedLines(field);
+  if (!maxWrappedLines || lineCount <= maxWrappedLines) {
+    return lineCount;
+  }
+  return maxWrappedLines;
+}
+
 /**
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
@@ -119,15 +126,15 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
 }
 
 /**
- * @internal
+ * @internal wraps the uwrap count function to apply the maxWrappedLines limit if set.
  */
 export function wrapUwrapCount(count: Count): LineCounter {
-  return (value, width) => {
+  return (value, width, field) => {
     if (value == null) {
       return 1;
     }
 
-    return count(String(value), width);
+    return limitByMaxWrappedLines(count(String(value), width), field);
   };
 }
 
@@ -148,14 +155,7 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
     }
 
     const charsPerLine = width / avgCharWidth;
-    const estimate = strValue.length / charsPerLine;
-
-    // limit the number of lines to the maxWrappedLines if set.
-    const maxWrappedLines = getMaxWrappedLines(field);
-    if (maxWrappedLines !== undefined && estimate > maxWrappedLines) {
-      return maxWrappedLines;
-    }
-    return estimate;
+    return limitByMaxWrappedLines(strValue.length / charsPerLine, field);
   };
 }
 

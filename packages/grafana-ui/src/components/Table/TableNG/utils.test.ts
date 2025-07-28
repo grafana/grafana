@@ -40,6 +40,7 @@ import {
   createTypographyContext,
   applySort,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
+  wrapUwrapCount,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1002,15 +1003,73 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('wrapUwrapCount', () => {
+    const field: Field = {
+      name: 'test',
+      type: FieldType.string,
+      config: {},
+      values: ['foo', 'bar', 'baz'],
+    };
+
+    it('wraps the uwrap count function', () => {
+      const wrappedCount = wrapUwrapCount(jest.fn(() => 2));
+      expect(wrappedCount('test string', 100, field)).toBe(2);
+    });
+
+    it('returns 1 for null or undefined values', () => {
+      const wrappedCount = wrapUwrapCount(jest.fn(() => 2));
+      expect(wrappedCount(null, 100, field)).toBe(1);
+      expect(wrappedCount(undefined, 100, field)).toBe(1);
+    });
+
+    it('clamps the line count to the max wrapped lines if set', () => {
+      expect(
+        wrapUwrapCount(jest.fn(() => 3))('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, {
+          ...field,
+          config: {
+            custom: {
+              cellOptions: {
+                wrapText: true,
+                maxWrappedLines: 2,
+              },
+            },
+          },
+        })
+      ).toBe(2);
+    });
+  });
+
   describe('getTextLineEstimator', () => {
     const counter = getTextLineEstimator(10);
+    const field: Field = {
+      name: 'test',
+      type: FieldType.string,
+      config: {},
+      values: ['foo', 'bar', 'baz'],
+    };
 
     it('returns -1 if there are no strings or dashes within the string', () => {
-      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5)).toBe(-1);
+      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5, field)).toBe(-1);
     });
 
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
-      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200)).toBe(2.5);
+      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field)).toBe(2.5);
+    });
+
+    it('clamps the line count to the maxWrappedLines if set', () => {
+      expect(
+        counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, {
+          ...field,
+          config: {
+            custom: {
+              cellOptions: {
+                wrapText: true,
+                maxWrappedLines: 2,
+              },
+            },
+          },
+        })
+      ).toBe(2);
     });
   });
 
@@ -1162,15 +1221,15 @@ describe('TableNG utils', () => {
 
     it('should take colWidths into account when calculating max wrap cell', () => {
       getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50);
-      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60);
+      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50, fields[0]);
+      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60, fields[1]);
     });
 
     // this is used to calc wrapped header height
     it('should use the display name if the rowIdx is -1', () => {
       getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50);
-      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60);
+      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50, fields[0]);
+      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60, fields[1]);
     });
 
     it('should ignore columns which do not have line counters', () => {
@@ -1182,13 +1241,6 @@ describe('TableNG utils', () => {
     it('should return the default height if there are no counters to apply', () => {
       const height = getRowHeight(fields, 3, [30, 30], 36, [], 20, 10);
       expect(height).toBe(36);
-    });
-
-    it('clamps the number of lines by the maxWrappedLines', () => {
-      fields[0].config.custom.cellOptions.maxWrappedLines = 2; // Set max wrapped lines to 2
-
-      // 3 lines @ 20px ('longer', 'one', 'here'), 10px vertical padding _would_ be 70, but we set the maxWrappedLines to 2, so it's 50.
-      expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(50);
     });
 
     describe('estimations vs. precise counts', () => {
