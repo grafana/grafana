@@ -21233,12 +21233,12 @@ __metadata:
   linkType: hard
 
 "jsdom-testing-mocks@npm:^1.13.1":
-  version: 1.13.1
-  resolution: "jsdom-testing-mocks@npm:1.13.1"
+  version: 1.14.0
+  resolution: "jsdom-testing-mocks@npm:1.14.0"
   dependencies:
     bezier-easing: "npm:^2.1.0"
     css-mediaquery: "npm:^0.1.2"
-  checksum: 10/434acae65fc89f4d8e0e2dc23b830ebaf4568483d5127da60bf825c8357c489955105b98a5d95ed5c4e1ed48f2fa5369b138f141d55b290cd656008493ac6a65
+  checksum: 10/b7f89f4687345f437f9e022cacc9ed577e58c825b4283b61dd46ab61f9612d8a715b6acc12aa91bcd3f6c97455dfe61eeae86ce4694832469f3ad95d179bd671
   languageName: node
   linkType: hard
 
