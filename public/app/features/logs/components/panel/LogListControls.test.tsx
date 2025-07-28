@@ -17,6 +17,13 @@ jest.mock('../../utils', () => ({
   downloadLogs: jest.fn(),
 }));
 
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
+
 const fontSize: LogListFontSize = 'default';
 const contextProps = {
   app: CoreApp.Unknown,
@@ -31,6 +38,8 @@ const contextProps = {
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: false,
   wrapLogMessage: false,
+  isAssistantAvailable: false,
+  openAssistantByLog: () => {},
 };
 
 describe('LogListControls', () => {

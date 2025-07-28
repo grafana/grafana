@@ -23,6 +23,11 @@ import (
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
 
+var (
+	ErrSecureValueNotFound      = contracts.ErrSecureValueNotFound
+	ErrSecureValueAlreadyExists = contracts.ErrSecureValueAlreadyExists
+)
+
 // SecureValueClient is a CRUD client for the secure value API.
 type SecureValueClient = contracts.SecureValueClient
 

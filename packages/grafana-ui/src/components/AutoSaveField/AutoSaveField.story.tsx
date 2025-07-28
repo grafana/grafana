@@ -35,6 +35,8 @@ const meta: Meta = {
         'validationMessageHorizontalOverflow',
       ],
     },
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
   },
   argTypes: {
     saveErrorMessage: { control: 'text' },

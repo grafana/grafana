@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "編輯評估群組"
     },
     "group-loader": {
-      "group-load-failed": "無法從「{{ namespaceName }}」中的群組「{{ groupName }}」載入規則"
+      "group-load-failed": "無法從「{{ namespaceName }}」中的群組「{{ groupName }}」載入規則",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "正在刪除群組"
@@ -2456,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "設定",
-      "draft-new-rule": "撰寫新規則",
       "ds-error": {
         "title": "無法載入此資料來源的規則"
       },
@@ -2482,6 +2483,7 @@
       "new-alert-rule": "新的警報規則",
       "new-datasource-recording-rule": "新的資料來源錄製規則",
       "new-grafana-recording-rule": "新的 Grafana 錄製規則",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "顯示更多內容…"
       },
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "重新整理預覽",
+      "empty-state": "",
       "label-preview": "預覽",
       "refresh": "更新"
     },
@@ -3466,7 +3469,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
-      "bulk-delete-provisioned-resources-not-implemented": "",
       "cancel-button": "取消",
       "cannot-move-folders": "資料夾無法移動",
       "confirmation-text": "刪除",
@@ -3498,6 +3500,23 @@
     },
     "browse-view": {
       "this-folder-is-empty": "此資料夾為空"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "button-done": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "progress-title": "",
+      "success-message": ""
+    },
+    "bulk-move-resources-form": {
+      "deleting": "",
+      "progress": ""
     },
     "counts": {
       "alertRule_other": "{{count}} 個警報規則",
@@ -4528,6 +4547,10 @@
     },
     "edit-actions": {
       "add": "新增 {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "移動 {{typeName}}",
       "panel-background": "變更面板背景",
       "panel-description": "變更面板描述",
@@ -4542,6 +4565,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "儀表板",
+        "element": "",
         "local-variable": "本機變數",
         "multiple-elements": "多個元素",
         "multiple-elements-delete-text": "確定要刪除這些元素嗎？",
@@ -5749,7 +5773,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7119,6 +7142,7 @@
           "start-time": "開始時間："
         }
       },
+      "share-span": "",
       "warnings": "警告"
     },
     "span-filters": {
@@ -7698,6 +7722,409 @@
       }
     }
   },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "",
+            "name-g-unit": "",
+            "name-meters-sec": ""
+          },
+          "name": ""
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "",
+            "name-arc-seconds": "",
+            "name-degrees": "",
+            "name-gradian": "",
+            "name-radians": ""
+          },
+          "name": ""
+        },
+        "area": {
+          "formats": {
+            "name-acres": "",
+            "name-hectares": "",
+            "name-square-feet": "",
+            "name-square-meters": "",
+            "name-square-miles": ""
+          },
+          "name": ""
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "",
+            "name-true-false": "",
+            "name-yes-no": ""
+          },
+          "name": ""
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "",
+            "name-flops": "",
+            "name-gflops": "",
+            "name-mflops": "",
+            "name-pflops": "",
+            "name-tflops": "",
+            "name-yflops": "",
+            "name-zflops": ""
+          },
+          "name": ""
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "",
+            "name-g-nm3": "",
+            "name-mg-dl": "",
+            "name-mg-m3": "",
+            "name-mg-nm3": "",
+            "name-mmol-l": "",
+            "name-ng-m3": "",
+            "name-ng-nm3": "",
+            "name-ppb": "",
+            "name-ppm": "",
+            "name-ug-m3": "",
+            "name-ug-nm3": ""
+          },
+          "name": ""
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "",
+            "name-brl": "",
+            "name-btc": "",
+            "name-chf": "",
+            "name-czk": "",
+            "name-dkk": "",
+            "name-eur": "",
+            "name-gbp": "",
+            "name-idr": "",
+            "name-ils": "",
+            "name-inr": "",
+            "name-isk": "",
+            "name-jpy": "",
+            "name-krw": "",
+            "name-mbtc": "",
+            "name-myr": "",
+            "name-nok": "",
+            "name-php": "",
+            "name-pln": "",
+            "name-pyg": "",
+            "name-rub": "",
+            "name-sek": "",
+            "name-try": "",
+            "name-uah": "",
+            "name-ubtc": "",
+            "name-usd": "",
+            "name-uyu": "",
+            "name-vnd": "",
+            "name-xpf": "",
+            "name-zar": ""
+          },
+          "name": ""
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "",
+            "name-bits-si": "",
+            "name-bytes-iec": "",
+            "name-bytes-si": "",
+            "name-gibibytes": "",
+            "name-gigabytes": "",
+            "name-kibibytes": "",
+            "name-kilobytes": "",
+            "name-mebibytes": "",
+            "name-megabytes": "",
+            "name-pebibytes": "",
+            "name-petabytes": "",
+            "name-tebibytes": "",
+            "name-terabytes": ""
+          },
+          "name": ""
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "",
+            "name-bits-sec-si": "",
+            "name-bytes-sec-iec": "",
+            "name-bytes-sec-si": "",
+            "name-gibibits-sec": "",
+            "name-gibibytes-sec": "",
+            "name-gigabits-sec": "",
+            "name-gigabytes-sec": "",
+            "name-kibibits-sec": "",
+            "name-kibibytes-sec": "",
+            "name-kilobits-sec": "",
+            "name-kilobytes-sec": "",
+            "name-mebibits-sec": "",
+            "name-mebibytes-sec": "",
+            "name-megabits-sec": "",
+            "name-megabytes-sec": "",
+            "name-packets-sec": "",
+            "name-pebibits-sec": "",
+            "name-pebibytes-sec": "",
+            "name-petabits-sec": "",
+            "name-petabytes-sec": "",
+            "name-tebibits-sec": "",
+            "name-tebibytes-sec": "",
+            "name-terabits-sec": "",
+            "name-terabytes-sec": ""
+          },
+          "name": ""
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "",
+            "name-datetime-iso": "",
+            "name-datetime-iso-no-date": "",
+            "name-datetime-local": "",
+            "name-datetime-local-no-date": "",
+            "name-datetime-us": "",
+            "name-datetime-us-no-date": "",
+            "name-from-now": ""
+          },
+          "name": ""
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "",
+            "name-ampere-hour": "",
+            "name-decibel-milliwatt": "",
+            "name-electron-volt": "",
+            "name-farad": "",
+            "name-femtofarad": "",
+            "name-gigawatt": "",
+            "name-henry": "",
+            "name-joule": "",
+            "name-kiloampere": "",
+            "name-kiloampere-hour": "",
+            "name-kiloohm": "",
+            "name-kilovolt": "",
+            "name-kilovolt-ampere": "",
+            "name-kilovolt-ampere-reactive": "",
+            "name-kilowatt": "",
+            "name-kilowatt-hour": "",
+            "name-kilowatt-min": "",
+            "name-lumens": "",
+            "name-megaohm": "",
+            "name-megawatt": "",
+            "name-megawatt-hour": "",
+            "name-microfarad": "",
+            "name-microhenry": "",
+            "name-milliampere": "",
+            "name-milliampere-hour": "",
+            "name-millihenry": "",
+            "name-milliohm": "",
+            "name-millivolt": "",
+            "name-milliwatt": "",
+            "name-nanofarad": "",
+            "name-ohm": "",
+            "name-picofarad": "",
+            "name-volt": "",
+            "name-volt-ampere": "",
+            "name-volt-ampere-reactive": "",
+            "name-watt": "",
+            "name-watt-hour": "",
+            "name-watt-hour-per-kg": "",
+            "name-watt-square-meter": ""
+          },
+          "name": ""
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "",
+            "name-cubic-feet-sec": "",
+            "name-cubic-meters-sec": "",
+            "name-gallons-min": "",
+            "name-litre-hour": "",
+            "name-litre-min": "",
+            "name-lux": "",
+            "name-millilitre-min": ""
+          },
+          "name": ""
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "",
+            "name-kilonewtons": "",
+            "name-newton-meters": "",
+            "name-newtons": ""
+          },
+          "name": ""
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "",
+            "name-gigahashes-sec": "",
+            "name-hashes-sec": "",
+            "name-kilohashes-sec": "",
+            "name-megahashes-sec": "",
+            "name-petahashes-sec": "",
+            "name-terahashes-sec": ""
+          },
+          "name": ""
+        },
+        "length": {
+          "formats": {
+            "name-feet": "",
+            "name-inch": "",
+            "name-kilometer": "",
+            "name-meter": "",
+            "name-mile": "",
+            "name-millimeter": ""
+          },
+          "name": ""
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "",
+            "name-kilogram": "",
+            "name-metric-ton": "",
+            "name-milligram": "",
+            "name-pound": ""
+          },
+          "name": ""
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "",
+            "name-decibel": "",
+            "name-hexadecimal": "",
+            "name-hexadecimal-0x": "",
+            "name-humidity": "",
+            "name-locale": "",
+            "name-number": "",
+            "name-percent-1": "",
+            "name-percent-100": "",
+            "name-pixels": "",
+            "name-scientific": "",
+            "name-short": "",
+            "name-si-short": "",
+            "name-string": ""
+          },
+          "name": ""
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "",
+            "name-hectopascals": "",
+            "name-inches-mercury": "",
+            "name-kilobars": "",
+            "name-kilopascals": "",
+            "name-millibars": "",
+            "name-pascals": "",
+            "name-psi": ""
+          },
+          "name": ""
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "",
+            "name-curie": "",
+            "name-exposure": "",
+            "name-gray": "",
+            "name-microsievert": "",
+            "name-microsievert-hour": "",
+            "name-millisievert": "",
+            "name-millisievert-hour": "",
+            "name-rad": "",
+            "name-rem": "",
+            "name-roentgen": "",
+            "name-sievert": "",
+            "name-sievert-hour": ""
+          },
+          "name": ""
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "",
+            "name-gigahertz": "",
+            "name-hertz": "",
+            "name-kilohertz": "",
+            "name-megahertz": "",
+            "name-radians-sec": "",
+            "name-rpm": ""
+          },
+          "name": ""
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "",
+            "name-fahrenheit": "",
+            "name-kelvin": ""
+          },
+          "name": ""
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "",
+            "name-counts-sec": "",
+            "name-events-min": "",
+            "name-events-sec": "",
+            "name-io-ops-sec": "",
+            "name-messages-min": "",
+            "name-messages-sec": "",
+            "name-ops-min": "",
+            "name-ops-sec": "",
+            "name-reads-min": "",
+            "name-reads-sec": "",
+            "name-records-min": "",
+            "name-records-sec": "",
+            "name-requests-min": "",
+            "name-requests-sec": "",
+            "name-rows-min": "",
+            "name-rows-sec": "",
+            "name-writes-min": "",
+            "name-writes-sec": ""
+          },
+          "name": ""
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "",
+            "name-clock-s": "",
+            "name-days": "",
+            "name-duration-dhms": "",
+            "name-duration-hms": "",
+            "name-duration-ms": "",
+            "name-duration-s": "",
+            "name-hertz": "",
+            "name-hours": "",
+            "name-microseconds": "",
+            "name-milliseconds": "",
+            "name-minutes": "",
+            "name-nanoseconds": "",
+            "name-seconds": "",
+            "name-timeticks": ""
+          },
+          "name": ""
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "",
+            "name-knot": "",
+            "name-meters-second": "",
+            "name-miles-hour": ""
+          },
+          "name": ""
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "",
+            "name-cubic-meter": "",
+            "name-gallons": "",
+            "name-litre": "",
+            "name-millilitre": "",
+            "name-normal-cubic-meter": ""
+          },
+          "name": ""
+        }
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -8156,7 +8583,10 @@
         "no-data": ""
       },
       "no-values-label": "沒有數值",
-      "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列"
+      "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "標籤"
@@ -8881,8 +9311,11 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "沒有要顯示的欄位。",
+      "open-assistant": "",
       "pin-line": "固定紀錄",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": "沒有要顯示的結果。"
       },
@@ -8897,6 +9330,9 @@
       "copy-log": "複製日誌行",
       "hide-details": "顯示紀錄詳細資料",
       "icon-label": "日誌功能表",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "釘選日誌",
       "show-context": "顯示內容",
       "show-details": "隱藏紀錄詳細資料",
@@ -10487,16 +10923,38 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
       "message": "此功能目前正在積極開發中。為了獲得最佳體驗和最新改進版本，建議使用 Grafana 的<2>夜間版本</2>。"
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "為此儲存庫連線新增一個明確的名稱",
@@ -10507,7 +10965,9 @@
       "label-display-name": "顯示名稱",
       "placeholder-my-repository-connection": "我的儲存庫連線",
       "text-loading-resource-information": "正在載入資源資訊…",
-      "files-count_other": "{{count}} 個檔案"
+      "dashboards-count_other": "",
+      "files-count_other": "{{count}} 個檔案",
+      "folders-count_other": ""
     },
     "check-repository": {
       "check": "勾選"
@@ -10518,36 +10978,20 @@
       "button-save": "儲存",
       "button-saving": "正在儲存…",
       "description-enabled": "一旦啟用自動拉取，目標便無法變更。",
-      "description-path": "Git 儲存庫中子目錄的路徑",
       "description-read-only": "無法透過 Grafana 修改資源。",
-      "description-repository-url": "輸入 GitHub 儲存庫網址",
       "description-title": "設定的人類可讀名稱",
       "error-required": "此為必填欄位。",
       "error-save-repository": "無法儲存儲存庫設定",
-      "error-valid-github-url": "請輸入有效的 GitHub 儲存庫網址",
       "label-automatic-pulling": "自動拉取",
-      "label-branch": "分支",
       "label-enabled": "已啟用",
-      "label-github-token": "GitHub 權杖",
       "label-interval-seconds": "間隔（秒）",
-      "label-local-path": "本機路徑",
-      "label-path": "路徑",
-      "label-pr-workflow": "儲存時啟用拉取請求選項",
       "label-repository-type": "儲存庫類型",
-      "label-repository-url": "儲存庫網址",
       "label-target": "目標",
       "label-title": "標題",
       "option-entire-instance": "整個執行個體",
-      "option-github": "GitHub",
-      "option-local": "本機",
       "option-managed-folder": "受管理的資料夾",
-      "placeholder-branch": "主要",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "我的設定",
-      "placeholder-select-repository-type": "選擇儲存庫類型"
+      "placeholder-my-config": "我的設定"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>設定 webhook</0>，以便在提交變更時在 Grafana 中即時取得更新。在變更上線之前，使用拉取請求來檢查並核准變更。",
@@ -10561,26 +11005,7 @@
     },
     "connect-repository-button": {
       "configure": "設定",
-      "configure-file": "設定檔案佈建",
-      "configure-git-sync": "設定 Git 同步",
       "repository-limit-info-alert": "已達到儲存庫限制（{{count}} 個）"
-    },
-    "connect-step": {
-      "description-branch": "用於 GitHub 儲存庫的分支",
-      "description-github-path": "這是 GitHub 儲存庫中的子目錄路徑，儀表板將從中儲存和佈建",
-      "description-paste-your-git-hub-personal-access-token": "貼上您的 GitHub 個人存取權杖",
-      "description-repository-url": "貼上 GitHub 儲存庫的網址",
-      "error-field-required": "此為必填欄位。",
-      "error-invalid-github-url": "請輸入有效的 GitHub 儲存庫網址",
-      "label-access-token": "GitHub 存取權杖",
-      "label-branch": "分支名稱",
-      "label-local-path": "本機路徑",
-      "label-path": "儲存庫中子目錄的路徑",
-      "label-repository-url": "Github 儲存庫網址",
-      "placeholder-branch": "主要",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "刪除",
@@ -10613,17 +11038,17 @@
       "title-instant-updates-requests-webhooks": "透過 webhook 即時更新和拉取請求。",
       "title-visual-previews-in-pull-requests": "具有圖片轉譯的拉取請求中的視覺預覽"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "作業規範",
-      "summary": "摘要",
-      "title-error": "錯誤"
+      "summary": "摘要"
     },
     "features-list": {
       "actions": {
         "set-up-required-feature-toggles": "設定所需的功能切換"
       },
-      "manage-dashboards-provision-updates-automatically": "在 GitHub 中將儀表板作為代碼管理，並自動佈建更新",
-      "manage-your-dashboards-with-remote-provisioning": "開始使用 GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "將儀表板儲存在版本控制的儲存空間中，以便更好地組織和追蹤歷史紀錄"
     },
     "file-history-page": {
@@ -10644,18 +11069,16 @@
     },
     "finish-step": {
       "description-enable-previews": "在拉取請求中新增儀表板變更的圖片預覽。您的 Grafana 儀表板圖像將在您的 Git 儲存庫中共用，並且任何具有儲存庫存取權限者都可以看見。",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "需要圖片轉譯。<2>設定圖片轉譯</2>",
-      "description-often-shall-instance-updates-git-hub": "執行個體應多久從 GitHub 拉取一次更新？",
-      "description-pr-enable-description": "允許使用者選擇在儲存變更時是否開啟拉取請求。如果儲存庫不允許直接變更主分支，則可能仍需要拉取請求。",
+      "description-preview-requirements": "",
       "description-read-only": "無法透過 Grafana 修改資源。",
-      "description-webhooks-enable": "允許使用者選擇在儲存變更時是否開啟拉取請求。如果儲存庫不允許直接變更主分支，則可能仍需要拉取請求。",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "在拉取請求中啟用儀表板預覽",
-      "label-pr-workflow": "儲存時啟用拉取請求選項",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "唯讀",
-      "label-update-instance-interval-seconds": "更新執行個體間隔（秒）",
-      "placeholder": "60",
-      "text-setup-later": "您可以稍後再設定",
-      "title-enhance-github": "增強您的 GitHub 體驗"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "沒有符合您查詢的結果",
@@ -10686,6 +11109,57 @@
       "header": "佈建",
       "subtitle-provisioning-feature": "檢視及管理您的佈建連線"
     },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
     "history-view": {
       "not-found": "無結果"
     },
@@ -10712,9 +11186,17 @@
       "starting": "正在開始…",
       "status": {
         "title-error-running-job": "執行作業時發生錯誤",
-        "title-job-completed-successfully": "作業已成功完成"
+        "title-warning-running-job": ""
       },
-      "summary": "摘要"
+      "summary": "摘要",
+      "title": {
+        "error-fetching-active-job": ""
+      }
+    },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
     },
     "mode-options": {
       "folder": {
@@ -10740,7 +11222,7 @@
     },
     "repository-actions": {
       "settings": "設定",
-      "source-code": "原始碼"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10805,6 +11287,24 @@
       "title-legacy-storage": "舊版儲存空間",
       "title-queued-for-deletion": "已排入刪除佇列"
     },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
+    },
     "resource-view": {
       "base": "基數",
       "dashboard-preview": "儀表板預覽",
@@ -10834,6 +11334,11 @@
       "label-current-step": "目前步驟",
       "label-pending-step": "待處理步驟"
     },
+    "sync-job": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": ""
+    },
     "sync-repository": {
       "body-edit-configuration": "編輯設定",
       "button-edit": "編輯",
@@ -10844,9 +11349,6 @@
       "tooltip-unhealthy-repository": "無法拉取狀態不佳的儲存庫"
     },
     "synchronize-step": {
-      "error-no-job-id": "無法啟動作業",
-      "error-no-repository-name": "未提供儲存庫名稱",
-      "error-starting-job": "開始作業時發生錯誤",
       "synchronization-description": "包含每個歷史數值的提交",
       "synchronization-options": "同步選項"
     },
@@ -10855,6 +11357,7 @@
       "go-to": "前往",
       "make-sure": "請務必包含以下權限"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "在此過程中，將無法建立、編輯或刪除資源。在最後一步中，它們將會消失。",
       "alert-point-2": "佈建完成後，資源將重新出現，並透過外部儲存空間進行管理。",

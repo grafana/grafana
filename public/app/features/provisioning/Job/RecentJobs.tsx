@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
+import { Alert, Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
 import { formatTimestamp } from '../utils/time';
 
@@ -26,8 +27,11 @@ const getStatusColor = (state?: SyncStatus['state']) => {
     case 'success':
       return 'green';
     case 'working':
-    case 'pending':
+      return 'blue';
+    case 'warning':
       return 'orange';
+    case 'pending':
+      return 'darkgrey';
     case 'error':
       return 'red';
     default:
@@ -123,21 +127,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
             <KeyValuesTable data={data} />
           </Stack>
         )}
-        {hasErrors && (
-          <Stack direction="column">
-            {row.status?.errors?.map(
-              (error, index) =>
-                error.trim() && (
-                  <Alert key={index} severity="error" title={t('provisioning.expanded-row.title-error', 'Error')}>
-                    <Stack alignItems="center" gap={1}>
-                      <Icon name="exclamation-circle" size="sm" />
-                      {error}
-                    </Stack>
-                  </Alert>
-                )
-            )}
-          </Stack>
-        )}
+        {hasErrors && <ProvisioningAlert error={{ message: row.status?.errors }} />}
         {hasSummary && (
           <Stack direction="column" gap={2}>
             <Text variant="body" color="secondary">
@@ -209,7 +199,7 @@ export function RecentJobs({ repo }: Props) {
   }
 
   return (
-    <Card>
+    <Card noMargin>
       <Card.Heading>
         <Trans i18nKey="provisioning.recent-jobs.jobs">Jobs</Trans>
       </Card.Heading>

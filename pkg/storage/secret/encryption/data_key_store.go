@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -161,14 +162,14 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 	}, nil
 }
 
-func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace string) ([]*contracts.SecretDataKey, error) {
+func (ss *encryptionStoreImpl) ListDataKeys(ctx context.Context, namespace string) ([]*contracts.SecretDataKey, error) {
 	start := time.Now()
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.GetAllDataKeys", trace.WithAttributes(
+	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.ListDataKeys", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer func() {
 		span.End()
-		ss.metrics.GetAllDataKeysDuration.Observe(float64(time.Since(start)))
+		ss.metrics.ListDataKeysDuration.Observe(float64(time.Since(start)))
 	}()
 
 	req := listDataKeys{
@@ -299,8 +300,8 @@ func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace st
 		return fmt.Errorf("getting rows affected: %w", err)
 	}
 
-	if rowsAffected != 1 {
-		return fmt.Errorf("expected 1 row affected, but affected %d", rowsAffected)
+	if rowsAffected == 0 {
+		logging.FromContext(ctx).Info("Disable all data keys: no keys were disabled for namespace", "namespace", namespace)
 	}
 
 	return nil
@@ -344,6 +345,63 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 
 	if rowsAffected != 1 {
 		return fmt.Errorf("bug: deleted more than one row from the data key table, should delete only one at a time: deleted=%v", rowsAffected)
+	}
+
+	return nil
+}
+
+type globalEncryptionStoreImpl struct {
+	db      contracts.Database
+	dialect sqltemplate.Dialect
+	tracer  trace.Tracer
+	metrics *GlobalDataKeyMetrics
+}
+
+func ProvideGlobalDataKeyStorage(
+	db contracts.Database,
+	tracer trace.Tracer,
+	registerer prometheus.Registerer,
+) (contracts.GlobalDataKeyStorage, error) {
+	store := &globalEncryptionStoreImpl{
+		db:      db,
+		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:  tracer,
+		metrics: NewGlobalDataKeyMetrics(registerer),
+	}
+
+	return store, nil
+}
+
+func (ss *globalEncryptionStoreImpl) DisableAllDataKeys(ctx context.Context) error {
+	start := time.Now()
+	ctx, span := ss.tracer.Start(ctx, "GlobalDataKeyStorage.DisableAllDataKeys")
+	defer func() {
+		span.End()
+		ss.metrics.DisableAllDataKeysDuration.Observe(float64(time.Since(start)))
+	}()
+
+	req := disableAllDataKeys{
+		SQLTemplate: sqltemplate.New(ss.dialect),
+		Updated:     time.Now(),
+	}
+
+	query, err := sqltemplate.Execute(sqlDataKeyDisableAll, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlDataKeyDisableAll.Name(), err)
+	}
+
+	result, err := ss.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("updating data keys: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		logging.FromContext(ctx).Info("Disable all data keys: no keys were disabled")
 	}
 
 	return nil

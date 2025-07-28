@@ -735,12 +735,12 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, registerer, resourceClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
 	legacyDataSourceLookup := service7.ProvideLegacyDataSourceLookup(service15)
-	queryAPIBuilder, err := query2.RegisterAPIService(featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
+	queryAPIBuilder, err := query2.RegisterAPIService(cfg, featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
 	if err != nil {
 		return nil, err
 	}
@@ -788,11 +788,11 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	decryptService := decrypt.ProvideDecryptService(decryptStorage)
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService)
+	v3 := decrypt.ProvideDecryptService(decryptStorage)
+	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v3 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v3)
+	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v4)
 	if err != nil {
 		return nil, err
 	}
@@ -1293,12 +1293,12 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, registerer, resourceClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
 	legacyDataSourceLookup := service7.ProvideLegacyDataSourceLookup(service15)
-	queryAPIBuilder, err := query2.RegisterAPIService(featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
+	queryAPIBuilder, err := query2.RegisterAPIService(cfg, featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
 	if err != nil {
 		return nil, err
 	}
@@ -1346,11 +1346,11 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	decryptService := decrypt.ProvideDecryptService(decryptStorage)
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService)
+	v3 := decrypt.ProvideDecryptService(decryptStorage)
+	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v3 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v3)
+	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v4)
 	if err != nil {
 		return nil, err
 	}
