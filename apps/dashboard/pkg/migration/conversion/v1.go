@@ -54,7 +54,7 @@ func Convert_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, s
 	return nil
 }
 
-func Convert_V1_to_V2alpha2(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
+func Convert_V1_to_V2beta1(in *dashv1.Dashboard, out *dashv2beta1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
 	// TODO: implement V1 to v2beta1 conversion

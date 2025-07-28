@@ -23,7 +23,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V0_to_V2alpha2(a.(*dashv0.Dashboard), b.(*dashv2beta1.Dashboard), scope)
+		return Convert_V0_to_V2beta1(a.(*dashv0.Dashboard), b.(*dashv2beta1.Dashboard), scope)
 	}); err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv1.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V1_to_V2alpha2(a.(*dashv1.Dashboard), b.(*dashv2beta1.Dashboard), scope)
+		return Convert_V1_to_V2beta1(a.(*dashv1.Dashboard), b.(*dashv2beta1.Dashboard), scope)
 	}); err != nil {
 		return err
 	}
@@ -57,24 +57,24 @@ func RegisterConversions(s *runtime.Scheme) error {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2alpha1.Dashboard)(nil), (*dashv2beta1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V2alpha1_to_V2alpha2(a.(*dashv2alpha1.Dashboard), b.(*dashv2beta1.Dashboard), scope)
+		return Convert_V2alpha1_to_V2beta1(a.(*dashv2alpha1.Dashboard), b.(*dashv2beta1.Dashboard), scope)
 	}); err != nil {
 		return err
 	}
 
 	// v2beta1 conversions
 	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv0.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V2alpha2_to_V0(a.(*dashv2beta1.Dashboard), b.(*dashv0.Dashboard), scope)
+		return Convert_V2beta1_to_V0(a.(*dashv2beta1.Dashboard), b.(*dashv0.Dashboard), scope)
 	}); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V2alpha2_to_V1(a.(*dashv2beta1.Dashboard), b.(*dashv1.Dashboard), scope)
+		return Convert_V2beta1_to_V1(a.(*dashv2beta1.Dashboard), b.(*dashv1.Dashboard), scope)
 	}); err != nil {
 		return err
 	}
 	if err := s.AddConversionFunc((*dashv2beta1.Dashboard)(nil), (*dashv2alpha1.Dashboard)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_V2alpha2_to_V2alpha1(a.(*dashv2beta1.Dashboard), b.(*dashv2alpha1.Dashboard), scope)
+		return Convert_V2beta1_to_V2alpha1(a.(*dashv2beta1.Dashboard), b.(*dashv2alpha1.Dashboard), scope)
 	}); err != nil {
 		return err
 	}

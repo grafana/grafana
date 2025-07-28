@@ -659,7 +659,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
 
 	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2beta1.yaml")
-	_, err = helper.DashboardsV2alpha2.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2beta1 dashboard")
 
 	// Now for the repository.

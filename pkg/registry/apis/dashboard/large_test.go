@@ -174,7 +174,7 @@ func TestLargeDashboardSupportV2alpha1(t *testing.T) {
 	require.True(t, exists)
 }
 
-func TestLargeDashboardSupportV2alpha2(t *testing.T) {
+func TestLargeDashboardSupportV2beta1(t *testing.T) {
 	// Test RebuildSpec functionality specifically for v2 dashboards
 	// This tests the json.Unmarshal(blob, &dash.Spec) path for structured specs
 	// unlike v0/v1 which use the UnmarshalJSON path for unstructured specs
