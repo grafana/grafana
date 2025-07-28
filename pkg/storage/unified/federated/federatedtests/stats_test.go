@@ -39,6 +39,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDirectSQLStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	db, cfg := db.InitTestDBWithCfg(t)
 	ctx := context.Background()
 
