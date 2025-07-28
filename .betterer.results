@@ -4294,6 +4294,9 @@ exports[`no skipping a11y tests in stories`] = {
     ],
     "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx:5381": [
       [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ]
   }`
 };
