@@ -1,3 +1,5 @@
+import { SortColumn } from 'react-data-grid';
+
 import {
   createDataFrame,
   createTheme,
@@ -30,6 +32,7 @@ import {
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
   getMaxWrapCell,
+  applySort,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1083,5 +1086,40 @@ describe('TableNG utils', () => {
     it.todo('should ignore columns which are not wrapped');
 
     it.todo('should only apply wrapping on idiomatic break characters (space, -, etc)');
+  });
+
+  describe('applySort', () => {
+    it('sorts by nanos', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 1, 2], nanos: [100, 99, 0] },
+          { name: 'value', values: [10, 20, 30] },
+        ],
+      });
+
+      const sortColumns: SortColumn[] = [
+        {
+          columnKey: 'time',
+          direction: 'ASC',
+        },
+      ];
+
+      const records = applySort(frameToRecords(frame), frame.fields, sortColumns);
+
+      expect(records).toMatchObject([
+        {
+          time: 1,
+          value: 20,
+        },
+        {
+          time: 1,
+          value: 10,
+        },
+        {
+          time: 2,
+          value: 30,
+        },
+      ]);
+    });
   });
 });
