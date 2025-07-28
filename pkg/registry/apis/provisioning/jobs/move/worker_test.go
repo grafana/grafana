@@ -141,7 +141,7 @@ func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute && 
+		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute &&
 			opts.Mode == repository.StageModeCommitOnlyOnce &&
 			opts.CommitOnlyOnceMessage == "Move files from Grafana test-job"
 	}), mock.Anything).Return(errors.New("move job submitted targeting repository that is not a ReaderWriter"))
@@ -197,7 +197,7 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 	mockWrapFn := repository.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
-		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute && 
+		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute &&
 			opts.Mode == repository.StageModeCommitOnlyOnce &&
 			opts.CommitOnlyOnceMessage != ""
 	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {

@@ -116,12 +116,12 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 func (w *Worker) constructTargetPath(jobTargetPath, sourcePath string) string {
 	// Extract the file/folder name from the source path
 	fileName := filepath.Base(sourcePath)
-	
+
 	// If the source path is a directory (ends with slash), preserve the trailing slash in target
 	if safepath.IsDir(sourcePath) {
 		return jobTargetPath + fileName + "/"
 	}
-	
+
 	// For files, just append the filename
 	return jobTargetPath + fileName
 }
