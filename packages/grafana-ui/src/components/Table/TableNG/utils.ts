@@ -95,7 +95,7 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
   const txt =
     "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
   const txtWidth = ctx.measureText(txt).width;
-  const avgCharWidth = txtWidth / txt.length + letterSpacing;
+  const avgCharWidth = txtWidth / txt.length + letterSpacing * fontSize;
   const { count } = varPreLine(ctx);
 
   return {
