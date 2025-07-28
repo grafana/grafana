@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Değerlendirme grubunu düzenle"
     },
     "group-loader": {
-      "group-load-failed": "{{ namespaceName }} alanındaki {{ groupName }} grubundan kurallar yüklenemedi"
+      "group-load-failed": "{{ namespaceName }} alanındaki {{ groupName }} grubundan kurallar yüklenemedi",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Grup siliniyor"
@@ -2466,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Yapılandır",
-      "draft-new-rule": "Yeni bir kural taslağı oluştur",
       "ds-error": {
         "title": "Bu veri kaynağı için kurallar yüklenemiyor"
       },
@@ -2492,6 +2493,7 @@
       "new-alert-rule": "Yeni uyarı kuralı",
       "new-datasource-recording-rule": "Yeni veri kaynağı kayıt kuralı",
       "new-grafana-recording-rule": "Yeni Grafana kayıt kuralı",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Daha fazla göster..."
       },
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Ön izlemeyi yenile",
+      "empty-state": "",
       "label-preview": "Ön izleme",
       "refresh": "Yenile"
     },
@@ -4563,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} ekle",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Panel arka planını değiştir",
       "panel-description": "Panel açıklamasını değiştir",
@@ -4577,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Pano",
+        "element": "",
         "local-variable": "Yerel değişken",
         "multiple-elements": "Birden çok öge",
         "multiple-elements-delete-text": "Bu ögeleri silmek istediğinize emin misiniz?",
@@ -5786,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7157,6 +7164,7 @@
           "start-time": "Başlangıç Tarihi:"
         }
       },
+      "share-span": "",
       "warnings": "Uyarılar"
     },
     "span-filters": {
@@ -8597,7 +8605,10 @@
         "no-data": ""
       },
       "no-values-label": "Değer yok",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Etiketler"
@@ -9330,6 +9341,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9360,9 @@
       "copy-log": "Günlük satırını kopyala",
       "hide-details": "Günlük ayrıntılarını göster",
       "icon-label": "Günlük menüsü",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Günlüğü sabitle",
       "show-context": "İçeriği göster",
       "show-details": "Günlük ayrıntılarını gizle",
@@ -10941,15 +10956,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11074,10 @@
       "title-instant-updates-requests-webhooks": "Web kancalarıyla anlık güncellemeler ve çekme istekleri.",
       "title-visual-previews-in-pull-requests": "Çekme isteklerinde resimlerin işlenmesiyle birlikte görsel ön izleme"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "İşin Özellikleri",
-      "summary": "Özet",
-      "title-error": "Hata"
+      "summary": "Özet"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11222,12 @@
       "starting": "Başlatılıyor...",
       "status": {
         "title-error-running-job": "İş çalıştırılırken hata oluştu",
-        "title-job-completed-successfully": "İş başarıyla tamamlandı"
+        "title-warning-running-job": ""
       },
-      "summary": "Özet"
+      "summary": "Özet",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11375,6 +11393,7 @@
       "go-to": "Şuraya git:",
       "make-sure": "Bu izinleri eklediğinizden emin olun"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Bu işlem sırasında kaynaklar oluşturulamayacak, düzenlenemeyecek veya silinemeyecek. Son adımda kaynaklar kaybolacaktır.",
       "alert-point-2": "Sağlama işlemi tamamlandığında kaynaklar tekrar görünecek ve harici depolama üzerinden yönetilecektir.",

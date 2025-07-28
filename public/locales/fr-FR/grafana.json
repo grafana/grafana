@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Modifier le groupe d’évaluation"
     },
     "group-loader": {
-      "group-load-failed": "Échec du chargement des règles du groupe {{ groupName }} dans {{ namespaceName }}"
+      "group-load-failed": "Échec du chargement des règles du groupe {{ groupName }} dans {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Le groupe est en cours de suppression"
@@ -2466,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configurer",
-      "draft-new-rule": "Rédiger une nouvelle règle",
       "ds-error": {
         "title": "Impossible de charger les règles pour cette source de données"
       },
@@ -2492,6 +2493,7 @@
       "new-alert-rule": "Nouvelle règle d'alerte",
       "new-datasource-recording-rule": "Nouvelle règle d’enregistrement de source de données",
       "new-grafana-recording-rule": "Nouvelle règle d’enregistrement Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Afficher plus..."
       },
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Actualiser l’aperçu",
+      "empty-state": "",
       "label-preview": "Aperçu",
       "refresh": "Actualiser"
     },
@@ -4563,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Déplacer {{typeName}}",
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
@@ -4577,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Tableau de bord",
+        "element": "",
         "local-variable": "Variable locale",
         "multiple-elements": "Éléments multiples",
         "multiple-elements-delete-text": "Voulez-vous vraiment supprimer ces éléments ?",
@@ -5786,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7157,6 +7164,7 @@
           "start-time": "Heure de début :"
         }
       },
+      "share-span": "",
       "warnings": "Avertissements"
     },
     "span-filters": {
@@ -8597,7 +8605,10 @@
         "no-data": ""
       },
       "no-values-label": "Aucune valeur",
-      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes"
+      "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Balises"
@@ -9330,6 +9341,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Aucun champ à afficher.",
+      "open-assistant": "",
       "pin-line": "Épingler ce log",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9360,9 @@
       "copy-log": "Copier la ligne de journal",
       "hide-details": "Afficher les détails du journal",
       "icon-label": "Menu du journal",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Épingler le journal",
       "show-context": "Afficher le contexte",
       "show-details": "Masquer les détails du journal",
@@ -10941,15 +10956,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11074,10 @@
       "title-instant-updates-requests-webhooks": "Mises à jour instantanées et demandes de fusion avec les webhooks.",
       "title-visual-previews-in-pull-requests": "Aperçus visuels dans les demandes de fusion avec rendu d’image"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Description de la mission",
-      "summary": "Synthèse",
-      "title-error": "Erreur"
+      "summary": "Synthèse"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11222,12 @@
       "starting": "Démarrage...",
       "status": {
         "title-error-running-job": "Erreur lors de l’exécution de la mission",
-        "title-job-completed-successfully": "Mission accomplie"
+        "title-warning-running-job": ""
       },
-      "summary": "Synthèse"
+      "summary": "Synthèse",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11375,6 +11393,7 @@
       "go-to": "Accéder à",
       "make-sure": "Assurez-vous d’inclure ces autorisations"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Les ressources ne pourront pas être créées, modifiées ou supprimées pendant ce processus. Lors de la dernière étape, elles disparaîtront.",
       "alert-point-2": "Une fois la mise en service terminée, les ressources réapparaîtront et seront gérées via un stockage externe.",

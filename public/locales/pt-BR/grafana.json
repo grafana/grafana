@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Editar grupo de avaliação"
     },
     "group-loader": {
-      "group-load-failed": "Falha ao carregar regras do grupo {{ groupName }} em {{ namespaceName }}"
+      "group-load-failed": "Falha ao carregar regras do grupo {{ groupName }} em {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "O grupo está sendo excluído"
@@ -2466,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configuração",
-      "draft-new-rule": "Crie o rascunho de uma nova regra",
       "ds-error": {
         "title": "Não é possível carregar regras para esta fonte de dados"
       },
@@ -2492,6 +2493,7 @@
       "new-alert-rule": "Nova regra de alerta",
       "new-datasource-recording-rule": "Nova regra de registro de fonte de dados",
       "new-grafana-recording-rule": "Nova regra de registro da Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Exibir mais…"
       },
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Atualizar a pré-visualização",
+      "empty-state": "",
       "label-preview": "Visualizar",
       "refresh": "Atualizar"
     },
@@ -4563,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "Adicionar {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Alterar plano de fundo do painel",
       "panel-description": "Alterar descrição do painel",
@@ -4577,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Painel de controle",
+        "element": "",
         "local-variable": "Variável local",
         "multiple-elements": "Vários elementos",
         "multiple-elements-delete-text": "Tem certeza de que deseja excluir estes elementos?",
@@ -5786,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7157,6 +7164,7 @@
           "start-time": "Horário de início:"
         }
       },
+      "share-span": "",
       "warnings": "Avisos"
     },
     "span-filters": {
@@ -8597,7 +8605,10 @@
         "no-data": ""
       },
       "no-values-label": "Sem valores",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tags"
@@ -9330,6 +9341,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9360,9 @@
       "copy-log": "Copiar linha do log",
       "hide-details": "Exibir detalhes do log",
       "icon-label": "Menu do log",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Fixar log",
       "show-context": "Exibir contexto",
       "show-details": "Ocultar detalhes do log",
@@ -10941,15 +10956,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11074,10 @@
       "title-instant-updates-requests-webhooks": "Atualizações imediatas e solicitações de extração com webhooks.",
       "title-visual-previews-in-pull-requests": "Pré-visualizações em solicitações de extração com renderização de imagens"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Especificação da tarefa",
-      "summary": "Resumo",
-      "title-error": "Erro"
+      "summary": "Resumo"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11222,12 @@
       "starting": "Iniciando…",
       "status": {
         "title-error-running-job": "Erro ao executar a tarefa",
-        "title-job-completed-successfully": "Tarefa concluída com sucesso"
+        "title-warning-running-job": ""
       },
-      "summary": "Resumo"
+      "summary": "Resumo",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11375,6 +11393,7 @@
       "go-to": "Ir para",
       "make-sure": "Certifique-se de incluir essas permissões"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Os recursos não poderão ser criados, editados ou excluídos durante este processo. Na última etapa, eles desaparecerão.",
       "alert-point-2": "Assim que o provisionamento for concluído, os recursos reaparecerão e serão gerenciados por meio de armazenamento externo.",
