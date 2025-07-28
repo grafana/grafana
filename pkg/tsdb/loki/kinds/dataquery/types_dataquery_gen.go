@@ -45,7 +45,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
+	Datasource any `json:"datasource,omitempty"`
 
 	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
@@ -66,7 +66,7 @@ type LokiDataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any             `json:"datasource,omitempty"`
+	Datasource any              `json:"datasource,omitempty"`
 	EditorMode *QueryEditorMode `json:"editorMode,omitempty"`
 
 	// The LogQL query.

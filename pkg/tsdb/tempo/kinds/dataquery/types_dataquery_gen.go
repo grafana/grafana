@@ -54,7 +54,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
+	Datasource any `json:"datasource,omitempty"`
 
 	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
@@ -69,7 +69,6 @@ type DataQuery struct {
 	RefId string `json:"refId"`
 }
 
-<<<<<<< HEAD
 // The state of the TraceQL streaming search query
 type SearchStreamingState string
 
@@ -85,7 +84,7 @@ type TempoQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any `json:"datasource,omitempty"`
+	Datasource any `json:"datasource,omitempty"`
 
 	// For metric queries, how many exemplars to request, 0 means no exemplars
 	Exemplars *int64          `json:"exemplars,omitempty"`
@@ -147,13 +146,6 @@ type TempoQuery struct {
 type TempoQueryType string
 
 // TraceqlFilter defines model for TraceqlFilter.
-=======
-// NewTempoQuery creates a new TempoQuery object.
-func NewTempoQuery() *TempoQuery {
-	return &TempoQuery{}
-}
-
->>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
 type TraceqlFilter struct {
 	// Uniquely identify the filter, will not be used in the query generation
 	Id string `json:"id"`
@@ -174,117 +166,5 @@ type TraceqlFilter struct {
 	ValueType *string `json:"valueType,omitempty"`
 }
 
-<<<<<<< HEAD
 // TraceqlSearchScope static fields are pre-set in the UI, dynamic fields are added by the user
 type TraceqlSearchScope string
-=======
-// NewTraceqlFilter creates a new TraceqlFilter object.
-func NewTraceqlFilter() *TraceqlFilter {
-	return &TraceqlFilter{}
-}
-
-// static fields are pre-set in the UI, dynamic fields are added by the user
-type TraceqlSearchScope string
-
-const (
-	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
-	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
-	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
-	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
-	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
-	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
-)
-
-// The type of the table that is used to display the search results
-type SearchTableType string
-
-const (
-	SearchTableTypeTraces SearchTableType = "traces"
-	SearchTableTypeSpans  SearchTableType = "spans"
-	SearchTableTypeRaw    SearchTableType = "raw"
-)
-
-type MetricsQueryType string
-
-const (
-	MetricsQueryTypeRange   MetricsQueryType = "range"
-	MetricsQueryTypeInstant MetricsQueryType = "instant"
-)
-
-type TempoQueryType string
-
-const (
-	TempoQueryTypeTraceql       TempoQueryType = "traceql"
-	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
-	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
-	TempoQueryTypeUpload        TempoQueryType = "upload"
-	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
-	TempoQueryTypeTraceId       TempoQueryType = "traceId"
-	TempoQueryTypeClear         TempoQueryType = "clear"
-)
-
-// The state of the TraceQL streaming search query
-type SearchStreamingState string
-
-const (
-	SearchStreamingStatePending   SearchStreamingState = "pending"
-	SearchStreamingStateStreaming SearchStreamingState = "streaming"
-	SearchStreamingStateDone      SearchStreamingState = "done"
-	SearchStreamingStateError     SearchStreamingState = "error"
-)
-
-type StringOrArrayOfString struct {
-	String        *string  `json:"String,omitempty"`
-	ArrayOfString []string `json:"ArrayOfString,omitempty"`
-}
-
-// NewStringOrArrayOfString creates a new StringOrArrayOfString object.
-func NewStringOrArrayOfString() *StringOrArrayOfString {
-	return &StringOrArrayOfString{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrArrayOfString` as JSON.
-func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
-	if resource.String != nil {
-		return json.Marshal(resource.String)
-	}
-
-	if resource.ArrayOfString != nil {
-		return json.Marshal(resource.ArrayOfString)
-	}
-
-	return nil, fmt.Errorf("no value for disjunction of scalars")
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.
-func (resource *StringOrArrayOfString) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	var errList []error
-
-	// String
-	var String string
-	if err := json.Unmarshal(raw, &String); err != nil {
-		errList = append(errList, err)
-		resource.String = nil
-	} else {
-		resource.String = &String
-		return nil
-	}
-
-	// ArrayOfString
-	var ArrayOfString []string
-	if err := json.Unmarshal(raw, &ArrayOfString); err != nil {
-		errList = append(errList, err)
-		resource.ArrayOfString = nil
-	} else {
-		resource.ArrayOfString = ArrayOfString
-		return nil
-	}
-
-	return errors.Join(errList...)
-}
->>>>>>> a34e88d2e49 (Chore: Migrate new infra to `release-11.6.5` (#108728))
