@@ -4,7 +4,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 test.describe(
   'Panels smokescreen',
   {
-    tag: ['@smoke'],
+    tag: ['@acceptance'],
   },
   () => {
     test('Tests each panel type in the panel edit view to ensure no crash', async ({
