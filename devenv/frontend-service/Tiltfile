@@ -9,12 +9,22 @@ local_resource(
 )
 
 local_resource(
+  "build builder",
+  cmd="docker build -f ./grafana-fs-builder.dockerfile -t grafana-fs-builder .",
+  # cmd="ls",
+  labels=["local"]
+)
+
+local_resource(
   'yarn start',
   cmd='rm -rf public/build/assets-manifest.json',
   serve_cmd='yarn start:noLint',
   resource_deps=['yarn install'],
+
+  # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
+  # the webpack build is complete?
   readiness_probe=probe(
-    initial_delay_secs=10, # wait for the assets-manifest.json to first be deleted
+    initial_delay_secs=10,
     period_secs=1,
     exec=exec_action(["bash", "-c", "stat public/build/assets-manifest.json"]),
   ),
@@ -25,6 +35,7 @@ local_resource(
 local_resource(
   'backend-build',
   "bash ./build-grafana.sh",
+  resource_deps=['build builder'],
   deps=[
     '../../pkg',
     '../../apps',
@@ -36,62 +47,33 @@ local_resource(
     '../../go.sum',
     '../../go.mod',
   ],
-  # env={
-  #   'GOOS': 'linux',
-  #   'GOARCH': 'arm64',
-  #   'CC': 'zig cc -target aarch64-linux',
-  #   'CXX': 'zig c++ -target aarch64-linux',
-  #   'CGO_ENABLED': '1',
-  # },
-  allow_parallel=True
+  env={
+    'USE_DOCKER_BUILDER': "true",
+  },
+  allow_parallel=True,
+  labels=["local"]
 )
 
 # --- Docker Compose
 docker_compose("./docker-compose.yaml")
 
 # First argument is the name of the service from the docker-compose file.
-# dc_resource("proxy", resource_deps=["backend", "frontend-service"], labels=["services"])
+dc_resource("proxy", resource_deps=["backend", "frontend-service"], labels=["services"])
 
-# dc_resource("backend",
-#   resource_deps=["yarn start", "backend-build"],
-#   labels=["services"]
-# )
+dc_resource("backend",
+  resource_deps=["yarn start", "backend-build"],
+  labels=["services"]
+)
 
 dc_resource("frontend-service",
   resource_deps=["yarn start", "backend-build"],
   labels=["services"]
 )
 
-# docker_build('grafana-backend-api', '../..',
-#   dockerfile='backend-native.dockerfile',
-#   only=[
-#     './bin',
-#     './conf/defaults.ini',
-#     './public/emails',
-#     './public/views',
-#     './public/dashboards',
-#     './public/app/plugins',
-#     './public/build/assets-manifest.json',
-#   ],
-#   # ignore=[
-#   #   '!./bin',  # This is built by the backend-build local resource
-#   # ],
-#   live_update = [
-#     sync('./bin', '/grafana/bin'),
-#     sync('./conf/defaults.ini', '/grafana/conf/defaults.ini'),
-#     sync('./public/emails', '/grafana/public/emails'),
-#     sync('./public/views', '/grafana/public/views'),
-#     sync('./public/dashboards', '/grafana/public/dashboards'),
-#     sync('./public/app/plugins', '/grafana/public/app/plugins'),
-#     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
-#     restart_container()
-#   ]
-# )
-
-docker_build('grafana-frontend-service', '../..',
-  dockerfile='backend-native.dockerfile',
+docker_build('grafana-fs-dev', '../..',
+  dockerfile='grafana-fs-dev.dockerfile',
   only=[
-    'bin/grafana',
+    'devenv/frontend-service/build/grafana',
     'conf/defaults.ini',
     'public/emails',
     'public/views',
@@ -99,29 +81,25 @@ docker_build('grafana-frontend-service', '../..',
     'public/app/plugins',
     'public/build/assets-manifest.json',
   ],
-  ignore=[
-    '!bin/grafana',  # This is built by the backend-build local resource
-  ],
   live_update = [
-    sync('bin/grafana', '/grafana/bin/grafana'),
-    sync('conf/defaults.ini', '/grafana/conf/defaults.ini'),
-    sync('public/emails', '/grafana/public/emails'),
-    sync('public/views', '/grafana/public/views'),
-    sync('public/dashboards', '/grafana/public/dashboards'),
-    sync('public/app/plugins', '/grafana/public/app/plugins'),
+    sync('./build/grafana', '/grafana/bin/grafana'),
+    sync('../../conf/defaults.ini', '/grafana/conf/defaults.ini'),
+    sync('../../public/emails', '/grafana/public/emails'),
+    sync('../../public/views', '/grafana/public/views'),
+    sync('../../public/dashboards', '/grafana/public/dashboards'),
+    sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
     restart_container()
   ]
 )
 
-
-# docker_build('grafana-proxy', '.',
-#   dockerfile='proxy.dockerfile',
-#   only=[
-#     "./nginx.conf",
-#   ],
-#   live_update = [
-#     sync('./nginx.conf', '/etc/nginx/conf.d/default.conf'),
-#     restart_container()
-#   ]
-# )
+docker_build('grafana-proxy', '.',
+  dockerfile='proxy.dockerfile',
+  only=[
+    "./nginx.conf",
+  ],
+  live_update = [
+    sync('./nginx.conf', '/etc/nginx/conf.d/default.conf'),
+    restart_container()
+  ]
+)
