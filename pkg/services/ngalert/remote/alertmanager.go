@@ -100,11 +100,6 @@ type AlertmanagerConfig struct {
 
 	// Timeout for the HTTP client.
 	Timeout time.Duration
-
-	// TODO: Remove once everything can be send in the 'smtp_config' field.
-	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
-	SmtpFrom      string
-	StaticHeaders map[string]string
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -140,12 +135,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
-
-		Smtp: cfg.SmtpConfig,
-
-		// TODO: Remove once everything can be sent in the 'smtp_config' field.
-		SmtpFrom:      cfg.SmtpFrom,
-		StaticHeaders: cfg.StaticHeaders,
+		Smtp:          cfg.SmtpConfig,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
 	if err != nil {
@@ -201,9 +191,6 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		tenantID:          cfg.TenantID,
 		url:               cfg.URL,
 		smtp:              cfg.SmtpConfig,
-
-		// TODO: Remove once it can be sent only in the 'smtp_config' field.
-		smtpFrom: cfg.SmtpFrom,
 	}
 
 	// Parse the default configuration once and remember its hash so we can compare it later.
@@ -719,12 +706,6 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool 
 	}
 
 	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
-		return true
-	}
-
-	// TODO: Remove when the from address can be sent only in the 'smtp_config' field.
-	if rc.SmtpFrom != am.smtpFrom {
-		am.log.Debug("SMTP 'from' address is different, sending the configuration to the remote Alertmanager", "remote", rc.SmtpFrom, "local", am.smtpFrom)
 		return true
 	}
 
