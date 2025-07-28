@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	_ "github.com/grafana/pyroscope-go/godeltaprof/http/pprof"
 
 	"github.com/urfave/cli/v2"
@@ -104,6 +105,11 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 	}
 
 	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
+
+	// Initialize the OpenFeature feature flag system
+	if err := featuremgmt.InitOpenFeatureWithCfg(cfg); err != nil {
+		return err
+	}
 
 	s, err := server.Initialize(
 		cfg,
