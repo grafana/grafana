@@ -9,7 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -17,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-// note: additional integration tests are in /pkg/tests/api/alerting/api_namespace_test.go
 
 func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	if testing.Short() {
@@ -65,6 +66,28 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, namespaces)
 	})
+}
+
+func TestGetNamespaceByTitle(t *testing.T) {
+	folderService := foldertest.NewFakeService()
+	folderService.ExpectedError = dashboards.ErrFolderNotFound
+	store := DBstore{
+		FolderService: folderService,
+	}
+	_, err := store.GetNamespaceByTitle(context.Background(), "Test Folder", 1, nil, folder.RootFolderUID)
+	require.Error(t, err)
+	require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+
+	// note: most tests are in /pkg/tests/api/alerting/api_namespace_test.go
+}
+
+func TestGetOrCreateNamespaceByTitle(t *testing.T) {
+	store := DBstore{}
+	_, err := store.GetOrCreateNamespaceByTitle(context.Background(), "", 1, nil, folder.RootFolderUID)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "title is empty")
+
+	// note: most tests are in /pkg/tests/api/alerting/api_namespace_test.go
 }
 
 func TestGenerateAlertingFolderUID(t *testing.T) {

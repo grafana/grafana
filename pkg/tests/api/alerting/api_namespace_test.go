@@ -215,7 +215,6 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 	})
 }
 
-// tests TestIntegration_GetOrCreateNamespaceByTitle and TestIntegration_GetNamespaceByTitle
 func TestIntegration_NamespacingForPrometheusRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
