@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Evaluatiegroep bewerken"
     },
     "group-loader": {
-      "group-load-failed": "Kan regels uit groep {{ groupName }} in {{ namespaceName }} niet laden"
+      "group-load-failed": "Kan regels uit groep {{ groupName }} in {{ namespaceName }} niet laden",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "De groep wordt verwijderd"
@@ -2466,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configureren",
-      "draft-new-rule": "Een nieuwe regel opstellen",
       "ds-error": {
         "title": "Kan geen regels laden voor deze gegevensbron"
       },
@@ -2492,6 +2493,7 @@
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "new-datasource-recording-rule": "Nieuwe gegevensbron voor opnameregel",
       "new-grafana-recording-rule": "Nieuwe Grafana-opnameregel",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Meer weergeven..."
       },
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Voorbeeld vernieuwen",
+      "empty-state": "",
       "label-preview": "Voorbeeld",
       "refresh": "Vernieuwen"
     },
@@ -4563,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} toevoegen",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "{{typeName}} verplaatsen ",
       "panel-background": "Paneelachtergrond wijzigen",
       "panel-description": "Paneelbeschrijving wijzigen",
@@ -4577,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "",
         "local-variable": "Lokale variabele",
         "multiple-elements": "Meerdere elementen",
         "multiple-elements-delete-text": "Weet je zeker dat je deze elementen wilt verwijderen?",
@@ -5786,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7157,6 +7164,7 @@
           "start-time": "Starttijd:"
         }
       },
+      "share-span": "",
       "warnings": "Waarschuwingen"
     },
     "span-filters": {
@@ -8597,7 +8605,10 @@
         "no-data": ""
       },
       "no-values-label": "Geen waarden",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tags"
@@ -9330,6 +9341,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Weer te geven velden.",
+      "open-assistant": "",
       "pin-line": "Logboek vastzetten",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9360,9 @@
       "copy-log": "Logboekregel kopiëren",
       "hide-details": "Logboekdetails weergeven",
       "icon-label": "Logboekmenu",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Logboek vastzetten",
       "show-context": "Context tonen",
       "show-details": "Logboekdetails verbergen",
@@ -10941,15 +10956,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11074,10 @@
       "title-instant-updates-requests-webhooks": "Directe updates en pull requests met webhooks.",
       "title-visual-previews-in-pull-requests": "Visuele voorbeelden in pull requests met beeldweergave"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Taakbeschrijving",
-      "summary": "Samenvatting",
-      "title-error": "Fout"
+      "summary": "Samenvatting"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11222,12 @@
       "starting": "Starten...",
       "status": {
         "title-error-running-job": "Er is een fout opgetreden bij het uitvoeren van de taak",
-        "title-job-completed-successfully": "Taak is voltooid"
+        "title-warning-running-job": ""
       },
-      "summary": "Samenvatting"
+      "summary": "Samenvatting",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11375,6 +11393,7 @@
       "go-to": "Ga naar",
       "make-sure": "Zorg ervoor dat je deze toestemmingen opneemt"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Bronnen kunnen tijdens dit proces niet worden gemaakt, bewerkt of verwijderd. In de laatste stap verdwijnen ze.",
       "alert-point-2": "Zodra de provisioning is voltooid, verschijnen bronnen weer en worden ze beheerd via externe opslag.",
