@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Stack } from '@grafana/ui';
@@ -15,7 +14,6 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
-import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useSelector } from 'app/types/store';
 
@@ -27,6 +25,7 @@ import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 import { MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
+import { useBulkActionRequest } from './useBulkActionRequest';
 import {
   BulkActionFormData,
   BulkActionProvisionResourceProps,
@@ -58,7 +57,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const rootItems = useSelector(rootItemsSelector);
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
-  const navigate = useNavigate();
+  const { handleSuccess } = useBulkActionRequest({ workflow, repository, successState, onDismiss });
 
   const getResourcePath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
     const item = findItem(rootItems?.items || [], childrenByParentUID, uid);
@@ -66,26 +65,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       return undefined;
     }
     return isFolder ? `${folderPath}/${item.title}/` : fetchProvisionedDashboardPath(uid);
-  };
-
-  const handleSuccess = () => {
-    if (workflow === 'branch') {
-      onDismiss?.();
-      if (successState.repoUrl) {
-        const url = buildResourceBranchRedirectUrl({
-          paramName: 'repo_url',
-          paramValue: successState.repoUrl,
-          repoType: repository.type,
-        });
-
-        navigate(url);
-        return;
-      }
-      window.location.reload();
-    } else {
-      onDismiss?.();
-      window.location.reload();
-    }
   };
 
   const handleSubmitForm = async (data: BulkActionFormData) => {

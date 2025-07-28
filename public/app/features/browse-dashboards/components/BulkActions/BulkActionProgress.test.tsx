@@ -15,7 +15,7 @@ const setup = (progressOverrides: Partial<ProgressState> = {}) => {
   };
 
   return {
-    ...render(<BulkActionProgress {...props} />),
+    ...render(<BulkActionProgress {...props} action="delete" />),
     props,
   };
 };

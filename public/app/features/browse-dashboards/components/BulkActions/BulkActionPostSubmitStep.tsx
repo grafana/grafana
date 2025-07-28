@@ -43,7 +43,9 @@ export function BulkActionPostSubmitStep({
         </Stack>
       </>
     );
-  } else if (failureResults) {
+  }
+
+  if (failureResults) {
     return <BulkActionFailureBanner result={failureResults} onDismiss={() => setFailureResults(undefined)} />;
   }
 

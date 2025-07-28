@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, FolderPicker, getBackendSrv } from '@grafana/runtime';
@@ -17,7 +16,6 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
-import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useSelector } from 'app/types/store';
 
@@ -29,11 +27,13 @@ import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 import { MoveResultFailed } from './BulkActionFailureBanner';
 import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
 import { ProgressState } from './BulkActionProgress';
+import { useBulkActionRequest } from './useBulkActionRequest';
 import {
   BulkActionFormData,
   BulkActionProvisionResourceProps,
   BulkSuccessResponse,
   getTargetFolderPathInRepo,
+  getTargetResourcePath,
   MoveResultSuccessState,
 } from './utils';
 
@@ -62,7 +62,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const rootItems = useSelector(rootItemsSelector);
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
-  const navigate = useNavigate();
+  const { handleSuccess } = useBulkActionRequest({ workflow, repository, successState, onDismiss });
 
   // Get target folder data (similar to MoveProvisionedDashboardForm)
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
@@ -75,20 +75,6 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     return isFolder ? `${folderPath}/${item.title}/` : fetchProvisionedDashboardPath(uid);
   };
 
-  const getTargetPath = (currentPath: string, targetFolderPath: string): string => {
-    // Handle folder paths that end with '/'
-    const cleanCurrentPath = currentPath.replace(/\/$/, ''); // Remove trailing slash
-    const filename = cleanCurrentPath.split('/').pop();
-
-    if (!filename) {
-      throw new Error(`Invalid path: ${currentPath}`);
-    }
-
-    // For folders, add back the trailing slash
-    const isFolder = currentPath.endsWith('/');
-    return isFolder ? `${targetFolderPath}/${filename}/` : `${targetFolderPath}/${filename}`;
-  };
-
   const getDashboardBody = async (currentPath: string) => {
     const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
     const url = `${baseUrl}/repositories/${repository.name}/files/${currentPath}`;
@@ -96,44 +82,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     return fileResponse.resource?.file;
   };
 
-  const handleSuccess = () => {
-    if (workflow === 'branch') {
-      onDismiss?.();
-      if (successState.repoUrl) {
-        const url = buildResourceBranchRedirectUrl({
-          paramName: 'repo_url',
-          paramValue: successState.repoUrl,
-          repoType: repository.type,
-        });
-
-        navigate(url);
-        return;
-      }
-      window.location.reload();
-    } else {
-      onDismiss?.();
-      window.location.reload();
-    }
-  };
-
-  const handleSubmitForm = async (data: BulkActionFormData) => {
-    setFailureResults(undefined);
-    setHasSubmitted(true);
-
-    // Calculate target path using target folder annotations (following MoveProvisionedDashboardForm pattern)
-    if (!targetFolder) {
-      setFailureResults([
-        {
-          status: 'failed',
-          title: t('browse-dashboards.bulk-move-resources-form.error-title', 'Target Folder Error'),
-          errorMessage: t(
-            'browse-dashboards.bulk-move-resources-form.error-target-folder-not-selected',
-            'Target folder data not found'
-          ),
-        },
-      ]);
-      return;
-    }
+  const setupMoveOperation = () => {
     const targetFolderPathInRepo = getTargetFolderPathInRepo({ targetFolder });
     const targets = collectSelectedItems(selectedItems, childrenByParentUID, rootItems?.items || []);
 
@@ -145,6 +94,46 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       });
     }
 
+    return { targetFolderPathInRepo, targets };
+  };
+
+  const createFileBody = async (isFolder: boolean, displayName: string, currentPath: string) => {
+    if (isFolder) {
+      return {
+        title: displayName,
+        type: 'folder',
+      };
+    }
+
+    const fileBody = await getDashboardBody(currentPath);
+    if (!fileBody) {
+      throw new Error(
+        t('browse-dashboards.bulk-move-resources-form.error-file-content-not-found', 'File content not found')
+      );
+    }
+
+    return fileBody;
+  };
+
+  const handleSubmitForm = async (data: BulkActionFormData) => {
+    setFailureResults(undefined);
+    setHasSubmitted(true);
+
+    // 1. Validate
+    if (!targetFolder) {
+      setFailureResults([
+        {
+          status: 'failed',
+          title: t('browse-dashboards.bulk-move-resources-form.error-title', 'Target Folder Error'),
+        },
+      ]);
+      return;
+    }
+
+    // 2. Setup
+    const { targetFolderPathInRepo, targets } = setupMoveOperation();
+
+    // 3. Process items
     const successes: BulkSuccessResponse<
       CreateRepositoryFilesWithPathApiArg,
       CreateRepositoryFilesWithPathApiResponse
@@ -185,31 +174,8 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           continue;
         }
 
-        const newPath = getTargetPath(currentPath, targetFolderPathInRepo);
-
-        let fileBody;
-        if (isFolder) {
-          // For folders, create basic folder structure
-          fileBody = {
-            title: displayName,
-            type: 'folder',
-          };
-        } else {
-          // Get file content for dashboards (following MoveProvisionedDashboardForm pattern)
-          fileBody = await getDashboardBody(currentPath);
-
-          if (!fileBody) {
-            failures.push({
-              status: 'failed',
-              title: `Dashboard: ${displayName}`,
-              errorMessage: t(
-                'browse-dashboards.bulk-move-resources-form.error-file-content-not-found',
-                'File content not found'
-              ),
-            });
-            continue;
-          }
-        }
+        const newPath = getTargetResourcePath(currentPath, targetFolderPathInRepo);
+        const fileBody = await createFileBody(isFolder, displayName, currentPath);
 
         // Build move parameters (following MoveProvisionedDashboardForm pattern)
         const moveParams: CreateRepositoryFilesWithPathApiArg = {

@@ -34,3 +34,17 @@ export function getTargetFolderPathInRepo({ targetFolder }: { targetFolder?: Fol
   const folderAnnotations = targetFolder.metadata.annotations || {};
   return folderAnnotations[AnnoKeySourcePath] || targetFolder.metadata.name || '';
 }
+
+export function getTargetResourcePath(currentPath: string, targetFolderPath: string): string {
+  // Handle folder paths that end with '/'
+  const cleanCurrentPath = currentPath.replace(/\/$/, ''); // Remove trailing slash
+  const filename = cleanCurrentPath.split('/').pop();
+
+  if (!filename) {
+    throw new Error(`Invalid path: ${currentPath}`);
+  }
+
+  // For folders, add back the trailing slash
+  const isFolder = currentPath.endsWith('/');
+  return isFolder ? `${targetFolderPath}/${filename}/` : `${targetFolderPath}/${filename}`;
+}

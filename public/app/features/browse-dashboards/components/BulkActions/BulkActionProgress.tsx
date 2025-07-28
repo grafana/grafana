@@ -29,9 +29,7 @@ export function BulkActionProgress({ progress, action }: Props) {
       </Stack>
       <ProgressBar progress={progressPercentage} topBottomSpacing={1} />
       <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.deleting">
-          {{ labelText }} {progress.item}
-        </Trans>
+        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.deleting">{{ labelText }}</Trans>: {progress.item}
       </Text>
     </Box>
   );
