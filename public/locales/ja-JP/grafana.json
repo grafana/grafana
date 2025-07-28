@@ -2458,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "構成",
-      "draft-new-rule": "新しいルールの下書きを作成",
       "ds-error": {
         "title": "このデータソースのルールを読み込めません"
       },
@@ -2484,6 +2483,7 @@
       "new-alert-rule": "新しいアラートルール",
       "new-datasource-recording-rule": "新しいデータソース記録ルール",
       "new-grafana-recording-rule": "新しいGrafana記録ルール",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "もっと見る..."
       },
@@ -4547,6 +4547,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}}を追加",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "{{typeName}}を移動",
       "panel-background": "パネルの背景を変更",
       "panel-description": "パネルの説明を変更",
@@ -4561,6 +4565,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "ダッシュボード",
+        "element": "",
         "local-variable": "ローカル変数",
         "multiple-elements": "複数の要素",
         "multiple-elements-delete-text": "これらの要素を削除してもよろしいですか？",
@@ -5768,7 +5773,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },

@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configura",
-      "draft-new-rule": "Scrivi una nuova regola",
       "ds-error": {
         "title": ""
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Nuova regola di avviso",
       "new-datasource-recording-rule": "Nuova regola di registrazione dell'origine dei dati",
       "new-grafana-recording-rule": "Nuova regola di registrazione Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Mostra altro…"
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "",
       "panel-description": "",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "",
         "local-variable": "Variabile locale",
         "multiple-elements": "Elementi multipli",
         "multiple-elements-delete-text": "Desideri davvero eliminare questi elementi?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },

@@ -213,33 +213,33 @@ func TestSCIMUtil_IsUserSyncEnabled(t *testing.T) {
 	}
 }
 
-func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
+func TestSCIMUtil_AreNonProvisionedUsersRejected(t *testing.T) {
 	ctx := context.Background()
 	orgID := int64(1)
 
 	tests := []struct {
 		name           string
 		k8sClient      client.K8sHandler
-		staticAllowed  bool
+		staticRejected bool
 		expectedResult bool
 		setupMock      func(*MockK8sHandler)
 	}{
 		{
 			name:           "k8s client nil - returns static config",
 			k8sClient:      nil,
-			staticAllowed:  true,
+			staticRejected: true,
 			expectedResult: true,
 		},
 		{
 			name:           "k8s client nil - returns static config false",
 			k8sClient:      nil,
-			staticAllowed:  false,
+			staticRejected: false,
 			expectedResult: false,
 		},
 		{
-			name:          "k8s client error - falls back to static config",
-			k8sClient:     &MockK8sHandler{},
-			staticAllowed: true,
+			name:           "k8s client error - falls back to static config",
+			k8sClient:      &MockK8sHandler{},
+			staticRejected: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(nil, errors.New("k8s error"))
@@ -247,9 +247,9 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name:          "dynamic config user sync enabled - non-provisioned users allowed",
-			k8sClient:     &MockK8sHandler{},
-			staticAllowed: false,
+			name:           "dynamic config user sync enabled - non-provisioned users rejected",
+			k8sClient:      &MockK8sHandler{},
+			staticRejected: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfigWithNonProvisioned(true, false, true)
 				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
@@ -258,9 +258,9 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name:          "dynamic config user sync disabled - non-provisioned users not allowed",
-			k8sClient:     &MockK8sHandler{},
-			staticAllowed: true,
+			name:           "dynamic config user sync disabled - non-provisioned users allowed",
+			k8sClient:      &MockK8sHandler{},
+			staticRejected: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfigWithNonProvisioned(false, true, false)
 				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
@@ -269,9 +269,9 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			name:          "dynamic config both settings disabled - non-provisioned users not allowed",
-			k8sClient:     &MockK8sHandler{},
-			staticAllowed: true,
+			name:           "dynamic config both settings disabled - non-provisioned users allowed",
+			k8sClient:      &MockK8sHandler{},
+			staticRejected: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfigWithNonProvisioned(false, false, false)
 				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
@@ -280,9 +280,9 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			expectedResult: false,
 		},
 		{
-			name:          "dynamic config both settings enabled - non-provisioned users allowed",
-			k8sClient:     &MockK8sHandler{},
-			staticAllowed: false,
+			name:           "dynamic config both settings enabled - non-provisioned users rejected",
+			k8sClient:      &MockK8sHandler{},
+			staticRejected: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfigWithNonProvisioned(true, true, true)
 				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
@@ -299,7 +299,7 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			}
 
 			util := NewSCIMUtil(tt.k8sClient)
-			result := util.AreNonProvisionedUsersAllowed(ctx, orgID, tt.staticAllowed)
+			result := util.AreNonProvisionedUsersRejected(ctx, orgID, tt.staticRejected)
 
 			assert.Equal(t, tt.expectedResult, result)
 
@@ -449,9 +449,9 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			},
 		},
 		{
-			name:                   "allowNonProvisionedUsers setting enabled",
+			name:                   "rejectNonProvisionedUsers setting enabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            "allowNonProvisionedUsers",
+			settingType:            "rejectNonProvisionedUsers",
 			expectedEnabled:        true,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -461,9 +461,9 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			},
 		},
 		{
-			name:                   "allowNonProvisionedUsers setting disabled",
+			name:                   "rejectNonProvisionedUsers setting disabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            "allowNonProvisionedUsers",
+			settingType:            "rejectNonProvisionedUsers",
 			expectedEnabled:        false,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -570,36 +570,36 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 			name: "valid object with both settings enabled",
 			obj:  createMockSCIMConfig(true, true),
 			expectedSpec: SCIMConfigSpec{
-				EnableUserSync:           true,
-				EnableGroupSync:          true,
-				AllowNonProvisionedUsers: false,
+				EnableUserSync:            true,
+				EnableGroupSync:           true,
+				RejectNonProvisionedUsers: false,
 			},
 		},
 		{
 			name: "valid object with both settings disabled",
 			obj:  createMockSCIMConfig(false, false),
 			expectedSpec: SCIMConfigSpec{
-				EnableUserSync:           false,
-				EnableGroupSync:          false,
-				AllowNonProvisionedUsers: false,
+				EnableUserSync:            false,
+				EnableGroupSync:           false,
+				RejectNonProvisionedUsers: false,
 			},
 		},
 		{
 			name: "valid object with mixed settings",
 			obj:  createMockSCIMConfig(true, false),
 			expectedSpec: SCIMConfigSpec{
-				EnableUserSync:           true,
-				EnableGroupSync:          false,
-				AllowNonProvisionedUsers: false,
+				EnableUserSync:            true,
+				EnableGroupSync:           false,
+				RejectNonProvisionedUsers: false,
 			},
 		},
 		{
-			name: "valid object with allowNonProvisionedUsers enabled",
+			name: "valid object with rejectNonProvisionedUsers enabled",
 			obj:  createMockSCIMConfigWithNonProvisioned(false, false, true),
 			expectedSpec: SCIMConfigSpec{
-				EnableUserSync:           false,
-				EnableGroupSync:          false,
-				AllowNonProvisionedUsers: true,
+				EnableUserSync:            false,
+				EnableGroupSync:           false,
+				RejectNonProvisionedUsers: true,
 			},
 		},
 		{
@@ -641,7 +641,7 @@ func createMockSCIMConfig(userSyncEnabled, groupSyncEnabled bool) *unstructured.
 }
 
 // Helper function to create a mock SCIMConfig unstructured object with non-provisioned users setting
-func createMockSCIMConfigWithNonProvisioned(userSyncEnabled, groupSyncEnabled, allowNonProvisionedUsers bool) *unstructured.Unstructured {
+func createMockSCIMConfigWithNonProvisioned(userSyncEnabled, groupSyncEnabled, rejectNonProvisionedUsers bool) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "scim.grafana.com/v0alpha1",
@@ -651,9 +651,9 @@ func createMockSCIMConfigWithNonProvisioned(userSyncEnabled, groupSyncEnabled, a
 				"namespace": "default",
 			},
 			"spec": map[string]interface{}{
-				"enableUserSync":           userSyncEnabled,
-				"enableGroupSync":          groupSyncEnabled,
-				"allowNonProvisionedUsers": allowNonProvisionedUsers,
+				"enableUserSync":            userSyncEnabled,
+				"enableGroupSync":           groupSyncEnabled,
+				"rejectNonProvisionedUsers": rejectNonProvisionedUsers,
 			},
 		},
 	}
@@ -676,9 +676,9 @@ func TestSCIMUtil_Integration(t *testing.T) {
 		userSyncEnabled := util.IsUserSyncEnabled(ctx, orgID, false)
 		assert.True(t, userSyncEnabled)
 
-		// Test non-provisioned users allowed
-		nonProvisionedAllowed := util.AreNonProvisionedUsersAllowed(ctx, orgID, false)
-		assert.True(t, nonProvisionedAllowed)
+		// Test non-provisioned users rejected
+		nonProvisionedRejected := util.AreNonProvisionedUsersRejected(ctx, orgID, false)
+		assert.True(t, nonProvisionedRejected)
 
 		mockClient.AssertExpectations(t)
 	})
@@ -695,8 +695,8 @@ func TestSCIMUtil_Integration(t *testing.T) {
 		assert.True(t, userSyncEnabled)
 
 		// Test non-provisioned users falls back to static config
-		nonProvisionedAllowed := util.AreNonProvisionedUsersAllowed(ctx, orgID, true)
-		assert.True(t, nonProvisionedAllowed)
+		nonProvisionedRejected := util.AreNonProvisionedUsersRejected(ctx, orgID, true)
+		assert.True(t, nonProvisionedRejected)
 
 		mockClient.AssertExpectations(t)
 	})
