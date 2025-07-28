@@ -135,7 +135,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>\n*Job:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
+                    "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>\n*Job:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>\n*Author:* ${{ github.event.pull_request.user.login }}"
                   }
                 },
                 {

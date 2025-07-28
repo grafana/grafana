@@ -13,6 +13,9 @@ import (
 )
 
 func TestIntegration_RetryingDisabled(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	store, _ := InitTestDB(t)
 	retryErrors := getRetryErrors(t, store)
 
@@ -61,6 +64,9 @@ func TestIntegration_RetryingDisabled(t *testing.T) {
 }
 
 func TestIntegration_RetryingOnFailures(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	store, _ := InitTestDB(t)
 	retryErrors := getRetryErrors(t, store)
 	store.dbCfg.QueryRetries = 5
