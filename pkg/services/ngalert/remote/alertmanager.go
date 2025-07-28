@@ -63,6 +63,7 @@ type Alertmanager struct {
 	orgID             int64
 	ready             bool
 	sender            *sender.ExternalAlertmanager
+	smtp              remoteClient.SmtpConfig
 	state             stateStore
 	tenantID          string
 	url               string
@@ -72,8 +73,6 @@ type Alertmanager struct {
 
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
-
-	smtp remoteClient.SmtpConfig
 }
 
 type AlertmanagerConfig struct {
