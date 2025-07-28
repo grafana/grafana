@@ -24,12 +24,17 @@ type CoreRoleStorageBackend interface{ resource.StorageBackend }
 // Used by wire to identify the storage backend for custom roles.
 type RoleStorageBackend interface{ resource.StorageBackend }
 
+// ResourcePermissionStorageBackend uses the resource.StorageBackend interface to provide storage for resource permissions.
+// Used wire to identify the storage backend for resource permissions.
+type ResourcePermissionStorageBackend interface{ resource.StorageBackend }
+
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store            legacy.LegacyIdentityStore
-	coreRolesStorage CoreRoleStorageBackend
-	rolesStorage     RoleStorageBackend
+	store                      legacy.LegacyIdentityStore
+	coreRolesStorage           CoreRoleStorageBackend
+	rolesStorage               RoleStorageBackend
+	resourcePermissionsStorage ResourcePermissionStorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer

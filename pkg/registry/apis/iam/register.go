@@ -52,24 +52,26 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
 	rolesStorage RoleStorageBackend,
+	resourcePermissionsStorage ResourcePermissionStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:               store,
-		coreRolesStorage:    coreRolesStorage,
-		rolesStorage:        rolesStorage,
-		sso:                 ssoService,
-		authorizer:          authorizer,
-		legacyAccessClient:  legacyAccessClient,
-		accessClient:        accessClient,
-		display:             user.NewLegacyDisplayREST(store),
-		reg:                 reg,
-		enableAuthZApis:     features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
-		enableAuthnMutation: features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
-		enableDualWriter:    true,
+		store:                      store,
+		coreRolesStorage:           coreRolesStorage,
+		rolesStorage:               rolesStorage,
+		resourcePermissionsStorage: resourcePermissionsStorage,
+		sso:                        ssoService,
+		authorizer:                 authorizer,
+		legacyAccessClient:         legacyAccessClient,
+		accessClient:               accessClient,
+		display:                    user.NewLegacyDisplayREST(store),
+		reg:                        reg,
+		enableAuthZApis:            features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzApis),
+		enableAuthnMutation:        features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthnMutation),
+		enableDualWriter:           true,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -171,6 +173,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			return err
 		}
 		storage[iamv0.RoleInfo.StoragePath()] = roleStore
+
+		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage

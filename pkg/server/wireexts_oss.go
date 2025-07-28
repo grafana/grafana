@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
@@ -75,6 +77,11 @@ var provisioningExtras = wire.NewSet(
 var configProviderExtras = wire.NewSet(
 	configprovider.ProvideService,
 )
+
+// ProvideResourcePermissionsStore provides a resourcepermissions.Store implementation for OSS
+func ProvideResourcePermissionsStore(cfg *setting.Cfg, sql db.DB, features featuremgmt.FeatureToggles) resourcepermissions.Store {
+	return resourcepermissions.NewStore(cfg, sql, features)
+}
 
 var wireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
@@ -150,6 +157,8 @@ var wireExtsBasicSet = wire.NewSet(
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
 	configProviderExtras,
+	// Resource permissions store for IAM API
+	ProvideResourcePermissionsStore,
 )
 
 var wireExtsSet = wire.NewSet(

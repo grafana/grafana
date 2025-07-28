@@ -120,6 +120,7 @@ func NewMapperRegistry() MapperRegistry {
 				},
 				folderSupport: false,
 			},
+			"resourcepermissions": newResourceTranslation("resourcepermissions", "uid", false),
 		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),

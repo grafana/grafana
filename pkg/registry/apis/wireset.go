@@ -24,6 +24,7 @@ var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
 	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	wire.Bind(new(iam.RoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	wire.Bind(new(iam.ResourcePermissionStorageBackend), new(*noopstorage.StorageBackendImpl)),
 )
 
 var WireSet = wire.NewSet(
