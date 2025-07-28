@@ -39,7 +39,7 @@ interface Props {
   wrapLogMessage: boolean;
 }
 
-type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll' | 'loading';
+type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll-top' | 'pre-scroll-bottom' | 'loading';
 export type InfiniteScrollMode = 'interval' | 'unlimited';
 export type LoadMoreLogsType =
   | ((range: AbsoluteTimeRange) => void)
@@ -107,7 +107,11 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('out-of-bounds');
         return;
       }
-      lastLogOfPage.current.push(logs[logs.length - 1].uid);
+      if (scrollDirection === ScrollDirection.Bottom) {
+        lastLogOfPage.current.push(logs[logs.length - 1].uid);
+      } else {
+        lastLogOfPage.current.push(logs[0].uid);
+      }
       setInfiniteLoaderState('loading');
       loadMore?.(newRange ?? getVisibleRange(logs), scrollDirection);
 
@@ -125,13 +129,20 @@ export const InfiniteScroll = ({
     }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMore || !logs.length || infiniteLoaderState !== 'pre-scroll') {
+      if (!scrollElement || !loadMore || !logs.length) {
         return;
       }
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);
       lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
-      if (scrollDirection === ScrollDirection.Bottom) {
+      if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top') {
+        if (infiniteScrollMode === 'unlimited' && scrollDirection === ScrollDirection.Top) {
+          setInfiniteLoaderState('pre-scroll-top');
+          return;
+        }
+        return;
+      }
+      if (scrollDirection !== ScrollDirection.NoScroll) {
         onLoadMore(scrollDirection);
       }
     }
@@ -143,10 +154,10 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [infiniteLoaderState, loadMore, logs.length, onLoadMore, scrollElement]);
+  }, [infiniteLoaderState, infiniteScrollMode, loadMore, logs.length, onLoadMore, scrollElement]);
 
   const loadMoreBottom = useCallback(() => {
-    onLoadMore(ScrollDirection.Bottom);
+    onLoadMore(ScrollDirection.Top);
   }, [onLoadMore]);
 
   const Renderer = useCallback(
@@ -156,7 +167,7 @@ export const InfiniteScroll = ({
           <LogLineMessage
             style={style}
             styles={styles}
-            onClick={infiniteLoaderState === 'pre-scroll' ? loadMoreBottom : undefined}
+            onClick={infiniteLoaderState === 'pre-scroll-bottom' ? loadMoreBottom : undefined}
           >
             {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
           </LogLineMessage>
@@ -205,7 +216,7 @@ export const InfiniteScroll = ({
       const lastLogIndex = logs.length - 1;
       const preScrollIndex = logs.length - 2;
       if (props.visibleStopIndex >= lastLogIndex) {
-        setInfiniteLoaderState('pre-scroll');
+        setInfiniteLoaderState('pre-scroll-bottom');
       } else if (props.visibleStartIndex < preScrollIndex) {
         setInfiniteLoaderState('idle');
       }
@@ -233,7 +244,7 @@ function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: Lo
           <Spinner inline />
         </>
       );
-    case 'pre-scroll':
+    case 'pre-scroll-bottom':
       return t('logs.infinite-scroll.load-more', 'Scroll to load more');
     default:
       return null;
