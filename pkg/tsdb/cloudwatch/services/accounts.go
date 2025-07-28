@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	oam "github.com/aws/aws-sdk-go-v2/service/oam"
 	oamtypes "github.com/aws/aws-sdk-go-v2/service/oam/types"
+	"github.com/aws/smithy-go"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
@@ -28,9 +28,9 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole(ctx context.Context) (
 	for {
 		response, err := a.ListSinks(ctx, &oam.ListSinksInput{NextToken: nextToken})
 		if err != nil {
-			// TODO: this is a bit hacky, figure out how to do it right in v2
-			if strings.Contains(err.Error(), "AccessDeniedException") {
-				return nil, fmt.Errorf("%w: %s", ErrAccessDeniedException, err.Error())
+			smithyErr := &smithy.GenericAPIError{}
+			if errors.As(err, &smithyErr) && smithyErr.Code == "AccessDeniedException" {
+				return nil, fmt.Errorf("%w: %s", ErrAccessDeniedException, smithyErr.Message)
 			}
 			return nil, fmt.Errorf("ListSinks error: %w", err)
 		}

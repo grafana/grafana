@@ -51,7 +51,6 @@ If you have already grouped some users into a team, then you can synchronize tha
 
 1. Insert the value of the group you want to sync with. This becomes the Grafana `GroupID`.
    Examples:
-
    - For LDAP, this is the LDAP distinguished name (DN) of LDAP group you want to synchronize with the team.
    - For Auth Proxy, this is the value we receive as part of the custom `Groups` header.
 
