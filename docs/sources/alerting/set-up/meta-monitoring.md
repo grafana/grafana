@@ -132,10 +132,6 @@ This metric is a histogram that shows you the number of seconds taken to send no
 
 This metric is a counter that shows you the number of failed writes to the configured alert state history backend. It includes a `backend` label to distinguish between different backends (such as `loki` or `prometheus`).
 
-{{< admonition type="note" >}}
-In Grafana Cloud, this metric is named `grafanacloud_grafana_instance_alerting_state_history_writes_failed_total:5m` and is available in the `grafanacloud-usage` data source. Only `backend="prometheus"` failures are tracked in this metric. Loki backend failures are not included.
-{{< /admonition >}}
-
 For example, you might want to create an alert that fires when `grafana_alerting_state_history_writes_failed_total{backend="prometheus"}` is greater than 0 to detect when Prometheus remote write is failing.
 
 ## Logs for Grafana-managed alerts
