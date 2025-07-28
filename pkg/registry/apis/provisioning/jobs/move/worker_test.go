@@ -12,6 +12,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -406,8 +407,13 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 
 			for i, path := range tt.paths {
 				if i < len(tt.moveResults) {
-					mockRepo.On("Move", mock.Anything, path, "new/location/"+filepath.Base(path), "main", "Move "+path+" to new/location/"+filepath.Base(path)).Return(tt.moveResults[i]).Once()
-					mockProgress.On("SetMessage", mock.Anything, "Moving "+path+" to new/location/"+filepath.Base(path)).Return().Once()
+					// Use the same logic as constructTargetPath to build expected target
+					expectedTarget := "new/location/" + filepath.Base(path)
+					if safepath.IsDir(path) {
+						expectedTarget += "/"
+					}
+					mockRepo.On("Move", mock.Anything, path, expectedTarget, "main", "Move "+path+" to "+expectedTarget).Return(tt.moveResults[i]).Once()
+					mockProgress.On("SetMessage", mock.Anything, "Moving "+path+" to "+expectedTarget).Return().Once()
 					mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 						return result.Path == path && result.Action == repository.FileActionRenamed
 					})).Return().Once()
