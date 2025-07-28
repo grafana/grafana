@@ -197,7 +197,19 @@ The `grafana-default-email` contact point that's provisioned with every new Graf
 
 This is sufficient to have your Alerting configuration up and running in Grafana Cloud with minimal effort.
 
+#### Migration assistant limitations on Grafana Alerting resources
+
 Migration of Silences is not supported by the migration assistant and needs to be configured manually. Alert History is also not available for migration.
+
+Attempting to migrate a large number of alert rules might result in the following error:
+
+```
+Maximum number of alert rule groups reached: Delete some alert rule groups or upgrade your plan and try again.
+```
+
+To avoid this, refer to the [Alert rule limits in Grafana Cloud](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#alert-rule-limits-in-grafana-cloud) when migrating alert rules.
+
+#### Prevent duplicated alert notifications
 
 Successfully migrating Alerting resources to your Grafana Cloud instance could result in 2 sets of notifications being generated:
 
