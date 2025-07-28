@@ -111,11 +111,7 @@ func (s *ResourcePermissionSqlBackend) getResourcePermission(ctx context.Context
 	return nil, fmt.Errorf("resource permission %q not found", name)
 }
 
-// buildListResourcePermissionsQuery builds a SQL query to list resource permissions
-// This is a simplified version - in practice, you'd want to join with user, team, and role tables
 func buildListResourcePermissionsQuery(sql *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (string, []interface{}, error) {
-	// Build the base query to get resource permissions
-	// This query gets permissions that users/teams have on resources through role assignments
 	baseQuery := `
 	SELECT 
 		p.id, p.action, p.scope, p.created, p.updated,

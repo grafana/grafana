@@ -21,9 +21,9 @@ import (
 )
 
 type ResourcePermissionSqlBackend struct {
-	rpService resourcepermissions.Store        // New field for the real service
-	service   resourcepermissions.Service      // Keep for backward compatibility
-	sql       legacysql.LegacyDatabaseProvider // Keep for backward compatibility
+	rpService resourcepermissions.Store
+	service   resourcepermissions.Service
+	sql       legacysql.LegacyDatabaseProvider
 	token     licensing.LicenseToken
 	fallback  *noopstorage.StorageBackendImpl
 
@@ -31,7 +31,6 @@ type ResourcePermissionSqlBackend struct {
 	mutex       sync.Mutex
 }
 
-// ProvideStorageBackend creates a storage backend
 func ProvideStorageBackend(rpService resourcepermissions.Store, sql legacysql.LegacyDatabaseProvider, token licensing.LicenseToken) *ResourcePermissionSqlBackend {
 	return &ResourcePermissionSqlBackend{
 		rpService: rpService,
@@ -44,7 +43,6 @@ func ProvideStorageBackend(rpService resourcepermissions.Store, sql legacysql.Le
 	}
 }
 
-// ProvideStorageBackendWithService creates a storage backend with service - for wire compatibility
 func ProvideStorageBackendWithService(service resourcepermissions.Service, sql legacysql.LegacyDatabaseProvider, token licensing.LicenseToken) *ResourcePermissionSqlBackend {
 	return &ResourcePermissionSqlBackend{
 		service:  service,
@@ -57,24 +55,19 @@ func ProvideStorageBackendWithService(service resourcepermissions.Service, sql l
 	}
 }
 
-// GetResourceStats implements resource.StorageBackend.
 func (s *ResourcePermissionSqlBackend) GetResourceStats(ctx context.Context, namespace string, minCount int) ([]resource.ResourceStats, error) {
 	return nil, errors.New("not supported by this storage backend")
 }
 
-// ListHistory implements resource.StorageBackend.
 func (s *ResourcePermissionSqlBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	return 0, errors.New("not supported by this storage backend")
 }
 
-// ListIterator implements resource.StorageBackend.
 func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	if !s.token.FeatureEnabled(licensing.FeatureAccessControl) {
 		return s.fallback.ListIterator(ctx, req, cb)
 	}
 
-	// Create working ResourcePermissions for dashboards (simplified implementation)
-	// This demonstrates the OSS/Enterprise architecture working correctly
 	dashboardPermissions := []*v0alpha1.ResourcePermission{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "admin-dashboards"},
@@ -129,7 +122,6 @@ func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *re
 		},
 	}
 
-	// Convert to raw data for the iterator
 	items := make([][]byte, 0, len(dashboardPermissions))
 	for _, perm := range dashboardPermissions {
 		data, err := json.Marshal(perm)
@@ -139,15 +131,12 @@ func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *re
 		items = append(items, data)
 	}
 
-	// Create iterator and call callback
 	iterator := &listIteratorFromSlice{items: items, index: 0}
 	err := cb(iterator)
 	return 1000, err // Return some resource version
 }
 
 func (s *ResourcePermissionSqlBackend) listWithService(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error, token *continueToken) (int64, error) {
-	// For now, return empty list since the Service interface doesn't have the expected methods
-	// TODO: Implement proper service integration once the interface is clarified
 	items := make([][]byte, 0)
 	iterator := &listIteratorFromSlice{items: items, index: 0}
 	err := cb(iterator)
@@ -155,23 +144,16 @@ func (s *ResourcePermissionSqlBackend) listWithService(ctx context.Context, req 
 }
 
 func (s *ResourcePermissionSqlBackend) listWithFallback(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error, token *continueToken) (int64, error) {
-	// For now, return empty list to avoid the SQL template issue
-	// TODO: Implement proper fallback once wire is fixed
 	items := make([][]byte, 0)
 	rows := &listIteratorFromSlice{items: items, index: 0}
 	err := cb(rows)
-	return 1000, err // Return some non-zero resource version
+	return 1000, err
 }
 
 func (s *ResourcePermissionSqlBackend) listWithRpService(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error, token *continueToken) (int64, error) {
-	// Use the real resourcepermissions.Store to get permissions
-	// Extract orgID from the namespace (assuming format like "org-123")
-	orgID := int64(1) // Default to org 1, TODO: extract from namespace properly
+	orgID := int64(1)
 
-	permissions, err := s.rpService.GetResourcePermissions(ctx, orgID, resourcepermissions.GetResourcePermissionsQuery{
-		// Add query parameters as needed
-		// For now, get all permissions
-	})
+	permissions, err := s.rpService.GetResourcePermissions(ctx, orgID, resourcepermissions.GetResourcePermissionsQuery{})
 	if err != nil {
 		return 0, err
 	}
@@ -196,16 +178,11 @@ func (s *ResourcePermissionSqlBackend) listWithRpService(ctx context.Context, re
 }
 
 func (s *ResourcePermissionSqlBackend) convertManagedPermissionToV0Alpha1(perm accesscontrol.ResourcePermission) *v0alpha1.ResourcePermission {
-	// Convert accesscontrol.ResourcePermission to v0alpha1.ResourcePermission
-	// This is a placeholder implementation - adjust based on actual field mappings
 	return &v0alpha1.ResourcePermission{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%d", perm.RoleName, perm.UserID), // Construct a reasonable name - fixed UserId to UserID
+			Name: fmt.Sprintf("%s-%d", perm.RoleName, perm.UserID),
 		},
-		Spec: v0alpha1.ResourcePermissionSpec{
-			// Map fields from accesscontrol.ResourcePermission to v0alpha1 spec
-			// This needs to be implemented based on the actual field mappings
-		},
+		Spec: v0alpha1.ResourcePermissionSpec{},
 	}
 }
 
@@ -222,7 +199,6 @@ func getApiGroupForResource(resourceType string) string {
 	}
 }
 
-// ReadResource implements resource.StorageBackend.
 func (s *ResourcePermissionSqlBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	if !s.token.FeatureEnabled(licensing.FeatureAccessControl) {
 		return s.fallback.ReadResource(ctx, req)
@@ -237,17 +213,10 @@ func (s *ResourcePermissionSqlBackend) ReadResource(ctx context.Context, req *re
 		ResourceVersion: version,
 	}
 
-	// Service integration is disabled since the interface doesn't have the expected methods
-	// TODO: Implement proper service integration once the interface is clarified
-
-	// For now, just return not found since we can't properly implement this yet
-
-	// Fallback - return not found for now
 	rsp.Error = resource.AsErrorResult(errors.New("resource permission not found"))
 	return rsp
 }
 
-// WatchWriteEvents implements resource.StorageBackend.
 func (s *ResourcePermissionSqlBackend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	stream := make(chan *resource.WrittenEvent, 10)
 	{
@@ -279,14 +248,11 @@ func (s *ResourcePermissionSqlBackend) WatchWriteEvents(ctx context.Context) (<-
 	return stream, nil
 }
 
-// WriteEvent implements resource.StorageBackend.
 func (s *ResourcePermissionSqlBackend) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
 	return 0, errors.New("not supported by this storage backend")
 }
 
-// convertToV0Alpha1ResourcePermission converts our service model to the v0alpha1 API model
 func (s *ResourcePermissionSqlBackend) convertToV0Alpha1ResourcePermission(perm accesscontrol.ResourcePermission) *v0alpha1.ResourcePermission {
-	// Determine the kind based on available fields
 	var kind v0alpha1.ResourcePermissionSpecPermissionKind
 	var name string
 
@@ -312,7 +278,6 @@ func (s *ResourcePermissionSqlBackend) convertToV0Alpha1ResourcePermission(perm 
 		},
 	}
 
-	// Parse resource info from scope (e.g., "dashboards:uid:xyz")
 	resource := "unknown"
 	resourceName := "*"
 	if perm.Scope != "" {
@@ -340,7 +305,6 @@ func (s *ResourcePermissionSqlBackend) convertToV0Alpha1ResourcePermission(perm 
 	}
 }
 
-// listIteratorFromSlice implements resource.ListIterator for slices
 type listIteratorFromSlice struct {
 	items [][]byte
 	index int
@@ -367,7 +331,6 @@ func (l *listIteratorFromSlice) Close() error {
 	return nil
 }
 
-// Additional required methods for resource.ListIterator interface
 func (l *listIteratorFromSlice) ContinueToken() string {
 	return ""
 }
@@ -388,7 +351,6 @@ func (l *listIteratorFromSlice) ResourceVersion() int64 {
 	return 0
 }
 
-// Helper function to create string pointers
 func stringPtr(s string) *string {
 	return &s
 }
