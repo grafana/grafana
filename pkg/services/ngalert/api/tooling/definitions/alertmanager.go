@@ -745,11 +745,13 @@ func (c ExtraConfiguration) Validate() error {
 		}
 	}
 
-	// Alertmanager configuration is validated during YAML unmarshalling.
-	am := config.Config{}
-	err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &am)
+	cfg, err := c.GetAlertmanagerConfig()
 	if err != nil {
 		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+	err = cfg.Validate()
+	if err != nil {
+		return errInvalidExtraConfiguration(fmt.Errorf("invalid alertmanager config: %w", err))
 	}
 
 	return nil
