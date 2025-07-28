@@ -4,7 +4,7 @@
 // when publishing new storybook.
 // Note: Storybook has a static copying feature but it copies entire directories which can contain thousands of icons.
 
-import { copySync, emptyDirSync, lstatSync } from 'fs-extra';
+import { existsSync, copySync, lstatSync } from 'fs-extra';
 import { resolve } from 'node:path';
 
 // avoid importing from @grafana/data to prevent error: window is not defined
@@ -52,16 +52,13 @@ export function copyAssetsSync() {
     },
   ];
 
-  const staticDir = resolve(__dirname, 'static', 'public');
-
-  emptyDirSync(staticDir);
-
   for (const asset of assets) {
     const fromPath = resolve(__dirname, asset.from);
     const toPath = resolve(__dirname, asset.to);
-
-    copySync(fromPath, toPath, {
-      filter: (src) => !lstatSync(src).isSymbolicLink(),
-    });
+    if (!existsSync(toPath)) {
+      copySync(fromPath, toPath, {
+        filter: (src) => !lstatSync(src).isSymbolicLink(),
+      });
+    }
   }
 }
