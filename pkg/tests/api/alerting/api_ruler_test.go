@@ -4666,9 +4666,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 }
 
 func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
-	if testing.
-		// Setup Grafana and its Database
-		Short() {
+	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
 
