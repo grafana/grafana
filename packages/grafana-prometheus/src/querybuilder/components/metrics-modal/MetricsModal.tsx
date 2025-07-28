@@ -126,7 +126,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
             placement="bottom-end"
             closeButton={false}
           >
-            <ButtonGroup className={styles.settingsBtn}>
+            <ButtonGroup>
               <Button
                 variant="secondary"
                 size="md"

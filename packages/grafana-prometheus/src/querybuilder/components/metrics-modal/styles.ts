@@ -56,9 +56,9 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
-      justifyContent: 'space-between',
       alignItems: 'center',
       position: 'sticky',
+      justifyContent: 'center',
     }),
     currentlySelected: css({
       color: 'grey',
@@ -70,9 +70,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     }),
     visible: css({
       visibility: 'visible',
-    }),
-    settingsBtn: css({
-      float: 'right',
     }),
     noBorder: css({
       border: 'none',
