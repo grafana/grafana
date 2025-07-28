@@ -14,7 +14,7 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 
 require (
 	cloud.google.com/go/storage v1.49.0 // @grafana/grafana-backend-group
-	github.com/Masterminds/semver/v3 v3.3.0 // @grafana/grafana-developer-enablement-squad
+	github.com/Masterminds/semver/v3 v3.3.1 // @grafana/grafana-developer-enablement-squad
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
 	github.com/docker/docker v28.1.1+incompatible // @grafana/grafana-developer-enablement-squad
 	github.com/drone/drone-cli v1.8.0 // @grafana/grafana-developer-enablement-squad
@@ -32,14 +32,14 @@ require (
 	go.opentelemetry.io/otel v1.35.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.35.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/crypto v0.38.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/mod v0.24.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.40.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/crypto v0.39.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/mod v0.25.0 // @grafana/grafana-backend-group
+	golang.org/x/net v0.41.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.27.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.14.0 // indirect; @grafana/alerting-backend
-	golang.org/x/text v0.25.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/time v0.9.0 // indirect; @grafana/grafana-backend-group
-	google.golang.org/api v0.216.0 // @grafana/grafana-backend-group
+	golang.org/x/sync v0.15.0 // indirect; @grafana/alerting-backend
+	golang.org/x/text v0.26.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/time v0.10.0 // indirect; @grafana/grafana-backend-group
+	google.golang.org/api v0.223.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.72.1 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.6 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
@@ -47,8 +47,8 @@ require (
 
 require (
 	cloud.google.com/go v0.116.0 // indirect
-	cloud.google.com/go/auth v0.13.0 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
+	cloud.google.com/go/auth v0.15.0 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.2.2 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -68,7 +68,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/google/s2a-go v0.1.8 // indirect
+	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
