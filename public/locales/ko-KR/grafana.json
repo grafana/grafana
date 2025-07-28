@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1545,7 +1546,8 @@
       "title": "평가 그룹 편집"
     },
     "group-loader": {
-      "group-load-failed": "{{ namespaceName }}의 {{ groupName }} 그룹에서 규칙 로딩 실패"
+      "group-load-failed": "{{ namespaceName }}의 {{ groupName }} 그룹에서 규칙 로딩 실패",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "그룹을 삭제하는 중입니다"
@@ -2456,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "구성",
-      "draft-new-rule": "새 규칙 초안 작성",
       "ds-error": {
         "title": "이 데이터 소스에 대한 규칙을 불러올 수 없음"
       },
@@ -2482,6 +2483,7 @@
       "new-alert-rule": "새 경고 규칙",
       "new-datasource-recording-rule": "새 데이터 소스 기록 규칙",
       "new-grafana-recording-rule": "새 Grafana 기록 규칙",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "더 보기..."
       },
@@ -2789,6 +2791,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "미리 보기 새로 고침",
+      "empty-state": "",
       "label-preview": "미리보기",
       "refresh": "새로 고침"
     },
@@ -4544,6 +4547,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} 추가",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "패널 배경 변경",
       "panel-description": "패널 설명 변경",
@@ -4558,6 +4565,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "대시보드",
+        "element": "",
         "local-variable": "로컬 변수",
         "multiple-elements": "여러 요소",
         "multiple-elements-delete-text": "정말 이 요소를 삭제하시겠어요?",
@@ -5765,7 +5773,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7135,6 +7142,7 @@
           "start-time": "시작 시간:"
         }
       },
+      "share-span": "",
       "warnings": "경고"
     },
     "span-filters": {
@@ -8575,7 +8583,10 @@
         "no-data": ""
       },
       "no-values-label": "값 없음",
-      "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}"
+      "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "태그"
@@ -9300,6 +9311,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9318,6 +9330,9 @@
       "copy-log": "로그 라인 복사",
       "hide-details": "로그 세부 정보 표시",
       "icon-label": "로그 메뉴",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "로그 고정",
       "show-context": "맥락 보기",
       "show-details": "로그 세부 정보 숨기기",
@@ -10908,15 +10923,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11023,10 +11038,10 @@
       "title-instant-updates-requests-webhooks": "웹훅을 통한 즉시 업데이트 및 풀 요청.",
       "title-visual-previews-in-pull-requests": "이미지 렌더링을 통해 풀 요청을 시각적으로 미리 보기"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "작업 사양",
-      "summary": "요약",
-      "title-error": "오류"
+      "summary": "요약"
     },
     "features-list": {
       "actions": {
@@ -11171,9 +11186,12 @@
       "starting": "시작하는 중...",
       "status": {
         "title-error-running-job": "작업 실행 중 오류 발생",
-        "title-job-completed-successfully": "작업이 성공적으로 완료되었습니다"
+        "title-warning-running-job": ""
       },
-      "summary": "요약"
+      "summary": "요약",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11339,6 +11357,7 @@
       "go-to": "다음으로 이동",
       "make-sure": "반드시 이러한 권한을 포함하세요"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "이 프로세스 중에는 리소스를 생성, 편집 또는 삭제할 수 없습니다. 마지막 단계에서는 리소스가 표시되지 않습니다.",
       "alert-point-2": "프로비저닝이 완료되면 리소스가 다시 표시되고 외부 스토리지를 통해 관리됩니다.",

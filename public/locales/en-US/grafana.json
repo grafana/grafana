@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
-      "draft-new-rule": "Draft a new rule",
       "ds-error": {
         "title": "Cannot load rules for this datasource"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
       "new-grafana-recording-rule": "New Grafana recording rule",
+      "new-rule-for-export": "New alert rule for export",
       "pagination": {
         "next-page": "Show more…"
       },
@@ -3515,7 +3515,7 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-action-resources-form": {
-      "failed-alert_one": "{{count}} item failed",
+      "failed-alert_one": "{{count}} items failed",
       "failed-alert_other": "{{count}} items failed"
     },
     "bulk-delete-resources-form": {
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "edit-query-result-rule": "Change query result rule",
+      "edit-template-variable-rule": "Change template variable rule",
+      "edit-time-range-rule": "Change time range rule",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "Element",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
@@ -5789,7 +5794,6 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
-      "partial-failure-warning": "Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -7160,6 +7164,7 @@
           "start-time": "Start Time:"
         }
       },
+      "share-span": "Share",
       "warnings": "Warnings"
     },
     "span-filters": {
@@ -7507,6 +7512,7 @@
     },
     "description-initial-view": "This location will show when the panel first loads.",
     "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
+    "description-no-repeat": "Prevent the map from repeating horizontally",
     "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
     "description-show-attribution": "Show the map source attribution info in the lower right",
     "description-show-debug": "Show map info",
@@ -7566,6 +7572,7 @@
     },
     "name-initial-view": "Initial view",
     "name-mouse-wheel-zoom": "Mouse wheel zoom",
+    "name-no-repeat": "No map repeating",
     "name-share-view": "Share view",
     "name-show-attribution": "Show attribution",
     "name-show-debug": "Show debug",
@@ -9255,9 +9262,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed labels",
+          "indexed-label_other": "Indexed label",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed fields",
+          "parsedl-label_other": "Parsed field",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
@@ -10951,15 +10958,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "This resource is behind the branch in GitHub.",
-      "new-branch": "View it in GitHub to see the latest changes.",
-      "not-saved": "The value is not yet saved in the Grafana database",
-      "open-git-hub": "Open in Github",
-      "open-pull-request-in-git-hub": "Open pull request in GitHub",
-      "view-pull-request-in-git-hub": "View pull request in GitHub"
+      "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
+      "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
+      "open-in-repo-button": "Open in {{repoType}}",
+      "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
+      "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
-    "title-created-branch-git-hub": "A new resource has been created in a branch in GitHub.",
-    "title-loaded-pull-request-git-hub": "This resource is loaded from a pull request in GitHub."
+    "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
     "banner": {
@@ -10986,7 +10993,7 @@
     },
     "bootstrap-step": {
       "dashboards-count_one": "{{count}} dashboard",
-      "dashboards-count_other": "{{count}} dashboards",
+      "dashboards-count_other": "{{count}} dashboard",
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
@@ -10994,7 +11001,7 @@
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
       "folders-count_one": "{{count}} folder",
-      "folders-count_other": "{{count}} folders",
+      "folders-count_other": "{{count}} folder",
       "grafana": "Grafana instance",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
@@ -11069,10 +11076,10 @@
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
+    "error-title-default": "Error",
     "expanded-row": {
       "job-specification": "Job Specification",
-      "summary": "Summary",
-      "title-error": "Error"
+      "summary": "Summary"
     },
     "features-list": {
       "actions": {
@@ -11217,10 +11224,12 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
-        "title-job-completed-successfully": "Job completed successfully",
         "title-warning-running-job": "Job completed with warnings"
       },
-      "summary": "Summary"
+      "summary": "Summary",
+      "title": {
+        "error-fetching-active-job": "Error fetching active job"
+      }
     },
     "local": {
       "path-description": "Local file system path to the repository",
@@ -11386,6 +11395,7 @@
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
+    "warning-title-default": "Warning",
     "wizard": {
       "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
       "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
@@ -13435,7 +13445,7 @@
         "create-new-data-frame": "Create a new data frame containing values predicted by a statistical model."
       },
       "name": {
-        "regression-analysis": "Regression analysis"
+        "trendline": "Trendline"
       }
     },
     "regression-transformer-editor": {
@@ -13457,6 +13467,9 @@
         }
       },
       "regression": "regression",
+      "tags": {
+        "regression-analysis": "Regression analysis"
+      },
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {

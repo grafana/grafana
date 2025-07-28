@@ -177,27 +177,20 @@ func TestV28(t *testing.T) {
 				"schemaVersion": 27,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"id":   1,
-						"type": "grafana-singlestat-panel",
-						"options": map[string]interface{}{
-							"valueOptions": map[string]interface{}{
-								"unit":     "short",
-								"decimals": 1,
-								"stat":     "max",
-							},
-							"thresholds": []interface{}{
-								map[string]interface{}{
-									"color": "green",
-									"value": nil,
-								},
-								map[string]interface{}{
-									"color": "red",
-									"value": 80.0,
-								},
-							},
-							"minValue": 0,
-							"maxValue": 100,
+						"id":        1,
+						"type":      "grafana-singlestat-panel",
+						"valueName": "current",
+						"format":    "percent",
+						"gauge": map[string]interface{}{
+							"show":             true,
+							"thresholdMarkers": true,
+							"thresholdLabels":  false,
 						},
+						"sparkline": map[string]interface{}{
+							"show":      true,
+							"lineColor": "#ff0000",
+						},
+						"colorBackground": true,
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A"},
 						},
@@ -211,38 +204,30 @@ func TestV28(t *testing.T) {
 						"id":   1,
 						"type": "stat",
 						"options": map[string]interface{}{
-							"justifyMode":            "auto",
+							"reduceOptions": map[string]interface{}{
+								"calcs":  []string{"lastNotNull"},
+								"fields": "",
+								"values": false,
+							},
 							"orientation":            "horizontal",
+							"colorMode":              "background",
+							"graphMode":              "area",
+							"justifyMode":            "auto",
 							"percentChangeColorMode": "standard",
 							"showPercentChange":      false,
 							"textMode":               "auto",
 							"wideLayout":             true,
-							"reduceOptions": map[string]interface{}{
-								"calcs":  []string{"max"},
-								"fields": "",
-								"values": false,
-							},
 						},
 						"fieldConfig": map[string]interface{}{
 							"defaults": map[string]interface{}{
-								"unit":     "short",
-								"decimals": 1,
-								"mappings": []interface{}{},
-								"min":      0,
-								"max":      100,
-								"thresholds": map[string]interface{}{
-									"mode": "absolute",
-									"steps": []interface{}{
-										map[string]interface{}{
-											"color": "green",
-											"value": nil,
-										},
-										map[string]interface{}{
-											"color": "red",
-											"value": 80.0,
-										},
-									},
+								"unit": "percent",
+								"min":  0,
+								"max":  100,
+								"color": map[string]interface{}{
+									"mode":       "fixed",
+									"fixedColor": "#ff0000",
 								},
+								"mappings": []interface{}{},
 							},
 							"overrides": []interface{}{},
 						},
@@ -358,5 +343,46 @@ func TestV28(t *testing.T) {
 		},
 	}
 
+	errorTests := []migrationTestCase{
+		{
+			name: "throw an error if stat panel plugin not found",
+			input: map[string]interface{}{
+				"schemaVersion": 27,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":         1,
+						"type":       "singlestat",
+						"valueName":  "avg",
+						"format":     "ms",
+						"decimals":   2,
+						"thresholds": "10,20,30",
+						"colors":     []interface{}{"green", "yellow", "red"},
+						"gauge": map[string]interface{}{
+							"show": false,
+						},
+						"targets": []interface{}{
+							map[string]interface{}{"refId": "A"},
+						},
+					},
+				},
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"name":           "var1",
+							"tags":           []interface{}{"tag1"},
+							"tagsQuery":      "query",
+							"tagValuesQuery": "values",
+							"useTags":        true,
+						},
+					},
+				},
+			},
+			expectedError: "schema migration from version 28 to 41 failed: stat panel plugin not found when migrating dashboard to schema version 28",
+		},
+	}
+
 	runMigrationTests(t, tests, schemaversion.V28(testutil.GetTestPanelProvider()))
+	runMigrationTests(t, errorTests, schemaversion.V28(testutil.GetTestPanelProviderWithCustomPanels([]schemaversion.PanelPluginInfo{
+		{ID: "fake-plugin", Version: "1.0.0"},
+	})))
 }

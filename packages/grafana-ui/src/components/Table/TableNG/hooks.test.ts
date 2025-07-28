@@ -1,23 +1,19 @@
 import { act, renderHook } from '@testing-library/react';
-import { varPreLine } from 'uwrap';
 
 import { cacheFieldDisplayNames, createDataFrame, Field, FieldType } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
 
+import { TABLE } from './constants';
 import {
   useFilteredRows,
   usePaginatedRows,
   useSortedRows,
   useFooterCalcs,
   useHeaderHeight,
-  useTypographyCtx,
+  useRowHeight,
 } from './hooks';
-
-jest.mock('uwrap', () => ({
-  // ...jest.requireActual('uwrap'),
-  varPreLine: jest.fn(() => ({
-    count: jest.fn(() => 1),
-  })),
-}));
+import { TableRow } from './types';
+import { createTypographyContext } from './utils';
 
 describe('TableNG hooks', () => {
   function setupData() {
@@ -28,21 +24,21 @@ describe('TableNG hooks', () => {
         type: FieldType.string,
         display: (v) => ({ text: v as string, numeric: NaN }),
         config: {},
-        values: [],
+        values: ['Alice', 'Bob', 'Charlie'],
       },
       {
         name: 'age',
         type: FieldType.number,
         display: (v) => ({ text: (v as number).toString(), numeric: v as number }),
         config: {},
-        values: [],
+        values: [30, 25, 35],
       },
       {
         name: 'active',
         type: FieldType.boolean,
         display: (v) => ({ text: (v as boolean).toString(), numeric: NaN }),
         config: {},
-        values: [],
+        values: [true, false, true],
       },
     ];
 
@@ -149,7 +145,7 @@ describe('TableNG hooks', () => {
           height: 300,
           width: 800,
           enabled: false,
-          headerHeight: 28,
+          headerHeight: TABLE.HEADER_HEIGHT,
           footerHeight: 0,
         })
       );
@@ -201,7 +197,7 @@ describe('TableNG hooks', () => {
           height: 140,
           width: 800,
           rowHeight: 10,
-          headerHeight: 28,
+          headerHeight: TABLE.HEADER_HEIGHT,
           footerHeight: 45,
         })
       );
@@ -288,7 +284,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'] },
         });
@@ -301,7 +297,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['mean'] },
         });
@@ -314,7 +310,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, textField] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'] },
         });
@@ -327,7 +323,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: undefined,
         });
@@ -340,7 +336,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: false,
           footerOptions: { show: true, reducer: ['sum'] },
         });
@@ -353,7 +349,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, textField] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: undefined },
         });
@@ -366,7 +362,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: [] },
         });
@@ -379,7 +375,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: ['Field2', 'Field3'] },
         });
@@ -392,7 +388,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: ['Field1', 'Field2', 'Field3'] },
         });
@@ -405,7 +401,7 @@ describe('TableNG hooks', () => {
       const { result } = renderHook(() => {
         const data = createDataFrame({ fields: [textField, numericField, numericField2] });
         cacheFieldDisplayNames([data]);
-        return useFooterCalcs(rows, data, {
+        return useFooterCalcs(rows, data.fields, {
           enabled: true,
           footerOptions: { show: true, reducer: ['sum'], fields: ['Field1', 'Field 2'] },
         });
@@ -413,19 +409,32 @@ describe('TableNG hooks', () => {
 
       expect(result.current).toEqual(['Total', '6', '13']);
     });
+
+    it('should not return the reducer label in the first column if there is a calc to render', () => {
+      const { result } = renderHook(() => {
+        const data = createDataFrame({ fields: [numericField, numericField2] });
+        cacheFieldDisplayNames([data]);
+        return useFooterCalcs(rows, data.fields, {
+          enabled: true,
+          footerOptions: { show: true, reducer: ['sum'], fields: [] },
+        });
+      });
+
+      expect(result.current).toEqual(['6', '13']);
+    });
   });
 
   describe('useHeaderHeight', () => {
+    const typographyCtx = createTypographyContext(14, 'sans-serif');
+
     it('should return 0 when no header is present', () => {
       const { fields } = setupData();
       const { result } = renderHook(() => {
-        const typographyCtx = useTypographyCtx();
         return useHeaderHeight({
           fields,
           columnWidths: [],
           enabled: false,
           typographyCtx,
-          defaultHeight: 28,
           sortColumns: [],
         });
       });
@@ -435,31 +444,20 @@ describe('TableNG hooks', () => {
     it('should return the default height when wrap is disabled', () => {
       const { fields } = setupData();
       const { result } = renderHook(() => {
-        const typographyCtx = useTypographyCtx();
         return useHeaderHeight({
           fields,
           columnWidths: [],
           enabled: true,
           typographyCtx,
-          defaultHeight: 28,
           sortColumns: [],
         });
       });
-      expect(result.current).toBe(22);
+      expect(result.current).toBe(28);
     });
 
     it('should return the appropriate height for wrapped text', () => {
-      // Simulate 2 lines of text
-      jest.mocked(varPreLine).mockReturnValue({
-        count: jest.fn(() => 2),
-        each: jest.fn(),
-        split: jest.fn(),
-        test: jest.fn(),
-      });
-
       const { fields } = setupData();
       const { result } = renderHook(() => {
-        const typographyCtx = useTypographyCtx();
         return useHeaderHeight({
           fields: fields.map((field) => {
             if (field.name === 'name') {
@@ -479,8 +477,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5 },
-          defaultHeight: 28,
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5, wrappedCount: jest.fn(() => 2) },
           sortColumns: [],
         });
       });
@@ -491,19 +488,9 @@ describe('TableNG hooks', () => {
     it('should calculate the available width for a header cell based on the icons rendered within it', () => {
       const countFn = jest.fn(() => 1);
 
-      // Simulate 2 lines of text
-      jest.mocked(varPreLine).mockReturnValue({
-        count: countFn,
-        each: jest.fn(),
-        split: jest.fn(),
-        test: jest.fn(),
-      });
-
       const { fields } = setupData();
 
       renderHook(() => {
-        const typographyCtx = useTypographyCtx();
-
         return useHeaderHeight({
           fields: fields.map((field) => {
             if (field.name === 'name') {
@@ -523,17 +510,15 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 10 },
-          defaultHeight: 28,
+          typographyCtx: { ...typographyCtx, wrappedCount: countFn },
           sortColumns: [],
           showTypeIcons: false,
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 87);
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86);
 
       renderHook(() => {
-        const typographyCtx = useTypographyCtx();
         return useHeaderHeight({
           fields: fields.map((field) => {
             if (field.name === 'name') {
@@ -554,14 +539,233 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 10 },
-          defaultHeight: 28,
+          typographyCtx: { ...typographyCtx, wrappedCount: countFn },
           sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
           showTypeIcons: true,
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 27);
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26);
+    });
+  });
+
+  describe('useRowHeight', () => {
+    const typographyCtx = createTypographyContext(14, 'sans-serif');
+
+    it('returns the default height if there are no wrapped columns or nested frames', () => {
+      const { fields } = setupData();
+
+      const defaultHeight = 40;
+
+      expect(
+        renderHook(() => {
+          return useRowHeight({
+            fields,
+            columnWidths: [100, 100, 100],
+            defaultHeight,
+            typographyCtx: typographyCtx,
+            hasNestedFrames: false,
+            expandedRows: new Set(),
+          });
+        }).result.current
+      ).toBe(defaultHeight);
+    });
+
+    describe('nested frames', () => {
+      it('returns 0 if the parent row is not expanded', () => {
+        const { fields } = setupData();
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'nested', type: FieldType.nestedFrames, values: [createDataFrame({ fields })], config: {} },
+              ],
+              columnWidths: [100, 100, 100],
+              defaultHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              expandedRows: new Set(),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({ __depth: 1, data: createDataFrame({ fields }), __index: 0 });
+          }).result.current
+        ).toBe(0);
+      });
+
+      it('returns a static height if there are no rows in the nested frame', () => {
+        const { fields } = setupData();
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'nested', type: FieldType.nestedFrames, values: [createDataFrame({ fields })], config: {} },
+              ],
+              columnWidths: [100, 100, 100],
+              defaultHeight: 40,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              expandedRows: new Set([0]),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __depth: 1,
+              data: undefined,
+              __index: 0,
+            });
+          }).result.current
+        ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2);
+      });
+
+      it('calculates the height to return based on the number of rows in the nested frame', () => {
+        const { fields } = setupData();
+
+        const defaultHeight = 40;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'nested', type: FieldType.nestedFrames, values: [createDataFrame({ fields })], config: {} },
+              ],
+              columnWidths: [100, 100, 100],
+              defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              expandedRows: new Set([0]),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __index: 0,
+              __depth: 1,
+              data: createDataFrame({ fields }),
+            });
+          }).result.current
+        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2); // 3 rows + header + padding
+      });
+
+      it('removes the header if configured', () => {
+        const { fields } = setupData();
+
+        const defaultHeight = 40;
+
+        expect(
+          renderHook(() => {
+            const rowHeight = useRowHeight({
+              fields: [
+                { name: 'nested', type: FieldType.nestedFrames, values: [createDataFrame({ fields })], config: {} },
+              ],
+              columnWidths: [100, 100, 100],
+              defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: true,
+              expandedRows: new Set([0]),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight({
+              __index: 0,
+              __depth: 1,
+              data: createDataFrame({ fields, meta: { custom: { noHeader: true } } }),
+            });
+          }).result.current
+        ).toBe(defaultHeight * 3 + TABLE.CELL_PADDING * 2); // 3 rows + padding (no header)
+      });
+    });
+
+    // we test the lineCounters and getRowHeight directly to check that all of that
+    // math is working correctly. we mainly want to confirm here that the
+    // cache is clearing and that the local logic in this hook works.
+    describe('wrapped columns', () => {
+      let rows: TableRow[];
+      let fieldsWithWrappedText: Field[];
+
+      beforeEach(() => {
+        const { fields, rows: _rows } = setupData();
+
+        rows = _rows;
+        fieldsWithWrappedText = fields.map((field) => {
+          if (field.name === 'name') {
+            return {
+              ...field,
+              name: 'Longer name that needs wrapping',
+              config: {
+                ...field.config,
+                custom: {
+                  ...field.config?.custom,
+                  cellOptions: {
+                    cellType: TableCellDisplayMode.Auto,
+                    wrapText: true,
+                  },
+                },
+              },
+            };
+          }
+          return field;
+        });
+      });
+
+      it('handles changes to default height on re-render', () => {
+        const { result, rerender } = renderHook(
+          ({ defaultHeight }) => {
+            const rowHeight = useRowHeight({
+              fields: fieldsWithWrappedText,
+              columnWidths: [100, 100, 100],
+              defaultHeight,
+              typographyCtx: typographyCtx,
+              hasNestedFrames: false,
+              expandedRows: new Set(),
+            });
+            if (typeof rowHeight !== 'function') {
+              throw new Error('Expected rowHeight to be a function');
+            }
+            return rowHeight;
+          },
+          {
+            initialProps: { defaultHeight: 40 },
+          }
+        );
+
+        expect(result.current(rows[0])).toBe(40);
+
+        // change the column widths
+        rerender({ defaultHeight: 50 });
+
+        expect(result.current(rows[0])).toBe(50);
+      });
+
+      it('adjusts the width of the columns based on the cell padding and border', () => {
+        fieldsWithWrappedText[0].values[0] = 'Annie Lennox';
+
+        const wrappedCountFn = jest.fn(() => 2);
+        const estimateLinesFn = jest.fn(() => 2);
+        const { result } = renderHook(() => {
+          const rowHeight = useRowHeight({
+            fields: fieldsWithWrappedText,
+            columnWidths: [100, 100, 100],
+            defaultHeight: 40,
+            typographyCtx: { ...typographyCtx, wrappedCount: wrappedCountFn, estimateLines: estimateLinesFn },
+            hasNestedFrames: false,
+            expandedRows: new Set(),
+          });
+          if (typeof rowHeight !== 'function') {
+            throw new Error('Expected rowHeight to be a function');
+          }
+          return rowHeight;
+        });
+
+        expect(result.current(rows[0])).toEqual(expect.any(Number));
+
+        expect(estimateLinesFn).toHaveBeenCalledWith('Annie Lennox', 100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT);
+      });
     });
   });
 });

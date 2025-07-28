@@ -35,10 +35,13 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         cfg.url = defaultXYZConfig.url;
         cfg.attribution = cfg.attribution ?? defaultXYZConfig.attribution;
       }
+      const noRepeat = options.noRepeat ?? false;
+
       return new TileLayer({
         source: new XYZ({
           url: cfg.url,
           attributions: cfg.attribution, // singular?
+          wrapX: !noRepeat,
         }),
         minZoom: cfg.minZoom,
         maxZoom: cfg.maxZoom,

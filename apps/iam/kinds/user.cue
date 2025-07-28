@@ -4,26 +4,17 @@ import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
-user: {
+userKind: {
 	kind:       "User"
 	pluralName: "Users"
-	current:    "v0alpha1"
-    
-	versions: {
-		"v0alpha1": {
-			codegen: {
-				ts: { enabled: false }
-				go: { enabled: true }
-			}
-			validation: {
-				operations: [
-					"CREATE",
-					"UPDATE",
-				]
-			}
-			schema: {
-				spec: v0alpha1.UserSpec
-			}
-		}
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
+	}
+}
+
+userv0alpha1: userKind & {
+	schema: {
+		spec: v0alpha1.UserSpec
 	}
 }

@@ -2,7 +2,7 @@
   "name": "@grafana-plugins/zipkin",
   "description": "Zipkin plugin for Grafana",
   "private": true,
-  "version": "12.1.0-pre",
+  "version": "12.2.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/data": "workspace:*",

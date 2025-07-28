@@ -53,7 +53,6 @@ Explore consists of a toolbar, outline, query editor, the ability to add multipl
 - **Outline** - Keeps track of the queries and visualization panels created in Explore. Refer to [Content outline](#content-outline) for more detail.
 
 - **Toolbar** - Provides quick access to frequently used tools and settings.
-
   - **Data source picker** - Select a data source from the dropdown menu, or use absolute time.
   - **Split** - Click to compare visualizations side by side. Refer to [Split and compare](#split-and-compare) for additional detail.
   - **Add** - Click to add your exploration to a dashboard. You can also use this to declare an incident,create a forecast, detect outliers and to run an investigation.
@@ -204,5 +203,5 @@ Now that you are familiar with Explore you can:
 - [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/)
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
 - [Work with logs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/)
-- [Work with traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>)
+- [Work with traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/)
 - [Create and use correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/correlations-editor-in-explore/)
