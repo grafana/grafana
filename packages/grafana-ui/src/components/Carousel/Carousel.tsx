@@ -102,13 +102,15 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
       <div className={cx(styles.imageGrid)}>
         {validImages.map((image, index) => (
           <button
+            aria-label={t('grafana-ui.carousel.aria-label-open-image', 'Open image preview')}
+            aria-describedby={`carousel-image-${index}`}
             type="button"
             key={image.path}
             onClick={() => openPreview(index)}
             className={cx(resetButtonStyles, styles.imageButton)}
           >
             <img src={image.path} alt="" onError={() => handleImageError(image.path)} />
-            <p>{image.name}</p>
+            <p id={`carousel-image-${index}`}>{image.name}</p>
           </button>
         ))}
       </div>

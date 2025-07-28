@@ -8271,6 +8271,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": "Open image preview"
+    },
     "cascader": {
       "clear-button": "Clear selection"
     },
