@@ -11,6 +11,18 @@
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
 
+# Migration infrastructure from proven baseline (11.6.5 → 11.5.8)
+/.github/ @grafana/grafana-developer-enablement-squad
+/.citools/ @grafana/grafana-developer-enablement-squad
+/scripts/ci/ @grafana/grafana-developer-enablement-squad
+/scripts/rtk-client-generator/ @grafana/grafana-frontend-platform
+/scripts/prepare-packagejson.js @grafana/grafana-frontend-platform
+
+# Legacy panels and SDK
+/public/app/plugins/panel/graph/ @grafana/dataviz-squad
+/public/app/plugins/panel/table-old/ @grafana/dataviz-squad
+/public/app/plugins/sdk.ts @grafana/plugins-platform-frontend
+
 # Documentation
 /.changelog-archive @grafana/grafana-developer-enablement-squad
 /CHANGELOG.md @grafana/grafana-developer-enablement-squad
@@ -32,7 +44,6 @@
 /devenv/README.md @grafana/docs-grafana
 
 # START Technical documentation
-/.vale.ini @grafana/docs-tooling
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 /docs/                                                                            @grafana/docs-tooling
 
@@ -67,14 +78,11 @@
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /hack/ @grafana/grafana-app-platform-squad
 
-/pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
-/public/app/features/provisioning @grafana/grafana-git-ui-sync-team
-/pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
+
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/playlist/ @grafana/grafana-app-platform-squad
-/apps/investigations/ @fcjack @matryer @svennergr
-/apps/advisor/ @grafana/plugins-platform-backend
+/apps/investigation/ @fcjack @matryer @svennergr
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services
@@ -243,7 +251,6 @@
 /devenv/dev-dashboards/extensions/ @grafana/plugins-platform-frontend
 
 /devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-backend
-/devenv/docker/blocks/stateful_webhook/ @grafana/alerting-backend
 /devenv/docker/blocks/caddy_tls/ @grafana/alerting-backend
 /devenv/docker/blocks/clickhouse/ @grafana/partner-datasources
 /devenv/docker/blocks/collectd/ @grafana/observability-metrics
@@ -443,7 +450,6 @@
 /.betterer.eslint.config.js @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
-/.ignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
@@ -463,7 +469,6 @@
 playwright.config.ts @grafana/plugins-platform-frontend
 
 # public folder
-/public/app/api/ @grafana/grafana-frontend-platform
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
@@ -540,7 +545,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
 /public/app/plugins/panel/histogram/ @grafana/dataviz-squad
 /public/app/plugins/panel/logs/ @grafana/observability-logs
-/public/app/plugins/panel/logs-new/ @grafana/observability-logs
 /public/app/plugins/panel/nodeGraph/ @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /public/app/plugins/panel/traces/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/flamegraph/ @grafana/observability-traces-and-profiling
@@ -728,7 +732,6 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
-/pkg/registry/apps/advisor @grafana/plugins-platform-backend
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
