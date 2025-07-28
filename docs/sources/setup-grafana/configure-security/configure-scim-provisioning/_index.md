@@ -24,6 +24,10 @@ Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/g
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{< /admonition >}}
 
+{{< admonition type="warning" >}}
+**Public Preview:** SCIM provisioning is currently in Public Preview. While functional, the feature is actively being refined and may undergo changes. We recommend thorough testing in non-production environments before deploying to production systems.
+{{< /admonition >}}
+
 {{< admonition type="note" >}}
 This feature is behind the `enableSCIM` feature toggle.
 You can enable feature toggles through configuration file or environment variables.
@@ -46,7 +50,7 @@ Always verify that your SAML identity provider is configured to send a stable, u
 ## Benefits
 
 {{< admonition type="note" >}}
-SCIM provisioning only works SAML authentication.
+SCIM provisioning only works with SAML authentication.
 Other authentication methods aren't supported.
 {{< /admonition >}}
 
@@ -63,27 +67,19 @@ When you enable SCIM in Grafana, the following requirements and restrictions app
 
 1. **Use the same identity provider for user provisioning and for authentication flow**: You must use the same identity provider for both authentication and user provisioning.
 
-2. **Authentication restrictions**:
-
-   - Users attempting to log in through other methods (LDAP, OAuth) will be blocked
-   - By default, users who are not provisioned through SCIM cannot access Grafana
-
-3. **Security restriction**: When using SAML, the login authentication flow requires the SAML assertion exchange between the Identity Provider and Grafana to include the `userUID` SAML assertion with the user's unique identifier at the Identity Provider.
-
+2. **Security restriction**: When using SAML, the login authentication flow requires the SAML assertion exchange between the Identity Provider and Grafana to include the `userUID` SAML assertion with the user's unique identifier at the Identity Provider.
    - Configure `userUID` SAML assertion in [Azure AD](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/#configure-saml-assertions-when-using-scim-provisioning)
    - Configure `userUID` SAML assertion in [Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/#configure-saml-assertions-when-using-scim-provisioning)
-
-4. **Exceptions**: Users with Basic Auth credentials and those using their Grafana Cloud accounts can still log in regardless of these restrictions.
 
 ## Configure SCIM in Grafana
 
 The table below describes all SCIM configuration options. Like any other Grafana configuration, you can apply these options as [environment variables](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
 
-| Setting                       | Required | Description                                                                                                                                                                                | Default |
-| ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
-| `user_sync_enabled`           | Yes      | Enable SCIM user provisioning. When enabled, Grafana will create, update, and deactivate users based on SCIM requests from your identity provider.                                         | `false` |
-| `group_sync_enabled`          | No       | Enable SCIM group provisioning. When enabled, Grafana will create, update, and delete teams based on SCIM requests from your identity provider. Cannot be enabled if Team Sync is enabled. | `false` |
-| `allow_non_provisioned_users` | No       | Allow non SCIM provisioned users to sign in to Grafana.                                                                                                                                    | `false` |
+| Setting                        | Required | Description                                                                                                                                                                                | Default |
+| ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `user_sync_enabled`            | Yes      | Enable SCIM user provisioning. When enabled, Grafana will create, update, and deactivate users based on SCIM requests from your identity provider.                                         | `false` |
+| `group_sync_enabled`           | No       | Enable SCIM group provisioning. When enabled, Grafana will create, update, and delete teams based on SCIM requests from your identity provider. Cannot be enabled if Team Sync is enabled. | `false` |
+| `reject_non_provisioned_users` | No       | When enabled, prevents non-SCIM provisioned users from signing in. Cloud Portal users can always sign in regardless of this setting.                                                       | `false` |
 
 {{< admonition type="warning" >}}
 **Team Sync Compatibility**:

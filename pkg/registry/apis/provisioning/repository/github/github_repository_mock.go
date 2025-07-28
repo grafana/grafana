@@ -395,6 +395,276 @@ func (_c *MockGithubRepository_LatestRef_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
+// ListRefs provides a mock function with given fields: ctx
+func (_m *MockGithubRepository) ListRefs(ctx context.Context) ([]v0alpha1.RefItem, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRefs")
+	}
+
+	var r0 []v0alpha1.RefItem
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]v0alpha1.RefItem, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []v0alpha1.RefItem); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]v0alpha1.RefItem)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGithubRepository_ListRefs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRefs'
+type MockGithubRepository_ListRefs_Call struct {
+	*mock.Call
+}
+
+// ListRefs is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockGithubRepository_Expecter) ListRefs(ctx interface{}) *MockGithubRepository_ListRefs_Call {
+	return &MockGithubRepository_ListRefs_Call{Call: _e.mock.On("ListRefs", ctx)}
+}
+
+func (_c *MockGithubRepository_ListRefs_Call) Run(run func(ctx context.Context)) *MockGithubRepository_ListRefs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_ListRefs_Call) Return(_a0 []v0alpha1.RefItem, _a1 error) *MockGithubRepository_ListRefs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGithubRepository_ListRefs_Call) RunAndReturn(run func(context.Context) ([]v0alpha1.RefItem, error)) *MockGithubRepository_ListRefs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Move provides a mock function with given fields: ctx, oldPath, newPath, ref, message
+func (_m *MockGithubRepository) Move(ctx context.Context, oldPath string, newPath string, ref string, message string) error {
+	ret := _m.Called(ctx, oldPath, newPath, ref, message)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Move")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = rf(ctx, oldPath, newPath, ref, message)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockGithubRepository_Move_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Move'
+type MockGithubRepository_Move_Call struct {
+	*mock.Call
+}
+
+// Move is a helper method to define mock.On call
+//   - ctx context.Context
+//   - oldPath string
+//   - newPath string
+//   - ref string
+//   - message string
+func (_e *MockGithubRepository_Expecter) Move(ctx interface{}, oldPath interface{}, newPath interface{}, ref interface{}, message interface{}) *MockGithubRepository_Move_Call {
+	return &MockGithubRepository_Move_Call{Call: _e.mock.On("Move", ctx, oldPath, newPath, ref, message)}
+}
+
+func (_c *MockGithubRepository_Move_Call) Run(run func(ctx context.Context, oldPath string, newPath string, ref string, message string)) *MockGithubRepository_Move_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_Move_Call) Return(_a0 error) *MockGithubRepository_Move_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockGithubRepository_Move_Call) RunAndReturn(run func(context.Context, string, string, string, string) error) *MockGithubRepository_Move_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// OnCreate provides a mock function with given fields: ctx
+func (_m *MockGithubRepository) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for OnCreate")
+	}
+
+	var r0 []map[string]interface{}
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]map[string]interface{}, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []map[string]interface{}); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]map[string]interface{})
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGithubRepository_OnCreate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnCreate'
+type MockGithubRepository_OnCreate_Call struct {
+	*mock.Call
+}
+
+// OnCreate is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockGithubRepository_Expecter) OnCreate(ctx interface{}) *MockGithubRepository_OnCreate_Call {
+	return &MockGithubRepository_OnCreate_Call{Call: _e.mock.On("OnCreate", ctx)}
+}
+
+func (_c *MockGithubRepository_OnCreate_Call) Run(run func(ctx context.Context)) *MockGithubRepository_OnCreate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_OnCreate_Call) Return(_a0 []map[string]interface{}, _a1 error) *MockGithubRepository_OnCreate_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGithubRepository_OnCreate_Call) RunAndReturn(run func(context.Context) ([]map[string]interface{}, error)) *MockGithubRepository_OnCreate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// OnDelete provides a mock function with given fields: ctx
+func (_m *MockGithubRepository) OnDelete(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for OnDelete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockGithubRepository_OnDelete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnDelete'
+type MockGithubRepository_OnDelete_Call struct {
+	*mock.Call
+}
+
+// OnDelete is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockGithubRepository_Expecter) OnDelete(ctx interface{}) *MockGithubRepository_OnDelete_Call {
+	return &MockGithubRepository_OnDelete_Call{Call: _e.mock.On("OnDelete", ctx)}
+}
+
+func (_c *MockGithubRepository_OnDelete_Call) Run(run func(ctx context.Context)) *MockGithubRepository_OnDelete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_OnDelete_Call) Return(_a0 error) *MockGithubRepository_OnDelete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockGithubRepository_OnDelete_Call) RunAndReturn(run func(context.Context) error) *MockGithubRepository_OnDelete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// OnUpdate provides a mock function with given fields: ctx
+func (_m *MockGithubRepository) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for OnUpdate")
+	}
+
+	var r0 []map[string]interface{}
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]map[string]interface{}, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []map[string]interface{}); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]map[string]interface{})
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGithubRepository_OnUpdate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnUpdate'
+type MockGithubRepository_OnUpdate_Call struct {
+	*mock.Call
+}
+
+// OnUpdate is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockGithubRepository_Expecter) OnUpdate(ctx interface{}) *MockGithubRepository_OnUpdate_Call {
+	return &MockGithubRepository_OnUpdate_Call{Call: _e.mock.On("OnUpdate", ctx)}
+}
+
+func (_c *MockGithubRepository_OnUpdate_Call) Run(run func(ctx context.Context)) *MockGithubRepository_OnUpdate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_OnUpdate_Call) Return(_a0 []map[string]interface{}, _a1 error) *MockGithubRepository_OnUpdate_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGithubRepository_OnUpdate_Call) RunAndReturn(run func(context.Context) ([]map[string]interface{}, error)) *MockGithubRepository_OnUpdate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Owner provides a mock function with no fields
 func (_m *MockGithubRepository) Owner() string {
 	ret := _m.Called()

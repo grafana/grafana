@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Checking this option will favor the series endpoint with {{exampleParameter}} parameter over the label values endpoint with {{exampleParameter}} parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "(Disabled)",
+      "enabled-label": "Metrics browser"
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "Only includes unique labels",
@@ -207,6 +211,103 @@
         "label-auto": "Auto",
         "label-custom": "Custom",
         "label-verbose": "Verbose"
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "Calculate the average over dimensions",
+        "documentation-bottomk": "Smallest k elements by sample value",
+        "documentation-count": "Count number of elements in the vector",
+        "documentation-count-values": "Count number of elements with the same value",
+        "documentation-group": "All values in the resulting vector are 1",
+        "documentation-max": "Select maximum over dimensions",
+        "documentation-min": "Select minimum over dimensions",
+        "documentation-quantile": "Calculate φ-quantile (0 ≤ φ ≤ 1) over dimensions",
+        "documentation-stddev": "Calculate population standard deviation over dimensions",
+        "documentation-stdvar": "Calculate population standard variance over dimensions",
+        "documentation-sum": "Calculate sum over dimensions",
+        "documentation-topk": "Largest k elements by sample value"
+      },
+      "getFunctions": {
+        "documentation-abs": "Returns the input vector with all sample values converted to their absolute value.",
+        "documentation-absent": "Returns an empty vector if the vector passed to it has any elements and a 1-element vector with the value 1 if the vector passed to it has no elements. This is useful for alerting on when no time series exist for a given metric name and label combination.",
+        "documentation-absent-over-time": "Returns an empty vector if the range vector passed to it has any elements and a 1-element vector with the value 1 if the range vector passed to it has no elements.",
+        "documentation-avg-over-time": "The average value of all points in the specified interval.",
+        "documentation-ceil": "Rounds the sample values of all elements in `v` up to the nearest integer.",
+        "documentation-changes": "For each input time series, `changes(v range-vector)` returns the number of times its value has changed within the provided time range as an instant vector.",
+        "documentation-clamp": "Clamps the sample values of all elements in `v` to have a lower limit of `min` and an upper limit of `max`.",
+        "documentation-clamp-max": "Clamps the sample values of all elements in `v` to have an upper limit of `max`.",
+        "documentation-clamp-min": "Clamps the sample values of all elements in `v` to have a lower limit of `min`.",
+        "documentation-count-over-time": "The count of all values in the specified interval.",
+        "documentation-count-scalar": "Returns the number of elements in a time series vector as a scalar. This is in contrast to the `count()` aggregation operator, which always returns a vector (an empty one if the input vector is empty) and allows grouping by labels via a `by` clause.",
+        "documentation-day-of-month": "Returns the day of the month for each of the given times in UTC. Returned values are from 1 to 31.",
+        "documentation-day-of-week": "Returns the day of the week for each of the given times in UTC. Returned values are from 0 to 6, where 0 means Sunday etc.",
+        "documentation-day-of-year": "Returns the day of the year for each of the given times in UTC. Returned values are from 1 to 365 for non-leap years, and 1 to 366 in leap years.",
+        "documentation-days-in-month": "Returns number of days in the month for each of the given times in UTC. Returned values are from 28 to 31.",
+        "documentation-deg": "Converts radians to degrees for all elements in v",
+        "documentation-delta": "Calculates the difference between the first and last value of each time series element in a range vector `v`, returning an instant vector with the given deltas and equivalent labels. The delta is extrapolated to cover the full time range as specified in the range vector selector, so that it is possible to get a non-integer result even if the sample values are all integers.",
+        "documentation-deriv": "Calculates the per-second derivative of the time series in a range vector `v`, using simple linear regression.",
+        "documentation-double-exponential-smoothing": "Produces a smoothed value for time series based on the range in `v`. The lower the smoothing factor `sf`, the more importance is given to old data. The higher the trend factor `tf`, the more trends in the data is considered. Both `sf` and `tf` must be between 0 and 1.",
+        "documentation-drop-common-labels": "Drops all labels that have the same name and value across all series in the input vector.",
+        "documentation-exp": "Calculates the exponential function for all elements in `v`.\nSpecial cases are:\n* `Exp(+Inf) = +Inf` \n* `Exp(NaN) = NaN`",
+        "documentation-floor": "Rounds the sample values of all elements in `v` down to the nearest integer.",
+        "documentation-histogram-avg": "Returns the arithmetic average of observed values stored in a native histogram. Samples that are not native histograms are ignored and do not show up in the returned vector.",
+        "documentation-histogram-count": "Returns the count of observations stored in a native histogram.",
+        "documentation-histogram-fraction": "Returns the estimated fraction of observations between the provided lower and upper values.",
+        "documentation-histogram-quantile": "Calculates the φ-quantile (0 ≤ φ ≤ 1) from the buckets `b` of a histogram. The samples in `b` are the counts of observations in each bucket. Each sample must have a label `le` where the label value denotes the inclusive upper bound of the bucket. (Samples without such a label are silently ignored.) The histogram metric type automatically provides time series with the `_bucket` suffix and the appropriate labels.",
+        "documentation-histogram-stddev": "Returns the estimated standard deviation of observations in a native histogram, based on the geometric mean of the buckets where the observations lie.",
+        "documentation-histogram-stdvar": "Returns the estimated standard variance of observations in a native histogram.",
+        "documentation-histogram-sum": "Returns the sum of observations stored in a native histogram.",
+        "documentation-holt-winters": "Renamed as double_exponential_smoothing in prometheus v3.x. For prometheus versions equal and greater than v3.0 please use double_exponential_smoothing. \n\nProduces a smoothed value for time series based on the range in `v`. The lower the smoothing factor `sf`, the more importance is given to old data. The higher the trend factor `tf`, the more trends in the data is considered. Both `sf` and `tf` must be between 0 and 1.",
+        "documentation-hour": "Returns the hour of the day for each of the given times in UTC. Returned values are from 0 to 23.",
+        "documentation-idelta": "Calculates the difference between the last two samples in the range vector `v`, returning an instant vector with the given deltas and equivalent labels.",
+        "documentation-increase": "Calculates the increase in the time series in the range vector. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for. The increase is extrapolated to cover the full time range as specified in the range vector selector, so that it is possible to get a non-integer result even if a counter increases only by integer increments.",
+        "documentation-info": "Returns latest details and metadata about a group of metrics, such as their labels and current values, without doing any calculations",
+        "documentation-irate": "Calculates the per-second instant rate of increase of the time series in the range vector. This is based on the last two data points. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for.",
+        "documentation-label-join": "For each timeseries in `v`, joins all the values of all the `src_labels` using `separator` and returns the timeseries with the label `dst_label` containing the joined value. There can be any number of `src_labels` in this function.",
+        "documentation-label-replace": "For each timeseries in `v`, `label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)`  matches the regular expression `regex` against the label `src_label`.  If it matches, then the timeseries is returned with the label `dst_label` replaced by the expansion of `replacement`. `$1` is replaced with the first matching subgroup, `$2` with the second etc. If the regular expression doesn't match then the timeseries is returned unchanged.",
+        "documentation-last-over-time": "The most recent point value in specified interval.",
+        "documentation-ln": "Calculates the natural logarithm for all elements in `v`.\nSpecial cases are:\n * `ln(+Inf) = +Inf`\n * `ln(0) = -Inf`\n * `ln(x < 0) = NaN`\n * `ln(NaN) = NaN`",
+        "documentation-log10": "Calculates the decimal logarithm for all elements in `v`. The special cases are equivalent to those in `ln`.",
+        "documentation-log2": "Calculates the binary logarithm for all elements in `v`. The special cases are equivalent to those in `ln`.",
+        "documentation-max-over-time": "The maximum value of all points in the specified interval.",
+        "documentation-min-over-time": "The minimum value of all points in the specified interval.",
+        "documentation-minute": "Returns the minute of the hour for each of the given times in UTC. Returned values are from 0 to 59.",
+        "documentation-month": "Returns the month of the year for each of the given times in UTC. Returned values are from 1 to 12, where 1 means January etc.",
+        "documentation-pi": "Returns pi",
+        "documentation-predict-linear": "Predicts the value of time series `t` seconds from now, based on the range vector `v`, using simple linear regression.",
+        "documentation-present-over-time": "The value 1 for any series in the specified interval.",
+        "documentation-quantile-over-time": "The φ-quantile (0 ≤ φ ≤ 1) of the values in the specified interval.",
+        "documentation-rad": "Converts degrees to radians for all elements in v",
+        "documentation-rate": "Calculates the per-second average rate of increase of the time series in the range vector. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for. Also, the calculation extrapolates to the ends of the time range, allowing for missed scrapes or imperfect alignment of scrape cycles with the range's time period.",
+        "documentation-resets": "For each input time series, `resets(v range-vector)` returns the number of counter resets within the provided time range as an instant vector. Any decrease in the value between two consecutive samples is interpreted as a counter reset.",
+        "documentation-round": "Rounds the sample values of all elements in `v` to the nearest integer. Ties are resolved by rounding up. The optional `to_nearest` argument allows specifying the nearest multiple to which the sample values should be rounded. This multiple may also be a fraction.",
+        "documentation-scalar": "Given a single-element input vector, `scalar(v instant-vector)` returns the sample value of that single element as a scalar. If the input vector does not have exactly one element, `scalar` will return `NaN`.",
+        "documentation-sgn": "Returns a vector with all sample values converted to their sign, defined as this: 1 if v is positive, -1 if v is negative and 0 if v is equal to zero.",
+        "documentation-sort": "Returns vector elements sorted by their sample values, in ascending order.",
+        "documentation-sort-desc": "Returns vector elements sorted by their sample values, in descending order.",
+        "documentation-sqrt": "Calculates the square root of all elements in `v`.",
+        "documentation-stddev-over-time": "The population standard deviation of the values in the specified interval.",
+        "documentation-stdvar-over-time": "The population standard variance of the values in the specified interval.",
+        "documentation-sum-over-time": "The sum of all values in the specified interval.",
+        "documentation-time": "Returns the number of seconds since January 1, 1970 UTC. Note that this does not actually return the current time, but the time at which the expression is to be evaluated.",
+        "documentation-timestamp": "Returns the timestamp of each of the samples of the given vector as the number of seconds since January 1, 1970 UTC.",
+        "documentation-vector": "Returns the scalar `s` as a vector with no labels.",
+        "documentation-year": "Returns the year for each of the given times in UTC."
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "calculates the arccosine of all elements in {{argument}}",
+        "documentation-acosh": "calculates the inverse hyperbolic cosine of all elements in {{argument}}",
+        "documentation-asin": "calculates the arcsine of all elements in {{argument}}",
+        "documentation-asinh": "calculates the inverse hyperbolic sine of all elements in {{argument}}",
+        "documentation-atan": "calculates the arctangent of all elements in {{argument}}",
+        "documentation-atanh": "calculates the inverse hyperbolic tangent of all elements in {{argument}}",
+        "documentation-cos": "calculates the cosine of all elements in {{argument}}",
+        "documentation-cosh": "calculates the hyperbolic cosine of all elements in {{argument}}",
+        "documentation-sin": "calculates the sine of all elements in {{argument}}",
+        "documentation-sinh": "calculates the hyperbolic sine of all elements in {{argument}}",
+        "documentation-tan": "calculates the tangent of all elements in {{argument}}",
+        "documentation-tanh": "calculates the hyperbolic tangent of all elements in {{argument}}"
       }
     },
     "querybuilder": {
@@ -319,6 +420,13 @@
         "title-add": "Add {{name}}",
         "title-remove": "Remove {{name}}"
       },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "Calculates {{aggregationName}} over dimensions while preserving {{labelWord}} {{labels}}.",
+          "label-default": "Calculates {{aggregationName}} over the dimensions.",
+          "label-without": "Calculates {{aggregationName}} over the dimensions {{labels}}. All other labels are preserved."
+        }
+      },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Set lower limit for the step parameter",
         "aria-label-select-resolution": "Select resolution",
@@ -354,9 +462,6 @@
         "tooltip-legend": "Series name override or template. Ex. {{templateExample}} will be replaced with label value for {{labelName}}."
       },
       "query-builder-hints": {
-        "hint-details": "hint: {{hintDetails}}"
-      },
-      "query-editor-hints": {
         "hint-details": "hint: {{hintDetails}}"
       },
       "query-editor-mode-toggle": {

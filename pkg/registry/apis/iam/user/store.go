@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
@@ -28,17 +29,77 @@ var (
 	_ rest.Getter               = (*LegacyStore)(nil)
 	_ rest.Lister               = (*LegacyStore)(nil)
 	_ rest.Storage              = (*LegacyStore)(nil)
+	_ rest.CreaterUpdater       = (*LegacyStore)(nil)
+	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
+	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
+	_ rest.TableConvertor       = (*LegacyStore)(nil)
 )
 
 var resource = iamv0.UserResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
-	return &LegacyStore{store, ac}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation}
 }
 
 type LegacyStore struct {
-	store legacy.LegacyIdentityStore
-	ac    claims.AccessClient
+	store               legacy.LegacyIdentityStore
+	ac                  claims.AccessClient
+	enableAuthnMutation bool
+}
+
+// Update implements rest.Updater.
+func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+}
+
+// DeleteCollection implements rest.CollectionDeleter.
+func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "deletecollection")
+}
+
+// Delete implements rest.GracefulDeleter.
+func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+		OrgID:      ns.OrgID,
+		UID:        name,
+		Pagination: common.Pagination{Limit: 1},
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	if found == nil || len(found.Users) < 1 {
+		return nil, false, resource.NewNotFound(name)
+	}
+
+	userToDelete := &found.Users[0]
+
+	if deleteValidation != nil {
+		userObj := toUserItem(userToDelete, ns.Value)
+		if err := deleteValidation(ctx, &userObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	deleteCmd := legacy.DeleteUserCommand{
+		UID: name,
+	}
+
+	_, err = s.store.DeleteUser(ctx, ns, deleteCmd)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	deletedUser := toUserItem(userToDelete, ns.Value)
+	return &deletedUser, true, nil
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -65,7 +126,7 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	res, err := common.List(
-		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
+		ctx, resource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha.User], error) {
 			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 				Pagination: p,
@@ -118,6 +179,52 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 
 	obj := toUserItem(&found.Users[0], ns.Value)
 	return &obj, nil
+}
+
+// Create implements rest.Creater.
+func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if !s.enableAuthnMutation {
+		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	userObj, ok := obj.(*iamv0alpha.User)
+	if !ok {
+		return nil, fmt.Errorf("expected User object, got %T", obj)
+	}
+
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {
+		return nil, fmt.Errorf("user must have either login or email")
+	}
+
+	createCmd := legacy.CreateUserCommand{
+		UID:           userObj.Name,
+		Login:         userObj.Spec.Login,
+		Email:         userObj.Spec.Email,
+		Name:          userObj.Spec.Name,
+		IsAdmin:       userObj.Spec.GrafanaAdmin,
+		IsDisabled:    userObj.Spec.Disabled,
+		EmailVerified: userObj.Spec.EmailVerified,
+		IsProvisioned: userObj.Spec.Provisioned,
+	}
+
+	result, err := s.store.CreateUser(ctx, ns, createCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	iamUser := toUserItem(&result.User, ns.Value)
+	return &iamUser, nil
 }
 
 func toUserItem(u *user.User, ns string) iamv0alpha.User {

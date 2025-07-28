@@ -25,6 +25,9 @@ import (
 )
 
 func TestIntegrationAMConfigAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -354,6 +357,9 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -504,9 +510,13 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 }
 
 func TestIntegrationAlertmanagerStatus(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

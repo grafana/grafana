@@ -7,6 +7,7 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
+import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { isAdmin } from '../utils/misc';
@@ -46,7 +47,7 @@ export function RuleListActions() {
       <Menu>
         <Menu.Group>
           <Menu.Item
-            label={t('alerting.rule-list.draft-new-rule', 'Draft a new rule')}
+            label={t('alerting.rule-list.new-rule-for-export', 'New alert rule for export')}
             icon="file-export"
             url="/alerting/export-new-rule"
           />
@@ -86,6 +87,7 @@ export function RuleListActions() {
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
+      {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
       <Dropdown overlay={moreActionsMenu}>
         <Button variant="secondary">
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />

@@ -114,6 +114,9 @@ type Writer interface {
 
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path, ref, message string) error
+
+	// Move a file from one path to another in the remote repository
+	Move(ctx context.Context, oldPath, newPath, ref, message string) error
 }
 
 type ReaderWriter interface {
@@ -167,5 +170,6 @@ type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
+	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }

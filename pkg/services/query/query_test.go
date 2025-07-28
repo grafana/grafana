@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -24,12 +25,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -48,8 +51,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationParseMetricRequest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -73,7 +79,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 	})
 
 	t.Run("Test a single datasource query with expressions", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -113,7 +119,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 	})
 
 	t.Run("Test a simple mixed datasource query", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -146,7 +152,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 	})
 
 	t.Run("Test a mixed datasource query with expressions", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -207,7 +213,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 	})
 
 	t.Run("Header validation", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -249,7 +255,7 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 	})
 
 	t.Run("Test a duplicated refId", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		mr := metricRequestWithQueries(t, `{
 			"refId": "A",
 			"datasource": {
@@ -269,8 +275,11 @@ func TestIntegrationParseMetricRequest(t *testing.T) {
 }
 
 func TestIntegrationQueryDataMultipleSources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("can query multiple datasources", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		query1, err := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
@@ -319,7 +328,7 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 
 	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		query1, err := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
@@ -385,7 +394,7 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 
 	t.Run("error is returned in query when one of the queries fails", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 
 		query1, _ := simplejson.NewJson([]byte(`
 			{
@@ -425,7 +434,7 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 
 	t.Run("ignores a deprecated datasourceID", func(t *testing.T) {
-		tc := setup(t)
+		tc := setup(t, false, nil)
 		query1, err := simplejson.NewJson([]byte(`
 			{
 				"datasource": {
@@ -451,7 +460,66 @@ func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	})
 }
 
-func setup(t *testing.T) *testContext {
+func TestIntegrationQueryDataWithMTDSClient(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	t.Run("can run a simple datasource query with a mt ds client", func(t *testing.T) {
+		stubbedResponse := &backend.QueryDataResponse{Responses: make(backend.Responses)}
+		testClient := &testClient{
+			queryDataStubbedResponse: stubbedResponse,
+		}
+		tc := setup(t, true, testClient)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "B",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`)
+		mr.From = "2022-01-01"
+		mr.To = "2022-01-02"
+		ctx := context.Background()
+		_, err := tc.queryService.QueryData(ctx, tc.signedInUser, true, mr)
+		require.NoError(t, err)
+
+		assert.Equal(t, data.QueryDataRequest{
+			TimeRange: data.TimeRange{
+				From: "2022-01-01T00:00:00Z",
+				To:   "2022-01-02T00:00:00Z",
+			},
+			Queries: []data.DataQuery{
+				{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							Type: "postgres",
+							UID:  "gIEkMvIVz",
+						},
+					},
+				},
+				{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "B",
+						Datasource: &data.DataSourceRef{
+							Type: "postgres",
+							UID:  "gIEkMvIVz",
+						},
+					},
+				},
+			},
+			Debug: false,
+		}, testClient.queryDataLastCalledWith)
+	})
+}
+
+func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClient) *testContext {
 	dss := []*datasources.DataSource{
 		{UID: "gIEkMvIVz", Type: "postgres"},
 		{UID: "sEx6ZvSVk", Type: "testdata"},
@@ -467,24 +535,55 @@ func setup(t *testing.T) *testContext {
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{
 		DataSources:           dss,
 		SimulatePluginFailure: false,
 	}
 
-	pCtxProvider := plugincontext.ProvideService(cfg,
-		localcache.ProvideService(), &pluginstore.FakePluginStore{
+	pCtxProvider := plugincontext.ProvideService(
+		cfg,
+		localcache.ProvideService(),
+		&pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "postgres"}},
 				{JSONData: plugins.JSONData{ID: "testdata"}},
 				{JSONData: plugins.JSONData{ID: "mysql"}},
 			},
-		}, &fakeDatasources.FakeCacheService{}, fakeDatasourceService,
-		pluginSettings.ProvideService(sqlStore, secretsService), pluginconfig.NewFakePluginRequestConfigProvider(),
+		},
+		&fakeDatasources.FakeCacheService{},
+		fakeDatasourceService,
+		pluginSettings.ProvideService(sqlStore, secretsService),
+		pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
-	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
-		featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
-	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider) // provider belonging to this package
+
+	var mtdsClientBuilder mtdsclient.MTDatasourceClientBuilder
+	if isMultiTenant {
+		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(isMultiTenant, mockClient)
+	} else {
+		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(false, nil)
+	}
+
+	exprService := expr.ProvideService(
+		&setting.Cfg{ExpressionsEnabled: true},
+		pc,
+		pCtxProvider,
+		featuremgmt.WithFeatures(),
+		nil,
+		tracing.InitializeTracerForTest(),
+		mtdsClientBuilder,
+	)
+
+	queryService := ProvideService(
+		setting.NewCfg(),
+		dc,
+		exprService,
+		rv,
+		pc,
+		pCtxProvider,
+		mtdsClientBuilder,
+	)
+
 	return &testContext{
 		pluginContext:          pc,
 		secretStore:            ss,
@@ -571,4 +670,21 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	return &backend.QueryDataResponse{Responses: make(backend.Responses)}, nil
+}
+
+type testClient struct {
+	queryDataLastCalledWith  data.QueryDataRequest
+	queryDataStubbedResponse *backend.QueryDataResponse
+	queryDataStubbedError    error
+}
+
+func (c *testClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	c.queryDataLastCalledWith = req
+	if c.queryDataStubbedError != nil {
+		return nil, c.queryDataStubbedError
+	}
+	if c.queryDataStubbedResponse != nil {
+		return c.queryDataStubbedResponse, nil
+	}
+	return nil, errors.New("no response stubbed")
 }

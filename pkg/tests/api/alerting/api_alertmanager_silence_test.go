@@ -26,6 +26,9 @@ import (
 )
 
 func TestIntegrationSilenceAuth(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
