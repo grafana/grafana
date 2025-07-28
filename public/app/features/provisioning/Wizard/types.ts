@@ -26,6 +26,16 @@ export interface ModeOption {
   subtitle: string;
 }
 
+export type StepStatus = 'idle' | 'running' | 'error' | 'success';
+
+export const RepoTypeDisplay: { [key in RepoType]: string } = {
+  github: 'GitHub',
+  gitlab: 'GitLab',
+  bitbucket: 'Bitbucket',
+  git: 'Git',
+  local: 'Local',
+};
+
 export type StepStatusInfo =
   | { status: 'idle' | 'running' | 'success' }
   | { status: 'error'; error: string | ProvisioningErrorInfo }
