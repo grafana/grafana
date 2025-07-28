@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurieren",
-      "draft-new-rule": "Neue Regel entwerfen",
       "ds-error": {
         "title": "Regeln für diese Datenquelle können nicht geladen werden"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Neue Warnregel",
       "new-datasource-recording-rule": "Neue Datenquelle-Aufnahmeregel",
       "new-grafana-recording-rule": "Neue Grafana-Aufnahmeregel",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Mehr anzeigen …"
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Verschieben von {{typeName}}",
       "panel-background": "Panel-Hintergrund ändern",
       "panel-description": "Panel-Beschreibung ändern",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "",
         "local-variable": "Lokale Variable",
         "multiple-elements": "Mehrere Elemente",
         "multiple-elements-delete-text": "Sind Sie sicher, dass Sie diese Elemente löschen möchten?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },

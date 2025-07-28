@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurera",
-      "draft-new-rule": "Skapa utkast till en ny regel",
       "ds-error": {
         "title": "Kan inte ladda regler för denna datakälla"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Ny varningsregel",
       "new-datasource-recording-rule": "Ny registreringsregel för datakälla",
       "new-grafana-recording-rule": "Ny registreringsregel för Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Visa mer …"
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "Lägg till {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Ändra panelbakgrund",
       "panel-description": "Ändra panelbeskrivning",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Instrumentpanel",
+        "element": "",
         "local-variable": "Lokal variabel",
         "multiple-elements": "Flera element",
         "multiple-elements-delete-text": "Är du säker på att du vill radera dessa element?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },

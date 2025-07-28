@@ -26,6 +26,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAdminStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("with unified alerting enabled", func(t *testing.T) {
 		url := grafanaSetup(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
