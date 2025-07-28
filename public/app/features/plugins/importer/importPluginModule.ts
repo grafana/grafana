@@ -2,6 +2,7 @@ import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { getResolvedLanguage } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 
+import { contextSrv } from '../../../core/services/context_srv';
 import builtInPlugins from '../built_in_plugins';
 import { registerPluginInCache } from '../loader/cache';
 import { SystemJS } from '../loader/systemjs';
@@ -70,7 +71,7 @@ export async function importPluginModule({
     let error = new Error('Could not load plugin: ' + e);
 
     // If rendererDisableAppPluginsPreload is enabled log a specific error message
-    if (config.featureToggles.rendererDisableAppPluginsPreload) {
+    if (config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render') {
       error = new Error('Plugin loading skipped due to rendererDisableAppPluginsPreload: ' + e);
     }
 
