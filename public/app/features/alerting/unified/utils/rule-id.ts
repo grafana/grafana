@@ -311,9 +311,21 @@ export function hashQuery(query: string) {
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
     query = query.slice(1, -1);
   }
+
   // whitespace could be added or removed
   query = query.replace(/\s|\n/g, '');
-  // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
+
+  // normalize escaped quotes in template strings like {{\"REQ_SENT\"}} -> {{"REQ_SENT"}}
+  query = query.replace(/\\"/g, '"');
+
+  // normalize backtick template strings to double quotes for consistency
+  // Convert `{{.field}}` to "{{.field}}"
+  query = query.replace(/`([^`]*)`/g, '"$1"');
+
+  // remove quotes, brackets, parentheses, backslashes, and backticks
+  query = query.replace(/['"()\[\]\\`]/g, '');
+
+  // labels matchers can be reordered, so sort the entire string, essentially comparing just the character counts
   return query.split('').sort().join('');
 }
 

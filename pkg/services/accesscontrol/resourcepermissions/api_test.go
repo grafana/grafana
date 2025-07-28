@@ -31,6 +31,9 @@ type getDescriptionTestCase struct {
 }
 
 func TestIntegrationApi_getDescription(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []getDescriptionTestCase{
 		{
 			desc: "should return description",
@@ -136,6 +139,9 @@ type getPermissionsTestCase struct {
 }
 
 func TestIntegrationApi_getPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []getPermissionsTestCase{
 		{
 			desc:       "expect permissions for resource with id 1",
@@ -182,6 +188,9 @@ type setBuiltinPermissionTestCase struct {
 }
 
 func TestIntegrationApi_setBuiltinRolePermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []setBuiltinPermissionTestCase{
 		{
 			desc:           "should set Edit permission for Viewer",
@@ -261,6 +270,9 @@ type setTeamPermissionTestCase struct {
 }
 
 func TestIntegrationApi_setTeamPermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []setTeamPermissionTestCase{
 		{
 			desc:           "should set Edit permission for team 1",
@@ -368,6 +380,9 @@ type setUserPermissionTestCase struct {
 }
 
 func TestIntegrationApi_setUserPermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []setUserPermissionTestCase{
 		{
 			desc:           "should set Edit permission for user 1",
@@ -443,6 +458,9 @@ func TestIntegrationApi_setUserPermission(t *testing.T) {
 }
 
 func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type setUserPermissionForTeamsTestCase struct {
 		setUserPermissionTestCase
 		teamCmd *team.CreateTeamCommand
