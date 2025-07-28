@@ -2957,6 +2957,18 @@
     },
     {
       "metadata": {
+        "name": "scanRowInvalidDashboardParseFallbackEnabled",
+        "resourceVersion": "1753730899886",
+        "creationTimestamp": "2025-07-28T19:28:19Z"
+      },
+      "spec": {
+        "description": "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "scopeApi",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-11-27T07:58:25Z"
