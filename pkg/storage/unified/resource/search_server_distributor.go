@@ -94,7 +94,8 @@ var (
 )
 
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	ds.tracing.Start(ctx, "distributor.Search")
+	ctx, span := ds.tracing.Start(ctx, "distributor.Search")
+	defer span.End()
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Search")
 	if err != nil {
 		return nil, err
@@ -104,7 +105,8 @@ func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceS
 }
 
 func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
-	ds.tracing.Start(ctx, "distributor.GetStats")
+	ctx, span := ds.tracing.Start(ctx, "distributor.GetStats")
+	defer span.End()
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "GetStats")
 	if err != nil {
 		return nil, err
@@ -114,7 +116,8 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
-	ds.tracing.Start(ctx, "distributor.CountManagedObjects")
+	ctx, span := ds.tracing.Start(ctx, "distributor.CountManagedObjects")
+	defer span.End()
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "CountManagedObjects")
 	if err != nil {
 		return nil, err
@@ -124,7 +127,8 @@ func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourc
 }
 
 func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
-	ds.tracing.Start(ctx, "distributor.ListManagedObjects")
+	ctx, span := ds.tracing.Start(ctx, "distributor.ListManagedObjects")
+	defer span.End()
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "ListManagedObjects")
 	if err != nil {
 		return nil, err
