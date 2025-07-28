@@ -78,8 +78,8 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		// we do this for auditing purposes.
 		if md, ok := metadata.FromIncomingContext(ctx); ok {
 			if svcIdentities := md.Get(contracts.HeaderGrafanaServiceIdentityName); len(svcIdentities) > 0 {
-				args = append(args, "grafana_st_decrypter_identity", svcIdentities[0])
-				span.SetAttributes(attribute.String("grafana_st_decrypter.identity", svcIdentities[0]))
+				args = append(args, "grafana_decrypter_identity", svcIdentities[0])
+				span.SetAttributes(attribute.String("grafana_decrypter.identity", svcIdentities[0]))
 			}
 		}
 

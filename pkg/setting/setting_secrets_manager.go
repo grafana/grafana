@@ -17,10 +17,10 @@ type SecretsManagerSettings struct {
 	ConfiguredKMSProviders map[string]map[string]string
 
 	DecryptServerType          string // "local" or "grpc"
-	DecryptServerUseTLS        bool   // Applicable for server_type=grpc. Whether to use TLS for the decrypt server
-	DecryptServerTLSSkipVerify bool   // Applicable for server_type=grpc. Whether to skip TLS verification for the decrypt server
-	DecryptServerTLSServerName string // Applicable for server_type=grpc. Server name to use for TLS verification
-	DecryptServerAddress       string // Applicable for server_type=grpc. Address for external secrets server
+	DecryptServerUseTLS        bool   // Applicable for decrypt_server_type=grpc. Whether to use TLS for the decrypt server
+	DecryptServerTLSSkipVerify bool   // Applicable for decrypt_server_type=grpc. Whether to skip TLS verification for the decrypt server
+	DecryptServerTLSServerName string // Applicable for decrypt_server_type=grpc. Server name to use for TLS verification
+	DecryptServerAddress       string // Applicable for decrypt_server_type=grpc. Address for external secrets server
 	DecryptGrafanaServiceName  string // Service name to use for background grafana decryption
 }
 

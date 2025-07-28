@@ -284,7 +284,6 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		fakeLogger := &mockLogger{}
-		logging.DefaultLogger = fakeLogger
 
 		loggerCtx := logging.Context(ctx, fakeLogger)
 
@@ -295,16 +294,15 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		require.Len(t, fakeLogger.InfoArgs, 1)
 		args := fakeLogger.InfoArgs[0]
-		require.Contains(t, args, "grafana_st_decrypter_identity")
+		require.Contains(t, args, "grafana_decrypter_identity")
 		require.Contains(t, args, "decrypter_identity")
 		for i, arg := range args {
-			if arg == "grafana_st_decrypter_identity" {
-				actualIdentity := args[i+1].(string)
-				require.Equal(t, stSvcIdentity, actualIdentity)
+			if arg == "grafana_decrypter_identity" {
+				require.Equal(t, stSvcIdentity, args[i+1].(string))
 			}
 
 			if arg == "decrypter_identity" {
-				require.Equal(t, tokenSvcIdentity, args[i+1])
+				require.Equal(t, tokenSvcIdentity, args[i+1].(string))
 			}
 		}
 	})
