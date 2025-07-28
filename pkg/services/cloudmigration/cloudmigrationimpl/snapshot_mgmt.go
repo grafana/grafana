@@ -90,11 +90,6 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		}
 
 		for _, ds := range dataSources {
-			// This avoids datasources that has issues to be migrated
-			if slices.Contains(SkippedDatasourcesType, ds.Type) {
-				s.log.Error("datasource type skipped", "type", ds.Type, "name", ds.Name)
-				continue
-			}
 			migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 				Type:  cloudmigration.DatasourceDataType,
 				RefID: ds.UID,
@@ -314,6 +309,12 @@ func (s *Service) getDataSourceCommands(ctx context.Context, signedInUser *user.
 
 	result := make([]datasources.AddDataSourceCommand, 0, len(dataSources))
 	for _, dataSource := range dataSources {
+		// This avoids datasources that has issues to be migrated
+		if slices.Contains(SkippedDatasourcesType, dataSource.Type) {
+			s.log.Info("datasource type skipped", "type", dataSource.Type, "name", dataSource.Name)
+			continue
+		}
+
 		// Decrypt secure json to send raw credentials
 		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
 		if err != nil {
