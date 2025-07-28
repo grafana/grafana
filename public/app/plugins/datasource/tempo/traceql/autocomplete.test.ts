@@ -237,6 +237,38 @@ describe('CompletionProvider', () => {
     }
   );
 
+  it('suggests compare function in pipeline operators', async () => {
+    const { provider, model } = setup('{.foo=300} | ', 13);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    const suggestions = (result! as monacoTypes.languages.CompletionList).suggestions;
+
+    expect(suggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'compare',
+          insertText: 'compare({$0})',
+          documentation: expect.stringContaining('Splits spans into two groups'),
+        }),
+      ])
+    );
+  });
+
+  it('suggests with keyword after spanset completion', async () => {
+    const { provider, model } = setup('{.foo=300} ', 11);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    const suggestions = (result! as monacoTypes.languages.CompletionList).suggestions;
+
+    expect(suggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'with',
+          insertText: 'with($0)',
+          documentation: expect.stringContaining('query hints'),
+        }),
+      ])
+    );
+  });
+
   it.each([
     ['{.foo=300} | avg(.value) ', 25],
     ['{.foo=300} && {.foo=300} | avg(.value) ', 39],
@@ -385,6 +417,68 @@ describe('CompletionProvider', () => {
       ]);
     }
   );
+
+  describe('Query hint autocompletion', () => {
+    it('suggests most_recent parameter inside with clause', async () => {
+      const { provider, model } = setup('{.foo=300} with(', 17);
+      const result = await provider.provideCompletionItems(model, emptyPosition);
+      const suggestions = (result! as monacoTypes.languages.CompletionList).suggestions;
+
+      expect(suggestions).toEqual([
+        expect.objectContaining({
+          label: 'most_recent',
+          insertText: 'most_recent=$0',
+          detail: 'Get latest traces',
+          documentation: expect.stringContaining('Forces Tempo to return the most recent results'),
+        }),
+      ]);
+    });
+
+    it('suggests boolean values after most_recent parameter', async () => {
+      const { provider, model } = setup('{.foo=300} with(most_recent=', 29);
+      const result = await provider.provideCompletionItems(model, emptyPosition);
+      const suggestions = (result! as monacoTypes.languages.CompletionList).suggestions;
+
+      expect(suggestions).toEqual([
+        expect.objectContaining({
+          label: 'true',
+          insertText: 'true',
+          detail: 'Boolean true',
+        }),
+        expect.objectContaining({
+          label: 'false',
+          insertText: 'false',
+          detail: 'Boolean false',
+        }),
+      ]);
+    });
+
+    it('suggests most_recent parameter with whitespace variations', async () => {
+      const { provider, model } = setup('{.foo=300} with( ', 18);
+      const result = await provider.provideCompletionItems(model, emptyPosition);
+      const suggestions = (result! as monacoTypes.languages.CompletionList).suggestions;
+
+      expect(suggestions).toEqual([
+        expect.objectContaining({
+          label: 'most_recent',
+          insertText: 'most_recent=$0',
+        }),
+      ]);
+    });
+
+    it('suggests boolean values with whitespace around equals', async () => {
+      const { provider, model } = setup('{.foo=300} with(most_recent = ', 31);
+      const result = await provider.provideCompletionItems(model, emptyPosition);
+      const suggestions = (result! as monacoTypes.languages.CompletionList).suggestions;
+
+      expect(suggestions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ label: 'true', insertText: 'true' }),
+          expect.objectContaining({ label: 'false', insertText: 'false' }),
+        ])
+      );
+    });
+  });
 });
 
 function setup(value: string, offset: number, tagsV1?: string[], tagsV2?: Scope[]) {
