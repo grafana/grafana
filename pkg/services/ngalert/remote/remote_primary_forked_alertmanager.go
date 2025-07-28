@@ -30,7 +30,6 @@ func NewRemotePrimaryFactory(
 	autogenFn AutogenFn,
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
-	l log.Logger,
 ) func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 	return func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
@@ -43,6 +42,7 @@ func NewRemotePrimaryFactory(
 			// Create the remote Alertmanager.
 			cfg.OrgID = orgID
 			cfg.PromoteConfig = true
+			l := log.New("ngalert.forked-alertmanager.remote-primary")
 			remoteAM, err := NewAlertmanager(ctx, cfg, store, crypto, autogenFn, m, t)
 			if err != nil {
 				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
@@ -50,7 +50,7 @@ func NewRemotePrimaryFactory(
 			}
 
 			// Use both implementations in the forked Alertmanager.
-			return newRemotePrimaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-primary"), internalAM, remoteAM), nil
+			return newRemotePrimaryForkedAlertmanager(l, internalAM, remoteAM), nil
 		}
 	}
 }

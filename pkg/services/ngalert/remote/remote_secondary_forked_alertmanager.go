@@ -72,7 +72,6 @@ func NewRemoteSecondaryFactory(
 	autogenFn AutogenFn,
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
-	l log.Logger,
 	withRemoteState bool,
 ) func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 	return func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
@@ -85,6 +84,7 @@ func NewRemoteSecondaryFactory(
 
 			// Create the remote Alertmanager.
 			cfg.OrgID = orgID
+			l := log.New("ngalert.forked-alertmanager.remote-secondary")
 			remoteAM, err := NewAlertmanager(ctx, cfg, stateStore, crypto, autogenFn, m, t)
 			if err != nil {
 				if withRemoteState {
@@ -97,7 +97,7 @@ func NewRemoteSecondaryFactory(
 
 			// Use both implementations in the forked Alertmanager.
 			rsCfg := RemoteSecondaryConfig{
-				Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
+				Logger:       l,
 				OrgID:        orgID,
 				Store:        cfgStore,
 				SyncInterval: syncInterval,

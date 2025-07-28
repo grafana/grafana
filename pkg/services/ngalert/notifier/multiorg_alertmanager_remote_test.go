@@ -67,7 +67,6 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		remote.NoopAutogenFn,
 		m.GetRemoteAlertmanagerMetrics(),
 		tracing.InitializeTracerForTest(),
-		log.NewNopLogger(),
 		false,
 	)
 
