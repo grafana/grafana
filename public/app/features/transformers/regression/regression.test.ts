@@ -10,7 +10,7 @@ import {
 
 import { ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
 
-describe('Regression transformation', () => {
+describe('Trendline transformation', () => {
   it('it should predict a linear regression to exactly fit the data when the data is f(x) = x', () => {
     const source = [
       toDataFrame({
@@ -45,7 +45,7 @@ describe('Regression transformation', () => {
           name: 'Linear regression',
           fields: [
             { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5], config: {} },
-            { name: 'value predicted', type: FieldType.number, values: [0, 1, 2, 3, 4, 5], config: {} },
+            { name: 'value', type: FieldType.number, values: [0, 1, 2, 3, 4, 5], config: {} },
           ],
           length: 6,
         }),
@@ -86,7 +86,7 @@ describe('Regression transformation', () => {
           name: 'Linear regression',
           fields: [
             { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5], config: {} },
-            { name: 'value predicted', type: FieldType.number, values: [1, 1, 1, 1, 1, 1], config: {} },
+            { name: 'value', type: FieldType.number, values: [1, 1, 1, 1, 1, 1], config: {} },
           ],
           length: 6,
         }),
