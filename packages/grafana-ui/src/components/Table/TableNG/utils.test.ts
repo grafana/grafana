@@ -1002,8 +1002,8 @@ describe('TableNG utils', () => {
   describe('getTextLineEstimator', () => {
     const counter = getTextLineEstimator(10);
 
-    it('returns 1 if there are no strings or dashes within the string', () => {
-      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5)).toBe(1);
+    it('returns -1 if there are no strings or dashes within the string', () => {
+      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5)).toBe(-1);
     });
 
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
