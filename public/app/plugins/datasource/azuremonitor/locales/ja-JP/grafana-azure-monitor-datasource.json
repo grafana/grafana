@@ -233,7 +233,7 @@
       "title-error-occurred": "Azure Monitorからリソースをリクエスト中にエラーが発生しました"
     },
     "scope-selector": {
-      "label": ""
+      "label": "スコープ"
     },
     "search": {
       "aria-label-resource-search": "リソース検索",

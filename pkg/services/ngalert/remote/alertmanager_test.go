@@ -257,8 +257,13 @@ func TestGetRemoteState(t *testing.T) {
 }
 
 func TestIntegrationApplyConfig(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// errorHandler returns an error response for the readiness check and state sync.
+	}
 	const tenantID = "test"
-	// errorHandler returns an error response for the readiness check and state sync.
+
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
 		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
@@ -411,10 +416,9 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, 4, configSyncs)
 	require.Equal(t, am.smtp, configSent.SmtpConfig)
 
-	// Failing to add the auto-generated routes should result in an error.
+	// Failing to add the auto-generated routes should not result in an error.
 	_, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), errAutogenFn, m, tracing.InitializeTracerForTest())
-	require.ErrorIs(t, err, errTest)
-	require.Equal(t, 4, configSyncs)
+	require.NoError(t, err, errTest)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
@@ -484,12 +488,18 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	test, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
-	cfgWithDecryptedSecret := PostableUserConfigToGrafanaAlertmanagerConfig(test)
+	cfgWithDecryptedSecret := client.GrafanaAlertmanagerConfig{
+		TemplateFiles:      test.TemplateFiles,
+		AlertmanagerConfig: test.AlertmanagerConfig,
+	}
 
 	testAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
 	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, false))
-	cfgWithAutogenRoutes := PostableUserConfigToGrafanaAlertmanagerConfig(testAutogenRoutes)
+	cfgWithAutogenRoutes := client.GrafanaAlertmanagerConfig{
+		TemplateFiles:      testAutogenRoutes.TemplateFiles,
+		AlertmanagerConfig: testAutogenRoutes.AlertmanagerConfig,
+	}
 
 	// Calculate hashes for expected configurations
 	cfgWithDecryptedSecretBytes, err := json.Marshal(cfgWithDecryptedSecret)
@@ -506,9 +516,10 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	require.NoError(t, err)
 	r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
 	require.NoError(t, err)
-	cfgWithExtraMerged := &client.GrafanaAlertmanagerConfig{
+	cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
 		TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
 		AlertmanagerConfig: r.Config,
+		Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
 	}
 	cfgWithExtraMergedBytes, err := json.Marshal(cfgWithExtraMerged)
 	require.NoError(t, err)
@@ -720,7 +731,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			}
 			raw, err := json.Marshal(test.config)
 			require.NoError(tt, err)
-			require.Equal(tt, test.expected, am.isDefaultConfiguration(md5.Sum(raw)))
+			require.Equal(tt, test.expected, am.isDefaultConfiguration(fmt.Sprintf("%x", md5.Sum(raw))))
 		})
 	}
 }
@@ -827,7 +838,7 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 			// Return an empty config to ensure it gets replaced
 			w.Header().Add("content-type", "application/json")
 			require.NoError(t, json.NewEncoder(w).Encode(client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: &client.GrafanaAlertmanagerConfig{},
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{},
 			}))
 			return
 		}

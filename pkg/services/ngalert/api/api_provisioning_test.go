@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -57,11 +60,17 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+//go:embed test-data/receiver-exports/*
+var receiverExportResponses embed.FS
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
 func TestIntegrationProvisioningApi(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("policies", func(t *testing.T) {
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -1620,6 +1629,9 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 }
 
 func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
 		env := createTestEnv(t, testConfig)
 		env.ac = &recordingAccessControlFake{
@@ -1893,6 +1905,112 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
 		})
+	})
+}
+
+func TestApiContactPointExportSnapshot(t *testing.T) {
+	// This test should fail whenever the export of a contact point changes. If the change is expected, update
+	// the corresponding test response file(s) in test-data/receiver-exports/*
+	type testcase struct {
+		name       string
+		receiver   models.Receiver
+		redacted   bool
+		exportType string
+	}
+	runTestCase := func(t *testing.T, tc testcase) {
+		postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&tc.receiver)
+		require.NoError(t, err)
+		postable := definitions.PostableUserConfig{
+			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: postableReceiver.Name,
+					},
+				},
+				Receivers: []*definitions.PostableApiReceiver{postableReceiver},
+			},
+		}
+
+		amConfig, err := json.Marshal(postable)
+		require.NoError(t, err)
+
+		env := createTestEnv(t, string(amConfig))
+		env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+			return true, nil
+		}
+		sut := createProvisioningSrvSutFromEnv(t, &env)
+		rc := createTestRequestCtx()
+
+		switch tc.exportType {
+		case "yaml":
+			rc.Req.Header.Add("Accept", "application/yaml")
+		case "json":
+			rc.Req.Header.Add("Accept", "application/json")
+		case "hcl":
+			rc.Req.Form.Add("format", "hcl")
+		default:
+			t.Fatalf("unknown export type %q", tc.exportType)
+		}
+
+		if tc.redacted {
+			rc.Req.Form.Set("decrypt", "false")
+		} else {
+			rc.Req.Form.Set("decrypt", "true")
+		}
+
+		response := sut.RouteGetContactPointsExport(&rc)
+		require.Equalf(t, 200, response.Status(), "expected 200, got %d, body: %q", response.Status(), response.Body())
+
+		actualBody := response.Body()
+		if tc.exportType == "json" {
+			// Indent the JSON for easier comparison.
+			// This isn't strictly necessary, but it makes the test output more readable.
+			out := new(bytes.Buffer)
+			err = json.Indent(out, actualBody, "", " ")
+			require.NoError(t, err)
+			actualBody = out.Bytes()
+		}
+
+		p := path.Join("test-data", "receiver-exports", "redacted")
+		if !tc.redacted {
+			p = path.Join("test-data", "receiver-exports", "unredacted")
+		}
+		p = path.Join(p, fmt.Sprintf("%s.%s", tc.name, tc.exportType))
+
+		// To update these files: os.WriteFile(path.Join(p), actualBody, 0644)
+
+		exportRaw, err := receiverExportResponses.ReadFile(p)
+		require.NoError(t, err)
+		require.Equal(t, string(exportRaw), string(actualBody))
+	}
+
+	t.Run("contact point export for all known configs", func(t *testing.T) {
+		allIntegrationsName := "all-integrations"
+		for _, exportType := range []string{"yaml", "json", "hcl"} {
+			t.Run(fmt.Sprintf("exportType=%s", exportType), func(t *testing.T) {
+				for _, redacted := range []bool{true, false} {
+					t.Run(fmt.Sprintf("redacted=%t", redacted), func(t *testing.T) {
+						allIntegrations := make([]models.Integration, 0, len(alertingNotify.AllKnownConfigsForTesting))
+						for integrationType := range alertingNotify.AllKnownConfigsForTesting {
+							integration := models.IntegrationGen(
+								models.IntegrationMuts.WithName(allIntegrationsName),
+								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", integrationType)),
+								models.IntegrationMuts.WithValidConfig(integrationType),
+							)()
+							integration.DisableResolveMessage = redacted
+							allIntegrations = append(allIntegrations, integration)
+						}
+						receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
+						runTestCase(t, testcase{
+							name:       allIntegrationsName,
+							receiver:   receiver,
+							redacted:   redacted,
+							exportType: exportType,
+						})
+					})
+				}
+			})
+		}
 	})
 }
 

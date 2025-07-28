@@ -2,7 +2,7 @@
   "name": "@grafana-plugins/jaeger",
   "description": "Jaeger plugin for Grafana",
   "private": true,
-  "version": "12.1.0-pre",
+  "version": "12.2.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/data": "workspace:*",
@@ -26,16 +26,17 @@
     "@grafana/plugin-configs": "workspace:*",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
-    "@testing-library/react": "16.2.0",
+    "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.20",
     "@types/logfmt": "^1.2.3",
-    "@types/node": "22.15.0",
+    "@types/node": "22.16.5",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@types/react-window": "1.8.8",
     "@types/uuid": "10.0.0",
+    "jest": "29.7.0",
     "ts-node": "10.9.2",
     "typescript": "5.8.3",
     "webpack": "5.97.1"
@@ -46,7 +47,9 @@
   "scripts": {
     "build": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production",
     "build:commit": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
-    "dev": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -w -c ./webpack.config.ts --env development"
+    "dev": "NODE_OPTIONS='--experimental-strip-types --no-warnings=ExperimentalWarning' webpack -w -c ./webpack.config.ts --env development",
+    "test": "jest --watch --onlyChanged",
+    "test:ci": "jest --maxWorkers 4"
   },
   "packageManager": "yarn@4.9.2"
 }

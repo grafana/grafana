@@ -6,8 +6,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
-import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning/v0alpha1';
-import provisioningSvg from 'img/provisioning/provisioning.svg';
+import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+
+import provisioningSvg from '../img/provisioning.svg';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';
@@ -151,17 +152,16 @@ export default function GettingStarted({ items }: Props) {
       )}
       <Stack direction="column" gap={6} wrap="wrap">
         <Stack gap={10} alignItems="center">
+          <div className={styles.imageContainer}>
+            <img src={provisioningSvg} className={styles.image} alt={'Grafana provisioning'} />
+          </div>
           <FeaturesList
-            repos={items}
             hasRequiredFeatures={hasRequiredFeatures}
             onSetupFeatures={() => {
               setSetupType('required-features');
               setShowModal(true);
             }}
           />
-          <div className={styles.imageContainer}>
-            <img src={provisioningSvg} className={styles.image} alt={'Grafana provisioning'} />
-          </div>
         </Stack>
         {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
           <EnhancedFeatures
