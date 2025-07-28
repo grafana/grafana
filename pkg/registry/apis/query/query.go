@@ -3,9 +3,11 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -140,7 +142,6 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 								span.SetAttributes(attribute.String("error.source", "downstream"))
 								break
 							} else if response.Error != nil {
-								connectLogger.Debug("500 error without downstream error source", "error", response.Error, "errorSource", response.ErrorSource, "refId", refId)
 								span.SetStatus(codes.Error, "500 error without downstream error source")
 							} else {
 								span.SetStatus(codes.Error, "500 error without downstream error source and no Error message")
@@ -187,9 +188,25 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				})
 				return
 			} else {
-				// return the error to the client, will send all non k8s errors as a k8 unexpected error
-				b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
-				responder.Error(err)
+				var errorDataResponse backend.DataResponse
+				if errors.Is(err, service.ErrInvalidDatasourceID) || errors.Is(err, service.ErrNoQueriesFound) || errors.Is(err, service.ErrMissingDataSourceInfo) || errors.Is(err, service.ErrQueryParamMismatch) || errors.Is(err, service.ErrDuplicateRefId) {
+					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+				} else if strings.Contains(err.Error(), "expression request error") {
+					b.log.Error("Error calling TransformData in an expression", "err", err)
+					errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+				} else {
+					b.log.Error("unknown error, treated as a 500", "err", err)
+					responder.Error(err)
+					return
+				}
+				qdr = &backend.QueryDataResponse{
+					Responses: map[string]backend.DataResponse{
+						"A": errorDataResponse,
+					},
+				}
+				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+					QueryDataResponse: *qdr,
+				})
 				return
 			}
 		}
@@ -215,9 +232,22 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 		jsonQueries = append(jsonQueries, sjQuery)
 	}
+
+	from := "now-1h"
+	to := "now"
+
+	//Alerting does not send top level `From` or `To` values.
+	if raw.From != "" {
+		from = raw.From
+	}
+
+	if raw.To != "" {
+		to = raw.To
+	}
+
 	mReq := dtos.MetricRequest{
-		From:    raw.From,
-		To:      raw.To,
+		From:    from,
+		To:      to,
 		Queries: jsonQueries,
 	}
 

@@ -431,6 +431,5 @@ func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user identity.
 		}
 		return ds, nil
 	}
-
 	return nil, ErrInvalidDatasourceID
 }
