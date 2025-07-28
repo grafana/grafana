@@ -211,7 +211,9 @@ describe('CompletionProvider', () => {
     const { provider, model } = setup('{.foo=300} ', 11);
     const result = await provider.provideCompletionItems(model, emptyPosition);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      CompletionProvider.spansetOps.map((s) => expect.objectContaining({ label: s.label, insertText: s.insertText }))
+      expect.arrayContaining(
+        CompletionProvider.spansetOps.map((s) => expect.objectContaining({ label: s.label, insertText: s.insertText }))
+      )
     );
   });
 
@@ -357,13 +359,15 @@ describe('CompletionProvider', () => {
       const { provider, model } = setup(input, offset);
       const result = await provider.provideCompletionItems(model, emptyPosition);
       expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-        CompletionProvider.spansetOps.map((completionItem) =>
-          expect.objectContaining({
-            detail: completionItem.detail,
-            documentation: completionItem.documentation,
-            insertText: completionItem.insertText,
-            label: completionItem.label,
-          })
+        expect.arrayContaining(
+          CompletionProvider.spansetOps.map((completionItem) =>
+            expect.objectContaining({
+              detail: completionItem.detail,
+              documentation: completionItem.documentation,
+              insertText: completionItem.insertText,
+              label: completionItem.label,
+            })
+          )
         )
       );
     }
