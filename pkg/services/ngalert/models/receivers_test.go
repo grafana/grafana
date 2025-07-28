@@ -277,9 +277,8 @@ func TestIntegrationConfig(t *testing.T) {
 }
 
 func TestIntegration_SecureFields(t *testing.T) {
-	if testing.
-		// Test that all known integration types have a config and correctly mark their secrets as secure.
-		Short() {
+	// Test that all known integration types have a config and correctly mark their secrets as secure.
+	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
 

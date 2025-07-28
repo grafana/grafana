@@ -21,12 +21,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationPasswordMigrationCommand(t *testing.T) {
-	if testing.
-		// setup datasources with password, basic_auth and none
-		Short() {
+	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
 
+	// setup datasources with password, basic_auth and none
 	store := db.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		passwordMigration(t, sess, store)
