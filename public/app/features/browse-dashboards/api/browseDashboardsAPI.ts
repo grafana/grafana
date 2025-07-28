@@ -65,20 +65,23 @@ export const browseDashboardsAPI = createApi({
   baseQuery: createBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
-      providesTags: (result) =>
-        result && result.length > 0
-          ? result.map((folder) => ({ type: 'getFolder', id: folder.uid }))
-          : [{ type: 'getFolder', id: 'EMPTY_RESULT' }],
-      query: ({ parentUid, limit, page, permission }) => ({
-        url: '/folders',
-        params: { parentUid, limit, page, permission },
-      }),
+      providesTags: ['getFolder'],
+      query: ({ parentUid, limit, page, permission }) => {
+        console.log('[BrowseDashboards] Fetching folders API call:', { parentUid, limit, page, permission });
+        return {
+          url: '/folders',
+          params: { parentUid, limit, page, permission },
+        };
+      },
     }),
 
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
-      query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+      query: (folderUID) => {
+        console.log('[BrowseDashboards] Fetching single folder API call:', folderUID);
+        return { url: `/folders/${folderUID}`, params: { accesscontrol: true } };
+      },
     }),
 
     // create a new folder
@@ -492,6 +495,7 @@ export const {
   useGetAffectedItemsQuery,
   useGetFolderQuery,
   useLazyGetFolderQuery,
+  useListFoldersQuery,
   useMoveFolderMutation,
   useMoveItemsMutation,
   useNewFolderMutation,

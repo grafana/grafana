@@ -3,6 +3,9 @@ import { isFetchError } from '@grafana/runtime';
 
 import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import { browseDashboardsAPI } from '../../../../features/browse-dashboards/api/browseDashboardsAPI';
+import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
+import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
 import {
@@ -59,6 +62,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Invalidate browse-dashboards cache when a provisioning repository is deleted (runs after success or error)
+        console.log('[Provisioning] Invalidating browse-dashboards cache after repository deletion');
+        dispatch(browseDashboardsAPI.util.invalidateTags(['getFolder']));
+        // Also trigger data refetch for the root folder to update the browse-dashboards view
+        dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
       },
     },
     deletecollectionRepository: {
@@ -84,6 +92,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Invalidate browse-dashboards cache when all provisioning repositories are deleted (runs after success or error)
+        console.log('[Provisioning] Invalidating browse-dashboards cache after deleting all repositories');
+        dispatch(browseDashboardsAPI.util.invalidateTags(['getFolder']));
+        // Also trigger data refetch for the root folder to update the browse-dashboards view
+        dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
       },
     },
     createRepositoryTest: {
@@ -164,6 +177,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Invalidate browse-dashboards cache when a new provisioning repository is created (runs after success or error)
+        console.log('[Provisioning] Invalidating browse-dashboards cache after repository creation');
+        dispatch(browseDashboardsAPI.util.invalidateTags(['getFolder']));
+        // Also trigger data refetch for the root folder to update the browse-dashboards view
+        dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
       },
     },
     replaceRepository: {
@@ -189,6 +207,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Invalidate browse-dashboards cache when a provisioning repository is created/updated (runs after success or error)
+        console.log('[Provisioning] Invalidating browse-dashboards cache after repository create/update');
+        dispatch(browseDashboardsAPI.util.invalidateTags(['getFolder']));
+        // Also trigger data refetch for the root folder to update the browse-dashboards view
+        dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
       },
     },
   },
