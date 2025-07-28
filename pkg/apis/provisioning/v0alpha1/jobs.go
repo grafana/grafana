@@ -40,6 +40,9 @@ const (
 
 	// JobActionDelete deletes files in the remote repository
 	JobActionDelete JobAction = "delete"
+
+	// JobActionMove moves files in the remote repository
+	JobActionMove JobAction = "move"
 )
 
 // +enum
@@ -87,6 +90,9 @@ type JobSpec struct {
 
 	// Delete when the action is `delete`
 	Delete *DeleteJobOptions `json:"delete,omitempty"`
+
+	// Move when the action is `move`
+	Move *MoveJobOptions `json:"move,omitempty"`
 }
 
 type PullRequestJobOptions struct {
@@ -141,6 +147,20 @@ type DeleteJobOptions struct {
 	// - nested/deep/ (for a directory)
 	// FIXME: we should validate this in admission hooks
 	Paths []string `json:"paths,omitempty"`
+}
+
+type MoveJobOptions struct {
+	// Ref to the branch or commit hash to delete from
+	Ref string `json:"ref,omitempty"`
+	// Paths to be deleted. Examples:
+	// - dashboard.json (for a file)
+	// - a/b/c/other-dashboard.json (for a file)
+	// - nested/deep/ (for a directory)
+	// FIXME: we should validate this in admission hooks
+	Paths []string `json:"paths,omitempty"`
+
+	// Destination path for the move (e.g. "new-location/")
+	TargetPath string `json:"targetPath,omitempty"`
 }
 
 // The job status
