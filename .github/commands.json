@@ -128,7 +128,7 @@
     "name": "datasource/Loki",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/203"
+      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
@@ -160,7 +160,7 @@
     "name": "datasource/Elasticsearch",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/97"
+      "url": "https://github.com/orgs/grafana/projects/190"
     }
   },
   {
@@ -488,7 +488,23 @@
     "name": "area/transformations",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
+      "url": "https://github.com/orgs/grafana/projects/908"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/correlations",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/908"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/expressions/sql",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/908"
     }
   },
   {
@@ -573,7 +589,7 @@
   },
   {
     "type": "label",
-    "name": "area/exploremetrics",
+    "name": "area/metricsdrilldown",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/516"
@@ -640,7 +656,7 @@
     "name": "area/configuration",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/96"
+      "url": "https://github.com/orgs/grafana/projects/665"
     }
   },
   {
@@ -648,7 +664,7 @@
     "name": "area/frontend/library-panels",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
+      "url": "https://github.com/orgs/grafana/projects/482"
     }
   },
   {
@@ -744,7 +760,7 @@
     "name": "area/backend/db/postgres",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/96"
+      "url": "https://github.com/orgs/grafana/projects/835"
     }
   },
   {
@@ -880,7 +896,7 @@
     "name": "area/dashboard/library-panel",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
+      "url": "https://github.com/orgs/grafana/projects/482"
     }
   },
   {
@@ -1117,14 +1133,6 @@
   },
   {
     "type": "label",
-    "name": "area/editor",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/grafana/grafana/projects/21"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/data/export",
     "action": "addToProject",
     "addToProject": {
@@ -1201,6 +1209,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/699"
+    }
+  },
+  {
+    "type": "label",
+    "name": "type/docs",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/69"
     }
   }
 ]

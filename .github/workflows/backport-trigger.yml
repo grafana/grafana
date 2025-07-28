@@ -1,0 +1,47 @@
+# We need secrets to backport, but they're not available for actions ran by forks.
+# So this workflow is used as a 'trigger', which the backport-workflow.yml will with
+# via workflow_run
+
+name: Backport (trigger)
+on:
+  pull_request:
+    types:
+      - closed
+      - labeled
+
+permissions: {}
+
+jobs:
+  trigger:
+    # Only run this job if the PR has been merged and has a label containing "backport v"
+    if: |
+      github.repository == 'grafana/grafana' &&
+      github.event.pull_request.merged == true &&
+      contains(join(github.event.pull_request.labels.*.name, ','), 'backport v')
+    runs-on: ubuntu-latest
+    steps:
+      # TODO: save this as job summary instead?
+      - name: Trigger
+        run: |
+          echo "Triggering workflow"
+          echo "See https://github.com/${{ github.repository }}/actions/workflows/workflow_run.yml for progress"
+
+      # Create a JSON artifact with details of this PR to pass to the backport workflow.
+      # The { action: 'labelled', label: 'backport-1.23.x' } can only be determined from this event payload,
+      # and is needed to do a backport after a PR has been merged
+      #
+      # Important that we don't run *anything* from the PR which could modify the backport_data.json file
+      - name: Create action data
+        run: |
+          jq '{
+            action: .action,
+            label: .label.name,
+            pr_number: .number,
+          }' "$GITHUB_EVENT_PATH" > /tmp/pr_info.json
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr_info
+          path: /tmp/pr_info.json
+          retention-days: 1
