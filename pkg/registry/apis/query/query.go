@@ -108,6 +108,7 @@ func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
+// called by mt query service and also when queryServiceFromUI is enabled, can be both mt and st
 func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
@@ -233,14 +234,14 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		return nil, err
 	}
 
-	mtLogger := connectLogger.New("slug", instanceConfig.Options["slug"])
+	dsQuerierLoggerWithSlug := connectLogger.New("slug", instanceConfig.Options["slug"])
 
 	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
 		b.clientSupplier,
 		ctx,
 		headers,
 		instanceConfig,
-		mtLogger,
+		dsQuerierLoggerWithSlug,
 	)
 
 	exprService := expr.ProvideService(
@@ -258,7 +259,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		mtDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, mtLogger, cache, exprService, mReq, mtDsClientBuilder, headers)
+	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, mtDsClientBuilder, headers)
 
 	if err != nil {
 		return qdr, err
