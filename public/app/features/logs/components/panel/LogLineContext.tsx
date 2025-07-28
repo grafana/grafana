@@ -153,7 +153,10 @@ export const LogLineContext = memo(
     }, [log, getRowContextQuery]);
 
     const updateResults = useCallback(async () => {
+      setAboveLogs([]);
+      setBelowLogs([]);
       await updateContextQuery();
+      setInitialized(false);
     }, [updateContextQuery]);
 
     useEffect(() => {
