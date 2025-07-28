@@ -1027,8 +1027,15 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			Do(ctx)
 		require.NoError(t, result.Error(), "should be able to create move job")
 
+		raw, err := result.Raw()
+		require.NoError(t, err)
+
+		obj := &unstructured.Unstructured{}
+		err = json.Unmarshal(raw, obj)
+		require.NoError(t, err)
+
 		// Wait for job to complete
-		helper.AwaitJobs(t, repo)
+		helper.AwaitJobSuccess(t, ctx, obj)
 
 		// Verify file is moved in repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "dashboard1.json")
@@ -1042,7 +1049,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		// Verify dashboard still exists in Grafana after sync
 		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		require.Equal(t, 3, len(dashboards.Items), "should still have 3 dashboards after move")
+		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
 
 		// Verify other files still exist at original locations
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
@@ -1069,8 +1076,15 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			Do(ctx)
 		require.NoError(t, result.Error(), "should be able to create move job")
 
+		raw, err := result.Raw()
+		require.NoError(t, err)
+		obj := &unstructured.Unstructured{}
+		err = json.Unmarshal(raw, obj)
+		require.NoError(t, err)
+
 		// Wait for job to complete
-		helper.AwaitJobs(t, repo)
+		helper.AwaitJobSuccess(t, ctx, obj)
+		printFileTree(t, helper.ProvisioningPath)
 
 		// Verify files are moved in repository
 		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "dashboard2.json")
@@ -1083,10 +1097,14 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		require.Error(t, err, "dashboard2.json should be gone from original location")
 		require.True(t, apierrors.IsNotFound(err))
 
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
+		require.Error(t, err, "folder should be gone from original location")
+		require.True(t, apierrors.IsNotFound(err), err.Error())
+
 		// Verify dashboards still exist in Grafana after sync
 		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		require.Equal(t, 3, len(dashboards.Items), "should still have 3 dashboards after move")
+		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
 	})
 
 	t.Run("move non-existent file", func(t *testing.T) {
