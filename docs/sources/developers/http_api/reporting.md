@@ -401,7 +401,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 ### Example request
 
 ```http
-GET /api/reports/6 HTTP/1.1
+DELETE /api/reports/6 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
