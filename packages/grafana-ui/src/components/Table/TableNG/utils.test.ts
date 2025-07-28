@@ -1204,7 +1204,11 @@ describe('TableNG utils', () => {
       it('returns doesnt bother getting the precise count if the estimates are all below the threshold', () => {
         jest.mocked(counters[0].counter).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.3);
         jest.mocked(counters[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD - 0.1);
+
         expect(getRowHeight(fields, 3, [30, 30], 36, counters, 20, 10)).toBe(36);
+
+        // this is what we really care about - we want to save on performance by not calling the counter in this case.
+        expect(counters[1].counter).not.toHaveBeenCalled();
       });
 
       it('uses the precise count if the estimate is above the threshold, even if its below 1', () => {
