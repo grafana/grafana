@@ -1,6 +1,7 @@
-FROM alpine:3.22.1
+# FROM alpine:3.22.1
+FROM ubuntu:24.04
 
-RUN apk add --no-cache gcompat libstdc++
+# RUN apk add --no-cache gcompat libstdc++
 
 # # glibc support - copied from main Dockerfile
 # ARG GLIBC_VERSION=2.40
