@@ -276,7 +276,9 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 		if r.Method == http.MethodPost {
 			if strings.Contains(r.URL.Path, "/config") {
-				require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
+				var cfg client.UserGrafanaConfig
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&cfg))
+				configSent = cfg
 				configSyncs++
 			} else {
 				stateSyncs++
