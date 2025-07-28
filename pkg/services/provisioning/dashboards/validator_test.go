@@ -32,6 +32,9 @@ const (
 )
 
 func TestIntegrationDuplicatesValidator(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 
