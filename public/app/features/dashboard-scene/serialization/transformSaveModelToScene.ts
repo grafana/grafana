@@ -498,9 +498,7 @@ export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
 
 function getDashboardInteractionCallback(uid: string, title: string) {
   return (e: SceneInteractionProfileEvent) => {
-    let interactionType = '';
-
-    reportInteraction('dashboard-render', {
+    reportInteraction('dashboard_render', {
       interactionType: e.origin,
       uid,
       duration: e.duration,
@@ -511,7 +509,7 @@ function getDashboardInteractionCallback(uid: string, title: string) {
     });
 
     logMeasurement(
-      `dashboard.${interactionType}`,
+      `dashboard_render`,
       {
         duration: e.duration,
         networkDuration: e.networkDuration,
@@ -520,7 +518,7 @@ function getDashboardInteractionCallback(uid: string, title: string) {
         jsHeapSizeLimit: e.jsHeapSizeLimit,
         timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
       },
-      { dashboard: uid, title: title }
+      { interactionType: e.origin, dashboard: uid, title: title }
     );
   };
 }
