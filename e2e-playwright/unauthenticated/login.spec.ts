@@ -25,7 +25,7 @@ test(
     tag: ['@acceptance'],
   },
   async ({ selectors, page, grafanaAPICredentials }) => {
-    test.skip(grafanaAPICredentials.password !== 'admin', 'Does not run without default password');
+    test.skip(grafanaAPICredentials.password !== 'admin', 'Only runs with the default password');
 
     await page.goto(selectors.pages.Login.url);
 
