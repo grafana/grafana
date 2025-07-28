@@ -18,6 +18,12 @@ jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
 }));
 
+jest.mock('app/features/provisioning/utils/selectors', () => ({
+  selectAllRepos: jest.fn(),
+  selectFolderRepository: jest.fn(),
+  selectRepoByName: jest.fn(),
+}));
+
 const mockTextUtil = jest.mocked(textUtil);
 
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
