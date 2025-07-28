@@ -1,7 +1,6 @@
 import { Property } from 'csstype';
 import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
-import { Count } from 'uwrap';
 
 import {
   DataFrame,
