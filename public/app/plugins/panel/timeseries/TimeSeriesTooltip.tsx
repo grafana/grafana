@@ -1,9 +1,7 @@
 import { ReactNode } from 'react';
 
 import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction, LinkModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
-import { AdHocFilterItem } from '@grafana/ui';
 import {
   VizTooltipContent,
   VizTooltipFooter,
@@ -11,9 +9,9 @@ import {
   VizTooltipWrapper,
   getContentItems,
   VizTooltipItem,
-  FILTER_FOR_OPERATOR,
 } from '@grafana/ui/internal';
 
+import { AdHocFilterModel } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter';
 import { getFieldActions } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 
@@ -44,7 +42,7 @@ export interface TimeSeriesTooltipProps {
   replaceVariables?: InterpolateFunction;
   dataLinks: LinkModel[];
   hideZeros?: boolean;
-  onAddAdHocFilter?: (item: AdHocFilterItem) => void;
+  adHocFilters?: AdHocFilterModel[];
 }
 
 export const TimeSeriesTooltip = ({
@@ -60,7 +58,7 @@ export const TimeSeriesTooltip = ({
   replaceVariables = (str) => str,
   dataLinks,
   hideZeros,
-  onAddAdHocFilter,
+  adHocFilters,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -91,34 +89,12 @@ export const TimeSeriesTooltip = ({
     const field = series.fields[seriesIdx];
     const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
-    // Check if the field supports filtering (similar to table implementation)
-    const showFilters = Boolean(
-      // We only show filters on filterable fields (xField.config.filterable).
-      // Fields will have been marked as filterable by the data source if that data source supports adhoc filtering
-      // (eg. Prom or Loki) and the field types support adhoc filtering (eg. string or number - depending on the data source).
-      // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
-      // are derived from a data source, but are not present in the data source.
-      // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
-      config.featureToggles.adhocFiltersInTooltips && xField.config.filterable && onAddAdHocFilter != null
-    );
-
-    // create the filter click handler based on hovered series index and row index:
-    const onFilterClick = showFilters
-      ? () => {
-          onAddAdHocFilter?.({
-            key: xField.name,
-            operator: FILTER_FOR_OPERATOR,
-            value: String(xField.values[dataIdxs[0]!]),
-          });
-        }
-      : undefined;
-
     if (isPinned || hasOneClickLink) {
       const dataIdx = dataIdxs[seriesIdx]!;
       const actions = getFieldActions(series, field, replaceVariables, dataIdx);
 
       footer = (
-        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} onFilterClick={onFilterClick} />
+        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
       );
     }
   }

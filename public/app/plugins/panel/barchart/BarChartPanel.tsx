@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
 import { PanelProps, VizOrientation } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import {
+  AdHocFilterItem,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPLOT_AXIS_FONT_SIZE,
@@ -12,8 +13,9 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/internal';
+import { FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
 
+import { AdHocFilterModel } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter';
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
@@ -161,7 +163,40 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               getDataLinks={(seriesIdx, dataIdx) =>
                 vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
               }
-              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
+              getAdHocFilters={(seriesIdx, dataIdx) => {
+                const xField = vizSeries[0].fields[0];
+
+                // Check if the field supports filtering (similar to table implementation)
+                // We only show filters on filterable fields (xField.config.filterable).
+                // Fields will have been marked as filterable by the data source if that data source supports adhoc filtering
+                // (eg. Prom or Loki) and the field types support adhoc filtering (eg. string or number - depending on the data source).
+                // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
+                // are derived from a data source, but are not present in the data source.
+                // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
+                if (
+                  config.featureToggles.adhocFiltersInTooltips &&
+                  xField.config.filterable &&
+                  onAddAdHocFilter != null
+                ) {
+                  const adHocFilterItem: AdHocFilterItem = {
+                    key: xField.name,
+                    operator: FILTER_FOR_OPERATOR,
+                    value: String(xField.values[xField.values[dataIdx]]),
+                  };
+
+                  const adHocFilters: AdHocFilterModel[] = [
+                    {
+                      ...adHocFilterItem,
+                      onClick: () => onAddAdHocFilter(adHocFilterItem),
+                    },
+                  ];
+
+                  return adHocFilters;
+                }
+
+                return [];
+              }}
+              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks, adHocFilters) => {
                 return (
                   <TimeSeriesTooltip
                     series={vizSeries[0]}
@@ -174,7 +209,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     maxHeight={options.tooltip.maxHeight}
                     replaceVariables={replaceVariables}
                     dataLinks={dataLinks}
-                    onAddAdHocFilter={onAddAdHocFilter}
+                    adHocFilters={adHocFilters}
                     hideZeros={options.tooltip.hideZeros}
                   />
                 );
