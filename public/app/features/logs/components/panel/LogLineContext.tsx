@@ -27,6 +27,7 @@ import { useDispatch } from 'app/types/store';
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
 import { ScrollDirection } from '../InfiniteScroll';
+import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogList } from './LogList';
 
@@ -41,34 +42,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: '50%',
       transform: 'translate(-50%, -50%)',
     }),
-    sticky: css({
-      position: 'sticky',
-      zIndex: 1,
-      top: '-1px',
-      bottom: '-1px',
-    }),
-    entry: css({
-      '& > td': {
-        padding: theme.spacing(1, 0, 1, 0),
-      },
-      background: theme.colors.emphasize(theme.colors.background.secondary),
-
-      '& > table': {
-        marginBottom: 0,
-      },
-
-      '& .log-row-menu': {
-        marginTop: '-6px',
-      },
-    }),
     datasourceUi: css({
-      paddingBottom: theme.spacing(1.25),
       display: 'flex',
       alignItems: 'center',
     }),
-    logRowGroups: css({
-      height: '60vh',
-      alignSelf: 'stretch',
+    loadingIndicator: css({
+      height: theme.spacing(3),
+    }),
+    logsContainer: css({
+      height: '59vh',
       border: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0, 0.5, 1, 0),
     }),
@@ -77,40 +59,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       padding: theme.spacing(0, 3, 3, 3),
     }),
-    flexRow: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      '& > div:last-child': {
-        marginLeft: 'auto',
-      },
-    }),
-    noMarginBottom: css({
-      '& > table': {
-        marginBottom: 0,
-      },
-    }),
-    hidden: css({
-      display: 'none',
-    }),
-    paddingTop: css({
-      paddingTop: theme.spacing(1),
-    }),
-    paddingBottom: css({
-      paddingBottom: theme.spacing(1),
-    }),
     link: css({
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
       ':hover': {
         color: theme.colors.text.link,
       },
-    }),
-    loadingCell: css({
-      position: 'sticky',
-      left: '50%',
-      display: 'inline-block',
-      transform: 'translateX(-50%)',
     }),
   };
 };
@@ -264,6 +218,8 @@ export const LogLineContext = memo(
       (_: AbsoluteTimeRange, direction: ScrollDirection) => {
         if (direction === ScrollDirection.Bottom) {
           loadMore('below', allLogs[allLogs.length - 1]);
+        } else {
+          loadMore('above', allLogs[0]);
         }
       },
       [allLogs, loadMore]
@@ -272,7 +228,7 @@ export const LogLineContext = memo(
     return (
       <Modal
         isOpen={open}
-        title={t('logs.log-row-context-modal.title-log-context', 'Log context')}
+        title={t('logs.log-line-context.title-log-context', 'Log context')}
         contentClassName={styles.flexColumn}
         className={styles.modal}
         onDismiss={onClose}
@@ -280,7 +236,18 @@ export const LogLineContext = memo(
         {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
           <div className={styles.datasourceUi}>{getLogRowContextUi(log, updateResults)}</div>
         )}
-        <div className={styles.logRowGroups} ref={containerRef}>
+        <div className={styles.loadingIndicator}>
+          {aboveState === LoadingState.Loading && (
+            <LoadingIndicator
+              adjective={
+                logsSortOrder === LogsSortOrder.Descending
+                  ? t('logs.log-line-context.newer-logs', 'newer')
+                  : t('logs.log-line-context.older-logs', 'older')
+              }
+            />
+          )}
+        </div>
+        <div className={styles.logsContainer} ref={containerRef}>
           {containerRef.current && (
             <LogList
               app={CoreApp.Unknown}
@@ -302,6 +269,17 @@ export const LogLineContext = memo(
               timeRange={timeRange}
               timeZone={timeZone}
               wrapLogMessage={wrapLogMessage}
+            />
+          )}
+        </div>
+        <div className={styles.loadingIndicator}>
+          {belowState === LoadingState.Loading && (
+            <LoadingIndicator
+              adjective={
+                logsSortOrder === LogsSortOrder.Descending
+                  ? t('logs.log-line-context.older-logs', 'older')
+                  : t('logs.log-line-context.newer-logs', 'newer')
+              }
             />
           )}
         </div>
