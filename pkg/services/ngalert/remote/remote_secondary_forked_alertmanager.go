@@ -102,12 +102,12 @@ func RemoteSecondaryFactory(
 				Store:        cfgStore,
 				SyncInterval: syncInterval,
 			}
-			return NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
+			return newRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
 		}
 	}
 }
 
-func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal notifier.Alertmanager, remote remoteAlertmanager) (*RemoteSecondaryForkedAlertmanager, error) {
+func newRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal notifier.Alertmanager, remote remoteAlertmanager) (*RemoteSecondaryForkedAlertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
