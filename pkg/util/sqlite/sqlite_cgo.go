@@ -10,6 +10,14 @@ import (
 
 type Driver = sqlite3.SQLiteDriver
 
+// The errors below are used in tests to simulate specific SQLite errors. It's a temporary solution
+// until we rewrite the tests not to depend on the sqlite3 package internals directly.
+var (
+	TestErrUniqueConstraintViolation = sqlite3.Error{Code: sqlite3.ErrConstraint, ExtendedCode: sqlite3.ErrConstraintUnique}
+	TestErrBusy                      = sqlite3.Error{Code: sqlite3.ErrBusy}
+	TestErrLocked                    = sqlite3.Error{Code: sqlite3.ErrLocked}
+)
+
 func IsBusyOrLocked(err error) bool {
 	var sqliteErr sqlite3.Error
 	if errors.As(err, &sqliteErr) {
