@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -38,6 +39,8 @@ type ServerOptions struct {
 	Features       featuremgmt.FeatureToggles
 	QOSQueue       QOSEnqueueDequeuer
 	SecureValues   secrets.InlineSecureValueSupport
+	Ring           *ring.Ring
+	RingLifecycler *ring.BasicLifecycler
 }
 
 // Creates a new ResourceServer
@@ -98,6 +101,8 @@ func NewResourceServer(
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
+	serverOptions.Ring = opts.Ring
+	serverOptions.RingLifecycler = opts.RingLifecycler
 
 	return resource.NewResourceServer(serverOptions)
 }

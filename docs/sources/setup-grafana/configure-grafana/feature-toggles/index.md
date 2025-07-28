@@ -35,14 +35,12 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `influxdbBackendMigration`             | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
 | `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different                                          | Yes                |
 | `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                                                       | Yes                |
-| `pluginsDetailsRightPanel`             | Enables right panel for the plugins details page                                                                                                              | Yes                |
 | `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                                                    | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                                                     | Yes                |
 | `awsDatasourcesTempCredentials`        | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                                          | Yes                |
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                                                      | Yes                |
-| `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                                                   | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                                                        | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                                              | Yes                |
 | `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                                                        | Yes                |
@@ -108,6 +106,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `elasticsearchCrossClusterSearch` | Enables cross cluster search in the Elasticsearch datasource                                           |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
+| `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 
 ## Development feature toggles

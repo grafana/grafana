@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -70,7 +70,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	// Initialize access client + access control
-	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	accessControl := acimpl.ProvideAccessControl(nil)
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl, accesscontrol.ResourceAuthorizerOptions{
 		Resource: "securevalues",
 		Attr:     "uid",
@@ -107,6 +107,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	encryptedValueStorage, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
+	// Initialize global encrypted value storage with a fake db
+	globalEncryptedValueStorage, err := encryptionstorage.ProvideGlobalEncryptedValueStorage(database, tracer)
+	require.NoError(t, err)
+
 	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
@@ -125,24 +129,28 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
 
 	return Sut{
-		SecureValueService:         secureValueService,
-		SecureValueMetadataStorage: secureValueMetadataStorage,
-		DecryptStorage:             decryptStorage,
-		DecryptService:             decryptService,
-		EncryptedValueStorage:      encryptedValueStorage,
-		SQLKeeper:                  sqlKeeper,
-		Database:                   database,
+		SecureValueService:          secureValueService,
+		SecureValueMetadataStorage:  secureValueMetadataStorage,
+		DecryptStorage:              decryptStorage,
+		DecryptService:              decryptService,
+		EncryptedValueStorage:       encryptedValueStorage,
+		GlobalEncryptedValueStorage: globalEncryptedValueStorage,
+		SQLKeeper:                   sqlKeeper,
+		Database:                    database,
+		AccessClient:                accessClient,
 	}
 }
 
 type Sut struct {
-	SecureValueService         contracts.SecureValueService
-	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
-	DecryptStorage             contracts.DecryptStorage
-	DecryptService             service.DecryptService
-	EncryptedValueStorage      contracts.EncryptedValueStorage
-	SQLKeeper                  *sqlkeeper.SQLKeeper
-	Database                   *database.Database
+	SecureValueService          contracts.SecureValueService
+	SecureValueMetadataStorage  contracts.SecureValueMetadataStorage
+	DecryptStorage              contracts.DecryptStorage
+	DecryptService              contracts.DecryptService
+	EncryptedValueStorage       contracts.EncryptedValueStorage
+	GlobalEncryptedValueStorage contracts.GlobalEncryptedValueStorage
+	SQLKeeper                   *sqlkeeper.SQLKeeper
+	Database                    *database.Database
+	AccessClient                types.AccessClient
 }
 
 type CreateSvConfig struct {

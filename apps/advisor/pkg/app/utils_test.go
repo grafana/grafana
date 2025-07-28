@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -11,7 +12,13 @@ import (
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetCheck(t *testing.T) {
@@ -289,13 +296,75 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 	assert.Empty(t, obj.Status.Report.Failures)
 }
 
+func TestRunStepsInParallel_ConcurrentHeaderAccess(t *testing.T) {
+	// Create an HTTP request with headers to simulate the real scenario
+	req, err := http.NewRequest("GET", "/test", nil)
+	require.NoError(t, err)
+	req.Header.Set("X-Test-Header", "test-value")
+	req.Header.Set("X-Panel-Id", "123")
+	req.Header.Set("Cookie", "session=abc123; user_pref=dark")
+
+	// Create a context with ReqContext that includes the HTTP request
+	webCtx := &web.Context{
+		Req: req,
+	}
+	reqCtx := &contextmodel.ReqContext{
+		Context:      webCtx,
+		SignedInUser: &user.SignedInUser{},
+	}
+
+	ctx := ctxkey.Set(context.Background(), reqCtx)
+
+	// Create steps that modify headers concurrently (simulating CookiesMiddleware behavior)
+	steps := []checks.Step{
+		&headerModifyingStep{headerName: "X-Test-Header", headerValue: "modified-1"},
+		&headerModifyingStep{headerName: "Cookie", headerValue: "session=xyz456"},
+		&headerModifyingStep{headerName: "X-Panel-Id", headerValue: "456"},
+	}
+
+	// Create multiple items to process
+	const numItems = 20
+	items := make([]any, numItems)
+	for i := 0; i < numItems; i++ {
+		items[i] = fmt.Sprintf("item-%d", i)
+	}
+
+	// Track panics that might occur during execution
+	var panicCount int32
+	originalPanicHandler := func() {
+		if r := recover(); r != nil {
+			panicCount++
+			t.Errorf("Unexpected panic during concurrent header access: %v", r)
+		}
+	}
+
+	// This test should not panic with our fix
+	t.Run("should not panic with concurrent header modifications", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				originalPanicHandler()
+			}
+		}()
+
+		failures, err := runStepsInParallel(ctx, logging.DefaultLogger, nil, steps, items)
+
+		// Verify no error occurred
+		assert.NoError(t, err)
+		// Should have no failures since our mock step doesn't report failures
+		assert.Empty(t, failures)
+		// Verify no panics occurred
+		assert.Equal(t, int32(0), panicCount)
+	})
+}
+
 type mockClient struct {
 	resource.Client
 	values []any
 }
 
 func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
-	m.values = append(m.values, req.Operations[0].Value)
+	value := req.Operations[0].Value
+	m.values = append(m.values, value)
 	return nil
 }
 
@@ -375,4 +444,50 @@ func (m *mockStep) Resolution() string {
 
 func (m *mockStep) ID() string {
 	return "mock"
+}
+
+// headerModifyingStep is a mock step that modifies HTTP headers to simulate
+// the behavior of CookiesMiddleware and other middleware that caused the original panic
+type headerModifyingStep struct {
+	headerName  string
+	headerValue string
+}
+
+func (h *headerModifyingStep) Run(ctx context.Context, log logging.Logger, obj *advisorv0alpha1.CheckSpec, item any) ([]advisorv0alpha1.CheckReportFailure, error) {
+	// Get the request context and modify headers (this used to cause panics)
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx != nil && reqCtx.Req != nil {
+		// This is the type of header modification that was causing the concurrent map access panic
+		reqCtx.Req.Header.Set(h.headerName, h.headerValue)
+		reqCtx.Req.Header.Add("X-Processed-By", h.ID())
+
+		// Also test header deletion like ClearCookieHeader does
+		if h.headerName == "Cookie" {
+			reqCtx.Req.Header.Del("Cookie")
+			reqCtx.Req.Header.Set("Cookie", h.headerValue)
+		}
+
+		// Test reading headers as well
+		_ = reqCtx.Req.Header.Get("X-Test-Header")
+		_ = reqCtx.Req.Header.Get("X-Panel-Id")
+	}
+
+	// No failures to report
+	return nil, nil
+}
+
+func (h *headerModifyingStep) Title() string {
+	return "Header Modifying Step"
+}
+
+func (h *headerModifyingStep) Description() string {
+	return "A mock step that modifies HTTP headers to test concurrent access"
+}
+
+func (h *headerModifyingStep) Resolution() string {
+	return "This is a test step"
+}
+
+func (h *headerModifyingStep) ID() string {
+	return fmt.Sprintf("header-modifier-%s", h.headerName)
 }
