@@ -28,7 +28,6 @@ func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		if resp.StatusCode == http.StatusOK && !isAuthedUser {
-
 			var result goffmodel.OFREPBulkEvaluateSuccessResponse
 			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 				return err
