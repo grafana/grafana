@@ -9,7 +9,7 @@ import (
 func TestV25(t *testing.T) {
 	tests := []migrationTestCase{
 		{
-			name: "v25 no-op migration updates schema version only",
+			name: "v25 no-op migration, updates schema version only",
 			input: map[string]interface{}{
 				"title":         "V25 No-Op Migration Test Dashboard",
 				"schemaVersion": 24,
@@ -34,5 +34,5 @@ func TestV25(t *testing.T) {
 			},
 		},
 	}
-	runMigrationTests(t, tests, schemaversion.V32)
+	runMigrationTests(t, tests, schemaversion.V25)
 }

@@ -43,24 +43,17 @@ func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
 			continue
 		}
 
-		if wasAngularTable {
-			panelMap["type"] = "table-old"
-		} else {
-			panelMap["type"] = "table"
+		// Find if the panel plugin exists
+		tablePanelPlugin := m.panelProvider.GetPanelPlugin("table")
+		if tablePanelPlugin.ID == "" {
+			return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION)
+		}
+		panelMap["pluginVersion"] = tablePanelPlugin.Version
+		err := tablePanelChangedHandler(panelMap)
+		if err != nil {
+			return err
 		}
 
-		if panelMap["type"] == "table-old" {
-			// Find if the panel plugin exists
-			tablePanelPlugin := m.panelProvider.GetPanelPlugin("table")
-			if tablePanelPlugin.ID == "" {
-				return NewMigrationError("table panel plugin not found when migrating dashboard to schema version 24", 24, LATEST_VERSION)
-			}
-			panelMap["pluginVersion"] = tablePanelPlugin.Version
-			err := tablePanelChangedHandler(panelMap)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
@@ -71,18 +64,23 @@ func tablePanelChangedHandler(panel map[string]interface{}) error {
 
 	transformations := migrateTransformations(panel, prevOptions)
 
-	// Find the default style (pattern '/.*/')
 	prevDefaults := findDefaultStyle(prevOptions)
 	defaults := migrateDefaults(prevDefaults)
 
-	// Filter styles that don't have pattern '/.*/'
 	overrides := findNonDefaultStyles(prevOptions)
+
+	if len(overrides) == 0 {
+		overrides = []interface{}{}
+	}
 
 	panel["transformations"] = transformations
 	panel["fieldConfig"] = map[string]interface{}{
 		"defaults":  defaults,
 		"overrides": overrides,
 	}
+
+	// Remove deprecated styles property
+	delete(panel, "styles")
 
 	return nil
 }
@@ -104,6 +102,7 @@ func findDefaultStyle(prevOptions map[string]interface{}) map[string]interface{}
 // findNonDefaultStyles finds all styles that don't have pattern '/.*/'
 func findNonDefaultStyles(prevOptions map[string]interface{}) []interface{} {
 	var overrides []interface{}
+
 	if styles, ok := prevOptions["styles"].([]interface{}); ok {
 		for _, style := range styles {
 			if styleMap, ok := style.(map[string]interface{}); ok {
@@ -313,22 +312,18 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 		return defaults
 	}
 
-	// Add unit
 	if unit, ok := prevDefaults["unit"].(string); ok && unit != "" {
 		defaults["unit"] = unit
 	}
 
-	// Add decimals
 	if decimals, ok := prevDefaults["decimals"].(float64); ok {
 		defaults["decimals"] = int(decimals)
 	}
 
-	// Add display name
 	if alias, ok := prevDefaults["alias"].(string); ok && alias != "" {
 		defaults["displayName"] = alias
 	}
 
-	// Handle alignment
 	if align, ok := prevDefaults["align"].(string); ok && align != "" {
 		alignValue := align
 		if align == "auto" {
@@ -337,7 +332,6 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 		defaults["custom"].(map[string]interface{})["align"] = alignValue
 	}
 
-	// Handle thresholds
 	if thresholds, ok := prevDefaults["thresholds"].([]interface{}); ok && len(thresholds) > 0 {
 		if colors, ok := prevDefaults["colors"].([]interface{}); ok && len(colors) > 0 {
 			steps := generateThresholds(thresholds, colors)
@@ -348,7 +342,6 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 		}
 	}
 
-	// Handle color mode
 	if colorMode, ok := prevDefaults["colorMode"].(string); ok && colorMode != "" {
 		if newColorMode, exists := colorModeMap[colorMode]; exists {
 			defaults["custom"].(map[string]interface{})["cellOptions"] = map[string]interface{}{
@@ -360,19 +353,21 @@ func migrateDefaults(prevDefaults map[string]interface{}) map[string]interface{}
 	return defaults
 }
 
-// generateThresholds creates threshold steps from thresholds and colors arrays
 func generateThresholds(thresholds []interface{}, colors []interface{}) []interface{} {
 	steps := []interface{}{
 		map[string]interface{}{
-			"color": colors[0],
-			"value": -1e9, // -Infinity equivalent
+			// -Infinity equivalent - assign a default color
+			"color": "red",
+			"value": nil,
 		},
 	}
 
 	for i, threshold := range thresholds {
-		color := colors[i+1]
-		if i+1 < len(colors) {
-			color = colors[i+1]
+		var color interface{}
+		if i < len(colors) && colors[i] != nil {
+			color = colors[i]
+		} else {
+			color = "red"
 		}
 
 		var value float64
@@ -396,7 +391,6 @@ func generateThresholds(thresholds []interface{}, colors []interface{}) []interf
 	return steps
 }
 
-// colorModeMap maps old color modes to new ones
 var colorModeMap = map[string]string{
 	"cell":  "color-background",
 	"row":   "color-background",

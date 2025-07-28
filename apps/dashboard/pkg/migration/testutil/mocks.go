@@ -71,6 +71,10 @@ func (m *TestPanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
 			ID:      "stat",
 			Version: "1.0.0",
 		},
+		{
+			ID:      "table",
+			Version: "1.0.0",
+		},
 		// Note: grafana-singlestat-panel is not included to match frontend test environment
 		// This ensures both frontend and backend migrations produce the same result
 	}
