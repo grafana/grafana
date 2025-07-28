@@ -7,9 +7,13 @@ import (
 )
 
 var (
-	ErrPrometheusRuleValidationFailed      = errutil.ValidationFailed("alerting.prometheusRuleInvalid")
-	ErrPrometheusRuleGroupValidationFailed = errutil.ValidationFailed("alerting.prometheusRuleGroupInvalid")
+	errPrometheusRuleGroupValidationFailedMsg = "{{.Public.Message}}"
+	ErrPrometheusRuleGroupValidationFailed    = errutil.ValidationFailed("alerting.prometheusRuleGroupInvalid").MustTemplate(errPrometheusRuleGroupValidationFailedMsg, errutil.WithPublic(errPrometheusRuleGroupValidationFailedMsg))
 )
+
+func errPrometheusRuleGroupValidationFailed(message string) error {
+	return ErrPrometheusRuleGroupValidationFailed.Build(errutil.TemplateData{Public: map[string]any{"Message": message}})
+}
 
 type PrometheusRulesFile struct {
 	Groups []PrometheusRuleGroup `yaml:"groups"`
@@ -25,12 +29,16 @@ type PrometheusRuleGroup struct {
 }
 
 func (g *PrometheusRuleGroup) Validate() error {
+	if g.Name == "" {
+		return errPrometheusRuleGroupValidationFailed("rule group name must not be empty")
+	}
+
 	if g.Limit != 0 {
-		return ErrPrometheusRuleGroupValidationFailed.Errorf("limit is not supported")
+		return errPrometheusRuleGroupValidationFailed("limit is not supported")
 	}
 
 	if g.QueryOffset != nil && *g.QueryOffset < prommodel.Duration(0) {
-		return ErrPrometheusRuleGroupValidationFailed.Errorf("query_offset must be >= 0")
+		return errPrometheusRuleGroupValidationFailed("query_offset must be >= 0")
 	}
 
 	return nil

@@ -84,8 +84,8 @@ var (
 
 // StaticSCIMConfig represents the static SCIM configuration from config.ini
 type StaticSCIMConfig struct {
-	AllowNonProvisionedUsers  bool
 	IsUserProvisioningEnabled bool
+	RejectNonProvisionedUsers bool
 }
 
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
@@ -94,13 +94,13 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 ) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
 	staticConfig := &StaticSCIMConfig{
-		AllowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
 		IsUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
+		RejectNonProvisionedUsers: scimSection.Key("reject_non_provisioned_users").MustBool(false),
 	}
 
 	return &UserSync{
-		allowNonProvisionedUsers:  staticConfig.AllowNonProvisionedUsers,
 		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
+		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
 		userService:               userService,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
@@ -115,8 +115,8 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 }
 
 type UserSync struct {
-	allowNonProvisionedUsers  bool
 	isUserProvisioningEnabled bool
+	rejectNonProvisionedUsers bool
 	userService               user.Service
 	authInfoService           login.AuthInfoService
 	userProtectionService     login.UserProtectionService
@@ -187,9 +187,13 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 		return nil
 	}
 
-	// Reject non-provisioned users
-	log.Error("Failed to access user, user is not provisioned")
-	return errUserNotProvisioned.Errorf("user is not provisioned")
+	// Reject non-provisioned users if configured to do so
+	if s.shouldRejectNonProvisionedUsers(ctx, currentIdentity) {
+		log.Error("Failed to authenticate user, user is not provisioned")
+		return errUserNotProvisioned.Errorf("user is not provisioned")
+	}
+
+	return nil
 }
 
 func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdentity *authn.Identity) bool {
@@ -197,21 +201,14 @@ func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdenti
 
 	// Use dynamic SCIM settings if available, otherwise fall back to static config
 	effectiveUserSyncEnabled := s.isUserProvisioningEnabled
-	effectiveAllowNonProvisionedUsers := s.allowNonProvisionedUsers
 
 	if s.scimUtil != nil {
 		orgID := currentIdentity.GetOrgID()
 		effectiveUserSyncEnabled = s.scimUtil.IsUserSyncEnabled(ctx, orgID, s.staticConfig.IsUserProvisioningEnabled)
-		effectiveAllowNonProvisionedUsers = s.scimUtil.AreNonProvisionedUsersAllowed(ctx, orgID, s.staticConfig.AllowNonProvisionedUsers)
 	}
 
 	if !effectiveUserSyncEnabled {
 		log.Debug("User provisioning is disabled, skipping validation")
-		return true
-	}
-
-	if effectiveAllowNonProvisionedUsers {
-		log.Debug("Non-provisioned users are allowed, skipping validation")
 		return true
 	}
 
@@ -221,6 +218,17 @@ func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdenti
 	}
 
 	return false
+}
+
+func (s *UserSync) shouldRejectNonProvisionedUsers(ctx context.Context, currentIdentity *authn.Identity) bool {
+	effectiveRejectNonProvisionedUsers := s.rejectNonProvisionedUsers
+
+	if s.scimUtil != nil {
+		orgID := currentIdentity.GetOrgID()
+		effectiveRejectNonProvisionedUsers = s.scimUtil.AreNonProvisionedUsersRejected(ctx, orgID, s.staticConfig.RejectNonProvisionedUsers)
+	}
+
+	return effectiveRejectNonProvisionedUsers
 }
 
 // SyncUserHook syncs a user with the database
