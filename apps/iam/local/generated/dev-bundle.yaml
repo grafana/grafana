@@ -1326,7 +1326,7 @@ subjects:
     kind: Group
     name: system:unauthenticated
 ---
-﻿apiVersion: v1
+apiVersion: v1
 kind: Service
 metadata:
   labels:
@@ -1570,7 +1570,7 @@ metadata:
   namespace: default
 data:
   overrides.yaml: |
-    overrides: 
+    overrides:
   tempo.yaml: |
     auth_enabled: false
     server:
@@ -1596,7 +1596,7 @@ data:
         local:
           path: /tmp/tempo/traces
         wal:
-          path: /tmp/tempo/wal 
+          path: /tmp/tempo/wal
           v2_encoding: none
           search_encoding: none
 ---
@@ -1901,13 +1901,13 @@ spec:
     name: grafana-agent
 
 ---
-﻿apiVersion: v1
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: loki-config
   namespace: default
 data:
-  config.yaml: | 
+  config.yaml: |
     auth_enabled: false
     server:
       http_listen_port: 3100
@@ -2218,7 +2218,6 @@ data:
       version: v0alpha1
       host: kubernetes.default.svc
       port: 443
-    
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -2240,7 +2239,7 @@ data:
     enabled = true
     [server]
     http_port = 3000
-    root_url = 
+    root_url =
     router_logging = true
     [unified_alerting]
     enabled = true
