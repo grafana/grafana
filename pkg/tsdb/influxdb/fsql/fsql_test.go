@@ -56,13 +56,13 @@ func (suite *FSQLTestSuite) AfterTest(suiteName, testName string) {
 }
 
 func TestFSQLTestSuite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	suite.Run(t, new(FSQLTestSuite))
 }
 
 func (suite *FSQLTestSuite) TestIntegration_QueryData() {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
 	suite.Run("should run simple query data", func() {
 		resp, err := Query(
 			context.Background(),
