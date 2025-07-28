@@ -63,7 +63,6 @@ type Alertmanager struct {
 	orgID             int64
 	ready             bool
 	sender            *sender.ExternalAlertmanager
-	smtpFrom          string
 	state             stateStore
 	tenantID          string
 	url               string

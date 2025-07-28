@@ -389,7 +389,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 3, configSyncs)
-	require.Equal(t, am.smtpFrom, configSent.SmtpConfig.FromAddress)
+	require.Equal(t, am.smtp.FromAddress, configSent.SmtpConfig.FromAddress)
 
 	// Changing fields in the SMTP config should result in the configuration being updated.
 	cfg.SmtpConfig = client.SmtpConfig{
