@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/mtdsclient"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -97,6 +98,12 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
 func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	fromAlert := false
+	for header, val := range s.headers {
+		if header == models.FromAlertHeaderName && val == "true" {
+			fromAlert = true
+		}
+	}
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
 	if err != nil {
@@ -104,7 +111,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 
 	// If there are expressions, handle them and return
-	if parsedReq.hasExpression {
+	if parsedReq.hasExpression || fromAlert {
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
 	// If there is only one datasource, query it and return

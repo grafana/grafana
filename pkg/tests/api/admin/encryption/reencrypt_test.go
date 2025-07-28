@@ -28,6 +28,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration_AdminApiReencrypt(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	const (
 		dataSourceTable              = "data_source"
 		secretsTable                 = "secrets"

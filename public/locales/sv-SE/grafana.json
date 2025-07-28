@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurera",
-      "draft-new-rule": "Skapa utkast till en ny regel",
       "ds-error": {
         "title": "Kan inte ladda regler för denna datakälla"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Ny varningsregel",
       "new-datasource-recording-rule": "Ny registreringsregel för datakälla",
       "new-grafana-recording-rule": "Ny registreringsregel för Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Visa mer …"
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "Lägg till {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Ändra panelbakgrund",
       "panel-description": "Ändra panelbeskrivning",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Instrumentpanel",
+        "element": "",
         "local-variable": "Lokal variabel",
         "multiple-elements": "Flera element",
         "multiple-elements-delete-text": "Är du säker på att du vill radera dessa element?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7160,6 +7164,7 @@
           "start-time": "Starttid:"
         }
       },
+      "share-span": "",
       "warnings": "Varningar"
     },
     "span-filters": {
@@ -10951,15 +10956,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11069,10 +11074,10 @@
       "title-instant-updates-requests-webhooks": "Omedelbara uppdateringar och pull-förfrågningar med webhooks.",
       "title-visual-previews-in-pull-requests": "Visuella förhandsgranskningar i pull-förfrågningar med bildrendering"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Jobbeskrivning",
-      "summary": "Sammanfattning",
-      "title-error": "Fel"
+      "summary": "Sammanfattning"
     },
     "features-list": {
       "actions": {
@@ -11217,10 +11222,12 @@
       "starting": "Startar …",
       "status": {
         "title-error-running-job": "Ett fel uppstod när ett jobb kördes",
-        "title-job-completed-successfully": "Jobbet har slutförts",
         "title-warning-running-job": ""
       },
-      "summary": "Sammanfattning"
+      "summary": "Sammanfattning",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11386,6 +11393,7 @@
       "go-to": "Gå till",
       "make-sure": "Se till att inkludera dessa behörigheter"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Resurser kan inte skapas, redigeras eller raderas under den här processen. I det sista steget kommer de att försvinna.",
       "alert-point-2": "När provisionering är klar kommer resurserna att visas igen och kan hanteras via extern lagring.",
