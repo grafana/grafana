@@ -16,8 +16,11 @@ var (
 )
 
 func IsBusyOrLocked(err error) bool {
-	return errors.Is(err, sqlite3.ErrLocked) || errors.Is(err, sqlite3.ErrBusy)
-	//(sqlError.Code == sqlite.ErrLocked || sqlError.Code == sqlite.ErrBusy) {
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		return sqliteErr.Code == sqlite3.ErrLocked || sqliteErr.Code == sqlite3.ErrBusy
+	}
+	return false
 }
 
 func IsUniqueConstraintViolation(err error) bool {
