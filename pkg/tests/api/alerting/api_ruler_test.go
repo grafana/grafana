@@ -4930,8 +4930,6 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 func TestIntegrationRulePermanentlyDelete(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
-
-		// Setup Grafana and its Database
 	}
 	testinfra.SQLiteIntegrationTest(t)
 
