@@ -13,6 +13,7 @@ use (
 	./apps/investigations
 	./apps/playlist
 	./apps/secret
+	./apps/shorturl
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apiserver

@@ -63,6 +63,7 @@ kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,t
 kubernetesLibraryPanelConnections,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
 kubernetesClientDashboardsFolders,GA,@grafana/grafana-app-platform-squad,false,false,false
+kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
