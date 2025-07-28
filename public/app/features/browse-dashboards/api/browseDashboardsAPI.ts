@@ -492,7 +492,6 @@ export const {
   useGetAffectedItemsQuery,
   useGetFolderQuery,
   useLazyGetFolderQuery,
-  useListFoldersQuery,
   useMoveFolderMutation,
   useMoveItemsMutation,
   useNewFolderMutation,

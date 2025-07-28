@@ -61,7 +61,7 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
-        // Refetch dashboards and folders after deleting a provisioning repository
+        // Refetch dashboards and folders after deleting a provisioned repository
         setTimeout(() => {
           dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
         }, 1000);
@@ -198,6 +198,7 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+        // Refetch dashboards and folders after creating/updating a provisioned repository
         dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
       },
     },

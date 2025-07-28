@@ -92,7 +92,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   // Fetch the root (aka general) folder if we're not in a specific folder
   const { data: rootFolderDTO } = useGetFolderQuery(folderDTO ? skipToken : 'general');
   const folder = folderDTO ?? rootFolderDTO;
-  console.log('dto', folder);
+
   const {
     canEditFolders,
     canDeleteFolders,
