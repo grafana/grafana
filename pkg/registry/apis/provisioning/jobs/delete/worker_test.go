@@ -823,3 +823,163 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err) // Should succeed overall, with only the failed resource recorded as error
 }
+
+func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
+	// Test that duplicate paths from explicit paths and resource resolution are deduplicated
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Ref:   "main",                                                             // Add ref to avoid sync worker execution
+				Paths: []string{"dashboards/test-dashboard.json", "folders/test-folder/"}, // Explicit paths
+				Resources: []provisioning.ResourceRef{
+					{
+						Name:  "test-dashboard", // This will resolve to "dashboards/test-dashboard.json" (duplicate)
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
+					{
+						Name:  "test-folder", // This will resolve to "folders/test-folder/" (duplicate)
+						Kind:  "Folder",
+						Group: "folder.grafana.app",
+					},
+					{
+						Name:  "unique-dashboard", // This will resolve to "dashboards/unique-dashboard.json" (unique)
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
+				},
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+
+	// Mock resources factory and repository resources
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+
+	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	// Expect total of 5 items (2 explicit paths + 3 resources), but only 3 unique paths will be deleted
+	mockProgress.On("SetTotal", mock.Anything, 5).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+
+	// Resource resolution phase
+	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
+
+	// Mock resource path resolution - note duplicates with explicit paths
+	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/test-dashboard").Return()
+	mockRepositoryResources.On("FindResourcePath", mock.Anything, "test-dashboard", schema.GroupVersionKind{
+		Group: "dashboard.grafana.app",
+		Kind:  "Dashboard",
+	}).Return("dashboards/test-dashboard.json", nil) // Duplicate of explicit path
+
+	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource folder.grafana.app/Folder/test-folder").Return()
+	mockRepositoryResources.On("FindResourcePath", mock.Anything, "test-folder", schema.GroupVersionKind{
+		Group: "folder.grafana.app",
+		Kind:  "Folder",
+	}).Return("folders/test-folder/", nil) // Duplicate of explicit path
+
+	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/unique-dashboard").Return()
+	mockRepositoryResources.On("FindResourcePath", mock.Anything, "unique-dashboard", schema.GroupVersionKind{
+		Group: "dashboard.grafana.app",
+		Kind:  "Dashboard",
+	}).Return("dashboards/unique-dashboard.json", nil) // Unique path
+
+	// Note: successful resource resolution does not call Record - only failures do
+
+	// Deletion phase - should only delete 3 unique paths (deduplication working)
+	mockProgress.On("SetMessage", mock.Anything, "Deleting dashboards/test-dashboard.json").Return()
+	mockRepo.On("Delete", mock.Anything, "dashboards/test-dashboard.json", "main", "Delete dashboards/test-dashboard.json").Return(nil)
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path == "dashboards/test-dashboard.json" && result.Action == repository.FileActionDeleted && result.Error == nil
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	mockProgress.On("SetMessage", mock.Anything, "Deleting folders/test-folder/").Return()
+	mockRepo.On("Delete", mock.Anything, "folders/test-folder/", "main", "Delete folders/test-folder/").Return(nil)
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path == "folders/test-folder/" && result.Action == repository.FileActionDeleted && result.Error == nil
+	})).Return()
+
+	mockProgress.On("SetMessage", mock.Anything, "Deleting dashboards/unique-dashboard.json").Return()
+	mockRepo.On("Delete", mock.Anything, "dashboards/unique-dashboard.json", "main", "Delete dashboards/unique-dashboard.json").Return(nil)
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path == "dashboards/unique-dashboard.json" && result.Action == repository.FileActionDeleted && result.Error == nil
+	})).Return()
+
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory)
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+
+	// Verify all mocks were called as expected - key point is that each file is only deleted once
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
+	mockResourcesFactory.AssertExpectations(t)
+	mockRepositoryResources.AssertExpectations(t)
+}
+
+func TestDeduplicatePaths(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "empty slice",
+			input:    []string{},
+			expected: []string{},
+		},
+		{
+			name:     "single path",
+			input:    []string{"path1"},
+			expected: []string{"path1"},
+		},
+		{
+			name:     "no duplicates",
+			input:    []string{"path1", "path2", "path3"},
+			expected: []string{"path1", "path2", "path3"},
+		},
+		{
+			name:     "with duplicates",
+			input:    []string{"path1", "path2", "path1", "path3", "path2"},
+			expected: []string{"path1", "path2", "path3"},
+		},
+		{
+			name:     "all same paths",
+			input:    []string{"path1", "path1", "path1"},
+			expected: []string{"path1"},
+		},
+		{
+			name:     "mixed paths with folder trailing slash",
+			input:    []string{"folder/", "file.json", "folder/", "nested/file.json", "file.json"},
+			expected: []string{"folder/", "file.json", "nested/file.json"},
+		},
+		{
+			name:     "preserves order",
+			input:    []string{"c", "a", "b", "a", "c"},
+			expected: []string{"c", "a", "b"},
+		},
+		{
+			name:     "realistic scenario - explicit paths and resource refs resolve to same paths",
+			input:    []string{"dashboards/dashboard1.json", "folder/", "dashboards/dashboard1.json", "alerts/alert1.yaml", "folder/"},
+			expected: []string{"dashboards/dashboard1.json", "folder/", "alerts/alert1.yaml"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := deduplicatePaths(tt.input)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}

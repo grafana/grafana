@@ -58,6 +58,9 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 			paths = append(paths, resolvedPaths...)
 		}
 
+		// Deduplicate paths to avoid attempting to delete the same file multiple times
+		paths = deduplicatePaths(paths)
+
 		return w.deleteFiles(ctx, rw, progress, opts, paths...)
 	}
 
@@ -156,4 +159,23 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 	}
 
 	return resolvedPaths, nil
+}
+
+// deduplicatePaths removes duplicate file paths from the slice while preserving order
+func deduplicatePaths(paths []string) []string {
+	if len(paths) <= 1 {
+		return paths
+	}
+
+	seen := make(map[string]bool, len(paths))
+	result := make([]string, 0, len(paths))
+
+	for _, path := range paths {
+		if !seen[path] {
+			seen[path] = true
+			result = append(result, path)
+		}
+	}
+
+	return result
 }
