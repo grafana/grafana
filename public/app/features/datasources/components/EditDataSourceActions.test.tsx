@@ -11,7 +11,9 @@ import { EditDataSourceActions } from './EditDataSourceActions';
 // Mock dependencies
 jest.mock('app/core/services/context_srv');
 jest.mock('../utils', () => ({
-  constructDataSourceExploreUrl: jest.fn(() => '/explore?left=%7B%22datasource%22:%22Test%20Prometheus%22,%22context%22:%22explore%22%7D'),
+  constructDataSourceExploreUrl: jest.fn(
+    () => '/explore?left=%7B%22datasource%22:%22Test%20Prometheus%22,%22context%22:%22explore%22%7D'
+  ),
 }));
 
 // Set default plugin links hook
