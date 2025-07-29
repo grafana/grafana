@@ -78,5 +78,6 @@ export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: Dashb
 }
 
 export function getIsLazy(preload: boolean | undefined): boolean {
+  // We don't want to lazy load panels in the case of image renderer
   return !(preload || contextSrv.user.authenticatedBy === 'render');
 }
