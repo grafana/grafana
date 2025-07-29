@@ -104,7 +104,7 @@ func (d *DiscoveryClientImpl) GetPreferredVersionForKind(gk schema.GroupKind) (s
 		if !strings.HasPrefix(apis.GroupVersion, gk.Group) {
 			continue
 		}
-		
+
 		// Parse the group/version
 		var group, version string
 		if strings.Contains(apis.GroupVersion, "/") {
@@ -113,10 +113,10 @@ func (d *DiscoveryClientImpl) GetPreferredVersionForKind(gk schema.GroupKind) (s
 			version = parts[1]
 		} else {
 			// Core API group (e.g., "v1")
-			group = ""  
+			group = ""
 			version = apis.GroupVersion
 		}
-		
+
 		// Look for our target kind in this API group version
 		for _, resource := range apis.APIResources {
 			if resource.Kind == gk.Kind {
