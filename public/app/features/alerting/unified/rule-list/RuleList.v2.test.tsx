@@ -155,11 +155,11 @@ describe('RuleList v2', () => {
 
 describe('RuleListActions', () => {
   const ui = {
-    newRuleButton: byRole('link', { name: /new alert rule/i }),
+    newRuleButton: byRole('link', { name: /^new alert rule$/i }),
     moreButton: byRole('button', { name: /more/i }),
     moreMenu: byRole('menu'),
     menuOptions: {
-      draftNewRule: byRole('link', { name: /draft a new rule/i }),
+      newAlertRuleForExport: byRole('link', { name: /new alert rule for export/i }),
       newGrafanaRecordingRule: byRole('link', { name: /new grafana recording rule/i }),
       newDataSourceRecordingRule: byRole('link', { name: /new data source recording rule/i }),
     },
@@ -191,7 +191,7 @@ describe('RuleListActions', () => {
     expect(ui.moreButton.get()).toBeInTheDocument();
   });
 
-  it('should only show Draft a new rule when the user has view Grafana rules permission', async () => {
+  it('should only show New alert rule for export when the user has view Grafana rules permission', async () => {
     grantUserPermissions([AccessControlAction.AlertingRuleRead]);
 
     const { user } = render(<RuleListActions />);
@@ -200,7 +200,7 @@ describe('RuleListActions', () => {
     const menu = await ui.moreMenu.find();
 
     expect(ui.newRuleButton.query()).not.toBeInTheDocument();
-    expect(ui.menuOptions.draftNewRule.query(menu)).toBeInTheDocument();
+    expect(ui.menuOptions.newAlertRuleForExport.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).not.toBeInTheDocument();
     expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
   });
@@ -213,7 +213,7 @@ describe('RuleListActions', () => {
     await user.click(ui.moreButton.get());
     const menu = await ui.moreMenu.find();
 
-    expect(ui.menuOptions.draftNewRule.query(menu)).toBeInTheDocument();
+    expect(ui.menuOptions.newAlertRuleForExport.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
   });
@@ -226,7 +226,7 @@ describe('RuleListActions', () => {
     await user.click(ui.moreButton.get());
     const menu = await ui.moreMenu.find();
 
-    expect(ui.menuOptions.draftNewRule.query(menu)).toBeInTheDocument();
+    expect(ui.menuOptions.newAlertRuleForExport.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).not.toBeInTheDocument();
     expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
   });
@@ -239,7 +239,7 @@ describe('RuleListActions', () => {
     await user.click(ui.moreButton.get());
     const menu = await ui.moreMenu.find();
 
-    expect(ui.menuOptions.draftNewRule.query(menu)).toBeInTheDocument();
+    expect(ui.menuOptions.newAlertRuleForExport.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
     expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
   });
