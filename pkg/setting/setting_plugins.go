@@ -200,8 +200,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginUpdateStrategy = pluginsSection.Key("update_strategy").In(PluginUpdateStrategyLatest, []string{PluginUpdateStrategyLatest, PluginUpdateStrategyMinor})
 
 	// Plugin API restrictions - read from sections
-	cfg.PluginRestrictedAPIsWhitelist = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_whitelist")
-	cfg.PluginRestrictedAPIsBlacklist = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_blacklist")
+	cfg.PluginRestrictedAPIsAllowList = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_allowlist")
+	cfg.PluginRestrictedAPIsBlockList = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_blocklist")
 
 	return nil
 }

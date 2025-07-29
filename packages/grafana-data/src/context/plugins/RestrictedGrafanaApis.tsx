@@ -15,8 +15,8 @@ type RequireAllPropertiesOptional<T> = keyof T extends never
     : 'Error: all properties of `RestrictedGrafanaApisContextTypeInternal` must be marked as optional, as their availability is controlled via a configuration parameter. Please have a look at `RestrictedGrafanaApisContextTypeInternal`.';
 export type RestrictedGrafanaApisContextType = RequireAllPropertiesOptional<RestrictedGrafanaApisContextTypeInternal>;
 
-// A type for whitelisting / blacklisting plugins for a given API
-export type RestrictedGrafanaApisWhitelist = Partial<
+// A type for allowing / blocking plugins for a given API
+export type RestrictedGrafanaApisAllowList = Partial<
   Record<keyof RestrictedGrafanaApisContextType, Array<string | RegExp>>
 >;
 
@@ -25,37 +25,37 @@ export const RestrictedGrafanaApisContext = createContext<RestrictedGrafanaApisC
 export type Props = {
   pluginId: string;
   apis: RestrictedGrafanaApisContextType;
-  // Use it to share APIs with plugins (TAKES PRECEDENCE over `apiBlacklist`)
-  apiWhitelist?: RestrictedGrafanaApisWhitelist;
+  // Use it to share APIs with plugins (TAKES PRECEDENCE over `apiBlockList`)
+  apiAllowList?: RestrictedGrafanaApisAllowList;
   // Use it to disable sharing APIs with plugins.
-  apiBlacklist?: RestrictedGrafanaApisWhitelist;
+  apiBlockList?: RestrictedGrafanaApisAllowList;
 };
 
 export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Props>): ReactElement {
-  const { children, pluginId, apis, apiWhitelist, apiBlacklist } = props;
+  const { children, pluginId, apis, apiAllowList, apiBlockList } = props;
 
   const allowedApis = useMemo(() => {
     const allowedApis: RestrictedGrafanaApisContextType = {};
 
     for (const api of Object.keys(apis) as Array<keyof RestrictedGrafanaApisContextType>) {
       if (
-        apiWhitelist &&
-        apiWhitelist[api] &&
-        (apiWhitelist[api].includes(pluginId) ||
-          apiWhitelist[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId)))
+        apiAllowList &&
+        apiAllowList[api] &&
+        (apiAllowList[api].includes(pluginId) ||
+          apiAllowList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId)))
       ) {
         allowedApis[api] = apis[api];
         continue;
       }
 
-      // IF no whitelist is defined (only blacklist), then we only omit the blacklisted APIs
+      // IF no allow list is defined (only block list), then we only omit the blocked APIs
       if (
-        (!apiWhitelist || Object.keys(apiWhitelist).length === 0) &&
-        apiBlacklist &&
-        apiBlacklist[api] &&
+        (!apiAllowList || Object.keys(apiAllowList).length === 0) &&
+        apiBlockList &&
+        apiBlockList[api] &&
         !(
-          apiBlacklist[api].includes(pluginId) ||
-          apiBlacklist[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId))
+          apiBlockList[api].includes(pluginId) ||
+          apiBlockList[api].some((keyword) => keyword instanceof RegExp && keyword.test(pluginId))
         )
       ) {
         allowedApis[api] = apis[api];
@@ -63,7 +63,7 @@ export function RestrictedGrafanaApisContextProvider(props: PropsWithChildren<Pr
     }
 
     return allowedApis;
-  }, [apis, apiWhitelist, apiBlacklist, pluginId]);
+  }, [apis, apiAllowList, apiBlockList, pluginId]);
 
   return <RestrictedGrafanaApisContext.Provider value={allowedApis}>{children}</RestrictedGrafanaApisContext.Provider>;
 }

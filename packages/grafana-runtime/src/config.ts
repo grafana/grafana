@@ -234,8 +234,8 @@ export class GrafanaBootConfig {
   exploreDefaultTimeOffset = '1h';
   exploreHideLogsDownload?: boolean;
   quickRanges?: TimeOption[];
-  pluginRestrictedAPIsWhitelist?: Record<string, string[]>;
-  pluginRestrictedAPIsBlacklist?: Record<string, string[]>;
+  pluginRestrictedAPIsAllowList?: Record<string, string[]>;
+  pluginRestrictedAPIsBlockList?: Record<string, string[]>;
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of

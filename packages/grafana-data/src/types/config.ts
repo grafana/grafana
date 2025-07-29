@@ -302,8 +302,8 @@ export interface GrafanaConfig {
   exploreDefaultTimeOffset: string;
   exploreHideLogsDownload: boolean;
   quickRanges?: TimeOption[];
-  pluginRestrictedAPIsWhitelist?: Record<string, string[]>;
-  pluginRestrictedAPIsBlacklist?: Record<string, string[]>;
+  pluginRestrictedAPIsAllowList?: Record<string, string[]>;
+  pluginRestrictedAPIsBlockList?: Record<string, string[]>;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
