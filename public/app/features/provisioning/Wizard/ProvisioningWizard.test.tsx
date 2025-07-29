@@ -402,7 +402,7 @@ describe('ProvisioningWizard', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/admin/provisioning');
     });
 
-    it('should handle cancel on subsequent steps with repository deletion', async () => {
+    it('should handle going back to previous step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
@@ -418,10 +418,10 @@ describe('ProvisioningWizard', () => {
         expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /Cancel/i }));
+      await user.click(screen.getByRole('button', { name: /Previous/i }));
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/admin/provisioning');
+        expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
       });
     });
 
