@@ -13,8 +13,8 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-schema"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "publishConfig": {
     "main": "dist/index.js",
     "module": "dist/esm/index.js",
@@ -49,6 +49,5 @@
   },
   "dependencies": {
     "tslib": "2.8.1"
-  },
-  "module": "dist/esm/index.js"
+  }
 }
