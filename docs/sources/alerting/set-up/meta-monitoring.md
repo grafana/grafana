@@ -128,6 +128,12 @@ This metric is a gauge that shows you the number of seconds that the scheduler i
 
 This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric lets you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
 
+#### grafana_alerting_state_history_writes_failed_total
+
+This metric is a counter that shows you the number of failed writes to the configured alert state history backend. It includes a `backend` label to distinguish between different backends (such as `loki` or `prometheus`).
+
+For example, you might want to create an alert that fires when `grafana_alerting_state_history_writes_failed_total{backend="prometheus"}` is greater than 0 to detect when Prometheus remote write is failing.
+
 ## Logs for Grafana-managed alerts
 
 If you have configured [Loki for alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/), logs related to state changes in Grafana-managed alerts are stored in the Loki data source.
