@@ -12,8 +12,8 @@ const SectionSeparator = ":"
 // the configuration is missing from the defaults.ini and the custom override is invalid
 var defaults = map[string]any{
 	"expressions" + SectionSeparator + "enabled":                          true,
-	"expressions" + SectionSeparator + "sql_expression_cell_limit":        100000,
-	"expressions" + SectionSeparator + "sql_expression_output_cell_limit": 100000,
+	"expressions" + SectionSeparator + "sql_expression_cell_limit":        int64(100000),
+	"expressions" + SectionSeparator + "sql_expression_output_cell_limit": int64(100000),
 	"expressions" + SectionSeparator + "sql_expression_timeout":           time.Second * 10,
 }
 

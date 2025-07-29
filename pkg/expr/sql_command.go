@@ -96,11 +96,14 @@ func UnmarshalSQLCommand(rn *rawNode, cfg setting.ConfigProvider) (*SQLCommand, 
 	formatRaw := rn.Query["format"]
 	format, _ := formatRaw.(string)
 
-	cellLimit := cfg.GetValue("expressions", "sql_expression_cell_limit").(int64)
-	outputLimit := cfg.GetValue("expressions", "sql_expression_output_cell_limit").(int64)
-	timeout := cfg.GetValue("expressions", "sql_expression_timeout").(time.Duration)
+	/*
+		// Example of how to get the configuration values from the config provider
+		cellLimit := cfg.GetValue("expressions", "sql_expression_cell_limit").(int64)
+		outputLimit := cfg.GetValue("expressions", "sql_expression_output_cell_limit").(int64)
+		timeout := cfg.GetValue("expressions", "sql_expression_timeout").(time.Duration)
+	*/
 
-	return NewSQLCommand(rn.RefID, format, expression, cellLimit, outputLimit, timeout)
+	return NewSQLCommand(rn.RefID, format, expression, cfg.Get().SQLExpressionCellLimit, cfg.Get().SQLExpressionOutputCellLimit, cfg.Get().SQLExpressionTimeout)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
