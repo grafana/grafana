@@ -119,7 +119,8 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
 
   return {
     ctx,
-    font,
+    fontFamily,
+    letterSpacing,
     avgCharWidth,
     estimateLines: getTextLineEstimator(avgCharWidth),
     wrappedCount: wrapUwrapCount(count),
@@ -179,16 +180,11 @@ export function getDataLinksCounter(): LineCounter {
   };
 }
 
-// 6px horizontal padding on each side
-const PILLS_SPACING = 12;
-// 4px gap between pills
-const PILLS_GAP = 4;
-// Pills are rendered at 12px font size
-const PILLS_TEXT_SIZE_RATIO = 12 / 14;
+const PILLS_FONT_SIZE = 12;
+const PILLS_SPACING = 12; // 6px horizontal padding on each side
+const PILLS_GAP = 4; // gap between pills
 
-export function getPillLineCounter(avgCharWidth: number): LineCounter {
-  const adjustedCharWidth = avgCharWidth * PILLS_TEXT_SIZE_RATIO;
-
+export function getPillLineCounter(measureWidth: (value: string) => number): LineCounter {
   return (value, width) => {
     if (value == null) {
       return 0;
@@ -203,8 +199,10 @@ export function getPillLineCounter(avgCharWidth: number): LineCounter {
     let currentLineUse = width;
 
     for (const pillValue of pillValues) {
-      const pillWidth = pillValue.length * adjustedCharWidth + PILLS_SPACING;
-      if (currentLineUse + pillWidth > width) {
+      const rawWidth = measureWidth(pillValue);
+      const pillWidth = rawWidth + PILLS_SPACING;
+
+      if (currentLineUse + pillWidth + PILLS_GAP > width) {
         lines++;
         currentLineUse = pillWidth;
       } else {
@@ -256,10 +254,29 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
         result.dataLinksCounter = result.dataLinksCounter ?? { counter: getDataLinksCounter(), fieldIdxs: [] };
         result.dataLinksCounter.fieldIdxs.push(fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
-        result.pillCounter = result.pillCounter ?? {
-          counter: getPillLineCounter(typographyCtx.avgCharWidth),
-          fieldIdxs: [],
-        };
+        if (!result.pillCounter) {
+          const pillTypographyCtx = createTypographyContext(
+            PILLS_FONT_SIZE,
+            typographyCtx.fontFamily,
+            typographyCtx.letterSpacing
+          );
+
+          // when using pills, there's a common-sense assumption that values will be repeated.
+          // cache the results of width calculations to try to limit some of the measureText cost.
+          const preciseWidthCache: Record<string, number> = {};
+
+          result.pillCounter = {
+            estimate: getPillLineCounter((value) => value.length * pillTypographyCtx.avgCharWidth),
+            counter: getPillLineCounter((value) => {
+              if (preciseWidthCache[value] === undefined) {
+                const width = pillTypographyCtx.ctx.measureText(value).width;
+                preciseWidthCache[value] = width;
+              }
+              return preciseWidthCache[value];
+            }),
+            fieldIdxs: [],
+          };
+        }
         result.pillCounter.fieldIdxs.push(fieldIdx);
       }
 
@@ -353,7 +370,7 @@ export function getRowHeight(
   // round up to the nearest line before doing math
   maxLines = Math.ceil(maxLines);
 
-  // we want a round number of lines for rendering
+  // adjust for vertical padding and line height, and clamp to a minimum default height
   const verticalPaddingValue =
     typeof verticalPadding === 'function' ? verticalPadding(maxField, maxLines) : verticalPadding;
   const totalHeight = maxLines * lineHeight + verticalPaddingValue;

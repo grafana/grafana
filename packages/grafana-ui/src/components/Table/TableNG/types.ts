@@ -270,7 +270,8 @@ export interface ScrollPosition {
 
 export interface TypographyCtx {
   ctx: CanvasRenderingContext2D;
-  font: string;
+  fontFamily: string;
+  letterSpacing: number;
   avgCharWidth: number;
   estimateLines: LineCounter;
   wrappedCount: LineCounter;

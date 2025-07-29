@@ -320,10 +320,6 @@ export function TableNG(props: TableNGProps) {
           field.display = getDisplayProcessor({ field, theme });
         }
 
-        if (cellType === TableCellDisplayMode.Pill) {
-          console.log(shouldTextOverflow(field));
-        }
-
         // attach JSONCell custom display function to JSONView cell type
         if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
           field.display = displayJsonValue;
@@ -1004,6 +1000,7 @@ const getCellStyles = (
     ...(maxWrappedLines && {
       // height properties need to override the default settings.
       height: 'auto',
+      // FIXME: this line causes the table to get out of alignment when 2 or more fields are wrapped
       maxHeight: maxWrappedLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2,
       minHeight: 'none',
       // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
