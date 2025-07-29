@@ -1,7 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
+import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
 import { InlineToast as InlineToastImpl, InlineToastProps } from './InlineToast';
@@ -14,8 +15,6 @@ const story: Meta = {
     docs: {
       page: mdx,
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   argTypes: {
     referenceElement: {
@@ -30,13 +29,16 @@ export default story;
 
 export const InlineToast: StoryFn<InlineToastProps> = (args) => {
   const [el, setEl] = useState<null | HTMLInputElement>(null);
+  const id = useId();
 
   return (
     <div style={{ maxWidth: 500, width: `calc(100% - 100px)` }}>
       <InlineToastImpl {...args} referenceElement={el}>
         Saved
       </InlineToastImpl>
-      <Input ref={setEl} />
+      <Field label="Input with InlineToast">
+        <Input ref={setEl} id={id} />
+      </Field>
     </div>
   );
 };
