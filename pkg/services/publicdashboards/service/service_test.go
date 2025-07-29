@@ -44,6 +44,9 @@ func TestLogPrefix(t *testing.T) {
 }
 
 func TestIntegrationGetPublicDashboardForView(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type storeResp struct {
 		pd  *PublicDashboard
 		d   *dashboards.Dashboard
@@ -436,6 +439,9 @@ func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 }
 
 func TestIntegrationGetPublicDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type storeResp struct {
 		pd  *PublicDashboard
 		d   *dashboards.Dashboard
@@ -513,6 +519,9 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 }
 
 func TestIntegrationGetEnabledPublicDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type storeResp struct {
 		pd  *PublicDashboard
 		d   *dashboards.Dashboard
@@ -578,6 +587,9 @@ func TestIntegrationGetEnabledPublicDashboard(t *testing.T) {
 // We're using sqlite here because testing all of the behaviors with mocks in
 // the correct order is convoluted.
 func TestIntegrationCreatePublicDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("Create public dashboard", func(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
@@ -959,6 +971,9 @@ func assertFalseIfNull(t *testing.T, expectedValue bool, nullableValue *bool) {
 }
 
 func TestIntegrationUpdatePublicDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeDashboardService := &dashboards.FakeDashboardService{}
 	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 
@@ -1203,6 +1218,9 @@ func assertOldValueIfNull(t *testing.T, expectedValue bool, oldValue bool, nulla
 }
 
 func TestIntegrationDeletePublicDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "uid"}
 
 	type mockFindResponse struct {

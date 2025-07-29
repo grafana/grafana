@@ -24,6 +24,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardSnapshotsService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)

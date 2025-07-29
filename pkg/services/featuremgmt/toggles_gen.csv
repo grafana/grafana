@@ -240,3 +240,4 @@ pluginAssetProvider,experimental,@grafana/plugins-platform-backend,false,true,fa
 unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
 dashboardDsAdHocFiltering,experimental,@grafana/datapro,false,false,true
 alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
+adhocFiltersInTooltips,experimental,@grafana/datapro,false,false,true

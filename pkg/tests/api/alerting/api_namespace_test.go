@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-// integration tests, to test folder permissions with GetNamespaceByUID
 func TestIntegration_NamespacingForRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -216,7 +215,6 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 	})
 }
 
-// tests TestIntegration_GetOrCreateNamespaceByTitle and TestIntegration_GetNamespaceByTitle
 func TestIntegration_NamespacingForPrometheusRules(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -472,7 +470,7 @@ func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID stri
 	require.NoError(t, err)
 
 	u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/permissions", grafanaListedAddr, folderUID)
-	resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes))
+	resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	err = resp.Body.Close()

@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configurer",
-      "draft-new-rule": "Rédiger une nouvelle règle",
       "ds-error": {
         "title": "Impossible de charger les règles pour cette source de données"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Nouvelle règle d'alerte",
       "new-datasource-recording-rule": "Nouvelle règle d’enregistrement de source de données",
       "new-grafana-recording-rule": "Nouvelle règle d’enregistrement Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Afficher plus..."
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Déplacer {{typeName}}",
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Tableau de bord",
+        "element": "",
         "local-variable": "Variable locale",
         "multiple-elements": "Éléments multiples",
         "multiple-elements-delete-text": "Voulez-vous vraiment supprimer ces éléments ?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7508,6 +7512,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7567,6 +7572,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -13439,7 +13445,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13461,6 +13467,9 @@
         }
       },
       "regression": "régression",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Nombre de points X, Y à prédire"
     },
     "rename-by-regex-transformer": {

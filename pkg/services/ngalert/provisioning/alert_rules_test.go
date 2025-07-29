@@ -36,6 +36,9 @@ import (
 // note: additional integration tests are in /pkg/tests/api/alerting/api_provisioning_test.go
 
 func TestIntegrationAlertRuleService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
@@ -749,6 +752,9 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 }
 
 func TestIntegrationCreateAlertRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)

@@ -647,7 +647,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		return idx, nil
 	}
 
-	idxInt, err, _ := s.buildIndex.Do(key.String(), func() (interface{}, error) {
+	ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
 		// Recheck if some other goroutine managed to build an index in the meantime.
 		// (That is, it finished running this function and stored the index into the cache)
 		idx, err := s.search.GetIndex(ctx, key)
@@ -681,10 +681,16 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		}
 		return idx, nil
 	})
-	if err != nil {
-		return nil, err
+
+	select {
+	case res := <-ch:
+		if res.Err != nil {
+			return nil, res.Err
+		}
+		return res.Val.(ResourceIndex), nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf("failed to get index: %w", ctx.Err())
 	}
-	return idxInt.(ResourceIndex), nil
 }
 
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {

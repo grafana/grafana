@@ -465,3 +465,315 @@ For debugging purposes, you can view the memberlist status by visitting `http://
 that every instance you create is part of the memberlist.
 You can also visit `http://127.0.0.1:3000/ring` to view the ring status and the storage-api servers that are part of the
 ring.
+
+---
+
+## Dual Writer System
+
+The Dual Writer system is a critical component of Unified Storage that manages the transition between legacy storage and unified storage during the migration process. It provides six different modes (0-5) that control how data is read from and written to both storage systems.
+
+### Dual Writer Mode Reference Table
+
+| Mode | Description | Read Source | Read Behavior | Write Targets | Write Behavior | Error Handling | Background Sync |
+|------|-------------|-------------|---------------|---------------|----------------|----------------|-----------------|
+| **0** | Disabled | Legacy Only | Synchronous | Legacy Only | Synchronous | Legacy errors bubble up | None |
+| **1** | Legacy Primary + Best Effort Unified | Legacy Only | Legacy: Sync<br/>Unified: Async (background) | Legacy + Unified | Legacy: Sync<br/>Unified: Async (background) | Only legacy errors bubble up.<br/>Unified errors logged but ignored | Active - syncs legacy → unified |
+| **2** | Legacy Primary + Unified Sync | Legacy Only | Legacy: Sync<br/>Unified: Sync (verification read) | Legacy + Unified | Legacy: Sync<br/>Unified: Sync | Legacy errors bubble up first.<br/>Unified errors bubble up (except NotFound which is ignored).<br/>If write succeeds in legacy but fails in unified, unified error bubbles up and legacy is cleaned up | Active - syncs legacy → unified |
+| **3** | Unified Primary + Legacy Sync | Unified Primary | Unified: Sync<br/>Legacy: Fallback on NotFound | Legacy + Unified | Legacy: Sync<br/>Unified: Sync | Legacy errors bubble up first.<br/>If legacy succeeds but unified fails, unified error bubbles up and legacy is cleaned up | Prerequisite - only available after sync completes |
+| **4** | Unified Only (Post-Sync) | Unified Only | Synchronous | Unified Only | Synchronous | Unified errors bubble up | Prerequisite - only available after sync completes |
+| **5** | Unified Only (Force) | Unified Only | Synchronous | Unified Only | Synchronous | Unified errors bubble up | None - bypasses sync requirements |
+
+
+### Dual Writer Architecture
+
+The dual writer acts as an intermediary layer that sits between the API layer and the storage backends, routing read and write operations based on the configured mode.
+
+```mermaid
+graph TB
+    subgraph "API Layer"
+        A[REST API Request]
+    end
+    
+    subgraph "Dual Writer Layer"
+        B[Dual Writer]
+        B --> C{Mode Decision}
+    end
+    
+    subgraph "Storage Backends"
+        D[Legacy Storage<br/>SQL Database]
+        E[Unified Storage<br/>K8s-style Storage]
+    end
+    
+    subgraph "Background Services"
+        F[Data Syncer<br/>Background Job]
+        G[Server Lock Service<br/>Distributed Lock]
+    end
+    
+    A --> B
+    C --> D
+    C --> E
+    F --> D
+    F --> E
+    F --> G
+```
+
+### Mode-Specific Data Flow Diagrams
+
+#### Mode 0: Legacy Only (Disabled)
+```mermaid
+sequenceDiagram
+    participant API as API Request
+    participant DW as Dual Writer
+    participant LS as Legacy Storage
+    participant US as Unified Storage
+    
+    Note over DW: Mode 0 - Unified Storage Disabled
+    
+    API->>DW: Read/Write Request
+    DW->>LS: Forward Request
+    LS-->>DW: Response
+    DW-->>API: Response
+    
+    Note over US: Not Used
+```
+
+#### Mode 1: Legacy Primary + Best Effort Unified
+```mermaid
+sequenceDiagram
+    participant API as API Request
+    participant DW as Dual Writer
+    participant LS as Legacy Storage
+    participant US as Unified Storage
+    participant BG as Background Sync
+    
+    Note over DW: Mode 1 - Legacy Primary, Unified Best-Effort
+    
+    %% Read Operations
+    API->>DW: Read Request
+    DW->>LS: Read from Legacy
+    LS-->>DW: Data
+    DW->>US: Read from Unified (Background)
+    Note over US: Errors ignored
+    DW-->>API: Legacy Data
+    
+    %% Write Operations
+    API->>DW: Write Request
+    DW->>LS: Write to Legacy
+    LS-->>DW: Success/Error
+    alt Legacy Write Successful
+        DW->>US: Write to Unified (Background)
+        Note over US: Errors ignored
+        DW-->>API: Legacy Result
+    else Legacy Write Failed
+        DW-->>API: Legacy Error
+    end
+    
+    BG->>LS: Periodic Sync Check
+    BG->>US: Sync Missing Data
+```
+
+#### Mode 2: Legacy Primary + Unified Sync
+```mermaid
+sequenceDiagram
+    participant API as API Request
+    participant DW as Dual Writer
+    participant LS as Legacy Storage
+    participant US as Unified Storage
+    participant BG as Background Sync
+    
+    Note over DW: Mode 2 - Legacy Primary, Unified Synchronous
+    
+    %% Read Operations
+    API->>DW: Read Request
+    DW->>LS: Read from Legacy
+    LS-->>DW: Data
+    DW->>US: Verification Read (Foreground)
+    Note over US: Verifies unified storage can serve the same object
+    US-->>DW: Success/Error
+    alt Verification Read Failed (Non-NotFound)
+        DW-->>API: Unified Error
+    else Verification Read Success or NotFound
+        DW-->>API: Legacy Data
+    end
+    
+    %% Write Operations
+    API->>DW: Write Request
+    DW->>LS: Write to Legacy
+    LS-->>DW: Success/Error
+    alt Legacy Write Successful
+        DW->>US: Write to Unified (Foreground)
+        US-->>DW: Success/Error
+        alt Unified Write Failed
+            DW->>LS: Cleanup Legacy (Best Effort)
+            DW-->>API: Unified Error
+        else Both Writes Successful
+            DW-->>API: Legacy Result
+        end
+    else Legacy Write Failed
+        DW-->>API: Legacy Error
+    end
+    
+    BG->>LS: Periodic Sync Check
+    BG->>US: Sync Missing Data
+```
+
+#### Mode 3: Unified Primary + Legacy Sync
+```mermaid
+sequenceDiagram
+    participant API as API Request
+    participant DW as Dual Writer
+    participant LS as Legacy Storage
+    participant US as Unified Storage
+    
+    Note over DW: Mode 3 - Unified Primary, Legacy Sync
+    Note over DW: Only activated after background sync succeeds
+    
+    %% Read Operations
+    API->>DW: Read Request
+    DW->>US: Read from Unified
+    US-->>DW: Data/Error
+    alt Unified Read NotFound
+        DW->>LS: Fallback to Legacy
+        LS-->>DW: Data/Error
+        DW-->>API: Legacy Result
+    else Unified Read Success
+        DW-->>API: Unified Data
+    end
+    
+    %% Write Operations
+    API->>DW: Write Request
+    DW->>LS: Write to Legacy
+    LS-->>DW: Success/Error
+    alt Legacy Write Successful
+        DW->>US: Write to Unified
+        US-->>DW: Success/Error
+        alt Unified Write Failed
+            DW->>LS: Cleanup Legacy (Best Effort)
+            DW-->>API: Unified Error
+        else Both Writes Successful
+            DW-->>API: Unified Result
+        end
+    else Legacy Write Failed
+        DW-->>API: Legacy Error
+    end
+```
+
+#### Mode 4 & 5: Unified Only
+```mermaid
+sequenceDiagram
+    participant API as API Request
+    participant DW as Dual Writer
+    participant LS as Legacy Storage
+    participant US as Unified Storage
+    
+    Note over DW: Mode 4/5 - Unified Only
+    Note over DW: Mode 4: After background sync succeeds
+    Note over DW: Mode 5: Ignores background sync state
+    
+    API->>DW: Read/Write Request
+    DW->>US: Forward Request
+    US-->>DW: Response
+    DW-->>API: Response
+    
+    Note over LS: Not Used
+```
+
+### Background Sync Behavior
+
+The background sync service runs periodically (default: every hour) and is responsible for:
+
+1. **Data Synchronization**: Ensures legacy and unified storage contain the same data
+2. **Mode Progression**: Enables transition from Mode 2 → Mode 3 → Mode 4
+3. **Conflict Resolution**: Handles cases where data exists in one storage but not the other
+
+#### Sync Process Flow
+
+```mermaid
+flowchart TD
+    A[Background Sync Trigger] --> B{Current Mode}
+    
+    B -->|Mode 1/2| C[Acquire Distributed Lock]
+    B -->|Mode 3+| Z[No Sync Needed]
+    
+    C --> D[List Legacy Storage Items]
+    D --> E[List Unified Storage Items]
+    E --> F[Compare All Items]
+    
+    F --> G{Item Comparison}
+    
+    G -->|Missing in Unified| H[Create in Unified]
+    G -->|Missing in Legacy| I[Delete from Unified]
+    G -->|Different Content| J[Update Unified with Legacy Version]
+    G -->|Identical| K[No Action Needed]
+    
+    H --> L[Track Sync Success]
+    I --> L
+    J --> L
+    K --> L
+    
+    L --> M{All Items Synced?}
+    M -->|Yes| N[Mark Sync Complete<br/>Enable Mode Progression]
+    M -->|No| O[Log Failures<br/>Retry Next Cycle]
+    
+    N --> P[Release Lock]
+    O --> P
+    Z --> P
+```
+
+#### Mode Transition Requirements
+
+- **Mode 0 → Mode 1**: Configuration change only
+- **Mode 1 → Mode 2**: Configuration change only  
+- **Mode 2 → Mode 3**: Requires successful background sync completion
+- **Mode 3 → Mode 4**: Requires successful background sync completion
+- **Mode 4 → Mode 5**: Configuration change only
+- **Any Mode → Mode 5**: Configuration change only (bypasses sync requirements)
+
+### Error Handling Strategies
+
+#### Write Operation Error Priority
+1. **Legacy Storage Errors**: Always bubble up immediately if legacy write fails
+2. **Unified Storage Errors**: 
+   - Mode 1: Logged but ignored
+   - Mode 2+: Bubble up after legacy cleanup attempt
+3. **Cleanup Operations**: Best effort - failures are logged but don't fail the original operation
+
+#### Read Operation Fallback
+- **Mode 2**: `NotFound` errors from unified storage are ignored (object may not be synced yet), but other errors bubble up
+- **Mode 3**: If unified storage returns `NotFound`, automatically falls back to legacy storage
+- **Other Modes**: No fallback - errors bubble up directly
+
+### Configuration
+
+#### Setting Dual Writer Mode
+```ini
+[unified_storage.{resource}.{kind}.{group}]
+dualWriterMode = {0-5}
+```
+
+#### Background Sync Configuration
+```ini
+[unified_storage]
+; Enable data sync between legacy and unified storage
+enable_data_sync = true
+
+; Sync interval (default: 1 hour)
+data_sync_interval = 1h
+
+; Maximum records to sync per run (default: 1000)  
+data_sync_records_limit = 1000
+
+; Skip data sync requirement for mode transitions
+skip_data_sync = false
+```
+
+### Monitoring and Observability
+
+The dual writer system provides metrics for monitoring:
+
+- `dual_writer_requests_total`: Counter of requests by mode, operation, and status
+- `dual_writer_sync_duration_seconds`: Histogram of background sync duration
+- `dual_writer_sync_success_total`: Counter of successful sync operations
+- `dual_writer_mode_transitions_total`: Counter of mode transitions
+
+Use these metrics to monitor the health of your migration and identify any issues with the dual writer system.

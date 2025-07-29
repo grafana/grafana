@@ -970,4 +970,8 @@ const (
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
+
+	// FlagAdhocFiltersInTooltips
+	// Enable adhoc filter buttons in visualization tooltips
+	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
 )

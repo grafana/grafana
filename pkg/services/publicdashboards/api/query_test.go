@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -230,55 +229,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 func getValidQueryPath(accessToken string) string {
 	return fmt.Sprintf("/api/public/dashboards/%s/panels/2/query", accessToken)
-}
-
-func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	_, cfg := db.InitTestDBWithCfg(t)
-
-	cfg.PublicDashboardsEnabled = true
-	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardService(t)
-	fakePublicDashboardService.On("GetQueryDataResponse", mock.Anything, mock.Anything, mock.Anything, int64(1), mock.Anything).Return(&backend.QueryDataResponse{
-		Responses: map[string]backend.DataResponse{
-			"A": {
-				Frames: []*data.Frame{{}},
-			},
-		},
-	}, nil)
-	server := setupTestServer(t, cfg, fakePublicDashboardService, anonymousUser)
-	pubdash := &PublicDashboard{
-		AccessToken: validAccessToken,
-	}
-
-	resp := callAPI(server, http.MethodPost,
-		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.AccessToken),
-		strings.NewReader(`{}`),
-		t,
-	)
-	require.Equal(t, http.StatusOK, resp.Code)
-	require.JSONEq(
-		t,
-		`{
-        "results": {
-          "A": {
-			"status": 200,
-            "frames": [
-              {
-                "data": {
-                  "values": []
-                },
-                "schema": {
-                  "fields": []
-                }
-              }
-            ]
-          }
-        }
-      }`,
-		resp.Body.String(),
-	)
 }
 
 func TestAPIGetAnnotations(t *testing.T) {

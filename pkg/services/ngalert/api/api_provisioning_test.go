@@ -60,6 +60,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationProvisioningApi(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("policies", func(t *testing.T) {
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -1590,6 +1593,9 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 }
 
 func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
 		env := createTestEnv(t, testConfig)
 		env.ac = &recordingAccessControlFake{

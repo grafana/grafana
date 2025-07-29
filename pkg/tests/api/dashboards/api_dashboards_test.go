@@ -70,18 +70,12 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	savedDashInGeneralFolder := createDashboard(t, grafanaListedAddr, "Saved dashboard in general folder", 0, "")
 
 	t.Run("When saving a dashboard with non-existing id in org A", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    123412321,
 				"title": "Expect error",
 			},
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 		err = resp.Body.Close()
@@ -89,18 +83,12 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with existing ID from org A in org B", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin-org2", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
-				"id":    123412321,
+				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"title": "Expect error",
 			},
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 		err = resp.Body.Close()
@@ -108,18 +96,12 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with same UID in org A and org B, should be okay", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin-org2", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"uid":   savedDashInFolder.UID,
 				"title": "Saved dash in folder",
 			},
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin-org2:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -127,35 +109,23 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When creating a dashboard in General folder with same name as dashboard in other folder", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"title": "Saved dash in folder",
 			},
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 	})
 	t.Run("When creating a dashboard in other folder with same name as dashboard in General folder", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"uid":   savedDashInFolder,
 				"title": "Dash with existing uid in other org",
 			},
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -168,17 +138,11 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard without id and uid and unique title in folder", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"title": "Unique",
 			},
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -186,18 +150,12 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with id 0", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    0,
 				"title": "Dash with zero id",
 			},
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -205,18 +163,12 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard in non-existing folder", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"title": "no folder",
 			},
 			"folderUid": "non-existing-folder",
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		err = resp.Body.Close()
@@ -224,19 +176,13 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with incorrect version but no overwrite", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"uid":     savedDashInFolder.UID,
 				"version": 1,
 			},
 			"folderUid": savedDashInFolder.FolderUID,
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		err = resp.Body.Close()
@@ -244,20 +190,14 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with current version and overwrite is true", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"uid":     savedDashInFolder.UID,
 				"version": savedDashInFolder.Version,
 				"title":   "Saved dash in folder",
 			},
 			"folderUid": savedDashInFolder.FolderUID,
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -265,20 +205,14 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When saving a dashboard with no version set and title set to a folder title", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"uid":   savedDashInFolder.UID,
 				"title": "Saved folder",
 			},
 			"folderUid": savedDashInFolder.FolderUID,
 			"overwrite": true,
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -286,7 +220,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When updating uid with id", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"uid":   "new-uid",
@@ -294,20 +228,14 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 			},
 			"folderUid": savedDashInFolder.FolderUID,
 			"overwrite": true,
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 	})
 	t.Run("When updating uid with a dashboard already using that uid", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"uid":   savedDashInGeneralFolder.UID,
@@ -315,13 +243,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 			},
 			"folderUid": savedDashInFolder.FolderUID,
 			"overwrite": true,
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		})
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		err = resp.Body.Close()
@@ -329,7 +251,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 
 	t.Run("When trying to update to a folder", func(t *testing.T) {
-		dashboardPayload := map[string]interface{}{
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
 				"uid":   savedDashInFolder.UID,
@@ -338,13 +260,8 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 			"isFolder":  true,
 			"folderUid": savedDashInFolder.FolderUID,
 			"overwrite": true,
-		}
-
-		payloadBytes, err := json.Marshal(dashboardPayload)
+		})
 		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		err = resp.Body.Close()
@@ -1056,6 +973,16 @@ func createDashboard(t *testing.T, grafanaListedAddr string, title string, folde
 	}
 }
 
+func postDashboard(t *testing.T, grafanaListedAddr, user, password string, payload map[string]interface{}) (*http.Response, error) {
+	t.Helper()
+
+	payloadBytes, err := json.Marshal(payload)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("http://%s:%s@%s/api/dashboards/db", user, password, grafanaListedAddr)
+	return http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+}
+
 func TestIntegrationDashboardServicePermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -1117,18 +1044,13 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			"overwrite": true,
 		}
 
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://viewer:viewer@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 
-		u = fmt.Sprintf("http://editor:editor@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err = http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -1145,18 +1067,13 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			"overwrite": true,
 		}
 
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://viewer:viewer@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 
-		u = fmt.Sprintf("http://editor:editor@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err = http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -1173,18 +1090,13 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			"overwrite": true,
 		}
 
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://viewer:viewer@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 
-		u = fmt.Sprintf("http://editor:editor@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err = http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
@@ -1201,18 +1113,13 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			"overwrite": true,
 		}
 
-		payloadBytes, err := json.Marshal(dashboardPayload)
-		require.NoError(t, err)
-
-		u := fmt.Sprintf("http://viewer:viewer@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
 
-		u = fmt.Sprintf("http://editor:editor@%s/api/dashboards/db", grafanaListedAddr)
-		resp, err = http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()

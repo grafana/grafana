@@ -2458,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "구성",
-      "draft-new-rule": "새 규칙 초안 작성",
       "ds-error": {
         "title": "이 데이터 소스에 대한 규칙을 불러올 수 없음"
       },
@@ -2484,6 +2483,7 @@
       "new-alert-rule": "새 경고 규칙",
       "new-datasource-recording-rule": "새 데이터 소스 기록 규칙",
       "new-grafana-recording-rule": "새 Grafana 기록 규칙",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "더 보기..."
       },
@@ -4547,6 +4547,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} 추가",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "패널 배경 변경",
       "panel-description": "패널 설명 변경",
@@ -4561,6 +4565,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "대시보드",
+        "element": "",
         "local-variable": "로컬 변수",
         "multiple-elements": "여러 요소",
         "multiple-elements-delete-text": "정말 이 요소를 삭제하시겠어요?",
@@ -5768,7 +5773,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7486,6 +7490,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7545,6 +7550,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -13397,7 +13403,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13419,6 +13425,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "예측할 X, Y 포인트 수"
     },
     "rename-by-regex-transformer": {

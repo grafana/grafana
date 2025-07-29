@@ -2458,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "設定",
-      "draft-new-rule": "撰寫新規則",
       "ds-error": {
         "title": "無法載入此資料來源的規則"
       },
@@ -2484,6 +2483,7 @@
       "new-alert-rule": "新的警報規則",
       "new-datasource-recording-rule": "新的資料來源錄製規則",
       "new-grafana-recording-rule": "新的 Grafana 錄製規則",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "顯示更多內容…"
       },
@@ -4547,6 +4547,10 @@
     },
     "edit-actions": {
       "add": "新增 {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "移動 {{typeName}}",
       "panel-background": "變更面板背景",
       "panel-description": "變更面板描述",
@@ -4561,6 +4565,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "儀表板",
+        "element": "",
         "local-variable": "本機變數",
         "multiple-elements": "多個元素",
         "multiple-elements-delete-text": "確定要刪除這些元素嗎？",
@@ -5768,7 +5773,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7486,6 +7490,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7545,6 +7550,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -13397,7 +13403,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13419,6 +13425,9 @@
         }
       },
       "regression": "回歸",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "要預測的 X、Y 點數"
     },
     "rename-by-regex-transformer": {

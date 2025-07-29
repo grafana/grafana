@@ -40,6 +40,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -333,6 +336,9 @@ func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
 }
 
 func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testScenario(t, "When an admin tries to import a dashboard with a library panel that does not exist, it should import the library panel",
 		func(t *testing.T, sc scenarioContext) {
 			var missingUID = "jL6MrxCMz"

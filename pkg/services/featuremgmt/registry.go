@@ -1861,6 +1861,13 @@ var (
 			HideFromDocs:      true,
 			Expression:        "false",
 		},
+		{
+			Name:         "adhocFiltersInTooltips",
+			Description:  "Enable adhoc filter buttons in visualization tooltips",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 

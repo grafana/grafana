@@ -12,6 +12,9 @@ import (
 )
 
 func TestIntegration_CreateLibraryElement(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
