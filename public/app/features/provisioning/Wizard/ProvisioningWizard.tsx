@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
-import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
@@ -64,11 +64,12 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
   const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
     useStepStatus();
 
-  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning);
+  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
   const isFinishWithSyncCompleted =
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
@@ -103,7 +104,11 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
-  const { shouldSkipSync, requiresMigration } = useResourceStats(repoName, isLegacyStorage);
+  const {
+    shouldSkipSync,
+    requiresMigration,
+    isLoading: isResourceStatsLoading,
+  } = useResourceStats(repoName, isLegacyStorage);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
     requiresMigration,
@@ -149,8 +154,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       let previousStepIndex = currentStepIndex - 1;
 
       // Handle special case: if we're on finish step and sync was skipped
-      // Only apply skip logic if we have a repoName (data is available)
-      if (activeStep === 'finish' && repoName && shouldSkipSync) {
+      // Only apply skip logic if we have a repoName and resource stats are loaded
+      if (activeStep === 'finish' && repoName && !isResourceStatsLoading && shouldSkipSync) {
         previousStepIndex = currentStepIndex - 2; // Go back to bootstrap
       }
 
@@ -165,24 +170,23 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   };
 
   const handlePrevious = async () => {
-    // For the first step, act like cancel - delete any existing repo and go back to main page
-    if (activeStep === 'connection') {
-      if (repoName) {
-        handleRepositoryDeletion(repoName);
-      } else {
+    // For cancel actions, show confirmation modal
+    if (shouldUseCancelBehavior) {
+      if (!repoName) {
         navigate(PROVISIONING_URL);
+        return;
       }
-      return;
-    }
-
-    // After sync completion, act like cancel (delete repo and exit)
-    if (isSyncCompleted || isFinishWithSyncCompleted) {
-      handleRepositoryDeletion(repoName);
+      setShowCancelConfirmation(true);
       return;
     }
 
     // For other steps, go back one step
     handleBack();
+  };
+
+  const handleConfirmCancel = () => {
+    setShowCancelConfirmation(false);
+    handleRepositoryDeletion(repoName);
   };
 
   // Calculate button text based on current step position
@@ -196,8 +200,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       }
 
       // If on bootstrap step and should skip sync, show finish step name
-      // Only apply skip logic if we have a repoName (data is available)
-      if (currentStep === 'bootstrap' && repoName && shouldSkipSync) {
+      // Only apply skip logic if we have a repoName and resource stats are loaded
+      if (currentStep === 'bootstrap' && repoName && !isResourceStatsLoading && shouldSkipSync) {
         const finishStepIndex = stepIndex + 2;
         if (finishStepIndex < steps.length) {
           return steps[finishStepIndex].name;
@@ -207,7 +211,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       return steps[stepIndex + 1].name;
     },
-    [steps, shouldSkipSync, repoName]
+    [steps, shouldSkipSync, repoName, isResourceStatsLoading]
   );
 
   // Calculate previous/cancel button text based on current state
@@ -233,8 +237,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       let nextStepIndex = currentStepIndex + 1;
 
       // Skip synchronize step if no sync is needed
-      // Only apply skip logic if we have a repoName (data is available)
-      if (activeStep === 'bootstrap' && repoName && shouldSkipSync) {
+      // Only apply skip logic if we have a repoName and resource stats are loaded
+      if (activeStep === 'bootstrap' && repoName && !isResourceStatsLoading && shouldSkipSync) {
         nextStepIndex = currentStepIndex + 2; // Skip to finish step
 
         // Create a pull job to initialize the repository
@@ -354,7 +358,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               <Button
                 variant={'secondary'}
                 onClick={handlePrevious}
-                disabled={isSubmitting || isCancelling || isStepRunning}
+                disabled={isSubmitting || isCancelling || isStepRunning || showCancelConfirmation}
               >
                 {getPreviousButtonText()}
               </Button>
@@ -367,6 +371,18 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
           </Stack>
         </form>
       </Stack>
+      <ConfirmModal
+        isOpen={showCancelConfirmation}
+        title={t('provisioning.wizard.discard-modal.title', 'Discard repository setup?')}
+        body={t(
+          'provisioning.wizard.discard-modal.body',
+          'This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?'
+        )}
+        confirmText={t('provisioning.wizard.discard-modal.confirm', 'Yes, discard')}
+        dismissText={t('provisioning.wizard.discard-modal.dismiss', 'Keep working')}
+        onConfirm={handleConfirmCancel}
+        onDismiss={() => setShowCancelConfirmation(false)}
+      />
     </FormProvider>
   );
 }
