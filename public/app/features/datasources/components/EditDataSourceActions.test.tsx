@@ -10,6 +10,9 @@ import { EditDataSourceActions } from './EditDataSourceActions';
 
 // Mock dependencies
 jest.mock('app/core/services/context_srv');
+jest.mock('../utils', () => ({
+  constructDataSourceExploreUrl: jest.fn(() => '/explore?left=%7B%22datasource%22:%22Test%20Prometheus%22,%22context%22:%22explore%22%7D'),
+}));
 
 // Set default plugin links hook
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
@@ -61,11 +64,19 @@ describe('EditDataSourceActions', () => {
   });
 
   describe('Core Actions', () => {
-    it('should render core Grafana actions when user has explore rights', () => {
+    it('should render core Grafana actions when user has explore rights', async () => {
       mockContextSrv.hasAccessToExplore.mockReturnValue(true);
 
       render(<EditDataSourceActions uid="test-uid" />);
 
+      // Should render the Actions dropdown button
+      const actionsButton = screen.getByText('Actions');
+      expect(actionsButton).toBeInTheDocument();
+
+      // Click the dropdown to open the menu
+      fireEvent.click(actionsButton);
+
+      // Now the menu items should be visible
       expect(screen.getByText('Explore data')).toBeInTheDocument();
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
     });
@@ -75,12 +86,20 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
-      expect(screen.queryByText('Explore data')).not.toBeInTheDocument();
+      // Should render just the "Build a dashboard" button directly (not in dropdown)
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
+      // Should not render the Actions dropdown
+      expect(screen.queryByText('Actions')).not.toBeInTheDocument();
+      // Should not render explore action anywhere
+      expect(screen.queryByText('Explore data')).not.toBeInTheDocument();
     });
 
     it('should have correct href for explore action', () => {
       render(<EditDataSourceActions uid="test-uid" />);
+
+      // Click the dropdown to open the menu
+      const actionsButton = screen.getByText('Actions');
+      fireEvent.click(actionsButton);
 
       const exploreLink = screen.getByText('Explore data').closest('a');
       // The explore URL uses the datasource name, not uid, and includes context
@@ -92,6 +111,10 @@ describe('EditDataSourceActions', () => {
 
     it('should have correct href for build dashboard action', () => {
       render(<EditDataSourceActions uid="test-uid" />);
+
+      // Click the dropdown to open the menu
+      const actionsButton = screen.getByText('Actions');
+      fireEvent.click(actionsButton);
 
       const dashboardLink = screen.getByText('Build a dashboard').closest('a');
       expect(dashboardLink).toHaveAttribute('href', 'dashboard/new-with-ds/test-uid');
@@ -119,6 +142,10 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
+      // Click the dropdown to open the menu
+      const actionsButton = screen.getByText('Actions');
+      fireEvent.click(actionsButton);
+
       expect(screen.getByText('Explore Logs')).toBeInTheDocument();
       expect(screen.getByText('Explore Traces')).toBeInTheDocument();
     });
@@ -140,6 +167,10 @@ describe('EditDataSourceActions', () => {
       setPluginLinksHook(() => ({ links: mockLinks, isLoading: false }));
 
       render(<EditDataSourceActions uid="test-uid" />);
+
+      // Click the dropdown to open the menu
+      const actionsButton = screen.getByText('Actions');
+      fireEvent.click(actionsButton);
 
       expect(screen.getByText('Allowed Action')).toBeInTheDocument();
       expect(screen.queryByText('Disallowed Action')).not.toBeInTheDocument();
@@ -171,6 +202,10 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
+      // Click the dropdown to open the menu
+      const actionsButton = screen.getByText('Actions');
+      fireEvent.click(actionsButton);
+
       const actionButton = screen.getByText('Clickable Action');
       fireEvent.click(actionButton);
 
@@ -193,6 +228,10 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
+      // Click the dropdown to open the menu
+      const actionsButton = screen.getByText('Actions');
+      fireEvent.click(actionsButton);
+
       const actionButton = screen.getByText('Test Action');
       const linkElement = actionButton.closest('a');
 
@@ -213,15 +252,24 @@ describe('EditDataSourceActions', () => {
 
       render(<EditDataSourceActions uid="test-uid" />);
 
+      // Should render the Actions dropdown since user has explore rights
+      const actionsButton = screen.getByText('Actions');
+      fireEvent.click(actionsButton);
+
       expect(screen.queryByText('Should Not Appear')).not.toBeInTheDocument();
       // Core actions should still be there
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Explore data')).toBeInTheDocument();
     });
 
     it('should handle empty extension links gracefully', () => {
       setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
       render(<EditDataSourceActions uid="test-uid" />);
+
+      // Should render the Actions dropdown since user has explore rights
+      const actionsButton = screen.getByText('Actions');
+      fireEvent.click(actionsButton);
 
       // Should render core actions without errors
       expect(screen.getByText('Build a dashboard')).toBeInTheDocument();
