@@ -61,9 +61,12 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		return w.deleteFiles(ctx, rw, progress, opts, paths...)
 	}
 
+	msg := fmt.Sprintf("Delete from Grafana %s", job.Name)
 	stageOptions := repository.StageOptions{
-		PushOnWrites: false,
-		Timeout:      10 * time.Minute,
+		Mode:                  repository.StageModeCommitOnlyOnce,
+		CommitOnlyOnceMessage: msg,
+		PushOnWrites:          false,
+		Timeout:               10 * time.Minute,
 	}
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
