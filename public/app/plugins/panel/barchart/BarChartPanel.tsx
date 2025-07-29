@@ -165,7 +165,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               getAdHocFilters={(seriesIdx, dataIdx) => {
                 const xField = vizSeries[0].fields[0];
 
-                // Check if the field supports filtering (similar to table implementation)
+                // Check if the field supports filtering
                 // We only show filters on filterable fields (xField.config.filterable).
                 // Fields will have been marked as filterable by the data source if that data source supports adhoc filtering
                 // (eg. Prom or Loki) and the field types support adhoc filtering (eg. string or number - depending on the data source).
