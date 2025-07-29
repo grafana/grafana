@@ -1,6 +1,7 @@
 package resourcepermission
 
 import (
+	"database/sql"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,26 +24,26 @@ type ListResourcePermissionsQuery struct {
 }
 
 type flatResourcePermission struct {
-	ID               int64     `xorm:"id"`
-	RoleName         string    `xorm:"role_name"`
-	RoleUID          string    `xorm:"role_uid"`
-	OrgID            int64     `xorm:"org_id"`
-	Action           string    `xorm:"action"`
-	Scope            string    `xorm:"scope"`
-	Created          time.Time `xorm:"created"`
-	Updated          time.Time `xorm:"updated"`
-	UserID           int64     `xorm:"user_id"`
-	UserOrgID        int64     `xorm:"user_org_id"`
-	UserUID          string    `xorm:"user_uid"`
-	UserLogin        string    `xorm:"user_login"`
-	UserName         string    `xorm:"user_name"`
-	UserEmail        string    `xorm:"user_email"`
-	IsServiceAccount bool      `xorm:"is_service_account"`
-	TeamID           int64     `xorm:"team_id"`
-	TeamUID          string    `xorm:"team_uid"`
-	TeamName         string    `xorm:"team_name"`
-	BuiltInOrgID     int64     `xorm:"builtin_org_id"`
-	BuiltInRole      string    `xorm:"builtin_role"`
+	ID               int64          `xorm:"id"`
+	RoleName         string         `xorm:"role_name"`
+	RoleUID          string         `xorm:"role_uid"`
+	OrgID            int64          `xorm:"org_id"`
+	Action           string         `xorm:"action"`
+	Scope            string         `xorm:"scope"`
+	Created          time.Time      `xorm:"created"`
+	Updated          time.Time      `xorm:"updated"`
+	UserID           sql.NullInt64  `xorm:"user_id"`
+	UserOrgID        sql.NullInt64  `xorm:"user_org_id"`
+	UserUID          sql.NullString `xorm:"user_uid"`
+	UserLogin        sql.NullString `xorm:"user_login"`
+	UserName         sql.NullString `xorm:"user_name"`
+	UserEmail        sql.NullString `xorm:"user_email"`
+	IsServiceAccount bool           `xorm:"is_service_account"`
+	TeamID           sql.NullInt64  `xorm:"team_id"`
+	TeamUID          sql.NullString `xorm:"team_uid"`
+	TeamName         sql.NullString `xorm:"team_name"`
+	BuiltInOrgID     sql.NullInt64  `xorm:"builtin_org_id"`
+	BuiltInRole      sql.NullString `xorm:"builtin_role"`
 }
 
 func toV0ResourcePermission(flatPerms []flatResourcePermission) *v0alpha1.ResourcePermission {
@@ -58,18 +59,18 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission) *v0alpha1.Resour
 	var permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
 	var permissionName string
 
-	if first.UserID != 0 {
-		name = first.UserUID
+	if first.UserID.Valid {
+		name = first.UserUID.String
 		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-		permissionName = first.UserUID
-	} else if first.TeamID != 0 {
-		name = first.TeamUID
+		permissionName = first.UserUID.String
+	} else if first.TeamID.Valid {
+		name = first.TeamUID.String
 		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
-		permissionName = first.TeamUID
-	} else if first.BuiltInRole != "" {
-		name = first.BuiltInRole
+		permissionName = first.TeamUID.String
+	} else if first.BuiltInRole.Valid {
+		name = first.BuiltInRole.String
 		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
-		permissionName = first.BuiltInRole
+		permissionName = first.BuiltInRole.String
 	} else {
 		// Default case, shouldn't happen but handle gracefully
 		name = "unknown"

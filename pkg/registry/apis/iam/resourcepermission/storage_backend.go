@@ -8,11 +8,13 @@ import (
 	"strings"
 	"sync"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/extensions/licensing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -21,31 +23,16 @@ import (
 )
 
 type ResourcePermissionSqlBackend struct {
-	rpService resourcepermissions.Store
-	service   resourcepermissions.Service
-	sql       legacysql.LegacyDatabaseProvider
-	token     licensing.LicenseToken
-	fallback  *noopstorage.StorageBackendImpl
+	sql      legacysql.LegacyDatabaseProvider
+	token    licensing.LicenseToken
+	fallback *noopstorage.StorageBackendImpl
 
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func ProvideStorageBackend(rpService resourcepermissions.Store, sql legacysql.LegacyDatabaseProvider, token licensing.LicenseToken) *ResourcePermissionSqlBackend {
+func ProvideStorageBackend(sql legacysql.LegacyDatabaseProvider, token licensing.LicenseToken) *ResourcePermissionSqlBackend {
 	return &ResourcePermissionSqlBackend{
-		rpService: rpService,
-		sql:       sql,
-		token:     token,
-		fallback:  noopstorage.ProvideStorageBackend(),
-
-		subscribers: make([]chan *resource.WrittenEvent, 0),
-		mutex:       sync.Mutex{},
-	}
-}
-
-func ProvideStorageBackendWithService(service resourcepermissions.Service, sql legacysql.LegacyDatabaseProvider, token licensing.LicenseToken) *ResourcePermissionSqlBackend {
-	return &ResourcePermissionSqlBackend{
-		service:  service,
 		sql:      sql,
 		token:    token,
 		fallback: noopstorage.ProvideStorageBackend(),
@@ -68,122 +55,44 @@ func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *re
 		return s.fallback.ListIterator(ctx, req, cb)
 	}
 
-	dashboardPermissions := []*v0alpha1.ResourcePermission{
-		{
-			ObjectMeta: metav1.ObjectMeta{Name: "admin-dashboards"},
-			Spec: v0alpha1.ResourcePermissionSpec{
-				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app",
-					Resource: "dashboards",
-					Name:     "*",
-				},
-				Permissions: []v0alpha1.ResourcePermissionspecPermission{
-					{
-						Kind:  v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name:  "admin",
-						Verbs: []string{"read", "write", "create", "delete"},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{Name: "editor-dashboards"},
-			Spec: v0alpha1.ResourcePermissionSpec{
-				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app",
-					Resource: "dashboards",
-					Name:     "*",
-				},
-				Permissions: []v0alpha1.ResourcePermissionspecPermission{
-					{
-						Kind:  v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name:  "editor",
-						Verbs: []string{"read", "write"},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{Name: "viewer-dashboards"},
-			Spec: v0alpha1.ResourcePermissionSpec{
-				Resource: v0alpha1.ResourcePermissionspecResource{
-					ApiGroup: "dashboard.grafana.app",
-					Resource: "dashboards",
-					Name:     "*",
-				},
-				Permissions: []v0alpha1.ResourcePermissionspecPermission{
-					{
-						Kind:  v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
-						Name:  "viewer",
-						Verbs: []string{"read"},
-					},
-				},
-			},
+	if req.ResourceVersion != 0 {
+		return 0, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
+	}
+
+	// Parse continue token
+	token, err := readContinueToken(req.NextPageToken)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse continue token: %w", err)
+	}
+
+	query := &ListResourcePermissionsQuery{
+		Pagination: common.Pagination{
+			Limit:    req.Limit,
+			Continue: token.id,
 		},
 	}
 
-	items := make([][]byte, 0, len(dashboardPermissions))
-	for _, perm := range dashboardPermissions {
-		data, err := json.Marshal(perm)
-		if err != nil {
-			return 0, err
-		}
-		items = append(items, data)
-	}
-
-	iterator := &listIteratorFromSlice{items: items, index: 0}
-	err := cb(iterator)
-	return 1000, err // Return some resource version
-}
-
-func (s *ResourcePermissionSqlBackend) listWithService(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error, token *continueToken) (int64, error) {
-	items := make([][]byte, 0)
-	iterator := &listIteratorFromSlice{items: items, index: 0}
-	err := cb(iterator)
-	return 1000, err
-}
-
-func (s *ResourcePermissionSqlBackend) listWithFallback(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error, token *continueToken) (int64, error) {
-	items := make([][]byte, 0)
-	rows := &listIteratorFromSlice{items: items, index: 0}
-	err := cb(rows)
-	return 1000, err
-}
-
-func (s *ResourcePermissionSqlBackend) listWithRpService(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error, token *continueToken) (int64, error) {
-	orgID := int64(1)
-
-	permissions, err := s.rpService.GetResourcePermissions(ctx, orgID, resourcepermissions.GetResourcePermissionsQuery{})
+	sql, err := s.sql(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	// Convert to v0alpha1.ResourcePermission format for the API
-	items := make([][]byte, 0, len(permissions))
-	for _, perm := range permissions {
-		v0alpha1Perm := s.convertManagedPermissionToV0Alpha1(perm)
-
-		data, err := json.Marshal(v0alpha1Perm)
-		if err != nil {
-			return 0, err
-		}
-
-		items = append(items, data)
+	// Get the most recent resource update time.
+	listRV, err := sql.GetResourceVersion(ctx, "resource_permission", "updated")
+	if err != nil {
+		return 0, err
 	}
-
-	// Create iterator from our items
-	rows := &listIteratorFromSlice{items: items, index: 0}
-	err = cb(rows)
-	return 1000, err // Return some resource version
-}
-
-func (s *ResourcePermissionSqlBackend) convertManagedPermissionToV0Alpha1(perm accesscontrol.ResourcePermission) *v0alpha1.ResourcePermission {
-	return &v0alpha1.ResourcePermission{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%d", perm.RoleName, perm.UserID),
-		},
-		Spec: v0alpha1.ResourcePermissionSpec{},
+	listRV *= 1000 // Convert to microseconds
+	rows, err := s.newResourcePermissionIterator(ctx, sql, query)
+	if rows != nil {
+		defer func() {
+			_ = rows.Close()
+		}()
 	}
+	if err == nil {
+		err = cb(rows)
+	}
+	return listRV, err
 }
 
 func getApiGroupForResource(resourceType string) string {
@@ -213,7 +122,24 @@ func (s *ResourcePermissionSqlBackend) ReadResource(ctx context.Context, req *re
 		ResourceVersion: version,
 	}
 
-	rsp.Error = resource.AsErrorResult(errors.New("resource permission not found"))
+	sql, err := s.sql(ctx)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+
+	resourcePermission, err := s.getResourcePermission(ctx, sql, req.Key.Name)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+
+	rsp.Value, err = json.Marshal(resourcePermission)
+	if err != nil {
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+
 	return rsp
 }
 
