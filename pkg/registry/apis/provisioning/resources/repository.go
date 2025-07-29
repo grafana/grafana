@@ -85,7 +85,7 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 
 	sourcePath, exists := annotations[utils.AnnoKeySourcePath]
 	if !exists || sourcePath == "" {
-		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)  
+		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)
 	}
 
 	// For folder resources, ensure the path has a trailing slash for proper deletion
