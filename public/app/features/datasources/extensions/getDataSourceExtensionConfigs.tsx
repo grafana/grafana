@@ -2,7 +2,7 @@ import {
   PluginExtensionAddedLinkConfig,
   PluginExtensionPoints,
   PluginExtensionDataSourceConfigActionsContext,
-  PluginExtensionDataSourceConfigStatusContext,
+  DataSourceConfigErrorStatusContext,
 } from '@grafana/data';
 
 import { createAddedLinkConfig } from '../../plugins/extensions/utils';
@@ -35,23 +35,16 @@ export function getDataSourceExtensionConfigs(): PluginExtensionAddedLinkConfig[
       }),
 
       // Example: Add troubleshooting link for error status
-      createAddedLinkConfig<PluginExtensionDataSourceConfigStatusContext>({
+      createAddedLinkConfig<DataSourceConfigErrorStatusContext>({
         // This is called at the top level, so will break if we add a translation here 😱
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         title: 'Troubleshooting Guide',
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         description: 'Get help resolving this datasource issue',
-        targets: [PluginExtensionPoints.DataSourceConfigStatus],
+        targets: [PluginExtensionPoints.DataSourceConfigErrorStatus],
         icon: 'question-circle',
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         category: 'Help',
-        configure: (context) => {
-          // Only show for error status
-          if (context?.severity !== 'error') {
-            return undefined;
-          }
-          return {};
-        },
         path: '/a/grafana/docs/troubleshooting/datasources',
       }),
     ];
