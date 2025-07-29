@@ -233,9 +233,11 @@ func TestServicebuildPipeLine(t *testing.T) {
 			expectedOrder: []string{"B", "A"},
 		},
 	}
+	cfg, err := setting.ProvideService(setting.NewCfg())
+	require.NoError(t, err)
 	s := Service{
 		features: featuremgmt.WithFeatures(featuremgmt.FlagExpressionParser),
-		cfg:      setting.ProvideService(setting.NewCfg()),
+		cfg:      cfg,
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

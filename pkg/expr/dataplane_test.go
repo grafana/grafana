@@ -54,9 +54,11 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
+	cfgProvider, err := setting.ProvideService(cfg)
+	require.NoError(t, err)
 
 	s := Service{
-		cfg:         setting.ProvideService(cfg),
+		cfg:         cfgProvider,
 		dataService: me,
 		features:    features,
 		pCtxProvider: plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{

@@ -427,15 +427,19 @@ type Cfg struct {
 	OAuthSkipOrgRoleUpdateSync     bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
+	// Deprecated: use ConfigProvider.GetValue instead.
 	ExpressionsEnabled bool
 
 	// SQLExpressionCellLimit is the maximum number of cells (rows × columns, across all frames) that can be accepted by a SQL expression.
+	// Deprecated: use ConfigProvider.GetValue instead.
 	SQLExpressionCellLimit int64
 
 	// SQLExpressionOutputCellLimit is the maximum number of cells (rows × columns) that can be outputted by a SQL expression.
+	// Deprecated: use ConfigProvider.GetValue instead.
 	SQLExpressionOutputCellLimit int64
 
 	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
+	// Deprecated: use ConfigProvider.GetValue instead.
 	SQLExpressionTimeout time.Duration
 
 	ImageUploadProvider string

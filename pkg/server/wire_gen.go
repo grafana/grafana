@@ -576,7 +576,10 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	starService := starimpl.ProvideService(sqlStore)
 	searchSearchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service15, service13, requestConfigProvider)
-	ossConfigProvider := setting.ProvideService(cfg)
+	ossConfigProvider, err := setting.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
 	mtDatasourceClientBuilder := mtdsclient.NewNullMTDatasourceClientBuilder()
 	exprService := expr.ProvideService(ossConfigProvider, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, mtDatasourceClientBuilder)
 	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, mtDatasourceClientBuilder)
@@ -1134,7 +1137,10 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	starService := starimpl.ProvideService(sqlStore)
 	searchSearchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service15, service13, requestConfigProvider)
-	ossConfigProvider := setting.ProvideService(cfg)
+	ossConfigProvider, err := setting.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
 	mtDatasourceClientBuilder := mtdsclient.NewNullMTDatasourceClientBuilder()
 	exprService := expr.ProvideService(ossConfigProvider, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, mtDatasourceClientBuilder)
 	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, mtDatasourceClientBuilder)

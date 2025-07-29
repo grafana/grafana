@@ -59,7 +59,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	s, req := newMockQueryService(resp, queries)
+	s, req := newMockQueryService(t, resp, queries)
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
@@ -133,7 +133,7 @@ func TestDSQueryError(t *testing.T) {
 		},
 	}
 
-	s, req := newMockQueryService(resp, queries)
+	s, req := newMockQueryService(t, resp, queries)
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
@@ -187,10 +187,12 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 			cfg.SQLExpressionCellLimit = tt.configCellLimit
 
 			features := featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+			cfgProvider, err := setting.ProvideService(cfg)
+			require.NoError(t, err)
 
 			// Create service with our configured limit
 			s := &Service{
-				cfg:      setting.ProvideService(cfg),
+				cfg:      cfgProvider,
 				features: features,
 				converter: &ResultConverter{
 					Features: features,
@@ -234,7 +236,9 @@ func dataSourceModel() *datasources.DataSource {
 	return d
 }
 
-func newMockQueryService(responses map[string]backend.DataResponse, queries []Query) (*Service, *Request) {
+func newMockQueryService(t *testing.T, responses map[string]backend.DataResponse, queries []Query) (*Service, *Request) {
+	t.Helper()
+
 	me := &mockEndpoint{
 		Responses: responses,
 	}
@@ -245,8 +249,10 @@ func newMockQueryService(responses map[string]backend.DataResponse, queries []Qu
 	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
 
 	features := featuremgmt.WithFeatures()
+	cfg, err := setting.ProvideService(setting.NewCfg())
+	require.NoError(t, err)
 	return &Service{
-		cfg:          setting.ProvideService(setting.NewCfg()),
+		cfg:          cfg,
 		dataService:  me,
 		pCtxProvider: pCtxProvider,
 		features:     featuremgmt.WithFeatures(),

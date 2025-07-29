@@ -76,7 +76,7 @@ func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64,
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
-func UnmarshalSQLCommand(rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
+func UnmarshalSQLCommand(rn *rawNode, cfg setting.ConfigProvider) (*SQLCommand, error) {
 	if rn.TimeRange == nil {
 		logger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
@@ -96,7 +96,11 @@ func UnmarshalSQLCommand(rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
 	formatRaw := rn.Query["format"]
 	format, _ := formatRaw.(string)
 
-	return NewSQLCommand(rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
+	cellLimit := cfg.GetValue("expressions", "sql_expression_cell_limit").(int64)
+	outputLimit := cfg.GetValue("expressions", "sql_expression_output_cell_limit").(int64)
+	timeout := cfg.GetValue("expressions", "sql_expression_timeout").(time.Duration)
+
+	return NewSQLCommand(rn.RefID, format, expression, cellLimit, outputLimit, timeout)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -154,7 +158,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	db := sql.DB{}
 	frame, err := db.QueryFrames(ctx, tracer, gr.refID, gr.query, allFrames, sql.WithMaxOutputCells(gr.outputLimit), sql.WithTimeout(gr.timeout))
-
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err

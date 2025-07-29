@@ -18,8 +18,10 @@ import (
 )
 
 func TestConvertDataFramesToResults(t *testing.T) {
+	cfg, err := setting.ProvideService(setting.NewCfg())
+	require.NoError(t, err)
 	s := &Service{
-		cfg:      setting.ProvideService(setting.NewCfg()),
+		cfg:      cfg,
 		features: featuremgmt.WithFeatures(),
 		tracer:   tracing.InitializeTracerForTest(),
 		metrics:  metrics.NewSSEMetrics(nil),
