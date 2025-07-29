@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Ennek az opciónak a bejelölésével előnyben részesíti a sorozat végpontját {{exampleParameter}} paraméterrel a címkeértékek végpontjához képest {{exampleParameter}} paraméterrel. Bár a címkeértékek végpontja hatékonyabbnak tekinthető, egyes felhasználók előnyben részesíthetik a sorozatot, mert rendelkezik POST-metódussal, míg a címkeértékek végpontja csak GET-metódussal rendelkezik."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",

@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Cocher cette option favorisera le point de terminaison de la série avec le paramètre {{exampleParameter}} par rapport au point de terminaison des valeurs d’étiquette avec le paramètre {{exampleParameter}}. Bien que le point de terminaison des valeurs d’étiquette soit considéré comme plus performant, certains utilisateurs peuvent préférer la série, car elle dispose d’une méthode POST tandis que le point de terminaison des valeurs d’étiquette ne dispose que d’une méthode GET."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",

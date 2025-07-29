@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Wenn diese Option aktiviert ist, wird der Reihenendpunkt mit dem Parameter {{exampleParameter}} gegenüber dem Endpunkt der Label-Werte mit dem Parameter {{exampleParameter}} bevorzugt. Obwohl der Endpunkt der Label-Werte als leistungsfähiger gilt, könnten manche Nutzer die Reihe bevorzugen, da sie über eine POST-Methode verfügt, während der Endpunkt der Label-Werte nur über eine GET-Methode verfügt."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",

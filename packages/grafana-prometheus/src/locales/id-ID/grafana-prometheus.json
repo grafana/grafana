@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Memeriksa opsi ini akan mengutamakan titik akhir data seri dengan {{exampleParameter}} parameter daripada titik akhir nilai label dengan {{exampleParameter}} parameter. Meskipun titik akhir nilai label dianggap memiliki kinerja yang lebih baik, beberapa pengguna mungkin lebih menyukai data seri karena memiliki metode POST, sementara titik akhir nilai label hanya memiliki metode GET."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",

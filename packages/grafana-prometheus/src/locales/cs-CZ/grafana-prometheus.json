@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Zaškrtnutím této možnosti upřednostníte koncový bod řady s parametrem {{exampleParameter}} před koncovým bodem hodnot štítků s parametrem {{exampleParameter}}. Zatímco koncový bod hodnot štítků je považován za výkonnější, někteří uživatelé mohou upřednostňovat řady kvůli metodě POST, zatímco koncový bod hodnot štítků má pouze metodu GET."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
