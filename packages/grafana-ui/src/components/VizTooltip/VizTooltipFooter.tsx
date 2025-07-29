@@ -98,7 +98,7 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, adHocFilte
         <div className={styles.footerSection}>
           {adHocFilters.map((item) => (
             <Button icon="filter" variant="secondary" size="sm" onClick={item.onClick}>
-              <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">Filter for {item.value}</Trans>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value" values={{ value: item.value }} />
             </Button>
           ))}
         </div>
