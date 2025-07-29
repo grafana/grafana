@@ -1079,4 +1079,8 @@ export interface FeatureToggles {
   * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enable adhoc filter buttons in visualization tooltips
+  */
+  adhocFiltersInTooltips?: boolean;
 }

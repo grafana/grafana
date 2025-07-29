@@ -9,6 +9,7 @@ import {
   VizTooltipWrapper,
   getContentItems,
   VizTooltipItem,
+  AdHocFilterModel,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
@@ -41,6 +42,7 @@ export interface TimeSeriesTooltipProps {
   replaceVariables?: InterpolateFunction;
   dataLinks: LinkModel[];
   hideZeros?: boolean;
+  adHocFilters?: AdHocFilterModel[];
 }
 
 export const TimeSeriesTooltip = ({
@@ -56,6 +58,7 @@ export const TimeSeriesTooltip = ({
   replaceVariables = (str) => str,
   dataLinks,
   hideZeros,
+  adHocFilters,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -90,7 +93,9 @@ export const TimeSeriesTooltip = ({
       const dataIdx = dataIdxs[seriesIdx]!;
       const actions = getFieldActions(series, field, replaceVariables, dataIdx);
 
-      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+      footer = (
+        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
+      );
     }
   }
 
