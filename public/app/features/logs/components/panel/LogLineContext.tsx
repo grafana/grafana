@@ -49,7 +49,7 @@ interface LogLineContextProps {
   sortOrder?: LogsSortOrder;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
-  displayedFields: string[];
+  displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
 }
@@ -69,7 +69,7 @@ export const LogLineContext = memo(
     getRowContextQuery,
     onClose,
     getRowContext,
-    displayedFields,
+    displayedFields = [],
     onClickShowField,
     onClickHideField,
   }: LogLineContextProps) => {
@@ -182,11 +182,14 @@ export const LogLineContext = memo(
     );
 
     useEffect(() => {
+      if (!open) {
+        return;
+      }
       if (!initialized) {
         Promise.all([loadMore('above', log), loadMore('below', log)]).then(() => {});
         setInitialized(true);
       }
-    }, [initialized, loadMore, log]);
+    }, [initialized, loadMore, log, open]);
 
     const handleLoadMore = useCallback(
       (_: AbsoluteTimeRange, direction: ScrollDirection) => {
