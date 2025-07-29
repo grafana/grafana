@@ -162,7 +162,7 @@ func inferResourceNameFromKind(kind string) string {
 	case "Dashboard":
 		return "dashboards"
 	case "Folder":
-		return "folders" 
+		return "folders"
 	case "User":
 		return "users"
 	default:

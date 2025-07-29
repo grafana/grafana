@@ -30,8 +30,10 @@ func (m *mockReaderWriter) Delete(ctx context.Context, path, ref, message string
 type simpleRepository struct{}
 
 func (s *simpleRepository) Config() *provisioning.Repository { return nil }
-func (s *simpleRepository) Validate() field.ErrorList      { return nil }
-func (s *simpleRepository) Test(ctx context.Context) (*provisioning.TestResults, error) { return nil, nil }
+func (s *simpleRepository) Validate() field.ErrorList        { return nil }
+func (s *simpleRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	return nil, nil
+}
 
 func TestDeleteWorker_IsSupported(t *testing.T) {
 	tests := []struct {
@@ -563,21 +565,21 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
 	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/nonexistent-dashboard").Return()
-	
+
 	// Expect error to be recorded, not thrown
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Name == "nonexistent-dashboard" && 
-		       result.Resource == "dashboards" && 
-		       result.Group == "dashboard.grafana.app" && 
-		       result.Action == repository.FileActionDeleted &&
-		       result.Error != nil
+		return result.Name == "nonexistent-dashboard" &&
+			result.Resource == "dashboards" &&
+			result.Group == "dashboard.grafana.app" &&
+			result.Action == repository.FileActionDeleted &&
+			result.Error != nil
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	// Mock sync worker behavior that happens when no ref is specified
 	mockProgress.On("ResetResults").Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
-	
+
 	mockSyncWorker := jobs.NewMockWorker(t)
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
@@ -703,7 +705,7 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 	mockProgress.On("StrictMaxErrors", 1).Return()
 	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
 	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/nonexistent-dashboard").Return()
-	
+
 	// Mock recording error and TooManyErrors returning error
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 		return result.Name == "nonexistent-dashboard" && result.Error != nil
@@ -788,7 +790,7 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 		return result.Name == "nonexistent-dashboard" && result.Error != nil
 	})).Return()
-	
+
 	// Allow continuing after error
 	mockProgress.On("TooManyErrors").Return(nil).Times(3) // Called after each resource resolution and file deletion
 
