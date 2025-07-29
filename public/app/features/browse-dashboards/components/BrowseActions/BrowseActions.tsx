@@ -14,7 +14,7 @@ import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDa
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
-import { BulkDeleteProvisionedResource } from '../BulkDeleteProvisionedResource';
+import { BulkDeleteProvisionedResource } from '../BulkActions/BulkDeleteProvisionedResource';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';

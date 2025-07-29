@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	service "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	contracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -22,8 +22,53 @@ func (_m *MockDecryptService) EXPECT() *MockDecryptService_Expecter {
 	return &MockDecryptService_Expecter{mock: &_m.Mock}
 }
 
+// Close provides a mock function with no fields
+func (_m *MockDecryptService) Close() error {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Close")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockDecryptService_Close_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Close'
+type MockDecryptService_Close_Call struct {
+	*mock.Call
+}
+
+// Close is a helper method to define mock.On call
+func (_e *MockDecryptService_Expecter) Close() *MockDecryptService_Close_Call {
+	return &MockDecryptService_Close_Call{Call: _e.mock.On("Close")}
+}
+
+func (_c *MockDecryptService_Close_Call) Run(run func()) *MockDecryptService_Close_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockDecryptService_Close_Call) Return(_a0 error) *MockDecryptService_Close_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockDecryptService_Close_Call) RunAndReturn(run func() error) *MockDecryptService_Close_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Decrypt provides a mock function with given fields: ctx, namespace, names
-func (_m *MockDecryptService) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]service.DecryptResult, error) {
+func (_m *MockDecryptService) Decrypt(ctx context.Context, namespace string, names ...string) (map[string]contracts.DecryptResult, error) {
 	_va := make([]interface{}, len(names))
 	for _i := range names {
 		_va[_i] = names[_i]
@@ -37,16 +82,16 @@ func (_m *MockDecryptService) Decrypt(ctx context.Context, namespace string, nam
 		panic("no return value specified for Decrypt")
 	}
 
-	var r0 map[string]service.DecryptResult
+	var r0 map[string]contracts.DecryptResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) (map[string]service.DecryptResult, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) (map[string]contracts.DecryptResult, error)); ok {
 		return rf(ctx, namespace, names...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) map[string]service.DecryptResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) map[string]contracts.DecryptResult); ok {
 		r0 = rf(ctx, namespace, names...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]service.DecryptResult)
+			r0 = ret.Get(0).(map[string]contracts.DecryptResult)
 		}
 	}
 
@@ -86,12 +131,12 @@ func (_c *MockDecryptService_Decrypt_Call) Run(run func(ctx context.Context, nam
 	return _c
 }
 
-func (_c *MockDecryptService_Decrypt_Call) Return(_a0 map[string]service.DecryptResult, _a1 error) *MockDecryptService_Decrypt_Call {
+func (_c *MockDecryptService_Decrypt_Call) Return(_a0 map[string]contracts.DecryptResult, _a1 error) *MockDecryptService_Decrypt_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockDecryptService_Decrypt_Call) RunAndReturn(run func(context.Context, string, ...string) (map[string]service.DecryptResult, error)) *MockDecryptService_Decrypt_Call {
+func (_c *MockDecryptService_Decrypt_Call) RunAndReturn(run func(context.Context, string, ...string) (map[string]contracts.DecryptResult, error)) *MockDecryptService_Decrypt_Call {
 	_c.Call.Return(run)
 	return _c
 }
