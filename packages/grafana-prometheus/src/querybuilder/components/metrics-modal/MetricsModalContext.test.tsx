@@ -86,54 +86,6 @@ describe('MetricsModalContext', () => {
     });
   });
 
-  describe('Settings management', () => {
-    it('should have correct default settings', () => {
-      const { result } = renderHook(() => useMetricsModal(), {
-        wrapper: createWrapper(),
-      });
-
-      expect(result.current.settings).toEqual({
-        disableTextWrap: false,
-        hasMetadata: true,
-        includeNullMetadata: true,
-        useBackend: false,
-        fullMetaSearch: false,
-      });
-    });
-
-    it('should update settings correctly', () => {
-      const { result } = renderHook(() => useMetricsModal(), {
-        wrapper: createWrapper(),
-      });
-
-      act(() => {
-        result.current.updateSettings({ useBackend: true });
-      });
-
-      expect(result.current.settings.useBackend).toBe(true);
-      expect(result.current.settings.disableTextWrap).toBe(false); // Other settings unchanged
-    });
-
-    it('should update multiple settings at once', () => {
-      const { result } = renderHook(() => useMetricsModal(), {
-        wrapper: createWrapper(),
-      });
-
-      act(() => {
-        result.current.updateSettings({
-          useBackend: true,
-          disableTextWrap: true,
-          fullMetaSearch: true,
-        });
-      });
-
-      expect(result.current.settings.useBackend).toBe(true);
-      expect(result.current.settings.disableTextWrap).toBe(true);
-      expect(result.current.settings.fullMetaSearch).toBe(true);
-      expect(result.current.settings.includeNullMetadata).toBe(true); // Unchanged
-    });
-  });
-
   describe('State management', () => {
     it('should update pagination', () => {
       const { result } = renderHook(() => useMetricsModal(), {
@@ -223,7 +175,6 @@ describe('MetricsModalContext', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.settings.hasMetadata).toBe(false);
       expect(result.current.metricsData).toEqual([]);
     });
 
@@ -238,7 +189,6 @@ describe('MetricsModalContext', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.settings.hasMetadata).toBe(false);
       expect(result.current.metricsData).toEqual([]);
     });
   });
@@ -282,8 +232,7 @@ describe('MetricsModalContext', () => {
   describe('Component integration', () => {
     it('should render provider without errors', () => {
       const TestComponent = () => {
-        const { settings } = useMetricsModal();
-        return <div data-testid="test">{settings.useBackend ? 'backend' : 'frontend'}</div>;
+        return <div data-testid="test">frontend</div>;
       };
 
       const { getByTestId } = render(

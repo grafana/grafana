@@ -24,14 +24,6 @@ import { MetricData, MetricsData } from './types';
 
 export const DEFAULT_RESULTS_PER_PAGE = 25;
 
-type Settings = {
-  useBackend: boolean;
-  includeNullMetadata: boolean;
-  disableTextWrap: boolean;
-  hasMetadata: boolean;
-  fullMetaSearch: boolean;
-};
-
 type Pagination = {
   pageNum: number;
   resultsPerPage: number;
@@ -46,8 +38,6 @@ type MetricsModalContextValue = {
     metricText: string,
     queryLabels?: QueryBuilderLabelFilter[]
   ) => Promise<void>;
-  settings: Settings;
-  updateSettings: (settings: Partial<Settings>) => void;
   pagination: Pagination;
   setPagination: (val: Pagination) => void;
   selectedTypes: Array<SelectableValue<string>>;
@@ -74,23 +64,9 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
   });
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
   const [searchedText, setSearchedText] = useState('');
-  const [settings, setSettings] = useState<Settings>({
-    disableTextWrap: false,
-    hasMetadata: true,
-    includeNullMetadata: true,
-    useBackend: false,
-    fullMetaSearch: false,
-  });
 
   // Track the latest search ID to handle race conditions
   const latestSearchIdRef = useRef<number>(0);
-
-  const updateSettings = useCallback((settingsUpdate: Partial<Settings>) => {
-    setSettings((prevSettings) => ({
-      ...prevSettings,
-      ...settingsUpdate,
-    }));
-  }, []);
 
   const fetchMetadata = useCallback(async () => {
     try {
@@ -98,20 +74,17 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
       const metadata = await languageProvider.queryMetricsMetadata(PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
 
       if (Object.keys(metadata).length === 0) {
-        updateSettings({ hasMetadata: false });
         setMetricsData([]);
       } else {
         const processedData = Object.keys(metadata).map((m) => generateMetricData(m, languageProvider));
         setMetricsData(processedData);
       }
     } catch (error) {
-      console.error('Failed to fetch metadata:', error);
-      updateSettings({ hasMetadata: false });
       setMetricsData([]);
     } finally {
       setIsLoading(false);
     }
-  }, [languageProvider, updateSettings]);
+  }, [languageProvider]);
 
   const debouncedBackendSearch = useMemo(
     () =>
@@ -163,8 +136,6 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
   return (
     <MetricsModalContext.Provider
       value={{
-        settings,
-        updateSettings,
         isLoading,
         setIsLoading,
         metricsData,

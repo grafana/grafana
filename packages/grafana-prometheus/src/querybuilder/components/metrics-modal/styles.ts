@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getMetricsModalStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
+export const getMetricsModalStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       width: '85vw',
@@ -77,13 +77,13 @@ export const getMetricsModalStyles = (theme: GrafanaTheme2, disableTextWrap: boo
   };
 };
 
-export const getResultsTableStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
+export const getResultsTableStyles = (theme: GrafanaTheme2) => {
   return {
     table: css({
-      tableLayout: disableTextWrap ? undefined : 'fixed',
+      tableLayout: 'fixed',
       borderRadius: theme.shape.radius.default,
       width: '100%',
-      whiteSpace: disableTextWrap ? 'nowrap' : 'normal',
+      whiteSpace: 'normal',
       td: {
         padding: theme.spacing(1),
       },
@@ -112,16 +112,16 @@ export const getResultsTableStyles = (theme: GrafanaTheme2, disableTextWrap: boo
       backgroundColor: theme.components.textHighlight.background,
     }),
     nameWidth: css({
-      width: disableTextWrap ? undefined : '37.5%',
+      width: '37.5%',
     }),
     nameOverflow: css({
-      overflowWrap: disableTextWrap ? undefined : 'anywhere',
+      overflowWrap: 'anywhere',
     }),
     typeWidth: css({
-      width: disableTextWrap ? undefined : '15%',
+      width: '15%',
     }),
     descriptionWidth: css({
-      width: disableTextWrap ? undefined : '35%',
+      width: '35%',
     }),
     stickyHeader: css({
       position: 'sticky',

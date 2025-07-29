@@ -23,7 +23,6 @@ export function ResultsTable(props: ResultsTableProps) {
   const {
     isLoading,
     metricsData,
-    settings: { hasMetadata, fullMetaSearch, disableTextWrap },
     pagination: { pageNum, resultsPerPage },
     selectedTypes,
     searchedText,
@@ -51,11 +50,16 @@ export function ResultsTable(props: ResultsTableProps) {
       });
     }
 
-    return filteredMetrics.slice((pageNum - 1) * resultsPerPage, (pageNum - 1) * resultsPerPage + resultsPerPage);
+    const filteredAndPaginatedMetrics = filteredMetrics.slice(
+      (pageNum - 1) * resultsPerPage,
+      (pageNum - 1) * resultsPerPage + resultsPerPage
+    );
+
+    return filteredAndPaginatedMetrics;
   }, [metricsData, pageNum, resultsPerPage, selectedTypes]);
 
   const theme = useTheme2();
-  const styles = getResultsTableStyles(theme, disableTextWrap);
+  const styles = getResultsTableStyles(theme);
 
   function selectMetric(metric: MetricData) {
     if (metric.value) {
@@ -65,28 +69,19 @@ export function ResultsTable(props: ResultsTableProps) {
   }
 
   function metaRows(metric: MetricData) {
-    if (fullMetaSearch && metric) {
-      return (
-        <>
-          <td>{displayType(metric.type ?? '')}</td>
-          <td>
-            <Highlighter
-              textToHighlight={metric.description ?? ''}
-              searchWords={searchedText.split(' ')}
-              autoEscape
-              highlightClassName={styles.matchHighLight}
-            />
-          </td>
-        </>
-      );
-    } else {
-      return (
-        <>
-          <td>{displayType(metric.type ?? '')}</td>
-          <td>{metric.description ?? ''}</td>
-        </>
-      );
-    }
+    return (
+      <>
+        <td>{displayType(metric.type ?? '')}</td>
+        <td>
+          <Highlighter
+            textToHighlight={metric.description ?? ''}
+            searchWords={searchedText.split(' ')}
+            autoEscape
+            highlightClassName={styles.matchHighLight}
+          />
+        </td>
+      </>
+    );
   }
 
   function addHelpIcon(fullType: string, descriptiveType: string, link: string) {
@@ -167,16 +162,12 @@ export function ResultsTable(props: ResultsTableProps) {
           <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>
             <Trans i18nKey="grafana-prometheus.querybuilder.results-table.name">Name</Trans>
           </th>
-          {hasMetadata && (
-            <>
-              <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>
-                <Trans i18nKey="grafana-prometheus.querybuilder.results-table.type">Type</Trans>
-              </th>
-              <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>
-                <Trans i18nKey="grafana-prometheus.querybuilder.results-table.description">Description</Trans>
-              </th>
-            </>
-          )}
+          <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>
+            <Trans i18nKey="grafana-prometheus.querybuilder.results-table.type">Type</Trans>
+          </th>
+          <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>
+            <Trans i18nKey="grafana-prometheus.querybuilder.results-table.description">Description</Trans>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -193,7 +184,7 @@ export function ResultsTable(props: ResultsTableProps) {
                       highlightClassName={styles.matchHighLight}
                     />
                   </td>
-                  {hasMetadata && metaRows(metric)}
+                  {metaRows(metric)}
                 </tr>
               );
             })}

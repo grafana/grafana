@@ -1,27 +1,14 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
-import { useState } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import {
-  Button,
-  ButtonGroup,
-  Icon,
-  Input,
-  Modal,
-  MultiSelect,
-  Pagination,
-  Spinner,
-  Toggletip,
-  useStyles2,
-} from '@grafana/ui';
+import { Icon, Input, Modal, MultiSelect, Pagination, Spinner, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
 
-import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { MetricsModalContextProvider, useMetricsModal } from './MetricsModalContext';
 import { ResultsTable } from './ResultsTable';
@@ -42,12 +29,10 @@ interface MetricsModalProps {
 const MetricsModalContent = (props: MetricsModalProps) => {
   const { isOpen, onClose, onChange, query, timeRange } = props;
 
-  const [showAdditionalSettings, setShowAdditionalSettings] = useState(false);
   const {
     isLoading,
     metricsData,
     debouncedBackendSearch,
-    settings: { hasMetadata, disableTextWrap },
     pagination,
     setPagination,
     selectedTypes,
@@ -56,7 +41,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
     setSearchedText,
   } = useMetricsModal();
 
-  const styles = useStyles2(getMetricsModalStyles, disableTextWrap);
+  const styles = useStyles2(getMetricsModalStyles);
   const placeholders = getPlaceholders();
   const promTypes = getPromTypes();
 
@@ -101,50 +86,18 @@ const MetricsModalContent = (props: MetricsModalProps) => {
             }}
           />
         </div>
-        {hasMetadata && (
-          <div className={styles.inputItem}>
-            <MultiSelect
-              data-testid={metricsModaltestIds.selectType}
-              inputId="my-select"
-              options={typeOptions}
-              value={selectedTypes}
-              placeholder={placeholders.filterType}
-              onChange={setSelectedTypes}
-            />
-          </div>
-        )}
+        <div className={styles.inputItem}>
+          <MultiSelect
+            data-testid={metricsModaltestIds.selectType}
+            inputId="my-select"
+            options={typeOptions}
+            value={selectedTypes}
+            placeholder={placeholders.filterType}
+            onChange={setSelectedTypes}
+          />
+        </div>
         <div>
           <Spinner className={`${styles.loadingSpinner} ${isLoading ? styles.visible : ''}`} />
-        </div>
-        <div className={styles.inputItem}>
-          <Toggletip
-            aria-label={t(
-              'grafana-prometheus.querybuilder.metrics-modal.aria-label-additional-settings',
-              'Additional settings'
-            )}
-            content={<AdditionalSettings />}
-            placement="bottom-end"
-            closeButton={false}
-          >
-            <ButtonGroup>
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => setShowAdditionalSettings(!showAdditionalSettings)}
-                data-testid={metricsModaltestIds.showAdditionalSettings}
-                className={styles.noBorder}
-              >
-                <Trans i18nKey="grafana-prometheus.querybuilder.metrics-modal.additional-settings">
-                  Additional Settings
-                </Trans>
-              </Button>
-              <Button
-                className={styles.noBorder}
-                variant="secondary"
-                icon={showAdditionalSettings ? 'angle-up' : 'angle-down'}
-              />
-            </ButtonGroup>
-          </Toggletip>
         </div>
       </div>
       <div className={styles.resultsData}>
