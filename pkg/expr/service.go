@@ -12,8 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 
-	mysql "github.com/dolthub/go-mysql-server/sql"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -120,7 +118,7 @@ func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 // BasicColumn is a simplified version of mysql.Column used for SQL expression schemas.
 type BasicColumn struct {
 	Name      string
-	MySQLType mysql.Type
+	MySQLType string
 	Nullable  bool
 
 	DataFrameFieldType data.FieldType
@@ -168,7 +166,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]
 			fT, _ := sql.MySQLColToFieldType(col)
 			columns = append(columns, BasicColumn{
 				Name:               col.Name,
-				MySQLType:          col.Type,
+				MySQLType:          col.Type.String(),
 				Nullable:           col.Nullable,
 				DataFrameFieldType: fT,
 			})
