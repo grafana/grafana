@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "Als je deze optie aanvinkt, wordt het serie-eindpunt met parameter {{exampleParameter}} de voorkeur gegeven boven het labelwaarden-eindpunt met parameter {{exampleParameter}}. Hoewel het eindpunt van de labelwaarden als beter presterend wordt beschouwd, geven sommige gebruikers de voorkeur aan de serie omdat deze een POST-methode heeft, terwijl het eindpunt van de labelwaarden alleen een GET-methode heeft."
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
