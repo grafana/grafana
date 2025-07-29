@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { subHours } from 'date-fns';
+import { times } from 'lodash';
 import { useState } from 'react';
 
 import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
@@ -53,6 +54,24 @@ function Workbench({ window }: WorkbenchProps) {
     },
   });
 
+  const exampleGroup = (
+    <div className={styles.groupItemWrapper}>
+      <div style={{ minWidth: 'min-content', flexGrow: flexSize }} className={cx(styles.leftColumn, styles.column)}>
+        <div className={styles.columnContent}>
+          <Trans i18nKey="alerting.workbench.left">left</Trans>
+        </div>
+      </div>
+      <div
+        style={{ minWidth: 'min-content', flexGrow: 1 - flexSize }}
+        className={cx(styles.rightColumn, styles.column)}
+      >
+        <div className={styles.columnContent}>
+          <Trans i18nKey="alerting.workbench.right">right</Trans>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ position: 'relative', display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
       {/* dummy splitter to handle flex width of group items */}
@@ -72,38 +91,7 @@ function Workbench({ window }: WorkbenchProps) {
 
       {/* groups go here */}
       <div data-testid="groups-container" className={cx(splitter.containerProps.className, styles.groupsContainer)}>
-        {/* group 1 */}
-        <div className={styles.groupItemWrapper}>
-          <div style={{ minWidth: 'min-content', flexGrow: flexSize }} className={cx(styles.leftColumn, styles.column)}>
-            <div className={styles.columnContent}>
-              <Trans i18nKey="alerting.workbench.left">left</Trans>
-            </div>
-          </div>
-          <div
-            style={{ minWidth: 'min-content', flexGrow: 1 - flexSize }}
-            className={cx(styles.rightColumn, styles.column)}
-          >
-            <div className={styles.columnContent}>
-              <Trans i18nKey="alerting.workbench.right">right</Trans>
-            </div>
-          </div>
-        </div>
-        {/* group 2 */}
-        <div className={styles.groupItemWrapper}>
-          <div style={{ minWidth: 'min-content', flexGrow: flexSize }} className={cx(styles.leftColumn, styles.column)}>
-            <div className={styles.columnContent}>
-              <Trans i18nKey="alerting.workbench.left">left</Trans>
-            </div>
-          </div>
-          <div
-            style={{ minWidth: 'min-content', flexGrow: 1 - flexSize }}
-            className={cx(styles.rightColumn, styles.column)}
-          >
-            <div className={styles.columnContent}>
-              <Trans i18nKey="alerting.workbench.right">right</Trans>
-            </div>
-          </div>
-        </div>
+        {times(50, () => exampleGroup)}
       </div>
     </div>
   );
@@ -114,11 +102,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     groupsContainer: css({
       position: 'absolute',
       width: '100%',
-      height: '100%',
+      height: `calc(100% - ${theme.spacing(4)} - 1px)`, // account for border
 
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: theme.spacing(4),
+      marginTop: `calc(${theme.spacing(4)} + 1px)`, // account for border
 
       overflow: 'scroll',
     }),
