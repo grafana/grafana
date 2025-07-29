@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -107,14 +108,25 @@ func (s *Service) isDisabled() bool {
 
 // BuildPipeline builds a pipeline from a request.
 func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
+	// TODO: REMOVE
+	if req != nil {
+		_, _ = s.GetSQLSchemas(context.Background(), *req) // temp hack until endpoint for local dev
+	}
 	return s.buildPipeline(req)
+}
+
+// BasicColumn is a simplified version of mysql.Column used for SQL expression schemas.
+type BasicColumn struct {
+	Name     string
+	Type     mysql.Type
+	Nullable bool
 }
 
 // GetSQLSchemas returns what the schemas are for SQL expressions for all DS queries
 // in the request. It executes the queries to get the schemas.
 // TODO: DTO for mysql.Schema?
 // Intended use is for autocomplete and AI, so used during the authoring/editing experience only.
-func (s *Service) GetSQLSchemas(ctx context.Context, req *Request) (map[string]mysql.Schema, error) {
+func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]BasicColumn, error) {
 	// Extract DS Nodes and Execute Them
 	// Building the pipeline is maybe not best, as it can have more errors.
 	filtered := make([]Query, 0, len(req.Queries))
@@ -124,12 +136,12 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req *Request) (map[string]m
 		}
 	}
 	req.Queries = filtered
-	pipeline, err := s.BuildPipeline(req)
+	pipeline, err := s.buildPipeline(&req)
 	if err != nil {
 		return nil, err
 	}
 
-	var schemas = make(map[string]mysql.Schema)
+	var schemas = make(map[string][]BasicColumn)
 
 	for _, node := range pipeline {
 		// For now, execute calls convert at the end, so we are being lazy and running the full conversion. Longer run we want to run without
@@ -147,8 +159,19 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req *Request) (map[string]m
 
 		frames := res.Values.AsDataFrames(dsNode.RefID())
 		schema := sql.SchemaFromFrame(frames[0])
-		schemas[dsNode.RefID()] = schema
+		columns := make([]BasicColumn, 0, len(schema))
+		for _, col := range schema {
+			columns = append(columns, BasicColumn{
+				Name:     col.Name,
+				Type:     col.Type,
+				Nullable: col.Nullable,
+			})
+		}
+		schemas[dsNode.RefID()] = columns
 	}
+
+	// TODO: REMOVE
+	spew.Dump(schemas)
 
 	return schemas, nil
 }
