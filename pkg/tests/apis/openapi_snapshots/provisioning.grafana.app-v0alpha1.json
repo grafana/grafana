@@ -2631,6 +2631,23 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.DeleteJobOptions": {
+        "type": "object",
+        "properties": {
+          "paths": {
+            "description": "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "ref": {
+            "description": "Ref to the branch or commit hash to delete from",
+            "type": "string"
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails": {
         "type": "object",
         "required": [
@@ -2653,7 +2670,7 @@
         "type": "object",
         "properties": {
           "branch": {
-            "description": "Target branch for export (only git)",
+            "description": "FIXME: we should validate this in admission hooks Target branch for export (only git)",
             "type": "string"
           },
           "folder": {
@@ -2665,7 +2682,7 @@
             "type": "string"
           },
           "path": {
-            "description": "Prefix in target file system",
+            "description": "FIXME: we should validate this in admission hooks Prefix in target file system",
             "type": "string"
           }
         }
@@ -3049,13 +3066,22 @@
         "type": "object",
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
+            "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
             "type": "string",
             "enum": [
+              "delete",
               "migrate",
               "pr",
               "pull",
               "push"
+            ]
+          },
+          "delete": {
+            "description": "Delete when the action is `delete`",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.DeleteJobOptions"
+              }
             ]
           },
           "migrate": {

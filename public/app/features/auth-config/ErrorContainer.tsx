@@ -25,12 +25,16 @@ export const ErrorContainerUnconnected = ({ error, warning, resetError, resetWar
     <div>
       {error && (
         <Alert title={error.message} onRemove={() => resetError()}>
-          {error.errors?.map((e, i) => <div key={i}>{e}</div>)}
+          {error.errors?.map((e, i) => (
+            <div key={i}>{e}</div>
+          ))}
         </Alert>
       )}
       {warning && (
         <Alert title={warning.message} onRemove={() => resetWarning()} severity="warning">
-          {warning.errors?.map((e, i) => <div key={i}>{e}</div>)}
+          {warning.errors?.map((e, i) => (
+            <div key={i}>{e}</div>
+          ))}
         </Alert>
       )}
     </div>

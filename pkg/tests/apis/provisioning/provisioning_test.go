@@ -822,7 +822,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 	})
 }
 
-func TestIntegrationProvisioning_MoveResources(t *testing.T) {
+func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -830,6 +830,158 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
+	const repo = "delete-job-test-repo"
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+		"SyncTarget":  "instance",
+	})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+	// Copy multiple test files to the repository
+	helper.CopyToProvisioningPath(t, "testdata/all-panels.json", "dashboard1.json")
+	helper.CopyToProvisioningPath(t, "testdata/text-options.json", "dashboard2.json")
+	helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "folder/dashboard3.json")
+
+	// Trigger and wait for initial sync to populate resources
+	helper.SyncAndWait(t, repo, nil)
+
+	// Verify initial state - should have 3 dashboards and 1 folder
+	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 3, len(dashboards.Items), "should have 3 dashboards after sync")
+
+	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(folders.Items), "should have 1 folder after sync")
+
+	t.Run("delete single file", func(t *testing.T) {
+		// Create delete job for single file
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(asJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Paths: []string{"dashboard1.json"},
+				},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "should be able to create delete job")
+
+		// Wait for job to complete
+		helper.AwaitJobs(t, repo)
+
+		// Verify file is deleted from repository
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
+		require.Error(t, err, "file should be deleted from repository")
+		require.True(t, apierrors.IsNotFound(err), "should be not found error")
+
+		// Verify dashboard is removed from Grafana after sync
+		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, 2, len(dashboards.Items), "should have 2 dashboards after delete")
+
+		// Verify other files still exist
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
+		require.NoError(t, err, "other files should still exist")
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
+		require.NoError(t, err, "nested files should still exist")
+	})
+
+	t.Run("delete multiple files", func(t *testing.T) {
+		// Create delete job for multiple files
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(asJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Paths: []string{"dashboard2.json", "folder/dashboard3.json"},
+				},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "should be able to create delete job")
+
+		// Wait for job to complete
+		helper.AwaitJobs(t, repo)
+
+		// Verify files are deleted from repository
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
+		require.Error(t, err, "dashboard2.json should be deleted")
+		require.True(t, apierrors.IsNotFound(err))
+
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
+		require.Error(t, err, "folder/dashboard3.json should be deleted")
+		require.True(t, apierrors.IsNotFound(err))
+
+		// Verify all dashboards are removed from Grafana after sync
+		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, 0, len(dashboards.Items), "should have 0 dashboards after deleting all")
+	})
+
+	t.Run("delete non-existent file", func(t *testing.T) {
+		// Create delete job for non-existent file
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(asJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionDelete,
+				Delete: &provisioning.DeleteJobOptions{
+					Paths: []string{"non-existent.json"},
+				},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "should be able to create delete job")
+
+		// Wait for job to complete - should fail due to strict error handling
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			list := &unstructured.UnstructuredList{}
+			err := helper.AdminREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("jobs").
+				Do(ctx).Into(list)
+			assert.NoError(collect, err, "should be able to list jobs")
+			assert.NotEmpty(collect, list.Items, "expect at least one job")
+
+			// Find the delete job specifically
+			var deleteJob *unstructured.Unstructured
+			for _, elem := range list.Items {
+				assert.Equal(collect, repo, elem.GetLabels()["provisioning.grafana.app/repository"], "should have repo label")
+
+				action := mustNestedString(elem.Object, "spec", "action")
+				if action == "delete" {
+					deleteJob = &elem
+					break
+				}
+			}
+			assert.NotNil(collect, deleteJob, "should find a delete job")
+
+			state := mustNestedString(deleteJob.Object, "status", "state")
+			assert.Equal(collect, "error", state, "delete job should have failed due to non-existent file")
+		}, time.Second*10, time.Millisecond*100, "Expected delete job to fail with error state")
+	})
+}
+
+func TestIntegrationProvisioning_MoveResources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
 	const repo = "move-test-repo"
 	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
 		"Name":        repo,

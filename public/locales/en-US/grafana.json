@@ -5355,6 +5355,20 @@
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
     },
+    "variable": {
+      "description": {
+        "action": "Change variable description"
+      },
+      "hide": {
+        "action": "Change variable hide option"
+      },
+      "label": {
+        "action": "Change variable label"
+      },
+      "name": {
+        "action": "Change variable name"
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Restore to version {{version}}",
       "label-view-json-diff": "View JSON diff",
@@ -5794,7 +5808,6 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
-      "partial-failure-warning": "Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -7513,6 +7526,7 @@
     },
     "description-initial-view": "This location will show when the panel first loads.",
     "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
+    "description-no-repeat": "Prevent the map from repeating horizontally",
     "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
     "description-show-attribution": "Show the map source attribution info in the lower right",
     "description-show-debug": "Show map info",
@@ -7572,6 +7586,7 @@
     },
     "name-initial-view": "Initial view",
     "name-mouse-wheel-zoom": "Mouse wheel zoom",
+    "name-no-repeat": "No map repeating",
     "name-share-view": "Share view",
     "name-show-attribution": "Show attribution",
     "name-show-debug": "Show debug",
@@ -8271,6 +8286,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": "Open image preview"
+    },
     "cascader": {
       "clear-button": "Clear selection"
     },
@@ -8283,6 +8301,7 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
+      "aria-label-delete": "Delete",
       "cancel": "Cancel",
       "confirmText-delete": "Delete"
     },
@@ -13444,7 +13463,7 @@
         "create-new-data-frame": "Create a new data frame containing values predicted by a statistical model."
       },
       "name": {
-        "regression-analysis": "Regression analysis"
+        "trendline": "Trendline"
       }
     },
     "regression-transformer-editor": {
@@ -13466,6 +13485,9 @@
         }
       },
       "regression": "regression",
+      "tags": {
+        "regression-analysis": "Regression analysis"
+      },
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {

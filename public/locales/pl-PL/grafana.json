@@ -2488,7 +2488,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfiguruj",
-      "draft-new-rule": "Zaprojektuj nową regułę",
       "ds-error": {
         "title": "Nie można załadować reguł dla tego źródła danych"
       },
@@ -2514,6 +2513,7 @@
       "new-alert-rule": "Nowa reguła alertu",
       "new-datasource-recording-rule": "Nowa reguła rejestracji źródła danych",
       "new-grafana-recording-rule": "Nowa reguła rejestracji w usłudze Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Pokaż więcej…"
       },
@@ -4604,6 +4604,10 @@
     },
     "edit-actions": {
       "add": "Dodaj: {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Zmień tło panelu",
       "panel-description": "Zmień opis panelu",
@@ -4618,6 +4622,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Pulpit",
+        "element": "",
         "local-variable": "Zmienna lokalna",
         "multiple-elements": "Wiele elementów",
         "multiple-elements-delete-text": "Czy na pewno chcesz usunąć te elementy?",
@@ -5831,7 +5836,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7552,6 +7556,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7611,6 +7616,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -13523,7 +13529,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13545,6 +13551,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Liczba punktów X,Y do prognozowania"
     },
     "rename-by-regex-transformer": {
