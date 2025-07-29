@@ -162,7 +162,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               getDataLinks={(seriesIdx, dataIdx) =>
                 vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
               }
-              getAdHocFilters={(seriesIdx, dataIdx) => {
+              getAdHocFilters={(_seriesIdx, dataIdx) => {
                 const xField = vizSeries[0].fields[0];
 
                 // Check if the field supports filtering
