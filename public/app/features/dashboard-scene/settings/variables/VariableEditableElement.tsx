@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useRef, useState } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,7 +9,7 @@ import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { dashboardEditActions, undoRedoWasClicked } from '../../edit-pane/shared';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { BulkActionElement } from '../../scene/types/BulkActionElement';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
@@ -123,36 +123,49 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
   const { name } = variable.useState();
   const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const [nameError, setNameError] = useState<string>();
-  const [validName, setValidName] = useState<string>(variable.state.name);
 
   const onChange = (e: FormEvent<HTMLInputElement>) => {
     const result = validateVariableName(variable, e.currentTarget.value);
     if (result.errorMessage !== nameError) {
       setNameError(result.errorMessage);
-    } else {
-      setValidName(variable.state.name);
     }
 
     variable.setState({ name: e.currentTarget.value });
   };
 
-  // Restore valid name if bluring while invalid
-  const onBlur = () => {
-    if (nameError) {
-      variable.setState({ name: validName });
-      setNameError(undefined);
-    }
-  };
+  const oldName = useRef(name);
 
   return (
     <Field label={t('dashboard.edit-pane.variable.name', 'Name')} invalid={!!nameError} error={nameError}>
       <Input
         ref={ref}
         value={name}
+        onFocus={() => {
+          oldName.current = name;
+        }}
         onChange={onChange}
-        required
-        onBlur={onBlur}
+        onBlur={(e) => {
+          const labelUnchanged = oldName.current === name;
+          const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
+
+          if (nameError) {
+            setNameError(undefined);
+            variable.setState({ name: oldName.current });
+            return;
+          }
+
+          if (shouldSkip) {
+            return;
+          }
+
+          dashboardEditActions.changeVariableName({
+            source: variable,
+            oldValue: oldName.current,
+            newValue: name,
+          });
+        }}
         data-testid={selectors.components.PanelEditor.ElementEditPane.variableNameInput}
+        required
       />
     </Field>
   );
@@ -160,10 +173,29 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
 
 function VariableLabelInput({ variable }: VariableInputProps) {
   const { label } = variable.useState();
+  const oldLabel = useRef(label ?? '');
+
   return (
     <Input
       value={label}
+      onFocus={() => {
+        oldLabel.current = label ?? '';
+      }}
       onChange={(e) => variable.setState({ label: e.currentTarget.value })}
+      onBlur={(e) => {
+        const labelUnchanged = oldLabel.current === e.currentTarget.value;
+        const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
+
+        if (shouldSkip) {
+          return;
+        }
+
+        dashboardEditActions.changeVariableLabel({
+          source: variable,
+          oldValue: oldLabel.current,
+          newValue: e.currentTarget.value,
+        });
+      }}
       data-testid={selectors.components.PanelEditor.ElementEditPane.variableLabelInput}
     />
   );
@@ -171,13 +203,31 @@ function VariableLabelInput({ variable }: VariableInputProps) {
 
 function VariableDescriptionTextArea({ variable }: VariableInputProps) {
   const { description } = variable.useState();
+  const oldDescription = useRef(description ?? '');
 
   return (
     <TextArea
       id="description-text-area"
       value={description ?? ''}
       placeholder={t('dashboard.edit-pane.variable.description-placeholder', 'Descriptive text')}
+      onFocus={() => {
+        oldDescription.current = description ?? '';
+      }}
       onChange={(e) => variable.setState({ description: e.currentTarget.value })}
+      onBlur={(e) => {
+        const labelUnchanged = oldDescription.current === e.currentTarget.value;
+        const shouldSkip = labelUnchanged || undoRedoWasClicked(e);
+
+        if (shouldSkip) {
+          return;
+        }
+
+        dashboardEditActions.changeVariableDescription({
+          source: variable,
+          oldValue: oldDescription.current,
+          newValue: e.currentTarget.value,
+        });
+      }}
     />
   );
 }
@@ -186,7 +236,11 @@ function VariableHideInput({ variable }: VariableInputProps) {
   const { hide = VariableHide.dontHide } = variable.useState();
 
   const onChange = (option: VariableHide) => {
-    variable.setState({ hide: option });
+    dashboardEditActions.changeVariableHideValue({
+      source: variable,
+      oldValue: hide,
+      newValue: option,
+    });
   };
 
   return <VariableHideSelect hide={hide} type={variable.state.type} onChange={onChange} />;
