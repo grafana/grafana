@@ -36,7 +36,7 @@ build_backend_resource_deps = []
 build_backend_env = {}
 if use_docker_builder:
   build_backend_resource_deps = ['build builder']
-  build_backend_env = { 
+  build_backend_env = {
     'USE_DOCKER_BUILDER': "true",
   }
   local_resource(
@@ -68,22 +68,28 @@ local_resource(
 
 # --- Docker Compose
 docker_compose("./docker-compose.yaml")
-
-# First argument is the name of the service from the docker-compose file.
-dc_resource("proxy", resource_deps=["backend", "frontend-service"], labels=["services"])
-
+dc_resource("proxy",
+  resource_deps=["backend", "frontend-service"],
+  labels=["services"]
+)
 dc_resource("backend",
   resource_deps=["yarn start", "backend-build"],
   labels=["services"]
 )
-
 dc_resource("frontend-service",
   resource_deps=["yarn start", "backend-build"],
-  labels=["services"]
+  labels=["services"],
 )
 
-docker_build('grafana-fs-dev', '../..',
+# paths in tilt files are confusing....
+# - if tilt is dealing the the path, it is relative to the Tiltfile
+# - if docker is dealing with the path, it is relative to the context
+docker_build('grafana-fs-dev',
+  # Set the docker context to the root of the repo
+  context='../..',
   dockerfile='grafana-fs-dev.dockerfile',
+
+  # Paths relative to the docker context (root of the repo)
   only=[
     'devenv/frontend-service/build/grafana',
     'conf/defaults.ini',
@@ -93,6 +99,8 @@ docker_build('grafana-fs-dev', '../..',
     'public/app/plugins',
     'public/build/assets-manifest.json',
   ],
+
+  # Sync paths are relative to the Tiltfile
   live_update = [
     sync('./build/grafana', '/grafana/bin/grafana'),
     sync('../../conf/defaults.ini', '/grafana/conf/defaults.ini'),
@@ -105,8 +113,12 @@ docker_build('grafana-fs-dev', '../..',
   ]
 )
 
-docker_build('grafana-proxy', '.',
+docker_build('grafana-proxy',
+  # Set the docker context to this frontend-service folder
+  context='.',
   dockerfile='proxy.dockerfile',
+
+  # Path relative to the docker context (this folder)
   only=[
     "./nginx.conf",
   ],
