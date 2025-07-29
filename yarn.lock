@@ -18454,7 +18454,7 @@ __metadata:
     reselect: "npm:5.1.1"
     rimraf: "npm:6.0.1"
     rxjs: "npm:7.8.2"
-    sass: "npm:1.83.4"
+    sass: "npm:1.89.2"
     sass-loader: "npm:16.0.5"
     selecto: "npm:1.26.3"
     semver: "npm:7.7.2"
@@ -28501,9 +28501,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.83.4":
-  version: 1.83.4
-  resolution: "sass@npm:1.83.4"
+"sass@npm:1.89.2":
+  version: 1.89.2
+  resolution: "sass@npm:1.89.2"
   dependencies:
     "@parcel/watcher": "npm:^2.4.1"
     chokidar: "npm:^4.0.0"
@@ -28514,7 +28514,7 @@ __metadata:
       optional: true
   bin:
     sass: sass.js
-  checksum: 10/9a7d1c6be1a9e711a1c561d189b9816aa7715f6d0ec0b2ec181f64163788d0caaf4741924eeadce558720b58b1de0e9b21b9dae6a0d14489c4d2a142d3f3b12e
+  checksum: 10/7e9044f3c88b23580731de321cdf4c53fe6139395e2241fce7ff353c60a7cc8fe36b5eedc9701e092d2975f2c124e886379bb9ceab27b5ed053548f202b992b3
   languageName: node
   linkType: hard
 
