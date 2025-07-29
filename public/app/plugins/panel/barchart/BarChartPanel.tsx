@@ -181,7 +181,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                   const adHocFilterItem: AdHocFilterItem = {
                     key: xField.name,
                     operator: FILTER_FOR_OPERATOR,
-                    value: String(xField.values[xField.values[dataIdx]]),
+                    value: String(xField.values[dataIdx]),
                   };
 
                   const adHocFilters: AdHocFilterModel[] = [
