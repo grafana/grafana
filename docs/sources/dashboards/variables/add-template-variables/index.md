@@ -35,6 +35,7 @@ keywords:
   - nested
   - chained
   - linked
+  - best practices
 labels:
   products:
     - cloud
@@ -121,13 +122,11 @@ To create a variable, follow these steps:
    If you don't enter a display name, then the drop-down list label is the variable name.
 
 1. Choose a **Show on dashboard** option:
-
    - **Label and value** - The variable drop-down list displays the variable **Name** or **Label** value. This is the default.
    - **Value:** The variable drop-down list only displays the selected variable value and a down arrow.
    - **Nothing:** No variable drop-down list is displayed on the dashboard.
 
 1. Click one of the following links to complete the steps for adding your selected variable type:
-
    - [Query](#add-a-query-variable)
    - [Custom](#add-a-custom-variable)
    - [Textbox](#add-a-text-box-variable)
@@ -137,6 +136,13 @@ To create a variable, follow these steps:
    - [Ad hoc filters](#add-ad-hoc-filters)
 
 <!-- vale Grafana.Spelling = YES -->
+
+### Variable best practices
+
+- Variable drop-down lists are displayed in the order in which they're listed in the **Variables** in dashboard settings, so put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- By default, variables don't have a default value. This means that the topmost value in the drop-down list is always preselected. If you want to pre-populate a variable with an empty value, you can use the following workaround in the variable settings:
+  1. Select the **Include All Option** checkbox.
+  2. In the **Custom all value** field, enter a value like `+`.
 
 ## Add a query variable
 
@@ -157,7 +163,6 @@ Query expressions are different for each data source. For more information, refe
    For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
 1. In the **Query type** drop-down list, select one of the following options:
-
    - **Label names**
    - **Label values**
    - **Metrics**
@@ -166,7 +171,6 @@ Query expressions are different for each data source. For more information, refe
    - **Classic query**
 
 1. In the **Query** field, enter a query.
-
    - The query field varies according to your data source. Some data sources have custom query editors.
    - Each data source defines how the variable values are extracted. The typical implementation uses every string value returned from the data source response as a variable value. Make sure to double-check the documentation for the data source.
    - Some data sources let you provide custom "display names" for the values. For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result. Other data sources may look for `text` and `value` or use a different approach. Always remember to double-check the documentation for the data source.
@@ -175,12 +179,10 @@ Query expressions are different for each data source. For more information, refe
 1. (Optional) In the **Regex** field, type a regular expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with a regular expression](#filter-variables-with-regex).
 1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query is used.
 1. Under **Refresh**, select when the variable should update options:
-
    - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-
    - **Multi-value** - Enables multiple values to be selected at the same time.
    - **Include All option** - Enables an option to include all variables.
 
@@ -200,7 +202,6 @@ For example, if you have server names or region names that never change, then yo
    You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-
    - **Multi-value** - Enables multiple values to be selected at the same time.
    - **Include All option** - Enables an option to include all variables.
 
@@ -249,7 +250,6 @@ _Data source_ variables enable you to quickly change the data source for an enti
    Leave this field empty to display all instances.
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
-
    - **Multi-value** - Enables multiple values to be selected at the same time.
    - **Include All option** - Enables an option to include all variables.
 
@@ -271,7 +271,6 @@ You can use an interval variable as a parameter to group by time (for InfluxDB),
 1. (Optional) Select on the **Auto option** checkbox if you want to add the `auto` option to the list.
 
    This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span. If you turn it on, then two more options appear:
-
    - **Step count** - Select the number of times the current time range is divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps.
    - **Min interval** - The minimum threshold below which the step count intervals does not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
 

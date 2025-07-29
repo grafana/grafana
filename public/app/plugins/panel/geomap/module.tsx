@@ -42,6 +42,14 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
       defaultValue: defaultMapViewConfig.shared,
     });
 
+    builder.addBooleanSwitch({
+      category,
+      path: 'view.noRepeat',
+      name: t('geomap.name-no-repeat', 'No map repeating'),
+      description: t('geomap.description-no-repeat', 'Prevent the map from repeating horizontally'),
+      defaultValue: false,
+    });
+
     // eslint-disable-next-line
     const state = context.instanceState as GeomapInstanceState;
     if (!state?.layers) {

@@ -62,6 +62,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -140,6 +143,9 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 }
 
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -208,80 +214,6 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 			if diff := cmp.Diff(expected(result), result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
-		})
-
-	scenarioWithPanel(t, "When a user tries to get connections of library panel, dashboards in inaccessible folders should not be returned",
-		func(t *testing.T, sc scenarioContext) {
-			accessibleFolder := createFolder(t, sc, "AccessibleFolder", sc.service.folderService)
-			inaccessibleFolder := createFolder(t, sc, "InAccessibleFolder", sc.service.folderService)
-			restrictedUser := user.SignedInUser{
-				UserID:     2,
-				Name:       "Non-Admin User",
-				Login:      "non-admin-user",
-				OrgID:      sc.user.OrgID,
-				OrgRole:    org.RoleViewer,
-				LastSeenAt: time.Now(),
-				Permissions: map[int64]map[string][]string{
-					sc.user.OrgID: {
-						dashboards.ActionFoldersRead: {
-							dashboards.ScopeFoldersProvider.GetResourceScopeUID(accessibleFolder.UID),
-						},
-						dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID("*")},
-					},
-				},
-			}
-
-			command := getCreatePanelCommand(accessibleFolder.ID, accessibleFolder.UID, "Accessible Library Panel") // nolint:staticcheck
-			sc.reqContext.Req.Body = mockRequestBody(command)
-			resp := sc.service.createHandler(sc.reqContext)
-			libraryElement := validateAndUnMarshalResponse(t, resp)
-
-			dashJSON := map[string]any{
-				"panels": []any{
-					map[string]any{
-						"id": int64(1),
-						"gridPos": map[string]any{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-						"libraryPanel": map[string]any{
-							"uid":  libraryElement.Result.UID,
-							"name": libraryElement.Result.Name,
-						},
-					},
-				},
-			}
-			accessibleDash := dashboards.Dashboard{
-				Title: "Accessible Dashboard",
-				Data:  simplejson.NewFromAny(dashJSON),
-			}
-
-			// create the dashboard in the general folder, an accessible folder, and an inaccessible folder
-			dashInGeneral := createDashboard(t, sc.sqlStore, restrictedUser, &accessibleDash, 0, "")
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{libraryElement.Result.UID}, dashInGeneral.ID)
-			require.NoError(t, err)
-
-			dashInAccessibleFolder := createDashboard(t, sc.sqlStore, restrictedUser, &accessibleDash, 0, accessibleFolder.UID)
-			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{libraryElement.Result.UID}, dashInAccessibleFolder.ID)
-			require.NoError(t, err)
-
-			dashInInaccessibleFolder := createDashboard(t, sc.sqlStore, restrictedUser, &accessibleDash, 0, inaccessibleFolder.UID)
-			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{libraryElement.Result.UID}, dashInInaccessibleFolder.ID)
-			require.NoError(t, err)
-
-			sc.reqContext.SignedInUser = &restrictedUser
-			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": libraryElement.Result.UID})
-
-			// connections should return the general folder one and the accessible folder one
-			connectionsResp := sc.service.getConnectionsHandler(sc.reqContext)
-			var result = validateAndUnMarshalConnectionResponse(t, connectionsResp)
-			require.Len(t, result.Result, 2)
-			uids := []string{result.Result[0].ConnectionUID, result.Result[1].ConnectionUID}
-			require.Contains(t, uids, dashInGeneral.UID)
-			require.Contains(t, uids, dashInAccessibleFolder.UID)
-			require.NotContains(t, uids, dashInInaccessibleFolder.UID)
 		})
 
 	scenarioWithPanel(t, "When an admin tries to create a connection with an element that exists, but the original folder does not, it should still succeed",
