@@ -86,10 +86,6 @@ module.exports = [
               importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
               message: 'Use Stack component instead.',
             },
-            {
-              group: ['@grafana/ui/src/*', '@grafana/runtime/src/*', '@grafana/data/src/*'],
-              message: 'Import from the public export instead.',
-            },
           ],
         },
       ],
@@ -113,7 +109,6 @@ module.exports = [
     ignores: ['public/app/plugins/**', '**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test'],
     rules: {
       '@grafana/no-untranslated-strings': 'error',
-      '@grafana/no-translation-top-level': 'error',
     },
   },
 ];
