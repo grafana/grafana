@@ -421,13 +421,15 @@ func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
 
 	// Mock FindResourcePath calls
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "test-dashboard", schema.GroupVersionKind{
-		Group: "dashboard.grafana.app",
-		Kind:  "Dashboard",
+		Group:   "dashboard.grafana.app",
+		Version: "v1beta1",
+		Kind:    "Dashboard",
 	}).Return("dashboards/test-dashboard.json", nil)
 
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "test-folder", schema.GroupVersionKind{
-		Group: "folder.grafana.app",
-		Kind:  "Folder",
+		Group:   "folder.grafana.app",
+		Version: "v1beta1",
+		Kind:    "Folder",
 	}).Return("folders/test-folder.json", nil)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
@@ -499,8 +501,9 @@ func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
 
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "test-dashboard", schema.GroupVersionKind{
-		Group: "dashboard.grafana.app",
-		Kind:  "Dashboard",
+		Group:   "dashboard.grafana.app",
+		Version: "v1beta1",
+		Kind:    "Dashboard",
 	}).Return("dashboards/test-dashboard.json", nil)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -553,8 +556,9 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 
 	findPathError := errors.New("resource not found in repository: dashboard.grafana.app/dashboards/nonexistent-dashboard")
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "nonexistent-dashboard", schema.GroupVersionKind{
-		Group: "dashboard.grafana.app",
-		Kind:  "Dashboard",
+		Group:   "dashboard.grafana.app",
+		Version: "v1beta1",
+		Kind:    "Dashboard",
 	}).Return("", findPathError)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -692,8 +696,9 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 
 	findPathError := errors.New("resource not found in repository")
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "nonexistent-dashboard", schema.GroupVersionKind{
-		Group: "dashboard.grafana.app",
-		Kind:  "Dashboard",
+		Group:   "dashboard.grafana.app",
+		Version: "v1beta1",
+		Kind:    "Dashboard",
 	}).Return("", findPathError)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -755,21 +760,24 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 
 	// First resource succeeds
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "valid-dashboard", schema.GroupVersionKind{
-		Group: "dashboard.grafana.app",
-		Kind:  "Dashboard",
+		Group:   "dashboard.grafana.app",
+		Version: "v1beta1",
+		Kind:    "Dashboard",
 	}).Return("dashboards/valid-dashboard.json", nil)
 
 	// Second resource fails
 	findPathError := errors.New("resource not found")
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "nonexistent-dashboard", schema.GroupVersionKind{
-		Group: "dashboard.grafana.app",
-		Kind:  "Dashboard",
+		Group:   "dashboard.grafana.app",
+		Version: "v1beta1",
+		Kind:    "Dashboard",
 	}).Return("", findPathError)
 
 	// Third resource succeeds
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "valid-folder", schema.GroupVersionKind{
-		Group: "folder.grafana.app",
-		Kind:  "Folder",
+		Group:   "folder.grafana.app",
+		Version: "v1beta1",
+		Kind:    "Folder",
 	}).Return("folders/valid-folder.json", nil)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
