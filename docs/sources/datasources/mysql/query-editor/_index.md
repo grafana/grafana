@@ -430,7 +430,7 @@ SELECT
   metric1 as text,
   tag1 as tag
 FROM
-  test_data
+  my_data
 WHERE
   $__unixEpochFilter(epoch_time)
 ```
