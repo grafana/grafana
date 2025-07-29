@@ -8,6 +8,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -120,6 +121,8 @@ type BasicColumn struct {
 	Name     string
 	Type     mysql.Type
 	Nullable bool
+
+	DataFrameFieldType data.FieldType
 }
 
 // GetSQLSchemas returns what the schemas are for SQL expressions for all DS queries
@@ -161,10 +164,12 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]
 		schema := sql.SchemaFromFrame(frames[0])
 		columns := make([]BasicColumn, 0, len(schema))
 		for _, col := range schema {
+			fT, _ := sql.MySQLColToFieldType(col)
 			columns = append(columns, BasicColumn{
-				Name:     col.Name,
-				Type:     col.Type,
-				Nullable: col.Nullable,
+				Name:               col.Name,
+				Type:               col.Type,
+				Nullable:           col.Nullable,
+				DataFrameFieldType: fT,
 			})
 		}
 		schemas[dsNode.RefID()] = columns
