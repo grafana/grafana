@@ -209,8 +209,8 @@ type Cfg struct {
 	PluginUpdateStrategy string
 
 	// Plugin API restrictions - maps API name to list of plugin IDs/patterns
-	PluginRestrictedAPIsWhitelist map[string][]string
-	PluginRestrictedAPIsBlacklist map[string][]string
+	PluginRestrictedAPIsAllowList map[string][]string
+	PluginRestrictedAPIsBlockList map[string][]string
 
 	// Panels
 	DisableSanitizeHtml bool
@@ -1052,8 +1052,8 @@ func NewCfg() *Cfg {
 		Azure:  &azsettings.AzureSettings{},
 
 		// Initialize plugin API restriction maps
-		PluginRestrictedAPIsWhitelist: make(map[string][]string),
-		PluginRestrictedAPIsBlacklist: make(map[string][]string),
+		PluginRestrictedAPIsAllowList: make(map[string][]string),
+		PluginRestrictedAPIsBlockList: make(map[string][]string),
 
 		// Avoid nil pointer
 		IsFeatureToggleEnabled: func(_ string) bool {

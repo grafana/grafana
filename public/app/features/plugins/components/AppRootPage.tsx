@@ -121,8 +121,8 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
       <RestrictedGrafanaApisContextProvider
         pluginId={pluginId}
         apis={restrictedGrafanaApis}
-        apiWhitelist={config.bootData.settings.pluginRestrictedAPIsWhitelist}
-        apiBlacklist={config.bootData.settings.pluginRestrictedAPIsBlacklist}
+        apiAllowList={config.bootData.settings.pluginRestrictedAPIsAllowList}
+        apiBlockList={config.bootData.settings.pluginRestrictedAPIsBlockList}
       >
         <PluginErrorBoundary
           fallback={({ error, errorInfo }) => (

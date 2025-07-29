@@ -441,7 +441,7 @@ export {
 } from './context/plugins/PluginContext';
 export {
   type RestrictedGrafanaApisContextType,
-  type RestrictedGrafanaApisWhitelist,
+  type RestrictedGrafanaApisAllowList,
   RestrictedGrafanaApisContext,
   RestrictedGrafanaApisContextProvider,
   useRestrictedGrafanaApis,
