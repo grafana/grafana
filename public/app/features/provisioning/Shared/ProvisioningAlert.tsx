@@ -1,28 +1,31 @@
 import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
-import { ProvisioningErrorInfo } from '../types';
+import { StatusInfo } from '../types';
 
 import { MessageList } from './MessageList';
 
 interface ProvisioningAlertProps {
-  error?: string | ProvisioningErrorInfo;
-  warning?: string | ProvisioningErrorInfo;
+  error?: string | StatusInfo;
+  warning?: string | StatusInfo;
+  success?: string | StatusInfo;
 }
 
-const getTitle = (alert: string | ProvisioningErrorInfo, isWarning = false) => {
+const getTitle = (alert: string | StatusInfo, type: 'error' | 'warning' | 'success' = 'error') => {
   if (typeof alert === 'string') {
     return alert;
   }
 
-  if (isWarning) {
+  if (type === 'warning') {
     return alert.title || t('provisioning.warning-title-default', 'Warning');
+  } else if (type === 'success') {
+    return alert.title || t('provisioning.success-title-default', 'Success');
   } else {
     return alert.title || t('provisioning.error-title-default', 'Error');
   }
 };
 
-const getMessage = (alert: string | ProvisioningErrorInfo) => {
+const getMessage = (alert: string | StatusInfo) => {
   if (typeof alert === 'string' || !alert.message) {
     return null;
   }
@@ -34,17 +37,17 @@ const getMessage = (alert: string | ProvisioningErrorInfo) => {
   return alert.message;
 };
 
-export function ProvisioningAlert({ error, warning }: ProvisioningAlertProps) {
-  const alertData = error || warning;
-  const isWarning = Boolean(warning);
-  const severity = isWarning ? 'warning' : 'error';
+export function ProvisioningAlert({ error, warning, success }: ProvisioningAlertProps) {
+  const alertData = error || warning || success;
+  const type = error ? 'error' : warning ? 'warning' : 'success';
+  const severity = type === 'success' ? 'success' : type;
 
   if (!alertData) {
     return null;
   }
 
   return (
-    <Alert severity={severity} title={getTitle(alertData, isWarning)}>
+    <Alert severity={severity} title={getTitle(alertData, type)}>
       {getMessage(alertData)}
     </Alert>
   );

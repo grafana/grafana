@@ -47,7 +47,12 @@ export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) 
           },
         });
       } else if (state === 'success') {
-        setStepStatusInfo({ status: 'success' });
+        setStepStatusInfo({
+          status: 'success',
+          success: {
+            title: t('provisioning.job-status.status.title-success-running-job', 'Job completed successfully'),
+          },
+        });
       } else if (state === 'warning') {
         setStepStatusInfo({
           status: 'warning',

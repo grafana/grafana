@@ -11243,6 +11243,7 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
+        "title-success-running-job": "Job completed successfully",
         "title-warning-running-job": "Job completed with warnings"
       },
       "summary": "Summary",
@@ -11391,6 +11392,7 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "success-title-default": "Success",
     "sync-job": {
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",
@@ -11423,6 +11425,12 @@
       "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
+      "discard-modal": {
+        "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
+        "confirm": "Yes, discard",
+        "dismiss": "Keep working",
+        "title": "Discard repository setup?"
+      },
       "step-bootstrap": "Choose what to synchronize",
       "step-connect": "Connect",
       "step-finish": "Choose additional settings",
@@ -11437,6 +11445,7 @@
     "wizard-content": {
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
+      "button-previous": "Previous",
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists"
     }
