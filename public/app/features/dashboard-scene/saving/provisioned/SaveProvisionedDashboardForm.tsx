@@ -16,6 +16,7 @@ import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
 import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
+import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
@@ -92,7 +93,14 @@ export function SaveProvisionedDashboardForm({
   const onBranchSuccess = (ref: string, path: string) => {
     panelEditor?.onDiscard();
     drawer.onClose();
-    navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+
+    const url = buildResourceBranchRedirectUrl({
+      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+      paramName: 'ref',
+      paramValue: ref,
+      repoType: request.data?.repository?.type,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({

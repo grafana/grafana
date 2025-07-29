@@ -31,7 +31,7 @@ test.describe(
           await expect(sandboxDiv).toBeHidden();
 
           const appPage = page.getByTestId('sandbox-app-test-page-one');
-          await expect(appPage).toBeVisible({ timeout: 10000 });
+          await expect(appPage).toBeVisible();
         });
 
         test('Loads the app configuration without the sandbox div wrapper', async ({ page }) => {
@@ -41,7 +41,7 @@ test.describe(
           await expect(sandboxDiv).toBeHidden();
 
           const configPage = page.getByTestId('sandbox-app-test-config-page');
-          await expect(configPage).toBeVisible({ timeout: 10000 });
+          await expect(configPage).toBeVisible();
         });
       });
 
@@ -59,7 +59,7 @@ test.describe(
           await expect(sandboxDiv).toBeVisible();
 
           const appPage = page.getByTestId('sandbox-app-test-page-one');
-          await expect(appPage).toBeVisible({ timeout: 10000 });
+          await expect(appPage).toBeVisible();
         });
 
         test('Loads the app configuration with the sandbox div wrapper', async ({ page }) => {
@@ -69,7 +69,7 @@ test.describe(
           await expect(sandboxDiv).toBeVisible();
 
           const configPage = page.getByTestId('sandbox-app-test-config-page');
-          await expect(configPage).toBeVisible({ timeout: 10000 });
+          await expect(configPage).toBeVisible();
         });
       });
     });
