@@ -564,7 +564,10 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		mtdsClientBuilder = mtdsclient.NewTestMTDSClientBuilder(false, nil)
 	}
 
-	cfgProvider, err := setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true})
+	cfg.Load(setting.CommandLineArgs{HomePath: "../../../"})
+	cfg.ExpressionsEnabled = true
+
+	cfgProvider, err := setting.ProvideService(cfg)
 	require.NoError(t, err)
 	exprService := expr.ProvideService(
 		cfgProvider,

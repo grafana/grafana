@@ -90,6 +90,10 @@ func (c *OSSConfigProvider) loadCache() error {
 }
 
 func ProvideService(cfg *Cfg) (*OSSConfigProvider, error) {
+	if cfg.Raw == nil {
+		return nil, fmt.Errorf("config is not loaded")
+	}
+
 	c := OSSConfigProvider{Cfg: cfg, cache: make(map[string]any, len(defaults))}
 	// any failures should occur during startup
 	if err := c.loadCache(); err != nil {
