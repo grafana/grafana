@@ -47,7 +47,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
@@ -2644,6 +2649,9 @@ func TestCleanUpDashboard(t *testing.T) {
 }
 
 func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name            string
 		featureEnabled  bool
@@ -2934,7 +2942,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 		dashboardStore:         &fakeStore,
 		folderService:          folderSvc,
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders, featuremgmt.FlagKubernetesLibraryPanels),
+		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders, featuremgmt.FlagKubernetesLibraryPanelConnections),
 		publicDashboardService: fakePublicDashboardService,
 		k8sclient:              k8sCliMock,
 	}

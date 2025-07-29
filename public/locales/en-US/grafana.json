@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "AI Alert Rule Button failed to load",
+        "feedback-button": "AI Feedback Button failed to load",
         "improve-annotations-button": "AI Improve Annotations Button failed to load",
         "improve-labels-button": "AI Improve Labels Button failed to load",
         "template-button": "AI Template Button failed to load",
@@ -1551,7 +1552,8 @@
       "title": "Edit evaluation group"
     },
     "group-loader": {
-      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
+      "no-rules": "No rules found in this group"
     },
     "group-status": {
       "content-the-group-is-being-deleted": "The group is being deleted"
@@ -2466,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
-      "draft-new-rule": "Draft a new rule",
       "ds-error": {
         "title": "Cannot load rules for this datasource"
       },
@@ -2492,6 +2493,7 @@
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
       "new-grafana-recording-rule": "New Grafana recording rule",
+      "new-rule-for-export": "New alert rule for export",
       "pagination": {
         "next-page": "Show more…"
       },
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Refresh preview",
+      "empty-state": "Add template content to see preview",
       "label-preview": "Preview",
       "refresh": "Refresh"
     },
@@ -3479,7 +3482,6 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
-      "bulk-delete-provisioned-resources-not-implemented": "Bulk delete for provisioned resources is not implemented yet.",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3511,6 +3513,24 @@
     },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "{{count}} items failed",
+      "failed-alert_other": "{{count}} items failed"
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
+      "button-done": "Done",
+      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
+      "error-path-not-found": "Path not found",
+      "progress-title": "Success",
+      "success-message": "All resources have been deleted successfully."
+    },
+    "bulk-move-resources-form": {
+      "deleting": "Deleting:",
+      "progress": "Progress: {{current}} of {{total}}"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
@@ -4546,6 +4566,11 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "duplicate-panel": "Duplicate panel",
+      "edit-query-result-rule": "Change query result rule",
+      "edit-template-variable-rule": "Change template variable rule",
+      "edit-time-range-rule": "Change time range rule",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -4560,6 +4585,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "Element",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
@@ -5330,6 +5356,20 @@
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
     },
+    "variable": {
+      "description": {
+        "action": "Change variable description"
+      },
+      "hide": {
+        "action": "Change variable hide option"
+      },
+      "label": {
+        "action": "Change variable label"
+      },
+      "name": {
+        "action": "Change variable name"
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Restore to version {{version}}",
       "label-view-json-diff": "View JSON diff",
@@ -5769,7 +5809,6 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
-      "partial-failure-warning": "Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -7140,6 +7179,7 @@
           "start-time": "Start Time:"
         }
       },
+      "share-span": "Share",
       "warnings": "Warnings"
     },
     "span-filters": {
@@ -7487,6 +7527,7 @@
     },
     "description-initial-view": "This location will show when the panel first loads.",
     "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
+    "description-no-repeat": "Prevent the map from repeating horizontally",
     "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
     "description-show-attribution": "Show the map source attribution info in the lower right",
     "description-show-debug": "Show map info",
@@ -7546,6 +7587,7 @@
     },
     "name-initial-view": "Initial view",
     "name-mouse-wheel-zoom": "Mouse wheel zoom",
+    "name-no-repeat": "No map repeating",
     "name-share-view": "Share view",
     "name-show-attribution": "Show attribution",
     "name-show-debug": "Show debug",
@@ -7719,6 +7761,409 @@
       }
     }
   },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "Feet/sec²",
+            "name-g-unit": "G unit",
+            "name-meters-sec": "Meters/sec²"
+          },
+          "name": "Acceleration"
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "Arc Minutes",
+            "name-arc-seconds": "Arc Seconds",
+            "name-degrees": "Degrees (°)",
+            "name-gradian": "Gradian",
+            "name-radians": "Radians"
+          },
+          "name": "Angle"
+        },
+        "area": {
+          "formats": {
+            "name-acres": "Acres (ac)",
+            "name-hectares": "Hectares (ha)",
+            "name-square-feet": "Square Feet (ft²)",
+            "name-square-meters": "Square Meters (m²)",
+            "name-square-miles": "Square Miles (mi²)"
+          },
+          "name": "Area"
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "On / Off",
+            "name-true-false": "True / False",
+            "name-yes-no": "Yes / No"
+          },
+          "name": "Boolean"
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "EFLOP/s",
+            "name-flops": "FLOP/s",
+            "name-gflops": "GFLOP/s",
+            "name-mflops": "MFLOP/s",
+            "name-pflops": "PFLOP/s",
+            "name-tflops": "TFLOP/s",
+            "name-yflops": "YFLOP/s",
+            "name-zflops": "ZFLOP/s"
+          },
+          "name": "Computation"
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "gram per cubic meter (g/m³)",
+            "name-g-nm3": "gram per normal cubic meter (g/Nm³)",
+            "name-mg-dl": "milligrams per decilitre (mg/dL)",
+            "name-mg-m3": "milligram per cubic meter (mg/m³)",
+            "name-mg-nm3": "milligram per normal cubic meter (mg/Nm³)",
+            "name-mmol-l": "millimoles per litre (mmol/L)",
+            "name-ng-m3": "nanogram per cubic meter (ng/m³)",
+            "name-ng-nm3": "nanogram per normal cubic meter (ng/Nm³)",
+            "name-ppb": "parts-per-billion (ppb)",
+            "name-ppm": "parts-per-million (ppm)",
+            "name-ug-m3": "microgram per cubic meter (μg/m³)",
+            "name-ug-nm3": "microgram per normal cubic meter (μg/Nm³)"
+          },
+          "name": "Concentration"
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "Bulgarian Lev (BGN)",
+            "name-brl": "Real (R$)",
+            "name-btc": "Bitcoin (฿)",
+            "name-chf": "Swiss franc (CHF)",
+            "name-czk": "Czech koruna (czk)",
+            "name-dkk": "Danish Krone (kr)",
+            "name-eur": "Euro (€)",
+            "name-gbp": "Pounds (£)",
+            "name-idr": "Indonesian Rupiah (Rp)",
+            "name-ils": "Israeli New Shekels (₪)",
+            "name-inr": "Indian Rupee (₹)",
+            "name-isk": "Icelandic Króna (kr)",
+            "name-jpy": "Yen (¥)",
+            "name-krw": "South Korean Won (₩)",
+            "name-mbtc": "Milli Bitcoin (฿)",
+            "name-myr": "Malaysian Ringgit (RM)",
+            "name-nok": "Norwegian Krone (kr)",
+            "name-php": "Philippine Peso (PHP)",
+            "name-pln": "Polish Złoty (PLN)",
+            "name-pyg": "Guaraní (₲)",
+            "name-rub": "Rubles (₽)",
+            "name-sek": "Swedish Krona (kr)",
+            "name-try": "Turkish Lira (₺)",
+            "name-uah": "Hryvnias (₴)",
+            "name-ubtc": "Micro Bitcoin (฿)",
+            "name-usd": "Dollars ($)",
+            "name-uyu": "Uruguay Peso (UYU)",
+            "name-vnd": "Vietnamese Dong (VND)",
+            "name-xpf": "CFP franc (XPF)",
+            "name-zar": "South African Rand (R)"
+          },
+          "name": "Currency"
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "bits(IEC)",
+            "name-bits-si": "bits(SI)",
+            "name-bytes-iec": "bytes(IEC)",
+            "name-bytes-si": "bytes(SI)",
+            "name-gibibytes": "gibibytes",
+            "name-gigabytes": "gigabytes",
+            "name-kibibytes": "kibibytes",
+            "name-kilobytes": "kilobytes",
+            "name-mebibytes": "mebibytes",
+            "name-megabytes": "megabytes",
+            "name-pebibytes": "pebibytes",
+            "name-petabytes": "petabytes",
+            "name-tebibytes": "tebibytes",
+            "name-terabytes": "terabytes"
+          },
+          "name": "Data"
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "bits/sec(IEC)",
+            "name-bits-sec-si": "bits/sec(SI)",
+            "name-bytes-sec-iec": "bytes/sec(IEC)",
+            "name-bytes-sec-si": "bytes/sec(SI)",
+            "name-gibibits-sec": "gibibits/sec",
+            "name-gibibytes-sec": "gibibytes/sec",
+            "name-gigabits-sec": "gigabits/sec",
+            "name-gigabytes-sec": "gigabytes/sec",
+            "name-kibibits-sec": "kibibits/sec",
+            "name-kibibytes-sec": "kibibytes/sec",
+            "name-kilobits-sec": "kilobits/sec",
+            "name-kilobytes-sec": "kilobytes/sec",
+            "name-mebibits-sec": "mebibits/sec",
+            "name-mebibytes-sec": "mebibytes/sec",
+            "name-megabits-sec": "megabits/sec",
+            "name-megabytes-sec": "megabytes/sec",
+            "name-packets-sec": "packets/sec",
+            "name-pebibits-sec": "pebibits/sec",
+            "name-pebibytes-sec": "pebibytes/sec",
+            "name-petabits-sec": "petabits/sec",
+            "name-petabytes-sec": "petabytes/sec",
+            "name-tebibits-sec": "tebibits/sec",
+            "name-tebibytes-sec": "tebibytes/sec",
+            "name-terabits-sec": "terabits/sec",
+            "name-terabytes-sec": "terabytes/sec"
+          },
+          "name": "Data rate"
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "Datetime default",
+            "name-datetime-iso": "Datetime ISO",
+            "name-datetime-iso-no-date": "Datetime ISO (No date if today)",
+            "name-datetime-local": "Datetime local",
+            "name-datetime-local-no-date": "Datetime local (No date if today)",
+            "name-datetime-us": "Datetime US",
+            "name-datetime-us-no-date": "Datetime US (No date if today)",
+            "name-from-now": "From Now"
+          },
+          "name": "Date & time"
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "Ampere (A)",
+            "name-ampere-hour": "Ampere-hour (Ah)",
+            "name-decibel-milliwatt": "Decibel-milliwatt (dBm)",
+            "name-electron-volt": "Electron volt (eV)",
+            "name-farad": "Farad (F)",
+            "name-femtofarad": "Femtofarad (fF)",
+            "name-gigawatt": "Gigawatt (GW)",
+            "name-henry": "Henry (H)",
+            "name-joule": "Joule (J)",
+            "name-kiloampere": "Kiloampere (kA)",
+            "name-kiloampere-hour": "Kiloampere-hour (kAh)",
+            "name-kiloohm": "Kiloohm (kΩ)",
+            "name-kilovolt": "Kilovolt (kV)",
+            "name-kilovolt-ampere": "Kilovolt-Ampere (kVA)",
+            "name-kilovolt-ampere-reactive": "Kilovolt-Ampere reactive (kVAr)",
+            "name-kilowatt": "Kilowatt (kW)",
+            "name-kilowatt-hour": "Kilowatt-hour (kWh)",
+            "name-kilowatt-min": "Kilowatt-min (kWm)",
+            "name-lumens": "Lumens (Lm)",
+            "name-megaohm": "Megaohm (MΩ)",
+            "name-megawatt": "Megawatt (MW)",
+            "name-megawatt-hour": "Megawatt-hour (MWh)",
+            "name-microfarad": "Microfarad (µF)",
+            "name-microhenry": "Microhenry (µH)",
+            "name-milliampere": "Milliampere (mA)",
+            "name-milliampere-hour": "Milliampere-hour (mAh)",
+            "name-millihenry": "Millihenry (mH)",
+            "name-milliohm": "Milliohm (mΩ)",
+            "name-millivolt": "Millivolt (mV)",
+            "name-milliwatt": "Milliwatt (mW)",
+            "name-nanofarad": "Nanofarad (nF)",
+            "name-ohm": "Ohm (Ω)",
+            "name-picofarad": "Picofarad (pF)",
+            "name-volt": "Volt (V)",
+            "name-volt-ampere": "Volt-Ampere (VA)",
+            "name-volt-ampere-reactive": "Volt-Ampere reactive (VAr)",
+            "name-watt": "Watt (W)",
+            "name-watt-hour": "Watt-hour (Wh)",
+            "name-watt-hour-per-kg": "Watt-hour per Kilogram (Wh/kg)",
+            "name-watt-square-meter": "Watt per square meter (W/m²)"
+          },
+          "name": "Energy"
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "Cubic feet/min (cfm)",
+            "name-cubic-feet-sec": "Cubic feet/sec (cfs)",
+            "name-cubic-meters-sec": "Cubic meters/sec (cms)",
+            "name-gallons-min": "Gallons/min (gpm)",
+            "name-litre-hour": "Litre/hour",
+            "name-litre-min": "Litre/min (L/min)",
+            "name-lux": "Lux (lx)",
+            "name-millilitre-min": "milliLitre/min (mL/min)"
+          },
+          "name": "Flow"
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "Kilonewton-meters (kNm)",
+            "name-kilonewtons": "Kilonewtons (kN)",
+            "name-newton-meters": "Newton-meters (Nm)",
+            "name-newtons": "Newtons (N)"
+          },
+          "name": "Force"
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "exahashes/sec",
+            "name-gigahashes-sec": "gigahashes/sec",
+            "name-hashes-sec": "hashes/sec",
+            "name-kilohashes-sec": "kilohashes/sec",
+            "name-megahashes-sec": "megahashes/sec",
+            "name-petahashes-sec": "petahashes/sec",
+            "name-terahashes-sec": "terahashes/sec"
+          },
+          "name": "Hash rate"
+        },
+        "length": {
+          "formats": {
+            "name-feet": "feet (ft)",
+            "name-inch": "inch (in)",
+            "name-kilometer": "kilometer (km)",
+            "name-meter": "meter (m)",
+            "name-mile": "mile (mi)",
+            "name-millimeter": "millimeter (mm)"
+          },
+          "name": "Length"
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "gram (g)",
+            "name-kilogram": "kilogram (kg)",
+            "name-metric-ton": "metric ton (t)",
+            "name-milligram": "milligram (mg)",
+            "name-pound": "pound (lb)"
+          },
+          "name": "Mass"
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "Candela (cd)",
+            "name-decibel": "Decibel",
+            "name-hexadecimal": "Hexadecimal",
+            "name-hexadecimal-0x": "Hexadecimal (0x)",
+            "name-humidity": "Humidity (%H)",
+            "name-locale": "Locale format",
+            "name-number": "Number",
+            "name-percent-1": "Percent (0.0-1.0)",
+            "name-percent-100": "Percent (0-100)",
+            "name-pixels": "Pixels",
+            "name-scientific": "Scientific notation",
+            "name-short": "short",
+            "name-si-short": "SI short",
+            "name-string": "String"
+          },
+          "name": "Misc"
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "Bars",
+            "name-hectopascals": "Hectopascals",
+            "name-inches-mercury": "Inches of mercury",
+            "name-kilobars": "Kilobars",
+            "name-kilopascals": "Kilopascals",
+            "name-millibars": "Millibars",
+            "name-pascals": "Pascals",
+            "name-psi": "PSI"
+          },
+          "name": "Pressure"
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "Becquerel (Bq)",
+            "name-curie": "curie (Ci)",
+            "name-exposure": "Exposure (C/kg)",
+            "name-gray": "Gray (Gy)",
+            "name-microsievert": "microSievert (µSv)",
+            "name-microsievert-hour": "microSievert/hour (µSv/h)",
+            "name-millisievert": "milliSievert (mSv)",
+            "name-millisievert-hour": "milliSievert/hour (mSv/h)",
+            "name-rad": "rad",
+            "name-rem": "rem",
+            "name-roentgen": "roentgen (R)",
+            "name-sievert": "Sievert (Sv)",
+            "name-sievert-hour": "Sievert/hour (Sv/h)"
+          },
+          "name": "Radiation"
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "Degrees per second (°/s)",
+            "name-gigahertz": "Gigahertz (GHz)",
+            "name-hertz": "Hertz (Hz)",
+            "name-kilohertz": "Kilohertz (kHz)",
+            "name-megahertz": "Megahertz (MHz)",
+            "name-radians-sec": "Radians per second (rad/s)",
+            "name-rpm": "Revolutions per minute (rpm)"
+          },
+          "name": "Rotational Speed"
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "Celsius (°C)",
+            "name-fahrenheit": "Fahrenheit (°F)",
+            "name-kelvin": "Kelvin (K)"
+          },
+          "name": "Temperature"
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "counts/min (cpm)",
+            "name-counts-sec": "counts/sec (cps)",
+            "name-events-min": "events/min (epm)",
+            "name-events-sec": "events/sec (eps)",
+            "name-io-ops-sec": "I/O ops/sec (iops)",
+            "name-messages-min": "messages/min (mpm)",
+            "name-messages-sec": "messages/sec (mps)",
+            "name-ops-min": "ops/min (opm)",
+            "name-ops-sec": "ops/sec (ops)",
+            "name-reads-min": "reads/min (rpm)",
+            "name-reads-sec": "reads/sec (rps)",
+            "name-records-min": "records/min (rpm)",
+            "name-records-sec": "records/sec (rps)",
+            "name-requests-min": "requests/min (rpm)",
+            "name-requests-sec": "requests/sec (rps)",
+            "name-rows-min": "rows/min (rpm)",
+            "name-rows-sec": "rows/sec (rps)",
+            "name-writes-min": "writes/min (wpm)",
+            "name-writes-sec": "writes/sec (wps)"
+          },
+          "name": "Throughput"
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "clock (ms)",
+            "name-clock-s": "clock (s)",
+            "name-days": "days (d)",
+            "name-duration-dhms": "duration (d hh:mm:ss)",
+            "name-duration-hms": "duration (hh:mm:ss)",
+            "name-duration-ms": "duration (ms)",
+            "name-duration-s": "duration (s)",
+            "name-hertz": "Hertz (1/s)",
+            "name-hours": "hours (h)",
+            "name-microseconds": "microseconds (µs)",
+            "name-milliseconds": "milliseconds (ms)",
+            "name-minutes": "minutes (m)",
+            "name-nanoseconds": "nanoseconds (ns)",
+            "name-seconds": "seconds (s)",
+            "name-timeticks": "Timeticks (s/100)"
+          },
+          "name": "Time"
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "kilometers/hour (km/h)",
+            "name-knot": "knot (kn)",
+            "name-meters-second": "meters/second (m/s)",
+            "name-miles-hour": "miles/hour (mph)"
+          },
+          "name": "Velocity"
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "cubic decimeter",
+            "name-cubic-meter": "cubic meter",
+            "name-gallons": "gallons",
+            "name-litre": "litre (L)",
+            "name-millilitre": "millilitre (mL)",
+            "name-normal-cubic-meter": "Normal cubic meter"
+          },
+          "name": "Volume"
+        }
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -7842,6 +8287,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": "Open image preview"
+    },
     "cascader": {
       "clear-button": "Clear selection"
     },
@@ -7854,6 +8302,7 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
+      "aria-label-delete": "Delete",
       "cancel": "Cancel",
       "confirmText-delete": "Delete"
     },
@@ -8177,7 +8626,10 @@
         "no-data": "No data"
       },
       "no-values-label": "No values",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sparkline": {
+        "no-data": "no data"
+      }
     },
     "tags": {
       "list-label": "Tags"
@@ -8829,9 +9281,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed labels",
+          "indexed-label_other": "Indexed label",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed fields",
+          "parsedl-label_other": "Parsed field",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
@@ -8910,8 +9362,11 @@
       "move-displayed-field-down": "Move down",
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
+      "remove-log": "Remove log",
+      "scroll-to-logline": "Scroll to log line",
       "search": {
         "no-results": "No results to display."
       },
@@ -8926,6 +9381,9 @@
       "copy-log": "Copy log line",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
+      "log-line": "Log line",
+      "log-line-explainer": "Explain this log line in a concise way",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
       "show-details": "Hide log details",
@@ -9759,7 +10217,9 @@
       "aria-label": "Help"
     },
     "invite-user": {
-      "invite-new-member-button": "Invite new member"
+      "invite-button": "Invite",
+      "invite-new-member-button": "Invite new member",
+      "invite-tooltip": "Invite user"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",
@@ -10517,24 +10977,50 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "not-saved": "The value is not yet saved in the Grafana database",
-      "open-pull-request-in-git-hub": "Open pull request in GitHub",
-      "view-pull-request-in-git-hub": "View pull request in GitHub"
+      "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
+      "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
+      "open-in-repo-button": "Open in {{repoType}}",
+      "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
+      "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
-    "title-created-branch-git-hub": "A new resource has been created in a branch in GitHub.",
-    "title-loaded-pull-request-git-hub": "This resource is loaded from a pull request in GitHub."
+    "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
     "banner": {
       "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
     },
+    "bitbucket": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "branch-required": "Branch is required",
+      "path-description": "Optional subdirectory path within the repository",
+      "path-label": "Path",
+      "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "pr-workflow-label": "Enable pull request option when saving",
+      "token-description": "Bitbucket App Password with repository permissions",
+      "token-label": "App Password",
+      "token-required": "Bitbucket token is required",
+      "token-user-description": "The username that will be used to access the repository with the app password",
+      "token-user-label": "Username",
+      "token-user-required": "Username is required",
+      "url-description": "The Bitbucket repository URL",
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid Bitbucket repository URL",
+      "url-required": "Repository URL is required"
+    },
     "bootstrap-step": {
+      "dashboards-count_one": "{{count}} dashboard",
+      "dashboards-count_other": "{{count}} dashboard",
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "ext-storage": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
+      "folders-count_one": "{{count}} folder",
+      "folders-count_other": "{{count}} folder",
       "grafana": "Grafana instance",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
@@ -10549,36 +11035,20 @@
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
-      "description-path": "Path to a subdirectory in the Git repository",
       "description-read-only": "Resources can't be modified through Grafana.",
-      "description-repository-url": "Enter the GitHub repository URL",
       "description-title": "A human-readable name for the config",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
-      "error-valid-github-url": "Please enter a valid GitHub repository URL",
       "label-automatic-pulling": "Automatic pulling",
-      "label-branch": "Branch",
       "label-enabled": "Enabled",
-      "label-github-token": "GitHub token",
       "label-interval-seconds": "Interval (seconds)",
-      "label-local-path": "Local path",
-      "label-path": "Path",
-      "label-pr-workflow": "Enable pull request option when saving",
       "label-repository-type": "Repository type",
-      "label-repository-url": "Repository URL",
       "label-target": "Target",
       "label-title": "Title",
       "option-entire-instance": "Entire instance",
-      "option-github": "GitHub",
-      "option-local": "Local",
       "option-managed-folder": "Managed folder",
-      "placeholder-branch": "main",
-      "placeholder-github-token": "ghp_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo-name",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/path/to/repo",
-      "placeholder-my-config": "My config",
-      "placeholder-select-repository-type": "Select repository type"
+      "placeholder-my-config": "My config"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Configure webhooks</0> to get instant updates in Grafana as soon as changes are committed. Review and approve changes using pull requests before they go live.",
@@ -10592,26 +11062,7 @@
     },
     "connect-repository-button": {
       "configure": "Configure",
-      "configure-file": "Configure file provisioning",
-      "configure-git-sync": "Configure Git Sync",
       "repository-limit-info-alert": "Repository limit reached ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Branch to use for the GitHub repository",
-      "description-github-path": "This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from",
-      "description-paste-your-git-hub-personal-access-token": "Paste your GitHub personal access token",
-      "description-repository-url": "Paste the URL of your GitHub repository",
-      "error-field-required": "This field is required.",
-      "error-invalid-github-url": "Please enter a valid GitHub repository URL",
-      "label-access-token": "GitHub access token",
-      "label-branch": "Branch name",
-      "label-local-path": "Local path",
-      "label-path": "Path to subdirectory in repository",
-      "label-repository-url": "GitHub repository URL",
-      "placeholder-branch": "main",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
@@ -10644,17 +11095,17 @@
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
+    "error-title-default": "Error",
     "expanded-row": {
       "job-specification": "Job Specification",
-      "summary": "Summary",
-      "title-error": "Error"
+      "summary": "Summary"
     },
     "features-list": {
       "actions": {
         "set-up-required-feature-toggles": "Set up required feature toggles"
       },
-      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in GitHub and provision updates automatically",
-      "manage-your-dashboards-with-remote-provisioning": "Get started with GitSync",
+      "manage-dashboards-provision-updates-automatically": "Manage dashboards as code in Git and provision updates automatically",
+      "manage-your-dashboards-with-remote-provisioning": "Get started with Git Sync",
       "store-dashboards-in-version-controlled-storage": "Store dashboards in version-controlled storage for better organization and history tracking"
     },
     "file-history-page": {
@@ -10675,18 +11126,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
+      "description-generate-dashboard-previews": "Create preview links for pull requests",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-often-shall-instance-updates-git-hub": "How often shall the instance pull updates from GitHub?",
-      "description-pr-enable-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "description-preview-requirements": "(requires <2>image rendering</2> and public access enabled)",
       "description-read-only": "Resources can't be modified through Grafana.",
-      "description-webhooks-enable": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "description-sync-interval": "How often to sync changes from the repository",
+      "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
-      "label-pr-workflow": "Enable pull request option when saving",
+      "label-generate-dashboard-previews": "Generate Dashboard Previews",
       "label-read-only": "Read only",
-      "label-update-instance-interval-seconds": "Update instance interval (seconds)",
-      "placeholder": "60",
-      "text-setup-later": "You can always set this up later",
-      "title-enhance-github": "Enhance your GitHub experience"
+      "label-sync-interval": "Sync Interval (seconds)"
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No results matching your query",
@@ -10717,6 +11166,57 @@
       "header": "Provisioning",
       "subtitle-provisioning-feature": "View and manage your provisioning connections"
     },
+    "git": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "branch-required": "Branch is required",
+      "path-description": "Optional subdirectory path within the repository",
+      "path-label": "Path",
+      "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "pr-workflow-label": "Enable pull request option when saving",
+      "token-description": "Git repository access token or password",
+      "token-label": "Access Token",
+      "token-required": "Git token is required",
+      "token-user-description": "The username that will be used to access the repository with the access token",
+      "token-user-label": "Username",
+      "token-user-required": "Username is required",
+      "url-description": "The Git repository URL",
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid Git repository URL",
+      "url-required": "Repository URL is required"
+    },
+    "github": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "branch-required": "Branch is required",
+      "path-description": "Optional subdirectory path within the repository",
+      "path-label": "Path",
+      "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "pr-workflow-label": "Enable pull request option when saving",
+      "token-description": "GitHub Personal Access Token with repository permissions",
+      "token-label": "Personal Access Token",
+      "token-required": "GitHub token is required",
+      "url-description": "The GitHub repository URL",
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid GitHub repository URL",
+      "url-required": "Repository URL is required"
+    },
+    "gitlab": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "branch-required": "Branch is required",
+      "path-description": "Optional subdirectory path within the repository",
+      "path-label": "Path",
+      "pr-workflow-description": "Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.",
+      "pr-workflow-label": "Enable merge request option when saving",
+      "token-description": "GitLab Project Access Token with repository permissions",
+      "token-label": "Project Access Token",
+      "token-required": "GitLab token is required",
+      "url-description": "The GitLab repository URL",
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid GitLab repository URL",
+      "url-required": "Repository URL is required"
+    },
     "history-view": {
       "not-found": "Not found"
     },
@@ -10743,9 +11243,17 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
-        "title-job-completed-successfully": "Job completed successfully"
+        "title-warning-running-job": "Job completed with warnings"
       },
-      "summary": "Summary"
+      "summary": "Summary",
+      "title": {
+        "error-fetching-active-job": "Error fetching active job"
+      }
+    },
+    "local": {
+      "path-description": "Local file system path to the repository",
+      "path-label": "Repository Path",
+      "path-required": "Repository path is required"
     },
     "mode-options": {
       "folder": {
@@ -10771,7 +11279,7 @@
     },
     "repository-actions": {
       "settings": "Settings",
-      "source-code": "Source Code"
+      "source-code": "Source code"
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10836,6 +11344,24 @@
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
     },
+    "repository-type-cards": {
+      "choose-provider": "Choose a provider:",
+      "configure-file": "Configure file provisioning",
+      "configure-with-provider": "Configure with {{ provider }}",
+      "provider-not-listed": "If your provider is not listed:"
+    },
+    "repository-types": {
+      "bitbucket": "Bitbucket",
+      "bitbucket-description": "Connect to Bitbucket repositories",
+      "github": "GitHub",
+      "github-description": "Connect to GitHub repositories",
+      "gitlab": "GitLab",
+      "gitlab-description": "Connect to GitLab repositories",
+      "local": "Local",
+      "local-description": "Configure file provisioning",
+      "pure-git": "Pure Git",
+      "pure-git-description": "Connect to any Git repository"
+    },
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Dashboard Preview",
@@ -10865,6 +11391,11 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "sync-job": {
+      "error-no-job-id": "Failed to start job",
+      "error-no-repository-name": "No repository name provided",
+      "error-starting-job": "Error starting job"
+    },
     "sync-repository": {
       "body-edit-configuration": "Edit the configuration",
       "button-edit": "Edit",
@@ -10875,9 +11406,6 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
-      "error-no-job-id": "Failed to start job",
-      "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
     },
@@ -10886,6 +11414,7 @@
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
+    "warning-title-default": "Warning",
     "wizard": {
       "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
       "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
@@ -11953,7 +12482,6 @@
       },
       "label-apply-to-entire-row": "Apply to entire row",
       "label-background-display-mode": "Background display mode",
-      "label-wrap-text": "Wrap text",
       "wrap-text": "Wrap text"
     },
     "column-alignment-options": {
@@ -12000,7 +12528,16 @@
       "label-wrap-text": "Wrap text"
     },
     "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-fields": "All Numeric Fields",
+    "text-wrap-options": {
+      "label-wrap-text": "Wrap text",
+      "max-wrapped-lines": {
+        "description": "Limits the number of lines displayed when wrapping text in a cell.",
+        "label": "Wrapped line limit",
+        "text-alpha": "Alpha"
+      },
+      "max-wrapped-lines-placeholder": "none"
+    }
   },
   "table-new": {
     "category-cell-options": "Cell options",
@@ -12940,7 +13477,7 @@
         "create-new-data-frame": "Create a new data frame containing values predicted by a statistical model."
       },
       "name": {
-        "regression-analysis": "Regression analysis"
+        "trendline": "Trendline"
       }
     },
     "regression-transformer-editor": {
@@ -12962,6 +13499,9 @@
         }
       },
       "regression": "regression",
+      "tags": {
+        "regression-analysis": "Regression analysis"
+      },
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {

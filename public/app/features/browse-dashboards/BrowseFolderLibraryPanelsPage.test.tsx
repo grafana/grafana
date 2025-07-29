@@ -45,6 +45,7 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
     canEditFolders: true,
     canViewPermissions: true,
     canSetPermissions: true,
+    canDeleteDashboards: true,
   };
 
   beforeAll(() => {

@@ -64,3 +64,23 @@ func NewMtDatasourceClientBuilderWithClientSupplier(
 		logger:         logger,
 	}
 }
+
+func NewTestMTDSClientBuilder(isMultiTenant bool, mockClient clientapi.QueryDataClient) MTDatasourceClientBuilder {
+	return &testBuilder{
+		mockClient:    mockClient,
+		isMultitenant: isMultiTenant,
+	}
+}
+
+type testBuilder struct {
+	mockClient    clientapi.QueryDataClient
+	isMultitenant bool
+}
+
+func (b *testBuilder) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool) {
+	if !b.isMultitenant {
+		return nil, false
+	}
+
+	return b.mockClient, true
+}

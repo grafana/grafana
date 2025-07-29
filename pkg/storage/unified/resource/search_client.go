@@ -24,21 +24,14 @@ type DualWriter interface {
 
 func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient resourcepb.ResourceIndexClient,
 	legacyClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles) resourcepb.ResourceIndexClient {
-	if dual.IsEnabled(gr) {
-		return &searchWrapper{
-			dual:          dual,
-			groupResource: gr,
-			unifiedClient: unifiedClient,
-			legacyClient:  legacyClient,
-			features:      features,
-			logger:        log.New("unified-storage.search-client"),
-		}
+	return &searchWrapper{
+		dual:          dual,
+		groupResource: gr,
+		unifiedClient: unifiedClient,
+		legacyClient:  legacyClient,
+		features:      features,
+		logger:        log.New("unified-storage.search-client"),
 	}
-	//nolint:errcheck
-	if ok, _ := dual.ReadFromUnified(context.Background(), gr); ok {
-		return unifiedClient
-	}
-	return legacyClient
 }
 
 type searchWrapper struct {

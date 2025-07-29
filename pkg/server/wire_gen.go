@@ -684,7 +684,13 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner)
+	playlistAppInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(playlistAppInstaller)
+	builderMetrics := builder.ProvideBuilderMetrics(registerer)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -697,12 +703,11 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, client, sqlStore, serverLockService, folderimplService)
-	playlistAppProvider := playlist.RegisterApp(playlistService, cfg, featureToggles)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
 	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -730,12 +735,12 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, registerer, resourceClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
 	legacyDataSourceLookup := service7.ProvideLegacyDataSourceLookup(service15)
-	queryAPIBuilder, err := query2.RegisterAPIService(featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
+	queryAPIBuilder, err := query2.RegisterAPIService(cfg, featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
 	if err != nil {
 		return nil, err
 	}
@@ -777,17 +782,20 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	}
 	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	secureValueValidator := validator3.ProvideSecureValueValidator()
-	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator)
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	decryptService := decrypt.ProvideDecryptService(decryptStorage)
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService)
+	v3, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	if err != nil {
+		return nil, err
+	}
+	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3, cfg)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v2 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v2)
+	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v4)
 	if err != nil {
 		return nil, err
 	}
@@ -1237,7 +1245,13 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner)
+	playlistAppInstaller, err := playlist.RegisterAppInstaller(playlistService, cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(playlistAppInstaller)
+	builderMetrics := builder.ProvideBuilderMetrics(registerer)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2, builderMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -1250,12 +1264,11 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, client, sqlStore, serverLockService, folderimplService)
-	playlistAppProvider := playlist.RegisterApp(playlistService, cfg, featureToggles)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	checkregistryService := checkregistry.ProvideService(service15, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
 	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideBuilderRunners(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1283,12 +1296,12 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	}
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderimplService, folderPermissionsService, accessControl, acimplService, registerer, resourceClient)
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, registerer, storageBackendImpl, storageBackendImpl)
 	if err != nil {
 		return nil, err
 	}
 	legacyDataSourceLookup := service7.ProvideLegacyDataSourceLookup(service15)
-	queryAPIBuilder, err := query2.RegisterAPIService(featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
+	queryAPIBuilder, err := query2.RegisterAPIService(cfg, featureToggles, apiserverService, service15, pluginstoreService, accessControl, middlewareHandler, plugincontextProvider, registerer, tracingService, legacyDataSourceLookup, exprService)
 	if err != nil {
 		return nil, err
 	}
@@ -1330,17 +1343,20 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	}
 	secureValueService := service12.ProvideSecureValueService(tracer, accessClient, databaseDatabase, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService)
 	secureValueValidator := validator3.ProvideSecureValueValidator()
-	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator)
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
 	}
-	decryptService := decrypt.ProvideDecryptService(decryptStorage)
-	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, decryptService)
+	v3, err := decrypt.ProvideDecryptService(cfg, tracer, decryptStorage)
+	if err != nil {
+		return nil, err
+	}
+	repositorySecrets := secrets.ProvideRepositorySecrets(featureToggles, secretsService, secureValueClient, v3, cfg)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, repositorySecrets, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v2 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v2)
+	v4 := extras.ProvideProvisioningOSSExtras(webhookExtraBuilder)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, repositorySecrets, tracingService, v4)
 	if err != nil {
 		return nil, err
 	}

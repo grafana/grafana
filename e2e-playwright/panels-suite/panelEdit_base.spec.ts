@@ -2,6 +2,12 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 
+test.use({
+  featureToggles: {
+    tableNextGen: true,
+  },
+});
+
 test.describe(
   'Panels test: Panel edit base',
   {
@@ -65,7 +71,7 @@ test.describe(
       // Check that table view works
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))).toHaveCount(0);
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
-      const tableHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header);
+      const tableHeader = page.getByRole('grid').getByRole('row').first();
       await expect(tableHeader).toBeVisible();
       await expect(tableHeader.getByText('A-series')).toBeVisible();
 

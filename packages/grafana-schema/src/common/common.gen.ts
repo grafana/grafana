@@ -722,6 +722,17 @@ export enum TableCellBackgroundDisplayMode {
   Gradient = 'gradient',
 }
 
+export interface TableWrapTextOptions {
+  /**
+   * if set, limits the number of lines of wrapped text to render
+   */
+  maxWrappedLines?: number;
+  /**
+   * if true, wrap the text content of the cell
+   */
+  wrapText?: boolean;
+}
+
 /**
  * Sort by field state
  */
@@ -755,17 +766,15 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
 /**
  * Auto mode table cell options
  */
-export interface TableAutoCellOptions {
+export interface TableAutoCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.Auto;
-  wrapText?: boolean;
 }
 
 /**
  * Colored text cell options
  */
-export interface TableColorTextCellOptions {
+export interface TableColorTextCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.ColorText;
-  wrapText?: boolean;
 }
 
 /**
@@ -787,7 +796,7 @@ export interface TableImageCellOptions {
 /**
  * Show data links in the cell
  */
-export interface TableDataLinksCellOptions {
+export interface TableDataLinksCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.DataLinks;
 }
 
@@ -818,11 +827,10 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
 /**
  * Colored background cell options
  */
-export interface TableColoredBackgroundCellOptions {
+export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions {
   applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
-  wrapText?: boolean;
 }
 
 /**
@@ -881,6 +889,16 @@ export type TimeZoneUtc = 'utc';
  * Use the timezone defined by end user web browser
  */
 export type TimeZoneBrowser = 'browser';
+
+/**
+ * Options for time comparison
+ */
+export interface TimeCompareOptions {
+  /**
+   * Enable time comparison control
+   */
+  timeCompare?: boolean;
+}
 
 /**
  * Optional formats for the template variable replace functions
