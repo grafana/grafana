@@ -753,9 +753,11 @@ export class LokiDatasource
       // If it is not a logs query, we need to check if we need to convert it to a logs query
       if (options?.convertMetricQueryToLogQuery) {
         queryExpr = getLogQueryFromMetricsQuery(queryExpr);
+      } else {
+        // Otherwise, we return an empty array, as data samples are only supported for logs queries
+        return [];
       }
-      // Otherwise, we return an empty array, as data samples are only supported for logs queries
-      return [];
+
     }
 
     const lokiLogsQuery: LokiQuery = {
