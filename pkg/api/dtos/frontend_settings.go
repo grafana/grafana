@@ -214,6 +214,8 @@ type FrontendSettingsDTO struct {
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
 	EnableFrontendSandboxForPlugins     []string `json:"enableFrontendSandboxForPlugins"`
+	PluginRestrictedAPIsWhitelist       map[string][]string `json:"pluginRestrictedAPIsWhitelist"`
+	PluginRestrictedAPIsBlacklist       map[string][]string `json:"pluginRestrictedAPIsBlacklist"`
 	ExploreDefaultTimeOffset            string   `json:"exploreDefaultTimeOffset"`
 	ExploreHideLogsDownload             bool     `json:"exploreHideLogsDownload"`
 
