@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { subHours } from 'date-fns';
 import { times } from 'lodash';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useSplitter, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Icon, Stack, TextLink, useSplitter, useStyles2, withErrorBoundary } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EditorColumnHeader } from '../components/contact-points/templates/EditorColumnHeader';
@@ -58,7 +58,7 @@ function Workbench({ window }: WorkbenchProps) {
     <div className={styles.groupItemWrapper}>
       <div style={{ minWidth: 'min-content', flexGrow: flexSize }} className={cx(styles.leftColumn, styles.column)}>
         <div className={styles.columnContent}>
-          <Trans i18nKey="alerting.workbench.left">left</Trans>
+          <GroupedItem label="My Service" />
         </div>
       </div>
       <div
@@ -96,6 +96,20 @@ function Workbench({ window }: WorkbenchProps) {
     </div>
   );
 }
+
+interface GroupedItemProps {
+  label: ReactNode;
+}
+
+const GroupedItem = ({ label }: GroupedItemProps) => {
+  return (
+    <TextLink inline={false} href="#">
+      <Stack direction="row" alignItems="center" gap={0.5}>
+        <Icon name="angle-down" /> {label}
+      </Stack>
+    </TextLink>
+  );
+};
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
