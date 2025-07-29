@@ -17,7 +17,6 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(() => [true, jest.fn()]),
 }));
 
-
 const dfBefore = createDataFrame({
   fields: [
     {
