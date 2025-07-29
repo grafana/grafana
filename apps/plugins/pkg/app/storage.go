@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +25,7 @@ var (
 )
 
 type PluginMetaStorage struct {
+	gr             schema.GroupResource
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
@@ -36,6 +38,7 @@ func NewPluginMetaStorage(
 		Resource: strings.ToLower(pluginsv0alpha1.PluginMetaKind().Plural()),
 	}
 	return &PluginMetaStorage{
+		gr:             gr,
 		namespacer:     namespacer,
 		tableConverter: rest.NewDefaultTableConvertor(gr),
 	}
@@ -64,17 +67,9 @@ func (s *PluginMetaStorage) ConvertToTable(ctx context.Context, object runtime.O
 }
 
 func (s *PluginMetaStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	obj, _ := s.Get(ctx, "grafana-example-plugin", &metav1.GetOptions{})
-	exampleObj := obj.(*pluginsv0alpha1.PluginMeta)
-	list := s.NewList().(*pluginsv0alpha1.PluginMetaList)
-	list.Items = append(list.Items, *exampleObj)
-	return list, nil
+	return s.NewList(), nil
 }
 
 func (s *PluginMetaStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	exampleObj := s.New().(*pluginsv0alpha1.PluginMeta)
-	exampleObj.Spec.PluginJSON.Id = name
-	exampleObj.Spec.PluginJSON.Name = "Example Plugin"
-	exampleObj.Spec.PluginJSON.Info.Version = "1.0.0"
-	return exampleObj, nil
+	return nil, apierrors.NewNotFound(s.gr, name)
 }

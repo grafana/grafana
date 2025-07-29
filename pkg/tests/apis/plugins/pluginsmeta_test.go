@@ -8,39 +8,41 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 var gvrPluginMeta = schema.GroupVersionResource{
 	Group:    "plugins.grafana.app",
 	Version:  "v0alpha1",
-	Resource: "pluginmeta",
+	Resource: "pluginmetas",
 }
 
 func TestIntegrationPluginMeta(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-		},
-	})
-	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("plugins.grafana.app/v0alpha1")
-	require.NoError(t, err)
 
-	t.Run("read only views", func(t *testing.T) {
+	t.Run("list plugin metas", func(t *testing.T) {
+		helper := setupHelper(t)
 		ctx := context.Background()
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Admin,
-			Namespace: helper.Org1.Admin.Identity.GetNamespace(),
-			GVR:       gvrPluginMeta,
+			User: helper.Org1.Admin,
+			GVR:  gvrPluginMeta,
 		})
-		_, err := client.Resource.List(ctx, metav1.ListOptions{})
+		list, err := client.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
+		require.NotNil(t, list)
+		require.Empty(t, list.Items)
+	})
+
+	t.Run("get plugin meta", func(t *testing.T) {
+		helper := setupHelper(t)
+		ctx := context.Background()
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvrPluginMeta,
+		})
+		_, err := client.Resource.Get(ctx, "example", metav1.GetOptions{})
+		require.Error(t, err)
 	})
 }
