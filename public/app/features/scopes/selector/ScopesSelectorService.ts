@@ -384,6 +384,22 @@ function isScopeObj(obj: unknown): obj is Scope {
   );
 }
 
+function hasValidScopeParentNode(obj: unknown): obj is RecentScope {
+  return (
+    isScopeObj(obj) &&
+    typeof obj === 'object' &&
+    obj !== null &&
+    'parentNode' in obj &&
+    typeof obj.parentNode === 'object' &&
+    obj.parentNode !== null &&
+    'metadata' in obj.parentNode &&
+    typeof obj.parentNode.metadata === 'object' &&
+    obj.parentNode.metadata !== null &&
+    'name' in obj.parentNode.metadata &&
+    'spec' in obj.parentNode.metadata
+  );
+}
+
 function parseScopesFromLocalStorage(content: string | undefined): RecentScope[][] {
   let recentScopes;
   try {
@@ -401,6 +417,13 @@ function parseScopesFromLocalStorage(content: string | undefined): RecentScope[]
     recentScopes = recentScopes.map((s: Array<{ scope: Scope }>) => s.map((scope) => scope.scope));
   } else if (!isScopeObj(recentScopes[0]?.[0])) {
     return [];
+  }
+
+  // Verify the structure of the parent node, and remove it if it is not valid
+  if (recentScopes[0]?.[0]?.parentNode) {
+    if (!hasValidScopeParentNode(recentScopes[0]?.[0]?.parentNode)) {
+      recentScopes[0][0].parentNode = undefined;
+    }
   }
 
   return recentScopes;
