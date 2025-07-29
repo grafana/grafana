@@ -31,6 +31,7 @@ import (
 
 var folderTitle string = "folder1"
 var folderDsc string = "folder desc"
+var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
 
 func TestIntegrationCreate(t *testing.T) {
 	if testing.Short() {
