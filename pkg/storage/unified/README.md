@@ -1317,6 +1317,64 @@ Unified Search supports multiple types of search operations:
 - **Additional endpoint**: `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search/sortable` for retrieving sortable fields
 - **Features**: Full-text search, filtering, sorting
 
+**Sortable Fields:**
+
+The `/search/sortable` endpoint currently returns a limited static list:
+```json
+{
+  "fields": [
+    {"field": "title", "display": "Title (A-Z)", "type": "string"},
+    {"field": "-title", "display": "Title (Z-A)", "type": "string"}
+  ]
+}
+```
+
+However, the search backend actually supports sorting by many more fields:
+
+**Standard Fields:**
+- `title` - Resource display name (uses `title_phrase` for exact sorting)
+- `name` - Kubernetes resource name
+- `description` - Resource description
+- `folder` - Parent folder name
+- `created` - Creation timestamp (int64)
+- `updated` - Last update timestamp (int64)
+- `createdBy` - Creator user ID
+- `updatedBy` - Last updater user ID
+- `tags` - Resource tags (array)
+- `rv` - Resource version (int64)
+
+**Dashboard-Specific Fields** (require `fields.` prefix):
+- `fields.schema_version` - Dashboard schema version
+- `fields.link_count` - Number of dashboard links
+- `fields.panel_types` - Panel types used in dashboard
+- `fields.ds_types` - Data source types used
+- `fields.transformation` - Transformations used
+
+**Usage Insights Fields** (Enterprise only, require `fields.` prefix):
+- `fields.views_total` - Total dashboard views
+- `fields.views_last_1_days` / `fields.views_last_7_days` / `fields.views_last_30_days` - Recent views
+- `fields.views_today` - Today's views
+- `fields.queries_total` - Total queries executed
+- `fields.queries_last_1_days` / `fields.queries_last_7_days` / `fields.queries_last_30_days` - Recent queries
+- `fields.queries_today` - Today's queries
+- `fields.errors_total` - Total errors
+- `fields.errors_last_1_days` / `fields.errors_last_7_days` / `fields.errors_last_30_days` - Recent errors
+- `fields.errors_today` - Today's errors
+
+**Usage Examples:**
+```bash
+# Sort by title (ascending)
+GET /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search?sortBy=title
+
+# Sort by creation date (descending)  
+GET /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search?sortBy=-created
+
+# Sort by usage insights (Enterprise)
+GET /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search?sortBy=-fields.views_total
+```
+
+*Note: There's currently a discrepancy between the limited fields exposed by `/search/sortable` and the full range of fields actually supported by the search backend.*
+
 ##### Federated Search  
 - **Purpose**: Search across multiple resource types simultaneously
 - **Features**: Cross-resource queries, unified result ranking, combined sorting and faceting
