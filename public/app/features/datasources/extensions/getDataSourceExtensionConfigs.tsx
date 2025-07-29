@@ -26,10 +26,11 @@ export function getDataSourceExtensionConfigs(): PluginExtensionAddedLinkConfig[
           if (context?.dataSource?.type !== 'prometheus') {
             return undefined;
           }
-          return {};
-        },
-        onClick: (_, { context }) => {
-          window.open(`https://monitoring-tool.com/datasource/${context!.dataSource.uid}`, '_blank');
+
+          // Return dynamic path with context
+          return {
+            path: `https://monitoring-tool.com/datasource/${context.dataSource.uid}`,
+          };
         },
       }),
 
