@@ -166,11 +166,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables right panel for the plugins details page
-  * @default true
-  */
-  pluginsDetailsRightPanel?: boolean;
-  /**
   * Enables previous SQL data source dataset dropdown behavior
   */
   sqlDatasourceDatabaseSelection?: boolean;
@@ -353,6 +348,10 @@ export interface FeatureToggles {
   */
   alertmanagerRemoteSecondary?: boolean;
   /**
+  * Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
+  */
+  alertingProvenanceLockWrites?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
@@ -396,6 +395,10 @@ export interface FeatureToggles {
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Enables time comparison option in supported panels
+  */
+  timeComparison?: boolean;
   /**
   * Enables infinite scrolling for the Logs panel in Explore and Dashboards
   * @default true
@@ -472,6 +475,10 @@ export interface FeatureToggles {
   * Enables SQL Expressions, which can execute SQL queries against data source results.
   */
   sqlExpressions?: boolean;
+  /**
+  * Enables column autocomplete for SQL Expressions
+  */
+  sqlExpressionsColumnAutoComplete?: boolean;
   /**
   * Enables the group to nested table transformation
   * @default true
@@ -748,6 +755,11 @@ export interface FeatureToggles {
   */
   alertingAIGenAlertRules?: boolean;
   /**
+  * Enable AI-generated feedback from the Grafana UI.
+  * @default false
+  */
+  alertingAIFeedback?: boolean;
+  /**
   * Enable AI-improve alert rules labels and annotations.
   * @default false
   */
@@ -987,6 +999,10 @@ export interface FeatureToggles {
   */
   kubernetesAuthzApis?: boolean;
   /**
+  * Enables create, delete, and update mutations for resources owned by IAM identity
+  */
+  kubernetesAuthnMutation?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1062,4 +1078,9 @@ export interface FeatureToggles {
   * Enables adhoc filtering support for the dashboard datasource
   */
   dashboardDsAdHocFiltering?: boolean;
+  /**
+  * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
+  * @default false
+  */
+  alertmanagerRemoteSecondaryWithRemoteState?: boolean;
 }

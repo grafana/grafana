@@ -63,18 +63,18 @@ export const XYChartTooltip = ({
 
   let label = series.name.value;
 
-  let seriesColor = series.color.fixed;
-  // let colorField = series.color.field;
-  // let pointColor: string;
+  let seriesColor = colorField?.display?.(colorField.values[rowIndex]).color ?? series.color.fixed ?? '#fff';
+  let fillOpacity = colorField?.config.custom?.fillOpacity;
 
-  // if (colorField != null) {
-  //   pointColor = colorField.display?.(colorField.values[rowIndex]).color!;
-  // }
+  // TODO: skip this if seriesColor already has an alpha component, such as opacity-by-value or opacity gradient schemes
+  if (fillOpacity != null) {
+    seriesColor = colorManipulator.alpha(seriesColor, fillOpacity / 100);
+  }
 
   const headerItem: VizTooltipItem = {
     label,
     value: '',
-    color: colorManipulator.alpha(seriesColor ?? '#fff', 0.5),
+    color: seriesColor,
     colorIndicator: ColorIndicator.marker_md,
   };
 

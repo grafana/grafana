@@ -246,7 +246,7 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 				InitMaxCount:  tt.initMaxSize,
 			}
 
-			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil)
+			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, support)
 
@@ -304,7 +304,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMaxCount:  0,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil)
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
