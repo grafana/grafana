@@ -12,7 +12,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { configureStore } from 'app/store/configureStore';
 
 import { makeDatasourceSetup } from '../../spec/helper/setup';
-import { updateQueryRefAction } from '../../state/explorePane';
+import { updateQueryLibraryRefAction } from '../../state/explorePane';
 import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
@@ -586,7 +586,7 @@ describe('useStateSync', () => {
     });
   });
 
-  it('should keep queryRef in state but not in URL', async () => {
+  it('should keep queryLibraryRef in state but not in URL', async () => {
     const { store, location } = setup({
       queryParams: {
         panes: JSON.stringify({
@@ -604,15 +604,15 @@ describe('useStateSync', () => {
     });
 
     act(() => {
-      store.dispatch(updateQueryRefAction({ exploreId: 'one', queryRef: 'library-query-456' }));
+      store.dispatch(updateQueryLibraryRefAction({ exploreId: 'one', queryLibraryRef: 'library-query-456' }));
     });
 
     await waitFor(() => {
-      expect(store.getState().explore.panes['one']?.queryRef).toBe('library-query-456');
+      expect(store.getState().explore.panes['one']?.queryLibraryRef).toBe('library-query-456');
 
       const search = location.getSearchObject();
       const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
-      expect(panes.one?.queryRef).toBeUndefined();
+      expect(panes.one?.queryLibraryRef).toBeUndefined();
     });
   });
 });

@@ -5,7 +5,7 @@ import { MutableRefObject } from 'react';
 import { UrlQueryMap } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 import { changeDatasource } from 'app/features/explore/state/datasource';
-import { changePanelsStateAction, updateQueryRefAction } from 'app/features/explore/state/explorePane';
+import { changePanelsStateAction } from 'app/features/explore/state/explorePane';
 import { splitClose, splitOpen } from 'app/features/explore/state/main';
 import { runQueries } from 'app/features/explore/state/query';
 import { changeRangeAction } from 'app/features/explore/state/time';
@@ -37,7 +37,6 @@ export function syncToURLPredicate(paused: MutableRefObject<boolean>, action: Ac
       changeRangeAction.type,
       changePanelsStateAction.type,
       changeDatasource.fulfilled.type,
-      updateQueryRefAction.type,
     ].includes(action.type) && !paused.current
   );
 }

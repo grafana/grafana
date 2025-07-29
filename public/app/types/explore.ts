@@ -144,7 +144,7 @@ export interface ExploreItemState {
    * Query library reference identifier when editing a query from the query library
    *
    */
-  queryRef?: string;
+  queryLibraryRef?: string;
   /**
    * Log query result to be displayed in the logs result viewer.
    */

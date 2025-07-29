@@ -67,7 +67,7 @@ export interface Props<TQuery extends DataQuery> {
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
-  queryRef?: string;
+  queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
 }
 
@@ -333,8 +333,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderQueryLibraryEditingBadge = () => {
-    const { queryRef } = this.props;
-    return <QueryLibraryEditingBadge key="query-library-editing-badge" queryRef={queryRef} />;
+    const { queryLibraryRef } = this.props;
+    return <QueryLibraryEditingBadge key="query-library-editing-badge" queryLibraryRef={queryLibraryRef} />;
   };
 
   renderExtraActions = () => {
@@ -375,13 +375,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       hideHideQueryButton: hideHideQueryButton = false,
       onReplace,
       onQueryReplacedFromLibrary,
-      queryRef,
+      queryLibraryRef,
     } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
-    const isEditingQueryLibrary = queryRef !== undefined;
+    const isEditingQueryLibrary = queryLibraryRef !== undefined;
 
     return (
       <>
@@ -394,7 +394,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        <MaybeQueryLibrarySaveButton query={query} queryRef={queryRef} />
+        <MaybeQueryLibrarySaveButton query={query} queryLibraryRef={queryLibraryRef} />
         {isEditingQueryLibrary && (
           <>
             <QueryOperationAction
@@ -514,11 +514,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 }
 
-export function QueryLibraryEditingBadge(props: { queryRef?: string }) {
+export function QueryLibraryEditingBadge(props: { queryLibraryRef?: string }) {
   const { queryLibraryEnabled } = useQueryLibraryContext();
-  const { queryRef } = props;
+  const { queryLibraryRef } = props;
 
-  if (!queryLibraryEnabled || !queryRef) {
+  if (!queryLibraryEnabled || !queryLibraryRef) {
     return null;
   }
 
@@ -527,8 +527,8 @@ export function QueryLibraryEditingBadge(props: { queryRef?: string }) {
       color="blue"
       icon="book"
       text={t('query-operation.query-library.from-library', 'Editing From Query Library')}
-      tooltip={t('query-operation.query-library.editing-tooltip', 'Editing query from library ({{queryRef}})', {
-        queryRef,
+      tooltip={t('query-operation.query-library.editing-tooltip', 'Editing query from library ({{queryLibraryRef}})', {
+        queryLibraryRef,
       })}
     />
   );
@@ -576,9 +576,9 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 }
 
 // Will render anything only if query library is enabled
-function MaybeQueryLibrarySaveButton(props: { query: DataQuery; queryRef?: string }) {
+function MaybeQueryLibrarySaveButton(props: { query: DataQuery; queryLibraryRef?: string }) {
   const { renderSaveQueryButton } = useQueryLibraryContext();
-  return renderSaveQueryButton(props.query, props.queryRef);
+  return renderSaveQueryButton(props.query, props.queryLibraryRef);
 }
 
 interface ReplaceQueryFromLibraryProps<TQuery extends DataQuery> {

@@ -411,24 +411,24 @@ describe('QueryLibraryBadge', () => {
     mockQueryLibraryContext.queryLibraryEnabled = true;
   });
 
-  it('should display badge when queryLibraryEnabled is true and queryRef is provided', () => {
-    render(<QueryLibraryEditingBadge queryRef="library-query-123" />);
+  it('should display badge when queryLibraryEnabled is true and queryLibraryRef is provided', () => {
+    render(<QueryLibraryEditingBadge queryLibraryRef="library-query-123" />);
     expect(screen.getByText('Editing From Query Library')).toBeInTheDocument();
   });
 
   it('should not display badge when queryLibraryEnabled is false', () => {
     mockQueryLibraryContext.queryLibraryEnabled = false;
-    render(<QueryLibraryEditingBadge queryRef="library-query-123" />);
+    render(<QueryLibraryEditingBadge queryLibraryRef="library-query-123" />);
     expect(screen.queryByText('Editing From Query Library')).not.toBeInTheDocument();
   });
 
-  it('should not display badge when queryRef is not provided', () => {
+  it('should not display badge when queryLibraryRef is not provided', () => {
     render(<QueryLibraryEditingBadge />);
     expect(screen.queryByText('Editing From Query Library')).not.toBeInTheDocument();
   });
 
-  it('should not display badge when queryRef is empty string', () => {
-    render(<QueryLibraryEditingBadge queryRef="" />);
+  it('should not display badge when queryLibraryRef is empty string', () => {
+    render(<QueryLibraryEditingBadge queryLibraryRef="" />);
     expect(screen.queryByText('Editing From Query Library')).not.toBeInTheDocument();
   });
 });
