@@ -49,7 +49,6 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   queries: T[];
   range: URLRange;
   panelsState?: ExplorePanelsState;
-  queryRef?: string;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
