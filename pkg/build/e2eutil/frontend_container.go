@@ -1,4 +1,4 @@
-package main
+package e2eutil
 
 import (
 	"context"
