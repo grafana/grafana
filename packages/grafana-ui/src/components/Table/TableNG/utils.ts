@@ -193,7 +193,18 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
     const field = fields[fieldIdx];
     if (shouldTextWrap(field)) {
       wrappedFields++;
-      // TODO: Pills, DataLinks, and JSON will have custom line counters here.
+
+      const cellType = getCellOptions(field).type;
+      if (cellType === TableCellDisplayMode.DataLinks) {
+        // getCellLinks filters out invalid links, so the number of links in the config array may not match
+        // what is actually rendered into the DOM.
+        result.dataLinksCounter = result.dataLinksCounter ?? {
+          estimate: (_value, _width, field) => field.config.links?.length ?? 1,
+          counter: (_value, _width, field, rowIdx) => getCellLinks(field, rowIdx)?.length ?? 1,
+          fieldIdxs: [],
+        };
+        result.dataLinksCounter.fieldIdxs.push(fieldIdx);
+      }
 
       // for string fields, we really want to find the longest field ahead of time to reduce the number of calls to `count`.
       // calling `count` is going to get a perfectly accurate line count, but it is expensive, so we'd rather estimate the line
@@ -258,8 +269,7 @@ export function getRowHeight(
       const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellValueRaw != null) {
         const colWidth = columnWidths[fieldIdx];
-        const approxLines = count(cellValueRaw, colWidth, field);
-
+        const approxLines = count(cellValueRaw, colWidth, field, rowIdx);
         if (approxLines > maxLines) {
           maxLines = approxLines;
           maxValue = cellValueRaw;
@@ -280,7 +290,7 @@ export function getRowHeight(
   // if we finished this row height loop with an estimate, we need to call
   // the `preciseCounter` method to get the exact line count.
   if (preciseCounter !== undefined) {
-    maxLines = preciseCounter(maxValue, maxWidth, maxField);
+    maxLines = preciseCounter(maxValue, maxWidth, maxField, rowIdx);
   }
 
   // we want a round number of lines for rendering

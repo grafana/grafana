@@ -974,6 +974,12 @@ const getCellStyles = (
       '-webkit-box-orient': 'vertical',
       overflowY: 'hidden',
     }),
+    ...(isLinkCell &&
+      shouldWrap && {
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: getJustifyContent(textAlign),
+      }),
 
     // should omit if no cell actions, and no shouldOverflow
     '&:hover, &[aria-selected=true]': {
@@ -1009,19 +1015,18 @@ const getCellStyles = (
 
     ...(isLinkCell && {
       '> a': {
-        // display: 'inline', // textWrap ? 'block' : 'inline',
-        whiteSpace: 'nowrap',
-        paddingInline: theme.spacing(1),
-        borderRight: `2px solid ${theme.colors.border.medium}`,
-
-        '&:first-of-type': {
-          paddingInlineStart: 0,
-        },
-
-        '&:last-of-type': {
-          borderRight: 'none',
-          paddingInlineEnd: 0,
-        },
+        flexWrap: 'nowrap',
+        ...(!shouldWrap && {
+          paddingInline: theme.spacing(0.5),
+          borderRight: `2px solid ${theme.colors.border.medium}`,
+          '&:first-child': {
+            paddingInlineStart: 0,
+          },
+          '&:last-child': {
+            paddingInlineEnd: 0,
+            borderRight: 'none',
+          },
+        }),
       },
     }),
   });

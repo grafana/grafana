@@ -11,6 +11,7 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-backgr
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
+// Whenever we add text wrapping, we should add all text wrapping options at once
 TableWrapTextOptions: {
   // if true, wrap the text content of the cell
   wrapText?: bool
@@ -60,7 +61,7 @@ TableImageCellOptions: {
 // Show data links in the cell
 TableDataLinksCellOptions: {
 	type: TableCellDisplayMode & "data-links"
-} @cuetsy(kind="interface")
+} & TableWrapTextOptions @cuetsy(kind="interface")
 
 // Show actions in the cell
 TableActionsCellOptions: {

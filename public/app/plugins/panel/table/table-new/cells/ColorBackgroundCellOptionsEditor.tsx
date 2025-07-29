@@ -6,7 +6,7 @@ import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
-import { AutoCellOptionsEditor } from './AutoCellOptionsEditor';
+import { TextWrapOptionsEditor } from './TextWrapOptionsEditor';
 
 const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>> = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
@@ -53,7 +53,7 @@ export const ColorBackgroundCellOptionsEditor = ({
         />
       </Field>
 
-      <AutoCellOptionsEditor
+      <TextWrapOptionsEditor
         cellOptions={cellOptions}
         onChange={(updatedCellOptions) => {
           cellOptions.wrapText = updatedCellOptions.wrapText;

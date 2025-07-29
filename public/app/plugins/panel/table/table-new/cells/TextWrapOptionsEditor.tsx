@@ -2,15 +2,16 @@ import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { TableAutoCellOptions, TableColoredBackgroundCellOptions, TableColorTextCellOptions } from '@grafana/schema';
+import { TableCellOptions, TableWrapTextOptions } from '@grafana/schema';
 import { Badge, Field, Input, Label, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
-export const AutoCellOptionsEditor = ({
+export const TextWrapOptionsEditor = ({
   cellOptions,
   onChange,
-}: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions | TableColoredBackgroundCellOptions>) => {
+}: TableCellEditorProps<TableCellOptions & TableWrapTextOptions>) => {
+  // Handle row coloring changes
   const onWrapTextChange = () => {
     cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);
@@ -23,7 +24,7 @@ export const AutoCellOptionsEditor = ({
 
   return (
     <>
-      <Field label={t('table.auto-cell-options-editor.label-wrap-text', 'Wrap text')}>
+      <Field label={t('table.text-wrap-options.label-wrap-text', 'Wrap text')}>
         <Switch
           label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Wrap text`)}
           value={cellOptions.wrapText}
@@ -35,13 +36,13 @@ export const AutoCellOptionsEditor = ({
           label={
             <Label
               description={t(
-                'table.auto-cell-options-editor.max-wrapped-lines.description',
+                'table.text-wrap-options.max-wrapped-lines.description',
                 'Limits the number of lines displayed when wrapping text in a cell.'
               )}
             >
-              <Trans i18nKey="table.auto-cell-options-editor.max-wrapped-lines.label">Wrapped line limit</Trans>&nbsp;
+              <Trans i18nKey="table.text-wrap-options.max-wrapped-lines.label">Wrapped line limit</Trans>&nbsp;
               <Badge
-                text={t('table.auto-cell-options-editor.max-wrapped-lines.text-alpha', 'Alpha')}
+                text={t('table.text-wrap-options.max-wrapped-lines.text-alpha', 'Alpha')}
                 color="blue"
                 style={{ display: 'inline-block', fontSize: '11px', marginLeft: '5px', lineHeight: '1.2' }}
               />
@@ -54,7 +55,7 @@ export const AutoCellOptionsEditor = ({
             value={cellOptions.maxWrappedLines}
             onChange={onMaxWrappedLinesChange}
             min={1}
-            placeholder={t('table.auto-cell-options-editor.max-wrapped-lines-placeholder', 'none')}
+            placeholder={t('table.text-wrap-options.max-wrapped-lines-placeholder', 'none')}
           />
         </Field>
       )}

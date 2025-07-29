@@ -518,7 +518,7 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0]);
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1);
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -549,7 +549,7 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0]);
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1);
     });
   });
 
@@ -771,7 +771,8 @@ describe('TableNG hooks', () => {
         expect(estimateLinesFn).toHaveBeenCalledWith(
           'Annie Lennox',
           100 - TABLE.CELL_PADDING * 2 - TABLE.BORDER_RIGHT,
-          fieldsWithWrappedText[0]
+          fieldsWithWrappedText[0],
+          0
         );
       });
     });

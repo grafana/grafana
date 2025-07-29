@@ -270,7 +270,7 @@ export interface TypographyCtx {
   wrappedCount: LineCounter;
 }
 
-export type LineCounter = (value: unknown, width: number, field: Field) => number;
+export type LineCounter = (value: unknown, width: number, field: Field, rowIdx: number) => number;
 export interface LineCounterEntry {
   /**
    * given a values and the available width, returns the line count for that value

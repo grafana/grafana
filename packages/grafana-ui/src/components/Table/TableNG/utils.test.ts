@@ -816,6 +816,7 @@ describe('TableNG utils', () => {
     it('creates the context using uwrap', () => {
       const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
       const ctx = createTypographyContext(14, 'sans-serif', 0.15);
+
       expect(ctx).toEqual(
         expect.objectContaining({
           font: '14px sans-serif',
@@ -825,8 +826,12 @@ describe('TableNG utils', () => {
           avgCharWidth: expect.any(Number),
         })
       );
-      expect(ctx.wrappedCount('the quick brown fox jumps over the lazy dog', 100, field)).toEqual(expect.any(Number));
-      expect(ctx.estimateLines('the quick brown fox jumps over the lazy dog', 100, field)).toEqual(expect.any(Number));
+      expect(ctx.wrappedCount('the quick brown fox jumps over the lazy dog', 100, field, 0)).toEqual(
+        expect.any(Number)
+      );
+      expect(ctx.estimateLines('the quick brown fox jumps over the lazy dog', 100, field, 0)).toEqual(
+        expect.any(Number)
+      );
     });
   });
 
@@ -835,21 +840,26 @@ describe('TableNG utils', () => {
 
     it('wraps the uwrap count function', () => {
       const wrappedCount = wrapUwrapCount(jest.fn(() => 2));
-      expect(wrappedCount('test string', 100, field)).toBe(2);
+      expect(wrappedCount('test string', 100, field, 0)).toBe(2);
     });
 
     it('returns 1 for null or undefined values', () => {
       const wrappedCount = wrapUwrapCount(jest.fn(() => 2));
-      expect(wrappedCount(null, 100, field)).toBe(1);
-      expect(wrappedCount(undefined, 100, field)).toBe(1);
+      expect(wrappedCount(null, 100, field, 0)).toBe(1);
+      expect(wrappedCount(undefined, 100, field, 0)).toBe(1);
     });
 
     it('clamps the line count to the max wrapped lines if set', () => {
       expect(
-        wrapUwrapCount(jest.fn(() => 3))('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, {
-          ...field,
-          config: { custom: { cellOptions: { wrapText: true, maxWrappedLines: 2 } } },
-        })
+        wrapUwrapCount(jest.fn(() => 3))(
+          'asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23',
+          200,
+          {
+            ...field,
+            config: { custom: { cellOptions: { wrapText: true, maxWrappedLines: 2 } } },
+          },
+          0
+        )
       ).toBe(2);
     });
   });
@@ -859,19 +869,24 @@ describe('TableNG utils', () => {
     const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
 
     it('returns -1 if there are no strings or dashes within the string', () => {
-      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5, field)).toBe(-1);
+      expect(counter('asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdf', 5, field, 0)).toBe(-1);
     });
 
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
-      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field)).toBe(2.5);
+      expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field, 0)).toBe(2.5);
     });
 
     it('clamps the line count to the maxWrappedLines if set', () => {
       expect(
-        counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, {
-          ...field,
-          config: { custom: { cellOptions: { wrapText: true, maxWrappedLines: 2 } } },
-        })
+        counter(
+          'asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23',
+          200,
+          {
+            ...field,
+            config: { custom: { cellOptions: { wrapText: true, maxWrappedLines: 2 } } },
+          },
+          0
+        )
       ).toBe(2);
     });
   });
@@ -1024,15 +1039,15 @@ describe('TableNG utils', () => {
 
     it('should take colWidths into account when calculating max wrap cell', () => {
       getRowHeight(fields, 3, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50, fields[0]);
-      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60, fields[1]);
+      expect(counters[0].counter).toHaveBeenCalledWith('longer one here', 50, fields[0], 3);
+      expect(counters[1].counter).toHaveBeenCalledWith(123456, 60, fields[1], 3);
     });
 
     // this is used to calc wrapped header height
     it('should use the display name if the rowIdx is -1', () => {
       getRowHeight(fields, -1, [50, 60], 36, counters, 20, 10);
-      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50, fields[0]);
-      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60, fields[1]);
+      expect(counters[0].counter).toHaveBeenCalledWith('Name', 50, fields[0], -1);
+      expect(counters[1].counter).toHaveBeenCalledWith('Age', 60, fields[1], -1);
     });
 
     it('should ignore columns which do not have line counters', () => {

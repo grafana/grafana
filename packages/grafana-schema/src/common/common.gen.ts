@@ -796,7 +796,7 @@ export interface TableImageCellOptions {
 /**
  * Show data links in the cell
  */
-export interface TableDataLinksCellOptions {
+export interface TableDataLinksCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.DataLinks;
 }
 
