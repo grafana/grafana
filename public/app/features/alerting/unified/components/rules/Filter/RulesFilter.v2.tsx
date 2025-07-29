@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
+  ClickOutsideWrapper,
   Combobox,
   FilterInput,
   Input,
@@ -49,6 +50,7 @@ export default function RulesFilter() {
   const styles = useStyles2(getStyles);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { searchQuery, updateFilters } = useRulesFilter();
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
@@ -60,15 +62,19 @@ export default function RulesFilter() {
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
     console.log('search Query', values);
+    console.log('handleAdvancedFilters', values);
   };
 
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
-    console.log('handleAdvancedFilters', values);
     updateFilters(formAdvancedFiltersToRuleFilter(values));
+    setIsPopupOpen(false); // Should close popup after applying filters?
+  };
+
+  const handleClearFilters = () => {
+    updateFilters(formAdvancedFiltersToRuleFilter(emptyAdvancedFilters));
   };
 
   const filterButtonLabel = t('alerting.rules-filter.filter-options.aria-label-show-filters', 'Filter');
-
   return (
     <form onSubmit={handleSubmit(submitHandler)} onReset={() => {}}>
       <Stack direction="row">
@@ -83,36 +89,44 @@ export default function RulesFilter() {
           value={watch('query')}
         />
         {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
-        <PopupCard
-          showOn="click"
-          placement="auto-end"
-          content={
-            <div className={styles.content}>
-              {activeTab === 'custom' && <FilterOptions onSubmit={handleAdvancedFilters} />}
-              {/* {activeTab === 'saved' && <SavedSearches />} */}
-            </div>
-          }
-          header={
-            <TabsBar hideBorder className={styles.fixTabsMargin}>
-              <Tab
-                active={activeTab === 'custom'}
-                icon="filter"
-                label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
-                onChangeTab={() => setActiveTab('custom')}
-              />
-              {/* <Tab
-                active={activeTab === 'saved'}
-                icon="bookmark"
-                label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
-                onChangeTab={() => setActiveTab('saved')}
-              /> */}
-            </TabsBar>
-          }
-        >
-          <Button name="filter" icon="filter" variant="secondary" aria-label={filterButtonLabel}>
-            {filterButtonLabel}
-          </Button>
-        </PopupCard>
+        <ClickOutsideWrapper onClick={() => setIsPopupOpen(false)}>
+          <PopupCard
+            showOn="click"
+            placement="auto-end"
+            disableBlur={true}
+            isOpen={isPopupOpen}
+            onClose={() => setIsPopupOpen(false)}
+            onToggle={() => setIsPopupOpen(!isPopupOpen)}
+            content={
+              <div className={styles.content} onClick={(e) => e.stopPropagation()}>
+                {activeTab === 'custom' && (
+                  <FilterOptions onSubmit={handleAdvancedFilters} onClear={handleClearFilters} />
+                )}
+                {/* {activeTab === 'saved' && <SavedSearches />} */}
+              </div>
+            }
+            header={
+              <TabsBar hideBorder className={styles.fixTabsMargin}>
+                <Tab
+                  active={activeTab === 'custom'}
+                  icon="filter"
+                  label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
+                  onChangeTab={() => setActiveTab('custom')}
+                />
+                {/* <Tab
+                  active={activeTab === 'saved'}
+                  icon="bookmark"
+                  label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
+                  onChangeTab={() => setActiveTab('saved')}
+                /> */}
+              </TabsBar>
+            }
+          >
+            <Button name="filter" icon="filter" variant="secondary" aria-label={filterButtonLabel}>
+              {filterButtonLabel}
+            </Button>
+          </PopupCard>
+        </ClickOutsideWrapper>
         {/* show list view / group view */}
         <RulesViewModeSelector />
       </Stack>
@@ -122,9 +136,10 @@ export default function RulesFilter() {
 
 interface FilterOptionsProps {
   onSubmit: SubmitHandler<AdvancedFilters>;
+  onClear: () => void;
 }
 
-const FilterOptions = ({ onSubmit }: FilterOptionsProps) => {
+const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
   const styles = useStyles2(getStyles);
   const { filterState } = useRulesFilter();
 
@@ -142,7 +157,7 @@ const FilterOptions = ({ onSubmit }: FilterOptionsProps) => {
       onSubmit={submitAdvancedFilters}
       onReset={() => {
         reset(emptyAdvancedFilters);
-        submitAdvancedFilters();
+        onClear();
       }}
     >
       <Stack direction="column" alignItems="end" gap={2}>
@@ -195,6 +210,7 @@ const FilterOptions = ({ onSubmit }: FilterOptionsProps) => {
           <Label>
             <Trans i18nKey="alerting.search.property.state">State</Trans>
           </Label>
+          {/* Should be able to select multiple states? */}
           <Controller
             name="ruleState"
             control={control}
