@@ -1,0 +1,60 @@
+# This workflow depends on the ./actionlint-format.txt file. It is MIT licensed (thanks, rhysd!): https://github.com/rhysd/actionlint/blob/2ab3a12c7848f6c15faca9a92612ef4261d0e370/testdata/format/sarif_template.txt
+name: Actionlint
+
+on:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  run-actionlint:
+    name: Lint GitHub Actions files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # to check out the code
+      actions: read # to read the workflow files
+      security-events: write # for uploading the SARIF report
+
+    env:
+      ACTIONLINT_VERSION: 1.7.7
+      # curl -LXGET https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_checksums.txt | grep linux_amd64
+      CHECKSUM: 023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
+
+      # GitHub Actions only runs x86_64. This will break if that assumption changes.
+      - name: Download Actionlint
+        run: |
+          set -euo pipefail
+          curl -OLXGET https://github.com/rhysd/actionlint/releases/download/v"${ACTIONLINT_VERSION}"/actionlint_"${ACTIONLINT_VERSION}"_linux_amd64.tar.gz
+          echo "${CHECKSUM}  actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sha256sum -c -
+          tar xzf actionlint_"${ACTIONLINT_VERSION}"_linux_amd64.tar.gz
+          test -f actionlint
+          chmod +x actionlint
+
+      - name: Run Actionlint
+        run: ./actionlint -format "$(cat .github/workflows/actionlint-format.txt)" | tee results.sarif
+
+      - name: Upload to GitHub security events
+        if: success() || failure()
+        # If there are security problems, GitHub will automatically comment on the PR for us.
+        uses: github/codeql-action/upload-sarif@28deaeda66b76a05916b6923827895f2b14ab387 # v3.28.16
+        with:
+          sarif_file: results.sarif
+          category: actionlint

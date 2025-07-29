@@ -1,0 +1,128 @@
+---
+- - :permit
+  - MIT
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:11:50.696368005 Z
+- - :permit
+  - Apache 2.0
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 Z
+- - :permit
+  - New BSD
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 Z
+- - :permit
+  - Simplified BSD
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 Z
+- - :permit
+  - Mozilla Public License 2.0
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 Z
+- - :permit
+  - ISC
+  - :who: Carl Bergquist
+    :why: Compatible license
+    :versions: []
+    :when: 2021-03-25 11:12:09.344787957 
+- - :license
+  - github.com/grafana/alerting
+  - GNU Affero GPL
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/apps/advisor
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/apps/alerting/notifications
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/apps/dashboard
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/apps/folder
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/apps/investigations
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/apps/playlist
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/pkg/aggregator
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/pkg/apimachinery
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/pkg/apis/secret
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/pkg/apiserver
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/pkg/promlib
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
+- - :license
+  - github.com/grafana/grafana/pkg/semconv
+  - unknown
+  - :who: Carl Bergquist
+    :why: repository is owned by Grafana Labs
+    :versions: []
+    :when: 2025-05-03 13:10:00.000000000 Z
