@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
+// HeaderGrafanaServiceIdentityName is used to pass the service identity in the gRPC request metadata.
+const HeaderGrafanaServiceIdentityName = "X-Grafana-Service-Identity-Name"
+
 var (
 	ErrDecryptNotFound      = errors.New("not found")
 	ErrDecryptNotAuthorized = errors.New("not authorized")
@@ -27,6 +30,7 @@ type DecryptAuthorizer interface {
 // DecryptService is the inferface for the decrypt service.
 type DecryptService interface {
 	Decrypt(ctx context.Context, namespace string, names ...string) (map[string]DecryptResult, error)
+	Close() error
 }
 
 // DecryptResult is the (union) result of a decryption operation.
