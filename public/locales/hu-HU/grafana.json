@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurálás",
-      "draft-new-rule": "Új szabály felvázolása",
       "ds-error": {
         "title": "Nem lehet betölteni a szabályokat ehhez az adatforráshoz"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Új riasztási szabály",
       "new-datasource-recording-rule": "Új adatforrás-felvételkészítési szabály",
       "new-grafana-recording-rule": "Új Grafana-felvételkészítési szabály",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Továbbiak megjelenítése…"
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} hozzáadása",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "{{typeName}} áthelyezése",
       "panel-background": "Panel hátterének módosítása",
       "panel-description": "Panel leírásának módosítása",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Irányítópult",
+        "element": "",
         "local-variable": "Helyi változó",
         "multiple-elements": "Több elem",
         "multiple-elements-delete-text": "Biztosan törli ezeket az elemeket?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7508,6 +7512,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7567,6 +7572,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -13439,7 +13445,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13461,6 +13467,9 @@
         }
       },
       "regression": "regresszió",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Előre jelzendő X,Y pontok száma"
     },
     "rename-by-regex-transformer": {

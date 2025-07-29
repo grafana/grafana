@@ -3482,6 +3482,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
+      "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3515,22 +3516,33 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "All resources have been deleted successfully",
+      "all-moved": "All resources have been moved successfully",
+      "button-done": "Done",
       "failed-alert_one": "{{count}} items failed",
-      "failed-alert_other": "{{count}} items failed"
+      "failed-alert_other": "{{count}} items failed",
+      "progress-title": "Success"
     },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "button-done": "Done",
       "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-path-not-found": "Path not found",
-      "progress-title": "Success",
-      "success-message": "All resources have been deleted successfully."
+      "error-path-not-found": "Path not found"
     },
     "bulk-move-resources-form": {
-      "deleting": "Deleting:",
-      "progress": "Progress: {{current}} of {{total}}"
+      "button-cancel": "Cancel",
+      "button-move": "Move",
+      "button-moving": "Moving...",
+      "deleting": "Deleting",
+      "error-file-content-not-found": "File content not found",
+      "error-path-not-found": "Path not found",
+      "error-target-folder-path-missing": "Target folder path is missing",
+      "error-title": "Target Folder Error",
+      "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "moving": "Moving",
+      "progress": "Progress: {{current}} of {{total}}",
+      "target-folder": "Target Folder"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
@@ -4567,6 +4579,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "duplicate-panel": "Duplicate panel",
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
@@ -5354,6 +5367,20 @@
       "invalid-json": "Not valid JSON",
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
+    },
+    "variable": {
+      "description": {
+        "action": "Change variable description"
+      },
+      "hide": {
+        "action": "Change variable hide option"
+      },
+      "label": {
+        "action": "Change variable label"
+      },
+      "name": {
+        "action": "Change variable name"
+      }
     },
     "version-history-comparison": {
       "button-restore": "Restore to version {{version}}",
@@ -7512,6 +7539,7 @@
     },
     "description-initial-view": "This location will show when the panel first loads.",
     "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
+    "description-no-repeat": "Prevent the map from repeating horizontally",
     "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
     "description-show-attribution": "Show the map source attribution info in the lower right",
     "description-show-debug": "Show map info",
@@ -7571,6 +7599,7 @@
     },
     "name-initial-view": "Initial view",
     "name-mouse-wheel-zoom": "Mouse wheel zoom",
+    "name-no-repeat": "No map repeating",
     "name-share-view": "Share view",
     "name-show-attribution": "Show attribution",
     "name-show-debug": "Show debug",
@@ -8270,6 +8299,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": "Open image preview"
+    },
     "cascader": {
       "clear-button": "Clear selection"
     },
@@ -8282,6 +8314,7 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
+      "aria-label-delete": "Delete",
       "cancel": "Cancel",
       "confirmText-delete": "Delete"
     },
@@ -8708,6 +8741,7 @@
       "footer-add-annotation": "Add annotation",
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
+      "footer-filter-for-value": "Filter for '{{value}}'",
       "timestamp": "Timestamp"
     },
     "week-start-picker": {
@@ -11222,6 +11256,7 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
+        "title-success-running-job": "Job completed successfully",
         "title-warning-running-job": "Job completed with warnings"
       },
       "summary": "Summary",
@@ -11370,6 +11405,7 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "success-title-default": "Success",
     "sync-job": {
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",
@@ -11402,6 +11438,12 @@
       "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
+      "discard-modal": {
+        "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
+        "confirm": "Yes, discard",
+        "dismiss": "Keep working",
+        "title": "Discard repository setup?"
+      },
       "step-bootstrap": "Choose what to synchronize",
       "step-connect": "Connect",
       "step-finish": "Choose additional settings",
@@ -11416,6 +11458,7 @@
     "wizard-content": {
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
+      "button-previous": "Previous",
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists"
     }
@@ -13443,7 +13486,7 @@
         "create-new-data-frame": "Create a new data frame containing values predicted by a statistical model."
       },
       "name": {
-        "regression-analysis": "Regression analysis"
+        "trendline": "Trendline"
       }
     },
     "regression-transformer-editor": {
@@ -13465,6 +13508,9 @@
         }
       },
       "regression": "regression",
+      "tags": {
+        "regression-analysis": "Regression analysis"
+      },
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {

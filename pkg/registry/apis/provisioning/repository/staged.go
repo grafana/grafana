@@ -10,6 +10,9 @@ import (
 	"github.com/grafana/nanogit"
 )
 
+//go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
+type WrapWithStageFn func(ctx context.Context, repo Repository, stageOptions StageOptions, fn func(repo Repository, staged bool) error) error
+
 // StageMode defines the staging and commit behavior
 type StageMode int
 
