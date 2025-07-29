@@ -54,8 +54,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
-	cfgProvider, err := setting.ProvideService(cfg)
-	require.NoError(t, err)
+	cfgProvider := setting.ProvideService(cfg)
 
 	s := Service{
 		cfg:         cfgProvider,

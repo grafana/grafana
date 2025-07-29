@@ -187,8 +187,7 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 			cfg.SQLExpressionCellLimit = tt.configCellLimit
 
 			features := featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-			cfgProvider, err := setting.ProvideService(cfg)
-			require.NoError(t, err)
+			cfgProvider := setting.ProvideService(cfg)
 
 			// Create service with our configured limit
 			s := &Service{
@@ -249,8 +248,7 @@ func newMockQueryService(t *testing.T, responses map[string]backend.DataResponse
 	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
 
 	features := featuremgmt.WithFeatures()
-	cfg, err := setting.ProvideService(setting.NewCfg())
-	require.NoError(t, err)
+	cfg := setting.ProvideService(setting.NewCfg())
 	return &Service{
 		cfg:          cfg,
 		dataService:  me,

@@ -76,7 +76,7 @@ func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64,
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
-func UnmarshalSQLCommand(rn *rawNode, cfg setting.ConfigProvider) (*SQLCommand, error) {
+func UnmarshalSQLCommand(rn *rawNode, cfg setting.SettingsProvider) (*SQLCommand, error) {
 	if rn.TimeRange == nil {
 		logger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)

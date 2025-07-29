@@ -18,8 +18,7 @@ import (
 )
 
 func TestConvertDataFramesToResults(t *testing.T) {
-	cfg, err := setting.ProvideService(setting.NewCfg())
-	require.NoError(t, err)
+	cfg := setting.ProvideService(setting.NewCfg())
 	s := &Service{
 		cfg:      cfg,
 		features: featuremgmt.WithFeatures(),

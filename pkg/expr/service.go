@@ -58,7 +58,7 @@ func NodeTypeFromDatasourceUID(uid string) NodeType {
 
 // Service is service representation for expression handling.
 type Service struct {
-	cfg          setting.ConfigProvider
+	cfg          setting.SettingsProvider
 	dataService  backend.QueryDataHandler
 	pCtxProvider pluginContextProvider
 	features     featuremgmt.FeatureToggles
@@ -76,7 +76,7 @@ type pluginContextProvider interface {
 	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }
 
-func ProvideService(cfg setting.ConfigProvider, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
+func ProvideService(cfg setting.SettingsProvider, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
 	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, builder mtdsclient.MTDatasourceClientBuilder,
 ) *Service {
 	return &Service{

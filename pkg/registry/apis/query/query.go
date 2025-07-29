@@ -240,7 +240,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		b.log,
 	)
 
-	settingProvider, err := setting.ProvideService(&setting.Cfg{
+	settingProvider := setting.ProvideService(&setting.Cfg{
 		ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
 		SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
 		SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,

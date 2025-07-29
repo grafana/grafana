@@ -567,8 +567,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 	cfg.Load(setting.CommandLineArgs{HomePath: "../../../"})
 	cfg.ExpressionsEnabled = true
 
-	cfgProvider, err := setting.ProvideService(cfg)
-	require.NoError(t, err)
+	cfgProvider := setting.ProvideService(cfg)
 	exprService := expr.ProvideService(
 		cfgProvider,
 		pc,

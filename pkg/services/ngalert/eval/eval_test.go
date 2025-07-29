@@ -592,8 +592,7 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			cfg, err := setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true})
-			require.NoError(t, err)
+			cfg := setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true})
 			expressions := expr.ProvideService(
 				cfg,
 				nil,
@@ -606,7 +605,7 @@ func TestValidate(t *testing.T) {
 			validator := NewConditionValidator(cacheService, expressions, store)
 			evalCtx := NewContext(context.Background(), u)
 
-			err = validator.Validate(evalCtx, condition)
+			err := validator.Validate(evalCtx, condition)
 			if testCase.error {
 				require.Error(t, err)
 			} else {
@@ -721,8 +720,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				cache:        cacheService,
 				pluginsStore: store,
 			})
-			cfg, err := setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true})
-			require.NoError(t, err)
+			cfg := setting.ProvideService(&setting.Cfg{ExpressionsEnabled: true})
 			evaluator := NewEvaluatorFactory(
 				setting.UnifiedAlertingSettings{},
 				cacheService,
