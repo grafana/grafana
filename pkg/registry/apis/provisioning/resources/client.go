@@ -107,6 +107,9 @@ type clientInfo struct {
 	client dynamic.ResourceInterface
 }
 
+// ForKind returns a client for a kind.
+// If the kind has a version, it will be used.
+// If the kind does not have a version, the preferred version will be used.
 func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -116,9 +119,29 @@ func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 		return info.client, info.gvr, nil
 	}
 
-	gvr, err := c.discovery.GetResourceForKind(gvk)
-	if err != nil {
-		return nil, schema.GroupVersionResource{}, err
+	var err error
+	var gvr schema.GroupVersionResource
+	var versionless schema.GroupVersionKind
+	if gvk.Version == "" {
+		versionless = gvk
+		gvr, gvk, err = c.discovery.GetPreferredVersionForKind(schema.GroupKind{
+			Group: gvk.Group,
+			Kind:  gvk.Kind,
+		})
+		if err != nil {
+			return nil, schema.GroupVersionResource{}, err
+		}
+
+		info, ok := c.byKind[gvk]
+		if ok && info.client != nil {
+			c.byKind[versionless] = info
+			return info.client, info.gvr, nil
+		}
+	} else {
+		gvr, err = c.discovery.GetResourceForKind(gvk)
+		if err != nil {
+			return nil, schema.GroupVersionResource{}, err
+		}
 	}
 	info = &clientInfo{
 		gvk:    gvk,
@@ -127,6 +150,9 @@ func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info
+	if versionless.Group != "" {
+		c.byKind[versionless] = info
+	}
 	return info.client, info.gvr, nil
 }
 
