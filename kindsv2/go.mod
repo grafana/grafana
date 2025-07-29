@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/kindsv2
 
-go 1.24.4
+go 1.24.5
 
 require github.com/grafana/cog v0.0.5
 
