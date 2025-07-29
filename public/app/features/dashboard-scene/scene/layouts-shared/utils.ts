@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { SceneObject } from '@grafana/scenes';
+import { contextSrv } from 'app/core/core';
 
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
@@ -74,4 +75,8 @@ export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: Dashb
     innerLayout.clearParent();
     layoutParent.switchLayout(innerLayout);
   }
+}
+
+export function getIsLazy(preload: boolean | undefined): boolean {
+  return !(preload || contextSrv.user.authenticatedBy === 'render');
 }

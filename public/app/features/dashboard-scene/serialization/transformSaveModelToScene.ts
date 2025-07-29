@@ -50,6 +50,7 @@ import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { getIsLazy } from '../scene/layouts-shared/utils';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -326,7 +327,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   } else {
     body = new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
+        isLazy: getIsLazy(dto.preload),
         children: createSceneObjectsForPanels(oldModel.panels),
       }),
     });
