@@ -87,9 +87,9 @@ export const QueryRows = ({ exploreId }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
-  const onCancelQueryLibraryEdit = useCallback(() => {
+  const onCancelQueryLibraryEdit = () => {
     dispatch(updateQueryRefAction({ exploreId, queryRef: undefined }));
-  }, [dispatch, exploreId]);
+  };
 
   return (
     <QueryEditorRows
