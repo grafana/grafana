@@ -69,6 +69,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         children: undefined,
       },
     });
+
+    // Load nodes from recent scopes so they are readily available
+    const parentNodes = this.getNodesFromRecentScopes();
+    this.updateState({ nodes: { ...this.state.nodes, ...parentNodes } });
   }
 
   private expandOrFilterNode = async (scopeNodeId: string, query?: string) => {
@@ -164,7 +168,11 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     //   would allow us to load scopeNode by ID right now so this can be undefined which means we skip the
     //   disableMultiSelect check.
     const parentNode = this.state.nodes[scopeNode.spec.parentName!];
-    const selectedScope = { scopeId: scopeNode.spec.linkId, scopeNodeId: scopeNode.metadata.name };
+    const selectedScope = {
+      scopeId: scopeNode.spec.linkId,
+      scopeNodeId: scopeNode.metadata.name,
+      parentNodeId: parentNode?.metadata.name,
+    };
 
     // if something is selected we look at parent and see if we are selecting in the same category or not. As we
     // cannot select in multiple categories we only need to check the first selected node. It is possible we have
@@ -246,8 +254,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
 
       const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-      const parentNode =
-        scopeNode && scopeNode.spec.parentName ? this.state.nodes[scopeNode.spec.parentName] : undefined;
+
+      const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
+      const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
+
       this.addRecentScopes(fetchedScopes, scopeNode && parentNode ? parentNode : undefined);
       this.updateState({ scopes: newScopesState, loading: false });
     }
@@ -281,19 +291,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
     const recentScopes = parseScopesFromLocalStorage(content);
 
-    // Load parent nodes for recent scopes
-    const parentNodes = Object.fromEntries(
-      recentScopes
-        .map((scopes) => [scopes[0]?.parentNode?.metadata?.name, scopes[0]?.parentNode])
-        .filter(([key, parentNode]) => parentNode !== undefined && key !== undefined)
-    );
-
-    if (parentNodes.length) {
-      this.updateState({ nodes: { ...this.state.nodes, ...parentNodes } });
-    }
-
-    console.log(this.state.nodes);
-
     // Filter out the current selection from recent scopes to avoid duplicates
     return recentScopes.filter((scopes: RecentScope[]) => {
       if (scopes.length !== this.state.appliedScopes.length) {
@@ -302,6 +299,20 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       const scopeSet = new Set(scopes.map((s) => s.metadata.name));
       return !this.state.appliedScopes.every((s) => scopeSet.has(s.scopeId));
     });
+  };
+
+  private getNodesFromRecentScopes = (): Record<string, ScopeNode> => {
+    const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
+    const recentScopes = parseScopesFromLocalStorage(content);
+
+    // Load parent nodes for recent scopes
+    const parentNodes = Object.fromEntries(
+      recentScopes
+        .map((scopes) => [scopes[0]?.parentNode?.metadata?.name, scopes[0]?.parentNode])
+        .filter(([key, parentNode]) => parentNode !== undefined && key !== undefined)
+    );
+
+    return parentNodes;
   };
 
   /**
