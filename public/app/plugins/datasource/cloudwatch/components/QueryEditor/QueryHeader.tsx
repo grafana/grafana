@@ -47,9 +47,9 @@ const QueryHeader = ({
   const onRegionChange = async (region: string) => {
     if (config.featureToggles.cloudWatchCrossAccountQuerying && isCloudWatchMetricsQuery(query)) {
       const isMonitoringAccount = await datasource.resources.isMonitoringAccount(region);
-      onChange({ ...query, region, accountId: isMonitoringAccount ? query.accountId : undefined });
+      onChange({ ...query, logGroups: [], region, accountId: isMonitoringAccount ? query.accountId : undefined });
     } else {
-      onChange({ ...query, region });
+      onChange({ ...query, logGroups: [], region });
     }
   };
 
