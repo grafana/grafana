@@ -851,9 +851,51 @@ func convertConditionalRenderingGroupKind_V2alpha1_to_V2beta1(in *dashv2alpha1.D
 	if in == nil {
 		return nil
 	}
-	// For brevity, assume the structure is identical and just return nil
-	// In a real implementation, this would need proper conversion
-	return nil
+
+	out := &dashv2beta1.DashboardConditionalRenderingGroupKind{
+		Kind: in.Kind,
+		Spec: dashv2beta1.DashboardConditionalRenderingGroupSpec{
+			Visibility: dashv2beta1.DashboardConditionalRenderingGroupSpecVisibility(in.Spec.Visibility),
+			Condition:  dashv2beta1.DashboardConditionalRenderingGroupSpecCondition(in.Spec.Condition),
+			Items:      make([]dashv2beta1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind, len(in.Spec.Items)),
+		},
+	}
+
+	// Convert each item in the Items slice
+	for i, item := range in.Spec.Items {
+		out.Spec.Items[i] = dashv2beta1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
+
+		if item.ConditionalRenderingVariableKind != nil {
+			out.Spec.Items[i].ConditionalRenderingVariableKind = &dashv2beta1.DashboardConditionalRenderingVariableKind{
+				Kind: item.ConditionalRenderingVariableKind.Kind,
+				Spec: dashv2beta1.DashboardConditionalRenderingVariableSpec{
+					Variable: item.ConditionalRenderingVariableKind.Spec.Variable,
+					Operator: dashv2beta1.DashboardConditionalRenderingVariableSpecOperator(item.ConditionalRenderingVariableKind.Spec.Operator),
+					Value:    item.ConditionalRenderingVariableKind.Spec.Value,
+				},
+			}
+		}
+
+		if item.ConditionalRenderingDataKind != nil {
+			out.Spec.Items[i].ConditionalRenderingDataKind = &dashv2beta1.DashboardConditionalRenderingDataKind{
+				Kind: item.ConditionalRenderingDataKind.Kind,
+				Spec: dashv2beta1.DashboardConditionalRenderingDataSpec{
+					Value: item.ConditionalRenderingDataKind.Spec.Value,
+				},
+			}
+		}
+
+		if item.ConditionalRenderingTimeRangeSizeKind != nil {
+			out.Spec.Items[i].ConditionalRenderingTimeRangeSizeKind = &dashv2beta1.DashboardConditionalRenderingTimeRangeSizeKind{
+				Kind: item.ConditionalRenderingTimeRangeSizeKind.Kind,
+				Spec: dashv2beta1.DashboardConditionalRenderingTimeRangeSizeSpec{
+					Value: item.ConditionalRenderingTimeRangeSizeKind.Spec.Value,
+				},
+			}
+		}
+	}
+
+	return out
 }
 
 func convertRowLayout_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, out *dashv2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, scope conversion.Scope) error {
