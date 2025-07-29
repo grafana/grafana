@@ -40,6 +40,9 @@ import (
 const (
 	// tracingPrexfixBleve is the prefix used for tracing spans in the Bleve backend
 	tracingPrexfixBleve = "unified_search.bleve."
+
+	indexStorageMemory = "memory"
+	indexStorageFile   = "file"
 )
 
 var _ resource.SearchBackend = &bleveBackend{}
@@ -145,6 +148,11 @@ func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource) *bleveInd
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
 	b.log.Info("index evicted from cache", "key", key)
+
+	if b.indexMetrics != nil {
+		b.indexMetrics.OpenIndexes.WithLabelValues(val.indexStorage).Dec()
+	}
+
 	return nil
 }
 
@@ -209,7 +217,10 @@ func (b *bleveBackend) BuildIndex(
 
 	resourceDir := filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 
+	newIndexType := indexStorageMemory
 	if size > b.opts.FileThreshold {
+		newIndexType = indexStorageFile
+
 		// We only check for the existing file-based index if we don't already have an open index for this key.
 		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 		// If we do have an unexpired cached index already, we always build a new index from scratch.
@@ -246,29 +257,23 @@ func (b *bleveBackend) BuildIndex(
 
 			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
 		}
-
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexTenants.WithLabelValues("file").Inc()
-		}
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
-		}
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexTenants.WithLabelValues("memory").Inc()
 		}
 		logWithDetails.Info("Building index using memory")
 	}
 
 	// Batch all the changes
 	idx := &bleveIndex{
-		key:      key,
-		index:    index,
-		fields:   fields,
-		standard: resource.StandardSearchFields(),
-		features: b.features,
-		tracing:  b.tracer,
+		key:          key,
+		index:        index,
+		indexStorage: newIndexType,
+		fields:       fields,
+		standard:     resource.StandardSearchFields(),
+		features:     b.features,
+		tracing:      b.tracer,
 	}
 
 	idx.allFields, err = getAllFields(idx.standard, fields)
@@ -305,10 +310,17 @@ func (b *bleveBackend) BuildIndex(
 
 	// If there was a previous index in the cache, close it.
 	if prev != nil {
+		if b.indexMetrics != nil {
+			b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
+		}
+
 		err := prev.index.Close()
 		if err != nil {
 			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
+	}
+	if b.indexMetrics != nil {
+		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
 	}
 
 	// Start a background task to cleanup the old index directories. If we have built a new file-based index,
@@ -466,6 +478,10 @@ func (b *bleveBackend) closeAllIndexes() {
 	for key, idx := range b.cache {
 		_ = idx.index.Close()
 		delete(b.cache, key)
+
+		if b.indexMetrics != nil {
+			b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
+		}
 	}
 }
 
@@ -475,6 +491,8 @@ type bleveIndex struct {
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
+
+	indexStorage string // memory or file, used when updating metrics
 
 	// When to expire and close the index. Zero value = no expiration.
 	// We only expire in-memory indexes.
