@@ -1774,12 +1774,16 @@ describe('LokiDatasource', () => {
     });
     it('calls query if convertMetricQueryToLogQuery is true for a metric query', async () => {
       const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
-      await ds.getDataSamples({ expr: 'rate({a="b"}[1m])', refId: 'A' }, mockTimeRange, { convertMetricQueryToLogQuery: true });
+      await ds.getDataSamples({ expr: 'rate({a="b"}[1m])', refId: 'A' }, mockTimeRange, {
+        convertMetricQueryToLogQuery: true,
+      });
       expect(spy).toHaveBeenCalled();
     });
     it('does not call query if convertMetricQueryToLogQuery is false for a metric query', async () => {
       const spy = jest.spyOn(ds, 'query');
-      await ds.getDataSamples({ expr: 'rate({a="b"}[1m])', refId: 'A' }, mockTimeRange, { convertMetricQueryToLogQuery: false });
+      await ds.getDataSamples({ expr: 'rate({a="b"}[1m])', refId: 'A' }, mockTimeRange, {
+        convertMetricQueryToLogQuery: false,
+      });
       expect(spy).not.toHaveBeenCalled();
     });
   });
