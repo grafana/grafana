@@ -15,17 +15,6 @@ import (
 	time "time"
 )
 
-type LibraryElementDTOMetaUser struct {
-	Id        int64  `json:"id"`
-	Name      string `json:"name"`
-	AvatarUrl string `json:"avatarUrl"`
-}
-
-// NewLibraryElementDTOMetaUser creates a new LibraryElementDTOMetaUser object.
-func NewLibraryElementDTOMetaUser() *LibraryElementDTOMetaUser {
-	return &LibraryElementDTOMetaUser{}
-}
-
 type LibraryElementDTOMeta struct {
 	FolderName          string                    `json:"folderName"`
 	FolderUid           string                    `json:"folderUid"`
@@ -42,6 +31,17 @@ func NewLibraryElementDTOMeta() *LibraryElementDTOMeta {
 		CreatedBy: *NewLibraryElementDTOMetaUser(),
 		UpdatedBy: *NewLibraryElementDTOMetaUser(),
 	}
+}
+
+type LibraryElementDTOMetaUser struct {
+	Id        int64  `json:"id"`
+	Name      string `json:"name"`
+	AvatarUrl string `json:"avatarUrl"`
+}
+
+// NewLibraryElementDTOMetaUser creates a new LibraryElementDTOMetaUser object.
+func NewLibraryElementDTOMetaUser() *LibraryElementDTOMetaUser {
+	return &LibraryElementDTOMetaUser{}
 }
 
 type Spec struct {

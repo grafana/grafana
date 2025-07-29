@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - release-*.*.*
     paths:
       - go.*
       - .github/workflows/trivy-scan.yml
