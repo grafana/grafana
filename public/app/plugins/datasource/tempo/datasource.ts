@@ -240,7 +240,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   // Allows to retrieve the list of tags for ad-hoc filters
   async getTagKeys(options: DataSourceGetTagKeysOptions<TempoQuery>): Promise<Array<{ text: string }>> {
-    await this.languageProvider.fetchTags(this.timeRangeForTags, options.timeRange);
+    await this.languageProvider.fetchTags(this.timeRangeForTags, options?.timeRange ?? undefined);
     const tags = this.languageProvider.tagsV2 || [];
     return tags
       .map(({ name, tags }) =>
@@ -253,7 +253,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
     const query = this.languageProvider.generateQueryFromFilters({ adhocFilters: options.filters });
-    return this.tagValuesQuery(options.key, query, options.timeRange);
+    return this.tagValuesQuery(options.key, query, options?.timeRange ?? undefined);
   }
 
   async tagValuesQuery(tag: string, query: string, range?: TimeRange): Promise<Array<{ text: string }>> {
