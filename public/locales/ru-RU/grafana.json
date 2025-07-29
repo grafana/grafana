@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1563,7 +1564,8 @@
       "title": "Редактирование группы оценки"
     },
     "group-loader": {
-      "group-load-failed": "Не удалось загрузить правила из группы {{ groupName }} в {{ namespaceName }}"
+      "group-load-failed": "Не удалось загрузить правила из группы {{ groupName }} в {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Выполняется удаление группы"
@@ -2486,7 +2488,6 @@
     },
     "rule-list": {
       "configure-datasource": "Настроить",
-      "draft-new-rule": "Составить новое правило",
       "ds-error": {
         "title": "Невозможно загрузить правила для этого источника данных"
       },
@@ -2512,6 +2513,7 @@
       "new-alert-rule": "Новое правило оповещения",
       "new-datasource-recording-rule": "Новое правило записи источника данных",
       "new-grafana-recording-rule": "Новое правило записи Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Показать еще…"
       },
@@ -2828,6 +2830,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Обновить просмотр",
+      "empty-state": "",
       "label-preview": "Предварительный просмотр",
       "refresh": "Обновить"
     },
@@ -4601,6 +4604,10 @@
     },
     "edit-actions": {
       "add": "Добавить {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
@@ -4615,6 +4622,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Дашборд",
+        "element": "",
         "local-variable": "Локальная переменная",
         "multiple-elements": "Несколько элементов",
         "multiple-elements-delete-text": "Действительно удалить элементы?",
@@ -5828,7 +5836,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7201,6 +7208,7 @@
           "start-time": "Время начала:"
         }
       },
+      "share-span": "",
       "warnings": "Предупреждения"
     },
     "span-filters": {
@@ -7548,6 +7556,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7607,6 +7616,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8641,7 +8651,10 @@
         "no-data": ""
       },
       "no-values-label": "Нет значений",
-      "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}"
+      "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Теги"
@@ -9390,6 +9403,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9408,6 +9422,9 @@
       "copy-log": "Копировать строку журнала",
       "hide-details": "Показать сведения о журнале",
       "icon-label": "Меню журнала",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Закрепить журнал",
       "show-context": "Показать контекст",
       "show-details": "Скрыть сведения о журнале",
@@ -11007,15 +11024,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11131,10 +11148,10 @@
       "title-instant-updates-requests-webhooks": "Мгновенные обновления и запросы на включение изменений с помощью веб-перехватчиков",
       "title-visual-previews-in-pull-requests": "Просмотр в запросах на включение изменений с визуализацией изображений"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Спецификация задания",
-      "summary": "Сводка",
-      "title-error": "Ошибка"
+      "summary": "Сводка"
     },
     "features-list": {
       "actions": {
@@ -11279,9 +11296,12 @@
       "starting": "Запуск...",
       "status": {
         "title-error-running-job": "Ошибка при выполнении задания",
-        "title-job-completed-successfully": "Задание завершено"
+        "title-warning-running-job": ""
       },
-      "summary": "Сводка"
+      "summary": "Сводка",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11447,6 +11467,7 @@
       "go-to": "Перейти к",
       "make-sure": "Обязательно включите эти разрешения"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Во время этого процесса невозможно создавать, редактировать или удалять ресурсы. На последнем шаге они исчезнут.",
       "alert-point-2": "После завершения подготовки ресурсы снова появятся и будут управляться через внешнее хранилище.",
@@ -13508,7 +13529,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13530,6 +13551,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Количество точек X, Y для прогнозирования"
     },
     "rename-by-regex-transformer": {
