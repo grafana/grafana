@@ -1127,6 +1127,76 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			require.NoError(t, err, "untargeted file should still exist")
 		})
 
+		t.Run("delete folder by resource reference", func(t *testing.T) {
+			// Create a dashboard inside a folder to automatically create the folder structure
+			// This follows the same pattern as other tests in this file
+			testDashboard := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "folder-dash"`, 1)
+			
+			// Write the modified dashboard to a temporary file first
+			tmpFolderDash := filepath.Join(tmpDir, "folder-dashboard.json")
+			require.NoError(t, os.WriteFile(tmpFolderDash, []byte(testDashboard), 0644))
+			
+			// Copy it to the folder structure using the helper
+			helper.CopyToProvisioningPath(t, tmpFolderDash, "test-folder/dashboard-in-folder.json")
+
+			// Sync to create the folder and its contents
+			helper.SyncAndWait(t, repo, nil)
+
+			// Verify folder was created in Grafana as a Folder resource
+			folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			
+			var testFolder *unstructured.Unstructured
+			for _, folder := range folders.Items {
+				// Folder names are generated with suffixes, so check if it starts with "test-folder"
+				if strings.HasPrefix(folder.GetName(), "test-folder") {
+					testFolder = &folder
+					break
+				}
+			}
+			require.NotNil(t, testFolder, "test-folder should exist as a Folder resource")
+			testFolderName := testFolder.GetName()
+
+			// Verify dashboard inside the folder exists
+			_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "test-folder", "dashboard-in-folder.json")
+			require.NoError(t, err, "dashboard inside folder should exist")
+
+			// Create delete job for the folder using ResourceRef (use the actual generated name)
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("jobs").
+				Body(asJSON(&provisioning.JobSpec{
+					Action: provisioning.JobActionDelete,
+					Delete: &provisioning.DeleteJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  testFolderName, // Use the actual generated folder name
+								Kind:  "Folder",
+								Group: "folder.grafana.app",
+							},
+						},
+					},
+				})).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.NoError(t, result.Error(), "should be able to create delete job for folder")
+
+			// Wait for job to complete
+			helper.AwaitJobs(t, repo)
+
+			// Verify folder is deleted from Grafana
+			_, err = helper.Folders.Resource.Get(ctx, testFolderName, metav1.GetOptions{})
+			require.Error(t, err, "folder should be deleted from Grafana")
+			require.True(t, apierrors.IsNotFound(err), "should be not found error")
+
+			// Verify folder contents are also deleted from repository
+			_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "test-folder", "dashboard-in-folder.json")
+			require.Error(t, err, "dashboard inside deleted folder should also be deleted")
+			require.True(t, apierrors.IsNotFound(err), "should be not found error")
+		})
+
 		t.Run("delete non-existent resource by reference", func(t *testing.T) {
 			// Create delete job for non-existent resource
 			result := helper.AdminREST.Post().
