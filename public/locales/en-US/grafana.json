@@ -8272,6 +8272,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": "Open image preview"
+    },
     "cascader": {
       "clear-button": "Clear selection"
     },
@@ -8284,6 +8287,7 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
+      "aria-label-delete": "Delete",
       "cancel": "Cancel",
       "confirmText-delete": "Delete"
     },
