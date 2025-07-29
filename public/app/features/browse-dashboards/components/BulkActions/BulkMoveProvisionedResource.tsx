@@ -216,7 +216,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       // handleSuccess(successes);
       setSuccessState({
         allSuccess: true,
-        repoUrl: successes[0].data.urls?.repositoryURL,
+        repoUrl: successes[0].data.urls?.newPullRequestURL,
       });
     } else if (failures.length > 0) {
       setFailureResults(failures);
