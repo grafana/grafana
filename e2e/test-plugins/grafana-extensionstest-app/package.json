@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/extensions-test-app",
-  "version": "11.5.7",
+  "version": "11.6.5",
   "private": true,
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
@@ -15,8 +15,8 @@
     "@types/lodash": "4.17.7",
     "@types/node": "22.10.2",
     "@types/prismjs": "1.26.4",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.2.25",
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
     "@types/semver": "7.5.8",
     "@types/uuid": "9.0.8",
     "glob": "10.4.1",
@@ -34,8 +34,8 @@
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "react-router-dom": "^6.22.0",
     "rxjs": "7.8.1",
     "tslib": "2.6.3"
