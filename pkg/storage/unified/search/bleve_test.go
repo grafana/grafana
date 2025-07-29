@@ -1029,7 +1029,7 @@ func TestCleanOldIndexes(t *testing.T) {
 
 func TestBleveIndexWithFailures(t *testing.T) {
 	t.Run("in-memory index", func(t *testing.T) {
-		testBleveIndexWithFailures(t, true)
+		testBleveIndexWithFailures(t, false)
 	})
 	t.Run("file-based index", func(t *testing.T) {
 		testBleveIndexWithFailures(t, true)

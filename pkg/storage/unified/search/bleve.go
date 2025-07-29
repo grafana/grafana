@@ -198,7 +198,7 @@ func (b *bleveBackend) BuildIndex(
 	resourceVersion int64,
 	fields resource.SearchableDocumentFields,
 	builder func(index resource.ResourceIndex) (int64, error),
-) (_ resource.ResourceIndex, buildError error) {
+) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
@@ -216,11 +216,12 @@ func (b *bleveBackend) BuildIndex(
 
 	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion)
 
-	// Cleanup function used when returning error from building of the index. We need to close the index, and possibly delete
-	// new index directory (if created).
-	cleanupIndexOnError := func(err error, index bleve.Index, indexDir string) {
-		if err == nil {
-			// If we're not returning error from the build function, we keep the index open.
+	// Close the newly created/opened index by default.
+	closeIndex := true
+	// This function is added via defer after new index has been created/opened, to make sure we close it properly when needed.
+	// Whether index needs closing or not is controlled by closeIndex.
+	closeIndexOnExit := func(index bleve.Index, indexDir string) {
+		if !closeIndex {
 			return
 		}
 
@@ -255,9 +256,7 @@ func (b *bleveBackend) BuildIndex(
 		if index != nil {
 			build = false
 			logWithDetails.Debug("Existing index found on filesystem", "directory", filepath.Join(resourceDir, fileIndexName))
-			defer func() {
-				cleanupIndexOnError(buildError, index, "") // Close index, but don't delete directory.
-			}()
+			defer closeIndexOnExit(index, "") // Close index, but don't delete directory.
 		} else {
 			// Building index from scratch. Index name has a time component in it to be unique, but if
 			// we happen to create non-unique name, we bump the time and try again.
@@ -283,10 +282,7 @@ func (b *bleveBackend) BuildIndex(
 			}
 
 			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
-
-			defer func() {
-				cleanupIndexOnError(buildError, index, indexDir) // Close index, and delete new index directory.
-			}()
+			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
@@ -294,9 +290,7 @@ func (b *bleveBackend) BuildIndex(
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
 		logWithDetails.Info("Building index using memory")
-		defer func() {
-			cleanupIndexOnError(buildError, index, "") // Close index, no directory.
-		}()
+		defer closeIndexOnExit(index, "") // Close index, don't cleanup directory.
 	}
 
 	// Batch all the changes
@@ -333,6 +327,9 @@ func (b *bleveBackend) BuildIndex(
 	} else {
 		logWithDetails.Info("Storing index in cache", "key", key, "expiration", idx.expiration)
 	}
+
+	// We're storing index in the cache, so we can't close it.
+	closeIndex = false
 
 	b.cacheMx.Lock()
 	prev := b.cache[key]
