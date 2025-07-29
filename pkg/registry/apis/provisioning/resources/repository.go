@@ -3,15 +3,15 @@ package resources
 import (
 	"context"
 	"fmt"
-	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
@@ -61,59 +61,33 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 
 // FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
 func (r *repositoryResources) FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error) {
-	// Query managed objects to find the file path for this resource
-	listerFromSearch, ok := r.lister.(*ResourceListerFromSearch)
-	if !ok {
-		return "", fmt.Errorf("lister does not support managed object queries")
-	}
-
-	// Convert GroupVersionKind to GroupVersionResource
-	gvr := schema.GroupVersionResource{
-		Group:    gvk.Group,
-		Version:  gvk.Version,
-		Resource: inferResourceNameFromKind(gvk.Kind),
-	}
-
-	objects, err := listerFromSearch.managed.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
-		Namespace: r.namespace,
-		Kind:      string(utils.ManagerKindRepo),
-		Id:        r.repoName,
-	})
+	// Use ForKind to get the dynamic client for this resource type
+	client, gvr, err := r.ResourcesManager.clients.ForKind(gvk)
 	if err != nil {
-		return "", fmt.Errorf("list managed objects for %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
+		return "", fmt.Errorf("get client for kind %s: %w", gvk.Kind, err)
 	}
 
-	if objects.Error != nil {
-		return "", fmt.Errorf("error listing managed objects: %s", objects.Error.Message)
-	}
-
-	// Filter results by group, resource, and name
-	for _, item := range objects.Items {
-		if item.Object != nil &&
-			item.Object.Group == gvr.Group &&
-			item.Object.Resource == gvr.Resource &&
-			item.Object.Name == name &&
-			item.Path != "" {
-			return item.Path, nil
+	// Get the specific resource by name using the dynamic client (already namespaced)
+	obj, err := client.Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return "", fmt.Errorf("resource not found: %s/%s/%s", gvr.Group, gvr.Resource, name)
 		}
+		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}
 
-	return "", fmt.Errorf("resource not found in repository: %s/%s/%s", gvr.Group, gvr.Resource, name)
-}
-
-// inferResourceNameFromKind converts Kind to resource name (e.g., "Dashboard" -> "dashboards")
-func inferResourceNameFromKind(kind string) string {
-	switch kind {
-	case "Dashboard":
-		return "dashboards"
-	case "Folder":
-		return "folders"
-	case "User":
-		return "users"
-	default:
-		// Default conversion: lowercase + 's'
-		return strings.ToLower(kind) + "s"
+	// Extract the source path from annotations
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		return "", fmt.Errorf("resource %s/%s/%s has no annotations", gvr.Group, gvr.Resource, name)
 	}
+
+	sourcePath, exists := annotations[utils.AnnoKeySourcePath]
+	if !exists || sourcePath == "" {
+		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)
+	}
+
+	return sourcePath, nil
 }
 
 func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {

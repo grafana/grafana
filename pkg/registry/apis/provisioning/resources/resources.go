@@ -217,9 +217,3 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	return objName, schema.GroupVersionKind{}, nil
 }
-
-// FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
-// This is implemented at the RepositoryResources level where managed client access is available
-func (r *ResourcesManager) FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error) {
-	return "", fmt.Errorf("FindResourcePath should be called on RepositoryResources, not ResourcesManager directly")
-}

@@ -569,7 +569,6 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	// Expect error to be recorded, not thrown
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 		return result.Name == "nonexistent-dashboard" &&
-			result.Resource == "dashboards" &&
 			result.Group == "dashboard.grafana.app" &&
 			result.Action == repository.FileActionDeleted &&
 			result.Error != nil

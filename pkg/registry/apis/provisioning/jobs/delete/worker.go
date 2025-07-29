@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -126,10 +125,9 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 	var resolvedPaths []string
 	for _, resource := range resources {
 		result := jobs.JobResourceResult{
-			Name:     resource.Name,
-			Resource: inferResourceNameFromKind(resource.Kind),
-			Group:    resource.Group,
-			Action:   repository.FileActionDeleted, // Will be used for deletion later
+			Name:   resource.Name,
+			Group:  resource.Group,
+			Action: repository.FileActionDeleted, // Will be used for deletion later
 		}
 
 		gvk := schema.GroupVersionKind{
@@ -156,17 +154,3 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 	return resolvedPaths, nil
 }
 
-// inferResourceNameFromKind converts Kind to resource name (e.g., "Dashboard" -> "dashboards")
-func inferResourceNameFromKind(kind string) string {
-	switch kind {
-	case "Dashboard":
-		return "dashboards"
-	case "Folder":
-		return "folders"
-	case "User":
-		return "users"
-	default:
-		// Default conversion: lowercase + 's'
-		return strings.ToLower(kind) + "s"
-	}
-}
