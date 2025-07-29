@@ -21,6 +21,7 @@ export function getDataSourceExtensionConfigs(): PluginExtensionAddedLinkConfig[
         icon: 'external-link-alt',
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         category: 'External Tools',
+        path: '/a/grafana/placeholder', // Placeholder path for initial validation (overridden by configure function)
         configure: (context) => {
           // Only show for prometheus datasources
           if (context?.dataSource?.type !== 'prometheus') {

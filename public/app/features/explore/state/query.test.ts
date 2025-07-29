@@ -3,23 +3,6 @@ import { EMPTY, interval, Observable, of } from 'rxjs';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
-// Mock the extensions setup to prevent link extension registration errors during tests
-jest.mock('app/features/plugins/extensions/registry/setup', () => ({
-  addedComponentsRegistry: {
-    register: jest.fn(),
-  },
-  exposedComponentsRegistry: {
-    register: jest.fn(),
-  },
-  addedLinksRegistry: {
-    register: jest.fn(),
-  },
-  addedFunctionsRegistry: {
-    register: jest.fn(),
-  },
-  pluginExtensionRegistries: {},
-}));
-
 import {
   DataQueryRequest,
   DataQueryResponse,
