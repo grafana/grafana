@@ -9,9 +9,9 @@ import {
   VizTooltipWrapper,
   getContentItems,
   VizTooltipItem,
+  AdHocFilterModel,
 } from '@grafana/ui/internal';
 
-import { AdHocFilterModel } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter';
 import { getFieldActions } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 

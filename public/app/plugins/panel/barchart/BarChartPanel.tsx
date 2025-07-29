@@ -13,9 +13,8 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
+import { AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
 
-import { AdHocFilterModel } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter';
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';

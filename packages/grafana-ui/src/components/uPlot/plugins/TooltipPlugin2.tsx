@@ -2,12 +2,12 @@ import { css, cx } from '@emotion/css';
 import { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { AdHocFilterModel } from 'src/components/VizTooltip/VizTooltipFooter';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
+import { AdHocFilterModel } from '../../../internal';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
