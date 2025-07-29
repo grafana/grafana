@@ -117,7 +117,6 @@ func (m *v24Migrator) migrate(dashboard map[string]interface{}) error {
 		if err != nil {
 			return err
 		}
-
 	}
 
 	return nil

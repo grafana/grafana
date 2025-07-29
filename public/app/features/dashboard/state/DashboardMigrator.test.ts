@@ -113,7 +113,7 @@ describe('DashboardModel', () => {
             type: 'table',
             // @ts-expect-error
             legend: true,
-            styles: [{ thresholds: ['10', '20', '30'] }, { colors: ['red', 'green', 'blue'] }],
+            styles: [{ thresholds: ['10', '20', '30'] }, { thresholds: ['100', '200', '300'] }],
             targets: [{ refId: 'A' }, {}],
           },
           // Old left-over repeated panel
