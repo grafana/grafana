@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configura",
-      "draft-new-rule": "Scrivi una nuova regola",
       "ds-error": {
         "title": ""
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Nuova regola di avviso",
       "new-datasource-recording-rule": "Nuova regola di registrazione dell'origine dei dati",
       "new-grafana-recording-rule": "Nuova regola di registrazione Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Mostra altro…"
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "",
       "panel-description": "",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "",
         "local-variable": "Variabile locale",
         "multiple-elements": "Elementi multipli",
         "multiple-elements-delete-text": "Desideri davvero eliminare questi elementi?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7160,6 +7164,7 @@
           "start-time": ""
         }
       },
+      "share-span": "",
       "warnings": "Allarmi"
     },
     "span-filters": {
@@ -7507,6 +7512,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7566,6 +7572,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -10951,15 +10958,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11069,10 +11076,10 @@
       "title-instant-updates-requests-webhooks": "Aggiornamenti istantanei e richieste di pull con webhook.",
       "title-visual-previews-in-pull-requests": "Anteprime visive nelle richieste di pull con rendering delle immagini"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Specifiche dell'attività",
-      "summary": "Indice",
-      "title-error": "Errore"
+      "summary": "Indice"
     },
     "features-list": {
       "actions": {
@@ -11217,10 +11224,12 @@
       "starting": "Avvio in corso...",
       "status": {
         "title-error-running-job": "Errore durante l'esecuzione dell'attività",
-        "title-job-completed-successfully": "Attività completata con successo",
         "title-warning-running-job": ""
       },
-      "summary": "Indice"
+      "summary": "Indice",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11386,6 +11395,7 @@
       "go-to": "Vai a",
       "make-sure": "Assicurati di includere queste autorizzazioni"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Le risorse non potranno essere create, modificate o eliminate durante questo processo. Nell'ultimo passaggio, scompariranno.",
       "alert-point-2": "Una volta completato il provisioning, le risorse riappariranno e verranno gestite tramite la memoria esterna.",
@@ -13435,7 +13445,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13457,6 +13467,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Numero di punti X, Y da prevedere"
     },
     "rename-by-regex-transformer": {

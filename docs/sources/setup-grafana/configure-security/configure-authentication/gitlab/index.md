@@ -88,7 +88,6 @@ Ensure that you have access to the [Grafana configuration file](../../../configu
 To configure GitLab authentication with Grafana, follow these steps:
 
 1. Create an OAuth application in GitLab.
-
    1. Set the redirect URI to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/gitlab`.
 
       Ensure that the Redirect URI is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/gitlab`.

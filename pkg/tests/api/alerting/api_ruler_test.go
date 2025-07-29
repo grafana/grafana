@@ -45,9 +45,13 @@ import (
 var testData embed.FS
 
 func TestIntegrationAlertRulePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -349,9 +353,13 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 		DisableLegacyAlerting: true,
@@ -784,6 +792,9 @@ func TestAlertRulePostExport(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	const folderName = "folder1"
@@ -956,9 +967,13 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1036,6 +1051,9 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 }
 
 func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1406,9 +1424,13 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestIntegrationRuleGroupSequence(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1512,6 +1534,9 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 }
 
 func TestIntegrationRuleCreate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
@@ -1647,9 +1672,13 @@ func TestIntegrationRuleCreate(t *testing.T) {
 }
 
 func TestIntegrationRuleUpdate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -1921,6 +1950,9 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 }
 
 func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -2080,9 +2112,13 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 }
 
 func TestIntegrationRulerAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2192,9 +2228,13 @@ func TestIntegrationRulerAccess(t *testing.T) {
 }
 
 func TestIntegrationEval(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2472,9 +2512,13 @@ func TestIntegrationEval(t *testing.T) {
 }
 
 func TestIntegrationQuota(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -2683,6 +2727,9 @@ func TestIntegrationQuota(t *testing.T) {
 }
 
 func TestIntegrationDeleteFolderWithRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	opts := testinfra.GrafanaOpts{
@@ -2849,9 +2896,13 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleCRUD(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4130,9 +4181,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 }
 
 func TestIntegrationRulePause(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4260,9 +4315,13 @@ func TestIntegrationRulePause(t *testing.T) {
 }
 
 func TestIntegrationHysteresisRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:        true,
 		EnableUnifiedAlerting:        true,
@@ -4334,9 +4393,11 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 }
 
 func TestIntegrationRuleNotificationSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database. Scheduler is set to evaluate every 1 second
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:        true,
 		EnableUnifiedAlerting:        true,
@@ -4603,7 +4664,10 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 }
 
 func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
-	// Setup Grafana and its Database
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4655,9 +4719,11 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 }
 
 func TestIntegrationRuleVersions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4745,9 +4811,11 @@ func TestIntegrationRuleVersions(t *testing.T) {
 }
 
 func TestIntegrationRuleSoftDelete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -4856,9 +4924,11 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 }
 
 func TestIntegrationRulePermanentlyDelete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
