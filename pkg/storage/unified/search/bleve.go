@@ -198,26 +198,50 @@ func (b *bleveBackend) BuildIndex(
 	resourceVersion int64,
 	fields resource.SearchableDocumentFields,
 	builder func(index resource.ResourceIndex) (int64, error),
-) (resource.ResourceIndex, error) {
+) (_ resource.ResourceIndex, buildError error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
-	var index bleve.Index
-	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
-
-	build := true
 	mapper, err := GetBleveMappings(fields)
 	if err != nil {
 		return nil, err
 	}
 
-	cachedIndex := b.getCachedIndex(key)
+	// Prepare fields before opening/creating indexes, so that we don't need to deal with closing them in case of errors.
+	standardSearchFields := resource.StandardSearchFields()
+	allFields, err := getAllFields(standardSearchFields, fields)
+	if err != nil {
+		return nil, err
+	}
 
 	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion)
 
+	// Cleanup function used when returning error from building of the index. We need to close the index, and possibly delete
+	// new index directory (if created).
+	cleanupIndexOnError := func(err error, index bleve.Index, indexDir string) {
+		if err == nil {
+			// If we're not returning error from the build function, we keep the index open.
+			return
+		}
+
+		if closeErr := index.Close(); closeErr != nil {
+			logWithDetails.Error("Failed to close index after index build failure", "err", closeErr)
+		}
+		if indexDir != "" {
+			if removeErr := os.RemoveAll(indexDir); removeErr != nil {
+				logWithDetails.Error("Failed to remove index directory after index build failure", "err", removeErr)
+			}
+		}
+	}
+
 	resourceDir := filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 
+	var index bleve.Index
+	cachedIndex := b.getCachedIndex(key)
+	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
 	newIndexType := indexStorageMemory
+	build := true
+
 	if size > b.opts.FileThreshold {
 		newIndexType = indexStorageFile
 
@@ -231,6 +255,9 @@ func (b *bleveBackend) BuildIndex(
 		if index != nil {
 			build = false
 			logWithDetails.Debug("Existing index found on filesystem", "directory", filepath.Join(resourceDir, fileIndexName))
+			defer func() {
+				cleanupIndexOnError(buildError, index, "") // Close index, but don't delete directory.
+			}()
 		} else {
 			// Building index from scratch. Index name has a time component in it to be unique, but if
 			// we happen to create non-unique name, we bump the time and try again.
@@ -256,6 +283,10 @@ func (b *bleveBackend) BuildIndex(
 			}
 
 			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
+
+			defer func() {
+				cleanupIndexOnError(buildError, index, indexDir) // Close index, and delete new index directory.
+			}()
 		}
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
@@ -263,6 +294,9 @@ func (b *bleveBackend) BuildIndex(
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
 		logWithDetails.Info("Building index using memory")
+		defer func() {
+			cleanupIndexOnError(buildError, index, "") // Close index, no directory.
+		}()
 	}
 
 	// Batch all the changes
@@ -271,21 +305,18 @@ func (b *bleveBackend) BuildIndex(
 		index:        index,
 		indexStorage: newIndexType,
 		fields:       fields,
-		standard:     resource.StandardSearchFields(),
+		allFields:    allFields,
+		standard:     standardSearchFields,
 		features:     b.features,
 		tracing:      b.tracer,
-	}
-
-	idx.allFields, err = getAllFields(idx.standard, fields)
-	if err != nil {
-		return nil, err
 	}
 
 	if build {
 		start := time.Now()
 		_, err = builder(idx)
 		if err != nil {
-			return nil, err
+			logWithDetails.Error("Failed to build index", "err", err)
+			return nil, fmt.Errorf("failed to build index: %w", err)
 		}
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)

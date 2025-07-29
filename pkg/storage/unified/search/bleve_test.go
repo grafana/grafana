@@ -1026,3 +1026,36 @@ func TestCleanOldIndexes(t *testing.T) {
 		require.Len(t, files, 0)
 	})
 }
+
+func TestBleveIndexWithFailures(t *testing.T) {
+	t.Run("in-memory index", func(t *testing.T) {
+		testBleveIndexWithFailures(t, true)
+	})
+	t.Run("file-based index", func(t *testing.T) {
+		testBleveIndexWithFailures(t, true)
+	})
+}
+
+func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
+	backend, _ := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	size := int64(1)
+	if fileBased {
+		// size=100 is above FileThreshold (5), make it a file-based index.
+		size = 100
+	}
+	_, err := backend.BuildIndex(context.Background(), ns, size, 100, nil, func(index resource.ResourceIndex) (int64, error) {
+		return 0, fmt.Errorf("fail")
+	})
+	require.Error(t, err)
+
+	// Even though previous build of the index failed, new building of the index should work.
+	_, err = backend.BuildIndex(context.Background(), ns, size, 100, nil, indexTestDocs(ns, int(size)))
+	require.NoError(t, err)
+}
