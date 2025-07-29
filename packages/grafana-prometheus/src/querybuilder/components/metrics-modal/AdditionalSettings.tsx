@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Icon, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useMetricsModal } from './MetricsModalContext';
@@ -84,11 +84,7 @@ export function AdditionalSettings() {
       <SwitchItem
         value={settings.disableTextWrap}
         onChange={() => toggleSetting('disableTextWrap')}
-        label={
-          <Trans i18nKey="grafana-prometheus.querybuilder.additional-settings.disable-text-wrap">
-            Disable text wrap
-          </Trans>
-        }
+        label={placeholders.disableTextWrap}
       />
       <SwitchItem
         testId={metricsModaltestIds.setUseBackend}

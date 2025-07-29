@@ -1,9 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/ResultsTable.tsx
-import { css } from '@emotion/css';
 import { ReactElement, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
@@ -11,6 +9,7 @@ import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
 
 import { useMetricsModal } from './MetricsModalContext';
+import { getResultsTableStyles } from './styles';
 import { MetricData } from './types';
 
 type ResultsTableProps = {
@@ -56,7 +55,7 @@ export function ResultsTable(props: ResultsTableProps) {
   }, [metricsData, pageNum, resultsPerPage, selectedTypes]);
 
   const theme = useTheme2();
-  const styles = getStyles(theme, disableTextWrap);
+  const styles = getResultsTableStyles(theme, disableTextWrap);
 
   function selectMetric(metric: MetricData) {
     if (metric.value) {
@@ -67,14 +66,13 @@ export function ResultsTable(props: ResultsTableProps) {
 
   function metaRows(metric: MetricData) {
     if (fullMetaSearch && metric) {
-      const searchWords = searchedText.split(' ');
       return (
         <>
           <td>{displayType(metric.type ?? '')}</td>
           <td>
             <Highlighter
               textToHighlight={metric.description ?? ''}
-              searchWords={searchWords}
+              searchWords={searchedText.split(' ')}
               autoEscape
               highlightClassName={styles.matchHighLight}
             />
@@ -205,64 +203,3 @@ export function ResultsTable(props: ResultsTableProps) {
     </table>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
-  return {
-    table: css({
-      tableLayout: disableTextWrap ? undefined : 'fixed',
-      borderRadius: theme.shape.radius.default,
-      width: '100%',
-      whiteSpace: disableTextWrap ? 'nowrap' : 'normal',
-      td: {
-        padding: theme.spacing(1),
-      },
-      'td,th': {
-        minWidth: theme.spacing(3),
-        borderBottom: `1px solid ${theme.colors.border.weak}`,
-      },
-    }),
-    row: css({
-      label: 'row',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-      cursor: 'pointer',
-      '&:last-child': {
-        borderBottom: 0,
-      },
-      '&:hover': {
-        backgroundColor: theme.colors.background.secondary,
-      },
-    }),
-    tableHeaderPadding: css({
-      padding: '8px',
-    }),
-    matchHighLight: css({
-      background: 'inherit',
-      color: theme.components.textHighlight.text,
-      backgroundColor: theme.components.textHighlight.background,
-    }),
-    nameWidth: css({
-      width: disableTextWrap ? undefined : '37.5%',
-    }),
-    nameOverflow: css({
-      overflowWrap: disableTextWrap ? undefined : 'anywhere',
-    }),
-    typeWidth: css({
-      width: disableTextWrap ? undefined : '15%',
-    }),
-    descriptionWidth: css({
-      width: disableTextWrap ? undefined : '35%',
-    }),
-    stickyHeader: css({
-      position: 'sticky',
-      top: 0,
-      backgroundColor: theme.colors.background.primary,
-    }),
-    noResults: css({
-      textAlign: 'center',
-      color: theme.colors.text.secondary,
-    }),
-    tooltipSpace: css({
-      marginLeft: '4px',
-    }),
-  };
-};

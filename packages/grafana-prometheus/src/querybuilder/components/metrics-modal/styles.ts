@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
+export const getMetricsModalStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
   return {
     modal: css({
       width: '85vw',
@@ -73,6 +73,67 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     }),
     noBorder: css({
       border: 'none',
+    }),
+  };
+};
+
+export const getResultsTableStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
+  return {
+    table: css({
+      tableLayout: disableTextWrap ? undefined : 'fixed',
+      borderRadius: theme.shape.radius.default,
+      width: '100%',
+      whiteSpace: disableTextWrap ? 'nowrap' : 'normal',
+      td: {
+        padding: theme.spacing(1),
+      },
+      'td,th': {
+        minWidth: theme.spacing(3),
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+      },
+    }),
+    row: css({
+      label: 'row',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      cursor: 'pointer',
+      '&:last-child': {
+        borderBottom: 0,
+      },
+      '&:hover': {
+        backgroundColor: theme.colors.background.secondary,
+      },
+    }),
+    tableHeaderPadding: css({
+      padding: '8px',
+    }),
+    matchHighLight: css({
+      background: 'inherit',
+      color: theme.components.textHighlight.text,
+      backgroundColor: theme.components.textHighlight.background,
+    }),
+    nameWidth: css({
+      width: disableTextWrap ? undefined : '37.5%',
+    }),
+    nameOverflow: css({
+      overflowWrap: disableTextWrap ? undefined : 'anywhere',
+    }),
+    typeWidth: css({
+      width: disableTextWrap ? undefined : '15%',
+    }),
+    descriptionWidth: css({
+      width: disableTextWrap ? undefined : '35%',
+    }),
+    stickyHeader: css({
+      position: 'sticky',
+      top: 0,
+      backgroundColor: theme.colors.background.primary,
+    }),
+    noResults: css({
+      textAlign: 'center',
+      color: theme.colors.text.secondary,
+    }),
+    tooltipSpace: css({
+      marginLeft: '4px',
     }),
   };
 };

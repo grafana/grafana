@@ -22,7 +22,7 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 
-interface BaseQueryBuilderProps {
+interface QueryBuilderContentProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
@@ -31,7 +31,7 @@ interface BaseQueryBuilderProps {
   showExplain: boolean;
 }
 
-export const QueryBuilderContent = memo<BaseQueryBuilderProps>((props) => {
+export const QueryBuilderContent = memo<QueryBuilderContentProps>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
 

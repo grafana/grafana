@@ -26,7 +26,7 @@ import { FeedbackLink } from './FeedbackLink';
 import { MetricsModalContextProvider, useMetricsModal } from './MetricsModalContext';
 import { ResultsTable } from './ResultsTable';
 import { calculatePageList, getPlaceholders, getPromTypes } from './helpers';
-import { getStyles } from './styles';
+import { getMetricsModalStyles } from './styles';
 import { metricsModaltestIds } from './testIds';
 import { PromFilterOption } from './types';
 
@@ -56,7 +56,7 @@ const MetricsModalContent = (props: MetricsModalProps) => {
     setSearchedText,
   } = useMetricsModal();
 
-  const styles = useStyles2(getStyles, disableTextWrap);
+  const styles = useStyles2(getMetricsModalStyles, disableTextWrap);
   const placeholders = getPlaceholders();
   const promTypes = getPromTypes();
 

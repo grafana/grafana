@@ -141,4 +141,5 @@ export const getPlaceholders = () => ({
     'Include results with no metadata'
   ),
   setUseBackend: t('grafana-prometheus.querybuilder.get-placeholders.set-use-backend', 'Enable regex search'),
+  disableTextWrap: t('grafana-prometheus.querybuilder.additional-settings.disable-text-wrap', 'Disable text wrap'),
 });
