@@ -25,6 +25,7 @@ import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWr
 
 interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
   ExtraFieldElement?: ReactNode;
+  hideMetricsBrowser?: boolean;
   'data-testid'?: string;
 }
 
@@ -40,6 +41,7 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
     range,
     onChange,
     onRunQuery,
+    hideMetricsBrowser = false,
   } = props;
 
   const theme = useTheme2();
@@ -111,20 +113,22 @@ export const PromQueryField = (props: PromQueryFieldProps) => {
         className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
         data-testid={props['data-testid']}
       >
-        <button
-          className="gf-form-label query-keyword pointer"
-          onClick={onClickChooserButton}
-          disabled={datasource.lookupsDisabled}
-          type="button"
-          data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
-        >
-          {datasource.lookupsDisabled ? (
-            <Trans i18nKey="grafana-prometheus.metrics-browser.disabled-label">(Disabled)</Trans>
-          ) : (
-            <Trans i18nKey="grafana-prometheus.metrics-browser.enabled-label">Metrics browser</Trans>
-          )}
-          <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
-        </button>
+        {!hideMetricsBrowser && (
+          <button
+            className="gf-form-label query-keyword pointer"
+            onClick={onClickChooserButton}
+            disabled={datasource.lookupsDisabled}
+            type="button"
+            data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
+          >
+            {datasource.lookupsDisabled ? (
+              <Trans i18nKey="grafana-prometheus.metrics-browser.disabled-label">(Disabled)</Trans>
+            ) : (
+              <Trans i18nKey="grafana-prometheus.metrics-browser.enabled-label">Metrics browser</Trans>
+            )}
+            <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
+          </button>
+        )}
 
         <div className="flex-grow-1 min-width-15">
           <MonacoQueryFieldWrapper

@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "このオプションをオンにすると、{{exampleParameter}}パラメーターを持つラベル値エンドポイントより、{{exampleParameter}}パラメーターを持つ系列エンドポイントが優先されます。ラベル値エンドポイントの方がパフォーマンスが高いと考えられていますが、ラベル値エンドポイントにはGETメソッドしかないのに対し、系列にはPOSTメソッドがあるため、系列を好むユーザーもいます。"
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",
