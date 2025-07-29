@@ -2,6 +2,7 @@ package expr
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -176,7 +177,8 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]
 	}
 
 	// TODO: REMOVE
-	spew.Dump(schemas)
+	b, _ := json.Marshal(schemas) // temp hack until endpoint for local dev
+	spew.Dump(string(b))
 
 	return schemas, nil
 }
