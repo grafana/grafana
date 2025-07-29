@@ -1254,6 +1254,14 @@ index_cache_ttl = 1h
 
 ; Periodic rebuild interval (for usage insights)
 index_rebuild_interval = 24h
+
+; Minimum resource count required to build an index (default: 1)
+; If a namespace has fewer resources than this threshold, no index will be created
+index_min_count = 1
+
+; Maximum resource count before creating an empty index (default: 0 = no limit)
+; When exceeded, creates an empty index instead of indexing all resources for performance
+index_max_count = 0
 ```
 
 ### Search Request Sources
