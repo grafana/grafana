@@ -1,9 +1,9 @@
-import { FormEvent } from 'react';
+// import { FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { t /*, Trans*/ } from '@grafana/i18n';
 import { TableCellOptions, TableWrapTextOptions } from '@grafana/schema';
-import { Badge, Field, Input, Label, Switch } from '@grafana/ui';
+import { /* Badge, */ Field, /* Input, Label, */ Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -17,10 +17,10 @@ export const TextWrapOptionsEditor = ({
     onChange(cellOptions);
   };
 
-  const onMaxWrappedLinesChange = (ev: FormEvent<HTMLInputElement>) => {
-    cellOptions.maxWrappedLines = ev.currentTarget.value ? Number(ev.currentTarget.value) : undefined;
-    onChange(cellOptions);
-  };
+  // const onMaxWrappedLinesChange = (ev: FormEvent<HTMLInputElement>) => {
+  //   cellOptions.maxWrappedLines = ev.currentTarget.value ? Number(ev.currentTarget.value) : undefined;
+  //   onChange(cellOptions);
+  // };
 
   return (
     <>
@@ -31,7 +31,7 @@ export const TextWrapOptionsEditor = ({
           onChange={onWrapTextChange}
         />
       </Field>
-      {cellOptions.wrapText && (
+      {/* {cellOptions.wrapText && (
         <Field
           label={
             <Label
@@ -58,7 +58,7 @@ export const TextWrapOptionsEditor = ({
             placeholder={t('table.text-wrap-options.max-wrapped-lines-placeholder', 'none')}
           />
         </Field>
-      )}
+      )} */}
     </>
   );
 };
