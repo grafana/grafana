@@ -457,7 +457,7 @@ require github.com/grafana/grafana/apps/alerting/notifications v0.0.0-2024120916
 
 require github.com/grafana/grafana/apps/investigation v0.0.0-20241218083103-f46c07aba7b6 // @fcjack @matryer
 
-require github.com/urfave/cli/v3 v3.3.8
+require github.com/urfave/cli/v3 v3.3.8 // @grafana/grafana-backend-group
 
 require (
 	cel.dev/expr v0.23.1 // indirect
