@@ -602,8 +602,8 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 	}).Return("", resourceError)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Name == "non-existent-uid" && result.Group == "dashboard.grafana.app" && 
-			result.Action == repository.FileActionRenamed && 
+		return result.Name == "non-existent-uid" && result.Group == "dashboard.grafana.app" &&
+			result.Action == repository.FileActionRenamed &&
 			result.Error != nil && result.Error.Error() == "find path for resource dashboard.grafana.app/Dashboard/non-existent-uid: resource not found"
 	})).Return()
 
@@ -662,14 +662,14 @@ func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
 
 func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 	tests := []struct {
-		name              string
-		resources         []provisioning.ResourceRef
-		resourcePaths     map[string]string
-		resourceErrors    map[string]error
-		tooManyErrors     error
-		expectedPaths     []string
-		expectedError     string
-		expectContinue    bool
+		name           string
+		resources      []provisioning.ResourceRef
+		resourcePaths  map[string]string
+		resourceErrors map[string]error
+		tooManyErrors  error
+		expectedPaths  []string
+		expectedError  string
+		expectContinue bool
 	}{
 		{
 			name: "single resource success",
@@ -725,7 +725,7 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 			resourceErrors: map[string]error{
 				"non-existent": errors.New("not found"),
 			},
-			expectedPaths: []string{"dashboards/existing.json"},
+			expectedPaths:  []string{"dashboards/existing.json"},
 			expectContinue: true,
 		},
 		{
@@ -761,7 +761,7 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 					} else if err, ok := tt.resourceErrors[resource.Name]; ok {
 						mockRepoResources.On("FindResourcePath", mock.Anything, resource.Name, gvk).Return("", err)
 						mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-							return result.Name == resource.Name && result.Group == resource.Group && 
+							return result.Name == resource.Name && result.Group == resource.Group &&
 								result.Action == repository.FileActionRenamed && result.Error != nil
 						})).Return()
 						if tt.tooManyErrors != nil {
