@@ -757,7 +757,6 @@ export class LokiDatasource
         // Otherwise, we return an empty array, as data samples are only supported for logs queries
         return [];
       }
-
     }
 
     const lokiLogsQuery: LokiQuery = {
