@@ -261,7 +261,7 @@ func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
 func (a *dashboardSqlAccess) parseDashboard(dash *dashboardV1.Dashboard, data []byte, id int64, title string) error {
 	err := dash.Spec.UnmarshalJSON(data)
 	if err != nil {
-		a.log.Warn("error unmarshalling dashboard spec", "error", err, "uid", dash.UID, "name", dash.Name)
+		a.log.Warn("error unmarshalling dashboard spec. Generating fallback dashboard data", "error", err, "uid", dash.UID, "name", dash.Name)
 		dash.Spec = *dashboardV0.NewDashboardSpec()
 
 		dashboardData, err := generateFallbackDashboard(data, title, string(dash.UID))
@@ -271,7 +271,6 @@ func (a *dashboardSqlAccess) parseDashboard(dash *dashboardV1.Dashboard, data []
 		}
 
 		err = dash.Spec.UnmarshalJSON(dashboardData)
-		fmt.Println("HERE BRO: ", dash.UID, dash.Name, dash.Spec.Object)
 		if err != nil {
 			a.log.Warn("error unmarshalling fallback dashboard data", "error", err, "uid", dash.UID, "name", dash.Name)
 			return err
@@ -339,7 +338,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		dash.SetCreationTimestamp(metav1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)
 		if err != nil {
-			a.log.Warn("failed to get meta accessor for dashboard", "error", err, "uid", dash.UID, "name", dash.Name, "version", version)
+			a.log.Debug("failed to get meta accessor for dashboard", "error", err, "uid", dash.UID, "name", dash.Name, "version", version)
 			return nil, err
 		}
 		meta.SetUpdatedTimestamp(&updated)
