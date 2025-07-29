@@ -49,10 +49,12 @@ const TagListComponent = memo(
             </li>
           ))}
           {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
-            <span className={styles.moreTagsLabel}>
-              {'+ '}
-              {numTags - displayMax}
-            </span>
+            <li className={styles.li}>
+              <span className={styles.moreTagsLabel}>
+                {'+ '}
+                {numTags - displayMax}
+              </span>
+            </li>
           )}
         </ul>
       );

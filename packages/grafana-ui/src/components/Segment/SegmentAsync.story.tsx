@@ -13,7 +13,7 @@ import { SegmentSection } from './SegmentSection';
 
 const AddButton = (
   <span className="gf-form-label query-part">
-    <Icon name="plus" />
+    <Icon aria-label="Add" name="plus" />
   </span>
 );
 
@@ -63,10 +63,6 @@ export const ArrayOptions = () => {
 const meta: Meta<typeof SegmentAsync> = {
   title: 'Inputs/SegmentAsync',
   component: SegmentAsync,
-  parameters: {
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
-  },
 };
 
 export const ArrayOptionsWithPrimitiveValue = () => {

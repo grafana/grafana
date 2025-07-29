@@ -18,8 +18,6 @@ export default {
     docs: {
       page: mdx,
     },
-    // TODO fix a11y issue in story and remove this
-    a11y: { test: 'off' },
   },
   argTypes: {
     size: {
@@ -81,25 +79,25 @@ export const Examples: StoryFn<typeof Button> = () => {
         <div>Inside ButtonGroup</div>
         <ButtonGroup>
           <Button icon="sync">Run query</Button>
-          <Button icon="angle-down" />
+          <Button icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
         <ButtonGroup>
           <Button variant="destructive" icon="sync">
             Run query
           </Button>
-          <Button variant="destructive" icon="angle-down" />
+          <Button variant="destructive" icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
         <ButtonGroup>
           <Button variant="success" icon="sync">
             Run query
           </Button>
-          <Button variant="success" icon="angle-down" />
+          <Button variant="success" icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
         <ButtonGroup>
           <Button variant="secondary" icon="sync">
             Run query
           </Button>
-          <Button variant="secondary" icon="angle-down" />
+          <Button variant="secondary" icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
       </Stack>
       <Card noMargin>

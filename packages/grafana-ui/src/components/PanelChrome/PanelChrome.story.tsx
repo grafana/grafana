@@ -223,7 +223,7 @@ export const Examples = () => {
               <Button size="sm" variant="secondary" key="A">
                 Breakdown
               </Button>,
-              <Button size="sm" variant="secondary" icon="times" key="B" />,
+              <Button aria-label="Close" size="sm" variant="secondary" icon="times" key="B" />,
             ],
           })}
           {renderPanel('With radio button', {
