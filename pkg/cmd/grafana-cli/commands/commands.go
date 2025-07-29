@@ -187,11 +187,11 @@ var adminCommands = []*cli.Command{
 	},
 	{
 		Name:  "secrets-consolidation",
-		Usage: "Runs a script that consolidates secrets in your database",
+		Usage: "Runs an operation that re-encrypts all encrypted values in your database with new data keys",
 		Subcommands: []*cli.Command{
 			{
 				Name:   "consolidate",
-				Usage:  "Consolidation operation over secrets. Returns ok unless there is an error. Safe to execute multiple times.",
+				Usage:  "Re-encrypts all encrypted values with new data keys and deletes the old deactivated data keys. Returns ok unless there is an error. Safe to execute multiple times.",
 				Action: runRunnerCommand(secretsconsolidation.ConsolidateSecrets),
 			},
 		},

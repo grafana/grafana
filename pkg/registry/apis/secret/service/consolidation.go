@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -33,10 +34,20 @@ func ProvideConsolidationService(
 	}
 }
 
-func (s *ConsolidationService) Consolidate(ctx context.Context) error {
+func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
+	ctx, span := s.tracer.Start(ctx, "ConsolidationService.Consolidate")
+	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(otelcodes.Error, err.Error())
+			span.RecordError(err)
+		}
+	}()
+
 	// Disable all active data keys.
 	// This will ensure that no new data can be encrypted with the old keys.
-	err := s.globalDataKeyStore.DisableAllDataKeys(ctx)
+	err = s.globalDataKeyStore.DisableAllDataKeys(ctx)
 	if err != nil {
 		return fmt.Errorf("disabling all data keys: %w", err)
 	}
