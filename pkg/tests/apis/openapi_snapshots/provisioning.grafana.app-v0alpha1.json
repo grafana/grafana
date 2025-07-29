@@ -3250,7 +3250,7 @@
             }
           },
           "ref": {
-            "description": "Ref to the branch or commit hash to delete from",
+            "description": "Ref to the branch or commit hash that should move",
             "type": "string"
           },
           "targetPath": {

@@ -783,7 +783,7 @@ export type MigrateJobOptions = {
 export type MoveJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
   paths?: string[];
-  /** Ref to the branch or commit hash to delete from */
+  /** Ref to the branch or commit hash that should move */
   ref?: string;
   /** Destination path for the move (e.g. "new-location/") */
   targetPath?: string;

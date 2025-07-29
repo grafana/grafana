@@ -1123,7 +1123,7 @@ func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"ref": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Ref to the branch or commit hash to delete from",
+							Description: "Ref to the branch or commit hash that should move",
 							Type:        []string{"string"},
 							Format:      "",
 						},

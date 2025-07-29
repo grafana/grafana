@@ -167,7 +167,7 @@ type ResourceRef struct {
 }
 
 type MoveJobOptions struct {
-	// Ref to the branch or commit hash to delete from
+	// Ref to the branch or commit hash that should move
 	Ref string `json:"ref,omitempty"`
 	// Paths to be deleted. Examples:
 	// - dashboard.json (for a file)
