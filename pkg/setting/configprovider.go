@@ -19,7 +19,7 @@ var defaults = map[string]any{
 
 type ConfigProvider interface {
 	Get() *Cfg
-	GetValue(sectionName string, keyName string) any
+	// GetValue(sectionName string, keyName string) any
 }
 
 type OSSConfigProvider struct {
