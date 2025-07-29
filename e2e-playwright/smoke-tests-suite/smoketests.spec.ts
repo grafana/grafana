@@ -5,7 +5,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.describe(
   'Smoke tests',
   {
-    tag: ['@smoke'],
+    tag: ['@acceptance'],
   },
   () => {
     test('Login, create test data source, create dashboard and panel scenario', async ({
