@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
-  ClickOutsideWrapper,
   Combobox,
   FilterInput,
   Input,
@@ -22,6 +21,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { RuleHealth } from '../../../search/rulesSearchParser';
 import { PopupCard } from '../../HoverCard';
+import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 import { emptyAdvancedFilters, formAdvancedFiltersToRuleFilter, searchQueryToDefaultValues } from './utils';
@@ -52,6 +52,53 @@ export default function RulesFilter() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { searchQuery, updateFilters } = useRulesFilter();
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  // Custom click-outside handler that's aware of data source picker portals
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!isPopupOpen) {
+        return;
+      }
+
+      // Check if the click target is a valid Element
+      if (!event.target || !(event.target instanceof Element)) {
+        return;
+      }
+
+      const target = event.target;
+
+      if (popupRef.current?.contains(target)) {
+        return;
+      }
+
+      if (target.closest('[role="tooltip"]')) {
+        return;
+      }
+
+      if (
+        target.closest('[data-testid*="select"]') ||
+        target.closest('.react-select__menu') ||
+        target.closest('.select__menu') ||
+        target.closest('[class*="menu"]') ||
+        target.closest('[class*="option"]') ||
+        target.closest('[class*="dropdown"]') ||
+        target.closest('[class*="popover"]')
+      ) {
+        return;
+      }
+
+      setIsPopupOpen(false);
+    };
+
+    if (isPopupOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isPopupOpen]);
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { setValue, watch, handleSubmit } = useForm<SearchQueryForm>({
@@ -89,7 +136,7 @@ export default function RulesFilter() {
           value={watch('query')}
         />
         {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
-        <ClickOutsideWrapper onClick={() => setIsPopupOpen(false)}>
+        <div ref={popupRef}>
           <PopupCard
             showOn="click"
             placement="auto-end"
@@ -126,7 +173,7 @@ export default function RulesFilter() {
               {filterButtonLabel}
             </Button>
           </PopupCard>
-        </ClickOutsideWrapper>
+        </div>
         {/* show list view / group view */}
         <RulesViewModeSelector />
       </Stack>
@@ -194,16 +241,24 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
           <Label>
             <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
           </Label>
-          {/* @TODO hook up data source selection */}
           <Controller
             name="dataSourceNames"
             control={control}
             render={({ field }) => (
-              <Combobox<string>
-                options={[]}
-                onChange={(value) => field.onChange(value ? [value] : [])}
-                value={field.value?.[0] || ''}
-                isClearable
+              <MultipleDataSourcePicker
+                alerting
+                noDefault
+                placeholder="Select data sources"
+                current={field.value}
+                onChange={(dataSource, action) => {
+                  const currentValues = field.value || [];
+                  const newValues =
+                    action === 'add'
+                      ? [...currentValues, dataSource.name]
+                      : currentValues.filter((name) => name !== dataSource.name);
+                  field.onChange(newValues);
+                }}
+                onClear={() => field.onChange([])}
               />
             )}
           />
