@@ -37,7 +37,7 @@ To access the Alert rules page, click **Alerts & IRM** -> **Alerting** -> **Aler
 
 By default, alert rules are grouped by folder. Select a group to expand it and view the list of alert rules within that group.
 
-Filters to simplify managing large volumes of alerts.
+The view includes filters to simplify managing large volumes of alerts.
 
 You can filter by data sources, dashboards, and alert rule properties such as state, type, health, and contact points. The **Search** input allows you to filter by additional parameters like folders, evaluation groups, labels, and more.
 
