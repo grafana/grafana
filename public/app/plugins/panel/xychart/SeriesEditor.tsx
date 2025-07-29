@@ -256,7 +256,6 @@ export const SeriesEditor = ({
                 settings: {
                   // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
                   filter: (field) =>
-                    field.name !== series.x?.matcher.options &&
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
                     field.type === FieldType.number &&
@@ -292,7 +291,6 @@ export const SeriesEditor = ({
                 settings: {
                   // TODO: filter out series.y?.exclude.options, series.size.matcher.options, series.color.matcher.options
                   filter: (field) =>
-                    field.name !== series.x?.matcher.options &&
                     (mapping === SeriesMapping.Auto ||
                       field.state?.origin?.frameIndex === series.frame?.matcher.options) &&
                     field.type === FieldType.number &&

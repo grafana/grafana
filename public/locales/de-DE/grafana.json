@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "",
+        "feedback-button": "",
         "improve-annotations-button": "",
         "improve-labels-button": "",
         "template-button": "",
@@ -1551,7 +1552,8 @@
       "title": "Evaluierungsgruppe bearbeiten"
     },
     "group-loader": {
-      "group-load-failed": "Die Regeln der Gruppe {{ groupName }} in {{ namespaceName }} konnten nicht geladen werden"
+      "group-load-failed": "Die Regeln der Gruppe {{ groupName }} in {{ namespaceName }} konnten nicht geladen werden",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "Die Gruppe wird gelöscht"
@@ -2466,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurieren",
-      "draft-new-rule": "Neue Regel entwerfen",
       "ds-error": {
         "title": "Regeln für diese Datenquelle können nicht geladen werden"
       },
@@ -2492,6 +2493,7 @@
       "new-alert-rule": "Neue Warnregel",
       "new-datasource-recording-rule": "Neue Datenquelle-Aufnahmeregel",
       "new-grafana-recording-rule": "Neue Grafana-Aufnahmeregel",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Mehr anzeigen …"
       },
@@ -2802,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Vorschau aktualisieren",
+      "empty-state": "",
       "label-preview": "Vorschau",
       "refresh": "Aktualisieren"
     },
@@ -4563,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Verschieben von {{typeName}}",
       "panel-background": "Panel-Hintergrund ändern",
       "panel-description": "Panel-Beschreibung ändern",
@@ -4577,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "",
         "local-variable": "Lokale Variable",
         "multiple-elements": "Mehrere Elemente",
         "multiple-elements-delete-text": "Sind Sie sicher, dass Sie diese Elemente löschen möchten?",
@@ -5786,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7157,6 +7164,7 @@
           "start-time": "Startzeit:"
         }
       },
+      "share-span": "",
       "warnings": "Warnungen"
     },
     "span-filters": {
@@ -7504,6 +7512,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7563,6 +7572,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8597,7 +8607,10 @@
         "no-data": ""
       },
       "no-values-label": "Keine Werte",
-      "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen"
+      "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Tags"
@@ -9330,6 +9343,7 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "Keine anzuzeigenden Felder.",
+      "open-assistant": "",
       "pin-line": "Log anheften",
       "remove-displayed-field": "",
       "remove-log": "",
@@ -9348,6 +9362,9 @@
       "copy-log": "Protokollzeile kopieren",
       "hide-details": "Logdetails anzeigen",
       "icon-label": "Protokollmenü",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Protokoll anheften",
       "show-context": "Kontext anzeigen",
       "show-details": "Logdetails ausblenden",
@@ -10941,15 +10958,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11059,10 +11076,10 @@
       "title-instant-updates-requests-webhooks": "Sofortige Updates und Pull-Requests mit Webhooks.",
       "title-visual-previews-in-pull-requests": "Visuelle Vorschauen in Pull-Requests mit Bildwiedergabe"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Auftragsspezifikation",
-      "summary": "Zusammenfassung",
-      "title-error": "Fehler"
+      "summary": "Zusammenfassung"
     },
     "features-list": {
       "actions": {
@@ -11207,9 +11224,12 @@
       "starting": "Wird gestartet ...",
       "status": {
         "title-error-running-job": "Fehler bei der Ausführung des Auftrags",
-        "title-job-completed-successfully": "Auftrag erfolgreich abgeschlossen"
+        "title-warning-running-job": ""
       },
-      "summary": "Zusammenfassung"
+      "summary": "Zusammenfassung",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11375,6 +11395,7 @@
       "go-to": "Weiter zu",
       "make-sure": "Achten Sie darauf, dass diese Berechtigungen berücksichtigt werden"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Während dieses Vorgangs können keine Ressourcen erstellt, bearbeitet oder gelöscht werden. Im letzten Schritt werden sie entfernt.",
       "alert-point-2": "Sobald die Bereitstellung abgeschlossen ist, werden die Ressourcen wieder angezeigt und über einen externen Speicher verwaltet.",
@@ -13424,7 +13445,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13446,6 +13467,9 @@
         }
       },
       "regression": "Regression",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Anzahl der zu prognostizierenden X-, Y-Punkte"
     },
     "rename-by-regex-transformer": {

@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"hash/fnv"
 	"log/slog"
 	"slices"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/ring"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -109,6 +111,9 @@ type searchSupport struct {
 	initMinSize  int
 	initMaxSize  int
 
+	ring           *ring.Ring
+	ringLifecycler *ring.BasicLifecycler
+
 	buildIndex singleflight.Group
 
 	// Index queue processors
@@ -128,7 +133,7 @@ var (
 	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics, ring *ring.Ring, ringLifecycler *ring.BasicLifecycler) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -155,6 +160,8 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		indexEventsChan:       make(chan *IndexEvent),
 		indexQueueProcessors:  make(map[string]*indexQueueProcessor),
 		rebuildInterval:       opts.RebuildInterval,
+		ring:                  ring,
+		ringLifecycler:        ringLifecycler,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -379,6 +386,33 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 	return rsp, nil
 }
 
+func (s *searchSupport) shouldBuildIndex(info ResourceStats) bool {
+	if s.ring == nil {
+		s.log.Debug("ring is not setup. Will proceed to build index")
+		return true
+	}
+
+	if s.ringLifecycler == nil {
+		s.log.Error("missing ring lifecycler")
+		return true
+	}
+
+	ringHasher := fnv.New32a()
+	_, err := ringHasher.Write([]byte(info.Namespace))
+	if err != nil {
+		s.log.Error("error hashing namespace", "namespace", info.Namespace, "err", err)
+		return true
+	}
+
+	rs, err := s.ring.GetWithOptions(ringHasher.Sum32(), searchOwnerRead, ring.WithReplicationFactor(s.ring.ReplicationFactor()))
+	if err != nil {
+		s.log.Error("error getting replicaset from ring", "namespace", info.Namespace, "err", err)
+		return true
+	}
+
+	return rs.Includes(s.ringLifecycler.GetInstanceAddr())
+}
+
 func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
@@ -392,6 +426,11 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 	for _, info := range stats {
 		// only periodically rebuild the dashboard index, specifically to update the usage insights data
 		if rebuild && info.Resource != dashboardv1.DASHBOARD_RESOURCE {
+			continue
+		}
+
+		if !s.shouldBuildIndex(info) {
+			s.log.Debug("skip building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			continue
 		}
 
@@ -608,7 +647,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		return idx, nil
 	}
 
-	idxInt, err, _ := s.buildIndex.Do(key.String(), func() (interface{}, error) {
+	ch := s.buildIndex.DoChan(key.String(), func() (interface{}, error) {
 		// Recheck if some other goroutine managed to build an index in the meantime.
 		// (That is, it finished running this function and stored the index into the cache)
 		idx, err := s.search.GetIndex(ctx, key)
@@ -642,10 +681,16 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 		}
 		return idx, nil
 	})
-	if err != nil {
-		return nil, err
+
+	select {
+	case res := <-ch:
+		if res.Err != nil {
+			return nil, res.Err
+		}
+		return res.Val.(ResourceIndex), nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf("failed to get index: %w", ctx.Err())
 	}
-	return idxInt.(ResourceIndex), nil
 }
 
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {

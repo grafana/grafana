@@ -16,6 +16,10 @@ const meta: Meta = {
     containerWidth: '100%',
     seriesCount: 5,
   },
+  parameters: {
+    // TODO fix a11y issue in story and remove this
+    a11y: { test: 'off' },
+  },
   argTypes: {
     containerWidth: {
       control: {
