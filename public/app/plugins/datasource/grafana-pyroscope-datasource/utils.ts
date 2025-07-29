@@ -8,6 +8,7 @@ import {
   DataQueryResponse,
   DataQueryRequest,
 } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 
 import { GrafanaPyroscopeDataQuery } from './dataquery.gen';
 
@@ -140,6 +141,13 @@ export const grammar: Grammar = {
   punctuation: /[{}(),.]/,
 };
 
+type FlameGraphQueryContext = {
+  datasource: DataSourceRef & { name: string };
+  start: number;
+  end: number;
+  query: GrafanaPyroscopeDataQuery;
+};
+
 export function enrichDataFrameWithQueryContextMapper(
   request: DataQueryRequest<GrafanaPyroscopeDataQuery>,
   datasourceName: string
@@ -152,7 +160,7 @@ export function enrichDataFrameWithQueryContextMapper(
         return data;
       }
 
-      const context = {
+      const context: FlameGraphQueryContext = {
         datasource: {
           uid: query.datasource.uid,
           type: query.datasource.type,
