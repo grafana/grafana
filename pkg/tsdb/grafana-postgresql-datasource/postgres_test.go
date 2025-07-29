@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -46,7 +47,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='/var/run/postgresql' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "TCP host",
@@ -55,7 +56,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "verify-ca automatically adds disable-sni",
@@ -64,7 +65,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-ca"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-ca' sslsni=0",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' port=1234 sslmode='verify-ca' sslsni=0",
 		},
 		{
 			desc:        "TCP/port host",
@@ -73,7 +74,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-full'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' port=1234 sslmode='verify-full'",
 		},
 		{
 			desc:        "Ipv6 host",
@@ -82,7 +83,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='::1' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='::1' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "Ipv6/port host",
@@ -91,7 +92,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='::1' dbname='database' port=1234 sslmode='verify-full'",
+			expConnStr:  "user='user' host='::1' dbname='database' password='password' port=1234 sslmode='verify-full'",
 		},
 		{
 			desc:        "Invalid port",
@@ -108,7 +109,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    `p'\assword`,
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+			expConnStr:  `user='user' host='host' dbname='database' password='p\'\\assword' sslmode='verify-full'`,
 		},
 		{
 			desc:        "User/DB with single quote and backslash",
@@ -117,7 +118,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    `password`,
 			database:    `d'\atabase`,
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  `user='u\'\\ser' password='password' host='host' dbname='d\'\\atabase' sslmode='verify-full'`,
+			expConnStr:  `user='u\'\\ser' host='host' dbname='d\'\\atabase' password='password' sslmode='verify-full'`,
 		},
 		{
 			desc:        "Custom TLS mode disabled",
@@ -126,7 +127,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "disable"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' sslmode='disable'",
 		},
 		{
 			desc:     "Custom TLS mode verify-full with certificate files",
@@ -140,8 +141,17 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 				CertFile:     "i/am/coding/client.crt",
 				CertKeyFile:  "i/am/coding/client.key",
 			},
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
+			expConnStr: "user='user' host='host' dbname='database' password='password' sslmode='verify-full' " +
 				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
+		},
+		{
+			desc:        "No password",
+			host:        "host",
+			user:        "user",
+			password:    "",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-full"},
+			expConnStr:  "user='user' host='host' dbname='database' sslmode='verify-full'",
 		},
 	}
 	for _, tt := range testCases {
@@ -186,7 +196,7 @@ func TestIntegrationPostgres(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	// change to true to run the PostgreSQL tests
-	const runPostgresTests = false
+	const runPostgresTests = true
 
 	if !isTestDbPostgres() && !runPostgresTests {
 		t.Skip()
@@ -1371,6 +1381,20 @@ func TestIntegrationPostgres(t *testing.T) {
 			require.Empty(t, frames[0].Fields)
 		})
 	})
+
+	t.Run("Test Postgres connection with pgpass file", func(t *testing.T) {
+		require.NoError(t, preparePgpassFile(t))
+		require.FileExists(t, os.Getenv("PGPASSFILE"), "Make sure that PGPASSFILE is set and file exists")
+
+		cnnstr := postgresTestDBConnString()
+		require.NotContains(t, cnnstr, "password=", "Make sure that password is not in the connection string")
+
+		dbPgpass, _, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+		require.NoError(t, err)
+
+		_, err = dbPgpass.Exec("SELECT 1") // Test connection
+		require.NoError(t, err)
+	})
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {
@@ -1402,6 +1426,23 @@ func isTestDbPostgres() bool {
 	return false
 }
 
+func preparePgpassFile(t *testing.T) error {
+	dir := t.TempDir()
+	t.Setenv("PGPASSFILE", filepath.Join(dir, ".pgpass"))
+
+	host := os.Getenv("POSTGRES_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("POSTGRES_PORT")
+	if port == "" {
+		port = "5432"
+	}
+
+	return os.WriteFile(filepath.Join(dir, ".pgpass"),
+		[]byte(fmt.Sprintf("%s:%s:grafanadstest:grafanatest:grafanatest", host, port)), 0600)
+}
+
 func postgresTestDBConnString() string {
 	host := os.Getenv("POSTGRES_HOST")
 	if host == "" {
@@ -1411,6 +1452,13 @@ func postgresTestDBConnString() string {
 	if port == "" {
 		port = "5432"
 	}
-	return fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
+
+	connStr := fmt.Sprintf("user=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
 		host, port)
+
+	if os.Getenv("PGPASSFILE") == "" {
+		connStr += " password=grafanatest"
+	}
+
+	return connStr
 }
