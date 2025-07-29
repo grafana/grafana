@@ -18,6 +18,9 @@ import (
 )
 
 func TestIntegration_GetLibraryElement(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// by uid
@@ -99,7 +102,7 @@ func TestIntegration_GetLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			b, err := json.Marshal(map[string]string{"test": "test"})
 			require.NoError(t, err)
-			newFolder := createFolder(t, sc, "NewFolder", nil)
+			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
 			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
 			result, err := sc.service.createLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{

@@ -25,10 +25,11 @@ import { contextSrv } from 'app/core/core';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { DashboardDTO, DashboardDataDTO } from 'app/types';
+import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
+import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -45,7 +46,6 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
 import { RowItem } from '../scene/layout-rows/RowItem';
-import { RowItemRepeaterBehavior } from '../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -239,7 +239,7 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
         children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
       }),
     }),
-    $behaviors: row.repeat ? [new RowItemRepeaterBehavior({ variableName: row.repeat })] : undefined,
+    repeatByVariable: row.repeat,
   });
   return rowItem;
 }
@@ -408,6 +408,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+    headerActions: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      : undefined,
   };
 
   if (panel.libraryPanel) {

@@ -42,6 +42,7 @@ type DashboardService interface {
 	UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*Dashboard, error)
 	ValidateDashboardRefreshInterval(minRefreshInterval string, targetRefreshInterval string) error
 	ValidateBasicDashboardProperties(title string, uid string, message string) error
+	GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error)
 }
 
 type PermissionsRegistrationService interface {
@@ -104,4 +105,6 @@ type Store interface {
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
+
+	GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error)
 }

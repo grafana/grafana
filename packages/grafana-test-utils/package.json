@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/test-utils",
-  "version": "12.0.0-pre",
+  "version": "12.2.0-pre",
   "private": true,
   "description": "Grafana test utils & Mock API",
   "keywords": [
@@ -46,11 +46,11 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
-    "msw": "2.10.2"
+    "msw": "2.10.4"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "@types/node": "22.15.0",
-    "typescript": "5.7.3"
+    "@types/node": "22.16.5",
+    "typescript": "5.8.3"
   }
 }

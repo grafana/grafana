@@ -15,8 +15,9 @@ import { parseResourceURI } from './components/ResourcePicker/utils';
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
 import { migrateQuery } from './grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType, RawAzureResourceItem } from './types';
+import { AzureMonitorQuery, AzureQueryType } from './types/query';
 import { GrafanaTemplateVariableQuery } from './types/templateVariables';
+import { RawAzureResourceItem } from './types/types';
 import messageFromError from './utils/messageFromError';
 
 export function parseResourceNamesAsTemplateVariable(resources: RawAzureResourceItem[], metricNamespace?: string) {

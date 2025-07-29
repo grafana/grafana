@@ -44,7 +44,11 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
           </Trans>
         </p>
       }
-      confirmText={`Yes, restore to version ${version.version}`}
+      confirmText={t(
+        'dashboard-scene.revert-dashboard-modal.confirmText-restore-version',
+        'Yes, restore to version {{version}}',
+        { version: version.version }
+      )}
     />
   );
 };

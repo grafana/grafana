@@ -23,9 +23,10 @@ import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
-import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
+import TNil from '../types/TNil';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceSpan, Trace, TraceSpanReference } from '../types/trace';
+import { SpanLinkFunc } from '../types/links';
+import { TraceSpan, Trace, TraceSpanReference, CriticalPathSection } from '../types/trace';
 
 import { TraceFlameGraphs } from './SpanDetail';
 import TimelineHeaderRow from './TimelineHeaderRow';

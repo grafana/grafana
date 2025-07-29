@@ -85,7 +85,10 @@ func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 
 func (r *Runner) Run(ctx context.Context) error {
 	logger := r.log.WithContext(ctx)
-	lastCreated, err := r.checkLastCreated(ctx, logger)
+	// We still need the context to eventually be cancelled to exit this function
+	// but we don't want the requests to fail because of it
+	ctxWithoutCancel := context.WithoutCancel(ctx)
+	lastCreated, err := r.checkLastCreated(ctxWithoutCancel, logger)
 	if err != nil {
 		logger.Error("Error getting last check creation time", "error", err)
 		// Wait for interval to create the next scheduled check
@@ -93,11 +96,17 @@ func (r *Runner) Run(ctx context.Context) error {
 	} else {
 		// do an initial creation if necessary
 		if lastCreated.IsZero() {
-			err = r.createChecks(ctx, logger)
+			err = r.createChecks(ctxWithoutCancel, logger)
 			if err != nil {
 				logger.Error("Error creating new check reports", "error", err)
 			} else {
 				lastCreated = time.Now()
+			}
+		} else {
+			// Run an initial cleanup to remove old checks
+			err = r.cleanupChecks(ctxWithoutCancel, logger)
+			if err != nil {
+				logger.Error("Error cleaning up old check reports", "error", err)
 			}
 		}
 	}
@@ -109,12 +118,12 @@ func (r *Runner) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			err = r.createChecks(ctx, logger)
+			err = r.createChecks(ctxWithoutCancel, logger)
 			if err != nil {
 				logger.Error("Error creating new check reports", "error", err)
 			}
 
-			err = r.cleanupChecks(ctx, logger)
+			err = r.cleanupChecks(ctxWithoutCancel, logger)
 			if err != nil {
 				logger.Error("Error cleaning up old check reports", "error", err)
 			}
@@ -129,17 +138,35 @@ func (r *Runner) Run(ctx context.Context) error {
 	}
 }
 
+func (r *Runner) listChecks(ctx context.Context, logger logging.Logger) ([]resource.Object, error) {
+	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	checks := list.GetItems()
+	for list.GetContinue() != "" {
+		logger.Debug("List has continue token, listing next page", "continue", list.GetContinue())
+		list, err = r.client.List(ctx, r.namespace, resource.ListOptions{Continue: list.GetContinue()})
+		if err != nil {
+			return nil, err
+		}
+		checks = append(checks, list.GetItems()...)
+	}
+	return checks, nil
+}
+
 // checkLastCreated returns the creation time of the last check created
 // regardless of its ID. This assumes that the checks are created in batches
 // so a batch will have a similar creation time.
 // In case it finds an unprocessed check from a previous run, it will set it to error.
 func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger) (time.Time, error) {
-	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
+	checkList, err := r.listChecks(ctx, log)
 	if err != nil {
 		return time.Time{}, err
 	}
 	lastCreated := time.Time{}
-	for _, item := range list.GetItems() {
+	for _, item := range checkList {
 		itemCreated := item.GetCreationTimestamp().Time
 		if itemCreated.After(lastCreated) {
 			lastCreated = itemCreated
@@ -147,7 +174,7 @@ func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger) (time
 
 		// If the check is unprocessed, set it to error
 		if checks.GetStatusAnnotation(item) == "" {
-			log.Error("Check is unprocessed", "check", item.GetStaticMetadata().Identifier())
+			log.Info("Check is unprocessed, marking as error", "check", item.GetStaticMetadata().Identifier())
 			err := checks.SetStatusAnnotation(ctx, r.client, item, checks.StatusAnnotationError)
 			if err != nil {
 				log.Error("Error setting check status to error", "error", err)
@@ -168,7 +195,7 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error 
 	allChecksRegistered := len(list.GetItems()) == len(r.checkRegistry.Checks())
 	retryCount := 0
 	for !allChecksRegistered && retryCount < waitMaxRetries {
-		logger.Error("Waiting for all check types to be registered", "retryCount", retryCount, "waitInterval", waitInterval)
+		logger.Info("Waiting for all check types to be registered", "retryCount", retryCount, "waitInterval", waitInterval)
 		time.Sleep(waitInterval)
 		list, err = r.typesClient.List(ctx, r.namespace, resource.ListOptions{})
 		if err != nil {
@@ -206,14 +233,16 @@ func (r *Runner) createChecks(ctx context.Context, logger logging.Logger) error 
 
 // cleanupChecks deletes the olders checks if the number of checks exceeds the limit.
 func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error {
-	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{Limit: -1})
+	checkList, err := r.listChecks(ctx, logger)
 	if err != nil {
 		return err
 	}
 
+	logger.Debug("Cleaning up checks", "numChecks", len(checkList))
+
 	// organize checks by type
 	checksByType := map[string][]resource.Object{}
-	for _, check := range list.GetItems() {
+	for _, check := range checkList {
 		labels := check.GetLabels()
 		checkType, ok := labels[checks.TypeLabel]
 		if !ok {
@@ -223,8 +252,10 @@ func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error
 		checksByType[checkType] = append(checksByType[checkType], check)
 	}
 
-	for _, checks := range checksByType {
+	for checkType, checks := range checksByType {
+		logger.Debug("Checking checks", "checkType", checkType, "numChecks", len(checks))
 		if len(checks) > r.maxHistory {
+			logger.Debug("Deleting old checks", "checkType", checkType, "maxHistory", r.maxHistory, "numChecks", len(checks))
 			// Sort checks by creation time
 			sort.Slice(checks, func(i, j int) bool {
 				ti := checks[i].GetCreationTimestamp().Time
@@ -239,6 +270,7 @@ func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error
 				if err != nil {
 					return fmt.Errorf("error deleting check: %w", err)
 				}
+				logger.Debug("Deleted check", "check", check.GetStaticMetadata().Identifier())
 			}
 		}
 	}

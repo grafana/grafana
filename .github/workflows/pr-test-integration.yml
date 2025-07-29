@@ -41,8 +41,6 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -89,8 +87,6 @@ jobs:
           cache: true
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -136,8 +132,6 @@ jobs:
           cache: true
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-      - name: Generate Go code
-        run: make gen-go
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}

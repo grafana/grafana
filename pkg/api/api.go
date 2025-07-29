@@ -254,18 +254,15 @@ func (hs *HTTPServer) registerRoutes() {
 
 	adminAuthPageEvaluator := func() ac.Evaluator {
 		authnSettingsEval := ssoutils.EvalAuthenticationSettings(hs.Cfg)
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-			return ac.EvalAny(authnSettingsEval, ssoutils.OauthSettingsEvaluator(hs.Cfg))
-		}
-		return authnSettingsEval
+
+		return ac.EvalAny(authnSettingsEval, ssoutils.OauthSettingsEvaluator(hs.Cfg))
 	}
 
 	r.Get("/admin/authentication", authorize(adminAuthPageEvaluator()), hs.Index)
 	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		providerParam := ac.Parameter(":provider")
-		r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
-	}
+
+	providerParam := ac.Parameter(":provider")
+	r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {

@@ -5,9 +5,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
+import { LIST_ITEM_SIZE } from '../../constants';
+
 import { useMetricsBrowser } from './MetricsBrowserContext';
 import { getStylesMetricSelector } from './styles';
-import { LIST_ITEM_SIZE } from './types';
 
 export function MetricSelector() {
   const styles = useStyles2(getStylesMetricSelector);
@@ -50,7 +51,7 @@ export function MetricSelector() {
         </Label>
         <div>
           <Input
-            onChange={(e) => setSeriesLimit(e.currentTarget.value.trim())}
+            onChange={(e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10))}
             aria-label={t(
               'grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint',
               'Limit results from series endpoint'

@@ -3,7 +3,7 @@ import { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useE
 import { TextBoxVariableModel, isEmptyObject } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { variableAdapters } from '../adapters';
 import { VARIABLE_PREFIX } from '../constants';

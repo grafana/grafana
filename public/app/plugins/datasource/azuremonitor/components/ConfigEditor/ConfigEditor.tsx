@@ -13,7 +13,7 @@ import {
   AzureMonitorDataSourceSecureJsonData,
   AzureMonitorDataSourceSettings,
   Subscription,
-} from '../../types';
+} from '../../types/types';
 import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';

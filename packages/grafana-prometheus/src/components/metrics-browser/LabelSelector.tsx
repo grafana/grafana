@@ -4,9 +4,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { BrowserLabel as PromLabel, Input, Label, useStyles2 } from '@grafana/ui';
 
+import { METRIC_LABEL } from '../../constants';
+
 import { useMetricsBrowser } from './MetricsBrowserContext';
 import { getStylesLabelSelector } from './styles';
-import { METRIC_LABEL } from './types';
 
 export function LabelSelector() {
   const styles = useStyles2(getStylesLabelSelector);

@@ -56,7 +56,7 @@ describe('AccordianLogs tests', () => {
   it('shows the number of log entries', () => {
     setup();
 
-    expect(screen.getByRole('switch', { name: 'Events (2)' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Events 2' })).toBeInTheDocument();
   });
 
   it('hides log entries when not expanded', () => {
@@ -103,12 +103,10 @@ describe('AccordianLogs tests', () => {
     setup({ isOpen: true, openedItems: new Set() } as AccordianLogsProps);
     expect(
       screen.getByRole('switch', {
-        name: '15μs (foo event name) : message = oh the next log message more = stuff',
+        name: '15μs (foo event name) : message oh the next log message more stuff',
       })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('switch', { name: '5μs: message = oh the log message something = else' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: '5μs: message oh the log message something else' })).toBeInTheDocument();
   });
 
   it('renders event name and duration when events list is open', () => {

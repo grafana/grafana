@@ -56,6 +56,7 @@ export interface PromOptions extends DataSourceJsonData {
   oauthPassThru?: boolean;
   codeModeMetricNamesSuggestionLimit?: number;
   seriesEndpoint?: boolean;
+  seriesLimit?: number;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -189,8 +190,3 @@ export type RecordingRuleIdentifier = {
   identifier?: string;
   identifierValue?: string;
 };
-
-export const EMPTY_MATCHER = '{}';
-export const MATCH_ALL_LABELS_STR = '__name__!=""';
-export const MATCH_ALL_LABELS = '{__name__!=""}';
-export const METRIC_LABEL = '__name__';

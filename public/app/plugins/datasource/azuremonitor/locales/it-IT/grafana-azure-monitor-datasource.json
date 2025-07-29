@@ -52,6 +52,7 @@
       "button-use-query": "Utilizza questa query",
       "label-categories": "Categorie",
       "label-query-results": "Risultati della query: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Tutte le categorie",
       "placeholder-search-logs": "Cerca query dei registri",
       "text-loading": "Caricamento in corso..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "Limita il numero di righe restituite (il valore predefinito è 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Le query dei registri di base comportano un costo in base alla quantità di dati analizzati.",
       "label-logs": "Registri",
       "title-basic-logs-queries": "Query sui registri di base",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "I registri di Azure avviano il pulsante della query",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Avvia la query",
       "button-run-query": "Esegui query",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Servizio",
       "placeholder-service": "Servizio...",
       "title-switch-mode": "Cambiare modalità editor?"
@@ -221,6 +231,9 @@
       "text-loading": "Caricamento in corso...",
       "text-no-resources": "Nessuna risorsa trovata",
       "title-error-occurred": "Si è verificato un errore durante la richiesta di risorse da Azure Monitor"
+    },
+    "scope-selector": {
+      "label": ""
     },
     "search": {
       "aria-label-resource-search": "Ricerca delle risorse",

@@ -291,6 +291,30 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		}
 	})
 
+	t.Run("with empty rule group name should return 400", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		emptyNameGroup := apimodels.PrometheusRuleGroup{
+			Name:     "",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", emptyNameGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "rule group name must not be empty")
+	})
+
 	t.Run("with valid request should return 202", func(t *testing.T) {
 		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
@@ -1556,14 +1580,33 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM.AssertExpectations(t)
 	})
 
-	t.Run("should return error when identifier header is missing", func(t *testing.T) {
+	t.Run("should use default identifier when header is missing", func(t *testing.T) {
 		rc := createRequestCtx()
+		rc.Req.Header.Set(mergeMatchersHeader, "test=value")
+		mockAM := &mockAlertmanager{}
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+			return extraConfig.Identifier == defaultConfigIdentifier
+		})).Return(nil)
 
-		amCfg := apimodels.AlertmanagerUserConfig{}
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"route": {
+					"receiver": "default"
+				},
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
 		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
 
-		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "identifier cannot be empty")
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
 	})
 
 	t.Run("should return error when merge matchers header has invalid format", func(t *testing.T) {
@@ -1576,6 +1619,26 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
 		require.Contains(t, string(response.Body()), "format should be 'key=value,key2=value2'")
+	})
+
+	t.Run("should return error when alertmanager config has empty route", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(mergeMatchersHeader, "env=prod")
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "failed to parse alertmanager config")
 	})
 }
 
@@ -1594,19 +1657,42 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 		require.Equal(t, http.StatusNotImplemented, response.Status())
 	})
 
-	t.Run("without config identifier header should return 400", func(t *testing.T) {
+	t.Run("without config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
+			ExtraConfigs: []apimodels.ExtraConfiguration{
+				{
+					Identifier: defaultConfigIdentifier,
+					AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+				},
+			},
+		}, nil)
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		rc := createRequestCtx()
 		response := srv.RouteConvertPrometheusGetAlertmanagerConfig(rc)
 
-		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Equal(t, http.StatusOK, response.Status())
+		mockAM.AssertExpectations(t)
 	})
 
-	t.Run("with empty config identifier header should return 400", func(t *testing.T) {
+	t.Run("with empty config identifier header should use default identifier", func(t *testing.T) {
 		mockAM := &mockAlertmanager{}
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
+			ExtraConfigs: []apimodels.ExtraConfiguration{
+				{
+					Identifier: defaultConfigIdentifier,
+					AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+				},
+			},
+		}, nil)
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
@@ -1614,7 +1700,8 @@ func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
 		rc.Req.Header.Set(configIdentifierHeader, "")
 		response := srv.RouteConvertPrometheusGetAlertmanagerConfig(rc)
 
-		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Equal(t, http.StatusOK, response.Status())
+		mockAM.AssertExpectations(t)
 	})
 
 	t.Run("should return config when it is found", func(t *testing.T) {
@@ -1820,14 +1907,14 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name:          "empty identifier should return error",
+			name:          "empty identifier should return the default value",
 			headerValue:   "",
-			expectedError: true,
+			expectedValue: defaultConfigIdentifier,
 		},
 		{
-			name:          "whitespace only identifier should return error",
+			name:          "whitespace only identifier should return the default value",
 			headerValue:   "   ",
-			expectedError: true,
+			expectedValue: defaultConfigIdentifier,
 		},
 	}
 
@@ -1836,14 +1923,8 @@ func TestParseConfigIdentifierHeader(t *testing.T) {
 			rc := createRequestCtx()
 			rc.Req.Header.Set(configIdentifierHeader, tc.headerValue)
 
-			identifier, err := parseConfigIdentifierHeader(rc)
-
-			if tc.expectedError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedValue, identifier)
-			}
+			identifier := parseConfigIdentifierHeader(rc)
+			require.Equal(t, tc.expectedValue, identifier)
 		})
 	}
 }
@@ -1904,13 +1985,14 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 		mockAM.AssertExpectations(t)
 	})
 
-	t.Run("should return error when identifier header is missing", func(t *testing.T) {
+	t.Run("should use default identifier when header is missing", func(t *testing.T) {
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, defaultConfigIdentifier).Return(nil).Once()
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
 
-		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "identifier cannot be empty")
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
 	})
 
 	t.Run("should return error when DeleteExtraConfiguration fails", func(t *testing.T) {
@@ -1937,13 +2019,14 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 		require.Equal(t, http.StatusNotImplemented, response.Status())
 	})
 
-	t.Run("should return error for empty identifier header", func(t *testing.T) {
+	t.Run("should use default identifier for empty identifier header", func(t *testing.T) {
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, defaultConfigIdentifier).Return(nil).Once()
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, "")
 
 		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
 
-		require.Equal(t, http.StatusBadRequest, response.Status())
-		require.Contains(t, string(response.Body()), "identifier cannot be empty")
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
 	})
 }

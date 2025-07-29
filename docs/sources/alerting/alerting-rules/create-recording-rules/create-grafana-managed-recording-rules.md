@@ -28,9 +28,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
   alerting-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#supported-data-sources
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#supported-data-sources
   configure-grafana-min-interval:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#min_interval

@@ -6,9 +6,10 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
-import { createDefaultConfigOptions } from '../test/__mocks__/datasource';
+import { countError } from '../constants';
+import { createDefaultConfigOptions } from '../test/mocks/datasource';
 
-import { countError, getValueFromEventItem, PromSettings } from './PromSettings';
+import { getValueFromEventItem, PromSettings } from './PromSettings';
 
 beforeEach(() => {
   jest.replaceProperty(config, 'featureToggles', {

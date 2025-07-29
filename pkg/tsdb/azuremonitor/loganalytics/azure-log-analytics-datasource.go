@@ -599,7 +599,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 				DatasourceName: dsInfo.DatasourceName,
 				Query:          queryJSONModel,
 			},
-		})
+		}, MultiField)
 
 		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
 		AddCustomDataLink(*frame, data.DataLink{
@@ -610,7 +610,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 				DatasourceName: dsInfo.DatasourceName,
 				Query:          queryJSONModel,
 			},
-		})
+		}, MultiField)
 
 		linkTitle := "Explore Trace in Azure Portal"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
@@ -624,7 +624,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 			DatasourceName: dsInfo.DatasourceName,
 			Query:          logsJSONModel,
 		},
-	})
+	}, SingleField)
 
 	return nil
 }

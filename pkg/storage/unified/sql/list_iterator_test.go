@@ -24,7 +24,10 @@ import (
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
-func TestListIter(t *testing.T) {
+func TestIntegrationListIter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 
 	grafanaDB := db.InitTestDB(t)

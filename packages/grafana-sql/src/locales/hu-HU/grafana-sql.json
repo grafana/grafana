@@ -2,26 +2,26 @@
   "grafana-sql": {
     "components": {
       "confirm-modal": {
-        "builder-mode": "",
+        "builder-mode": "Az építő mód nem jeleníti meg a kódban végzett módosításokat. A lekérdezésépítő megjeleníti az utolsó módosításokat, amelyeket az építő módban végzett.",
         "cancel": "Mégse",
-        "clipboard": "",
-        "copy-code-and-switch": "",
-        "discard-code-and-switch": "",
+        "clipboard": "Szeretné a kódot a vágólapra másolni?",
+        "copy-code-and-switch": "Kód másolása és váltás",
+        "discard-code-and-switch": "Kód elvetése és váltás",
         "warning": "Figyelmeztetés"
       },
       "connection-limits": {
-        "auto-max-idle": "",
-        "content-auto-max-idle": "",
-        "content-max-idle": "",
-        "content-max-lifetime": "",
-        "content-max-open": "",
-        "max-idle": "",
-        "max-lifetime": "",
-        "max-open": "",
-        "title-connection-limits": ""
+        "auto-max-idle": "Inaktív automatikus maximális száma",
+        "content-auto-max-idle": "Ha engedélyezve van, automatikusan beállítja az <1>Inaktív kapcsolatok maximális száma</1> értéket a <3>Megnyitott kapcsolatok maximális száma</3> értékére. Ha a nyitott kapcsolatok maximális száma nincs beállítva, akkor az alapértelmezett értékre lesz beállítva ({{defaultMaxIdle}}).",
+        "content-max-idle": "Az inaktív kapcsolatok készletében lévő kapcsolatok maximális száma. Ha a <1>Megnyitott kapcsolatok maximális száma</1> nagyobb, mint 0, de kisebb, mint az <3>Inaktív kapcsolatok maximális száma</3>, akkor az <5>Inaktív kapcsolatok maximális száma</5> csökken, hogy megfeleljen a <8>Megnyitott kapcsolatok maximális száma</8> határértékének. Ha 0-ra van állítva, akkor egyetlen inaktív kapcsolat sem marad meg.",
+        "content-max-lifetime": "A csatlakozás újrafelhasználásának maximális időtartama másodpercben. Ha 0-ra van állítva, a kapcsolatok újrafelhasználása végtelen.",
+        "content-max-open": "Az adatbázishoz irányuló nyitott kapcsolatok maximális száma. Ha az <1>Inaktív kapcsolatok maximális száma</1> nagyobb, mint 0, és a <3>Megnyitott kapcsolatok maximális száma</3> kisebb, mint az <5>Inaktív kapcsolatok maximális száma</5>, akkor az <7>Inaktív kapcsolatok maximális száma</7> csökken, hogy megfeleljen a <9>Megnyitott kapcsolatok maximális száma</9> határértékének. Ha 0-ra van állítva, akkor nincs korlátozva a nyitott kapcsolatok száma.",
+        "max-idle": "Max. inaktív",
+        "max-lifetime": "Max. élettartam",
+        "max-open": "Max. nyitott",
+        "title-connection-limits": "Kapcsolati korlátozások"
       },
       "dataset-selector": {
-        "aria-label-dataset-selector": ""
+        "aria-label-dataset-selector": "Adatkészlet-választó"
       },
       "error-boundary": {
         "fall-back": {
@@ -31,21 +31,21 @@
       "get-custom-operators": {
         "custom-operators": {
           "label": {
-            "macros": ""
+            "macros": "Makrók"
           }
         }
       },
       "make-render-column": {
         "render-column": {
           "aria-label-group-by": "Csoportosítási szempont",
-          "title-remove-group-by-column": ""
+          "title-remove-group-by-column": "Csoport eltávolítása oszlop szerint"
         }
       },
       "order-by-row": {
-        "aria-label-order-by": "",
+        "aria-label-order-by": "Rendezési szempont",
         "label-limit": "Korlát",
-        "label-offset": "",
-        "label-order-by": ""
+        "label-offset": "Eltolás",
+        "label-order-by": "Rendezési szempont"
       },
       "preview": {
         "label-element": {
@@ -54,96 +54,100 @@
         }
       },
       "query-header": {
-        "content-invalid-query": "",
-        "label-dataset": "",
+        "content-invalid-query": "A lekérdezés érvénytelen. A részleteket tekintse meg alább. <1></1>Ezt a lekérdezést azonban továbbra is futtathatja.",
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-dataset": "Adatkészlet",
         "label-filter": "Szűrő",
         "label-format": "Formátum",
         "label-group": "Csoport",
-        "label-order": "",
+        "label-order": "Sorrend",
         "label-preview": "Előnézet",
         "label-table": "Táblázat",
-        "placeholder-select-format": "",
+        "placeholder-select-format": "Formátum kiválasztása",
         "run-query": "Lekérdezés"
       },
       "query-toolbox": {
-        "content-hit-ctrlcmdreturn-to-run-query": "",
-        "tooltip-collapse": "",
-        "tooltip-expand": "",
-        "tooltip-format-query": ""
+        "content-hit-ctrlcmdreturn-to-run-query": "A lekérdezés futtatásához nyomja le a CTRL/CMD+Enter billentyűkombinációt",
+        "tooltip-collapse": "Szerkesztő összecsukása",
+        "tooltip-expand": "Szerkesztő kibontása",
+        "tooltip-format-query": "Lekérdezés formázása"
       },
       "query-validator": {
-        "query-will-process": "",
-        "validating-query": ""
+        "query-will-process": "<0></0> Ez a lekérdezés <2>{{bytes}}</2> feldolgozását végzi futtatáskor.",
+        "validating-query": "Lekérdezés érvényesítése…"
       },
       "raw-editor": {
         "render-placeholder": {
-          "editing-in-expanded-code-editor": ""
+          "editing-in-expanded-code-editor": "Szerkesztés kibontott kódszerkesztőben"
         },
-        "title-query-num": ""
+        "title-query-num": "{{queryNum}}. lekérdezés"
       },
       "select-column": {
         "label-column": "Oszlop"
       },
       "select-custom-function-parameters": {
-        "aria-label-parameter": "",
+        "aria-label-parameter": "{{columnIndex}}. oszlop {{index}}. paramétere",
         "render-parameters": {
           "params": {
-            "title-remove-parameter": ""
+            "title-remove-parameter": "Paraméter eltávolítása"
           }
         },
-        "title-add-parameter": ""
+        "title-add-parameter": "Paraméter hozzáadása"
       },
       "select-row": {
         "aggregate-options": {
           "options": {
             "label": {
-              "aggregations": "",
-              "macros": ""
+              "aggregations": "Összegzések",
+              "macros": "Makrók"
             }
           }
         },
         "label": {
-          "time": "",
+          "time": "idő",
           "value": "érték"
         },
         "label-alias": "Alias",
-        "label-data-operations": "",
-        "title-add-column": "",
-        "title-remove-column": ""
+        "label-data-operations": "Adatműveletek",
+        "title-add-column": "Oszlop hozzáadása",
+        "title-remove-column": "Oszlop eltávolítása"
       },
       "settings": {
-        "aria-label-conjunction": "",
+        "aria-label-conjunction": "Összekötés",
         "aria-label-field": "Mező",
         "aria-label-operator": "Műveleti jel",
-        "title-button-filter": ""
+        "title-button-filter": "{{ buttonLabel }} szűrő"
       },
       "sql-query-editor-lazy": {
         "text-loading-editor": "Szerkesztő betöltése"
       },
       "table-selector": {
-        "aria-label-table-selector": "",
-        "placeholder-loading": "",
-        "placeholder-select-table": ""
+        "aria-label-table-selector": "Táblázatválasztó",
+        "placeholder-loading": "Táblázatok betöltése",
+        "placeholder-select-table": "Táblázat kiválasztása"
       },
       "tlssecrets-config": {
-        "content-tlsssl-client-certificate": "",
-        "content-tlsssl-client-key": "",
-        "content-tlsssl-root-certificate": "",
-        "tlsssl-client-certificate": "",
-        "tlsssl-client-key": "",
+        "content-tlsssl-client-certificate": "A TLS-/SSL-klienstanúsítvánnyal történő hitelesítéshez adja meg itt a klienstanúsítványt.",
+        "content-tlsssl-client-key": "A TLS-/SSL-klienstanúsítvánnyal történő hitelesítéshez adja meg itt a kulcsot.",
+        "content-tlsssl-root-certificate": "Ha a kiválasztott TLS-/SSL-módhoz kiszolgáló-gyökértanúsítvány szükséges, adja meg itt",
+        "tlsssl-client-certificate": "TLS-/SSL-klienstanúsítvány",
+        "tlsssl-client-key": "TLS-/SSL-klienskulcs",
         "tlsssl-root-certificate": "TLS-/SSL-gyökértanúsítvány"
       },
       "visual-editor": {
-        "label-filter-by-column-value": "",
-        "label-group-by-column": ""
+        "label-filter-by-column-value": "Szűrés oszlopérték szerint",
+        "label-group-by-column": "Csoportosítás oszlop szerint"
       },
       "widgets": {
-        "aria-label-macros-value-selector": ""
+        "aria-label-macros-value-selector": "Makróérték-választó"
       }
     },
     "utils": {
       "get-columns-width-indices": {
-        "label-selected-columns": ""
+        "label-selected-columns": "Kijelölt oszlopok"
       }
     }
   }

@@ -1,0 +1,21 @@
+{
+  "data": [
+    {
+      "fields": [
+        { "name": "traceID", "values": ["3fa414edcef6ad90", "3fa414edcef6ad90"] },
+        { "name": "spanID", "values": ["3fa414edcef6ad90", "0f5c1808567e4403"] },
+        { "name": "parentSpanID", "values": [null, "3fa414edcef6ad90"] },
+        { "name": "operationName", "values": ["HTTP GET - api_traces_traceid", "/tempopb.Querier/FindTraceByID"] },
+        { "name": "serviceName", "values": ["tempo-querier", "tempo-querier"] },
+        { "name": "startTime", "values": [1605873894680.409, 1605873894680.587] },
+        { "name": "duration", "values": [1049.141, 1.847] }
+      ],
+      "meta": {
+        "preferredVisualisationType": "trace",
+        "custom": {
+          "traceFormat": "jaeger"
+        }
+      }
+    }
+  ]
+}

@@ -55,7 +55,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestConnectLibraryPanelsForDashboard(t *testing.T) {
+func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -348,7 +351,10 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 		})
 }
 
-func TestImportLibraryPanelsForDashboard(t *testing.T) {
+func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testScenario(t, "When an admin tries to import a dashboard with a library panel that does not exist, it should import the library panel",
 		func(t *testing.T, sc scenarioContext) {
 			var missingUID = "jL6MrxCMz"
@@ -850,7 +856,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
 			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
-		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac, dashService)
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac, dashService, nil, nil)
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,

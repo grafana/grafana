@@ -7,7 +7,7 @@ import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server
 import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
@@ -17,11 +17,11 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasourc
 
 import { ContactPoint } from './ContactPoint';
 import { ContactPointsPageContents } from './ContactPoints';
-import setupMimirFlavoredServer from './__mocks__/mimirFlavoredServer';
+import { RECEIVER_META_KEY } from './constants';
+import setupMimirFlavoredServer from './mocks/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
-} from './__mocks__/vanillaAlertmanagerServer';
-import { RECEIVER_META_KEY } from './constants';
+} from './mocks/vanillaAlertmanagerServer';
 import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
 
 /**

@@ -1,6 +1,6 @@
 import { IMarkdownString, languages } from 'monaco-editor';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
@@ -25,6 +25,8 @@ type CompletionItem = MinimalCompletionItem & {
 interface Props {
   languageProvider: TempoLanguageProvider;
   setAlertText: (text?: string) => void;
+  timeRangeForTags?: number;
+  range?: TimeRange;
 }
 
 /**
@@ -38,11 +40,15 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   languageProvider: TempoLanguageProvider;
   registerInteractionCommandId: string | null;
   setAlertText: (text?: string) => void;
+  timeRangeForTags?: number;
+  range?: TimeRange;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
     this.setAlertText = props.setAlertText;
     this.registerInteractionCommandId = null;
+    this.timeRangeForTags = props.timeRangeForTags;
+    this.range = props.range;
   }
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
@@ -391,14 +397,24 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.registerInteractionCommandId = id;
   }
 
-  private async getTagValues(tagName: string, query: string): Promise<Array<SelectableValue<string>>> {
+  private async getTagValues(
+    tagName: string,
+    query: string,
+    timeRangeForTags?: number,
+    range?: TimeRange
+  ): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
     const cacheKey = `${tagName}:${query}`;
 
     if (this.cachedValues.hasOwnProperty(cacheKey)) {
       tagValues = this.cachedValues[cacheKey];
     } else {
-      tagValues = await this.languageProvider.getOptionsV2(tagName, query);
+      tagValues = await this.languageProvider.getOptionsV2({
+        tag: tagName,
+        query,
+        timeRangeForTags,
+        range,
+      });
       this.cachedValues[cacheKey] = tagValues;
     }
     return tagValues;
@@ -461,7 +477,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
-          tagValues = await this.getTagValues(situation.tagName, situation.query);
+          tagValues = await this.getTagValues(situation.tagName, situation.query, this.timeRangeForTags, this.range);
           setAlertText(undefined);
         } catch (error) {
           if (isFetchError(error)) {

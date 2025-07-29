@@ -41,7 +41,8 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
-  getEscapedSpanNames,
+  getEscapedRegexValues,
+  getEscapedValues,
   makeHistogramLink,
   makePromServiceMapRequest,
 } from './datasource';
@@ -778,12 +779,12 @@ describe('Tempo service graph view', () => {
       'server.cluster.local:9090^/sample.test(.*)?',
       'test\\path',
     ];
-    let escaped = getEscapedSpanNames(spanNames);
+    let escaped = getEscapedRegexValues(getEscapedValues(spanNames));
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
-      'test\\\\\\\\path',
+      'test\\\\path',
     ]);
   });
 
@@ -1226,7 +1227,17 @@ describe('should provide functionality for ad-hoc filters', () => {
   });
 
   it('for getTagKeys', async () => {
-    const response = await datasource.getTagKeys();
+    const response = await datasource.getTagKeys({
+      filters: [],
+      timeRange: {
+        from: dateTime('2021-04-20T15:55:00Z'),
+        to: dateTime('2021-04-20T15:55:00Z'),
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      },
+    });
     expect(response).toEqual([{ text: 'span.label1' }, { text: 'span.label2' }]);
   });
 

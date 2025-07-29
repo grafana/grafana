@@ -229,4 +229,41 @@ describe('ExtensionToolbarItem', () => {
 
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
   });
+
+  it('should render individual buttons when multiple plugins are available', async () => {
+    const plugin1Meta = {
+      pluginId: 'grafana-investigations-app',
+      addedComponents: [{ ...mockComponent, title: 'Investigations' }],
+    };
+
+    const plugin2Meta = {
+      pluginId: 'grafana-assistant-app',
+      addedComponents: [{ ...mockComponent, title: 'Assistant' }],
+    };
+
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      links: [
+        { pluginId: plugin1Meta.pluginId, title: plugin1Meta.addedComponents[0].title },
+        { pluginId: plugin2Meta.pluginId, title: plugin2Meta.addedComponents[0].title },
+      ],
+      isLoading: false,
+    });
+
+    (getExtensionPointPluginMeta as jest.Mock).mockReturnValue(
+      new Map([
+        [plugin1Meta.pluginId, plugin1Meta],
+        [plugin2Meta.pluginId, plugin2Meta],
+      ])
+    );
+
+    setup();
+
+    // Should render two separate buttons, not a dropdown
+    const buttons = screen.getAllByTestId(/extension-toolbar-button-open/);
+    expect(buttons).toHaveLength(2);
+
+    // Each button should have the correct title
+    expect(buttons[0]).toHaveAttribute('aria-label', 'Open Investigations');
+    expect(buttons[1]).toHaveAttribute('aria-label', 'Open Assistant');
+  });
 });

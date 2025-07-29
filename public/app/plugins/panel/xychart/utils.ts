@@ -62,8 +62,8 @@ export function prepSeries(
 
     let xMatcher = getFieldMatcher(
       seriesCfg.x?.matcher ?? {
-        id: FieldMatcherID.byType,
-        options: 'number',
+        id: FieldMatcherID.byTypes,
+        options: new Set(['number', 'time']),
       }
     );
     let yMatcher = getFieldMatcher(
@@ -89,19 +89,18 @@ export function prepSeries(
 
       let frameSeries: XYSeries[] = [];
 
-      // only grabbing number fields (exclude time, string, enum, other)
-      let onlyNumFields = frame.fields.filter((field) => field.type === FieldType.number);
+      let onlyNumTimeFields = frame.fields.filter(
+        (field) => field.type === FieldType.number || field.type === FieldType.time
+      );
 
       // only one of these per frame
-      let x = onlyNumFields.find((field) => xMatcher(field, frame, frames));
-      let color =
-        colorMatcher != null
-          ? onlyNumFields.find((field) => field !== x && colorMatcher!(field, frame, frames))
-          : undefined;
-      let size =
-        sizeMatcher != null
-          ? onlyNumFields.find((field) => field !== x && field !== color && sizeMatcher!(field, frame, frames))
-          : undefined;
+      let x = onlyNumTimeFields.find((field) => xMatcher(field, frame, frames));
+
+      // only grabbing number fields (exclude time, string, enum, other)
+      let onlyNumFields = onlyNumTimeFields.filter((field) => field.type === FieldType.number);
+
+      let color = colorMatcher != null ? onlyNumFields.find((field) => colorMatcher(field, frame, frames)) : undefined;
+      let size = sizeMatcher != null ? onlyNumFields.find((field) => sizeMatcher(field, frame, frames)) : undefined;
 
       // x field is required
       if (x != null) {

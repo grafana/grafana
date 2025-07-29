@@ -14,6 +14,9 @@ import (
 )
 
 func TestIntegration_PatchLibraryElement(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{Kind: int64(model.PanelElement), Version: 1}
@@ -25,7 +28,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder", nil)
+			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -92,7 +95,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder", nil)
+			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
 			cmd := model.PatchLibraryElementCommand{
 				FolderID:  newFolder.ID, // nolint:staticcheck
 				FolderUID: &newFolder.UID,
@@ -337,7 +340,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolder(t, sc, "NewFolder", nil)
+			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
 			// nolint:staticcheck
 			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel")
 			sc.ctx.Req.Body = mockRequestBody(command)

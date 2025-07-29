@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -37,10 +38,11 @@ func RegisterApp(
 		return nil
 	}
 	appCfg := &runner.AppBuilderConfig{
-		Authorizer:          getAuthorizer(ng.Api.AccessControl),
-		LegacyStorageGetter: getLegacyStorage(request.GetNamespaceMapper(cfg), ng),
-		OpenAPIDefGetter:    v0alpha1.GetOpenAPIDefinitions,
-		ManagedKinds:        notificationsResource.GetKinds(),
+		Authorizer:               getAuthorizer(ng.Api.AccessControl),
+		LegacyStorageGetter:      getLegacyStorage(request.GetNamespaceMapper(cfg), ng),
+		OpenAPIDefGetter:         v0alpha1.GetOpenAPIDefinitions,
+		ManagedKinds:             notificationsResource.GetKinds(),
+		AllowedV0Alpha1Resources: []string{builder.AllResourcesAllowed},
 	}
 
 	return &AlertingNotificationsAppProvider{

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
@@ -36,6 +36,8 @@ import {
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/organize.svg';
+import lightImage from '../images/light/organize.svg';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
@@ -257,7 +259,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 
   return (
     <>
-      <InlineFieldRow>
+      <InlineFieldRow className={styles.fieldOrderRadio}>
         <InlineField label={t('transformers.organize-fields-transformer-editor.field-order', 'Field order')}>
           <RadioButtonGroup
             options={[
@@ -326,6 +328,9 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 };
 
 const getDraggableStyles = (theme: GrafanaTheme2) => ({
+  fieldOrderRadio: css({
+    marginBottom: theme.spacing(1),
+  }),
   labelsDraggable: css({
     marginBottom: theme.spacing(3),
   }),
@@ -429,7 +434,7 @@ const DraggableUIOrderByItem = ({ index, item, onChangeSort }: DraggableUIOrderB
                     'Drag and drop to reorder'
                   )}
                   size="lg"
-                  className={styles.draggable}
+                  className={cx(styles.draggable, { [styles.disabled]: item.order === Order.Off })}
                 />
               </span>
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">
@@ -467,6 +472,10 @@ const getFieldNameStyles = (theme: GrafanaTheme2) => ({
       color: theme.colors.text.maxContrast,
     },
   }),
+  disabled: css({
+    color: theme.colors.text.disabled,
+    pointerEvents: 'none',
+  }),
 });
 
 const reorderToIndex = (fieldNames: string[], startIndex: number, endIndex: number) => {
@@ -488,13 +497,18 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   return fieldNames.sort(comparer);
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<OrganizeFieldsTransformerOptions> = {
-  id: DataTransformerID.organize,
-  editor: OrganizeFieldsTransformerEditor,
-  transformation: standardTransformers.organizeFieldsTransformer,
-  name: standardTransformers.organizeFieldsTransformer.name,
-  description:
-    "Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.",
-  categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.organize).helperDocs,
-};
+export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryItem<OrganizeFieldsTransformerOptions> =
+  () => ({
+    id: DataTransformerID.organize,
+    editor: OrganizeFieldsTransformerEditor,
+    transformation: standardTransformers.organizeFieldsTransformer,
+    name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
+    description: t(
+      'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
+      'Re-order, hide, or rename fields.'
+    ),
+    categories: new Set([TransformerCategory.ReorderAndRename]),
+    help: getTransformationContent(DataTransformerID.organize).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

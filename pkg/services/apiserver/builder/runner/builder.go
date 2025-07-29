@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -29,6 +30,10 @@ type AppBuilderConfig struct {
 	OpenAPIDefGetter    common.GetOpenAPIDefinitions
 	ManagedKinds        map[schema.GroupVersion][]resource.Kind
 	CustomConfig        any
+	// Do not set anything here unless you have special circumstances! This is a list of resources that are allowed to be accessed in v0alpha1,
+	// to prevent accidental exposure of experimental APIs. While developing, use the feature flag `grafanaAPIServerWithExperimentalAPIs`.
+	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
+	AllowedV0Alpha1Resources []string
 
 	groupVersion schema.GroupVersion
 }
@@ -109,6 +114,11 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+// AllowedV0Alpha1Resources returns the list of resources that are allowed to be accessed in v0alpha1
+func (b *appBuilder) AllowedV0Alpha1Resources() []string {
+	return b.config.AllowedV0Alpha1Resources
+}
+
 // UpdateAPIGroupInfo implements APIGroupBuilder.UpdateAPIGroupInfo
 func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	for _, kinds := range b.config.ManagedKinds {
@@ -123,6 +133,11 @@ func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 				return err
 			}
 			apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath()] = store
+			if registryStore, ok := store.(*genericregistry.Store); ok {
+				for subPath := range kind.ZeroValue().GetSubresources() {
+					apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath(subPath)] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, registryStore)
+				}
+			}
 		}
 	}
 	return nil

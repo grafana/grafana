@@ -14,10 +14,29 @@ concurrency:
 permissions: {}
 
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/backend-unit-tests.yml
+
   grafana:
     # Run this workflow only for PRs from forks
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    needs: detect-changes
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         shard: [
@@ -41,8 +60,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Generate Go code
-        run: make gen-go
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -53,8 +70,8 @@ jobs:
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    # If it gets merged into `main` or `release-*`, then a junit test result is uploaded to GCS.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         shard: [
@@ -90,8 +107,6 @@ jobs:
       - run: go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
 
       # Run code
-      - name: Generate Go code
-        run: make gen-go
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}

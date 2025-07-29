@@ -16,6 +16,7 @@ type BuildOpts struct {
 	ExperimentalFlags []string
 	Tags              []string
 	WireTag           string
+	GoCacheProg       string
 	Static            bool
 	Enterprise        bool
 }
@@ -153,6 +154,10 @@ func Builder(
 	builder = builder.
 		WithMountedCache("/root/.cache/go", goBuildCache).
 		WithEnvVariable("GOCACHE", "/root/.cache/go")
+
+	if prog := opts.GoCacheProg; prog != "" {
+		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
+	}
 
 	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
 

@@ -5,22 +5,24 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Drawer, Stack } from '@grafana/ui';
-import { useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
-import { DashboardEditFormSharedFields } from '../components/Provisioned/DashboardEditFormSharedFields';
+import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
+
+import { buildResourceBranchRedirectUrl } from './utils';
 
 export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
-  isGitHub: boolean;
   isNew?: boolean;
   workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
+  repository?: RepositoryView;
   onDismiss: () => void;
 }
 
@@ -33,9 +35,9 @@ export function DeleteProvisionedDashboardForm({
   defaultValues,
   loadedFromRef,
   readOnly,
-  isGitHub,
   isNew,
   workflowOptions,
+  repository,
   onDismiss,
 }: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
@@ -82,9 +84,13 @@ export function DeleteProvisionedDashboardForm({
   const onBranchSuccess = (path: string, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
     onDismiss();
-    navigate(
-      `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}`
-    );
+    const url = buildResourceBranchRedirectUrl({
+      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+      paramName: 'pull_request_url',
+      paramValue: urls?.newPullRequestURL,
+      repoType: request.data?.repository?.type,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({
@@ -121,12 +127,13 @@ export function DeleteProvisionedDashboardForm({
               </Alert>
             )}
 
-            <DashboardEditFormSharedFields
+            <ResourceEditFormSharedFields
+              resourceType="dashboard"
               isNew={isNew}
               readOnly={readOnly}
               workflow={workflow}
               workflowOptions={workflowOptions}
-              isGitHub={isGitHub}
+              repository={repository}
             />
 
             {/* Save / Cancel button */}

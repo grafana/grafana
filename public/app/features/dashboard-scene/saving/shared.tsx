@@ -23,13 +23,17 @@ export interface DashboardChangeInfo {
   hasFolderChanges?: boolean;
   hasMigratedToV2?: boolean;
 }
-export interface ProvisionedDashboardFormData {
-  ref?: string; // Branch or tag in the repository
-  path: string; // Path to the dashboard file in the repository
-  comment?: string; // Commit message for the change
-  repo: string; // Repository name
+
+export interface BaseProvisionedFormData {
+  ref?: string;
+  path: string;
+  comment?: string;
+  repo: string;
   workflow?: WorkflowOption;
-  title: string; // Title of the dashboard
+  title: string;
+}
+
+export interface ProvisionedDashboardFormData extends BaseProvisionedFormData {
   description: string;
   folder: {
     uid?: string;

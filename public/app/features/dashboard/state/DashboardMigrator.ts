@@ -830,16 +830,16 @@ export class DashboardMigrator {
 
     if (oldVersion < 37) {
       panelUpgrades.push((panel: PanelModel) => {
-        if (
-          panel.options?.legend &&
+        if (panel.options?.legend && typeof panel.options.legend === 'object') {
           // There were two ways to hide the legend, this normalizes to `legend.showLegend`
-          (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false)
-        ) {
-          panel.options.legend.displayMode = 'list';
-          panel.options.legend.showLegend = false;
-        } else if (panel.options?.legend) {
-          panel.options.legend = { ...panel.options?.legend, showLegend: true };
+          if (panel.options.legend.displayMode === 'hidden' || panel.options.legend.showLegend === false) {
+            panel.options.legend.displayMode = 'list';
+            panel.options.legend.showLegend = false;
+          } else {
+            panel.options.legend = { ...panel.options.legend, showLegend: true };
+          }
         }
+
         return panel;
       });
     }

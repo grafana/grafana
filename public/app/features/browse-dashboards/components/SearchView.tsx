@@ -7,14 +7,18 @@ import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKey
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { SearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItemKind, SearchState } from 'app/features/search/types';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
-import { setAllSelection, setItemSelectionState, useHasSelection } from '../state';
+import { useHasSelection } from '../state/hooks';
+import { setAllSelection, setItemSelectionState } from '../state/slice';
+import { BrowseDashboardsPermissions } from '../types';
+
+import { canEditItemType, canSelectItems } from './utils';
 
 interface SearchViewProps {
   height: number;
   width: number;
-  canSelect: boolean;
+  permissions: BrowseDashboardsPermissions;
   searchState: SearchState;
   searchStateManager: SearchStateManager;
   emptyState?: ReactNode;
@@ -47,7 +51,7 @@ const initialLoadingView = {
 export function SearchView({
   width,
   height,
-  canSelect,
+  permissions,
   searchState,
   searchStateManager: stateManager,
   emptyState: emptyStateProp,
@@ -66,7 +70,12 @@ export function SearchView({
         return false;
       }
 
-      // Currently, this indicates _some_ items are selected, not nessicarily all are
+      // Check if user has permission to select this item type
+      if (!canEditItemType(kind, permissions)) {
+        return false;
+      }
+
+      // Currently, this indicates _some_ items are selected, not necessarily all are
       // selected.
       if (kind === '*' && uid === '*') {
         return hasSelection;
@@ -77,7 +86,7 @@ export function SearchView({
 
       return selectedItems[assertDashboardViewItemKind(kind)][uid] ?? false;
     },
-    [selectedItems, hasSelection]
+    [selectedItems, hasSelection, permissions]
   );
 
   const clearSelection = useCallback(() => {
@@ -86,13 +95,17 @@ export function SearchView({
 
   const handleItemSelectionChange = useCallback(
     (kind: string, uid: string) => {
+      if (!canEditItemType(kind, permissions)) {
+        return; // Cannot select this item
+      }
+
       const newIsSelected = !selectionChecker(kind, uid);
 
       dispatch(
         setItemSelectionState({ item: { kind: assertDashboardViewItemKind(kind), uid }, isSelected: newIsSelected })
       );
     },
-    [selectionChecker, dispatch]
+    [selectionChecker, dispatch, permissions]
   );
 
   if (value.totalRows === 0) {
@@ -112,6 +125,7 @@ export function SearchView({
     return <div style={{ width }}>{emptyState}</div>;
   }
 
+  const canSelect = canSelectItems(permissions);
   const props: SearchResultsProps = {
     response: value,
     selection: canSelect ? selectionChecker : undefined,

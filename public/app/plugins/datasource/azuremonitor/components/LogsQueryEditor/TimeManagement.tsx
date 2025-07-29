@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+import { AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setDashboardTime, setTimeColumn } from './setQueryValue';
 

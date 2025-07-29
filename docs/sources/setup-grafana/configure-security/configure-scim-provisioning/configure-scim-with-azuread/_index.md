@@ -24,6 +24,10 @@ weight: 320
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{< /admonition >}}
 
+{{< admonition type="warning" >}}
+**Public Preview:** SCIM provisioning is currently in Public Preview. While functional, the feature is actively being refined and may undergo changes. We recommend thorough testing in non-production environments before deploying to production systems.
+{{< /admonition >}}
+
 This guide explains how to configure SCIM provisioning with Azure AD to automate user and team management in Grafana.
 
 {{< admonition type="note" >}}
@@ -108,12 +112,13 @@ After setting the Tenant URL and Secret Token, navigate to the **Mappings** sect
 
 Configure the following required attributes:
 
-| Azure AD Attribute  | Grafana Attribute              |
-| ------------------- | ------------------------------ |
-| `userPrincipalName` | `userName`                     |
-| `mail`              | `emails[type eq "work"].value` |
-| `displayName`       | `displayName`                  |
-| `objectId`          | `externalId`                   |
+| Azure AD Attribute                                            | Grafana Attribute              |
+| ------------------------------------------------------------- | ------------------------------ |
+| `userPrincipalName`                                           | `userName`                     |
+| `mail`                                                        | `emails[type eq "work"].value` |
+| `displayName`                                                 | `displayName`                  |
+| `objectId`                                                    | `externalId`                   |
+| `Switch([IsSoftDeleted], , "False", "True", "True", "False")` | `active`                       |
 
 ### Enable provisioning
 

@@ -94,6 +94,13 @@ export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditA
   static type = 'dashboard-edit-action';
 }
 
+/**
+ * Emitted after DashboardEditActionEvent has been processed (or undone)
+ */
+export class DashboardStateChangedEvent extends BusEventWithPayload<{ source: SceneObject }> {
+  static type = 'dashboard-state-changed';
+}
+
 export interface AddElementActionHelperProps {
   addedObject: SceneObject;
   source: SceneObject;

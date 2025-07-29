@@ -25,7 +25,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -33,7 +33,6 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { RowItemRepeaterBehavior } from '../scene/layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -811,6 +810,41 @@ describe('transformSaveModelToScene', () => {
       expect((libPanelBehavior as LibraryPanelBehavior).state.name).toEqual(panel.libraryPanel.name);
       expect(gridItem.state.body.state.title).toEqual(panel.title);
     });
+
+    describe('header actions', () => {
+      beforeEach(() => {
+        jest.clearAllMocks();
+      });
+
+      it('should include headerActions when timeComparison feature toggle is enabled', () => {
+        config.featureToggles.timeComparison = true;
+
+        const panel = {
+          title: 'Test Panel',
+          type: 'timeseries',
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        };
+
+        const { vizPanel } = buildGridItemForTest(panel);
+
+        expect(vizPanel.state.headerActions).toBeDefined();
+        expect(vizPanel.state.headerActions).toHaveLength(1);
+      });
+
+      it('should not include headerActions when timeComparison feature toggle is disabled', () => {
+        config.featureToggles.timeComparison = false;
+
+        const panel = {
+          title: 'Test Panel',
+          type: 'timeseries',
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        };
+
+        const { vizPanel } = buildGridItemForTest(panel);
+
+        expect(vizPanel.state.headerActions).toBeUndefined();
+      });
+    });
   });
 
   describe('Convert to new rows', () => {
@@ -845,10 +879,7 @@ describe('transformSaveModelToScene', () => {
 
       const row2 = layout.state.rows[1];
 
-      expect(row2.state.$behaviors?.[0]).toBeInstanceOf(RowItemRepeaterBehavior);
-
-      const repeatBehavior = row2.state.$behaviors?.[0] as RowItemRepeaterBehavior;
-      expect(repeatBehavior.state.variableName).toBe('server');
+      expect(row2.state.repeatByVariable).toBe('server');
 
       const lastRow = layout.state.rows[layout.state.rows.length - 1];
       expect(lastRow.state.title).toBe('Row at the bottom - not repeated - saved collapsed ');

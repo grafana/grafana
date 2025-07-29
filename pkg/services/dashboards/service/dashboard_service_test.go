@@ -46,7 +46,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
@@ -2642,7 +2648,10 @@ func TestCleanUpDashboard(t *testing.T) {
 	}
 }
 
-func TestK8sDashboardCleanupJob(t *testing.T) {
+func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name            string
 		featureEnabled  bool
@@ -2917,4 +2926,107 @@ func createTestUnstructuredDashboard(uid, title string, resourceVersion string) 
 			},
 		},
 	}
+}
+
+func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
+	fakeStore := dashboards.FakeDashboardStore{}
+	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	defer fakeStore.AssertExpectations(t)
+
+	k8sCliMock := new(client.MockK8sHandler)
+
+	folderSvc := foldertest.NewFakeService()
+	service := &DashboardServiceImpl{
+		cfg:                    setting.NewCfg(),
+		log:                    log.New("test.logger"),
+		dashboardStore:         &fakeStore,
+		folderService:          folderSvc,
+		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
+		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders, featuremgmt.FlagKubernetesLibraryPanelConnections),
+		publicDashboardService: fakePublicDashboardService,
+		k8sclient:              k8sCliMock,
+	}
+
+	searchResponse := &resourcepb.ResourceSearchResponse{
+		TotalHits: 3,
+		Results: &resourcepb.ResourceTable{
+			Columns: []*resourcepb.ResourceTableColumnDefinition{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				{Name: resource.SEARCH_FIELD_TAGS, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceTableColumnDefinition_INT64},
+			},
+			Rows: []*resourcepb.ResourceTableRow{
+				{
+					Key: &resourcepb.ResourceKey{
+						Name:     "dashboard1",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 1"),
+						[]byte("folder1"),
+						[]byte("[]"),
+						[]byte("1"),
+					},
+				},
+				{
+					Key: &resourcepb.ResourceKey{
+						Name:     "dashboard2",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 2"),
+						[]byte("folder2"),
+						[]byte("[]"),
+						[]byte("2"),
+					},
+				},
+				{
+					Key: &resourcepb.ResourceKey{
+						Name:     "dashboard3",
+						Resource: "dashboard",
+					},
+					Cells: [][]byte{
+						[]byte("Dashboard 3"),
+						[]byte(""),
+						[]byte("[]"),
+						[]byte("3"),
+					},
+				},
+			},
+		},
+	}
+
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+		return len(req.Options.Fields) == 1 &&
+			req.Options.Fields[0].Key == search.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
+			req.Options.Fields[0].Values[0] == "test-library-panel"
+	})).Return(searchResponse, nil).Once()
+
+	results, err := service.GetDashboardsByLibraryPanelUID(context.Background(), "test-library-panel", 1)
+
+	require.NoError(t, err)
+	require.Len(t, results, 3)
+
+	resultMap := make(map[string]*dashboards.DashboardRef)
+	for _, result := range results {
+		resultMap[result.UID] = result
+	}
+
+	expectedDashboards := map[string]struct {
+		folderUID string
+		id        int64
+	}{
+		"dashboard1": {folderUID: "folder1", id: 1},
+		"dashboard2": {folderUID: "folder2", id: 2},
+		"dashboard3": {folderUID: "", id: 3},
+	}
+	for uid, expected := range expectedDashboards {
+		result, exists := resultMap[uid]
+		require.True(t, exists, "Expected dashboard %s not found", uid)
+		require.Equal(t, expected.folderUID, result.FolderUID, "Folder UID mismatch for %s", uid)
+		require.Equal(t, expected.id, result.ID, "ID mismatch for %s", uid) // nolint:staticcheck
+	}
+
+	k8sCliMock.AssertExpectations(t)
 }

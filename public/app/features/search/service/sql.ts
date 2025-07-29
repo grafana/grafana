@@ -2,15 +2,14 @@ import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableVal
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { isResourceList } from 'app/features/apiserver/guards';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardDataDTO, PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
 
 import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
+import { deletedDashboardsCache } from './deletedDashboardsCache';
 import { DashboardQueryResult, GrafanaSearcher, LocationInfo, QueryResponse, SearchQuery, SortOptions } from './types';
-import { replaceCurrentFolderQuery, resourceToSearchResult, searchHitsToDashboardSearchHits } from './utils';
+import { filterSearchResults, replaceCurrentFolderQuery, searchHitsToDashboardSearchHits } from './utils';
 
 interface APIQuery {
   query?: string;
@@ -135,16 +134,8 @@ export class SQLSearcher implements GrafanaSearcher {
     let rsp: DashboardSearchHit[];
 
     if (query.deleted) {
-      // Deleted dashboards are fetched from a k8s API
-      const api = getDashboardAPI();
-      const deletedResponse = await api.listDeletedDashboards({});
-
-      if (isResourceList<DashboardDataDTO>(deletedResponse)) {
-        const searchHits = resourceToSearchResult(deletedResponse);
-        rsp = searchHitsToDashboardSearchHits(searchHits);
-      } else {
-        rsp = [];
-      }
+      const allDeletedHits = await deletedDashboardsCache.get();
+      rsp = searchHitsToDashboardSearchHits(filterSearchResults(allDeletedHits, query));
     } else {
       rsp = await backendSrv.get<DashboardSearchHit[]>('/api/search', query);
     }

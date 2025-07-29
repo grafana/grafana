@@ -358,7 +358,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	})
 }
 
-func TestIntegrationNestedFolderService(t *testing.T) {
+func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -438,7 +438,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac, b)
 			require.NoError(t, err)
 
-			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac, dashSrv)
+			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac, dashSrv, nil, nil)
 			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOn)
 			require.NoError(t, err)
 
@@ -517,7 +517,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
 			require.NoError(t, err)
 
-			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac, dashSrv)
+			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac, dashSrv, nil, nil)
 			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOff)
 			require.NoError(t, err)
 
@@ -655,7 +655,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				require.NoError(t, err)
 				dashSrv.RegisterDashboardPermissions(dashboardPermissions)
 
-				elementService := libraryelements.ProvideService(cfg, db, routeRegister, tc.service, tc.featuresFlag, ac, dashSrv)
+				elementService := libraryelements.ProvideService(cfg, db, routeRegister, tc.service, tc.featuresFlag, ac, dashSrv, nil, nil)
 				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
@@ -726,7 +726,10 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	})
 }
 
-func TestNestedFolderServiceFeatureToggle(t *testing.T) {
+func TestIntegrationNestedFolderServiceFeatureToggle(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	nestedFolderStore := folder.NewFakeStore()
 
 	dashStore := dashboards.FakeDashboardStore{}
@@ -757,7 +760,10 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	})
 }
 
-func TestFolderServiceDualWrite(t *testing.T) {
+func TestIntegrationFolderServiceDualWrite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	db, _ := sqlstore.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
@@ -816,7 +822,10 @@ func TestFolderServiceDualWrite(t *testing.T) {
 	})
 }
 
-func TestNestedFolderService(t *testing.T) {
+func TestIntegrationNestedFolderService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("with feature flag unset", func(t *testing.T) {
 		t.Run("Should create a folder in both dashboard and folders tables", func(t *testing.T) {
 			// dash is needed here because folderSvc.Create expects SaveDashboard to return it
@@ -1690,7 +1699,10 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	})
 }
 
-func TestFolderServiceGetFolder(t *testing.T) {
+func TestIntegrationFolderServiceGetFolder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	db, _ := sqlstore.InitTestDB(t)
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -1801,7 +1813,10 @@ func TestFolderServiceGetFolder(t *testing.T) {
 	}
 }
 
-func TestFolderServiceGetFolders(t *testing.T) {
+func TestIntegrationFolderServiceGetFolders(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -1872,7 +1887,10 @@ func TestFolderServiceGetFolders(t *testing.T) {
 
 // TODO replace it with an API test under /pkg/tests/api/folders
 // whenever the golang client with get updated to allow filtering child folders by permission
-func TestGetChildrenFilterByPermission(t *testing.T) {
+func TestIntegrationGetChildrenFilterByPermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	db, cfg := sqlstore.InitTestDB(t)
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{

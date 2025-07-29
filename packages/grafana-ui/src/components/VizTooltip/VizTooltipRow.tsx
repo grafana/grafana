@@ -52,8 +52,9 @@ export const VizTooltipRow = ({
         overflowY: 'auto',
       }
     : {
-        whiteSpace: 'wrap',
+        whiteSpace: 'pre-line',
         wordBreak: 'break-word',
+        lineHeight: 1.2,
       };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);

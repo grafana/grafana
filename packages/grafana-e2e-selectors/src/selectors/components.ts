@@ -229,6 +229,9 @@ export const versionedComponents = {
         codeModeMetricNamesSuggestionLimit: {
           '11.1.0': 'data-testid code mode metric names suggestion limit',
         },
+        seriesLimit: {
+          '12.0.2': 'data-testid maximum series limit',
+        },
       },
       queryEditor: {
         explain: {
@@ -247,13 +250,13 @@ export const versionedComponents = {
           '10.4.0': 'data-testid prometheus format',
         },
         step: {
-          '10.4.0': 'prometheus-step', // id for autosize component
+          '10.4.0': 'data-testid prometheus-step', // id for autosize component
         },
         type: {
           '10.4.0': 'data-testid prometheus type', //wrapper for radio button group
         },
         exemplars: {
-          '10.4.0': 'prometheus-exemplars', // id for editor switch component
+          '10.4.0': 'data-testid prometheus-exemplars', // id for editor switch component
         },
         builder: {
           // see QueryBuilder below for commented selectors
@@ -346,7 +349,7 @@ export const versionedComponents = {
       },
       annotations: {
         minStep: {
-          '10.4.0': 'prometheus-annotation-min-step', // id for autosize input
+          '10.4.0': 'data-testid prometheus-annotation-min-step', // id for autosize input
         },
         title: {
           '10.4.0': 'data-testid prometheus annotation title',
@@ -476,6 +479,19 @@ export const versionedComponents = {
         },
         body: {
           '10.2.0': 'data-testid table body',
+        },
+      },
+      TableNG: {
+        Filters: {
+          HeaderButton: {
+            '12.1.0': 'data-testid tableng header filter',
+          },
+          Container: {
+            '12.1.0': 'data-testid tablenf filter container',
+          },
+          SelectAll: {
+            '12.1.0': 'data-testid tableng filter select-all',
+          },
         },
       },
     },
@@ -1176,11 +1192,6 @@ export const versionedComponents = {
       '12.1.0': 'data-testid Data links actions tooltip wrapper',
     },
   },
-  TablePanel: {
-    autoCell: {
-      '12.1.0': 'data-testid Table panel auto cell',
-    },
-  },
   CodeEditor: {
     container: {
       '10.2.3': 'data-testid Code editor container',
@@ -1362,6 +1373,63 @@ export const versionedComponents = {
   Portal: {
     container: {
       '11.5.0': 'data-testid portal-container',
+    },
+  },
+  ExportImage: {
+    formatOptions: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-format-options',
+      },
+      png: {
+        ['12.1.0']: 'data-testid export-image-format-png',
+      },
+      jpg: {
+        ['12.1.0']: 'data-testid export-image-format-jpg',
+      },
+    },
+    rendererAlert: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert',
+      },
+      title: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert-title',
+      },
+      description: {
+        ['12.1.0']: 'data-testid export-image-renderer-alert-description',
+      },
+    },
+    buttons: {
+      generate: {
+        ['12.1.0']: 'data-testid export-image-generate-button',
+      },
+      download: {
+        ['12.1.0']: 'data-testid export-image-download-button',
+      },
+      cancel: {
+        ['12.1.0']: 'data-testid export-image-cancel-button',
+      },
+    },
+    preview: {
+      container: {
+        ['12.1.0']: 'data-testid export-image-preview-container',
+      },
+      loading: {
+        ['12.1.0']: 'data-testid export-image-preview-loading',
+      },
+      image: {
+        ['12.1.0']: 'data-testid export-image-preview',
+      },
+      error: {
+        container: {
+          ['12.1.0']: 'data-testid export-image-error',
+        },
+        title: {
+          ['12.1.0']: 'data-testid export-image-error-title',
+        },
+        message: {
+          ['12.1.0']: 'data-testid export-image-error-message',
+        },
+      },
     },
   },
 } satisfies VersionedSelectorGroup;

@@ -31,7 +31,9 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   annotations: DataFrame[];
-  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void> | undefined;
+  toggleLegendRef?:
+    | React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>
+    | undefined;
 };
 
 export function LogsVolumePanel(props: Props) {

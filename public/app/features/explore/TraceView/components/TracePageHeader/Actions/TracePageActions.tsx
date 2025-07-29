@@ -88,7 +88,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
 
       <ActionButton
         onClick={copyTraceId}
-        ariaLabel={'Copy Trace ID'}
+        ariaLabel={t('explore.trace-page-actions.ariaLabel-copy-trace-id', 'Copy Trace ID')}
         label={
           copyTraceIdClicked
             ? t('explore.trace-page-actions.label-copied', 'Copied!')
@@ -98,7 +98,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
       />
       <ActionButton
         onClick={exportTrace}
-        ariaLabel={'Export Trace'}
+        ariaLabel={t('explore.trace-page-actions.ariaLabel-export-trace', 'Export Trace')}
         label={t('explore.trace-page-actions.label-export', 'Export')}
         icon={'save'}
       />

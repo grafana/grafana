@@ -20,7 +20,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TNil } from '../../types';
+import TNil from '../../types/TNil';
 
 import { getStyles as getAccordianKeyValuesStyles } from './AccordianKeyValues';
 import TextList from './TextList';

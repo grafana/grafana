@@ -60,7 +60,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestDataSourceProxy_routeRule(t *testing.T) {
+func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	cfg := &setting.Cfg{}
 
 	t.Run("Plugin with routes", func(t *testing.T) {

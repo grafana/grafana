@@ -21,7 +21,7 @@ import {
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
@@ -128,6 +128,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           uid: dash.metadata.name,
           k8s: dash.metadata,
           version: dash.metadata.generation,
+          created: dash.metadata.creationTimestamp,
         },
         dashboard: {
           ...dash.spec,

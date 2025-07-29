@@ -4,11 +4,12 @@ import { ReactNode } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
+import { DEFAULT_SERIES_LIMIT, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
+import { PrometheusDatasource } from '../../datasource';
 import { PrometheusLanguageProviderInterface } from '../../language_provider';
-import { getMockTimeRange } from '../../test/__mocks__/datasource';
+import { getMockTimeRange } from '../../test/mocks/datasource';
 
 import { MetricsBrowserProvider, useMetricsBrowser } from './MetricsBrowserContext';
-import { LAST_USED_LABELS_KEY, METRIC_LABEL } from './types';
 
 const setupLocalStorageMock = () => {
   let store: Record<string, string> = {};
@@ -52,6 +53,8 @@ const setupLanguageProviderMock = () => {
       return Promise.resolve([]);
     }),
   } as unknown as PrometheusLanguageProviderInterface;
+
+  mockLanguageProvider.datasource = { seriesLimit: DEFAULT_SERIES_LIMIT } as unknown as PrometheusDatasource;
 
   return { mockTimeRange, mockLanguageProvider };
 };

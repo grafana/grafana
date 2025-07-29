@@ -477,9 +477,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
       hasLogfmt: false,
       hasPack: false,
     };
-    if (!config.featureToggles.lokiQueryHints) {
-      return empty;
-    }
 
     const series = await this.datasource.getDataSamples(
       {

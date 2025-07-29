@@ -7,10 +7,12 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { StoreState, AccessControlAction, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
-import { getDataSources, getDataSourcesCount, useLoadDataSources } from '../state';
+import { useLoadDataSources } from '../state/hooks';
+import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
 
 import { DataSourcesListCard } from './DataSourcesListCard';

@@ -199,7 +199,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
+	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService(), nil)
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService, tracer)
 
 	ctx := context.Background()
@@ -792,11 +792,16 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		service.unifiedStore = fakeFolderStore
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
-				Key:    folderkey,
-				Fields: []*resourcepb.Requirement{},
+				Key: folderkey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+						Operator: string(selection.Equals),
+						Values:   []string{"foo title"},
+					},
+				},
 				Labels: []*resourcepb.Requirement{},
 			},
-			Query: "foo title",
 			Limit: folderSearchLimit}).
 			Return(&resourcepb.ResourceSearchResponse{
 				Results: &resourcepb.ResourceTable{
@@ -842,7 +847,10 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	})
 }
 
-func TestDeleteFoldersFromApiServer(t *testing.T) {
+func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)

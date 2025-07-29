@@ -9,8 +9,8 @@ import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import {
-  grafanaRulerGroupName,
-  grafanaRulerGroupName2,
+  grafanaRulerGroup,
+  grafanaRulerGroup2,
   grafanaRulerNamespace,
   grafanaRulerRule,
 } from '../../mocks/grafanaRulerApi';
@@ -41,7 +41,7 @@ describe('Updating a Grafana managed rule', () => {
 
     const ruleGroupID: RuleGroupIdentifier = {
       dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      groupName: grafanaRulerGroupName,
+      groupName: grafanaRulerGroup.name,
       namespaceName: grafanaRulerNamespace.uid,
     };
 
@@ -71,13 +71,13 @@ describe('Updating a Grafana managed rule', () => {
 
     const ruleGroupID: RuleGroupIdentifier = {
       dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      groupName: grafanaRulerGroupName,
+      groupName: grafanaRulerGroup.name,
       namespaceName: grafanaRulerNamespace.uid,
     };
 
     const targetRuleGroupID: RuleGroupIdentifier = {
       dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      groupName: grafanaRulerGroupName2,
+      groupName: grafanaRulerGroup2.name,
       namespaceName: grafanaRulerNamespace.uid,
     };
 
@@ -110,7 +110,7 @@ describe('Updating a Grafana managed rule', () => {
   it('should fail if the rule does not exist in the group', async () => {
     const ruleGroupID: RuleGroupIdentifier = {
       dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      groupName: grafanaRulerGroupName,
+      groupName: grafanaRulerGroup.name,
       namespaceName: grafanaRulerNamespace.uid,
     };
 

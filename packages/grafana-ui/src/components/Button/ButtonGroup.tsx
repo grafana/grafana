@@ -27,14 +27,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
 
     '> .button-group:not(:first-child) > button, > button:not(:first-child)': {
-      borderTopLeftRadius: 0,
-      borderBottomLeftRadius: 0,
+      borderTopLeftRadius: 'unset',
+      borderBottomLeftRadius: 'unset',
       borderLeft: `1px solid rgba(255, 255, 255, 0.12)`,
     },
 
     '> .button-group:not(:last-child) > button, > button:not(:last-child)': {
-      borderTopRightRadius: 0,
-      borderBottomRightRadius: 0,
+      borderTopRightRadius: 'unset',
+      borderBottomRightRadius: 'unset',
       borderRight: `1px solid rgba(0, 0, 0, 0.12)`,
     },
   }),

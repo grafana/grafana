@@ -27,7 +27,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestConcurrentUsersMetrics(t *testing.T) {
+func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, featuremgmt.WithFeatures())
 	s := createService(t, cfg, sqlStore, statsService)
@@ -45,7 +48,10 @@ func TestConcurrentUsersMetrics(t *testing.T) {
 	assert.Equal(t, int32(6), stats["stats.auth_token_per_user_le_inf"])
 }
 
-func TestConcurrentUsersStats(t *testing.T) {
+func TestIntegrationConcurrentUsersStats(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, featuremgmt.WithFeatures())
 	s := createService(t, cfg, sqlStore, statsService)

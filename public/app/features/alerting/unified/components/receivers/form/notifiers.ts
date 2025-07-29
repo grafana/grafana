@@ -1,6 +1,6 @@
 import { ReactElement } from 'react';
 
-import { NotifierDTO } from '../../../../../../types';
+import { NotifierDTO } from 'app/types/alerting';
 
 export interface NotifierMetadata {
   enabled: boolean;

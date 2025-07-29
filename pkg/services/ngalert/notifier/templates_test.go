@@ -57,7 +57,10 @@ var (
 	}
 )
 
-func TestTemplateDefaultData(t *testing.T) {
+func TestIntegrationTemplateDefaultData(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	am := setupAMTest(t)
 
 	tests := []struct {

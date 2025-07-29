@@ -23,7 +23,7 @@ import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
