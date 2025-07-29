@@ -301,7 +301,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       label: 'compare',
       insertText: 'compare({$0})',
       detail: 'Compare span groups',
-      documentation: 'Splits spans into two groups (selection and baseline) and returns time-series for all attributes to highlight differences. First parameter is a spanset filter for the selection group (e.g., {status=error}). Optional parameters: topN limit (default 10), start timestamp, end timestamp.',
+      documentation:
+        'Splits spans into two groups (selection and baseline) and returns time-series for all attributes to highlight differences. First parameter is a spanset filter for the selection group (e.g., {status=error}). Optional parameters: topN limit (default 10), start timestamp, end timestamp.',
     },
     {
       label: 'count_over_time',
@@ -365,7 +366,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       label: 'with',
       insertText: 'with($0)',
       detail: 'Query hints',
-      documentation: 'Provides query hints to modify search behavior. Use with parameters like most_recent=true to get the latest traces.',
+      documentation:
+        'Provides query hints to modify search behavior. Use with parameters like most_recent=true to get the latest traces.',
     },
   ];
 
@@ -374,7 +376,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       label: 'most_recent',
       insertText: 'most_recent=$0',
       detail: 'Get latest traces',
-      documentation: 'Forces Tempo to return the most recent results ordered by time. Use most_recent=true to see the freshest data when troubleshooting incidents.',
+      documentation:
+        'Forces Tempo to return the most recent results ordered by time. Use most_recent=true to see the freshest data when troubleshooting incidents.',
     },
     // Future parameters can be added here as simple objects
   ];
