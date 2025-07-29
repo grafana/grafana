@@ -57,7 +57,7 @@ interface TooltipPlugin2Props {
     timeRange: TimeRange2 | null,
     viaSync: boolean,
     dataLinks: LinkModel[],
-    adHocFilters: AdHocFilterModel[],
+    adHocFilters: AdHocFilterModel[]
   ) => React.ReactNode;
 
   maxWidth?: number;
@@ -284,7 +284,7 @@ export const TooltipPlugin2 = ({
                 selectedRange,
                 viaSync,
                 _isPinned ? dataLinks : closestSeriesIdx != null ? persistentLinks[closestSeriesIdx] : [],
-                _isPinned ? adHocFilters : [],
+                _isPinned ? adHocFilters : []
               )
             : null,
         dismiss,
