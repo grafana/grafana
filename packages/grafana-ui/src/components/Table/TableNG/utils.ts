@@ -163,9 +163,19 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
  * @internal
  */
 export function getDataLinksCounter(): LineCounter {
-  // when we render links, we filter out the invalid ones. rather than pass through `getCellLinks`, which
-  // makes the expensive call to `getLinks` for every row, we'll implement an identical filter.
-  return (_value, _width, field) => field.config.links?.filter((link) => link.url || link.onClick)?.length ?? 1;
+  const linksCountCache: Record<string, number> = {};
+
+  // when we render links, we need to filter out the invalid links. since the call to `getLinks` is expensive,
+  // we'll cache the result and reuse it for every row in the table. this cache is cleared when line counts are
+  // rebuilt anytime from the `useRowHeight` hook, and that includes adding and removing data links.
+  return (_value, _width, field, rowIdx) => {
+    const cacheKey = getDisplayName(field);
+    if (linksCountCache[cacheKey] === undefined) {
+      linksCountCache[cacheKey] = getCellLinks(field, rowIdx)?.length ?? 0;
+    }
+
+    return linksCountCache[cacheKey];
+  };
 }
 
 /**
@@ -204,7 +214,6 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
       wrappedFields++;
 
       const cellType = getCellOptions(field).type;
-
       if (cellType === TableCellDisplayMode.DataLinks) {
         result.dataLinksCounter = result.dataLinksCounter ?? { counter: getDataLinksCounter(), fieldIdxs: [] };
         result.dataLinksCounter.fieldIdxs.push(fieldIdx);
