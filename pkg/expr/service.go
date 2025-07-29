@@ -118,9 +118,9 @@ func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 
 // BasicColumn is a simplified version of mysql.Column used for SQL expression schemas.
 type BasicColumn struct {
-	Name     string
-	Type     mysql.Type
-	Nullable bool
+	Name      string
+	MySQLType mysql.Type
+	Nullable  bool
 
 	DataFrameFieldType data.FieldType
 }
@@ -167,7 +167,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (map[string][]
 			fT, _ := sql.MySQLColToFieldType(col)
 			columns = append(columns, BasicColumn{
 				Name:               col.Name,
-				Type:               col.Type,
+				MySQLType:          col.Type,
 				Nullable:           col.Nullable,
 				DataFrameFieldType: fT,
 			})
