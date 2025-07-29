@@ -45,6 +45,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+var orgID = int64(1)
+var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+
 type rcp struct {
 	Host string
 }
