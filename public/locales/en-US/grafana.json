@@ -3516,11 +3516,12 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "All resources have been deleted successfully",
+      "all-moved": "All resources have been moved successfully",
       "button-done": "Done",
       "failed-alert_one": "{{count}} items failed",
       "failed-alert_other": "{{count}} items failed",
-      "progress-title": "Success",
-      "repository-url": "All resources have been {{ action }} successfully"
+      "progress-title": "Success"
     },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
@@ -3533,12 +3534,13 @@
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
-      "deleting": "{{labelText}}",
+      "deleting": "Deleting",
       "error-file-content-not-found": "File content not found",
       "error-path-not-found": "Path not found",
       "error-target-folder-path-missing": "Target folder path is missing",
       "error-title": "Target Folder Error",
       "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "moving": "Moving",
       "progress": "Progress: {{current}} of {{total}}",
       "target-folder": "Target Folder"
     },
