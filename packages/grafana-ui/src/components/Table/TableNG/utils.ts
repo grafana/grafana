@@ -160,6 +160,15 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
 }
 
 /**
+ * @internal
+ */
+export function getDataLinksCounter(): LineCounter {
+  // when we render links, we filter out the invalid ones. rather than pass through `getCellLinks`, which
+  // makes the expensive call to `getLinks` for every row, we'll implement an identical filter.
+  return (_value, _width, field) => field.config.links?.filter((link) => link.url || link.onClick)?.length ?? 1;
+}
+
+/**
  * @internal return a text line counter for every field which has wrapHeaderText enabled.
  */
 export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
@@ -195,21 +204,14 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
       wrappedFields++;
 
       const cellType = getCellOptions(field).type;
+
       if (cellType === TableCellDisplayMode.DataLinks) {
-        // getCellLinks filters out invalid links, so the number of links in the config array may not match
-        // what is actually rendered into the DOM.
-        result.dataLinksCounter = result.dataLinksCounter ?? {
-          estimate: (_value, _width, field) => field.config.links?.length ?? 1,
-          counter: (_value, _width, field, rowIdx) => getCellLinks(field, rowIdx)?.length ?? 1,
-          fieldIdxs: [],
-        };
+        result.dataLinksCounter = result.dataLinksCounter ?? { counter: getDataLinksCounter(), fieldIdxs: [] };
         result.dataLinksCounter.fieldIdxs.push(fieldIdx);
       }
 
-      // for string fields, we really want to find the longest field ahead of time to reduce the number of calls to `count`.
-      // calling `count` is going to get a perfectly accurate line count, but it is expensive, so we'd rather estimate the line
-      // count and call the counter only for the field which will take up the most space based on its
-      if (field.type === FieldType.string) {
+      // for string fields, we estimate the length of a line using `avgCharWidth` to limit expensive calls `count`.
+      else if (field.type === FieldType.string) {
         result.textCounter = result.textCounter ?? {
           counter: typographyCtx.wrappedCount,
           estimate: typographyCtx.estimateLines,
