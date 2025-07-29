@@ -153,4 +153,3 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 
 	return resolvedPaths, nil
 }
-

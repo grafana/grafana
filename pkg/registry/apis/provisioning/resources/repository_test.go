@@ -20,15 +20,15 @@ import (
 
 func TestRepositoryResources_FindResourcePath(t *testing.T) {
 	tests := []struct {
-		name            string
-		resourceName    string
-		gvk             schema.GroupVersionKind
-		expectedGVR     schema.GroupVersionResource
-		forKindError    error
-		getError        error
-		resourceObj     *unstructured.Unstructured
-		expectedPath    string
-		expectedError   string
+		name          string
+		resourceName  string
+		gvk           schema.GroupVersionKind
+		expectedGVR   schema.GroupVersionResource
+		forKindError  error
+		getError      error
+		resourceObj   *unstructured.Unstructured
+		expectedPath  string
+		expectedError string
 	}{
 		{
 			name:         "dashboard found successfully",
