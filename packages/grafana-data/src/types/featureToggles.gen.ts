@@ -307,6 +307,10 @@ export interface FeatureToggles {
   */
   dashboardSchemaValidationLogging?: boolean;
   /**
+  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
+  */
+  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
+  /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
   datasourceQueryTypes?: boolean;
