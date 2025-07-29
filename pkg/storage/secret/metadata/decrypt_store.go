@@ -113,7 +113,6 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 
 	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, name, sv.Spec.Decrypters)
 	if !authorized {
-		fmt.Println("Decrypting secure value failed auth:", namespace, name)
 		return "", contracts.ErrDecryptNotAuthorized
 	}
 
