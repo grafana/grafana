@@ -70,7 +70,6 @@ func TestConsolidation(t *testing.T) {
 			{"test-secret-4", "namespace2", "test-value-4"},
 		}
 
-		var createdSecrets []*secretv1beta1.SecureValue
 		var originalDecryptedValues []string
 		var originalEncryptedData [][]byte
 
@@ -89,7 +88,7 @@ func TestConsolidation(t *testing.T) {
 
 			createdSv, err := sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
 			require.NoError(t, err)
-			createdSecrets = append(createdSecrets, createdSv)
+			require.NotNil(t, createdSv)
 
 			// Store the original decrypted data and encrypted data
 			authCtx := createAuthContext(ctx, tc.namespace, types.TypeAccessPolicy)
