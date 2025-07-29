@@ -127,6 +127,7 @@ export const extractFieldsTransformerEditor = ({
             interactive={true}
             tooltip={t('transformers.extract-fields-transformer-editor.tooltip-regexp', 'Example: {{regexExample}}', {
               regexExample: '/(?<NewField>.*)/',
+              interpolation: { escapeValue: false },
             })}
           >
             <Input
