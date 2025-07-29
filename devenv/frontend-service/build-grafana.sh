@@ -23,6 +23,16 @@ echo "Go build cache: $(go env GOCACHE), $(ls -1 $(go env GOCACHE) | wc -l) item
 # Need to build version into the binary so plugin compatibility works correctly
 VERSION=$(jq -r .version package.json)
 
+# Set cross-compilation env vars only on macOS (Darwin)
+if [[ "$(uname)" == "Darwin" ]]; then
+  echo "Setting up cross-compilation environment for macOS"
+  export CGO_ENABLED=1
+  export GOOS=linux
+  export GOARCH=arm64
+  export CC="zig cc -target aarch64-linux"
+  export CXX="zig c++ -target aarch64-linux"
+fi
+
 go build -v \
   -ldflags "-X main.version=${VERSION}" \
   -gcflags "all=-N -l" \

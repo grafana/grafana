@@ -19,6 +19,16 @@ if ! tilt version &> /dev/null; then
     IS_OKAY=false
 fi
 
+# Only check for zig if running on macOS
+if [[ "$(uname)" == "Darwin" ]] && ! zig version &> /dev/null; then
+    echo "Warning: zig is not installed"
+    echo "Zig is required for cross-compilation on macOS."
+    echo "Install with 'brew install zig' or see https://ziglang.org/download/ for installation instructions."
+    echo ""
+
+    # Don't block on this yet.
+    # IS_OKAY=false
+fi
 
 if [ "$IS_OKAY" = false ]; then
     echo "Please fix the above errors before continuing"
