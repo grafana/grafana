@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
@@ -616,7 +617,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			workers := []jobs.Worker{migrationWorker, syncWorker, exportWorker}
+			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
+			workers := []jobs.Worker{
+				deleteWorker,
+				exportWorker,
+				migrationWorker,
+				syncWorker,
+			}
 
 			// Add any extra workers
 			for _, extra := range b.extras {
@@ -791,6 +798,15 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 					In:          "query",
 					Description: "do not pro-actively verify the payload",
 					Schema:      spec.BooleanProperty(),
+					Required:    false,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "originalPath",
+					In:          "query",
+					Description: "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/')",
+					Schema:      spec.StringProperty(),
 					Required:    false,
 				},
 			},

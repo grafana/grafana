@@ -211,10 +211,11 @@ func (a *dashboardSqlAccess) countValues(ctx context.Context, opts MigrateOption
 
 func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*BlobStoreInfo, error) {
 	query := &DashboardQuery{
-		OrgID:      orgId,
-		Limit:      100000000,
-		GetHistory: opts.WithHistory, // include history
-		Order:      "ASC",            // oldest first
+		OrgID:         orgId,
+		Limit:         100000000,
+		GetHistory:    opts.WithHistory, // include history
+		AllowFallback: true,             // allow fallback to dashboard table during migration
+		Order:         "ASC",            // oldest first
 	}
 
 	blobs := &BlobStoreInfo{}
@@ -309,6 +310,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 				"dashboard", row.Dash.Name,
 				"uid", row.Dash.UID,
 				"id", id,
+				"namespace", opts.Namespace,
 			)
 			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
 		}

@@ -1,3 +1,5 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,DeleteJobOptions,Paths
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,DeleteJobOptions,Resources
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,FileList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,HistoryList,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,JobResourceSummary,Errors
