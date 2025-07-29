@@ -110,14 +110,14 @@ Here is an overview of version support through 2026:
 | 11.0.x                    | May 14, 2024       | February 14, 2025    | Not Supported                 |
 | 11.1.x                    | June 25, 2024      | April 23, 2025       | Not Supported                 |
 | 11.2.x                    | August 27, 2024    | May 27, 2025         | Not Supported                 |
-| 11.3.x                    | October 22, 2024   | July 22, 2025        | Security & Critical Bugs Only |
+| 11.3.x                    | October 22, 2024   | July 22, 2025        | Not Supported                 |
 | 11.4.x                    | December 5, 2024   | September 5, 2025    | Security & Critical Bugs Only |
 | 11.5.x                    | January 28, 2025   | October 28, 2025     | Security & Critical Bugs Only |
 | 11.6.x (Last minor of 11) | March 25, 2025     | June 25, 2026        | Security & Critical Bugs Only |
 | 12.0.x                    | May 5, 2025        | February 5, 2026     | Security & Critical Bugs Only |
 | 12.1.x                    | July 22, 2025      | April 22, 2026       | Full Support until next minor |
-| 12.2.x                    | September 23, 2025 | June 23, 2026        | Full Support until next minor |
-| 12.3.x                    | November 18, 2025  | August 18, 2026      | Full Support until next minor |
+| 12.2.x                    | September 23, 2025 | June 23, 2026        | Yet to be released            |
+| 12.3.x                    | November 18, 2025  | August 18, 2026      | Yet to be released            |
 
 ## How are these versions supported?
 
