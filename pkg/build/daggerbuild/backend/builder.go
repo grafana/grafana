@@ -72,7 +72,7 @@ func ViceroyContainer(
 	container = container.
 		WithExec([]string{"dpkg", "--remove-architecture", "ppc64el"}).
 		WithExec([]string{"dpkg", "--remove-architecture", "s390x"}).
-		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "update", "-yq"}).
 		WithExec([]string{"apt-get", "install", "-yq", "curl", "make", "git"}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)}).
 		WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
