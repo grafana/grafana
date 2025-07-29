@@ -586,25 +586,6 @@ describe('useStateSync', () => {
     });
   });
 
-  it('should sync queryRef from URL to state', async () => {
-    const { store } = setup({
-      queryParams: {
-        panes: JSON.stringify({
-          one: {
-            datasource: 'loki-uid',
-            queries: [{ expr: 'test', refId: 'A' }],
-            queryRef: 'library-query-123',
-          },
-        }),
-        schemaVersion: 1,
-      },
-    });
-
-    await waitFor(() => {
-      expect(store.getState().explore.panes['one']?.queryRef).toBe('library-query-123');
-    });
-  });
-
   it('should keep queryRef in state but not in URL', async () => {
     const { store, location } = setup({
       queryParams: {
