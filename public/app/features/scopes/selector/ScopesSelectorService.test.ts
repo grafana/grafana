@@ -1,9 +1,10 @@
-import { Scope, ScopeNode, Store } from '@grafana/data';
+import { Scope, ScopeNode, Store, store } from '@grafana/data';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 
 import { RECENT_SCOPES_KEY, ScopesSelectorService } from './ScopesSelectorService';
+import { RecentScope } from './types';
 
 describe('ScopesSelectorService', () => {
   let service: ScopesSelectorService;
@@ -42,6 +43,7 @@ describe('ScopesSelectorService', () => {
   };
 
   let storeValue: Record<string, unknown> = {};
+  let store: Store;
 
   beforeEach(() => {
     apiClient = {
@@ -63,15 +65,21 @@ describe('ScopesSelectorService', () => {
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
     storeValue = {};
-    const store = {
+    store = {
       get(key: string) {
         return storeValue[key];
       },
-
       set(key: string, value: string) {
         storeValue[key] = value;
       },
-    };
+      subscribe: jest.fn(),
+      notifySubscribers: jest.fn(),
+      getBool: jest.fn(),
+      getObject: jest.fn(),
+      setObject: jest.fn(),
+      exists: jest.fn(),
+      delete: jest.fn(),
+    } as unknown as Store;
 
     service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
   });
@@ -125,6 +133,10 @@ describe('ScopesSelectorService', () => {
       await service.deselectScope('test-scope-node');
       expect(service.state.selectedScopes).toEqual([]);
     });
+
+    it('should set recent scopes', async () => {
+      await service.selectScope('test-scope-node');
+    });
   });
 
   describe('changeScopes', () => {
@@ -153,6 +165,16 @@ describe('ScopesSelectorService', () => {
       expect(subscribeFn).toHaveBeenCalledTimes(2);
 
       sub.unsubscribe();
+    });
+
+    it('should set parent node for recent scopes', async () => {
+      // Load mock node
+      await service.updateNode('', true, '');
+
+      await service.changeScopes(['test-scope'], 'test-scope-node');
+      expect(service.state.appliedScopes).toEqual([{ scopeId: 'test-scope', parentNodeId: 'test-scope-node' }]);
+      expect(service.state.nodes).toEqual({ 'test-scope-node': mockNode });
+      expect(storeValue[RECENT_SCOPES_KEY]).toEqual(JSON.stringify([[{ ...mockScope, parentNode: mockNode }]]));
     });
   });
 
@@ -251,6 +273,91 @@ describe('ScopesSelectorService', () => {
       storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[{ metadata: { noName: 'test' } }]]);
       recentScopes = service.getRecentScopes();
       expect(recentScopes).toEqual([]);
+    });
+  });
+
+  describe('nodes from local storage', () => {
+    it('should return parent nodes from recent scopes', async () => {
+      // Set mock scopes with parent node
+      const mockScopeWithParentNode: RecentScope = {
+        metadata: { name: 'test-scope' },
+        spec: {
+          title: 'test-scope',
+          type: 'scope',
+          category: 'scope',
+          description: 'test scope',
+          filters: [],
+        },
+        parentNode: {
+          metadata: { name: 'test-scope-node' },
+          spec: {
+            linkId: 'test-scope',
+            linkType: 'scope',
+            parentName: '',
+            nodeType: 'container',
+            title: 'test-scope-node',
+          },
+        },
+      };
+
+      // Set store value BEFORE creating the service
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([[mockScopeWithParentNode]]);
+
+      // Create service with the existing store (which now has the data)
+      service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
+      expect(service.state.nodes).toEqual({ 'test-scope-node': mockScopeWithParentNode.parentNode });
+    });
+
+    it('should remove parent node if it is not valid', async () => {
+      // Mock with valid parent node
+      const mockScopeWithValidParentNode: RecentScope = {
+        metadata: { name: 'test-scope' },
+        spec: {
+          title: 'test-scope',
+          type: 'scope',
+          category: 'scope',
+          description: 'test scope',
+          filters: [],
+        },
+        parentNode: {
+          metadata: { name: 'test-scope-node' },
+          spec: {
+            linkId: 'test-scope',
+            linkType: 'scope',
+            parentName: '',
+            nodeType: 'container',
+            title: 'test-scope-node',
+          },
+        },
+      };
+
+      // lacks name and spec
+      const mockScopeWithInvalidParentNode: RecentScope = {
+        metadata: { name: 'test-scope' },
+        spec: {
+          title: 'test-scope',
+          type: 'scope',
+          category: 'scope',
+          description: 'test scope',
+          filters: [],
+        },
+        parentNode: {
+          //@ts-expect-error
+          metadata: {},
+          //@ts-expect-error
+          spec: {},
+        },
+      };
+
+      // Set store value BEFORE creating the service
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify([
+        [mockScopeWithInvalidParentNode],
+        [mockScopeWithValidParentNode],
+      ]);
+
+      // Create service with the existing store (which now has the data)
+      service = new ScopesSelectorService(apiClient, dashboardsService, store as Store);
+      expect(service.state.nodes).toEqual({ 'test-scope-node': mockScopeWithValidParentNode.parentNode });
     });
   });
 });

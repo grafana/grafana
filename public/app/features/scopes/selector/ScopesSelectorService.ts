@@ -255,10 +255,12 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       const scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
+      // If parentNodeId is provided, use it directly as the parent node
+      // If not provided, try to get the parent from the scope node
       const parentNodeId = scopes[0]?.parentNodeId || scopeNode?.spec.parentName;
       const parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
 
-      this.addRecentScopes(fetchedScopes, scopeNode && parentNode ? parentNode : undefined);
+      this.addRecentScopes(fetchedScopes, parentNode);
       this.updateState({ scopes: newScopesState, loading: false });
     }
   };
@@ -396,7 +398,10 @@ function hasValidScopeParentNode(obj: unknown): obj is RecentScope {
     typeof obj.parentNode.metadata === 'object' &&
     obj.parentNode.metadata !== null &&
     'name' in obj.parentNode.metadata &&
-    'spec' in obj.parentNode.metadata
+    'spec' in obj.parentNode &&
+    typeof obj.parentNode.spec === 'object' &&
+    obj.parentNode.spec !== null &&
+    'title' in obj.parentNode.spec
   );
 }
 
@@ -421,7 +426,7 @@ function parseScopesFromLocalStorage(content: string | undefined): RecentScope[]
 
   // Verify the structure of the parent node, and remove it if it is not valid
   if (recentScopes[0]?.[0]?.parentNode) {
-    if (!hasValidScopeParentNode(recentScopes[0]?.[0]?.parentNode)) {
+    if (!hasValidScopeParentNode(recentScopes[0]?.[0])) {
       recentScopes[0][0].parentNode = undefined;
     }
   }
