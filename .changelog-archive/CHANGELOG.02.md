@@ -234,6 +234,7 @@ Grunt & Watch tasks:
 - binary to `/usr/sbin/grafana-server`
 - init.d script improvements, renamed to `/etc/init.d/grafana-server`
 - added default file with environment variables,
+
   - `/etc/default/grafana-server` (deb/ubuntu)
   - `/etc/sysconfig/grafana-server` (centos/redhat)
 

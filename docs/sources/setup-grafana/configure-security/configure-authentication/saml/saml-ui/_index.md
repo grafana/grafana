@@ -64,6 +64,7 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 ### 2. Sign Requests Section
 
 1. In the **Sign requests** field, specify whether you want the outgoing requests to be signed, and, if so, then:
+
    1. Provide a certificate and a private key that will be used by the service provider (Grafana) and the SAML IdP.
 
       Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.

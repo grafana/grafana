@@ -234,6 +234,7 @@ In case there is an uncertainty around the prioritization of an issue, please as
 **Critical bugs**
 
 1. If a bug has been categorized and any of the following criteria apply, the bug should be labeled as critical and must be actively worked on as someone's top priority right now:
+
    - Results in any data loss
    - Critical security or performance issues
    - Problem that makes a feature unusable

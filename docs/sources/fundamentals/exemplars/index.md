@@ -101,6 +101,7 @@ This panel shows the details of the trace in different segments.
 
 - The next segment shows the entire span for the specific trace as a narrow strip.
   All levels of the trace from the client all the way down to database query is displayed, which provides a bird's eye view of the time distribution across all layers over which the HTTP request was processed.
+
   1. You can click within this strip view to display a magnified view of a smaller time segment within the span. This magnified view shows up in the bottom segment of the panel.
 
   1. In the magnified view, you can expand or collapse the various levels of the trace to drill down to the specific span of interest.

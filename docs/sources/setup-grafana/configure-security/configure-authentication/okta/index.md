@@ -30,6 +30,7 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. For **Sign-in method**, select **OIDC - OpenID Connect**.
 1. For **Application type**, select **Web Application** and click **Next**.
 1. Configure **New Web App Integration Operations**:
+
    - **App integration name**: Choose a name for the app.
    - **Logo (optional)**: Add a logo.
    - **Grant type**: Select **Authorization Code** and **Refresh Token**.
@@ -53,6 +54,7 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. In the **Okta Admin Console**, select **Directory > Profile Editor**.
 1. Select the Okta Application Profile you created previously (the default name for this is `<App name> User`).
 1. Select **Add Attribute** and fill in the following fields:
+
    - **Data Type**: string
    - **Display Name**: Meaningful name. For example, `Grafana Role`.
    - **Variable Name**: Meaningful name. For example, `grafana_role`.

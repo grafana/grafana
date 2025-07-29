@@ -14,13 +14,7 @@ export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
   return units.length > 1 ? (
     <Tooltip
       placement={'top'}
-      content={
-        <Stack direction={'column'}>
-          {units?.map((unit) => (
-            <span key={unit.name}>{unit.name}</span>
-          ))}
-        </Stack>
-      }
+      content={<Stack direction={'column'}>{units?.map((unit) => <span key={unit.name}>{unit.name}</span>)}</Stack>}
     >
       <Content icon={icon}>{units.length}</Content>
     </Tooltip>

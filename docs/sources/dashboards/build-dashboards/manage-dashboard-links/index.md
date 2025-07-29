@@ -94,6 +94,7 @@ Add links to other dashboards at the top of your current dashboard.
    If you don't add any tags, Grafana includes links to all other dashboards.
 
 1. Set link options:
+
    - **Show as dropdown** – If you are linking to lots of dashboards, then you probably want to select this option and add an optional title to the dropdown. Otherwise, Grafana displays the dashboard links side by side across the top of your dashboard.
    - **Include current time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
    - **Include current template variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. For more information, see [Dashboard URL variables](ref:dashboard-url-variables).
@@ -117,6 +118,7 @@ Add a link to a URL at the top of your current dashboard. You can link to any av
 1. In the **Tooltip** field, enter the tooltip you want the link to display when the user hovers their mouse over it.
 1. In the **Icon** drop-down, choose the icon you want displayed with the link.
 1. Set link options; by default, these options are enabled for URL links:
+
    - **Include current time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
    - **Include current template variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link.
    - **Open link in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
@@ -132,6 +134,7 @@ To edit, duplicate, or delete dashboard link, follow these steps:
 1. Click **Settings**.
 1. Go to the **Links** tab.
 1. Do one of the following:
+
    - **Edit** - Click the name of the link and update the link settings.
    - **Duplicate** - Click the copy link icon next to the link that you want to duplicate.
    - **Delete** - Click the red **X** next to the link that you want to delete, and then **Delete**.

@@ -98,13 +98,7 @@ export function EditDataSourceActions({ uid }: Props) {
       />
       {!isLoading &&
         links.map((link) => (
-          <Menu.Item
-            key={link.id}
-            label={link.title}
-            url={link.path}
-            onClick={link.onClick}
-            icon={link.icon}
-          />
+          <Menu.Item key={link.id} label={link.title} url={link.path} onClick={link.onClick} icon={link.icon} />
         ))}
     </Menu>
   );

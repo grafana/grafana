@@ -43,9 +43,7 @@ export function UserProfileEditTabs(props: Props): ReactElement {
         <TabContent>
           {Boolean(activeTab) && (
             <Fragment key={activeTab?.tabId}>
-              {activeTab?.components.map((Component, index) => (
-                <Component key={`${activeTab?.tabId}-${index}`} />
-              ))}
+              {activeTab?.components.map((Component, index) => <Component key={`${activeTab?.tabId}-${index}`} />)}
             </Fragment>
           )}
         </TabContent>

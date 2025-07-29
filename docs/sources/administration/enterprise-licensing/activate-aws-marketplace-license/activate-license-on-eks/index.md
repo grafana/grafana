@@ -89,6 +89,7 @@ For more information on Grafana High Availability setup, refer to [Set up Grafan
 In this task, you configure Grafana Enterprise to validate the license with AWS instead of Grafana Labs.
 
 1. In AWS IAM, assign the following permissions to the Node IAM role (if you are using a Node Group), or the Pod Execution role (if you are using a Fargate profile):
+
    - `"license-manager:CheckoutLicense"`
    - `"license-manager:ListReceivedLicenses"`
    - `"license-manager:GetLicenseUsage"`
@@ -99,6 +100,7 @@ In this task, you configure Grafana Enterprise to validate the license with AWS 
    For more information about AWS license permissions, refer to [Actions, resources, and condition keys for AWS License Manager](https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslicensemanager.html).
 
 1. Choose **one** of the following options to update the [license_validation_type](../../../../setup-grafana/configure-grafana/enterprise-configuration/#license_validation_type) configuration to `aws`:
+
    - **Option 1:** Use `kubectl edit configmap grafana` to edit `grafana.ini` add the following section to the configuration:
 
      ```

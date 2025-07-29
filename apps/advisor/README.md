@@ -142,6 +142,7 @@ Check [`security_config_step.go`](./pkg/app/checks/configchecks/security_config_
 2. **Type Safety**: Use type assertions to ensure you're working with the correct type of item.
 
 3. **Severity Levels**: Use appropriate severity levels:
+
    - `CheckReportFailureSeverityHigh`: For critical issues that need immediate attention
    - `CheckReportFailureSeverityLow`: For non-critical issues that can be addressed later
 

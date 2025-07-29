@@ -92,11 +92,7 @@ describe('Plugin Extensions / Utils', () => {
       // Check if the right components are selected
       const limitedComponents = getLimitedComponentsToRender({ props, components, limit: 3 });
       const rendered = render(
-        <>
-          {limitedComponents?.map((Component, index) => (
-            <Component key={index} {...props} />
-          ))}
-        </>
+        <>{limitedComponents?.map((Component, index) => <Component key={index} {...props} />)}</>
       );
 
       expect(rendered.getByText('Test 1')).toBeInTheDocument();
@@ -131,11 +127,7 @@ describe('Plugin Extensions / Utils', () => {
       // Check if the right components are selected
       const limitedComponents = getLimitedComponentsToRender({ props, components, limit: 1 });
       const rendered = render(
-        <>
-          {limitedComponents?.map((Component, index) => (
-            <Component key={index} {...props} />
-          ))}
-        </>
+        <>{limitedComponents?.map((Component, index) => <Component key={index} {...props} />)}</>
       );
 
       expect(rendered.getByText('Test 1')).toBeInTheDocument();
@@ -166,11 +158,7 @@ describe('Plugin Extensions / Utils', () => {
         pluginId: ['plugin-id-2', 'plugin-id-3'],
       });
       const rendered = render(
-        <>
-          {limitedComponents?.map((Component, index) => (
-            <Component key={index} {...props} />
-          ))}
-        </>
+        <>{limitedComponents?.map((Component, index) => <Component key={index} {...props} />)}</>
       );
 
       expect(rendered.getByText('Test 2')).toBeInTheDocument();

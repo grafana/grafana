@@ -249,6 +249,7 @@ To enable backend communication between plugins:
    ```
 
    This is a comma-separated list that uses glob matching.
+
    - To allow access to all plugins that have a backend:
 
      ```

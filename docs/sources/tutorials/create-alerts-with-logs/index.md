@@ -65,6 +65,7 @@ There are different ways you can follow along with this tutorial.
 - **Grafana OSS**
 
   To run a Grafana stack locally, ensure you have the following applications installed:
+
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
   - [Git](https://git-scm.com/)
 
@@ -225,6 +226,7 @@ In this section, we use the default options for Grafana-managed alert rule creat
    {{< /docs/ignore >}}
 
 1. In the **Alert condition** section:
+
    - Keep `Last` as the value for the reducer function (`WHEN`), and `0` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the query.

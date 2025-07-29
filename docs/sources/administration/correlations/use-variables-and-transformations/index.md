@@ -66,6 +66,7 @@ Instructions below show how to set up a link that can run metrics query for the 
    ```
 
    Two data sources are created: Source (emulating logs data source) and Target (emulating metrics data source):
+
    - A correlation called “App metrics” is created targeting the Target data source with its UID.
      - The label and description are provided as text
      - Each correlation contains the following configuration:

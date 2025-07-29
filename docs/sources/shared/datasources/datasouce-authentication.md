@@ -18,6 +18,7 @@ labels:
 To set up authentication:
 
 1. Select an authentication method from the drop-down list:
+
    - **Basic authentication**: Authenticates your data source using a username and password
    - **Forward OAuth identity**: Forwards the OAuth access token and the OIDC ID token, if available, of the user querying to the data source
    - **No authentication**: No authentication is required to access the data source

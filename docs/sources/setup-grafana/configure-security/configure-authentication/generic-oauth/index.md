@@ -450,6 +450,7 @@ Support for the Auth0 "audience" feature is not currently available in Grafana. 
 To set up Generic OAuth authentication with Auth0, follow these steps:
 
 1. Create an Auth0 application using the following parameters:
+
    - Name: Grafana
    - Type: Regular Web Application
 
@@ -484,6 +485,7 @@ To set up Generic OAuth authentication with Bitbucket, follow these steps:
 1. Navigate to **Settings > Workspace setting > OAuth consumers** in BitBucket.
 
 1. Create an application by selecting **Add consumer** and using the following parameters:
+
    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
 
 1. Click **Save**.
@@ -516,6 +518,7 @@ By default, a refresh token is included in the response for the **Authorization 
 To set up Generic OAuth authentication with OneLogin, follow these steps:
 
 1. Create a new Custom Connector in OneLogin with the following settings:
+
    - Name: Grafana
    - Sign On Method: OpenID Connect
    - Redirect URI: `https://<grafana domain>/login/generic_oauth`
@@ -523,6 +526,7 @@ To set up Generic OAuth authentication with OneLogin, follow these steps:
    - Login URL: `https://<grafana domain>/login/generic_oauth`
 
 1. Add an app to the Grafana Connector:
+
    - Display Name: Grafana
 
 1. Update the `[auth.generic_oauth]` section of the Grafana configuration file using the client ID and client secret from the **SSO** tab of the app details page:

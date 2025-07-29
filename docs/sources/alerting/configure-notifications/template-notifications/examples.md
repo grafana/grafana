@@ -444,6 +444,7 @@ Use one of the following methods to include a dashboard link with the correct ti
    ```
 
    These URLs include a time range based on the alert’s timing:
+
    - `from`: One hour before the alert started.
    - `to`: The current time if the alert is firing, or the alert’s end time if resolved.
 

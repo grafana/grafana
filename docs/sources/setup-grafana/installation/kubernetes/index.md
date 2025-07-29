@@ -391,7 +391,9 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
 1. In the editor, change the container image under the `kind: Deployment` section.
 
    For example:
+
    - From
+
      - `yaml image: grafana/grafana-oss:10.0.1`
 
    - To
@@ -571,6 +573,7 @@ This section outlines general instructions for provisioning Grafana resources wi
    ```
 
    You can follow the same process to provision additional Grafana resources by supplying the following folders:
+
    - `provisioning/dashboards`
    - `provisioning/datasources`
    - `provisioning/plugins`
