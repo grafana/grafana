@@ -873,9 +873,8 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 	tracer := tracing.InitializeTracerForTest()
 
 	fakeFolder := &folder.Folder{UID: "folderUID", Title: "Folder", Fullpath: "Folder"}
-	mockFolder := foldertest.NewFakeServiceWithFolders(map[string]*folder.Folder{
-		"folderUID": fakeFolder,
-	})
+	mockFolder := foldertest.NewFakeService()
+	mockFolder.AddFolder(fakeFolder)
 
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("cloud_migration")

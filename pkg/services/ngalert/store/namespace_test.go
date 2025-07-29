@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -20,12 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-// note: additional integration tests are in /pkg/tests/api/alerting/api_namespace_test.go
-
-func createContextWithUser(user *user.SignedInUser) context.Context {
-	return identity.WithRequester(context.Background(), user)
-}
 
 func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 	if testing.Short() {

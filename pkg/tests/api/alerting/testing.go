@@ -1454,37 +1454,6 @@ func requireStatusCode(t *testing.T, expected, actual int, response string) {
 	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
 }
 
-func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, params *apimodels.ExportQueryParams) (int, string) {
-	t.Helper()
-	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/alert-rules/%s/export", a.url, ruleUID))
-	require.NoError(t, err)
-	if params != nil {
-		q := url.Values{}
-		if params.Format != "" {
-			q.Set("format", params.Format)
-		}
-		if params.Download {
-			q.Set("download", "true")
-		}
-		u.RawQuery = q.Encode()
-	}
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
-	require.NoError(t, err)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-
-	require.NoError(t, err)
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	b, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-
-	return resp.StatusCode, string(b)
-}
-
 func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 

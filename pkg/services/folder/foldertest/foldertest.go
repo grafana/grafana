@@ -24,16 +24,6 @@ func NewFakeService() *FakeService {
 	}
 }
 
-func NewFakeServiceWithFolders(folders map[string]*folder.Folder) *FakeService {
-	fs := &FakeService{
-		foldersByUID: folders,
-	}
-	for _, f := range folders {
-		fs.ExpectedFolders = append(fs.ExpectedFolders, f)
-	}
-	return fs
-}
-
 func (s *FakeService) AddFolder(f *folder.Folder) {
 	if s.foldersByUID == nil {
 		s.foldersByUID = make(map[string]*folder.Folder)
