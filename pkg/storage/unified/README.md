@@ -781,3 +781,618 @@ The dual writer system provides metrics for monitoring:
 - `dual_writer_mode_transitions_total`: Counter of mode transitions
 
 Use these metrics to monitor the health of your migration and identify any issues with the dual writer system.
+
+---
+
+## Unified Search System
+
+The Unified Search system provides a scalable, distributed search capability for Grafana's Unified Storage. It uses a ring-based architecture to distribute search requests across multiple search server instances, with namespace-based sharding for optimal performance and data distribution.
+
+### System Architecture
+
+The search system provides both unified and legacy search capabilities, with routing based on dual writer mode configuration:
+
+```mermaid
+graph TB
+    subgraph "Request Sources"
+        A[Grafana UI<br/>User Search]
+        B[Dashboard Service<br/>Resource Searches]
+        C[Folder Service<br/>Resource Searches]
+        D[Alerting Service<br/>Resource Searches]
+        E[Provisioning Service<br/>Resource Searches]
+        F[API Endpoints<br/>Search Operations]
+    end
+    
+    subgraph "API Gateway Layer"
+        G[Grafana API Server<br/>Search Endpoint]
+        H[Search Client<br/>Dual Writer Aware]
+    end
+    
+    subgraph "Routing Decision"
+        I{Dual Writer Mode<br/>Check}
+    end
+    
+    subgraph "Unified Search Path (Mode 3+)"
+        J[Search Distributor<br/>Ring-based Routing]
+        K[Ring<br/>Consistent Hashing]
+        L[Search API Server 1<br/>Namespace Sharding<br/>+ Embedded Bleve Backend]
+        M[Search API Server 2<br/>Namespace Sharding<br/>+ Embedded Bleve Backend]
+        N[Search API Server 3<br/>Namespace Sharding<br/>+ Embedded Bleve Backend]
+        O[Unified Storage<br/>K8s-style Resources]
+    end
+    
+    subgraph "Legacy Search Path (Mode 0-2)"
+        Q[Legacy Search Service<br/>SQL-based Search]
+        R[Legacy Storage<br/>Traditional Tables]
+        S[Shadow Traffic<br/>Mode 1-2 + Flag Enabled]
+    end
+    
+    A --> G
+    B --> H
+    C --> H
+    D --> H
+    E --> H
+    F --> G
+    G --> H
+    H --> I
+    
+    I -->|Mode 3+| J
+    I -->|Mode 0-2| Q
+    
+    J --> K
+    K --> L
+    K --> M
+    K --> N
+    L -.->|Just-in-Time<br/>Indexing| O
+    M -.->|Just-in-Time<br/>Indexing| O
+    N -.->|Just-in-Time<br/>Indexing| O
+    
+    Q --> R
+    Q -.->|Shadow Traffic<br/>Mode 1-2 + Flag| S
+    S -.-> J
+```
+
+### Search Backend Routing
+
+The search client routes requests based on the dual writer mode configuration for each resource type:
+
+#### Dual Writer Mode → Backend Routing
+- **Mode 0-2**: Route to **Legacy Search**
+  - Mode 1-2: Shadow traffic to Unified Search (if `unifiedStorageSearchDualReaderEnabled` is enabled)
+  - Mode 0: No shadow traffic
+- **Mode 3+**: Route to **Unified Search** 
+  - No shadow traffic needed (unified is primary)
+
+### Feature Flags
+
+Unified Search requires several feature flags to be enabled depending on the desired functionality:
+
+| Feature Flag | Purpose | Stage | Required For |
+|--------------|---------|-------|--------------|
+| `unifiedStorageSearch` | Core search functionality | Experimental | Search API servers, indexing |
+| `unifiedStorageSearchUI` | Frontend search interface | Experimental | Grafana UI search |
+| `unifiedStorageSearchPermissionFiltering` | User permission filtering | GA | Access control in search results |
+| `unifiedStorageSearchSprinkles` | Usage insights integration | Experimental | Dashboard usage sorting (Enterprise) |
+| `unifiedStorageSearchDualReaderEnabled` | Shadow traffic to unified search | Experimental | Shadow traffic during migration |
+
+#### Basic Configuration
+```ini
+[feature_toggles]
+; Core search functionality (required)
+unifiedStorageSearch = true
+
+; Enable search UI (required for frontend)
+unifiedStorageSearchUI = true
+
+; Enable permission filtering (recommended)
+unifiedStorageSearchPermissionFiltering = true
+
+; Enable shadow traffic during migration (optional)
+unifiedStorageSearchDualReaderEnabled = true
+
+; Enable usage insights sorting (Enterprise only)
+unifiedStorageSearchSprinkles = true
+```
+
+### Request Flow Diagrams
+
+#### Search Request Flow with Dual Writer Mode Routing
+
+Search requests originate from multiple sources, and the search client routes based on dual writer mode configuration:
+
+```mermaid
+sequenceDiagram
+    participant UI as Grafana UI
+    participant DS as Dashboard Service
+    participant AS as Alerting Service
+    participant API as API Server
+    participant SC as Search Client
+    participant DW as Dual Writer Check
+    participant LS as Legacy Search
+    participant SD as Search Distributor
+    participant SA as Search API Server
+    participant US as Unified Storage
+    
+    Note over UI,AS: Multiple Request Sources
+    
+    par UI Search
+        UI->>API: Search Request
+        API->>SC: Forward Search
+    and Dashboard Service
+        DS->>SC: Find Dashboards
+    and Alerting Service
+        AS->>SC: Discover Resources
+    end
+    
+    SC->>DW: Check Dual Writer Mode for Resource Type
+    
+    alt Mode 3+ (Unified Primary)
+        DW-->>SC: Route to Unified Search
+        SC->>SD: Route to Unified Search
+        SD->>SA: Forward to Search Server
+        
+        alt Index Available
+            SA->>SA: Query Embedded Bleve Index
+        else Index Missing/Outdated
+            SA->>US: Fetch Resources (Just-in-Time)
+            US-->>SA: Resource Data
+            SA->>SA: Build/Update Bleve Index
+            SA->>SA: Query Updated Index
+        end
+        
+        SA-->>SD: Unified Results
+        SD-->>SC: Response
+        
+        par Return Unified Results
+            SC-->>API: Results
+            API-->>UI: Search Results
+        and Internal Services
+            SC-->>DS: Dashboard Results
+            SC-->>AS: Resource Results
+        end
+        
+    else Mode 0-2 (Legacy Primary)
+        DW-->>SC: Route to Legacy Search
+        SC->>LS: Route to Legacy Search
+        LS-->>SC: Legacy Results
+        
+        par Return Legacy Results
+            SC-->>API: Results  
+            API-->>UI: Search Results
+        and Internal Services
+            SC-->>DS: Dashboard Results
+            SC-->>AS: Resource Results
+        end
+    end
+    
+    Note over SC: Routing decision based on<br/>dual writer mode configuration
+```
+
+#### Search Request Flow with Shadow Traffic
+
+When `unifiedStorageSearchDualReaderEnabled` is enabled and resource is in dual writer Mode 1-2 (legacy primary), shadow traffic is generated:
+
+```mermaid
+sequenceDiagram
+    participant UI as Grafana UI
+    participant DS as Dashboard Service
+    participant AS as Alerting Service
+    participant API as API Server
+    participant SC as Search Client
+    participant DW as Dual Writer Check
+    participant LS as Legacy Search
+    participant US as Unified Search
+    participant BG as Background Request
+    
+    Note over SC: Shadow Traffic Flag Enabled
+    
+    par Request Sources
+        UI->>API: Search Request
+        API->>SC: Forward Search
+    and Dashboard Service
+        DS->>SC: Find Dashboards
+    and Alerting Service
+        AS->>SC: Discover Resources
+    end
+    
+    SC->>DW: Check Dual Writer Mode for Resource Type
+    
+    alt Mode 1-2 + Shadow Flag Enabled
+        DW-->>SC: Use Legacy + Shadow Traffic
+        SC->>LS: Primary Search (Foreground)
+        SC->>BG: Shadow Search (Background, 500ms timeout)
+        
+        par Primary Path
+            LS-->>SC: Legacy Results
+        and Shadow Path
+            BG->>US: Unified Search
+            US-->>BG: Unified Results (Ignored)
+            Note over BG: Errors logged but don't fail request
+        end
+        
+        par Return Legacy Results
+            SC-->>API: Results
+            API-->>UI: Search Results
+        and Internal Services
+            SC-->>DS: Dashboard Results
+            SC-->>AS: Resource Results
+        end
+        
+    else Mode 0 or Mode 3+ or Flag Disabled
+        DW-->>SC: No Shadow Traffic
+        SC->>LS: Legacy Search Only (Mode 0)
+        Note over SC: OR Route to Unified (Mode 3+)
+        LS-->>SC: Results
+        SC-->>AS: Results
+        Note over AS: No shadow traffic:<br/>Mode 0, Mode 3+, or flag disabled
+    end
+    
+    Note over SC: Shadow traffic only for Mode 1-2<br/>with unifiedStorageSearchDualReaderEnabled
+```
+
+### Distributor Architecture
+
+The Search Distributor acts as a smart proxy that routes search requests to the appropriate search API server based on namespace hashing:
+
+```mermaid
+flowchart TD
+    A[Incoming Search Request] --> B[Extract Namespace]
+    B --> C[Hash Namespace with FNV32]
+    C --> D[Query Hash Ring]
+    
+    D --> E{Ring Status}
+    E -->|Active Instances Available| F[Get Replication Set]
+    E -->|No Active Instances| G[Return Error]
+    
+    F --> H[Random Load Balancing]
+    H --> I[Select Instance from Replication Set]
+    I --> J[Get gRPC Client from Pool]
+    J --> K[Forward Request to Target Server]
+    
+    K --> L[Add Proxy Headers]
+    L --> M[Execute Request]
+    M --> N[Return Response]
+```
+
+#### Key Features:
+- **Namespace-based routing**: Each request is routed based on the target namespace
+- **Load balancing**: Random selection among available replicas for the namespace
+- **Health awareness**: Only routes to `ACTIVE` ring instances
+- **Connection pooling**: Reuses gRPC connections for efficiency
+- **Proxy headers**: Adds metadata for debugging and tracing
+
+### Ring Architecture
+
+The hash ring provides consistent, distributed assignment of namespaces to search API servers:
+
+```mermaid
+graph TB
+    subgraph "Hash Ring (128 tokens per instance)"
+        A[Instance A<br/>Tokens: 0-42]
+        B[Instance B<br/>Tokens: 43-85]
+        C[Instance C<br/>Tokens: 86-127]
+    end
+    
+    subgraph "Namespace Distribution"
+        D["Namespace: 'stacks-1'<br/>Hash: 42<br/>→ Instance A"]
+        E["Namespace: 'stacks-2'<br/>Hash: 67<br/>→ Instance B"]
+        F["Namespace: 'stacks-3'<br/>Hash: 95<br/>→ Instance C"]
+    end
+    
+    subgraph "Ring States"
+        G[JOINING<br/>New instance bootstrapping]
+        H[ACTIVE<br/>Serving requests]
+        I[LEAVING<br/>Graceful shutdown]
+    end
+    
+    A --> D
+    B --> E
+    C --> F
+```
+
+#### Ring Properties:
+- **Consistent hashing**: Uses FNV32 hash function for namespace distribution
+- **128 tokens per instance**: Provides good distribution across the ring
+- **Replication factor**: Configurable redundancy (default based on cluster size)
+- **State management**: Instances transition through JOINING → ACTIVE → LEAVING
+- **Automatic rebalancing**: Ring adjusts when instances join/leave
+
+### Namespace-Based Sharding
+
+Unified Search uses namespace-based sharding to distribute search indexes across multiple search API servers:
+
+```mermaid
+flowchart LR
+    subgraph "Namespaces"
+        N1[stacks-1]
+        N2[stacks-2]
+        N3[stacks-3]
+        N4[stacks-4]
+        N5[stacks-5]
+    end
+    
+    subgraph "Hash Ring Distribution"
+        subgraph "Search Server 1"
+            I1[Indexes:<br/>• stacks-1<br/>• stacks-4]
+        end
+        
+        subgraph "Search Server 2" 
+            I2[Indexes:<br/>• stacks-2<br/>• stacks-5]
+        end
+        
+        subgraph "Search Server 3"
+            I3[Indexes:<br/>• stacks-3]
+        end
+    end
+    
+    N1 --> I1
+    N2 --> I2
+    N3 --> I3
+    N4 --> I1
+    N5 --> I2
+```
+
+#### Sharding Benefits:
+1. **Horizontal scalability**: Add more search servers to handle more namespaces
+2. **Resource isolation**: Each namespace's index is independent
+3. **Parallel processing**: Multiple searches can run simultaneously across different servers
+4. **Fault tolerance**: Namespace availability depends only on its assigned server(s)
+
+#### Sharding Algorithm:
+```go
+func getSearchServer(namespace string) string {
+    hash := fnv.New32a()
+    hash.Write([]byte(namespace))
+    
+    // Get replication set from ring
+    replicationSet := ring.GetWithOptions(
+        hash.Sum32(), 
+        searchRingRead, 
+        ring.WithReplicationFactor(ring.ReplicationFactor())
+    )
+    
+    // Random load balancing within replication set
+    instance := replicationSet.Instances[rand.Intn(len(replicationSet.Instances))]
+    return instance.Id
+}
+```
+
+### Search Index Management
+
+Each search API server contains an embedded Bleve search engine that manages indexes for its assigned namespaces:
+
+```mermaid
+flowchart TD
+    subgraph "Search API Server"
+        A[Incoming Search Request] --> B{Index Exists?}
+        
+        B -->|Yes| C[Query Embedded Bleve Index]
+        B -->|No/Outdated| D[Just-in-Time Indexing]
+        
+        D --> E[Fetch Resources from Unified Storage]
+        E --> F[Build Search Documents]
+        F --> G{Index Size Threshold}
+        
+        G -->|Small < FileThreshold| H[Create Memory-based Index]
+        G -->|Large ≥ FileThreshold| I[Create Disk-based Index]
+        
+        H --> J[Store in Embedded Bleve]
+        I --> J
+        
+        J --> C
+        C --> K[Return Search Results]
+    end
+    
+    subgraph "Background Indexing"
+        L[Resource Write Events] --> M[Watch Event Stream]
+        M --> N[Index Queue Processor]
+        N --> O[Batch Document Updates]
+        O --> J
+    end
+    
+    subgraph "Index Features"
+        P[Full-text Search]
+        Q[Field-based Filtering]
+        R[Permission Filtering]
+        S[Usage Insights Integration]
+    end
+    
+    C --> P
+    C --> Q
+    C --> R
+    C --> S
+```
+
+#### Index Architecture Details:
+
+**Embedded Bleve Backend**: Each Search API Server contains its own Bleve search engine instance, not a shared external service.
+
+**Just-in-Time Indexing**: When a search request arrives for a namespace that doesn't have an index (or has an outdated index):
+1. The Search API Server fetches all resources for that namespace from Unified Storage
+2. Builds search documents in memory
+3. Creates either a memory-based or disk-based Bleve index depending on size
+4. Executes the search query against the newly built index
+5. Returns results to the user
+
+**Index Storage Strategy**:
+- **Memory indexes**: For small datasets (< `index_file_threshold` documents)
+- **Disk indexes**: For large datasets (≥ `index_file_threshold` documents)
+- Indexes are stored per Search API Server instance, not globally shared
+
+**Background Updates**: In addition to just-in-time indexing, Search API Servers also maintain indexes through background watch events for incremental updates.
+
+#### Index Configuration:
+```ini
+[unified_storage]
+; Path for disk-based search indexes
+index_path = /var/lib/grafana/unified-search/bleve
+
+; Threshold for file-based vs memory indexes  
+index_file_threshold = 1000
+
+; Maximum batch size for indexing
+index_max_batch_size = 100
+
+; Number of worker threads for indexing
+index_workers = 4
+
+; Cache TTL for indexes
+index_cache_ttl = 1h
+
+; Periodic rebuild interval (for usage insights)
+index_rebuild_interval = 24h
+```
+
+### Search Request Sources
+
+Unified Search serves multiple types of consumers within the Grafana ecosystem:
+
+#### 1. User-Initiated Searches
+- **Source**: Grafana UI search interface
+- **Purpose**: Interactive dashboard and folder discovery
+- **Characteristics**: Real-time, user-facing, latency-sensitive
+- **Endpoint**: `/api/v1/search` (legacy search UI) or `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search` (when `unifiedStorageSearchUI` is enabled)
+
+#### 2. Internal Service Searches
+
+Internal services use different search backends depending on dual writer mode configuration:
+
+- **Dashboard Service**: 
+  - Find related dashboards based on tags, folders, or content
+  - Discover dashboards for playlist creation
+  - Validate dashboard references during operations
+  - **Backend**: Depends on dashboard dual writer mode (Legacy for Mode 0-2, Unified for Mode 3+)
+
+- **Folder Service**:
+  - Retrieve folder contents and nested structures
+  - Resolve folder hierarchy relationships
+  - Check folder permissions and accessibility
+  - **Backend**: Depends on folder dual writer mode (Legacy for Mode 0-2, Unified for Mode 3+)
+
+- **Alerting Service**:
+  - Discover dashboards and panels for alert rule creation
+  - Find existing alert rules across namespaces
+  - Resolve dashboard/panel references in alert definitions
+  - **Backend**: Mixed - dashboard searches use dashboard dual writer mode, alert rule searches typically use legacy
+
+- **Provisioning Service**:
+  - Check for existing resources before provisioning
+  - Validate resource uniqueness and naming conflicts
+  - Discover resources for bulk operations
+  - **Backend**: Depends on each resource type's dual writer mode configuration
+
+- **API Services**:
+  - Backend support for various API endpoints
+  - Resource validation and dependency checking
+  - **Backend**: Routes based on resource type's dual writer mode
+
+#### 3. Search Operation Types
+
+Unified Search supports multiple types of search operations:
+
+##### Resource Search
+- **Purpose**: Find resources (dashboards, folders, etc.) by content
+- **Endpoint**: `/api/v1/search` (legacy) or `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search` (when `unifiedStorageSearchUI` is enabled)
+- **Additional endpoint**: `/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search/sortable` for retrieving sortable fields
+- **Features**: Full-text search, filtering, sorting
+
+##### Federated Search  
+- **Purpose**: Search across multiple resource types simultaneously
+- **Features**: Cross-resource queries, unified result ranking, combined sorting and faceting
+- **Implementation**: Uses Bleve IndexAlias to combine multiple indexes for unified searching
+- **Default behavior**: When no type is specified, automatically federates dashboards and folders
+
+**How Federated Search Works:**
+
+Federated search is implemented using Bleve's IndexAlias feature, which allows searching across multiple indexes as if they were a single unified index. This enables:
+
+1. **Cross-resource queries**: Search for content across dashboards, folders, and other resource types
+2. **Unified sorting**: Results from different resource types are merged and sorted together
+3. **Combined faceting**: Aggregate facet statistics across all federated resource types
+4. **Permission filtering**: Respects user permissions for each resource type independently
+
+**API Usage Examples:**
+
+**1. Default Federation (Dashboards + Folders):**
+```bash
+# When no type is specified, automatically searches dashboards and folders
+GET /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search?query=my-search
+```
+
+**2. Single Resource Type Search:**
+```bash
+# Search only folders (despite the "dashboard" API group, type parameter controls what's searched)
+GET /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search?type=folders&query=my-search
+
+# Search only dashboards
+GET /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search?type=dashboards&query=my-search
+```
+
+**3. Explicit Two-Type Federation:**
+```bash
+# Search dashboards (primary) with folders federated
+GET /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search?type=dashboards&type=folders&query=my-search
+```
+
+**4. Protocol Buffer Request Structure:**
+```protobuf
+message ResourceSearchRequest {
+  ListOptions options = 1;          // Primary resource type to search
+  repeated ResourceKey federated = 2; // Additional resource types to federate
+  string query = 3;                 // Search query applied across all types
+  // ... other fields
+}
+```
+
+**Example gRPC/Protocol Buffer Usage:**
+```go
+searchRequest := &resourcepb.ResourceSearchRequest{
+    Options: &resourcepb.ListOptions{
+        Key: dashboardKey, // Primary: search dashboards
+    },
+    Federated: []*resourcepb.ResourceKey{
+        folderKey, // Also search folders
+    },
+    Query: "monitoring",
+    Limit: 50,
+    SortBy: []*resourcepb.ResourceSearchRequest_Sort{
+        {Field: "title", Desc: false}, // Sort combined results by title
+    },
+}
+```
+
+**5. Unified Results:**
+Federated search returns a single result set containing resources from all specified types, with:
+- **Unified ranking**: All results scored and ranked together
+- **Cross-type sorting**: Resources from different types sorted by common fields (title, tags, etc.)
+- **Resource type identification**: Each result includes metadata indicating its resource type
+- **Permission-aware filtering**: Only returns resources the user has permission to see
+
+**Limitations:**
+- Federation only works across resource types with **common fields** (title, tags, folder, etc.)
+- All federated indexes must be of the same search backend type (currently Bleve)
+- Currently supports up to 2 resource types in federation via the API endpoint
+- **Architectural note**: The search endpoint is under `dashboard.grafana.app` but can search any resource type via the `type` parameter - this is a design choice where the "dashboard search" has evolved into a generic search endpoint
+
+##### Managed Objects
+- **Purpose**: Administrative queries for resource management
+- **Operations**: Count, list, statistics
+
+##### Stats and Monitoring
+- **Purpose**: Index health and performance metrics
+- **Metrics**: Document counts, index sizes, search latency
+
+
+### Monitoring and Observability
+
+Key metrics for monitoring Unified Search:
+
+- `unified_search_requests_total`: Search request counts by type and status
+- `unified_search_request_duration_seconds`: Search request latency
+- `unified_search_index_size_bytes`: Size of search indexes
+- `unified_search_documents_total`: Number of indexed documents
+- `unified_search_indexing_duration_seconds`: Time to build/update indexes
+- `unified_search_shadow_requests_total`: Shadow traffic request counts
+- `unified_search_ring_members`: Number of active search server instances
+
+
