@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config, logMeasurement, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -17,12 +17,15 @@ import {
   SceneGridItemLike,
   SceneDataLayerProvider,
   UserActionEvent,
-  SceneInteractionProfileEvent,
   SceneObjectState,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
+import {
+  getDashboardInteractionCallback,
+  getDashboardSceneProfiler,
+} from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
@@ -292,21 +295,26 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         }
       : undefined;
 
+  const queryController = new behaviors.SceneQueryController(
+    {
+      enableProfiling:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
+    },
+    getDashboardSceneProfiler()
+  );
+
   const behaviorList: SceneObjectState['$behaviors'] = [
     new behaviors.CursorSync({
       sync: oldModel.graphTooltip,
     }),
-    new behaviors.SceneQueryController({
-      enableProfiling:
-        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
-      onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
-    }),
+    queryController,
     registerDashboardMacro,
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     addPanelsOnLoadBehavior,
     new DashboardReloadBehavior({
-      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
+      reloadOnParamsChange: true,
       uid,
     }),
   ];
@@ -499,30 +507,3 @@ export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
     panel.snapshotData = [];
   }
 };
-
-function getDashboardInteractionCallback(uid: string, title: string) {
-  return (e: SceneInteractionProfileEvent) => {
-    reportInteraction('dashboard_render', {
-      interactionType: e.origin,
-      uid,
-      duration: e.duration,
-      networkDuration: e.networkDuration,
-      totalJSHeapSize: e.totalJSHeapSize,
-      usedJSHeapSize: e.usedJSHeapSize,
-      jsHeapSizeLimit: e.jsHeapSizeLimit,
-    });
-
-    logMeasurement(
-      `dashboard_render`,
-      {
-        duration: e.duration,
-        networkDuration: e.networkDuration,
-        totalJSHeapSize: e.totalJSHeapSize,
-        usedJSHeapSize: e.usedJSHeapSize,
-        jsHeapSizeLimit: e.jsHeapSizeLimit,
-        timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
-      },
-      { interactionType: e.origin, dashboard: uid, title: title }
-    );
-  };
-}
