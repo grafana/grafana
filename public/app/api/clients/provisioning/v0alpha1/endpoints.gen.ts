@@ -758,11 +758,21 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type ResourceRef = {
+  /** Group is the group of the resource, such as "dashboard.grafana.app". */
+  group?: string;
+  /** Kind is the type of resource, for example, "Dashboard". */
+  kind?: string;
+  /** Name is the name of the resource, such as a dashboard UID. */
+  name?: string;
+};
 export type DeleteJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
   paths?: string[];
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
+  /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
 };
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */

@@ -618,7 +618,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible)
+			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible)
 			workers := []jobs.Worker{
 				deleteWorker,

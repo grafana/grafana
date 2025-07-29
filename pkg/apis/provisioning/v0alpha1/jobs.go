@@ -147,6 +147,23 @@ type DeleteJobOptions struct {
 	// - nested/deep/ (for a directory)
 	// FIXME: we should validate this in admission hooks
 	Paths []string `json:"paths,omitempty"`
+
+	// Resources to delete
+	// This option has been created because currently the frontend does not use
+	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
+	// is it to use the paths.
+	Resources []ResourceRef `json:"resources,omitempty"`
+}
+
+type ResourceRef struct {
+	// Name is the name of the resource, such as a dashboard UID.
+	Name string `json:"name,omitempty"`
+
+	// Kind is the type of resource, for example, "Dashboard".
+	Kind string `json:"kind,omitempty"`
+
+	// Group is the group of the resource, such as "dashboard.grafana.app".
+	Group string `json:"group,omitempty"`
 }
 
 type MoveJobOptions struct {

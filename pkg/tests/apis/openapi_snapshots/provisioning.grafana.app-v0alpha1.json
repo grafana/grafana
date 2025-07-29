@@ -2645,6 +2645,18 @@
           "ref": {
             "description": "Ref to the branch or commit hash to delete from",
             "type": "string"
+          },
+          "resources": {
+            "description": "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceRef"
+                }
+              ]
+            }
           }
         }
       },
@@ -3843,6 +3855,23 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
               }
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceRef": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "description": "Group is the group of the resource, such as \"dashboard.grafana.app\".",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is the type of resource, for example, \"Dashboard\".",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name is the name of the resource, such as a dashboard UID.",
+            "type": "string"
           }
         }
       },
