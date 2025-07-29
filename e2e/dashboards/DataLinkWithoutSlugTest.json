@@ -77,7 +77,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "11.6.0-pre",
+      "pluginVersion": "11.5.8",
       "targets": [
         {
           "alias": "test1",
@@ -172,7 +172,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0-pre",
+      "pluginVersion": "11.5.8",
       "targets": [
         {
           "datasource": {
