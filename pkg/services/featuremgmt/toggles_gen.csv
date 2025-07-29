@@ -67,6 +67,7 @@ kubernetesClientDashboardsFolders,GA,@grafana/grafana-app-platform-squad,false,f
 dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
+scanRowInvalidDashboardParseFallbackEnabled,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-datasources-core-services,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,false,true,false

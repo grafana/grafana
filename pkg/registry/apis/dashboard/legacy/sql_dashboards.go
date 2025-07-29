@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -61,6 +62,7 @@ type dashboardSqlAccess struct {
 	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
 	provisioning provisioning.ProvisioningService
+	features     featuremgmt.FeatureToggles
 
 	// Use for writing (not reading)
 	dashStore             dashboards.Store
@@ -82,6 +84,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	libraryPanelSvc librarypanels.Service,
 	sorter sort.Service,
 	accessControl accesscontrol.AccessControl,
+	features featuremgmt.FeatureToggles,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
@@ -93,6 +96,7 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		libraryPanelSvc:       libraryPanelSvc,
 		accessControl:         accessControl,
 		log:                   log.New("dashboard.legacysql"),
+		features:              features,
 	}
 }
 
@@ -228,6 +232,54 @@ func (r *rowsWrapper) Value() []byte {
 	return b
 }
 
+func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
+	generatedDashboard := map[string]interface{}{
+		"editable": true,
+		"id":       1,
+		"panels": []map[string]interface{}{
+			{
+				"description": "The JSON is invalid. You can import it again after fixing it.",
+				"gridPos":     map[string]interface{}{"h": 8, "w": 24, "x": 0, "y": 0},
+				"id":          1,
+				"options": map[string]interface{}{
+					"code":    map[string]interface{}{"language": "plaintext", "showLineNumbers": false, "showMiniMap": false},
+					"content": string(data),
+					"mode":    "code",
+				},
+				"title": "Invalid dashboard",
+				"type":  "text",
+			},
+		},
+		"schemaVersion": 41,
+		"title":         title,
+		"uid":           uid,
+		"version":       3,
+	}
+	return json.Marshal(generatedDashboard)
+}
+
+func (a *dashboardSqlAccess) parseDashboard(dash *dashboardV1.Dashboard, data []byte, id int64, title string) error {
+	err := dash.Spec.UnmarshalJSON(data)
+	if err != nil {
+		a.log.Warn("error unmarshalling dashboard spec", "error", err, "uid", dash.UID, "name", dash.Name)
+		dash.Spec = *dashboardV0.NewDashboardSpec()
+
+		dashboardData, err := generateFallbackDashboard(data, title, string(dash.UID))
+		if err != nil {
+			a.log.Warn("error generating fallback dashboard data", "error", err, "uid", dash.UID, "name", dash.Name)
+			return err
+		}
+
+		err = dash.Spec.UnmarshalJSON(dashboardData)
+		fmt.Println("HERE BRO: ", dash.UID, dash.Name, dash.Spec.Object)
+		if err != nil {
+			a.log.Warn("error unmarshalling fallback dashboard data", "error", err, "uid", dash.UID, "name", dash.Name)
+			return err
+		}
+	}
+	return nil
+}
+
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRow, error) {
 	dash := &dashboardV1.Dashboard{
 		TypeMeta:   dashboardV1.DashboardResourceInfo.TypeMeta(),
@@ -238,6 +290,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 	var dashboard_id int64
 	var orgId int64
 	var folder_uid sql.NullString
+	var title string
 	var updated time.Time
 	var updatedBy sql.NullString
 	var updatedByID sql.NullInt64
@@ -257,7 +310,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 	var data []byte // the dashboard JSON
 	var version int64
 
-	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &folder_uid,
+	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &title, &folder_uid,
 		&deleted, &plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&created, &createdBy, &createdByID,
@@ -332,21 +385,22 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if len(data) > 0 {
-			if err = dash.Spec.UnmarshalJSON(data); err != nil {
-				a.log.Warn("error unmarshalling dashboard spec", "error", err, "uid", dash.UID, "name", dash.Name, "version", version)
-				dash.Spec = *dashboardV0.NewDashboardSpec()
-				dash.Spec.Set("title", dash.Name)
-				dash.Spec.Set("uid", string(dash.UID))
-				dash.Spec.Set("version", float64(version))
-				dash.Spec.Set("id", dashboard_id)
-				dash.Spec.Object["value"] = data // store the raw value
+			if a.features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled) {
+				err := a.parseDashboard(dash, data, dashboard_id, title)
+				if err != nil {
+					return row, err
+				}
 			} else {
-				// Ignore any saved values for id/version/uid
-				delete(dash.Spec.Object, "id")
-				delete(dash.Spec.Object, "version")
-				delete(dash.Spec.Object, "uid")
+				err := dash.Spec.UnmarshalJSON(data)
+				if err != nil {
+					return row, fmt.Errorf("JSON unmarshal error for: %s // %w", dash.Name, err)
+				}
 			}
 		}
+		// Ignore any saved values for id/version/uid
+		delete(dash.Spec.Object, "id")
+		delete(dash.Spec.Object, "version")
+		delete(dash.Spec.Object, "uid")
 	}
 	return row, err
 }
