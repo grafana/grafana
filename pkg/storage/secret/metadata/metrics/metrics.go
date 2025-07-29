@@ -13,16 +13,6 @@ const (
 
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
 type StorageMetrics struct {
-	OutboxAppendDuration                *prometheus.HistogramVec
-	OutboxReceiveDuration               prometheus.Histogram
-	OutboxAppendCount                   *prometheus.CounterVec
-	OutboxReceiveCount                  prometheus.Counter
-	OutboxDeleteDuration                prometheus.Histogram
-	OutboxDeleteCount                   prometheus.Counter
-	OutboxIncrementReceiveCountDuration prometheus.Histogram
-	OutboxIncrementReceiveCountCount    prometheus.Counter
-	OutboxTotalMessageLifetimeDuration  *prometheus.HistogramVec
-
 	KeeperMetadataCreateDuration          *prometheus.HistogramVec
 	KeeperMetadataCreateCount             *prometheus.CounterVec
 	KeeperMetadataUpdateDuration          *prometheus.HistogramVec
@@ -45,7 +35,6 @@ type StorageMetrics struct {
 	SecureValueMetadataGetCount       prometheus.Counter
 	SecureValueMetadataListDuration   prometheus.Histogram
 	SecureValueMetadataListCount      prometheus.Counter
-	SecureValueGetForDecryptDuration  prometheus.Histogram
 	SecureValueSetExternalIDDuration  prometheus.Histogram
 	SecureValueSetStatusDuration      prometheus.Histogram
 
@@ -55,67 +44,6 @@ type StorageMetrics struct {
 
 func newStorageMetrics() *StorageMetrics {
 	return &StorageMetrics{
-		// Outbox metrics
-		OutboxAppendDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_append_duration_seconds",
-			Help:      "Duration of outbox message append operations",
-			Buckets:   prometheus.DefBuckets,
-		}, []string{"message_type"}),
-		OutboxAppendCount: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_append_count",
-			Help:      "Count of outbox message append operations",
-		}, []string{"message_type"}),
-		OutboxReceiveDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_receive_duration_seconds",
-			Help:      "Duration of outbox message receive operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
-		OutboxReceiveCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_receive_count",
-			Help:      "Count of outbox message receive operations",
-		}),
-		OutboxDeleteDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_delete_duration_seconds",
-			Help:      "Duration of outbox message delete operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
-		OutboxDeleteCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_delete_count",
-			Help:      "Count of outbox message delete operations",
-		}),
-		OutboxIncrementReceiveCountDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_increment_receive_count_duration_seconds",
-			Help:      "Duration of outbox message increment receive count operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
-		OutboxIncrementReceiveCountCount: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_increment_receive_count_count",
-			Help:      "Count of outbox message increment receive count operations",
-		}),
-		OutboxTotalMessageLifetimeDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "outbox_total_message_lifetime_duration_seconds",
-			Help:      "Total duration of outbox message lifetime",
-			Buckets:   prometheus.DefBuckets,
-		}, []string{"message_type"}),
-
 		// Keeper metrics
 		KeeperMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
@@ -256,13 +184,6 @@ func newStorageMetrics() *StorageMetrics {
 			Name:      "secure_value_metadata_list_count",
 			Help:      "Count of secure value metadata list operations",
 		}),
-		SecureValueGetForDecryptDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_get_for_decrypt_duration_seconds",
-			Help:      "Duration of secure value get for decrypt operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
 		SecureValueSetExternalIDDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
@@ -307,15 +228,6 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 
 		if reg != nil {
 			reg.MustRegister(
-				m.OutboxAppendDuration,
-				m.OutboxAppendCount,
-				m.OutboxReceiveDuration,
-				m.OutboxReceiveCount,
-				m.OutboxDeleteDuration,
-				m.OutboxDeleteCount,
-				m.OutboxIncrementReceiveCountDuration,
-				m.OutboxIncrementReceiveCountCount,
-				m.OutboxTotalMessageLifetimeDuration,
 				m.KeeperMetadataCreateDuration,
 				m.KeeperMetadataCreateCount,
 				m.KeeperMetadataUpdateDuration,
@@ -337,7 +249,6 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueMetadataGetCount,
 				m.SecureValueMetadataListDuration,
 				m.SecureValueMetadataListCount,
-				m.SecureValueGetForDecryptDuration,
 				m.SecureValueSetExternalIDDuration,
 				m.SecureValueSetStatusDuration,
 				m.DecryptDuration,

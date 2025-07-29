@@ -8,13 +8,19 @@ import { createLogLine } from '../mocks/logRow';
 
 import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
 import { LogListFontSize } from './LogList';
-import { LogListContextProvider } from './LogListContext';
+import { LogListContextProvider, LogListContext } from './LogListContext';
 import { LogListSearchContext } from './LogListSearchContext';
-import { defaultProps } from './__mocks__/LogListContext';
+import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn(() => [true, jest.fn()]),
+}));
+
 jest.mock('./LogListContext');
+jest.mock('../LogDetails');
 
 const theme = createTheme();
 const virtualization = new LogLineVirtualization(theme, 'default');
@@ -44,6 +50,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       displayedFields: [],
       index: 0,
       log,
+      logs: [log],
       onClick: jest.fn(),
       showTime: true,
       style: {},
@@ -422,6 +429,40 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
       expect(screen.queryByText('luna')).not.toBeInTheDocument();
       expect(screen.getByText('un')).toBeInTheDocument();
+    });
+  });
+
+  describe('Inline details', () => {
+    test('Details are not rendered if details mode is not inline', () => {
+      render(
+        <LogListContext.Provider
+          value={{
+            ...defaultValue,
+            showDetails: [log],
+            detailsMode: 'sidebar',
+            detailsDisplayed: jest.fn().mockReturnValue(true),
+          }}
+        >
+          <LogLine {...defaultProps} />
+        </LogListContext.Provider>
+      );
+      expect(screen.queryByPlaceholderText('Search field names and values')).not.toBeInTheDocument();
+    });
+
+    test('Details are rendered if details mode is inline', () => {
+      render(
+        <LogListContext.Provider
+          value={{
+            ...defaultValue,
+            showDetails: [log],
+            detailsMode: 'inline',
+            detailsDisplayed: jest.fn().mockReturnValue(true),
+          }}
+        >
+          <LogLine {...defaultProps} />
+        </LogListContext.Provider>
+      );
+      expect(screen.getByPlaceholderText('Search field names and values')).toBeInTheDocument();
     });
   });
 });

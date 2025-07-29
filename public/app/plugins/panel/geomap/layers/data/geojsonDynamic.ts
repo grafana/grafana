@@ -1,5 +1,5 @@
 import { FeatureLike } from 'ol/Feature';
-import OlMap from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
@@ -15,6 +15,7 @@ import {
   GrafanaTheme2,
   PluginState,
   EventBus,
+  DataFrame,
 } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 import { findField } from 'app/features/dimensions/utils';
@@ -65,6 +66,14 @@ export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
   },
 };
 
+// Default configuration with tooltip support enabled
+export const defaultDynamicGeoJSONConfig: MapLayerOptions<DynamicGeoJSONMapperConfig> = {
+  type: 'dynamic-geojson',
+  name: 'Dynamic GeoJSON',
+  config: defaultOptions,
+  tooltip: true,
+};
+
 export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfig> = {
   id: 'dynamic-geojson',
   name: 'Dynamic GeoJSON',
@@ -78,7 +87,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
    * @param options
    * @param theme
    */
-  create: async (map: OlMap, options: MapLayerOptions<DynamicGeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<DynamicGeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({
@@ -88,11 +97,20 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
 
     const features = new ReplaySubject<FeatureLike[]>();
 
+    // Function to update feature properties for tooltip support
+    const updateFeatureProperties = (frame?: DataFrame) => {
+      updateFeaturePropertiesForTooltip(source, frame, config.idField, idToIdx);
+    };
+
     const key = source.on('change', () => {
       //one geojson loads
       if (source.getState() === 'ready') {
         unByKey(key);
         features.next(source.getFeatures());
+        // Apply current data to newly loaded features
+        if (currentFrame) {
+          updateFeatureProperties(currentFrame);
+        }
       }
     });
 
@@ -117,14 +135,16 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
 
     const style = await getStyleConfigState(config.style);
     const idToIdx = new Map<string, number>();
+    let currentFrame: DataFrame | undefined = undefined;
 
     const vectorLayer = new VectorImage({
       source,
       style: (feature: FeatureLike) => {
-        const idx = idToIdx.get(feature.getId() as string);
+        const featureId = feature.getId();
+        const idx = featureId != null ? idToIdx.get(String(featureId)) : undefined;
         const dims = style.dims;
 
-        if (idx && dims) {
+        if (idx !== undefined && dims) {
           return new Style({
             fill: new Fill({ color: dims.color?.get(idx) }),
             stroke: new Stroke({ color: style.base.color, width: style.base.lineWidth ?? 1 }),
@@ -174,12 +194,12 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
       update: (data: PanelData) => {
         const frame = data.series[0];
         if (frame) {
-          const field = findField(frame, config.idField);
-          if (field) {
-            idToIdx.clear();
-            field.values.forEach((v, i) => idToIdx.set(v, i));
-          }
-
+          currentFrame = frame;
+          
+          // Update feature properties for tooltip support
+          updateFeatureProperties(frame);
+          
+          // Update style dimensions for data-driven styling
           style.dims = getStyleDimension(frame, style, theme, config.dataStyle);
         }
         vectorLayer.changed();
@@ -232,3 +252,39 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
   },
   defaultOptions,
 };
+
+/**
+ * Helper function to update feature properties for tooltip support
+ * @param source - OpenLayers vector source containing features
+ * @param frame - DataFrame containing the data
+ * @param idField - Field name to use for matching feature IDs
+ * @param idToIdx - Map to store ID to row index mappings
+ */
+export function updateFeaturePropertiesForTooltip(
+  source: VectorSource,
+  frame: DataFrame | undefined,
+  idField: string | undefined,
+  idToIdx: Map<string, number>
+): void {
+  if (!frame || !idField) {
+    return;
+  }
+  
+  const field = findField(frame, idField);
+  if (field) {
+    idToIdx.clear();
+    field.values.forEach((v, i) => idToIdx.set(String(v), i));
+    
+    source.forEachFeature((feature) => {
+      const featureId = feature.getId();
+      if (featureId != null) {
+        const rowIndex = idToIdx.get(String(featureId));
+        if (rowIndex !== undefined) {
+          // Set tooltip properties without overwriting existing GeoJSON properties
+          feature.set('frame', frame);
+          feature.set('rowIndex', rowIndex);
+        }
+      }
+    });
+  }
+}

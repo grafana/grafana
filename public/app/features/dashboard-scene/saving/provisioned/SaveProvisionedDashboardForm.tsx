@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
@@ -15,6 +16,7 @@ import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
 import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
+import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
@@ -26,10 +28,10 @@ import { getProvisionedMeta } from './utils/getProvisionedMeta';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  isGitHub: boolean;
   loadedFromRef?: string;
   workflowOptions: Array<{ label: string; value: string }>;
   readOnly: boolean;
+  repository?: RepositoryView;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -39,9 +41,9 @@ export function SaveProvisionedDashboardForm({
   changeInfo,
   isNew,
   loadedFromRef,
-  isGitHub,
   workflowOptions,
   readOnly,
+  repository,
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
@@ -91,7 +93,14 @@ export function SaveProvisionedDashboardForm({
   const onBranchSuccess = (ref: string, path: string) => {
     panelEditor?.onDiscard();
     drawer.onClose();
-    navigate(`${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?ref=${ref}`);
+
+    const url = buildResourceBranchRedirectUrl({
+      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+      paramName: 'ref',
+      paramValue: ref,
+      repoType: request.data?.repository?.type,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({
@@ -120,6 +129,8 @@ export function SaveProvisionedDashboardForm({
       ref = loadedFromRef;
     }
 
+    const message = comment || `Save dashboard: ${dashboard.state.title}`;
+
     const body = dashboard.getSaveResource({
       isNew,
       title,
@@ -130,7 +141,7 @@ export function SaveProvisionedDashboardForm({
       ref,
       name: repo,
       path,
-      message: comment,
+      message,
       body,
     });
   };
@@ -219,7 +230,7 @@ export function SaveProvisionedDashboardForm({
             readOnly={readOnly}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            repository={repository}
             isNew={isNew}
           />
 

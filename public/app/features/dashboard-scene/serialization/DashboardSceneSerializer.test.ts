@@ -10,7 +10,6 @@ import { Dashboard, VariableModel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-  defaultDataQueryKind,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
   GridLayoutKind,
@@ -41,6 +40,9 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     bootData: {
+      user: {
+        timezone: 'UTC',
+      },
       settings: {
         defaultDatasource: '-- Grafana --',
         datasources: {
@@ -724,14 +726,9 @@ describe('DashboardSceneSerializer', () => {
               spec: {
                 builtIn: true,
                 name: 'Annotations & Alerts',
-                query: {
-                  kind: 'DataQuery',
-                  version: defaultDataQueryKind().version,
-                  group: 'grafana',
-                  datasource: {
-                    name: '-- Grafana --',
-                  },
-                  spec: {},
+                datasource: {
+                  uid: '-- Grafana --',
+                  type: 'grafana',
                 },
                 enable: true,
                 hide: true,
@@ -1020,7 +1017,7 @@ describe('DashboardSceneSerializer', () => {
                           refId: 'A',
                           hidden: false,
                           // No datasource defined
-                          query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'sql', spec: {} },
+                          query: { kind: 'sql', spec: {} },
                         },
                       },
                       {
@@ -1028,15 +1025,8 @@ describe('DashboardSceneSerializer', () => {
                         spec: {
                           refId: 'B',
                           hidden: false,
-                          query: {
-                            kind: 'DataQuery',
-                            version: defaultDataQueryKind().version,
-                            group: 'prometheus',
-                            datasource: {
-                              name: 'datasource-1',
-                            },
-                            spec: {},
-                          },
+                          datasource: { uid: 'datasource-1', type: 'prometheus' },
+                          query: { kind: 'prometheus', spec: {} },
                         },
                       },
                     ],
@@ -1071,7 +1061,7 @@ describe('DashboardSceneSerializer', () => {
                           refId: 'C',
                           hidden: false,
                           // No datasource defined
-                          query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'sql', spec: {} },
+                          query: { kind: 'sql', spec: {} },
                         },
                       },
                     ],
@@ -1119,7 +1109,7 @@ describe('DashboardSceneSerializer', () => {
               kind: 'AnnotationQuery',
               spec: {
                 name: 'Annotation 1',
-                query: { kind: 'DataQuery', version: defaultDataQueryKind().version, group: 'prometheus', spec: {} },
+                query: { kind: 'prometheus', spec: {} },
                 enable: true,
                 hide: false,
                 iconColor: 'red',

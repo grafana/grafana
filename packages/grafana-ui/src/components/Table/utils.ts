@@ -196,6 +196,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DataLinksCell;
     case TableCellDisplayMode.Actions:
       return ActionsCell;
+    case TableCellDisplayMode.Pill:
+      return DefaultCell; // Legacy table doesn't support pill cells, fallback to default
   }
 
   if (field.type === FieldType.geo) {
@@ -764,10 +766,16 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
   return longestField;
 }
 
-export type DataLinksActionsTooltipCoords = {
+export interface DataLinksActionsTooltipState {
+  coords: DataLinksActionsTooltipCoords;
+  links?: LinkModel[];
+  actions?: ActionModel[];
+}
+
+export interface DataLinksActionsTooltipCoords {
   clientX: number;
   clientY: number;
-};
+}
 
 export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: ActionModel[]) => {
   const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);

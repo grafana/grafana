@@ -10,7 +10,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
 
 import { appEvents } from '../../../core/core';
 import { ResponseTransformers } from '../api/ResponseTransformers';

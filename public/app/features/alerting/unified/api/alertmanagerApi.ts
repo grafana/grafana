@@ -2,7 +2,7 @@ import { isEmpty } from 'lodash';
 
 import { encodeMatcher } from 'app/features/alerting/unified/utils/matchers';
 import { dispatch } from 'app/store/store';
-import { ReceiversStateDTO } from 'app/types/alerting';
+import { NotificationChannelOption, NotifierDTO, ReceiversStateDTO } from 'app/types/alerting';
 
 import {
   AlertManagerCortexConfig,
@@ -14,7 +14,6 @@ import {
   GrafanaAlertingConfiguration,
   Matcher,
 } from '../../../../plugins/datasource/alertmanager/types';
-import { NotificationChannelOption, NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToMatcherField } from '../utils/alertmanager';
 import {

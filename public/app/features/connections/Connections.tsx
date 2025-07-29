@@ -1,6 +1,6 @@
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom-v5-compat';
 
-import { StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from './constants';
 import { AddNewConnectionPage } from './pages/AddNewConnectionPage';

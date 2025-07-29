@@ -885,11 +885,6 @@ describe('Plugin details page', () => {
         isDataSourceEditor: false,
         isOrgAdmin: true,
       });
-      config.featureToggles.pluginsDetailsRightPanel = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.pluginsDetailsRightPanel = false;
     });
 
     it('should display Latest release date and report a concern information', async () => {

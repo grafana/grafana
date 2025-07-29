@@ -5,7 +5,8 @@ import { t } from '@grafana/i18n';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector } from 'app/types/store';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -109,4 +110,31 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
     default:
       return new GeneralSettingsEditView({});
   }
+}
+
+export type ResourceBranchUrlOptions = {
+  baseUrl?: string;
+  paramName?: string;
+  paramValue?: string;
+  repoType?: string;
+};
+
+export function buildResourceBranchRedirectUrl({
+  baseUrl = '/dashboards',
+  paramName,
+  paramValue,
+  repoType,
+}: ResourceBranchUrlOptions): string {
+  const params = new URLSearchParams();
+
+  if (paramName && paramValue) {
+    params.set(paramName, paramValue);
+  }
+
+  if (repoType) {
+    params.set('repo_type', repoType);
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 }

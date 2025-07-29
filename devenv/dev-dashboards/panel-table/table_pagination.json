@@ -2662,9 +2662,10 @@
         }
     ],
     "schemaVersion": 32,
-      "tags": [
-        "gdev",
-        "panel-tests"
+    "tags": [
+      "gdev",
+      "panel-tests",
+      "table"
     ],
     "templating": {
         "list": []
@@ -2675,8 +2676,8 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Table panel - Pagination",
+    "title": "Panel Tests - Table - Pagination",
     "uid": "1YGJxPUnz",
-    "version": 2,
+    "version": 3,
     "weekStart": ""
 }

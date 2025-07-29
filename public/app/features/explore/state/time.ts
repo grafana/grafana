@@ -17,7 +17,8 @@ import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { ExploreItemState, ThunkDispatch, ThunkResult } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+import { ThunkDispatch, ThunkResult } from 'app/types/store';
 
 import { syncTimesAction } from './main';
 import { runLoadMoreLogsQueries, runQueries } from './query';

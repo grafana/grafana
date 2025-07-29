@@ -22,7 +22,6 @@ import {
   CustomVariableKind,
   Spec as DashboardV2Spec,
   DatasourceVariableKind,
-  defaultDataQueryKind,
   GridLayoutItemSpec,
   GridLayoutSpec,
   GroupByVariableKind,
@@ -139,7 +138,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Variables
     const variables = scene.state?.$variables;
     expect(variables?.state.variables).toHaveLength(dash.variables.length);
-
     validateVariable({
       sceneVariable: variables?.state.variables[0],
       variableKind: dash.variables[0] as QueryVariableKind,
@@ -208,25 +206,35 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Annotations
     expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
     const dataLayers = scene.state.$data as DashboardDataLayerSet;
+    // we should get two annotations, Grafana built-in and the custom ones
     expect(dataLayers.state.annotationLayers).toHaveLength(dash.annotations.length);
-    expect(dataLayers.state.annotationLayers[0].state.name).toBe(dash.annotations[0].spec.name);
-    expect(dataLayers.state.annotationLayers[0].state.isEnabled).toBe(dash.annotations[0].spec.enable);
-    expect(dataLayers.state.annotationLayers[0].state.isHidden).toBe(dash.annotations[0].spec.hide);
+    expect(dataLayers.state.annotationLayers).toHaveLength(5);
+
+    // Built-in
+    const builtInAnnotation = dataLayers.state.annotationLayers[0] as unknown as DashboardAnnotationsDataLayer;
+    expect(builtInAnnotation.state.name).toBe('Annotations & Alerts');
+    expect(builtInAnnotation.state.isEnabled).toBe(true);
+    expect(builtInAnnotation.state.isHidden).toBe(true);
+    expect(builtInAnnotation.state?.query.builtIn).toBe(1);
 
     // Enabled
     expect(dataLayers.state.annotationLayers[1].state.name).toBe(dash.annotations[1].spec.name);
     expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(dash.annotations[1].spec.enable);
     expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(dash.annotations[1].spec.hide);
 
-    // Disabled
     expect(dataLayers.state.annotationLayers[2].state.name).toBe(dash.annotations[2].spec.name);
     expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(dash.annotations[2].spec.enable);
     expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(dash.annotations[2].spec.hide);
 
-    // Hidden
+    // Disabled
     expect(dataLayers.state.annotationLayers[3].state.name).toBe(dash.annotations[3].spec.name);
     expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(dash.annotations[3].spec.enable);
     expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(dash.annotations[3].spec.hide);
+
+    // Hidden
+    expect(dataLayers.state.annotationLayers[4].state.name).toBe(dash.annotations[4].spec.name);
+    expect(dataLayers.state.annotationLayers[4].state.isEnabled).toBe(dash.annotations[4].spec.enable);
+    expect(dataLayers.state.annotationLayers[4].state.isHidden).toBe(dash.annotations[4].spec.hide);
 
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
@@ -271,14 +279,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
+        datasource: {
+          type: 'graphite',
+          uid: 'datasource1',
+        },
         hidden: false,
         query: {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: 'graphite',
-          datasource: {
-            name: 'datasource1',
-          },
+          kind: 'prometheus',
           spec: {
             expr: 'test-query',
           },
@@ -300,14 +307,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
+        datasource: {
+          type: 'prometheus',
+          uid: 'datasource1',
+        },
         hidden: false,
         query: {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: 'prometheus',
-          datasource: {
-            name: 'datasource1',
-          },
+          kind: 'prometheus',
           spec: {
             expr: 'test-query',
           },
@@ -334,12 +340,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         refId: 'A',
         hidden: false,
         query: {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: 'prometheus',
-          datasource: {
-            name: 'abc123',
-          },
+          kind: 'prometheus',
           spec: {
             expr: 'test-query',
           },
@@ -721,21 +722,16 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 enable: true,
                 hide: false,
                 iconColor: 'purple',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'abc123',
+                },
                 legacyOptions: {
                   expr: 'rate(http_requests_total[5m])',
                   queryType: 'range',
                   legendFormat: '{{method}} {{endpoint}}',
                   useValueAsTime: true,
                   step: '1m',
-                },
-                query: {
-                  kind: 'DataQuery',
-                  version: defaultDataQueryKind().version,
-                  group: 'prometheus',
-                  datasource: {
-                    name: 'abc123',
-                  },
-                  spec: {},
                 },
               },
             },
@@ -768,36 +764,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       // Get the annotation layers
       const dataLayerSet = scene.state.$data as DashboardDataLayerSet;
       expect(dataLayerSet).toBeDefined();
+      // it should have two annotation layers, built-in and custom
       expect(dataLayerSet.state.annotationLayers.length).toBe(2);
-      const defaultAnnotationLayer = dataLayerSet.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
-
-      // Verify that the default annotation layer has been correctly initialized
-      expect(defaultAnnotationLayer.state.query).toEqual({
-        datasource: {
-          uid: '-- Grafana --',
-          type: 'grafana',
-        },
-        builtIn: 1,
-        enable: true,
-        iconColor: 'rgba(0, 211, 255, 1)',
-        name: 'Annotations & Alerts',
-        filter: undefined,
-        hide: true,
-      });
 
       const annotationLayer = dataLayerSet.state.annotationLayers[1] as DashboardAnnotationsDataLayer;
 
       // Verify that the legacyOptions have been merged into the query object
       expect(annotationLayer.state.query).toMatchObject({
-        datasource: {
-          uid: 'abc123',
-          type: 'prometheus',
-        },
         name: 'Annotation with legacy options',
-        builtIn: 0,
-        enable: true,
-        hide: false,
-        iconColor: 'purple',
         expr: 'rate(http_requests_total[5m])',
         queryType: 'range',
         legendFormat: '{{method}} {{endpoint}}',

@@ -233,7 +233,7 @@
       "title-error-occurred": "Terjadi kesalahan saat meminta sumber daya dari Azure Monitor"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Ruang Lingkup"
     },
     "search": {
       "aria-label-resource-search": "Pencarian sumber daya",

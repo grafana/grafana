@@ -17,7 +17,7 @@ weight: 1000
 Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP, OAuth, or SAML users who are members of certain teams or groups to automatically be added or removed as members of certain teams in Grafana.
 
 {{< admonition type="note" >}}
-Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
 Grafana keeps track of all synchronized users in teams, and you can see which users have been synchronized in the team members list, see `LDAP` label in screenshot.
@@ -51,7 +51,6 @@ If you have already grouped some users into a team, then you can synchronize tha
 
 1. Insert the value of the group you want to sync with. This becomes the Grafana `GroupID`.
    Examples:
-
    - For LDAP, this is the LDAP distinguished name (DN) of LDAP group you want to synchronize with the team.
    - For Auth Proxy, this is the value we receive as part of the custom `Groups` header.
 

@@ -27,7 +27,8 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
-import { LdapPayload, MapKeyCertConfigured, StoreState } from 'app/types';
+import { LdapPayload, MapKeyCertConfigured } from 'app/types/ldap';
+import { StoreState } from 'app/types/store';
 
 import { LdapDrawerComponent } from './LdapDrawer';
 

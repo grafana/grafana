@@ -26,7 +26,7 @@ import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
-import { LogLineDetails } from './LogLineDetails';
+import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
@@ -41,6 +41,7 @@ export interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
+  detailsMode?: LogLineDetailsMode;
   displayedFields: string[];
   enableLogDetails: boolean;
   eventBus?: EventBus;
@@ -58,6 +59,7 @@ export interface Props {
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
+  noInteractions?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterString?: (value: string, refId?: string) => void;
@@ -105,11 +107,12 @@ export const LogList = ({
   app,
   displayedFields,
   containerElement,
+  logOptionsStorageKey,
+  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'sidebar') : 'sidebar',
   dedupStrategy,
   enableLogDetails,
   eventBus,
   filterLevels,
-  logOptionsStorageKey,
   fontSize = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.fontSize`) ?? 'default') : 'default',
   getFieldLinks,
   getRowContextQuery,
@@ -122,6 +125,7 @@ export const LogList = ({
   logs,
   logsMeta,
   logSupportsContext,
+  noInteractions,
   onClickFilterLabel,
   onClickFilterOutLabel,
   onClickFilterString,
@@ -146,24 +150,24 @@ export const LogList = ({
   timeZone,
   wrapLogMessage,
 }: Props) => {
-  const hasUnescapedContent = useMemo(() => logs.some((log) => log.hasUnescapedContent), [logs]);
   return (
     <LogListContextProvider
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
+      detailsMode={detailsMode}
       displayedFields={displayedFields}
       enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
       fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
-      hasUnescapedContent={hasUnescapedContent}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}
       logLineMenuCustomItems={logLineMenuCustomItems}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
+      noInteractions={noInteractions}
       onClickFilterLabel={onClickFilterLabel}
       onClickFilterOutLabel={onClickFilterOutLabel}
       onClickFilterString={onClickFilterString}
@@ -222,6 +226,7 @@ const LogListComponent = ({
     app,
     displayedFields,
     dedupStrategy,
+    detailsMode,
     filterLevels,
     fontSize,
     forceEscape,
@@ -456,9 +461,11 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
+                detailsMode,
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
+                showDetails,
                 showTime,
                 wrap: wrapLogMessage,
               })}
@@ -468,7 +475,7 @@ const LogListComponent = ({
               outerRef={scrollRef}
               overscanCount={5}
               ref={listRef}
-              style={{ overflowY: 'scroll' }}
+              style={wrapLogMessage ? { overflowY: 'scroll' } : { overflow: 'scroll' }}
               width="100%"
             >
               {Renderer}
@@ -476,7 +483,7 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
-      {showDetails.length > 0 && (
+      {detailsMode === 'sidebar' && showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
           focusLogLine={focusLogLine}
@@ -501,6 +508,9 @@ function getStyles(
       '& .unwrapped-log-line': {
         display: 'grid',
         gridTemplateColumns: getGridTemplateColumns(columns, displayedFields),
+        '& .field': {
+          overflow: 'hidden',
+        },
       },
     }),
     logListContainer: css({

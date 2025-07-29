@@ -3,7 +3,7 @@ import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
 import { Resource } from 'app/features/apiserver/types';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
@@ -72,6 +72,10 @@ export function isV1DashboardCommand(
   cmd: SaveDashboardCommand<Dashboard | DashboardV2Spec>
 ): cmd is SaveDashboardCommand<Dashboard> {
   return !isDashboardV2Spec(cmd.dashboard);
+}
+
+export function isV1ClassicDashboard(obj: Dashboard | DashboardV2Spec): obj is Dashboard {
+  return !isDashboardV2Spec(obj);
 }
 
 export function isV2DashboardCommand(

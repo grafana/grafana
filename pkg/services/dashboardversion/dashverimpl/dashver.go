@@ -61,6 +61,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 			userService,
 			unified,
 			sorter,
+			features,
 		),
 		dashSvc: dashboardService,
 		log:     log.New("dashboard-version"),

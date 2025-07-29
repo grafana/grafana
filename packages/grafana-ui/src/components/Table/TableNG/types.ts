@@ -10,7 +10,6 @@ import {
   TimeRange,
   FieldConfigSource,
   ActionModel,
-  InterpolateFunction,
   FieldType,
   DataFrameWithValue,
   SelectableValue,
@@ -30,12 +29,9 @@ export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: 
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (
-  frame: DataFrame,
-  field: Field,
-  rowIndex: number,
-  replaceVariables?: InterpolateFunction
-) => ActionModel[];
+export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
@@ -135,6 +131,7 @@ export interface BaseTableProps {
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
   structureRev?: number;
+  transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
@@ -142,7 +139,6 @@ export interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  replaceVariables?: InterpolateFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
 }
@@ -151,7 +147,6 @@ export interface BaseTableProps {
 export interface TableNGProps extends BaseTableProps {}
 
 export interface TableCellRendererProps {
-  actions?: ActionModel[];
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -165,6 +160,7 @@ export interface TableCellRendererProps {
   cellInspect: boolean;
   showFilters: boolean;
   justifyContent: Property.JustifyContent;
+  getActions?: GetActionsFunctionLocal;
 }
 
 export type ContextMenuProps = {
@@ -205,7 +201,7 @@ export interface SparklineCellProps {
   width: number;
 }
 
-export interface BarGaugeCellProps extends ActionCellProps {
+export interface BarGaugeCellProps {
   field: Field;
   height: number;
   rowIdx: number;
@@ -214,19 +210,12 @@ export interface BarGaugeCellProps extends ActionCellProps {
   width: number;
 }
 
-export interface ImageCellProps extends ActionCellProps {
+export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
   height: number;
   justifyContent: Property.JustifyContent;
   value: TableCellValue;
-  rowIdx: number;
-}
-
-export interface JSONCellProps extends ActionCellProps {
-  justifyContent: Property.JustifyContent;
-  value: TableCellValue;
-  field: Field;
   rowIdx: number;
 }
 
@@ -241,22 +230,22 @@ export interface GeoCellProps {
   height: number;
 }
 
-export interface ActionCellProps {
-  actions?: ActionModel[];
-}
-
 export interface CellColors {
   textColor?: string;
   bgColor?: string;
   bgHoverColor?: string;
 }
 
-export interface AutoCellProps extends ActionCellProps {
-  value: TableCellValue;
+export interface AutoCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
+  value: TableCellValue;
   rowIdx: number;
-  cellOptions: TableCellOptions;
+}
+
+export interface ActionCellProps {
+  field: Field;
+  rowIdx: number;
+  getActions: GetActionsFunctionLocal;
 }
 
 // Comparator for sorting table values
@@ -271,4 +260,30 @@ export type ColumnTypes = Record<string, FieldType>;
 export interface ScrollPosition {
   x: number;
   y: number;
+}
+
+export interface TypographyCtx {
+  ctx: CanvasRenderingContext2D;
+  font: string;
+  avgCharWidth: number;
+  estimateLines: LineCounter;
+  wrappedCount: LineCounter;
+}
+
+export type LineCounter = (value: unknown, width: number) => number;
+export interface LineCounterEntry {
+  /**
+   * given a values and the available width, returns the line count for that value
+   */
+  counter: LineCounter;
+  /**
+   * if getting an accurate line count is expensive, you can provide an estimate method
+   * which will be used when looping over the row. the counter method will only be invoked
+   * for the cell which is the maximum line count for the row.
+   */
+  estimate?: LineCounter;
+  /**
+   * indicates which field indexes of the visible fields this line counter applies to.
+   */
+  fieldIdxs: number[];
 }

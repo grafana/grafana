@@ -5,17 +5,22 @@ process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylig
 
 const esModules = [
   '@glideapps/glide-data-grid',
+  '@wojtekmaj/date-utils',
   'ol',
   'd3',
   'd3-color',
   'd3-interpolate',
   'delaunator',
+  'get-user-locale',
   'internmap',
   'robust-predicates',
   'leven',
   'nanoid',
   'marked',
+  'memoize',
+  'mimic-function',
   'monaco-promql',
+  'react-calendar',
   '@kusto/monaco-kusto',
   'monaco-editor',
   '@msagl',
@@ -25,6 +30,11 @@ const esModules = [
   'react-data-grid',
   '@grafana/llm',
   'pkce-challenge',
+  'quickselect',
+  'rbush',
+  'earcut',
+  'pbf',
+  'geotiff',
 ].join('|');
 
 module.exports = {
@@ -64,4 +74,19 @@ module.exports = {
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    // Decoupled plugins run their own tests so ignoring them here.
+    '<rootDir>/public/app/plugins/datasource/azuremonitor',
+    '<rootDir>/public/app/plugins/datasource/cloud-monitoring',
+    '<rootDir>/public/app/plugins/datasource/grafana-postgresql-datasource',
+    '<rootDir>/public/app/plugins/datasource/grafana-pyroscope-datasource',
+    '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
+    '<rootDir>/public/app/plugins/datasource/jaeger',
+    '<rootDir>/public/app/plugins/datasource/mysql',
+    '<rootDir>/public/app/plugins/datasource/parca',
+    '<rootDir>/public/app/plugins/datasource/tempo',
+    '<rootDir>/public/app/plugins/datasource/zipkin',
+  ],
+  projects: ['<rootDir>'],
 };

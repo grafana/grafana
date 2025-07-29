@@ -30,8 +30,8 @@ export const CONFIG_SECTION_HEADERS_WITH_PDC = [
 ];
 
 export const HTTP_MODES: ComboboxOption[] = [
-  { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
+  { label: 'GET', value: 'GET' },
 ];
 
 export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?: number | 'auto') => {

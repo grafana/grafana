@@ -2,7 +2,6 @@ import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } fro
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   Spec as DashboardV2Spec,
-  defaultDataQueryKind,
   GridLayoutItemKind,
   GridLayoutKind,
   PanelKind,
@@ -25,7 +24,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import {
   getDefaultDatasource,
@@ -467,14 +466,10 @@ describe('ResponseTransformers', () => {
                 {
                   kind: 'PanelQuery',
                   spec: {
+                    datasource: 'datasource1',
                     hidden: false,
                     query: {
-                      kind: 'DataQuery',
-                      version: defaultDataQueryKind().version,
-                      group: 'prometheus',
-                      datasource: {
-                        name: 'datasource1',
-                      },
+                      kind: 'prometheus',
                       spec: {
                         expr: 'test-query',
                       },
@@ -978,9 +973,11 @@ describe('ResponseTransformers', () => {
 
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.query.group).toEqual('theoretical-ds');
-          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
-          expect(query.spec.query.kind).toBe('DataQuery');
+          expect(query.spec.datasource).toEqual({
+            type: 'theoretical-ds',
+            uid: 'theoretical-uid',
+          });
+          expect(query.spec.query.kind).toBe('theoretical-ds');
         });
       });
 
@@ -1006,9 +1003,11 @@ describe('ResponseTransformers', () => {
 
         result.forEach((query) => {
           expect(query.kind).toBe('PanelQuery');
-          expect(query.spec.query.group).toEqual('theoretical-ds');
-          expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
-          expect(query.spec.query.kind).toBe('DataQuery');
+          expect(query.spec.datasource).toEqual({
+            type: 'theoretical-ds',
+            uid: 'theoretical-uid',
+          });
+          expect(query.spec.query.kind).toBe('theoretical-ds');
         });
       });
     });
@@ -1018,8 +1017,7 @@ describe('ResponseTransformers', () => {
     const { spec: v2Spec } = v2;
 
     expect(v1.name).toBe(v2Spec.name);
-    expect(v1.datasource?.type).toBe(v2Spec.query?.spec.group);
-    expect(v1.datasource?.uid).toBe(v2Spec.query?.spec.datasource?.name);
+    expect(v1.datasource).toBe(v2Spec.datasource);
     expect(v1.enable).toBe(v2Spec.enable);
     expect(v1.hide).toBe(v2Spec.hide);
     expect(v1.iconColor).toBe(v2Spec.iconColor);
@@ -1045,10 +1043,7 @@ describe('ResponseTransformers', () => {
         return {
           refId: q.spec.refId,
           hide: q.spec.hidden,
-          datasource: {
-            type: q.spec.query.spec.group,
-            uid: q.spec.query.spec.datasource?.uid,
-          },
+          datasource: q.spec.datasource,
           ...q.spec.query.spec,
         };
       })
@@ -1098,24 +1093,18 @@ describe('ResponseTransformers', () => {
     };
 
     expect(v2Common).toEqual(v1Common);
+
     if (v2.kind === 'QueryVariable') {
-      expect(v2.spec.query).toMatchObject({
-        kind: 'DataQuery',
-        version: defaultDataQueryKind().version,
-        group: (v1.datasource?.type || getDefaultDataSourceRef()?.type) ?? 'grafana',
-        ...(v1.datasource?.uid && {
-          datasource: {
-            name: v1.datasource?.uid,
-          },
-        }),
-      });
+      expect(v2.spec.datasource).toEqual(v1.datasource);
+
       if (typeof v1.query === 'string') {
-        expect(v2.spec.query.spec).toEqual({
-          [LEGACY_STRING_VALUE_KEY]: v1.query,
-        });
+        expect(v2.spec.query.spec[LEGACY_STRING_VALUE_KEY]).toEqual(v1.query);
       } else {
-        expect(v2.spec.query.spec).toEqual({
-          ...(typeof v1.query === 'object' ? v1.query : {}),
+        expect(v2.spec.query).toEqual({
+          kind: v1.datasource?.type,
+          spec: {
+            ...(typeof v1.query === 'object' ? v1.query : {}),
+          },
         });
       }
     }

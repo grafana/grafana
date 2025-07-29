@@ -4,7 +4,7 @@ import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@
 import { DataSourceSrv, FetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { ThunkResult, ThunkDispatch } from 'app/types';
+import { ThunkResult, ThunkDispatch } from 'app/types/store';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';

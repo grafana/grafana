@@ -278,6 +278,10 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			q = q.MustCols("help_flags1")
 			usr.HelpFlags1 = *cmd.HelpFlags1
 		})
+		setOptional(cmd.IsProvisioned, func(v bool) {
+			q = q.UseBool("is_provisioned")
+			usr.IsProvisioned = v
+		})
 
 		if _, err := q.Update(&usr); err != nil {
 			return err

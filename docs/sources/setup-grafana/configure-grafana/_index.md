@@ -2655,8 +2655,6 @@ If `true`, propagate the tracing context to the plugin backend and enable tracin
 
 Load an external version of a core plugin if it has been installed.
 
-Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
-
 <hr>
 
 ### `[plugin.grafana-image-renderer]`
@@ -2838,22 +2836,14 @@ For example:
 
 ```ini
 [time_picker]
-quick_ranges = [
-  {
-    "display": "Last 5 minutes",
-    "from": "now-5m",
-    "to": "now",
-  },
-  {
-    "display": "Yesterday",
-    "from": "now-1d/d",
-  },
-  {
-    "display": "Today so far",
-    "from": "now/d",
-    "to": "now",
-  }
-]
+quick_ranges = """[
+{"from":"now-6s","to":"now","display":"Last 6 seconds"},
+{"from":"now-10m","to":"now","display":"Last 10 minutes"},
+{"from":"now-25h","to":"now","display":"Last 24 hours"},
+{"from":"now/w","to":"now/w","display":"This week"},
+{"from":"now-1w/w","to":"now-1w/w","display":"Last week"},
+{"from":"now-10d","to":"now","display":"Last 10 days"}
+]"""
 ```
 
 ### `[expressions]`
@@ -2866,7 +2856,7 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 
 Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
 
-#### `sql_expression_cell_output_limit`
+#### `sql_expression_output_cell_limit`
 
 Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
 

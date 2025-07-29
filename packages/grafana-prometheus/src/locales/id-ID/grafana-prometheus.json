@@ -2,202 +2,206 @@
   "grafana-prometheus": {
     "components": {
       "annotation-query-editor": {
-        "annotation-data-load-error": "",
-        "aria-label-lower-limit-parameter": "",
-        "label-min-step": "",
-        "label-series-value-as-timestamp": "",
+        "annotation-data-load-error": "Terjadi kesalahan pemuatan data anotasi!",
+        "aria-label-lower-limit-parameter": "Tetapkan batas bawah untuk parameter langkah",
+        "label-min-step": "Langkah minimum",
+        "label-series-value-as-timestamp": "Nilai data seri sebagai stempel waktu",
         "label-tags": "Tag",
-        "label-text": "",
+        "label-text": "Teks",
         "label-title": "Judul",
-        "placeholder-auto": "",
-        "tooltip-either-pattern-example-instance-replaced-label": "",
-        "tooltip-min-step": "",
-        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+        "placeholder-auto": "auto",
+        "tooltip-either-pattern-example-instance-replaced-label": "Gunakan nama atau pola. Misalnya, {{labelTemplate}} diganti dengan nilai label untuk label {{labelName}}.",
+        "tooltip-min-step": "Batas bawah tambahan untuk parameter langkah kueri Prometheus dan untuk variabel <2>{{intervalVar}}</2> dan <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Unit stempel waktu adalah milidetik. Jika satuan nilai data seri adalah detik, kalikan vektor rentangnya dengan 1000."
       },
       "get-query-type-options": {
         "description": {
-          "instant-query-range": ""
+          "instant-query-range": "Jalankan kueri Instan dan kueri Rentang"
         },
         "label": {
-          "both": ""
+          "both": "Keduanya"
         },
         "range-options": {
           "description": {
-            "query-range": ""
+            "query-range": "Jalankan kueri selama rentang waktu tertentu"
           },
           "label": {
-            "instant": "",
-            "range": ""
+            "instant": "Instan",
+            "range": "Rentang"
           }
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "",
-        "description-select-labels": "",
-        "select-labels-to-search-in": ""
+        "aria-label-filter-expression-for-label": "Filter persamaan berdasarkan label",
+        "description-select-labels": "Setelah nilai label dipilih, hanya kombinasi label yang mungkin yang ditampilkan.",
+        "select-labels-to-search-in": "2. Pilih label untuk pencarian"
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "",
-        "aria-label-limit-results-from-series-endpoint": "",
-        "description-series-limit": "",
-        "label-select-metric": "",
-        "select-a-metric": "",
-        "series-limit": ""
+        "aria-label-filter-expression-for-metric": "Filter persamaan berdasarkan metrik",
+        "aria-label-limit-results-from-series-endpoint": "Batasi hasil dari titik akhir data seri",
+        "description-series-limit": "Batas ini berlaku untuk semua metrik, label, dan nilai. Biarkan bidang kosong untuk menggunakan batas default. Atur ke 0 untuk menonaktifkan batas dan mengambil semuanya — ini dapat menyebabkan masalah kinerja.",
+        "label-select-metric": "Setelah metrik dipilih, hanya label yang mungkin yang ditampilkan. Label dibatasi oleh batas data seri di bawah ini.",
+        "select-a-metric": "1. Pilih metrik",
+        "series-limit": "Batas data seri"
       },
       "prom-cheat-sheet": {
-        "prom-ql-cheat-sheet": ""
+        "prom-ql-cheat-sheet": "Lembar Ringkasan PromQL"
       },
       "prom-exemplar-field": {
-        "exemplars": "",
-        "tooltip-disable-query": "",
-        "tooltip-enable-query": ""
+        "exemplars": "Contoh",
+        "tooltip-disable-query": "Nonaktifkan kueri dengan contoh",
+        "tooltip-enable-query": "Aktifkan kueri dengan contoh"
       },
       "prom-explore-extra-field": {
-        "aria-label-prometheus-extra-field": "",
-        "aria-label-query-type-field": "",
-        "aria-label-step-field": "",
-        "min-step": "",
-        "query-type": "",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+        "aria-label-prometheus-extra-field": "Bidang tambahan Prometheus",
+        "aria-label-query-type-field": "Bidang jenis kueri",
+        "aria-label-step-field": "Bidang langkah",
+        "min-step": "Langkah minimum",
+        "query-type": "Jenis kueri",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Unit waktu dan variabel bawaan dapat digunakan di sini, misalnya: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Default jika tidak ada unit yang ditentukan: {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": ""
+        "placeholder-enter-a-prom-ql-query": "Masukkan kueri PromQL…"
       },
       "prom-variable-query-editor": {
-        "aria-label-classic-query": "",
-        "aria-label-metric-regex": "",
-        "aria-label-metric-selector": "",
-        "aria-label-prometheus-query": "",
-        "aria-label-query-type": "",
-        "aria-label-series-query": "",
-        "label-classic-query": "",
+        "aria-label-classic-query": "Kueri Klasik",
+        "aria-label-metric-regex": "Ekspresi reguler metrik",
+        "aria-label-metric-selector": "Selektor metrik",
+        "aria-label-prometheus-query": "Kueri Prometheus",
+        "aria-label-query-type": "Jenis kueri",
+        "aria-label-series-query": "Kueri Data Seri",
+        "label-classic-query": "Kueri Klasik",
         "label-label": "Label",
-        "label-metric-regex": "",
+        "label-metric-regex": "Ekspresi reguler metrik",
         "label-query": "Kueri",
-        "label-query-type": "",
-        "label-series-query": "",
-        "placeholder-classic-query": "",
-        "placeholder-metric-regex": "",
-        "placeholder-prometheus-query": "",
+        "label-query-type": "Jenis kueri",
+        "label-series-query": "Kueri Data Seri",
+        "placeholder-classic-query": "Kueri Klasik",
+        "placeholder-metric-regex": "Ekspresi reguler metrik",
+        "placeholder-prometheus-query": "Kueri Prometheus",
         "placeholder-select-query-type": "Pilih jenis kueri",
-        "placeholder-series-query": "",
-        "returns-metrics-matching-specified-metric-regex": "",
-        "tooltip-classic-query": "",
-        "tooltip-label": "",
-        "tooltip-metric-regex": "",
-        "tooltip-query": "",
-        "tooltip-query-type": "",
-        "tooltip-series-query": ""
+        "placeholder-series-query": "Kueri Data Seri",
+        "returns-metrics-matching-specified-metric-regex": "Mengembalikan daftar metrik yang sesuai dengan regex metrik yang ditentukan.",
+        "tooltip-classic-query": "Implementasi awal dari editor kueri variabel Prometheus. Masukkan string dengan jenis kueri dan parameter yang benar seperti yang dijelaskan dalam dokumen ini. Misalnya, {{exampleQuery}}.",
+        "tooltip-label": "Mengembalikan daftar nilai label untuk nama label di semua metrik kecuali metrik tersebut ditentukan.",
+        "tooltip-metric-regex": "Mengembalikan daftar nama label, secara opsional menyaring berdasarkan regex metrik yang ditentukan.",
+        "tooltip-query": "Mengembalikan daftar hasil kueri Prometheus untuk kueri tersebut. Ini dapat mencakup fungsi Prometheus, yaitu {{exampleQuery}}.",
+        "tooltip-query-type": "Plugin sumber data Prometheus menyediakan jenis kueri berikut untuk variabel templat.",
+        "tooltip-series-query": "Masukkan metrik dengan label, hanya metrik atau hanya label, yaitu {{example1}}, {{example2}}, atau {{example3}}. Mengembalikan daftar deret waktu yang terkait dengan data yang dimasukkan."
       },
       "selector-actions": {
-        "aria-label-selector": "",
-        "aria-label-selector-clear-button": "",
-        "aria-label-use-selector-as-metrics-button": "",
-        "aria-label-use-selector-for-query-button": "",
-        "aria-label-validate-submit-button": "",
+        "aria-label-selector": "selektor",
+        "aria-label-selector-clear-button": "Tombol hapus selektor",
+        "aria-label-use-selector-as-metrics-button": "Gunakan selektor sebagai tombol metrik",
+        "aria-label-use-selector-for-query-button": "Gunakan selektor untuk tombol kueri",
+        "aria-label-validate-submit-button": "Validasi tombol kirim",
         "clear": "Hapus",
-        "resulting-selector": "",
-        "use-as-rate-query": "",
-        "use-query": "",
-        "validate-selector": ""
+        "resulting-selector": "4. Selektor yang dihasilkan",
+        "use-as-rate-query": "Gunakan sebagai kueri rate",
+        "use-query": "Gunakan kueri",
+        "validate-selector": "Validasi selektor"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "",
-        "aria-label-values-for": "",
-        "description-search-field-values-across-selected-labels": "",
-        "select-multiple-values-for-your-labels": ""
+        "aria-label-filter-expression-for-label-values": "Filter persamaan berdasarkan nilai label",
+        "aria-label-values-for": "Nilai untuk {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Gunakan bidang pencarian untuk menemukan nilai di seluruh label yang dipilih.",
+        "select-multiple-values-for-your-labels": "3. Pilih (beberapa) nilai untuk label Anda"
       }
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-allow-as-recording-rules-target": "",
-        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "Izinkan sebagai target aturan perekaman",
+        "label-manage-alerts-via-alerting-ui": "Kelola peringatan melalui UI Peringatan",
         "title-alerting": "Alerting",
-        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-allow-as-recording-rules-target": "Izinkan sumber data ini dipilih sebagai target untuk menulis aturan perekaman.",
         "tooltip-manage-alerts-via-alerting-ui": "Kelola aturan peringatan untuk sumber data ini. Untuk mengelola sumber daya alerting lainnya, tambahkan sumber data Alertmanager."
       },
       "config-editor": {
-        "browser-access-mode-error": "",
-        "description-advanced-settings": "",
+        "browser-access-mode-error": "Mode akses browser di sumber data Prometheus tidak lagi tersedia. Beralih ke mode akses server.",
+        "description-advanced-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda.",
         "title-advanced-settings": "Pengaturan lanjutan",
         "title-error": "Kesalahan"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "Metode akses Anda adalah <1>Browser</1>, ini berarti URL harus dapat diakses dari browser.",
-        "tooltip-http-url": "",
+        "tooltip-http-url": "Tentukan URL HTTP lengkap (misalnya {{exampleURL}})",
         "tooltip-server-access-mode": "Metode akses Anda adalah <1>Server</1>, ini berarti URL harus dapat diakses dari backend/server grafana."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": ""
+        "visit-docs-for-more-details-here": "Kunjungi dokumen untuk detail selengkapnya di sini."
       },
       "exemplar-setting": {
         "label-data-source": "Sumber data",
-        "label-internal-link": "",
+        "label-internal-link": "Tautan internal",
         "label-label-name": "Nama label",
-        "label-remove-exemplar-link": "",
+        "label-remove-exemplar-link": "Hapus tautan contoh",
         "label-url": "URL",
-        "label-url-label": "",
-        "placeholder-go-to-examplecom": "",
-        "placeholder-httpsexamplecomvalueraw": "",
-        "placeholder-trace-id": "",
-        "title-remove-exemplar-link": "",
-        "tooltip-data-source": "",
-        "tooltip-internal-link": "",
-        "tooltip-label-name": "",
-        "tooltip-url": "",
-        "tooltip-url-label": ""
+        "label-url-label": "Label URL",
+        "placeholder-go-to-examplecom": "Buka example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "Hapus tautan contoh",
+        "tooltip-data-source": "Sumber data yang akan dinavigasi oleh contoh.",
+        "tooltip-internal-link": "Aktifkan opsi ini jika Anda memiliki tautan internal. Saat diaktifkan, ini akan menampilkan selektor sumber data. Pilih penyimpanan data pelacakan backend untuk data contoh Anda.",
+        "tooltip-label-name": "Nama bidang dalam objek label yang harus digunakan untuk mendapatkan traceID.",
+        "tooltip-url": "URL backend jejak yang akan digunakan pengguna untuk melihat jejaknya",
+        "tooltip-url-label": "Gunakan untuk mengganti label tombol pada bidang traceID contoh."
       },
       "exemplars-settings": {
         "add": "Tambahkan",
-        "no-exemplars-configurations": "",
-        "title-exemplars": ""
+        "no-exemplars-configurations": "Tidak ada konfigurasi contoh",
+        "title-exemplars": "Contoh"
       },
       "prom-settings": {
-        "aria-label-default-editor": "",
-        "aria-label-prom-type-type": "",
-        "aria-label-prometheus-type": "",
-        "aria-label-select-http-method": "",
+        "aria-label-default-editor": "Editor Default (Kode atau Pembuat)",
+        "aria-label-prom-type-type": "Jenis {{promType}}",
+        "aria-label-prometheus-type": "Jenis Prometheus",
+        "aria-label-select-http-method": "Pilih metode HTTP",
         "editor-options": {
           "label-builder": "",
           "label-code": ""
         },
-        "label-cache-level": "",
-        "label-custom-query-parameters": "",
-        "label-default-editor": "",
-        "label-disable-metrics-lookup": "",
-        "label-disable-recording-rules-beta": "",
-        "label-http-method": "",
-        "label-incremental-querying-beta": "",
-        "label-metric-names-suggestion-limit": "",
-        "label-prom-type-version": "",
-        "label-prometheus-type": "",
-        "label-query-overlap-window": "",
-        "label-query-timeout": "",
-        "label-scrape-interval": "",
-        "label-series-limit": "",
-        "label-use-series-endpoint": "",
-        "more-info": "",
-        "placeholder-example-maxsourceresolutionmtimeout": "",
-        "title-interval-behaviour": "",
-        "title-other": "",
+        "label-cache-level": "Level cache",
+        "label-custom-query-parameters": "Parameter kueri kustom",
+        "label-default-editor": "Editor default",
+        "label-disable-metrics-lookup": "Nonaktifkan pencarian metrik",
+        "label-disable-recording-rules-beta": "Nonaktifkan aturan perekaman (beta)",
+        "label-http-method": "Metode HTTP",
+        "label-incremental-querying-beta": "Kueri inkremental (beta)",
+        "label-metric-names-suggestion-limit": "Batas saran nama metrik",
+        "label-prom-type-version": "Versi {{promType}}",
+        "label-prometheus-type": "Jenis Prometheus",
+        "label-query-overlap-window": "Jendela kueri tumpang tindih",
+        "label-query-timeout": "Batas waktu kueri habis",
+        "label-scrape-interval": "Interval scrape",
+        "label-series-limit": "Batas data seri",
+        "label-use-series-endpoint": "Gunakan titik akhir data seri",
+        "more-info": "Untuk informasi lengkap tentang mengonfigurasi jenis dan versi prometheus dalam sumber data, lihat <2>dokumentasi penyediaan</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Contoh: {{example}}",
+        "title-interval-behaviour": "Perilaku interval",
+        "title-other": "Lainnya",
         "title-performance": "Kinerja",
-        "title-query-editor": "",
-        "tooltip-cache-level": "",
-        "tooltip-custom-query-parameters": "",
-        "tooltip-default-editor": "",
-        "tooltip-disable-metrics-lookup": "",
-        "tooltip-disable-recording-rules-beta": "",
-        "tooltip-http-method": "",
-        "tooltip-incremental-querying-beta": "",
-        "tooltip-metric-names-suggestion-limit": "",
-        "tooltip-prom-type-version": "",
-        "tooltip-prometheus-type": "",
-        "tooltip-query-overlap-window": "",
-        "tooltip-query-timeout": "",
-        "tooltip-scrape-interval": "",
-        "tooltip-series-limit": "",
-        "tooltip-use-series-endpoint": ""
+        "title-query-editor": "Editor kueri",
+        "tooltip-cache-level": "Mengatur level cache peramban untuk kueri editor. Pengaturan cache yang lebih tinggi disarankan untuk sumber data dengan kardinalitas tinggi.",
+        "tooltip-custom-query-parameters": "Tambahkan parameter kustom ke URL kueri Prometheus. Misalnya {{example1}}, {{example2}}, {{example3}}, atau {{example4}}. Beberapa parameter harus digabungkan bersama dengan {{concatenationChar}}.",
+        "tooltip-default-editor": "Atur opsi editor default untuk semua pengguna sumber data ini.",
+        "tooltip-disable-metrics-lookup": "Memeriksa opsi ini akan menonaktifkan pemilih metrik dan dukungan metrik/label dalam pelengkapan otomatis bidang kueri. Ini membantu jika Anda memiliki masalah kinerja dengan instans Prometheus yang lebih besar. ",
+        "tooltip-disable-recording-rules-beta": "Fitur ini akan menonaktifkan aturan perekaman. Aktifkan ini untuk meningkatkan kinerja dasbor",
+        "tooltip-http-method": "Anda dapat menggunakan metode HTTP POST atau GET untuk melakukan kueri sumber data Prometheus Anda. POST adalah metode yang disarankan karena memungkinkan kueri yang lebih besar. Ubah ini menjadi GET jika Anda memiliki versi Prometheus yang lebih lama dari 2.1 atau jika permintaan POST dibatasi di jaringan Anda.",
+        "tooltip-incremental-querying-beta": "Fitur ini akan mengubah perilaku default kueri relatif: alih-alih selalu meminta data terbaru dari instans Prometheus, hasil kueri akan disimpan sementara, dan hanya data baru yang akan diminta. Aktifkan ini untuk mengurangi beban basis data dan jaringan.",
+        "tooltip-metric-names-suggestion-limit": "Jumlah maksimum nama metrik yang mungkin muncul sebagai saran pelengkapan otomatis dalam mode Kode editor kueri.",
+        "tooltip-prom-type-version": "Gunakan ini untuk mengatur versi instans {{promType}} Anda jika tidak dikonfigurasi secara otomatis.",
+        "tooltip-prometheus-type": "Atur ini ke jenis basis data prometheus Anda, misalnya Prometheus, Cortex, Mimir, atau Thanos. Mengubah bidang ini akan menyimpan pengaturan Anda saat ini. Jenis Prometheus tertentu mendukung atau tidak mendukung berbagai API. Misalnya, beberapa jenis mendukung pencocokan regex bagi kueri label untuk meningkatkan kinerja. Beberapa jenis memiliki API untuk metadata. Jika Anda mengatur ini secara tidak benar, Anda mungkin mengalami perilaku tidak biasa saat melakukan kueri metrik dan label. Periksa dokumentasi Prometheus Anda untuk memastikan Anda memasukkan jenis yang benar.",
+        "tooltip-query-overlap-window": "Tetapkan durasi seperti {{example1}} atau {{example2}} atau {{example3}}. Default {{default}}. Durasi ini akan ditambahkan ke durasi setiap permintaan tambahan.",
+        "tooltip-query-timeout": "Atur batas waktu kueri Prometheus.",
+        "tooltip-scrape-interval": "Interval ini adalah seberapa sering Prometheus melakukan scrape pada target. Atur ini ke interval scrape dan evaluasi umum yang dikonfigurasi dalam file konfigurasi Prometheus Anda. Jika Anda mengatur ini ke nilai yang lebih besar dari interval file konfigurasi Prometheus Anda, Grafana akan mengevaluasi data sesuai dengan interval ini dan Anda akan melihat lebih sedikit titik data. Default ke {{default}}.",
+        "tooltip-series-limit": "Batas ini berlaku untuk semua sumber daya (metrik, label, dan nilai) untuk kedua endpoint (deret dan label). Biarkan bidang kosong untuk menggunakan batas default (40000). Atur ke 0 untuk menonaktifkan batas dan mengambil semuanya — ini dapat menyebabkan masalah kinerja. Batas default adalah 40000.",
+        "tooltip-use-series-endpoint": "Memeriksa opsi ini akan mengutamakan titik akhir data seri dengan {{exampleParameter}} parameter daripada titik akhir nilai label dengan {{exampleParameter}} parameter. Meskipun titik akhir nilai label dianggap memiliki kinerja yang lebih baik, beberapa pengguna mungkin lebih menyukai data seri karena memiliki metode POST, sementara titik akhir nilai label hanya memiliki metode GET."
       }
+    },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
     },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
@@ -209,14 +213,111 @@
         "label-verbose": ""
       }
     },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
     "querybuilder": {
       "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "",
-        "disable-text-wrap": ""
+        "content-filter-metric-names-regex-search-using": "Filter nama metrik dengan pencarian regex, menggunakan panggilan tambahan pada API Prometheus.",
+        "disable-text-wrap": "Nonaktifkan pemenggalan teks otomatis"
       },
       "feedback-link": {
         "give-feedback": "Berikan umpan balik",
-        "title-give-feedback": ""
+        "title-give-feedback": "Penjelajah metrik ini masih baru, beri tahu kami cara untuk meningkatkannya"
       },
       "get-collapsed-info": {
         "exemplars": "",
@@ -225,20 +326,43 @@
         "step": "",
         "type": ""
       },
+      "get-placeholders": {
+        "browse": "",
+        "include-null-metadata": "",
+        "metadata-search-switch": "",
+        "set-use-backend": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
+      },
       "handle-function": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Penguraian kueri mengalami masalah ketidakjelasan."
         }
       },
       "label-filter-item": {
-        "aria-label-remove": "",
-        "placeholder-select-label": "",
+        "aria-label-remove": "Hapus {{name}}",
+        "placeholder-select-label": "Pilih label",
         "placeholder-select-value": "Pilih nilai"
       },
       "label-filters": {
-        "label-filters": "",
-        "label-label-filters": "",
-        "tooltip-label-filters": ""
+        "label-filters": "Filter label",
+        "label-label-filters": "Filter label",
+        "tooltip-label-filters": "Opsional: digunakan untuk menyaring metrik yang dipilih untuk jenis kueri ini."
       },
       "label-param-editor": {
         "loadingMessage-loading-labels": "",
@@ -246,94 +370,98 @@
       },
       "metric-combobox": {
         "async-select": {
-          "aria-label-open-metrics-explorer": "",
-          "placeholder-select-metric": "",
-          "tooltip-open-metrics-explorer": ""
+          "aria-label-open-metrics-explorer": "Buka penjelajah metrik",
+          "placeholder-select-metric": "Pilih metrik",
+          "tooltip-open-metrics-explorer": "Buka penjelajah metrik"
         },
         "label-metric": "Metrik",
-        "tooltip-metric": ""
+        "tooltip-metric": "Opsional: mengembalikan daftar nilai label untuk nama label dalam metrik yang ditentukan."
       },
       "metrics-modal": {
-        "additional-settings": "",
+        "additional-settings": "Pengaturan Tambahan",
         "aria-label-additional-settings": "Pengaturan tambahan",
-        "aria-label-browse-metrics": "",
-        "currently-selected": "",
-        "metrics-pre-filtered": "",
-        "placeholder-results-per-page": "",
-        "results-per-page": "",
-        "title-metrics-explorer": "",
-        "results-amount_other": ""
+        "aria-label-browse-metrics": "Telusuri metrik",
+        "currently-selected": "Sedang dipilih: {{selected}}",
+        "metrics-pre-filtered": "Metrik ini telah difilter sebelumnya berdasarkan label yang dipilih di filter label.",
+        "placeholder-results-per-page": "hasil per halaman",
+        "results-per-page": "Hasil per halaman",
+        "title-metrics-explorer": "Penjelajah metrik",
+        "results-amount_other": "Menampilkan {{num}} dari {{count}} hasil"
       },
       "nested-query": {
         "label": {
-          "ignoring": "",
+          "ignoring": "Mengabaikan",
           "on": "Aktif"
         },
         "operator": "Operator",
-        "tooltip-remove-match": "",
-        "vector-matches": ""
+        "tooltip-remove-match": "Hapus kecocokan",
+        "vector-matches": "Kecocokan vektor"
       },
       "operation-editor": {
-        "not-found": "",
-        "title-remove": ""
+        "not-found": "Operasi {{id}} tidak ditemukan",
+        "title-remove": "Hapus {{name}}"
       },
       "operation-header": {
         "placeholder-replace-with": "Ganti dengan",
-        "title-click-to-view-alternative-operations": "",
-        "title-remove-operation": ""
+        "title-click-to-view-alternative-operations": "Klik untuk melihat operasi alternatif",
+        "title-remove-operation": "Hapus operasi"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "",
-        "title-remove-operation": ""
+        "title-click-to-show-description": "Klik untuk menampilkan deskripsi",
+        "title-remove-operation": "Hapus operasi"
       },
       "operation-list": {
-        "operations": "",
+        "operations": "Operasi",
         "placeholder-search": "Cari",
-        "title-add-operation": ""
+        "title-add-operation": "Tambah operasi"
       },
       "operation-param-editor": {
-        "title-add": "",
-        "title-remove": ""
+        "title-add": "Tambahkan {{name}}",
+        "title-remove": "Hapus {{name}}"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "",
-        "aria-label-select-resolution": "",
+        "aria-label-lower-limit-parameter": "Tetapkan batas bawah untuk parameter langkah",
+        "aria-label-select-resolution": "Pilih resolusi",
         "format-options": {
           "label-heatmap": "",
           "label-table": "",
           "label-time-series": ""
         },
-        "label-exemplars": "",
+        "label-exemplars": "Contoh",
         "label-format": "Format",
-        "label-min-step": "",
-        "label-resolution": "",
+        "label-min-step": "Langkah minimum",
+        "label-resolution": "Resolusi",
         "label-type": "Jenis",
-        "placeholder-auto": "",
+        "placeholder-auto": "auto",
         "title-options": "Opsi",
-        "tooltip-min-step": ""
+        "tooltip-min-step": "Batas bawah tambahan untuk parameter langkah kueri Prometheus dan untuk variabel <2>{{interval}}</2> dan <4>{{rateInterval}}</4>."
       },
       "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "",
-        "tooltip-autocomplete-suggestions-limited": ""
+        "autocomplete-suggestions-limited": "Saran pelengkapan otomatis dibatasi",
+        "tooltip-autocomplete-suggestions-limited": "Jumlah nama metrik melebihi batas pelengkapan otomatis. Hanya {{autocompleteLimit}} metrik yang paling relevan yang ditampilkan. Anda dapat menyesuaikan ambang batas dalam pengaturan sumber data."
       },
       "prom-query-editor-selector": {
         "body-syntax-error": "",
         "confirmText-continue": "",
         "kick-start-your-query": "Mulai kueri Anda",
-        "label-explain": "",
-        "run-queries": "",
-        "title-parsing-error-switch-builder": ""
+        "label-explain": "Penjelasan",
+        "run-queries": "Jalankan kueri",
+        "title-parsing-error-switch-builder": "Terjadi kesalahan penguraian: Beralih ke mode pembuat?"
       },
       "prom-query-legend-editor": {
-        "label-legend": "",
-        "placeholder-select-legend-mode": "",
-        "tooltip-legend": ""
+        "label-legend": "Legenda",
+        "placeholder-select-legend-mode": "Pilih mode legenda",
+        "tooltip-legend": "Mengganti nama seri atau templat. Misalnya, {{templateExample}} akan diganti dengan nilai label untuk {{labelName}}."
       },
       "query-builder-hints": {
-        "hint-details": ""
-      },
-      "query-editor-hints": {
-        "hint-details": ""
+        "hint-details": "petunjuk: {{hintDetails}}"
       },
       "query-editor-mode-toggle": {
         "editor-modes": {
@@ -342,38 +470,41 @@
         }
       },
       "query-pattern": {
-        "apply-query": "",
-        "aria-label-apply-query-starter-button": "",
-        "aria-label-back-button": "",
-        "aria-label-create-new-query-button": "",
-        "aria-label-raw-query": "",
-        "aria-label-use-this-query-button": "",
+        "apply-query": "Terapkan kueri",
+        "aria-label-apply-query-starter-button": "tombol mulai terapkan kueri",
+        "aria-label-back-button": "tombol kembali",
+        "aria-label-create-new-query-button": "tombol buat kueri baru",
+        "aria-label-raw-query": "Kueri {{patternName}} mentah",
+        "aria-label-use-this-query-button": "tombol gunakan kueri ini",
         "back": "Kembali",
-        "create-new-query": "",
+        "create-new-query": "Buat kueri baru",
         "use-this-query": "Gunakan kueri ini"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-close-kick-start-your-query-modal": "tutup modal untuk memulai kueri Anda",
         "aria-label-kick-start-your-query-modal": "Mulai modal kueri Anda",
-        "aria-label-toggle-query-starter": "",
+        "aria-label-toggle-query-starter": "buka dan tutup kartu pemula kueri {{patternType}}",
         "close": "Tutup",
-        "description-kick-start-your-query": "",
-        "label-toggle-query-starter": "",
+        "description-kick-start-your-query": "Mulai kueri Anda dengan memilih salah satu kueri ini. Anda kemudian dapat melanjutkan untuk menyelesaikan kueri Anda.",
+        "label-toggle-query-starter": "kueri awal {{patternType}}",
         "title-kick-start-your-query": "Mulai kueri Anda"
       },
       "raw-query": {
-        "aria-label-selector": ""
+        "aria-label-selector": "selektor"
       },
       "results-table": {
-        "content-descriptive-type": "",
+        "content-descriptive-type": "Saat membuat {{descriptiveType}}, Prometheus mengekspos beberapa data seri dengan penghitung jenis. ",
         "description": "Deskripsi",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
         "name": "Nama",
         "select": "Pilih",
         "type": "Jenis"
       },
       "update-function-args": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Penguraian kueri mengalami masalah ketidakjelasan."
         }
       }
     }

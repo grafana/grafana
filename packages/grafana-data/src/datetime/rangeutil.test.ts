@@ -1,9 +1,13 @@
+import { initRegionalFormatForTests } from '@grafana/i18n';
+
 import { RawTimeRange, TimeRange } from '../types/time';
+import * as featureToggles from '../utils/featureToggles';
 
 import { dateTime } from './moment_wrapper';
 import {
   convertRawToRange,
   describeInterval,
+  describeTimeRange,
   isRelativeTimeRange,
   relativeToTimeRange,
   roundInterval,
@@ -308,6 +312,182 @@ describe('Range Utils', () => {
 
       expect(relativeTimeRange.from).toEqual(1209600);
       expect(relativeTimeRange.to).toEqual(604800);
+    });
+  });
+
+  describe('describeTimeRange', () => {
+    it.each([
+      ['now-5m', 'now', 'Last 5 minutes'],
+      ['now-15m', 'now', 'Last 15 minutes'],
+      ['now-1h', 'now', 'Last 1 hour'],
+      ['now-24h', 'now', 'Last 24 hours'],
+      ['now-7d', 'now', 'Last 7 days'],
+      ['now-30d', 'now', 'Last 30 days'],
+      ['now/d', 'now/d', 'Today'],
+      ['now/d', 'now', 'Today so far'],
+      ['now/w', 'now/w', 'This week'],
+      ['now/M', 'now/M', 'This month'],
+      ['now/y', 'now/y', 'This year'],
+      ['now-1d/d', 'now-1d/d', 'Yesterday'],
+      ['now-1w/w', 'now-1w/w', 'Previous week'],
+      ['now-1M/M', 'now-1M/M', 'Previous month'],
+      ['now-1y/y', 'now-1y/y', 'Previous year'],
+      ['now/fQ', 'now/fQ', 'This fiscal quarter'],
+      ['now/fy', 'now/fy', 'This fiscal year'],
+      ['now-1Q/fQ', 'now-1Q/fQ', 'Previous fiscal quarter'],
+      ['now-1y/fy', 'now-1y/fy', 'Previous fiscal year'],
+    ])('should return display name "%s" for range from "%s" to "%s"', (from, to, expected) => {
+      expect(describeTimeRange({ from, to })).toBe(expected);
+    });
+
+    it('should prioritize custom quick ranges over standard ranges', () => {
+      const customRanges = [{ from: 'now-5m', to: 'now', display: 'Lightning round!' }];
+
+      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, customRanges)).toBe('Lightning round!');
+    });
+
+    it('should format with the default timezone', () => {
+      // Tests default to Pacific/Easter
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = dateTime('2023-01-15T14:45:00Z');
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toBe('2023-01-15 05:30:00 to 2023-01-15 09:45:00');
+    });
+
+    it('should respect timezone in datetime formatting', () => {
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = dateTime('2023-01-15T14:45:00Z');
+
+      const result = describeTimeRange({ from, to }, 'Australia/Sydney');
+      expect(result).toBe('2023-01-15 21:30:00 to 2023-01-16 01:45:00');
+    });
+
+    it('should handle absolute from, relative to', () => {
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = 'now';
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toBe('2023-01-15 05:30:00 to a few seconds ago');
+    });
+
+    it('should handle relative from, absolute to', () => {
+      const from = 'now-1h';
+      const to = dateTime('2023-01-15T14:45:00Z');
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toBe('an hour ago to 2023-01-15 09:45:00');
+    });
+
+    it('should handle invalid relative expressions', () => {
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = 'invalid-expression';
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toContain('Invalid date');
+    });
+
+    it('should handle empty custom ranges array', () => {
+      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, [])).toBe('Last 5 minutes');
+    });
+
+    it('should handle null custom ranges', () => {
+      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, undefined)).toBe('Last 5 minutes');
+    });
+  });
+
+  describe('describeTimeRange - localeFormatPreference enabled', () => {
+    let mockGetFeatureToggle: jest.SpyInstance;
+
+    beforeAll(() => {
+      initRegionalFormatForTests('en-AU');
+      mockGetFeatureToggle = jest.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
+        return featureName === 'localeFormatPreference';
+      });
+    });
+
+    afterAll(() => {
+      mockGetFeatureToggle.mockRestore();
+    });
+
+    it.each([
+      ['now-5m', 'now', 'Last 5 minutes'],
+      ['now-15m', 'now', 'Last 15 minutes'],
+      ['now-1h', 'now', 'Last 1 hour'],
+      ['now-7d', 'now', 'Last 7 days'],
+      ['now/d', 'now/d', 'Today'],
+      ['now/d', 'now', 'Today so far'],
+      ['now/w', 'now/w', 'This week'],
+      ['now-1d/d', 'now-1d/d', 'Yesterday'],
+      ['now-1w/w', 'now-1w/w', 'Previous week'],
+      ['now-1y/y', 'now-1y/y', 'Previous year'],
+      ['now/fQ', 'now/fQ', 'This fiscal quarter'],
+      ['now-1Q/fQ', 'now-1Q/fQ', 'Previous fiscal quarter'],
+    ])('should return display name "%s" for range from "%s" to "%s"', (from, to, expected) => {
+      expect(describeTimeRange({ from, to })).toBe(expected);
+    });
+
+    it('should prioritize custom quick ranges over standard ranges', () => {
+      const customRanges = [{ from: 'now-5m', to: 'now', display: 'Lightning round!' }];
+
+      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, customRanges)).toBe('Lightning round!');
+    });
+
+    it('should format with the default timezone', () => {
+      // Tests default to Pacific/Easter
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = dateTime('2023-01-15T14:45:00Z');
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toBe('15/1/23, 5:30 – 9:45 am');
+    });
+
+    it('should respect timezone in datetime formatting', () => {
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = dateTime('2023-01-15T14:45:00Z');
+
+      const result = describeTimeRange({ from, to }, 'Australia/Sydney');
+      expect(result).toBe('15/1/23, 9:30 pm – 16/1/23, 1:45 am');
+    });
+
+    it('should include seconds in the output if the time has seconds', () => {
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = dateTime('2023-01-15T14:45:12Z');
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toBe('15/1/23, 5:30:00 am – 9:45:12 am');
+    });
+
+    it('should handle absolute from, relative to', () => {
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = 'now';
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toBe('15/01/2023, 5:30 am to a few seconds ago');
+    });
+
+    it('should handle relative from, absolute to', () => {
+      const from = 'now-1h';
+      const to = dateTime('2023-01-15T14:45:00Z');
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toBe('an hour ago to 15/01/2023, 9:45 am');
+    });
+
+    it('should handle invalid relative expressions', () => {
+      const from = dateTime('2023-01-15T10:30:00Z');
+      const to = 'invalid-expression';
+
+      const result = describeTimeRange({ from, to });
+      expect(result).toContain('Invalid date');
+    });
+
+    it('should handle empty custom ranges array', () => {
+      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, [])).toBe('Last 5 minutes');
+    });
+
+    it('should handle null custom ranges', () => {
+      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, undefined)).toBe('Last 5 minutes');
     });
   });
 });

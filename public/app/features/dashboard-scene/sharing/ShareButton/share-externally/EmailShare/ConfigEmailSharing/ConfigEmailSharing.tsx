@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/core';
 import { publicDashboardApi, useAddRecipientMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { validEmailRegex } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { useShareDrawerContext } from '../../../../ShareDrawer/ShareDrawerContext';
 import ShareConfiguration from '../../ShareConfiguration';

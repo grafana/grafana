@@ -12,7 +12,7 @@ import {
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
@@ -288,7 +288,7 @@ export class V2DashboardSerializer
         const panelQueries = elementPanel.spec.data.spec.queries;
 
         for (const query of panelQueries) {
-          if (!query.spec.query.datasource?.name) {
+          if (!query.spec.datasource) {
             const elementId = this.getElementIdForPanel(elementPanel.spec.id);
             if (!this.defaultDsReferencesMap.panels.has(elementId)) {
               this.defaultDsReferencesMap.panels.set(elementId, new Set());
@@ -306,7 +306,7 @@ export class V2DashboardSerializer
     if (saveModel?.variables) {
       for (const variable of saveModel.variables) {
         // for query variables that dont have a ds defined add them to the list
-        if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
+        if (variable.kind === 'QueryVariable' && !variable.spec.datasource) {
           this.defaultDsReferencesMap.variables.add(variable.spec.name);
         }
       }
@@ -315,7 +315,7 @@ export class V2DashboardSerializer
     // initialize annotations ds references map
     if (saveModel?.annotations) {
       for (const annotation of saveModel.annotations) {
-        if (!annotation.spec.query?.datasource?.name) {
+        if (!annotation.spec.datasource) {
           this.defaultDsReferencesMap.annotations.add(annotation.spec.name);
         }
       }

@@ -233,7 +233,7 @@
       "title-error-occurred": "从 Azure Monitor 请求资源时发生错误"
     },
     "scope-selector": {
-      "label": ""
+      "label": "范围"
     },
     "search": {
       "aria-label-resource-search": "资源搜索",

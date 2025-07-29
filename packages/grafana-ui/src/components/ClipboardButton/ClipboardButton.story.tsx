@@ -7,7 +7,7 @@ import { ClipboardButton as ClipboardButtonImpl, Props } from './ClipboardButton
 import mdx from './ClipboardButton.mdx';
 
 const meta: Meta = {
-  title: 'Buttons/ClipboardButton',
+  title: 'Inputs/ClipboardButton',
   component: ClipboardButtonImpl,
   parameters: {
     docs: {

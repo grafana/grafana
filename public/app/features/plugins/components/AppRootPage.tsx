@@ -32,8 +32,8 @@ import {
   useExposedComponentsRegistry,
   useAddedFunctionsRegistry,
 } from '../extensions/ExtensionRegistriesContext';
+import { importAppPlugin } from '../pluginLoader';
 import { getPluginSettings } from '../pluginSettings';
-import { importAppPlugin } from '../plugin_loader';
 import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';

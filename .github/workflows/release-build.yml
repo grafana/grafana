@@ -1,6 +1,10 @@
 name: Build Release Packages
 on:
   workflow_dispatch:
+  schedule:
+    # Every weeknight at midnight
+    # "Scheduled workflows will only run on the default branch." (docs.github.com)
+    - cron: "0 0 * * 1-5"
   push:
     branches:
       - release-*.*.*
@@ -96,8 +100,8 @@ jobs:
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT} = process.env;
-
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, GITHUB_EVENT_NAME} = process.env;
+            
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
@@ -108,6 +112,7 @@ jobs:
                   "build-id": String(BUILD_ID),
                   "bucket": BUCKET,
                   "grafana-commit": GRAFANA_COMMIT,
+                  "source-event": GITHUB_EVENT_NAME,
                 }
             })
 
@@ -186,5 +191,5 @@ jobs:
       bucket: grafana-prerelease
       pattern: artifacts-*
       run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}
+      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod

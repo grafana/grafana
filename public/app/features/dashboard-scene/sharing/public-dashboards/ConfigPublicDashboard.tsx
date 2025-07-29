@@ -8,7 +8,7 @@ import { contextSrv } from 'app/core/core';
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { ConfigPublicDashboardBase } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { getDashboardSceneFor } from '../../utils/utils';

@@ -19,13 +19,13 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TabsLayoutTabKind,
-  DataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/ConditionalRenderingGroup';
 import { conditionalRenderingSerializerRegistry } from '../../conditional-rendering/serializers';
+import { CustomTimeRangeCompare } from '../../scene/CustomTimeRangeCompare';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
@@ -74,6 +74,9 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
+    headerActions: config.featureToggles.timeComparison
+      ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
+      : undefined,
   };
 
   if (!config.publicDashboardAccessToken) {
@@ -186,15 +189,12 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
-      if (!query.spec.query.datasource?.name) {
-        datasource = getRuntimePanelDataSource(query.spec.query);
+      if (!query.spec.datasource?.uid) {
+        datasource = getRuntimePanelDataSource(query);
       } else {
-        datasource = {
-          uid: query.spec.query.datasource?.name,
-          type: query.spec.query.group,
-        };
+        datasource = query.spec.datasource;
       }
-    } else if (datasource.uid !== query.spec.query.datasource?.name || datasource.type !== query.spec.query.group) {
+    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
@@ -203,19 +203,11 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 }
 
 export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
-  const ds: DataSourceRef = {
-    uid: variable.spec.query.datasource?.name,
-    type: variable.spec.query.group,
-  };
-  return getDataSourceForQuery(ds, variable.spec.query.group);
+  return getDataSourceForQuery(variable.spec.datasource, variable.spec.query.kind);
 }
 
-export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
-  const ds: DataSourceRef = {
-    uid: query.datasource?.name,
-    type: query.group,
-  };
-  return getDataSourceForQuery(ds, query.group);
+export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef | undefined {
+  return getDataSourceForQuery(query.spec.datasource, query.spec.query.kind);
 }
 
 /**
@@ -223,7 +215,10 @@ export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
  * @param queryKind - The kind of query being performed
  * @returns The resolved DataSourceRef
  */
-function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
+function getDataSourceForQuery(
+  querySpecDS: DataSourceRef | undefined | null,
+  queryKind: string
+): DataSourceRef | undefined {
   // If datasource is specified and has a uid, use it
   if (querySpecDS?.uid) {
     return querySpecDS;
@@ -262,22 +257,14 @@ function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, qu
     };
   }
 
-  if (dsList && !dsList[defaultDatasource]) {
-    throw new Error(`Default datasource ${defaultDatasource} not found in datasource list`);
-  }
-
-  // In the datasource list from bootData "id" is the type and the uid could be uid or the name
-  // in cases like grafana, dashboard or mixed datasource
-  return {
-    uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
-    type: dsList[defaultDatasource].meta.id,
-  };
+  // If we don't find a default datasource, return undefined
+  return undefined;
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   return {
     refId: query.spec.refId,
-    datasource: getRuntimePanelDataSource(query.spec.query),
+    datasource: getRuntimePanelDataSource(query),
     hide: query.spec.hidden,
     ...query.spec.query.spec,
   };

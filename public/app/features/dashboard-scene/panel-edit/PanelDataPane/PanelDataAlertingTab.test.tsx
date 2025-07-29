@@ -25,7 +25,8 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, DashboardDataDTO } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { DashboardDataDTO } from 'app/types/dashboard';
 import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';

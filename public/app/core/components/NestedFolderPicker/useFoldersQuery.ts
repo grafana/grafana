@@ -1,6 +1,5 @@
 import { config } from '@grafana/runtime';
-
-import { PermissionLevelString } from '../../../types';
+import { PermissionLevelString } from 'app/types/acl';
 
 import { useFoldersQueryAppPlatform } from './useFoldersQueryAppPlatform';
 import { useFoldersQueryLegacy } from './useFoldersQueryLegacy';

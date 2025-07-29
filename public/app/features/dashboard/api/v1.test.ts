@@ -1,7 +1,7 @@
 import { GrafanaConfig, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
-import { DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardWithAccessInfo } from './types';
 import { K8sDashboardAPI } from './v1';

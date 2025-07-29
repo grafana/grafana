@@ -16,16 +16,7 @@ import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
-export interface UIOptions {
-  exemplars: boolean;
-  type: boolean;
-  format: boolean;
-  minStep: boolean;
-  legend: boolean;
-  resolution: boolean;
-}
-
-export interface PromQueryBuilderOptionsProps {
+interface PromQueryBuilderOptionsProps {
   query: PromQuery;
   app?: CoreApp;
   onChange: (update: PromQuery) => void;
