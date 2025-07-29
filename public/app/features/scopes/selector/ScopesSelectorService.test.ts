@@ -1,4 +1,4 @@
-import { Scope, ScopeNode, Store, store } from '@grafana/data';
+import { Scope, ScopeNode, Store } from '@grafana/data';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
