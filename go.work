@@ -5,6 +5,7 @@ go 1.24.5
 
 use (
 	. // skip:golangci-lint
+	./.citools/swagger
 	./apps/alerting/notifications
 	./apps/investigation
 	./apps/playlist
