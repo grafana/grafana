@@ -691,6 +691,14 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
+	span.SetAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+		attribute.Int64("size", size),
+		attribute.Int64("rv", rv),
+	)
+
 	logger := s.log.With("namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
 
 	builder, err := s.builders.get(ctx, nsr)
@@ -700,6 +708,9 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	fields := s.builders.GetFields(nsr)
 
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
+		span := trace.SpanFromContext(ctx)
+		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.Int64("rv", rv)))
+
 		rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Limit: 1000000000000, // big number
 			Options: &resourcepb.ListOptions{
@@ -728,9 +739,11 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					Name:      iter.Name(),
 				}
 
+				span.AddEvent("building document", trace.WithAttributes(attribute.String("name", iter.Name())))
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
 				if err != nil {
+					span.RecordError(err)
 					logger.Error("error building search document", "key", SearchID(key), "err", err)
 					continue
 				}
@@ -743,6 +756,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 				// When we reach the batch size, perform bulk index and reset the batch.
 				if len(items) >= maxBatchSize {
+					span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
 					if err = index.BulkIndex(&BulkIndexRequest{
 						Items: items,
 					}); err != nil {
@@ -756,6 +770,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 			// Index any remaining items in the final batch.
 			if len(items) > 0 {
+				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
 				if err = index.BulkIndex(&BulkIndexRequest{
 					Items: items,
 				}); err != nil {
