@@ -86,6 +86,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
+	globalDataKeyStore, err := encryptionstorage.ProvideGlobalDataKeyStorage(database, tracer, nil)
+	require.NoError(t, err)
+
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
 	enc, err := cipher.ProvideAESGCMCipherService(tracer, usageStats)
@@ -128,6 +131,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
 
+	consolidationService := service.ProvideConsolidationService(tracer, globalDataKeyStore, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
+
 	return Sut{
 		SecureValueService:          secureValueService,
 		SecureValueMetadataStorage:  secureValueMetadataStorage,
@@ -138,6 +143,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		SQLKeeper:                   sqlKeeper,
 		Database:                    database,
 		AccessClient:                accessClient,
+		ConsolidationService:        consolidationService,
+		EncryptionManager:           encryptionManager,
+		GlobalDataKeyStore:          globalDataKeyStore,
 	}
 }
 
@@ -151,6 +159,9 @@ type Sut struct {
 	SQLKeeper                   *sqlkeeper.SQLKeeper
 	Database                    *database.Database
 	AccessClient                types.AccessClient
+	ConsolidationService        contracts.ConsolidationService
+	EncryptionManager           contracts.EncryptionManager
+	GlobalDataKeyStore          contracts.GlobalDataKeyStorage
 }
 
 type CreateSvConfig struct {
