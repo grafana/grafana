@@ -26,9 +26,6 @@ preferencesv0alpha1: {
 			// Selected locale (beta)
 			regionalFormat?: string
 
-			// Selected locale (beta)
-			locale?: string
-
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference
 

@@ -52,8 +52,6 @@ type PreferencesSpec struct {
 	Language *string `json:"language,omitempty"`
 	// Selected locale (beta)
 	RegionalFormat *string `json:"regionalFormat,omitempty"`
-	// Selected locale (beta)
-	Locale *string `json:"locale,omitempty"`
 	// Explore query history preferences
 	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
 	// Cookie preferences
