@@ -120,6 +120,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
 
+  const canSkipSync = repoName && !isResourceStatsLoading && shouldSkipSync;
+
   // A different repository is marked with instance target -- nothing will succeed
   useEffect(() => {
     if (data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
@@ -154,8 +156,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       let previousStepIndex = currentStepIndex - 1;
 
       // Handle special case: if we're on finish step and sync was skipped
-      // Only apply skip logic if we have a repoName and resource stats are loaded
-      if (activeStep === 'finish' && repoName && !isResourceStatsLoading && shouldSkipSync) {
+      if (activeStep === 'finish' && canSkipSync) {
         previousStepIndex = currentStepIndex - 2; // Go back to bootstrap
       }
 
@@ -200,8 +201,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       }
 
       // If on bootstrap step and should skip sync, show finish step name
-      // Only apply skip logic if we have a repoName and resource stats are loaded
-      if (currentStep === 'bootstrap' && repoName && !isResourceStatsLoading && shouldSkipSync) {
+      if (currentStep === 'bootstrap' && canSkipSync) {
         const finishStepIndex = stepIndex + 2;
         if (finishStepIndex < steps.length) {
           return steps[finishStepIndex].name;
@@ -211,7 +211,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       return steps[stepIndex + 1].name;
     },
-    [steps, shouldSkipSync, repoName, isResourceStatsLoading]
+    [steps, canSkipSync]
   );
 
   // Calculate previous/cancel button text based on current state
@@ -237,8 +237,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
       let nextStepIndex = currentStepIndex + 1;
 
       // Skip synchronize step if no sync is needed
-      // Only apply skip logic if we have a repoName and resource stats are loaded
-      if (activeStep === 'bootstrap' && repoName && !isResourceStatsLoading && shouldSkipSync) {
+      if (activeStep === 'bootstrap' && canSkipSync) {
         nextStepIndex = currentStepIndex + 2; // Skip to finish step
 
         // Create a pull job to initialize the repository
