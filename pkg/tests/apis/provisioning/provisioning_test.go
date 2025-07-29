@@ -931,28 +931,28 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		// Create modified test files with unique UIDs for ResourceRef testing
 		// Read and modify the testdata files to have unique UIDs that don't conflict with existing resources
 		allPanelsContent := helper.LoadFile("testdata/all-panels.json")
-		textOptionsContent := helper.LoadFile("testdata/text-options.json")  
+		textOptionsContent := helper.LoadFile("testdata/text-options.json")
 		timelineDemoContent := helper.LoadFile("testdata/timeline-demo.json")
-		
+
 		// Modify UIDs to be unique for ResourceRef tests
 		allPanelsModified := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "resourceref1"`, 1)
 		textOptionsModified := strings.Replace(string(textOptionsContent), `"uid": "WZ7AhQiVz"`, `"uid": "resourceref2"`, 1)
 		timelineDemoModified := strings.Replace(string(timelineDemoContent), `"uid": "mIJjFy8Kz"`, `"uid": "resourceref3"`, 1)
-		
+
 		// Create temporary files and copy them to the provisioning path
 		tmpDir := t.TempDir()
 		tmpFile1 := filepath.Join(tmpDir, "resource-test-1.json")
-		tmpFile2 := filepath.Join(tmpDir, "resource-test-2.json") 
+		tmpFile2 := filepath.Join(tmpDir, "resource-test-2.json")
 		tmpFile3 := filepath.Join(tmpDir, "resource-test-3.json")
-		
+
 		require.NoError(t, os.WriteFile(tmpFile1, []byte(allPanelsModified), 0644))
 		require.NoError(t, os.WriteFile(tmpFile2, []byte(textOptionsModified), 0644))
 		require.NoError(t, os.WriteFile(tmpFile3, []byte(timelineDemoModified), 0644))
-		
+
 		// Copy the temporary files to the provisioning path
-		helper.CopyToProvisioningPath(t, tmpFile1, "resource-test-1.json")         // UID: resourceref1
-		helper.CopyToProvisioningPath(t, tmpFile2, "resource-test-2.json")         // UID: resourceref2  
-		helper.CopyToProvisioningPath(t, tmpFile3, "nested/resource-test-3.json")  // UID: resourceref3
+		helper.CopyToProvisioningPath(t, tmpFile1, "resource-test-1.json")        // UID: resourceref1
+		helper.CopyToProvisioningPath(t, tmpFile2, "resource-test-2.json")        // UID: resourceref2
+		helper.CopyToProvisioningPath(t, tmpFile3, "nested/resource-test-3.json") // UID: resourceref3
 
 		// Trigger sync to populate the new resources
 		helper.SyncAndWait(t, repo, nil)
@@ -961,7 +961,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, len(dashboards.Items), 3, "should have at least 3 dashboards after adding test resources")
-		
+
 		// Debug: print the actual dashboard names/UIDs to verify they match our expectations
 		for i, dashboard := range dashboards.Items {
 			t.Logf("Dashboard %d: name=%s, UID=%s", i+1, dashboard.GetName(), dashboard.GetUID())
@@ -1057,7 +1057,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "nested", "resource-test-3.json")
 			require.Error(t, err, "nested/resource-test-3.json should be deleted")
 
-			// Verify specific dashboards are removed from Grafana  
+			// Verify specific dashboards are removed from Grafana
 			dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
 			require.Equal(t, 0, len(dashboards.Items), "should have 0 dashboards after deleting 2 more (2 -> 0)")
@@ -1066,16 +1066,16 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		t.Run("mixed deletion - paths and resources", func(t *testing.T) {
 			// Setup fresh resources for mixed test - reuse the modified content with unique UIDs
 			tmpMixed1 := filepath.Join(tmpDir, "mixed-test-1.json")
-			tmpMixed2 := filepath.Join(tmpDir, "mixed-test-2.json") 
+			tmpMixed2 := filepath.Join(tmpDir, "mixed-test-2.json")
 			tmpMixed3 := filepath.Join(tmpDir, "mixed-test-3.json")
-			
+
 			require.NoError(t, os.WriteFile(tmpMixed1, []byte(allPanelsModified), 0644))
 			require.NoError(t, os.WriteFile(tmpMixed2, []byte(textOptionsModified), 0644))
 			require.NoError(t, os.WriteFile(tmpMixed3, []byte(timelineDemoModified), 0644))
-			
-			helper.CopyToProvisioningPath(t, tmpMixed1, "mixed-test-1.json")    // UID: resourceref1
-			helper.CopyToProvisioningPath(t, tmpMixed2, "mixed-test-2.json")    // UID: resourceref2
-			helper.CopyToProvisioningPath(t, tmpMixed3, "mixed-test-3.json")    // UID: resourceref3
+
+			helper.CopyToProvisioningPath(t, tmpMixed1, "mixed-test-1.json") // UID: resourceref1
+			helper.CopyToProvisioningPath(t, tmpMixed2, "mixed-test-2.json") // UID: resourceref2
+			helper.CopyToProvisioningPath(t, tmpMixed3, "mixed-test-3.json") // UID: resourceref3
 
 			helper.SyncAndWait(t, repo, nil)
 
