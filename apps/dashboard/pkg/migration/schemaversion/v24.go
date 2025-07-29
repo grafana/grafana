@@ -4,6 +4,70 @@ import (
 	"strconv"
 )
 
+// V24 migration migrates the angular table panel to the standard table panel
+// In the frontend, this is an auto-migration meaning that this angular panel is always migrated to table panel.
+
+// Example before migration:
+// {
+//     "panels": [
+//         {
+//             "id": 1,
+//             "type": "table",
+//             "title": "Table Panel",
+//             "legend": true,
+//             "styles": [
+//                 { "thresholds": ["10", "20", "30"] },
+//                 { "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"] },
+//                 { "pattern": "/.*/" }
+//             ],
+//             "targets": [{ "refId": "A" }, {}]
+//         }
+//     ]
+// }
+
+// Example after migration:
+// "panels": [
+//     {
+//       "fieldConfig": {
+//         "defaults": {
+//           "custom": {},
+//           "thresholds": {
+//             "mode": "absolute",
+//             "steps": [
+//               {
+//                 "color": "red",
+//                 "value": null
+//               },
+//               {
+//                 "color": "red",
+//                 "value": 10
+//               },
+//               {
+//                 "color": "yellow",
+//                 "value": 20
+//               },
+//               {
+//                 "color": "green",
+//                 "value": 30
+//               }
+//             ]
+//           }
+//         },
+//         "overrides": []
+//       },
+//       "id": 1,
+//       "legend": true,
+//       "pluginVersion": "1.0.0",
+//       "targets": [
+//         {
+//           "refId": "A"
+//         }
+//       ],
+//       "transformations": [],
+//       "type": "table"
+//     }
+//   ]
+
 type v24Migrator struct {
 	panelProvider PanelPluginInfoProvider
 	panelPlugins  []PanelPluginInfo

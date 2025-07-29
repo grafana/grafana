@@ -173,6 +173,14 @@ describe('Backend / Frontend result comparison', () => {
       // Because Go and TS handle -Infinity differently.
       const cleanedFrontendResult = sortedDeepCloneWithoutNulls(frontendMigrationResult);
 
+      // Remove deprecated angular properties that backend shouldn't return, but DashboardModel will still set them
+      for (const panel of cleanedFrontendResult.panels ?? []) {
+        // @ts-expect-error
+        delete panel.autoMigrateFrom;
+        // @ts-expect-error
+        delete panel.styles;
+      }
+
       expect(backendMigrationResult).toMatchObject(cleanedFrontendResult);
     });
   });

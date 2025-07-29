@@ -62,6 +62,49 @@ func TestV24(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should not migrate angular table without styles",
+			input: map[string]interface{}{
+				"schemaVersion": 23,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "table",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 24,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "table",
+					},
+				},
+			},
+		},
+		{
+			name: "should not migrate react table (table2)",
+			input: map[string]interface{}{
+				"schemaVersion": 23,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "table2",
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 24,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":   1,
+						"type": "table2",
+					},
+				},
+			},
+		},
 	}
+
 	runMigrationTests(t, tests, schemaversion.V24(testutil.GetTestPanelProvider()))
 }

@@ -11,16 +11,6 @@ const (
 
 type SchemaVersionMigrationFunc func(map[string]interface{}) error
 
-var AutoMigrateAngular = map[string]string{
-	"graph":                    "timeseries",
-	"table-old":                "table",
-	"singlestat":               "stat",
-	"grafana-singlestat-panel": "stat",
-	"grafana-piechart-panel":   "piechart",
-	"grafana-worldmap-panel":   "geomap",
-	"natel-discrete-panel":     "state-timeline",
-}
-
 type DataSourceInfo struct {
 	Default    bool
 	UID        string
