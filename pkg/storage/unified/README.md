@@ -867,6 +867,15 @@ The search client routes requests based on the dual writer mode configuration fo
 
 Unified Search requires several feature flags to be enabled depending on the desired functionality:
 
+#### Prerequisites (Required for Unified Storage)
+
+| Feature Flag | Purpose | Stage | Required For |
+|--------------|---------|-------|--------------|
+| `kubernetesClientDashboardsFolders` | Enable k8s-style APIs for dashboards/folders | GA | Unified storage for dashboards and folders |
+| `grafanaAPIServerWithExperimentalAPIs` | Allow experimental API groups | Development | Access to v0alpha1 APIs (including search) |
+
+#### Unified Search Specific Flags
+
 | Feature Flag | Purpose | Stage | Required For |
 |--------------|---------|-------|--------------|
 | `unifiedStorageSearch` | Core search functionality | Experimental | Search API servers, indexing |
@@ -878,6 +887,10 @@ Unified Search requires several feature flags to be enabled depending on the des
 #### Basic Configuration
 ```ini
 [feature_toggles]
+; Prerequisites for unified storage (required)
+kubernetesClientDashboardsFolders = true
+grafanaAPIServerWithExperimentalAPIs = true
+
 ; Core search functionality (required)
 unifiedStorageSearch = true
 
