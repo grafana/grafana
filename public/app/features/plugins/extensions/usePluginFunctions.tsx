@@ -43,7 +43,12 @@ export function usePluginFunctions<Signature>({
       };
     }
 
-    if (isGrafanaDevMode() && pluginContext && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+    if (
+      isGrafanaDevMode() &&
+      !isCoreGrafanaPlugin &&
+      pluginContext &&
+      isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)
+    ) {
       pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
         isLoading: false,

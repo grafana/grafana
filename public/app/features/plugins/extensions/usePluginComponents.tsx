@@ -50,7 +50,12 @@ export function usePluginComponents<Props extends object = {}>({
     }
 
     // Don't show extensions if the extension-point misses meta info (plugin.json) in DEV mode
-    if (isGrafanaDevMode() && pluginContext && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+    if (
+      isGrafanaDevMode() &&
+      !isCoreGrafanaPlugin &&
+      pluginContext &&
+      isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)
+    ) {
       pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
         isLoading: false,
