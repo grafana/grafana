@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
@@ -84,7 +85,12 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 
 	sourcePath, exists := annotations[utils.AnnoKeySourcePath]
 	if !exists || sourcePath == "" {
-		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)
+		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)  
+	}
+
+	// For folder resources, ensure the path has a trailing slash for proper deletion
+	if gvk.Kind == "Folder" && !safepath.IsDir(sourcePath) {
+		sourcePath = sourcePath + "/"
 	}
 
 	return sourcePath, nil

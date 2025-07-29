@@ -73,12 +73,12 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-folder",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "folders/test-folder.json",
+							utils.AnnoKeySourcePath: "folders/test-folder",
 						},
 					},
 				},
 			},
-			expectedPath: "folders/test-folder.json",
+			expectedPath: "folders/test-folder/", // Trailing slash added for folder resources
 		},
 		{
 			name:         "ForKind fails",
@@ -215,6 +215,81 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 				},
 			},
 			expectedPath: "team-a/subfolder/nested-dashboard.json",
+		},
+		{
+			name:         "folder without trailing slash gets slash added",
+			resourceName: "test-folder",
+			gvk: schema.GroupVersionKind{
+				Group: "folder.grafana.app",
+				Kind:  "Folder",
+			},
+			expectedGVR: schema.GroupVersionResource{
+				Group:    "folder.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "folders",
+			},
+			resourceObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "test-folder",
+						"namespace": "test-namespace",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeySourcePath: "folders/test-folder", // No trailing slash
+						},
+					},
+				},
+			},
+			expectedPath: "folders/test-folder/", // Should have trailing slash added
+		},
+		{
+			name:         "folder with trailing slash keeps slash",
+			resourceName: "test-folder-2",
+			gvk: schema.GroupVersionKind{
+				Group: "folder.grafana.app",
+				Kind:  "Folder",
+			},
+			expectedGVR: schema.GroupVersionResource{
+				Group:    "folder.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "folders",
+			},
+			resourceObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "test-folder-2",
+						"namespace": "test-namespace",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeySourcePath: "folders/test-folder-2/", // Already has trailing slash
+						},
+					},
+				},
+			},
+			expectedPath: "folders/test-folder-2/", // Should keep existing trailing slash
+		},
+		{
+			name:         "non-folder resource keeps path unchanged",
+			resourceName: "test-dashboard",
+			gvk: schema.GroupVersionKind{
+				Group: "dashboard.grafana.app",
+				Kind:  "Dashboard", // Not a folder
+			},
+			expectedGVR: schema.GroupVersionResource{
+				Group:    "dashboard.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "dashboards",
+			},
+			resourceObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "test-dashboard",
+						"namespace": "test-namespace",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeySourcePath: "dashboards/test-dashboard", // No trailing slash
+						},
+					},
+				},
+			},
+			expectedPath: "dashboards/test-dashboard", // Should remain unchanged for non-folders
 		},
 	}
 
