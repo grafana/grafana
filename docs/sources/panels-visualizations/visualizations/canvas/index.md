@@ -478,7 +478,6 @@ You can style the selected connection using the following options:
 - **Size** - Control the size of the connection by entering a number in the **Value** field.
 - **Radius** - Add curve to the connection by entering a value to represent the degree.
 - **Arrow Direction** - Control the appearance of the arrow head. Choose from:
-
   - **Forward** - The arrow head points in the direction in which the connection was drawn.
   - **Reverse** - The arrow head points in the opposite direction of which the connection was drawn.
   - **Both** - Adds arrow heads to both ends of the connection.
