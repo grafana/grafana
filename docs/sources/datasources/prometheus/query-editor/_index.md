@@ -103,7 +103,6 @@ Click **+ Operations** to select from a list of operations including Aggregation
 **Options:**
 
 - **Legend**- Lets you customize the name for the time series. You can use a predefined or custom format.
-
   - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
   - **Verbose** - Displays all label names.
   - **Custom** - Lets you customize the legend using label templates. For example, `{{hostname}}` is replaced with the value of the `hostname` label. To switch to a different legend mode, clear the input and click outside the field.
@@ -111,7 +110,6 @@ Click **+ Operations** to select from a list of operations including Aggregation
 - **Min step** - Sets the minimum interval between data points returned by the query. For example, setting this to `1h` suggests that data is collected or displayed at hourly intervals. This setting supports the `$__interval` and `$__rate_interval` macros. Note that the time range of the query is aligned to this step size, which may adjust the actual start and end times of the returned data.
 
 - **Format** - Determines how the data from your Prometheus query is interpreted and visualized in a panel. Choose from the following format options:
-
   - **Time series** - The default format. Refer to [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
   - **Table** - Displays data in table format. This format works only in a [Table panel](ref:table).
   - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](ref:heatmap) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. Converts cumulative histogram data into regular histogram format and sorts the series by bucket boundaries for proper display.
