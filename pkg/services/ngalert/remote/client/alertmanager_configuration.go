@@ -37,10 +37,6 @@ type UserGrafanaConfig struct {
 	Promoted                  bool                      `json:"promoted"`
 	ExternalURL               string                    `json:"external_url"`
 	SmtpConfig                SmtpConfig                `json:"smtp_config"`
-
-	// TODO: Remove once everything can be sent in the 'SmtpConfig' field.
-	SmtpFrom      string            `json:"smtp_from"`
-	StaticHeaders map[string]string `json:"static_headers"`
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {

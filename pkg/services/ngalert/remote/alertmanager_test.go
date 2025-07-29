@@ -260,8 +260,13 @@ func TestGetRemoteState(t *testing.T) {
 }
 
 func TestIntegrationApplyConfig(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+
+		// errorHandler returns an error response for the readiness check and state sync.
+	}
 	const tenantID = "test"
-	// errorHandler returns an error response for the readiness check and state sync.
+
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
 		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
@@ -279,7 +284,9 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 		if r.Method == http.MethodPost {
 			if strings.Contains(r.URL.Path, "/config") {
-				require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
+				var cfg client.UserGrafanaConfig
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&cfg))
+				configSent = cfg
 				configSyncs++
 			} else {
 				stateSyncs++
@@ -322,11 +329,9 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		SyncInterval:  1 * time.Hour,
 		ExternalURL:   "https://test.grafana.com",
 		SmtpConfig: client.SmtpConfig{
-			FromAddress: "test-instance@grafana.net",
+			FromAddress:   "test-instance@grafana.net",
+			StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
 		},
-
-		SmtpFrom:      "test-instance@grafana.net",
-		StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
 	}
 
 	ctx := context.Background()
@@ -363,8 +368,8 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 	// Grafana's URL, email "from" address, and static headers should be sent alongside the configuration.
 	require.Equal(t, cfg.ExternalURL, configSent.ExternalURL)
-	require.Equal(t, cfg.SmtpFrom, configSent.SmtpFrom)
-	require.Equal(t, cfg.StaticHeaders, configSent.StaticHeaders)
+	require.Equal(t, cfg.SmtpConfig.FromAddress, configSent.SmtpConfig.FromAddress)
+	require.Equal(t, cfg.SmtpConfig.StaticHeaders, configSent.SmtpConfig.StaticHeaders)
 
 	// If we already got a 200 status code response and the sync interval hasn't elapsed,
 	// we shouldn't send the state/configuration again.
@@ -389,12 +394,12 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, 2, configSyncs)
 
 	// Changing the "from" address should result in the configuration being updated.
-	cfg.SmtpFrom = "new-address@test.com"
+	cfg.SmtpConfig.FromAddress = "new-address@test.com"
 	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 3, configSyncs)
-	require.Equal(t, am.smtpFrom, configSent.SmtpFrom)
+	require.Equal(t, am.smtp.FromAddress, configSent.SmtpConfig.FromAddress)
 
 	// Changing fields in the SMTP config should result in the configuration being updated.
 	cfg.SmtpConfig = client.SmtpConfig{

@@ -63,7 +63,7 @@ type Alertmanager struct {
 	orgID             int64
 	ready             bool
 	sender            *sender.ExternalAlertmanager
-	smtpFrom          string
+	smtp              remoteClient.SmtpConfig
 	state             stateStore
 	tenantID          string
 	url               string
@@ -74,10 +74,8 @@ type Alertmanager struct {
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
 
-	smtp          remoteClient.SmtpConfig
 	promoteConfig bool
 	externalURL   string
-	staticHeaders map[string]string
 }
 
 type AlertmanagerConfig struct {
@@ -103,11 +101,6 @@ type AlertmanagerConfig struct {
 
 	// Timeout for the HTTP client.
 	Timeout time.Duration
-
-	// TODO: Remove once everything can be send in the 'smtp_config' field.
-	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
-	SmtpFrom      string
-	StaticHeaders map[string]string
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -199,9 +192,6 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		externalURL:   cfg.ExternalURL,
 		promoteConfig: cfg.PromoteConfig,
 		smtp:          cfg.SmtpConfig,
-		staticHeaders: cfg.StaticHeaders,
-		// TODO: Remove once it can be sent only in the 'smtp_config' field.
-		smtpFrom: cfg.SmtpFrom,
 	}
 
 	// Parse the default configuration once and remember its hash so we can compare it later.
@@ -348,10 +338,6 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 		Promoted:    am.promoteConfig,
 		ExternalURL: am.externalURL,
 		SmtpConfig:  am.smtp,
-
-		// TODO: Remove once everything can be sent only in the 'smtp_config' field.
-		SmtpFrom:      am.smtpFrom,
-		StaticHeaders: am.staticHeaders,
 	}
 
 	cfgHash, err := calculateUserGrafanaConfigHash(payload)
@@ -707,7 +693,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool 
 		return true
 	}
 	if rc.Hash != hash {
-		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration to the remote Alertmanager", "remote", rc.Hash, "local", hash)
+		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration", "remote", rc.Hash, "local", hash)
 		return true
 	}
 	return false
