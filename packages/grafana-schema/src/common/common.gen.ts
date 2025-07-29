@@ -722,6 +722,17 @@ export enum TableCellBackgroundDisplayMode {
   Gradient = 'gradient',
 }
 
+export interface TableWrapTextOptions {
+  /**
+   * if set, limits the number of lines of wrapped text to render
+   */
+  maxWrappedLines?: number;
+  /**
+   * if true, wrap the text content of the cell
+   */
+  wrapText?: boolean;
+}
+
 /**
  * Sort by field state
  */
@@ -755,19 +766,15 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
 /**
  * Auto mode table cell options
  */
-export interface TableAutoCellOptions {
-  maxWrappedLines?: number;
+export interface TableAutoCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.Auto;
-  wrapText?: boolean;
 }
 
 /**
  * Colored text cell options
  */
-export interface TableColorTextCellOptions {
-  maxWrappedLines?: number;
+export interface TableColorTextCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.ColorText;
-  wrapText?: boolean;
 }
 
 /**
@@ -820,12 +827,10 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
 /**
  * Colored background cell options
  */
-export interface TableColoredBackgroundCellOptions {
+export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions {
   applyToRow?: boolean;
-  maxWrappedLines?: number;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
-  wrapText?: boolean;
 }
 
 /**
