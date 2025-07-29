@@ -3,15 +3,18 @@ package move
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -72,7 +75,7 @@ func TestMoveWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewWorker(nil, nil)
+			worker := NewWorker(nil, nil, nil)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -86,7 +89,7 @@ func TestMoveWorker_ProcessMissingMoveSettings(t *testing.T) {
 		},
 	}
 
-	worker := NewWorker(nil, nil)
+	worker := NewWorker(nil, nil, nil)
 	err := worker.Process(context.Background(), nil, job, nil)
 	require.EqualError(t, err, "missing move settings")
 }
@@ -101,7 +104,7 @@ func TestMoveWorker_ProcessMissingTargetPath(t *testing.T) {
 		},
 	}
 
-	worker := NewWorker(nil, nil)
+	worker := NewWorker(nil, nil, nil)
 	err := worker.Process(context.Background(), nil, job, nil)
 	require.EqualError(t, err, "target path is required for move operation")
 }
@@ -117,7 +120,7 @@ func TestMoveWorker_ProcessInvalidTargetPath(t *testing.T) {
 		},
 	}
 
-	worker := NewWorker(nil, nil)
+	worker := NewWorker(nil, nil, nil)
 	err := worker.Process(context.Background(), nil, job, nil)
 	require.EqualError(t, err, "target path must be a directory (should end with '/')")
 }
@@ -149,7 +152,7 @@ func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute)
+	worker := NewWorker(nil, mockWrapFn.Execute, nil)
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "move files in repository: move job submitted targeting repository that is not a ReaderWriter")
 }
@@ -173,7 +176,7 @@ func TestMoveWorker_ProcessWrapFnError(t *testing.T) {
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
 	mockProgress.On("StrictMaxErrors", 1).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute)
+	worker := NewWorker(nil, mockWrapFn.Execute, nil)
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "move files in repository: stage failed")
 }
@@ -220,7 +223,7 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 		return result.Path == "test/path2" && result.Action == repository.FileActionRenamed && result.Error == nil
 	})).Return()
 
-	worker := NewWorker(nil, mockWrapFn.Execute)
+	worker := NewWorker(nil, mockWrapFn.Execute, nil)
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -259,7 +262,7 @@ func TestMoveWorker_ProcessMoveFilesWithError(t *testing.T) {
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
-	worker := NewWorker(nil, mockWrapFn.Execute)
+	worker := NewWorker(nil, mockWrapFn.Execute, nil)
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "move files in repository: too many errors")
 }
@@ -304,7 +307,7 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
 	}), mockProgress).Return(nil)
 
-	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute)
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil)
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -345,7 +348,7 @@ func TestMoveWorker_ProcessSyncWorkerError(t *testing.T) {
 	syncError := errors.New("sync failed")
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.Anything, mockProgress).Return(syncError)
 
-	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute)
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil)
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "pull resources: sync failed")
 }
@@ -426,7 +429,7 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 				}
 			}
 
-			worker := NewWorker(nil, nil)
+			worker := NewWorker(nil, nil, nil)
 			err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, tt.paths...)
 
 			if tt.expectedError != "" {
@@ -482,9 +485,351 @@ func TestMoveWorker_constructTargetPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewWorker(nil, nil)
+			worker := NewWorker(nil, nil, nil)
 			result := worker.constructTargetPath(tt.jobTargetPath, tt.sourcePath)
 			require.Equal(t, tt.expectedTarget, result)
+		})
+	}
+}
+
+func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"test/path1"},
+				TargetPath: "new/location/",
+				Resources: []provisioning.ResourceRef{
+					{
+						Name:  "dashboard-uid",
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
+				},
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResources := resources.NewMockRepositoryResources(t)
+	mockSyncWorker := jobs.NewMockWorker(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 2).Return() // 1 path + 1 resource
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
+	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/dashboard-uid").Return()
+	mockProgress.On("SetMessage", mock.Anything, "Moving test/path1 to new/location/path1").Return()
+	mockProgress.On("SetMessage", mock.Anything, "Moving dashboard/file.yaml to new/location/file.yaml").Return()
+	mockProgress.On("TooManyErrors").Return(nil).Times(2)
+
+	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepoResources, nil)
+	mockRepoResources.On("FindResourcePath", mock.Anything, "dashboard-uid", schema.GroupVersionKind{
+		Group: "dashboard.grafana.app",
+		Kind:  "Dashboard",
+	}).Return("dashboard/file.yaml", nil)
+
+	mockRepo.On("Move", mock.Anything, "test/path1", "new/location/path1", "", "Move test/path1 to new/location/path1").Return(nil)
+	mockRepo.On("Move", mock.Anything, "dashboard/file.yaml", "new/location/file.yaml", "", "Move dashboard/file.yaml to new/location/file.yaml").Return(nil)
+
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path == "test/path1" && result.Action == repository.FileActionRenamed && result.Error == nil
+	})).Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path == "dashboard/file.yaml" && result.Action == repository.FileActionRenamed && result.Error == nil
+	})).Return()
+
+	// Add expectations for sync worker (called when ref is empty)
+	mockProgress.On("ResetResults").Return()
+	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
+	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
+		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
+	}), mockProgress).Return(nil)
+
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory)
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+}
+
+func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				TargetPath: "new/location/",
+				Resources: []provisioning.ResourceRef{
+					{
+						Name:  "non-existent-uid",
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
+				},
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResources := resources.NewMockRepositoryResources(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return() // 1 resource
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
+	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/non-existent-uid").Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepoResources, nil)
+	resourceError := errors.New("resource not found")
+	mockRepoResources.On("FindResourcePath", mock.Anything, "non-existent-uid", schema.GroupVersionKind{
+		Group: "dashboard.grafana.app",
+		Kind:  "Dashboard",
+	}).Return("", resourceError)
+
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Name == "non-existent-uid" && result.Group == "dashboard.grafana.app" && 
+			result.Action == repository.FileActionRenamed && 
+			result.Error != nil && result.Error.Error() == "find path for resource dashboard.grafana.app/Dashboard/non-existent-uid: resource not found"
+	})).Return()
+
+	// Add expectations for sync worker (called when ref is empty)
+	mockSyncWorker := jobs.NewMockWorker(t)
+	mockProgress.On("ResetResults").Return()
+	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
+	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
+		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
+	}), mockProgress).Return(nil)
+
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory)
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err) // Should continue despite individual resource errors
+}
+
+func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				TargetPath: "new/location/",
+				Resources: []provisioning.ResourceRef{
+					{
+						Name:  "dashboard-uid",
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
+				},
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return() // 1 resource
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
+
+	factoryError := errors.New("failed to create resources client")
+	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(nil, factoryError)
+
+	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory)
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.EqualError(t, err, "move files in repository: create repository resources client: failed to create resources client")
+}
+
+func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
+	tests := []struct {
+		name              string
+		resources         []provisioning.ResourceRef
+		resourcePaths     map[string]string
+		resourceErrors    map[string]error
+		tooManyErrors     error
+		expectedPaths     []string
+		expectedError     string
+		expectContinue    bool
+	}{
+		{
+			name: "single resource success",
+			resources: []provisioning.ResourceRef{
+				{
+					Name:  "dashboard-uid",
+					Kind:  "Dashboard",
+					Group: "dashboard.grafana.app",
+				},
+			},
+			resourcePaths: map[string]string{
+				"dashboard-uid": "dashboards/test.json",
+			},
+			expectedPaths: []string{"dashboards/test.json"},
+		},
+		{
+			name: "multiple resources success",
+			resources: []provisioning.ResourceRef{
+				{
+					Name:  "dashboard1",
+					Kind:  "Dashboard",
+					Group: "dashboard.grafana.app",
+				},
+				{
+					Name:  "dashboard2",
+					Kind:  "Dashboard",
+					Group: "dashboard.grafana.app",
+				},
+			},
+			resourcePaths: map[string]string{
+				"dashboard1": "dashboards/dash1.json",
+				"dashboard2": "dashboards/dash2.json",
+			},
+			expectedPaths: []string{"dashboards/dash1.json", "dashboards/dash2.json"},
+		},
+		{
+			name: "resource not found continues",
+			resources: []provisioning.ResourceRef{
+				{
+					Name:  "non-existent",
+					Kind:  "Dashboard",
+					Group: "dashboard.grafana.app",
+				},
+				{
+					Name:  "existing",
+					Kind:  "Dashboard",
+					Group: "dashboard.grafana.app",
+				},
+			},
+			resourcePaths: map[string]string{
+				"existing": "dashboards/existing.json",
+			},
+			resourceErrors: map[string]error{
+				"non-existent": errors.New("not found"),
+			},
+			expectedPaths: []string{"dashboards/existing.json"},
+			expectContinue: true,
+		},
+		{
+			name:          "empty resources list",
+			resources:     []provisioning.ResourceRef{},
+			expectedPaths: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockReaderWriter{
+				MockRepository: repository.NewMockRepository(t),
+			}
+			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+			mockRepoResources := resources.NewMockRepositoryResources(t)
+
+			if len(tt.resources) > 0 {
+				mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
+				mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepoResources, nil)
+
+				for _, resource := range tt.resources {
+					mockProgress.On("SetMessage", mock.Anything, fmt.Sprintf("Finding path for resource %s/%s/%s", resource.Group, resource.Kind, resource.Name)).Return()
+
+					gvk := schema.GroupVersionKind{
+						Group: resource.Group,
+						Kind:  resource.Kind,
+					}
+
+					if path, ok := tt.resourcePaths[resource.Name]; ok {
+						mockRepoResources.On("FindResourcePath", mock.Anything, resource.Name, gvk).Return(path, nil)
+					} else if err, ok := tt.resourceErrors[resource.Name]; ok {
+						mockRepoResources.On("FindResourcePath", mock.Anything, resource.Name, gvk).Return("", err)
+						mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+							return result.Name == resource.Name && result.Group == resource.Group && 
+								result.Action == repository.FileActionRenamed && result.Error != nil
+						})).Return()
+						if tt.tooManyErrors != nil {
+							mockProgress.On("TooManyErrors").Return(tt.tooManyErrors)
+						} else {
+							mockProgress.On("TooManyErrors").Return(nil)
+						}
+					}
+				}
+			}
+
+			worker := NewWorker(nil, nil, mockResourcesFactory)
+			paths, err := worker.resolveResourcesToPaths(context.Background(), mockRepo, mockProgress, tt.resources)
+
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			require.Equal(t, tt.expectedPaths, paths)
+
+			mockResourcesFactory.AssertExpectations(t)
+			if len(tt.resources) > 0 {
+				mockRepoResources.AssertExpectations(t)
+			}
+			mockProgress.AssertExpectations(t)
+		})
+	}
+}
+
+func TestMoveWorker_deduplicatePaths(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "no duplicates",
+			input:    []string{"path1", "path2", "path3"},
+			expected: []string{"path1", "path2", "path3"},
+		},
+		{
+			name:     "with duplicates",
+			input:    []string{"path1", "path2", "path1", "path3", "path2"},
+			expected: []string{"path1", "path2", "path3"},
+		},
+		{
+			name:     "empty slice",
+			input:    []string{},
+			expected: []string{},
+		},
+		{
+			name:     "single item",
+			input:    []string{"path1"},
+			expected: []string{"path1"},
+		},
+		{
+			name:     "all duplicates",
+			input:    []string{"path1", "path1", "path1"},
+			expected: []string{"path1"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := deduplicatePaths(tt.input)
+			require.Equal(t, tt.expected, result)
 		})
 	}
 }
