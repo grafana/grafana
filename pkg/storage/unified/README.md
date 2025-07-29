@@ -62,7 +62,6 @@ protocol = https
 
 [feature_toggles]
 grafanaAPIServerWithExperimentalAPIs = true
-kubernetesClientDashboardsFolders = true
 
 [unified_storage.folders.folder.grafana.app]
 dualWriterMode = 4
@@ -259,7 +258,6 @@ To enable it, add the following to your `custom.ini` under the `[feature_toggles
 [feature_toggles]
 ; Used by the Grafana instance
 unifiedStorageSearchUI = true
-kubernetesClientDashboardsFolders = true
 
 ; Used by unified storage
 unifiedStorageSearch = true
@@ -369,7 +367,6 @@ signing_keys_url = http://localhost:3011/api/signing-keys/keys
 mode = "on-prem"
 
 [feature_toggles]
-kubernetesClientDashboardsFolders = true
 kubernetesDashboardsAPI = true
 kubernetesFolders = true
 unifiedStorage = true
@@ -418,7 +415,6 @@ http_port = 3011
 http_addr = "127.0.0.2"
 
 [feature_toggles]
-kubernetesClientDashboardsFolders = true
 kubernetesDashboardsAPI = true
 kubernetesFolders = true
 unifiedStorageSearchUI = true

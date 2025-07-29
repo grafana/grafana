@@ -89,20 +89,11 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 		query.DashboardID = id
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, query.Version)
-		if err != nil {
-			return nil, err
-		}
-		return version, nil
-	}
-
-	version, err := s.store.Get(ctx, query)
+	version, err := s.getHistoryThroughK8s(ctx, query.OrgID, query.DashboardUID, query.Version)
 	if err != nil {
 		return nil, err
 	}
-	version.Data.Set("id", version.DashboardID)
-	return version.ToDTO(query.DashboardUID), nil
+	return version, nil
 }
 
 func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
@@ -160,31 +151,17 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 		query.Limit = 1000
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		versions, err := s.listHistoryThroughK8s(
-			ctx,
-			query.OrgID,
-			query.DashboardUID,
-			int64(query.Limit),
-			query.ContinueToken,
-		)
-		if err != nil {
-			return nil, err
-		}
-		return versions, nil
-	}
-
-	dvs, err := s.store.List(ctx, query)
+	versions, err := s.listHistoryThroughK8s(
+		ctx,
+		query.OrgID,
+		query.DashboardUID,
+		int64(query.Limit),
+		query.ContinueToken,
+	)
 	if err != nil {
 		return nil, err
 	}
-	dtos := make([]*dashver.DashboardVersionDTO, len(dvs))
-	for i, v := range dvs {
-		dtos[i] = v.ToDTO(query.DashboardUID)
-	}
-	return &dashver.DashboardVersionResponse{
-		Versions: dtos,
-	}, nil
+	return versions, nil
 }
 
 // getDashUIDMaybeEmpty is a helper function which takes a dashboardID and

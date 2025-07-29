@@ -221,7 +221,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagKubernetesClientDashboardsFolders,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {

@@ -193,9 +193,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		ExpectedUser: &user.User{},
 	}
 
-	featuresArr := []any{
-		featuremgmt.FlagKubernetesClientDashboardsFolders}
-	features := featuremgmt.WithFeatures(featuresArr...)
+	features := featuremgmt.WithFeatures()
 
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
@@ -521,7 +519,7 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("TestSearchFoldersFromApiServer")
 	service := Service{
 		k8sclient:     fakeK8sClient,
-		features:      featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		features:      featuremgmt.WithFeatures(),
 		unifiedStore:  folderStore,
 		tracer:        tracer,
 		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
@@ -764,7 +762,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("TestGetFoldersFromApiServer")
 	service := Service{
 		k8sclient:     fakeK8sClient,
-		features:      featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		features:      featuremgmt.WithFeatures(),
 		unifiedStore:  folderStore,
 		accessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 		tracer:        tracer,
@@ -866,7 +864,7 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 		publicDashboardService: publicDashboardFakeService,
 		accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
 		registry:               make(map[string]folder.RegistryService),
-		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesClientDashboardsFolders),
+		features:               featuremgmt.WithFeatures(),
 		tracer:                 tracer,
 	}
 	user := &user.SignedInUser{OrgID: 1}

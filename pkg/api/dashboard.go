@@ -204,7 +204,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 	metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
 	// lookup folder title & url
-	if dash.FolderUID != "" && hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
+	if dash.FolderUID != "" {
 		queryResult, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        c.GetOrgID(),
 			UID:          &dash.FolderUID,

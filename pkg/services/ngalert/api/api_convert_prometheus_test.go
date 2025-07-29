@@ -571,6 +571,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		fldr.ParentUID = ""
 		folderService.ExpectedFolder = fldr
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		folderService.AddFolder(fldr)
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// Create rules in both folders
@@ -669,6 +670,8 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 		fldr2 := randFolder()
 		fldr2.ParentUID = ""
 		folderService.ExpectedFolders = []*folder.Folder{fldr, fldr2}
+		folderService.AddFolder(fldr)
+		folderService.AddFolder(fldr2)
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr, fldr2)
 
 		// Create a Grafana rule for each Prometheus rule
@@ -798,6 +801,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		// Create a folder in the root
 		fldr := randFolder()
 		fldr.ParentUID = ""
+		folderService.AddFolder(fldr)
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 

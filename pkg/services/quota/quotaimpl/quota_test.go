@@ -504,8 +504,10 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	folderSvc := folderimpl.ProvideService(
 		fStore, acmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
 		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	require.NoError(t, err)
 	dashService, err := dashService.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(),
-		ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotaService, orgService, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore())
 	require.NoError(t, err)
