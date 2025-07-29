@@ -22,7 +22,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Button, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, Modal, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types/store';
 
@@ -33,47 +33,6 @@ import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogList } from './LogList';
 import { ScrollToLogsEvent } from './virtualization';
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    modal: css({
-      width: '85vw',
-      [theme.breakpoints.down('md')]: {
-        width: '100%',
-      },
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-    }),
-    datasourceUi: css({
-      display: 'flex',
-      alignItems: 'center',
-    }),
-    loadingIndicator: css({
-      height: theme.spacing(3),
-      textAlign: 'center',
-    }),
-    wrapper: css({
-      border: `1px solid ${theme.colors.border.weak}`,
-      padding: theme.spacing(0, 1, 1, 0),
-    }),
-    logsContainer: css({
-      height: '59vh',
-    }),
-    flexColumn: css({
-      display: 'flex',
-      flexDirection: 'column',
-      padding: theme.spacing(0, 3, 3, 3),
-    }),
-    link: css({
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      ':hover': {
-        color: theme.colors.text.link,
-      },
-    }),
-  };
-};
 
 interface LogLineContextProps {
   log: LogRowModel;
@@ -122,6 +81,7 @@ export const LogLineContext = memo(
     const allLogs = useMemo(() => [...aboveLogs, log, ...belowLogs], [log, belowLogs, aboveLogs]);
     const [aboveState, setAboveState] = useState(LoadingState.NotStarted);
     const [belowState, setBelowState] = useState(LoadingState.NotStarted);
+    const [showLog, setShowLog] = useState(false);
     const eventBusRef = useRef(new EventBusSrv());
 
     const dispatch = useDispatch();
@@ -258,6 +218,18 @@ export const LogLineContext = memo(
         {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
           <div className={styles.datasourceUi}>{getLogRowContextUi(log, updateResults)}</div>
         )}
+        <Collapse
+          collapsible={true}
+          isOpen={showLog}
+          onToggle={() => setShowLog(!showLog)}
+          label={
+            <div className={styles.logPreview}>
+              {showLog ? t('logs.log-line-context.title-log-line', 'Log line') : log.entry.substring(0, 300)}
+            </div>
+          }
+        >
+          <div>{log.entry}</div>
+        </Collapse>
         <div className={styles.loadingIndicator}>
           {aboveState === LoadingState.Loading && (
             <LoadingIndicator
@@ -358,6 +330,54 @@ export const LogLineContext = memo(
   }
 );
 LogLineContext.displayName = 'LogLineContext';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    modal: css({
+      width: '85vw',
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+    }),
+    datasourceUi: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    loadingIndicator: css({
+      height: theme.spacing(3),
+      textAlign: 'center',
+    }),
+    wrapper: css({
+      border: `1px solid ${theme.colors.border.weak}`,
+      padding: theme.spacing(0, 1, 1, 0),
+    }),
+    logsContainer: css({
+      height: '57vh',
+    }),
+    flexColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(0, 3, 3, 3),
+    }),
+    link: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      ':hover': {
+        color: theme.colors.text.link,
+      },
+    }),
+    logPreview: css({
+      overflow: 'hidden',
+      textAlign: 'left',
+      textOverflow: 'ellipsis',
+      width: '75vw',
+      whiteSpace: 'nowrap',
+    }),
+  };
+};
 
 const getLoadMoreDirection = (place: 'above' | 'below', sortOrder: LogsSortOrder): LogRowContextQueryDirection => {
   if (place === 'above' && sortOrder === LogsSortOrder.Descending) {
