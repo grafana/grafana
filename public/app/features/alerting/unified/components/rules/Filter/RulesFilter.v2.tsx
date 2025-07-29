@@ -1,15 +1,18 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   Button,
+  ClickOutsideWrapper,
   Combobox,
   FilterInput,
   Input,
   Label,
+  MultiCombobox,
   RadioButtonGroup,
   Stack,
   Tab,
@@ -21,10 +24,39 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { RuleHealth } from '../../../search/rulesSearchParser';
 import { PopupCard } from '../../HoverCard';
-import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 import { emptyAdvancedFilters, formAdvancedFiltersToRuleFilter, searchQueryToDefaultValues } from './utils';
+
+/**
+ * Creates a portal container outside the current stacking context for dropdowns
+ * that need to appear above popups/modals
+ */
+function usePortalContainer(zIndex: number) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = document.createElement('div');
+    Object.assign(container.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: String(zIndex),
+    });
+
+    document.body.appendChild(container);
+    containerRef.current = container;
+
+    return () => {
+      container.remove();
+    };
+  }, [zIndex]);
+
+  return containerRef.current;
+}
 
 type ActiveTab = 'custom' | 'saved';
 export type AdvancedFilters = {
@@ -52,53 +84,6 @@ export default function RulesFilter() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { searchQuery, updateFilters } = useRulesFilter();
-  const popupRef = useRef<HTMLDivElement>(null);
-
-  // Custom click-outside handler that's aware of data source picker portals
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!isPopupOpen) {
-        return;
-      }
-
-      // Check if the click target is a valid Element
-      if (!event.target || !(event.target instanceof Element)) {
-        return;
-      }
-
-      const target = event.target;
-
-      if (popupRef.current?.contains(target)) {
-        return;
-      }
-
-      if (target.closest('[role="tooltip"]')) {
-        return;
-      }
-
-      if (
-        target.closest('[data-testid*="select"]') ||
-        target.closest('.react-select__menu') ||
-        target.closest('.select__menu') ||
-        target.closest('[class*="menu"]') ||
-        target.closest('[class*="option"]') ||
-        target.closest('[class*="dropdown"]') ||
-        target.closest('[class*="popover"]')
-      ) {
-        return;
-      }
-
-      setIsPopupOpen(false);
-    };
-
-    if (isPopupOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isPopupOpen]);
 
   // this form will managed the search query string, which is updated either by the user typing in the input or by the advanced filters
   const { setValue, watch, handleSubmit } = useForm<SearchQueryForm>({
@@ -108,8 +93,7 @@ export default function RulesFilter() {
   });
 
   const submitHandler: SubmitHandler<SearchQueryForm> = (values: SearchQueryForm) => {
-    console.log('search Query', values);
-    console.log('handleAdvancedFilters', values);
+    // Handle search query form submission if needed
   };
 
   const handleAdvancedFilters: SubmitHandler<AdvancedFilters> = (values) => {
@@ -136,7 +120,7 @@ export default function RulesFilter() {
           value={watch('query')}
         />
         {/* the popup card is mounted inside of a portal, so we can't rely on the usual form handling mechanisms of button[type=submit] */}
-        <div ref={popupRef}>
+        <ClickOutsideWrapper onClick={() => setIsPopupOpen(false)}>
           <PopupCard
             showOn="click"
             placement="auto-end"
@@ -173,7 +157,7 @@ export default function RulesFilter() {
               {filterButtonLabel}
             </Button>
           </PopupCard>
-        </div>
+        </ClickOutsideWrapper>
         {/* show list view / group view */}
         <RulesViewModeSelector />
       </Stack>
@@ -188,7 +172,11 @@ interface FilterOptionsProps {
 
 const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
   const styles = useStyles2(getStyles);
+  const theme = useStyles2((theme) => theme);
   const { filterState } = useRulesFilter();
+
+  // Create portal container outside popup's stacking context
+  const portalContainer = usePortalContainer(theme.zIndex.portal + 100);
 
   const defaultValues = searchQueryToDefaultValues(filterState);
 
@@ -198,6 +186,12 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
   });
 
   const submitAdvancedFilters = handleSubmit(onSubmit);
+
+  const dataSourceOptions = useMemo(() => {
+    return getDataSourceSrv()
+      .getList({ alerting: true })
+      .map((ds: DataSourceInstanceSettings) => ({ label: ds.name, value: ds.name }));
+  }, []);
 
   return (
     <form
@@ -245,20 +239,12 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
             name="dataSourceNames"
             control={control}
             render={({ field }) => (
-              <MultipleDataSourcePicker
-                alerting
-                noDefault
+              <MultiCombobox
+                options={dataSourceOptions}
+                value={field.value}
+                onChange={(selections) => field.onChange(selections.map((s) => s.value))}
                 placeholder="Select data sources"
-                current={field.value}
-                onChange={(dataSource, action) => {
-                  const currentValues = field.value || [];
-                  const newValues =
-                    action === 'add'
-                      ? [...currentValues, dataSource.name]
-                      : currentValues.filter((name) => name !== dataSource.name);
-                  field.onChange(newValues);
-                }}
-                onClear={() => field.onChange([])}
+                portalContainer={portalContainer || undefined}
               />
             )}
           />

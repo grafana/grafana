@@ -30,6 +30,7 @@ interface MultiComboboxBaseProps<T extends string | number>
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;
   enableAllOption?: boolean;
+  portalContainer?: HTMLElement;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
@@ -47,6 +48,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     maxWidth,
     isClearable,
     createCustomValue = false,
+    portalContainer,
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -319,12 +321,13 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           </div>
         </span>
       </div>
-      <Portal>
+      <Portal root={portalContainer}>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
           style={{
             ...floatStyles,
             width: floatStyles.width + 24, // account for checkbox
+            pointerEvents: 'auto', // Override container's pointer-events: none
           }}
           {...getMenuProps({ ref: floatingRef })}
         >
