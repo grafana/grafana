@@ -1131,11 +1131,11 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			// Create a dashboard inside a folder to automatically create the folder structure
 			// This follows the same pattern as other tests in this file
 			testDashboard := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "folder-dash"`, 1)
-			
+
 			// Write the modified dashboard to a temporary file first
 			tmpFolderDash := filepath.Join(tmpDir, "folder-dashboard.json")
 			require.NoError(t, os.WriteFile(tmpFolderDash, []byte(testDashboard), 0644))
-			
+
 			// Copy it to the folder structure using the helper
 			helper.CopyToProvisioningPath(t, tmpFolderDash, "test-folder/dashboard-in-folder.json")
 
@@ -1145,7 +1145,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			// Verify folder was created in Grafana as a Folder resource
 			folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
-			
+
 			var testFolder *unstructured.Unstructured
 			for _, folder := range folders.Items {
 				// Folder names are generated with suffixes, so check if it starts with "test-folder"
