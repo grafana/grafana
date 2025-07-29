@@ -234,10 +234,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onCancelQueryLibraryEdit = () => {
-    const { onCancelQueryLibraryEdit } = this.props;
-    if (onCancelQueryLibraryEdit) {
-      onCancelQueryLibraryEdit();
-    }
+    this.props.onCancelQueryLibraryEdit?.();
+    // TODO add monitoring
+    // TODO redirect to query editor
   };
 
   onCopyQuery = () => {
@@ -333,9 +332,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
   };
 
-  renderQueryLibraryBadge = () => {
+  renderQueryLibraryEditingBadge = () => {
     const { queryRef } = this.props;
-    return <QueryLibraryBadgeWrapper key="query-library-badge-wrapper" queryRef={queryRef} />;
+    return <QueryLibraryEditingBadge key="query-library-editing-badge" queryRef={queryRef} />;
   };
 
   renderExtraActions = () => {
@@ -365,7 +364,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     extraActions.push(this.renderWarnings('info'));
     extraActions.push(this.renderWarnings('warning'));
     extraActions.push(<AdaptiveTelemetryQueryActions key="adaptive-telemetry-actions" query={query} />);
-    extraActions.push(this.renderQueryLibraryBadge());
+    extraActions.push(this.renderQueryLibraryEditingBadge());
 
     return extraActions;
   };
@@ -382,7 +381,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
-    const isEditingQueryLibraryRef = queryRef !== undefined;
+    const isEditingQueryLibrary = queryRef !== undefined;
 
     return (
       <>
@@ -396,7 +395,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         )}
         {this.renderExtraActions()}
         <MaybeQueryLibrarySaveButton query={query} queryRef={queryRef} />
-        {isEditingQueryLibraryRef && (
+        {isEditingQueryLibrary && (
           <>
             <QueryOperationAction
               title={t('query-operation.header.cancel-query-library-edit', 'Cancel editing from library')}
@@ -406,14 +405,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             <Divider direction="vertical" spacing={0} />
           </>
         )}
-        {!isEditingQueryLibraryRef && (
+        {!isEditingQueryLibrary && (
           <QueryOperationAction
             title={t('query-operation.header.duplicate-query', 'Duplicate query')}
             icon="copy"
             onClick={this.onCopyQuery}
           />
         )}
-        {!isEditingQueryLibraryRef && (
+        {!isEditingQueryLibrary && (
           <ReplaceQueryFromLibrary
             datasourceFilters={datasource?.name ? [datasource.name] : []}
             onSelectQuery={(query) => {
@@ -435,7 +434,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             onClick={this.onHideQuery}
           />
         ) : null}
-        {!isEditingQueryLibraryRef && (
+        {!isEditingQueryLibrary && (
           <QueryOperationAction
             title={t('query-operation.header.remove-query', 'Remove query')}
             icon="trash-alt"
@@ -515,7 +514,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 }
 
-export function QueryLibraryBadgeWrapper(props: { queryRef?: string }) {
+export function QueryLibraryEditingBadge(props: { queryRef?: string }) {
   const { queryLibraryEnabled } = useQueryLibraryContext();
   const { queryRef } = props;
 

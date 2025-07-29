@@ -2,11 +2,7 @@ import { isEqual } from 'lodash';
 
 import { EventBusSrv } from '@grafana/data';
 import { changeDatasource } from 'app/features/explore/state/datasource';
-import {
-  changePanelsStateAction,
-  initializeExplore,
-  updateQueryRefAction,
-} from 'app/features/explore/state/explorePane';
+import { changePanelsStateAction, initializeExplore } from 'app/features/explore/state/explorePane';
 import { splitClose, syncTimesAction } from 'app/features/explore/state/main';
 import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explore/state/query';
 import { updateTime } from 'app/features/explore/state/time';
