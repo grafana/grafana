@@ -18,10 +18,10 @@ import (
 // Authorization checks will happen within each function, and the user in ctx will
 // limit which namespace/tenant/org we are talking to
 type PluginDatasourceProvider interface {
-	// Get a single datasurce
+	// Get a single data source (any type)
 	GetDataSource(ctx context.Context, uid string) (*datasourceV0.DataSource, error)
 
-	// List all datasources
+	// List all datasources (any type)
 	ListDataSource(ctx context.Context) (*datasourceV0.DataSourceList, error)
 
 	// Create a data source
@@ -30,7 +30,7 @@ type PluginDatasourceProvider interface {
 	// Update a data source
 	UpdateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error)
 
-	// Delete datasurce
+	// Delete a data source (any type)
 	Delete(ctx context.Context, uid string) error
 
 	// Return settings (decrypted!) for a specific plugin

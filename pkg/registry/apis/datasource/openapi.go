@@ -32,6 +32,20 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 		return nil, err
 	}
 
+	// Hide the resource routes -- explicit ones will be added if defined below
+	prefix := root + "namespaces/{namespace}/datasources/{name}/resource"
+	r := oas.Paths.Paths[prefix]
+	if r != nil && r.Get != nil {
+		r.Get.Description = "Get resources in the datasource plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI"
+		r.Delete = nil
+		r.Head = nil
+		r.Patch = nil
+		r.Post = nil
+		r.Put = nil
+		r.Options = nil
+	}
+	delete(oas.Paths.Paths, prefix+"/{path}")
+
 	// Set explicit apiVersion and kind on the datasource
 	ds, ok := oas.Components.Schemas["com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"]
 	if !ok {
@@ -104,7 +118,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	if len(custom.Routes) > 0 {
 		ds := oas.Paths.Paths[root+"namespaces/{namespace}/datasources/{name}"]
 		if ds == nil || len(ds.Parameters) < 2 {
-			return nil, fmt.Errorf("missing parmeters")
+			return nil, fmt.Errorf("missing Parameters")
 		}
 
 		prefix := root + "namespaces/{namespace}/datasources/{name}/resource"
@@ -124,7 +138,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 					op.Tags = append(op.Tags, "Route") // Custom resource?
 				}
 			}
-			oas.Paths.Paths[prefix+k] = v // TODO add namepsace + name parameters
+			oas.Paths.Paths[prefix+k] = v // TODO add namespace + name parameters
 		}
 	}
 	return oas, err
