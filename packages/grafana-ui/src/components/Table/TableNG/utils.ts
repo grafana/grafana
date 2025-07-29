@@ -25,6 +25,7 @@ import {
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
+import { inferPills } from './Cells/PillCell';
 import { COLUMN, TABLE } from './constants';
 import {
   CellColors,
@@ -82,6 +83,24 @@ export function shouldTextWrap(field: Field): boolean {
 }
 
 /**
+ * @internal
+ * Returns the limit of number of lines that should be shown for wrapped text if set.
+ */
+export function getMaxWrappedLines(field: Field): number | undefined {
+  const cellOptions = getCellOptions(field);
+  // @ts-ignore - same rationale as shouldWrapText above.
+  return cellOptions?.maxWrappedLines;
+}
+
+function limitByMaxWrappedLines(lineCount: number, field: Field): number {
+  const maxWrappedLines = getMaxWrappedLines(field);
+  if (!maxWrappedLines || lineCount <= maxWrappedLines) {
+    return lineCount;
+  }
+  return maxWrappedLines;
+}
+
+/**
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
  */
@@ -100,7 +119,8 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
 
   return {
     ctx,
-    font,
+    fontFamily,
+    letterSpacing,
     avgCharWidth,
     estimateLines: getTextLineEstimator(avgCharWidth),
     wrappedCount: wrapUwrapCount(count),
@@ -108,15 +128,15 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
 }
 
 /**
- * @internal
+ * @internal wraps the uwrap count function to apply the maxWrappedLines limit if set.
  */
 export function wrapUwrapCount(count: Count): LineCounter {
-  return (value, width) => {
+  return (value, width, field) => {
     if (value == null) {
       return 1;
     }
 
-    return count(String(value), width);
+    return limitByMaxWrappedLines(count(String(value), width), field);
   };
 }
 
@@ -124,7 +144,7 @@ export function wrapUwrapCount(count: Count): LineCounter {
  * @internal returns a line counter which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
  */
 export function getTextLineEstimator(avgCharWidth: number): LineCounter {
-  return (value, width) => {
+  return (value, width, field) => {
     if (!value) {
       return -1;
     }
@@ -137,7 +157,60 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
     }
 
     const charsPerLine = width / avgCharWidth;
-    return strValue.length / charsPerLine;
+    return limitByMaxWrappedLines(strValue.length / charsPerLine, field);
+  };
+}
+
+/**
+ * @internal
+ */
+export function getDataLinksCounter(): LineCounter {
+  const linksCountCache: Record<string, number> = {};
+
+  // when we render links, we need to filter out the invalid links. since the call to `getLinks` is expensive,
+  // we'll cache the result and reuse it for every row in the table. this cache is cleared when line counts are
+  // rebuilt anytime from the `useRowHeight` hook, and that includes adding and removing data links.
+  return (_value, _width, field, rowIdx) => {
+    const cacheKey = getDisplayName(field);
+    if (linksCountCache[cacheKey] === undefined) {
+      linksCountCache[cacheKey] = getCellLinks(field, rowIdx)?.length ?? 0;
+    }
+
+    return linksCountCache[cacheKey];
+  };
+}
+
+const PILLS_FONT_SIZE = 12;
+const PILLS_SPACING = 12; // 6px horizontal padding on each side
+const PILLS_GAP = 4; // gap between pills
+
+export function getPillLineCounter(measureWidth: (value: string) => number): LineCounter {
+  return (value, width) => {
+    if (value == null) {
+      return 0;
+    }
+
+    const pillValues = inferPills(String(value));
+    if (pillValues.length === 0) {
+      return 0;
+    }
+
+    let lines = 0;
+    let currentLineUse = width;
+
+    for (const pillValue of pillValues) {
+      const rawWidth = measureWidth(pillValue);
+      const pillWidth = rawWidth + PILLS_SPACING;
+
+      if (currentLineUse + pillWidth + PILLS_GAP > width) {
+        lines++;
+        currentLineUse = pillWidth;
+      } else {
+        currentLineUse += pillWidth + PILLS_GAP;
+      }
+    }
+
+    return lines;
   };
 }
 
@@ -175,12 +248,40 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
     const field = fields[fieldIdx];
     if (shouldTextWrap(field)) {
       wrappedFields++;
-      // TODO: Pills, DataLinks, and JSON will have custom line counters here.
 
-      // for string fields, we really want to find the longest field ahead of time to reduce the number of calls to `count`.
-      // calling `count` is going to get a perfectly accurate line count, but it is expensive, so we'd rather estimate the line
-      // count and call the counter only for the field which will take up the most space based on its
-      if (field.type === FieldType.string) {
+      const cellType = getCellOptions(field).type;
+      if (cellType === TableCellDisplayMode.DataLinks) {
+        result.dataLinksCounter = result.dataLinksCounter ?? { counter: getDataLinksCounter(), fieldIdxs: [] };
+        result.dataLinksCounter.fieldIdxs.push(fieldIdx);
+      } else if (cellType === TableCellDisplayMode.Pill) {
+        if (!result.pillCounter) {
+          const pillTypographyCtx = createTypographyContext(
+            PILLS_FONT_SIZE,
+            typographyCtx.fontFamily,
+            typographyCtx.letterSpacing
+          );
+
+          // when using pills, there's a common-sense assumption that values will be repeated.
+          // cache the results of width calculations to try to limit some of the measureText cost.
+          const preciseWidthCache: Record<string, number> = {};
+
+          result.pillCounter = {
+            estimate: getPillLineCounter((value) => value.length * pillTypographyCtx.avgCharWidth),
+            counter: getPillLineCounter((value) => {
+              if (preciseWidthCache[value] === undefined) {
+                const width = pillTypographyCtx.ctx.measureText(value).width;
+                preciseWidthCache[value] = width;
+              }
+              return preciseWidthCache[value];
+            }),
+            fieldIdxs: [],
+          };
+        }
+        result.pillCounter.fieldIdxs.push(fieldIdx);
+      }
+
+      // for string fields, we estimate the length of a line using `avgCharWidth` to limit expensive calls `count`.
+      else if (field.type === FieldType.string) {
         result.textCounter = result.textCounter ?? {
           counter: typographyCtx.wrappedCount,
           estimate: typographyCtx.estimateLines,
@@ -215,7 +316,9 @@ export function getRowHeight(
   defaultHeight: number,
   lineCounters?: LineCounterEntry[],
   lineHeight = TABLE.LINE_HEIGHT,
-  verticalPadding = 0
+  // when this is a function, the field which was measured as the maximum size will be returned, as well as the
+  // calculated number of lines, so that the consumer can use it in case the vertical padding value differs field-by-field.
+  verticalPadding: number | ((field: Field, numLines: number) => number) = TABLE.CELL_PADDING
 ): number {
   if (!lineCounters?.length) {
     return defaultHeight;
@@ -224,6 +327,7 @@ export function getRowHeight(
   let maxLines = -1;
   let maxValue = '';
   let maxWidth = 0;
+  let maxField: Field | undefined;
   let preciseCounter: LineCounter | undefined;
 
   for (const { estimate, counter, fieldIdxs } of lineCounters) {
@@ -239,11 +343,12 @@ export function getRowHeight(
       const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (cellValueRaw != null) {
         const colWidth = columnWidths[fieldIdx];
-        const approxLines = count(cellValueRaw, colWidth);
+        const approxLines = count(cellValueRaw, colWidth, field, rowIdx);
         if (approxLines > maxLines) {
           maxLines = approxLines;
           maxValue = cellValueRaw;
           maxWidth = colWidth;
+          maxField = field;
           preciseCounter = isEstimating ? counter : undefined;
         }
       }
@@ -252,18 +357,23 @@ export function getRowHeight(
 
   // if the value is -1 or the estimate for the max cell was less than the SINGLE_LINE_ESTIMATE_THRESHOLD, we trust
   // that the estimator correctly identified that no text wrapping is needed for this row, skipping the preciseCounter.
-  if (maxLines < SINGLE_LINE_ESTIMATE_THRESHOLD) {
+  if (maxField === undefined || maxLines < SINGLE_LINE_ESTIMATE_THRESHOLD) {
     return defaultHeight;
   }
 
   // if we finished this row height loop with an estimate, we need to call
   // the `preciseCounter` method to get the exact line count.
   if (preciseCounter !== undefined) {
-    maxLines = preciseCounter(maxValue, maxWidth);
+    maxLines = preciseCounter(maxValue, maxWidth, maxField, rowIdx);
   }
 
-  // we want a round number of lines for rendering
-  const totalHeight = Math.ceil(maxLines) * lineHeight + verticalPadding;
+  // round up to the nearest line before doing math
+  maxLines = Math.ceil(maxLines);
+
+  // adjust for vertical padding and line height, and clamp to a minimum default height
+  const verticalPaddingValue =
+    typeof verticalPadding === 'function' ? verticalPadding(maxField, maxLines) : verticalPadding;
+  const totalHeight = maxLines * lineHeight + verticalPaddingValue;
   return Math.max(totalHeight, defaultHeight);
 }
 
@@ -276,9 +386,7 @@ export function shouldTextOverflow(field: Field): boolean {
   const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
-    (field.type === FieldType.string &&
-      cellOptions.type !== TableCellDisplayMode.Image &&
-      cellOptions.type !== TableCellDisplayMode.Pill) ||
+    (field.type === FieldType.string && cellOptions.type !== TableCellDisplayMode.Image) ||
     // regardless of the underlying cell type, data links cells have text overflow.
     cellOptions.type === TableCellDisplayMode.DataLinks;
 

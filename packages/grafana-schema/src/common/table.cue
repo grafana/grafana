@@ -11,6 +11,14 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-backgr
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
+// Whenever we add text wrapping, we should add all text wrapping options at once
+TableWrapTextOptions: {
+  // if true, wrap the text content of the cell
+  wrapText?: bool
+  // if set, limits the number of lines of wrapped text to render
+  maxWrappedLines?: number
+} @cuetsy(kind="interface")
+
 // Sort by field state
 TableSortByFieldState: {
 	// Sets the display name of the field to sort by
@@ -31,14 +39,12 @@ TableFooterOptions: {
 // Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
-	wrapText?: bool
-} @cuetsy(kind="interface")
+} & TableWrapTextOptions @cuetsy(kind="interface")
 
 // Colored text cell options
 TableColorTextCellOptions: {
 	type: TableCellDisplayMode & "color-text"
-	wrapText?: bool
-} @cuetsy(kind="interface")
+} & TableWrapTextOptions @cuetsy(kind="interface")
 
 // Json view cell options
 TableJsonViewCellOptions: {
@@ -55,7 +61,7 @@ TableImageCellOptions: {
 // Show data links in the cell
 TableDataLinksCellOptions: {
 	type: TableCellDisplayMode & "data-links"
-} @cuetsy(kind="interface")
+} & TableWrapTextOptions @cuetsy(kind="interface")
 
 // Show actions in the cell
 TableActionsCellOptions: {
@@ -81,8 +87,11 @@ TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
 	mode?: TableCellBackgroundDisplayMode
 	applyToRow?: bool
-	wrapText?: bool
-} @cuetsy(kind="interface")
+} & TableWrapTextOptions @cuetsy(kind="interface")
+
+TablePillCellOptions: {
+  type: TableCellDisplayMode & "pill"
+} & TableWrapTextOptions @cuetsy(kind="interface")
 
 // Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
@@ -107,8 +116,4 @@ TableFieldOptions: {
 	hideHeader?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
-} @cuetsy(kind="interface")
-
-TablePillCellOptions: {
-  type: TableCellDisplayMode & "pill"
 } @cuetsy(kind="interface")

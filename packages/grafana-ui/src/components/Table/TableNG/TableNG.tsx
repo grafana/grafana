@@ -70,6 +70,7 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
+  getMaxWrappedLines,
   getVisibleFields,
   isCellInspectEnabled,
   shouldTextOverflow,
@@ -350,6 +351,7 @@ export function TableNG(props: TableNGProps) {
 
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
+        const maxWrappedLines = shouldWrap ? getMaxWrappedLines(field) : undefined;
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
@@ -367,14 +369,16 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.ColorText:
           case TableCellDisplayMode.DataLinks:
           case TableCellDisplayMode.JSONView:
+          case TableCellDisplayMode.Pill:
             cellClass = getCellStyles(
               theme,
+              cellType,
               textAlign,
               shouldWrap,
               shouldOverflow,
               canBeColorized,
               isMonospace,
-              cellType === TableCellDisplayMode.DataLinks
+              maxWrappedLines
             );
             break;
         }
@@ -941,35 +945,37 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
+  cellType: TableCellDisplayMode,
   textAlign: TextAlign,
   shouldWrap: boolean,
   shouldOverflow: boolean,
   isColorized: boolean,
   isMonospace: boolean,
-  // TODO: replace this with cellTypeStyles: TemplateStringsArray object
-  isLinkCell: boolean
+  maxWrappedLines?: number
 ) =>
   css({
     display: 'flex',
     alignItems: 'center',
     textAlign,
     justifyContent: getJustifyContent(textAlign),
-    paddingInline: TABLE.CELL_PADDING,
+    padding: TABLE.CELL_PADDING,
     minHeight: '100%',
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
-    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
-    ...(isMonospace && { fontFamily: 'monospace' }),
 
-    // should omit if no cell actions, and no shouldOverflow
     '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': {
         display: 'flex',
       },
-      ...(shouldOverflow && {
-        whiteSpace: 'pre-line',
+      ...((shouldOverflow || maxWrappedLines) && {
+        zIndex: theme.zIndex.tooltip - 2,
+        whiteSpace: isMonospace ? 'pre' : 'pre-line',
         height: 'fit-content',
+        maxHeight: 'none',
         minWidth: 'fit-content',
-        ...(isMonospace && { whiteSpace: 'pre' }),
+        '-webkit-line-clamp': 'none',
+        ...(cellType === TableCellDisplayMode.Pill && {
+          flexWrap: 'wrap',
+        }),
       }),
     },
 
@@ -989,21 +995,54 @@ const getCellStyles = (
           }),
     },
 
-    ...(isLinkCell && {
+    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
+    ...(isMonospace && { fontFamily: 'monospace' }),
+    ...(maxWrappedLines && {
+      // height properties need to override the default settings.
+      height: 'auto',
+      // FIXME: this line causes the table to get out of alignment when 2 or more fields are wrapped
+      maxHeight: maxWrappedLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2,
+      minHeight: 'none',
+      // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
+      display: '-webkit-box',
+      '-webkit-line-clamp': String(maxWrappedLines),
+      '-webkit-box-orient': 'vertical',
+      overflowY: 'hidden',
+    }),
+
+    ...(cellType === TableCellDisplayMode.DataLinks && {
+      ...(shouldWrap && {
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: getJustifyContent(textAlign),
+      }),
       '> a': {
-        // display: 'inline', // textWrap ? 'block' : 'inline',
+        flexWrap: 'nowrap',
+        ...(!shouldWrap && {
+          paddingInline: theme.spacing(0.5),
+          borderRight: `2px solid ${theme.colors.border.medium}`,
+          '&:first-child': {
+            paddingInlineStart: 0,
+          },
+          '&:last-child': {
+            paddingInlineEnd: 0,
+            borderRight: 'none',
+          },
+        }),
+      },
+    }),
+
+    ...(cellType === TableCellDisplayMode.Pill && {
+      display: 'inline-flex',
+      gap: theme.spacing(0.5),
+      flexWrap: shouldWrap ? 'wrap' : 'nowrap',
+      '> span': {
+        display: 'flex',
+        padding: theme.spacing(0.25, 0.75),
+        borderRadius: theme.shape.radius.default,
+        fontSize: theme.typography.bodySmall.fontSize,
+        lineHeight: theme.typography.bodySmall.lineHeight,
         whiteSpace: 'nowrap',
-        paddingInline: theme.spacing(1),
-        borderRight: `2px solid ${theme.colors.border.medium}`,
-
-        '&:first-of-type': {
-          paddingInlineStart: 0,
-        },
-
-        '&:last-of-type': {
-          borderRight: 'none',
-          paddingInlineEnd: 0,
-        },
       },
     }),
   });

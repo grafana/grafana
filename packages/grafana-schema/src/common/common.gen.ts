@@ -723,6 +723,20 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
+ * Whenever we add text wrapping, we should add all text wrapping options at once
+ */
+export interface TableWrapTextOptions {
+  /**
+   * if set, limits the number of lines of wrapped text to render
+   */
+  maxWrappedLines?: number;
+  /**
+   * if true, wrap the text content of the cell
+   */
+  wrapText?: boolean;
+}
+
+/**
  * Sort by field state
  */
 export interface TableSortByFieldState {
@@ -755,17 +769,15 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
 /**
  * Auto mode table cell options
  */
-export interface TableAutoCellOptions {
+export interface TableAutoCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.Auto;
-  wrapText?: boolean;
 }
 
 /**
  * Colored text cell options
  */
-export interface TableColorTextCellOptions {
+export interface TableColorTextCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.ColorText;
-  wrapText?: boolean;
 }
 
 /**
@@ -787,7 +799,7 @@ export interface TableImageCellOptions {
 /**
  * Show data links in the cell
  */
-export interface TableDataLinksCellOptions {
+export interface TableDataLinksCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.DataLinks;
 }
 
@@ -818,11 +830,14 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
 /**
  * Colored background cell options
  */
-export interface TableColoredBackgroundCellOptions {
+export interface TableColoredBackgroundCellOptions extends TableWrapTextOptions {
   applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
-  wrapText?: boolean;
+}
+
+export interface TablePillCellOptions extends TableWrapTextOptions {
+  type: TableCellDisplayMode.Pill;
 }
 
 /**
@@ -840,37 +855,6 @@ export enum TableCellHeight {
  * and other potential options for that display.
  */
 export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions);
-
-/**
- * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
- * Generally defines alignment, filtering capabilties, display options, etc.
- */
-export interface TableFieldOptions {
-  align: FieldTextAlignment;
-  cellOptions: TableCellOptions;
-  /**
-   * This field is deprecated in favor of using cellOptions
-   */
-  displayMode?: TableCellDisplayMode;
-  filterable?: boolean;
-  hidden?: boolean; // ?? default is missing or false ??
-  /**
-   * Hides any header for a column, useful for columns that show some static content or buttons.
-   */
-  hideHeader?: boolean;
-  inspect: boolean;
-  minWidth?: number;
-  width?: number;
-  /**
-   * Enables text wrapping for column headers
-   */
-  wrapHeaderText?: boolean;
-}
-
-export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
-  align: 'auto',
-  inspect: false,
-};
 
 /**
  * Use UTC/GMT timezone
@@ -987,9 +971,36 @@ export enum ComparisonOperation {
   NEQ = 'neq',
 }
 
-export interface TablePillCellOptions {
-  type: TableCellDisplayMode.Pill;
+/**
+ * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+ * Generally defines alignment, filtering capabilties, display options, etc.
+ */
+export interface TableFieldOptions {
+  align: FieldTextAlignment;
+  cellOptions: TableCellOptions;
+  /**
+   * This field is deprecated in favor of using cellOptions
+   */
+  displayMode?: TableCellDisplayMode;
+  filterable?: boolean;
+  hidden?: boolean; // ?? default is missing or false ??
+  /**
+   * Hides any header for a column, useful for columns that show some static content or buttons.
+   */
+  hideHeader?: boolean;
+  inspect: boolean;
+  minWidth?: number;
+  width?: number;
+  /**
+   * Enables text wrapping for column headers
+   */
+  wrapHeaderText?: boolean;
 }
+
+export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
+  align: 'auto',
+  inspect: false,
+};
 
 /**
  * A specific timezone from https://en.wikipedia.org/wiki/Tz_database
