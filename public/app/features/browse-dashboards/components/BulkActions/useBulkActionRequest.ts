@@ -6,7 +6,7 @@ import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/set
 import { MoveResultSuccessState } from './utils';
 
 interface Props {
-  workflow: 'branch' | 'write' | undefined;
+  workflow?: 'branch' | 'write';
   repository: RepositoryView;
   successState: MoveResultSuccessState;
   onDismiss?: () => void;

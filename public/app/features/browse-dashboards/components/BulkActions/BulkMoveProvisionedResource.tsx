@@ -1,8 +1,9 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { config, FolderPicker, getBackendSrv } from '@grafana/runtime';
+import { FolderPicker } from '@grafana/runtime';
 import { Box, Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
@@ -10,8 +11,10 @@ import {
   CreateRepositoryFilesWithPathApiResponse,
   RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
+  ResourceWrapper,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
@@ -36,7 +39,6 @@ import {
   getResourceTargetPath,
   MoveResultSuccessState,
 } from './utils';
-
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
   repository: RepositoryView;
@@ -65,7 +67,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const { handleSuccess } = useBulkActionRequest({ workflow, repository, successState, onDismiss });
 
   // Get target folder data
-  const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
+  const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
 
   const getResourceCurrentPath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
     const item = findItem(rootItems?.items || [], childrenByParentUID, uid);
@@ -76,9 +78,12 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   };
 
   const getDashboardBody = async (currentPath: string) => {
-    const baseUrl = `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
-    const url = `${baseUrl}/repositories/${repository.name}/files/${currentPath}`;
-    const fileResponse = await getBackendSrv().get(url);
+    const repositoryClient = new ScopedResourceClient({
+      group: 'provisioning.grafana.app',
+      version: 'v0alpha1',
+      resource: 'repositories',
+    });
+    const fileResponse = await repositoryClient.subresource<ResourceWrapper>(repository.name, `files/${currentPath}`);
     return fileResponse.resource?.file;
   };
 

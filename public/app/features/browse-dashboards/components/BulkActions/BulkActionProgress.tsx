@@ -15,7 +15,6 @@ interface Props {
 
 export function BulkActionProgress({ progress, action }: Props) {
   const progressPercentage = Math.round((progress.current / progress.total) * 100);
-  const labelText = action === 'move' ? 'Moving' : 'Deleting';
 
   return (
     <Box>
@@ -29,7 +28,12 @@ export function BulkActionProgress({ progress, action }: Props) {
       </Stack>
       <ProgressBar progress={progressPercentage} topBottomSpacing={1} />
       <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="browse-dashboards.bulk-move-resources-form.deleting">{{ labelText }}</Trans>: {progress.item}
+        {action === 'move' ? (
+          <Trans i18nKey="browse-dashboards.bulk-move-resources-form.moving">Moving</Trans>
+        ) : (
+          <Trans i18nKey="browse-dashboards.bulk-move-resources-form.deleting">Deleting</Trans>
+        )}
+        : {progress.item}
       </Text>
     </Box>
   );

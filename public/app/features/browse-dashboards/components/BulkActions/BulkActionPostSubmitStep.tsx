@@ -30,11 +30,12 @@ export function BulkActionPostSubmitStep({
     return (
       <>
         <Alert severity="success" title={t('browse-dashboards.bulk-action-resources-form.progress-title', 'Success')}>
-          {t(
-            'browse-dashboards.bulk-action-resources-form.repository-url',
-            'All resources have been {{ action }} successfully',
-            { action: action === 'move' ? 'moved' : 'deleted' }
-          )}
+          {action === 'move'
+            ? t('browse-dashboards.bulk-action-resources-form.all-moved', 'All resources have been moved successfully')
+            : t(
+                'browse-dashboards.bulk-action-resources-form.all-deleted',
+                'All resources have been deleted successfully'
+              )}
         </Alert>
         <Stack gap={2}>
           <Button onClick={() => handleSuccess()}>
