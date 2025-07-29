@@ -176,7 +176,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
-	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
 	if hs.Cfg.PublicDashboardsEnabled {
 		// list public dashboards
@@ -263,6 +262,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 	providerParam := ac.Parameter(":provider")
 	r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
+
+	// ShortURL API
+	hs.registerShortURLAPI(r)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -550,8 +552,6 @@ func (hs *HTTPServer) registerRoutes() {
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
 		}, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
-		// short urls
-		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
 	}, reqSignedIn)
 
 	// admin api
