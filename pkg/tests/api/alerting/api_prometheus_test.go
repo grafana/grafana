@@ -31,6 +31,9 @@ import (
 var respModel apimodels.UpdateRuleGroupResponse
 
 func TestIntegrationPrometheusRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -359,6 +362,9 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 }
 
 func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -690,6 +696,9 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
