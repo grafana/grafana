@@ -250,6 +250,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		QuickRanges:                      hs.Cfg.QuickRanges,
 		SecureSocksDSProxyEnabled:        hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		EnableFrontendSandboxForPlugins:  hs.Cfg.EnableFrontendSandboxForPlugins,
+		PluginRestrictedAPIsWhitelist:    hs.Cfg.PluginRestrictedAPIsWhitelist,
+		PluginRestrictedAPIsBlacklist:    hs.Cfg.PluginRestrictedAPIsBlacklist,
 		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:          hs.Cfg.PublicDashboardsEnabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
