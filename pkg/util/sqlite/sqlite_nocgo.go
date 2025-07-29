@@ -41,7 +41,7 @@ func IsUniqueConstraintViolation(err error) bool {
 	var sqliteErr sqlite.Error
 	if errors.As(err, &sqliteErr) {
 		// These constants are extended codes combined with primary code, so we can check them directly.
-		return sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARY_KEY || sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE
+		return sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY || sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE
 	}
 }
 
