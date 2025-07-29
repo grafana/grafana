@@ -144,7 +144,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           />
         </Field>
 
-        <Field label="Password" required>
+        <Field label="Password">
           <SecretInput
             width={WIDTH_LONG}
             placeholder="Password"
