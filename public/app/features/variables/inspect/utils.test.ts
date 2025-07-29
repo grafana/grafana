@@ -1,6 +1,23 @@
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
+// Mock the extensions setup to prevent link extension registration errors during tests
+jest.mock('app/features/plugins/extensions/registry/setup', () => ({
+  addedComponentsRegistry: {
+    register: jest.fn(),
+  },
+  exposedComponentsRegistry: {
+    register: jest.fn(),
+  },
+  addedLinksRegistry: {
+    register: jest.fn(),
+  },
+  addedFunctionsRegistry: {
+    register: jest.fn(),
+  },
+  pluginExtensionRegistries: {},
+}));
+
 import { variableAdapters } from '../adapters';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { createDataSourceVariableAdapter } from '../datasource/adapter';
