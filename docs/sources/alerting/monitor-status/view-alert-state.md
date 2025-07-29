@@ -71,7 +71,7 @@ To view the details of your alert rules and the status of alert instances:
 1. Click **Alerts & IRM** -> **Alerting**.
 1. Click **Alert rules** to view the list of existing alert rules.
 
-   {{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions-2.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
+   {{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions2.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 
    Each alert rule shows its state, summary, and available actions such as **Pause evaluation**, **Silence notifications**, **Export**, **Delete**, and more.
 
