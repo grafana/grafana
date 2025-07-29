@@ -314,7 +314,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     addPanelsOnLoadBehavior,
     new DashboardReloadBehavior({
-      reloadOnParamsChange: true,
+      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
       uid,
     }),
   ];
