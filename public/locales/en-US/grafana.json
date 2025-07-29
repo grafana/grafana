@@ -11222,6 +11222,7 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
+        "title-success-running-job": "Job completed successfully",
         "title-warning-running-job": "Job completed with warnings"
       },
       "summary": "Summary",
@@ -11370,6 +11371,7 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "success-title-default": "Success",
     "sync-job": {
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",

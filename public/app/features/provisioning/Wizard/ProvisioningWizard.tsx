@@ -346,6 +346,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
             {hasStepError && 'error' in stepStatusInfo && <ProvisioningAlert error={stepStatusInfo.error} />}
             {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
+            {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
