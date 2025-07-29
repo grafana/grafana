@@ -32,6 +32,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -76,6 +79,9 @@ func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
 }
 
 func TestIntegrationBuilder_Pagination(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -123,6 +129,9 @@ func TestIntegrationBuilder_Pagination(t *testing.T) {
 }
 
 func TestIntegrationBuilder_RBAC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testsCases := []struct {
 		desc            string
 		userPermissions []accesscontrol.Permission
