@@ -64,7 +64,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		}
 
 		// Legacy dashboard table
-		err = fn("dashboard", "org_id=? AND folder_uid=?", group, "dashboards", true)
+		err = fn("dashboard", "org_id=? AND folder_uid=? AND is_folder=false", group, "dashboards", true)
 		if err != nil {
 			return err
 		}
