@@ -51,6 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     loadingIndicator: css({
       height: theme.spacing(3),
+      textAlign: 'center',
     }),
     wrapper: css({
       border: `1px solid ${theme.colors.border.weak}`,
@@ -86,7 +87,7 @@ interface LogLineContextProps {
     options?: LogRowContextOptions,
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
-  logsSortOrder: LogsSortOrder;
+  sortOrder?: LogsSortOrder;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   displayedFields: string[];
@@ -101,7 +102,9 @@ export const LogLineContext = memo(
     log,
     logOptionsStorageKey,
     open,
-    logsSortOrder,
+    sortOrder = logOptionsStorageKey
+      ? (store.get(`${logOptionsStorageKey}.sortOrder`) ?? LogsSortOrder.Descending)
+      : LogsSortOrder.Descending,
     timeZone,
     getLogRowContextUi,
     getRowContextQuery,
@@ -126,8 +129,10 @@ export const LogLineContext = memo(
     const styles = getStyles(theme);
 
     const timeRange = useMemo(() => {
-      const fromMs = allLogs[0].timeEpochMs;
-      let toMs = allLogs[allLogs.length - 1].timeEpochMs;
+      const fromMs =
+        sortOrder === LogsSortOrder.Ascending ? allLogs[0].timeEpochMs : allLogs[allLogs.length - 1].timeEpochMs;
+      let toMs =
+        sortOrder === LogsSortOrder.Ascending ? allLogs[allLogs.length - 1].timeEpochMs : allLogs[0].timeEpochMs;
       // In case we have a lot of logs and from and to have same millisecond
       // we add 1 millisecond to toMs to make sure we have a range
       if (fromMs === toMs) {
@@ -145,7 +150,7 @@ export const LogLineContext = memo(
         },
       };
       return range;
-    }, [allLogs]);
+    }, [allLogs, sortOrder]);
 
     const updateContextQuery = useCallback(async () => {
       const contextQuery = getRowContextQuery ? await getRowContextQuery(log) : null;
@@ -169,16 +174,16 @@ export const LogLineContext = memo(
       async (place: 'above' | 'below', refLog: LogRowModel): Promise<LogRowModel[]> => {
         const result = await getRowContext(normalizeLogRefId(refLog), {
           limit: PAGE_SIZE,
-          direction: getLoadMoreDirection(place, logsSortOrder),
+          direction: getLoadMoreDirection(place, sortOrder),
         });
 
         const newLogs = dataFrameToLogsModel(result.data).rows;
-        if (logsSortOrder === LogsSortOrder.Ascending) {
+        if (sortOrder === LogsSortOrder.Ascending) {
           newLogs.reverse();
         }
         return newLogs.filter((r) => !containsRow(allLogs, r));
       },
-      [allLogs, getRowContext, logsSortOrder]
+      [allLogs, getRowContext, sortOrder]
     );
 
     const loadMore = useCallback(
@@ -192,21 +197,28 @@ export const LogLineContext = memo(
             !r.searchWords || !r.searchWords?.length ? { ...r, searchWords: log.searchWords } : r
           );
           const [older, newer] = partition(newLogs, (newRow) => newRow.timeEpochNs > log.timeEpochNs);
-          const newAbove = logsSortOrder === LogsSortOrder.Ascending ? newer : older;
-          const newBelow = logsSortOrder === LogsSortOrder.Ascending ? older : newer;
+          const newAbove = sortOrder === LogsSortOrder.Ascending ? newer : older;
+          const newBelow = sortOrder === LogsSortOrder.Ascending ? older : newer;
 
           setAboveLogs((aboveLogs: LogRowModel[]) => {
-            return newAbove.length > 0 ? sortLogRows([...newAbove, ...aboveLogs], logsSortOrder) : aboveLogs;
+            return newAbove.length > 0 ? sortLogRows([...newAbove, ...aboveLogs], sortOrder) : aboveLogs;
           });
           setBelowLogs((belowLogs: LogRowModel[]) => {
-            return newBelow.length > 0 ? sortLogRows([...belowLogs, ...newBelow], logsSortOrder) : belowLogs;
+            return newBelow.length > 0 ? sortLogRows([...belowLogs, ...newBelow], sortOrder) : belowLogs;
           });
+
           setState(LoadingState.NotStarted);
+          if (!newAbove.length && place === 'above') {
+            setAboveState(LoadingState.Done);
+          }
+          if (!newBelow.length && place === 'below') {
+            setBelowState(LoadingState.Done);
+          }
         } catch {
           setState(LoadingState.Error);
         }
       },
-      [getContextLogs, log, logsSortOrder]
+      [getContextLogs, log, sortOrder]
     );
 
     useEffect(() => {
@@ -250,11 +262,14 @@ export const LogLineContext = memo(
           {aboveState === LoadingState.Loading && (
             <LoadingIndicator
               adjective={
-                logsSortOrder === LogsSortOrder.Descending
+                sortOrder === LogsSortOrder.Descending
                   ? t('logs.log-line-context.newer-logs', 'newer')
                   : t('logs.log-line-context.older-logs', 'older')
               }
             />
+          )}
+          {aboveState === LoadingState.Done && (
+            <Trans i18nKey="logs.log-line-context.no-more-logs-available">No more logs available.</Trans>
           )}
         </div>
         <div className={styles.wrapper}>
@@ -277,7 +292,7 @@ export const LogLineContext = memo(
                 onClickShowField={onClickShowField}
                 showControls
                 showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
-                sortOrder={logsSortOrder}
+                sortOrder={sortOrder}
                 timeRange={timeRange}
                 timeZone={timeZone}
                 wrapLogMessage={
@@ -291,11 +306,14 @@ export const LogLineContext = memo(
           {belowState === LoadingState.Loading && (
             <LoadingIndicator
               adjective={
-                logsSortOrder === LogsSortOrder.Descending
+                sortOrder === LogsSortOrder.Descending
                   ? t('logs.log-line-context.older-logs', 'older')
                   : t('logs.log-line-context.newer-logs', 'newer')
               }
             />
+          )}
+          {aboveState === LoadingState.Done && (
+            <Trans i18nKey="logs.log-line-context.no-more-logs-available">No more logs available.</Trans>
           )}
         </div>
 

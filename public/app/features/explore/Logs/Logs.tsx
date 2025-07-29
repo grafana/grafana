@@ -789,7 +789,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           getRowContextQuery={getRowContextQuery}
           getLogRowContextUi={getLogRowContextUi}
           logOptionsStorageKey={SETTING_KEY_ROOT}
-          logsSortOrder={logsSortOrder}
           timeZone={timeZone}
           displayedFields={displayedFields}
           onClickShowField={showField}
