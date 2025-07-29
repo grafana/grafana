@@ -22,6 +22,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       cursor: 'pointer',
       display: 'inline-block',
+      overflowWrap: 'anywhere',
+      height: '100%',
     }),
   };
 };
