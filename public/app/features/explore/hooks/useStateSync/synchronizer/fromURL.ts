@@ -34,7 +34,7 @@ export function syncFromURL(
   }
 
   Object.entries(urlState.panes).forEach(async ([exploreId, urlPane], i) => {
-    const { datasource, queries, range, panelsState, queryRef } = urlPane;
+    const { datasource, queries, range, panelsState } = urlPane;
 
     const paneState = panesState[exploreId];
 
@@ -65,10 +65,6 @@ export function syncFromURL(
           if (update.panelsState && panelsState) {
             dispatch(changePanelsStateAction({ exploreId, panelsState }));
           }
-
-          if (update.queryRef !== undefined) {
-            dispatch(updateQueryRefAction({ exploreId, queryRef }));
-          }
         });
     } else {
       // This happens when browser history is used to navigate.
@@ -84,7 +80,6 @@ export function syncFromURL(
           panelsState,
           position: i,
           eventBridge: new EventBusSrv(),
-          queryRef,
         })
       );
     }

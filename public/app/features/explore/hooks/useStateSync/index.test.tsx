@@ -605,7 +605,7 @@ describe('useStateSync', () => {
     });
   });
 
-  it('should sync queryRef from state to URL', async () => {
+  it('should keep queryRef in state but not in URL', async () => {
     const { store, location } = setup({
       queryParams: {
         panes: JSON.stringify({
@@ -627,13 +627,15 @@ describe('useStateSync', () => {
     });
 
     await waitFor(() => {
+      expect(store.getState().explore.panes['one']?.queryRef).toBe('library-query-456');
+
       const search = location.getSearchObject();
       const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
-      expect(panes.one?.queryRef).toBe('library-query-456');
+      expect(panes.one?.queryRef).toBeUndefined();
     });
   });
 
-  it('should handle queryRef cleanup in URL when queryRef is undefined', async () => {
+  it('should clear queryRef from state when set to undefined', async () => {
     const { store, location } = setup({
       queryParams: {
         panes: JSON.stringify({
@@ -656,6 +658,8 @@ describe('useStateSync', () => {
     });
 
     await waitFor(() => {
+      expect(store.getState().explore.panes['one']?.queryRef).toBeUndefined();
+
       const search = location.getSearchObject();
       const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
       expect(panes.one?.queryRef).toBeUndefined();

@@ -23,20 +23,17 @@ export const urlDiff = (
   queries: boolean;
   range: boolean;
   panelsState: boolean;
-  queryRef: boolean;
 } => {
   const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
   const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
   const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
   const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
-  const queryRef = !isEqual(currentUrlState?.queryRef, oldUrlState?.queryRef);
 
   return {
     datasource,
     queries,
     range,
     panelsState,
-    queryRef,
   };
 };
 
