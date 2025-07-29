@@ -74,7 +74,8 @@ export class K8sDashboardV2API
       }
 
       // Ensure a consistent dashboard slug
-      if (!dashboard.access.slug) {
+      if (!dashboard.access?.slug) {
+        dashboard.access = dashboard.access ?? {};
         dashboard.access.slug = kbn.slugifyForUrl(dashboard.spec.title.trim());
       }
 
