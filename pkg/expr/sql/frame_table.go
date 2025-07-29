@@ -29,7 +29,7 @@ func (ft *FrameTable) String() string {
 	return ft.Name()
 }
 
-func schemaFromFrame(frame *data.Frame) mysql.Schema {
+func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	schema := make(mysql.Schema, len(frame.Fields))
 
 	for i, field := range frame.Fields {
@@ -47,7 +47,7 @@ func schemaFromFrame(frame *data.Frame) mysql.Schema {
 // Schema implements the mysql.Table interface
 func (ft *FrameTable) Schema() mysql.Schema {
 	if ft.schema == nil {
-		ft.schema = schemaFromFrame(ft.Frame)
+		ft.schema = SchemaFromFrame(ft.Frame)
 	}
 	return ft.schema
 }

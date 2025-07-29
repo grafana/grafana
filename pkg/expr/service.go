@@ -9,9 +9,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 
+	mysql "github.com/dolthub/go-mysql-server/sql"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -104,6 +108,49 @@ func (s *Service) isDisabled() bool {
 // BuildPipeline builds a pipeline from a request.
 func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 	return s.buildPipeline(req)
+}
+
+// GetSQLSchemas returns what the schemas are for SQL expressions for all DS queries
+// in the request. It executes the queries to get the schemas.
+// TODO: DTO for mysql.Schema?
+// Intended use is for autocomplete and AI, so used during the authoring/editing experience only.
+func (s *Service) GetSQLSchemas(ctx context.Context, req *Request) (map[string]mysql.Schema, error) {
+	// Extract DS Nodes and Execute Them
+	// Building the pipeline is maybe not best, as it can have more errors.
+	filtered := make([]Query, 0, len(req.Queries))
+	for _, q := range req.Queries {
+		if NodeTypeFromDatasourceUID(q.DataSource.UID) == TypeDatasourceNode {
+			filtered = append(filtered, q)
+		}
+	}
+	req.Queries = filtered
+	pipeline, err := s.BuildPipeline(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var schemas = make(map[string]mysql.Schema)
+
+	for _, node := range pipeline {
+		// For now, execute calls convert at the end, so we are being lazy and running the full conversion. Longer run we want to run without
+		// full conversion and just get the schema. Maybe conversion should be
+		dsNode := node.(*DSNode)
+		// Make all input to SQL
+		dsNode.isInputToSQLExpr = true
+
+		// TODO: check where time is coming from, don't recall
+		res, err := dsNode.Execute(ctx, time.Now(), mathexp.Vars{}, s)
+		if err != nil || res.Error != nil {
+			continue
+			// we want to continue and get the schemas we can
+		}
+
+		frames := res.Values.AsDataFrames(dsNode.RefID())
+		schema := sql.SchemaFromFrame(frames[0])
+		schemas[dsNode.RefID()] = schema
+	}
+
+	return schemas, nil
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.
