@@ -131,9 +131,9 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 		}
 
 		gvk := schema.GroupVersionKind{
-			Group:   resource.Group,
-			Kind:    resource.Kind,
-			Version: w.getDefaultVersionForGroup(resource.Group),
+			Group: resource.Group,
+			Kind:  resource.Kind,
+			// Version is left empty so ForKind will use the preferred version
 		}
 
 		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", resource.Group, resource.Kind, resource.Name))
@@ -155,15 +155,3 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 	return resolvedPaths, nil
 }
 
-// getDefaultVersionForGroup returns the default API version for a given group
-func (w *Worker) getDefaultVersionForGroup(group string) string {
-	switch group {
-	case "dashboard.grafana.app":
-		return "v1beta1"
-	case "folder.grafana.app":
-		return "v1beta1"
-	default:
-		// For unknown groups, we'll return empty and let the discovery client figure it out
-		return ""
-	}
-}
