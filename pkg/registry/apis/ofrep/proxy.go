@@ -14,8 +14,9 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
+
+	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
 func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
@@ -27,13 +28,13 @@ func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		if resp.StatusCode == http.StatusOK && !isAuthedUser {
-			var result featuremgmt.OFREPBulkResponse
+			var result goffmodel.OFREPBulkEvaluateSuccessResponse
 			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 				return err
 			}
 			_ = resp.Body.Close()
 
-			var filteredFlags []featuremgmt.OFREPFlag
+			var filteredFlags []goffmodel.OFREPFlagBulkEvaluateSuccessResponse
 			for _, f := range result.Flags {
 				if isPublicFlag(f.Key) {
 					filteredFlags = append(filteredFlags, f)

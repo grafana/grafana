@@ -40,14 +40,9 @@ func TestIntegrationFeatures(t *testing.T) {
 
 		require.Equal(t, 200, rsp.Response.StatusCode)
 		require.JSONEq(t, `{
-			"Value": true,
-			"FlagKey": "`+flag+`",
-			"FlagType": 0,
-			"Variant": "enabled",
-			"Reason": "STATIC",
-			"ErrorCode": "",
-			"ErrorMessage": "",
-			"FlagMetadata": {}
-		}`, string(rsp.Body))
+			"value": true,
+			"key":"`+flag+`",
+			"reason":"static provider evaluation result",
+			"variant":"enabled"}`, string(rsp.Body))
 	})
 }
