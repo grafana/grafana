@@ -4,7 +4,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 test.describe(
   'Panels smokescreen',
   {
-    tag: ['@smoke'],
+    tag: ['@acceptance'],
   },
   () => {
     test('Tests each panel type in the panel edit view to ensure no crash', async ({
@@ -14,6 +14,7 @@ test.describe(
     }) => {
       // this test can absolutely take longer than the default 30s timeout
       test.setTimeout(60000);
+
       // Create new dashboard
       const dashboardPage = await gotoDashboardPage({});
 
@@ -30,19 +31,20 @@ test.describe(
 
       // Loop through every panel type and ensure no crash
       for (const [_, panel] of Object.entries(panelTypes)) {
-        // Skip hidden and deprecated panels
-        if (!panel.hideFromList && panel.state !== 'deprecated') {
-          // Open visualization picker
-          const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
-          await vizPicker.click();
-          await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
-
-          // Verify panel type is selected
-          await expect(vizPicker).toHaveText(panel.name);
-
-          // Ensure no unexpected error occurred
-          await expect(page.getByText('An unexpected error happened')).toBeHidden();
+        if (panel.hideFromList || panel.state === 'deprecated') {
+          continue; // Skip hidden and deprecated panels
         }
+
+        // Select the panel type in the viz picker
+        const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
+        await vizPicker.click();
+        await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
+
+        // Verify panel type is selected
+        await expect(vizPicker).toHaveText(panel.name);
+
+        // Ensure no unexpected error occurred
+        await expect(page.getByText('An unexpected error happened')).toBeHidden();
       }
     });
   }
