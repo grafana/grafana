@@ -6,7 +6,7 @@
 ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.4-alpine
+ARG GO_IMAGE=golang:1.24.5-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -22,7 +22,6 @@ WORKDIR /tmp/grafana
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
-COPY plugins-bundled plugins-bundled
 COPY public public
 COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
@@ -61,25 +60,33 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
+COPY .citools/bra .citools/bra
+COPY .citools/cue .citools/cue
+COPY .citools/cog .citools/cog
+COPY .citools/lefthook .citools/lefthook
+COPY .citools/jb .citools/jb
+COPY .citools/golangci-lint .citools/golangci-lint
+COPY .citools/swagger .citools/swagger
 
 # Include vendored dependencies
-COPY pkg/util/xorm/go.* pkg/util/xorm/
-COPY pkg/apiserver/go.* pkg/apiserver/
-COPY pkg/apimachinery/go.* pkg/apimachinery/
-COPY pkg/build/go.* pkg/build/
-COPY pkg/build/wire/go.* pkg/build/wire/
-COPY pkg/promlib/go.* pkg/promlib/
-COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
-COPY pkg/storage/unified/apistore/go.* pkg/storage/unified/apistore/
-COPY pkg/semconv/go.* pkg/semconv/
-COPY pkg/aggregator/go.* pkg/aggregator/
-COPY apps/playlist/go.* apps/playlist/
-COPY apps/investigation/go.* apps/investigation/
+COPY pkg/util/xorm pkg/util/xorm
+COPY pkg/apiserver pkg/apiserver
+COPY pkg/apimachinery pkg/apimachinery
+COPY pkg/build pkg/build
+COPY pkg/build/wire pkg/build/wire
+COPY pkg/promlib pkg/promlib
+COPY pkg/storage/unified/resource pkg/storage/unified/resource
+COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
+COPY pkg/semconv pkg/semconv
+COPY pkg/aggregator pkg/aggregator
+COPY apps/playlist apps/playlist
+COPY apps/investigations apps/investigations
+COPY apps/advisor apps/advisor
 COPY apps apps
 COPY kindsv2 kindsv2
-COPY apps/alerting/notifications/go.* apps/alerting/notifications/
-COPY pkg/codegen/go.* pkg/codegen/
-COPY pkg/plugins/codegen/go.* pkg/plugins/codegen/
+COPY apps/alerting/notifications apps/alerting/notifications
+COPY pkg/codegen pkg/codegen
+COPY pkg/plugins/codegen pkg/plugins/codegen
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
@@ -124,6 +131,7 @@ FROM ${JS_SRC} AS js-src
 FROM ${BASE_IMAGE}
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
+LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
 
 ARG GF_UID="472"
 ARG GF_GID="0"
