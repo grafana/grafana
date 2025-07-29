@@ -24,7 +24,6 @@ export const Page: PageType = ({
   subTitle,
   children,
   className,
-  info,
   layout = PageLayoutType.Standard,
   onSetScrollRef,
   ...otherProps
@@ -41,11 +40,7 @@ export const Page: PageType = ({
   // This prevents flickering sectionNav when going from dashboard to settings for example
   useLayoutEffect(() => {
     if (navModel) {
-      chrome.update({
-        sectionNav: navModel,
-        pageNav: pageNav,
-        layout: layout,
-      });
+      chrome.update({ sectionNav: navModel, pageNav: pageNav, layout: layout });
     }
   }, [navModel, pageNav, chrome, layout]);
 
@@ -64,7 +59,6 @@ export const Page: PageType = ({
                 onEditTitle={onEditTitle}
                 navItem={pageHeaderNav}
                 renderTitle={renderTitle}
-                info={info}
                 subTitle={subTitle}
               />
             )}
@@ -100,13 +94,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       position: 'relative',
     }),
-    pageContent: css({
-      label: 'page-content',
-      flexGrow: 1,
-    }),
-    primaryBg: css({
-      background: theme.colors.background.primary,
-    }),
+    pageContent: css({ label: 'page-content', flexGrow: 1 }),
+    primaryBg: css({ background: theme.colors.background.primary }),
     pageInner: css({
       label: 'page-inner',
       padding: theme.spacing(2),
@@ -117,9 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       margin: theme.spacing(0, 0, 0, 0),
 
-      [theme.breakpoints.up('md')]: {
-        padding: theme.spacing(4),
-      },
+      [theme.breakpoints.up('md')]: { padding: theme.spacing(4) },
     }),
     canvasContent: css({
       label: 'canvas-content',

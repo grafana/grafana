@@ -4,21 +4,17 @@ import * as React from 'react';
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { PageInfo } from '../PageInfo/PageInfo';
-
 import { EditableTitle } from './EditableTitle';
-import { PageInfoItem } from './types';
 
 export interface Props {
   navItem: NavModelItem;
   renderTitle?: (title: string) => React.ReactNode;
   actions?: React.ReactNode;
-  info?: PageInfoItem[];
   subTitle?: React.ReactNode;
   onEditTitle?: (newValue: string) => Promise<void>;
 }
 
-export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEditTitle }: Props) {
+export function PageHeader({ navItem, renderTitle, actions, subTitle, onEditTitle }: Props) {
   const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
 
@@ -34,10 +30,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   return (
     <div className={styles.pageHeader}>
       <div className={styles.topRow}>
-        <div className={styles.titleInfoContainer}>
-          {titleElement}
-          {info && <PageInfo info={info} />}
-        </div>
+        <div className={styles.titleInfoContainer}>{titleElement}</div>
         <div className={styles.actions}>{actions}</div>
       </div>
       {sub && <div className={styles.subTitle}>{sub}</div>}
@@ -54,20 +47,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       gap: theme.spacing(1, 3),
     }),
-    title: css({
-      display: 'flex',
-      flexDirection: 'row',
-      maxWidth: '100%',
-      flex: 1,
-      h1: {
-        marginBottom: 0,
-      },
-    }),
-    actions: css({
-      display: 'flex',
-      flexDirection: 'row',
-      gap: theme.spacing(1),
-    }),
+    title: css({ display: 'flex', flexDirection: 'row', maxWidth: '100%', flex: 1, h1: { marginBottom: 0 } }),
+    actions: css({ display: 'flex', flexDirection: 'row', gap: theme.spacing(1) }),
     titleInfoContainer: css({
       display: 'flex',
       label: 'title-info-container',
@@ -85,14 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       marginBottom: theme.spacing(2),
     }),
-    subTitle: css({
-      position: 'relative',
-      color: theme.colors.text.secondary,
-    }),
-    img: css({
-      width: '32px',
-      height: '32px',
-      marginRight: theme.spacing(2),
-    }),
+    subTitle: css({ position: 'relative', color: theme.colors.text.secondary }),
+    img: css({ width: '32px', height: '32px', marginRight: theme.spacing(2) }),
   };
 };
