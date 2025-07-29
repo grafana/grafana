@@ -1,42 +1,6 @@
-import { fuzzyFilter, fuzzyMatches, getFallbackFilter, shouldUseFuzzySearch } from './fuzzySearch';
+import { fuzzyFilter, fuzzyMatches } from './fuzzySearch';
 
 describe('fuzzySearch', () => {
-  describe('shouldUseFuzzySearch', () => {
-    describe('should return true for valid fuzzy search terms', () => {
-      it.each(['simple', 'CPU Alert', 'memory-usage', 'alert_rule_name', 'k8s pod alert', 'API Response Time'])(
-        'returns true for "%s"',
-        (searchTerm) => {
-          expect(shouldUseFuzzySearch(searchTerm)).toBe(true);
-        }
-      );
-    });
-
-    describe('should return false for edge cases', () => {
-      it('returns false for non-ASCII characters', () => {
-        expect(shouldUseFuzzySearch('café')).toBe(false);
-        expect(shouldUseFuzzySearch('règle')).toBe(false);
-        expect(shouldUseFuzzySearch('アラート')).toBe(false);
-      });
-
-      it('returns false for symbol-only searches', () => {
-        expect(shouldUseFuzzySearch('!!!')).toBe(false);
-        expect(shouldUseFuzzySearch('***')).toBe(false);
-        expect(shouldUseFuzzySearch('<<<>>>')).toBe(false);
-        expect(shouldUseFuzzySearch('[]{}')).toBe(false);
-      });
-
-      it('returns false for very long search terms (>25 chars)', () => {
-        const longTerm = 'this-is-a-very-long-search-term-that-exceeds-max-length';
-        expect(longTerm.length).toBeGreaterThan(25);
-        expect(shouldUseFuzzySearch(longTerm)).toBe(false);
-      });
-
-      it('returns false for too many terms (>5)', () => {
-        expect(shouldUseFuzzySearch('cpu mem disk net io err')).toBe(false);
-      });
-    });
-  });
-
   describe('fuzzyMatches', () => {
     describe('should match with typos and fuzzy logic', () => {
       it.each([
@@ -183,45 +147,16 @@ describe('fuzzySearch', () => {
         expect(result).toHaveLength(1);
         expect(result[0].name).toBe(longRuleName);
       });
-    });
 
-    describe('should handle performance edge cases', () => {
-      it('limits out-of-order permutations for complex searches', () => {
-        // This test ensures the outOfOrderLimit logic works without hanging
-        const result = fuzzyFilter(testRules, (rule) => rule.name, 'cpu high memory low disk');
+      it('handles complex searches without hanging', () => {
+        const result = fuzzyFilter(
+          testRules,
+          (rule) => rule.name,
+          'cpu high memory low disk space alert response time'
+        );
         // Should not hang and should return some results
         expect(Array.isArray(result)).toBe(true);
       });
-    });
-  });
-
-  describe('getFallbackFilter', () => {
-    const testItems = [
-      { name: 'High CPU usage', id: '1' },
-      { name: 'Memory too low', id: '2' },
-      { name: 'API[5xx] Error', id: '3' },
-    ];
-
-    it('performs case-insensitive substring matching', () => {
-      const result = getFallbackFilter(testItems, (item) => item.name, 'cpu');
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('High CPU usage');
-    });
-
-    it('returns all items for empty search', () => {
-      const result = getFallbackFilter(testItems, (item) => item.name, '');
-      expect(result).toHaveLength(testItems.length);
-    });
-
-    it('returns all items for whitespace search', () => {
-      const result = getFallbackFilter(testItems, (item) => item.name, '   ');
-      expect(result).toHaveLength(testItems.length);
-    });
-
-    it('handles special characters correctly', () => {
-      const result = getFallbackFilter(testItems, (item) => item.name, '[5xx]');
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('API[5xx] Error');
     });
   });
 
@@ -238,13 +173,34 @@ describe('fuzzySearch', () => {
 
     it('handles common alerting rule patterns', () => {
       // Test various real-world search patterns
-      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'grafana sync').length).toBeGreaterThan(0);
-      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'k8s cpu').length).toBeGreaterThan(0);
-      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'postgres pool').length).toBeGreaterThan(0);
-      expect(fuzzyFilter(realWorldRules, (r) => r.name, '5xx error').length).toBeGreaterThan(0);
-      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'memory 90').length).toBeGreaterThan(0);
-      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'disk latency').length).toBeGreaterThan(0);
-      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'api p99').length).toBeGreaterThan(0);
+      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'grafana sync')).toContainEqual({
+        name: 'grafana_dashboard_sync_failed',
+        id: '1',
+      });
+      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'k8s cpu')).toContainEqual({
+        name: 'k8s-pod-cpu-usage-high',
+        id: '2',
+      });
+      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'postgres pool')).toContainEqual({
+        name: 'PostgreSQL Connection Pool Exhausted',
+        id: '3',
+      });
+      expect(fuzzyFilter(realWorldRules, (r) => r.name, '5xx error')).toContainEqual({
+        name: 'HTTP 5xx Error Rate High',
+        id: '4',
+      });
+      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'memory 90')).toContainEqual({
+        name: 'Memory Usage > 90%',
+        id: '5',
+      });
+      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'disk latency')).toContainEqual({
+        name: 'Disk I/O Latency Critical',
+        id: '6',
+      });
+      expect(fuzzyFilter(realWorldRules, (r) => r.name, 'api p99')).toContainEqual({
+        name: 'API Response Time P99 > 500ms',
+        id: '7',
+      });
     });
 
     it('handles typos in common alert terms', () => {
