@@ -8729,6 +8729,7 @@
       "footer-add-annotation": "Add annotation",
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
+      "footer-filter-for-value": "Filter for '{{value}}'",
       "timestamp": "Timestamp"
     },
     "week-start-picker": {
