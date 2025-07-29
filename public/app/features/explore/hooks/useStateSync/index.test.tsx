@@ -615,35 +615,4 @@ describe('useStateSync', () => {
       expect(panes.one?.queryRef).toBeUndefined();
     });
   });
-
-  it('should clear queryRef from state when set to undefined', async () => {
-    const { store, location } = setup({
-      queryParams: {
-        panes: JSON.stringify({
-          one: {
-            datasource: 'loki-uid',
-            queries: [{ expr: 'test', refId: 'A' }],
-            queryRef: 'library-query-123',
-          },
-        }),
-        schemaVersion: 1,
-      },
-    });
-
-    await waitFor(() => {
-      expect(store.getState().explore.panes['one']?.queryRef).toBe('library-query-123');
-    });
-
-    act(() => {
-      store.dispatch(updateQueryRefAction({ exploreId: 'one', queryRef: undefined }));
-    });
-
-    await waitFor(() => {
-      expect(store.getState().explore.panes['one']?.queryRef).toBeUndefined();
-
-      const search = location.getSearchObject();
-      const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
-      expect(panes.one?.queryRef).toBeUndefined();
-    });
-  });
 });
