@@ -9,7 +9,6 @@ import {
   PanelKind,
   LibraryPanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { contextSrv } from 'app/core/core';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
