@@ -47,6 +47,8 @@ export const calculateTooltipPosition = (
 
 export const getColorIndicatorClass = (colorIndicator: string, styles: ColorIndicatorStyles) => {
   switch (colorIndicator) {
+    case ColorIndicator.series:
+      return styles.series;
     case ColorIndicator.value:
       return styles.value;
     case ColorIndicator.hexagon:
