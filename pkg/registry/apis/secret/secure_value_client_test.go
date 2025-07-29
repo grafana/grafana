@@ -14,6 +14,9 @@ import (
 )
 
 func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	setup := testutils.Setup(t)
 
 	validator := validator.ProvideSecureValueValidator()

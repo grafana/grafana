@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configuração",
-      "draft-new-rule": "Crie o rascunho de uma nova regra",
       "ds-error": {
         "title": "Não é possível carregar regras para esta fonte de dados"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Nova regra de alerta",
       "new-datasource-recording-rule": "Nova regra de registro de fonte de dados",
       "new-grafana-recording-rule": "Nova regra de registro da Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Exibir mais…"
       },
@@ -4566,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "Adicionar {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Alterar plano de fundo do painel",
       "panel-description": "Alterar descrição do painel",
@@ -4580,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Painel de controle",
+        "element": "",
         "local-variable": "Variável local",
         "multiple-elements": "Vários elementos",
         "multiple-elements-delete-text": "Tem certeza de que deseja excluir estes elementos?",
@@ -5789,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },

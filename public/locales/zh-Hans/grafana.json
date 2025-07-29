@@ -2458,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "配置",
-      "draft-new-rule": "起草新规则",
       "ds-error": {
         "title": "无法加载此数据源的规则"
       },
@@ -2484,6 +2483,7 @@
       "new-alert-rule": "新建警报规则",
       "new-datasource-recording-rule": "新的数据源录制规则",
       "new-grafana-recording-rule": "新的 Grafana 录制规则",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "显示更多..."
       },
@@ -4547,6 +4547,10 @@
     },
     "edit-actions": {
       "add": "添加{{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "移动{{typeName}}",
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
@@ -4561,6 +4565,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "仪表板",
+        "element": "",
         "local-variable": "局部变量",
         "multiple-elements": "多个元素",
         "multiple-elements-delete-text": "您确定要删除这些元素吗？",
@@ -5768,7 +5773,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
