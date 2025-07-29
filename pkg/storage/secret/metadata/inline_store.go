@@ -37,37 +37,37 @@ type inlineStorage struct {
 }
 
 // CanReference implements contracts.InlineSecureValueSupport.
-func (i *inlineStorage) CanReference(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) (bool, error) {
+func (i *inlineStorage) CanReference(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) error {
 	actor, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return false, apierrors.NewBadRequest("missing auth info")
+		return apierrors.NewBadRequest("missing auth info")
 	}
 	if owner.Name == "" {
-		return false, apierrors.NewBadRequest("missing owner name")
+		return apierrors.NewBadRequest("missing owner name")
 	}
 
 	// TODO? more efficient version of this based on database query?
 	// We want to check if the owner matches OR the identity in context have view permissions
 	for _, value := range values {
 		if !value.Create.IsZero() {
-			return false, apierrors.NewBadRequest("unable to create")
+			return apierrors.NewBadRequest("unable to create")
 		}
 		if value.Remove {
-			return false, apierrors.NewBadRequest("unable to remove")
+			return apierrors.NewBadRequest("unable to remove")
 		}
 		if value.Name == "" {
-			return false, apierrors.NewBadRequest("expecting a name")
+			return apierrors.NewBadRequest("expecting a name")
 		}
 
 		// ???? Read requires view?  do we have a read that does not require view
 		v, err := i.db.Read(ctx, xkube.Namespace(owner.Namespace), value.Name, contracts.ReadOpts{})
 		if err != nil || v == nil {
-			return false, apierrors.NewBadRequest("unable to reference secure value")
+			return apierrors.NewBadRequest("unable to reference secure value")
 		}
 
-		for _, ref := range v.OwnerReferences {
-			fmt.Printf("REF: %+v\n", ref)
-		}
+		// for _, ref := range v.OwnerReferences {
+		// 	fmt.Printf("REF: %+v\n", ref)
+		// }
 
 		// If the owner does not match... check if the request can read the name
 		ok, err := i.access.Check(ctx, actor, authlib.CheckRequest{
@@ -78,11 +78,11 @@ func (i *inlineStorage) CanReference(ctx context.Context, owner common.ObjectRef
 			Name:      value.Name,
 		})
 		if err != nil || !ok.Allowed {
-			return false, apierrors.NewBadRequest("not allowed to read value")
+			return apierrors.NewBadRequest("not allowed to read value")
 		}
 	}
 
-	return true, nil
+	return nil // Yes, can reference
 }
 
 // UpdateSecureValues implements contracts.InlineSecureValueSupport.

@@ -24,31 +24,21 @@ func (_m *MockInlineSecureValueSupport) EXPECT() *MockInlineSecureValueSupport_E
 }
 
 // CanReference provides a mock function with given fields: ctx, owner, values
-func (_m *MockInlineSecureValueSupport) CanReference(ctx context.Context, owner v0alpha1.ObjectReference, values map[string]v0alpha1.InlineSecureValue) (bool, error) {
+func (_m *MockInlineSecureValueSupport) CanReference(ctx context.Context, owner v0alpha1.ObjectReference, values map[string]v0alpha1.InlineSecureValue) error {
 	ret := _m.Called(ctx, owner, values)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CanReference")
 	}
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ObjectReference, map[string]v0alpha1.InlineSecureValue) (bool, error)); ok {
-		return rf(ctx, owner, values)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ObjectReference, map[string]v0alpha1.InlineSecureValue) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ObjectReference, map[string]v0alpha1.InlineSecureValue) error); ok {
 		r0 = rf(ctx, owner, values)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ObjectReference, map[string]v0alpha1.InlineSecureValue) error); ok {
-		r1 = rf(ctx, owner, values)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockInlineSecureValueSupport_CanReference_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanReference'
@@ -71,12 +61,12 @@ func (_c *MockInlineSecureValueSupport_CanReference_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockInlineSecureValueSupport_CanReference_Call) Return(_a0 bool, _a1 error) *MockInlineSecureValueSupport_CanReference_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockInlineSecureValueSupport_CanReference_Call) Return(_a0 error) *MockInlineSecureValueSupport_CanReference_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockInlineSecureValueSupport_CanReference_Call) RunAndReturn(run func(context.Context, v0alpha1.ObjectReference, map[string]v0alpha1.InlineSecureValue) (bool, error)) *MockInlineSecureValueSupport_CanReference_Call {
+func (_c *MockInlineSecureValueSupport_CanReference_Call) RunAndReturn(run func(context.Context, v0alpha1.ObjectReference, map[string]v0alpha1.InlineSecureValue) error) *MockInlineSecureValueSupport_CanReference_Call {
 	_c.Call.Return(run)
 	return _c
 }

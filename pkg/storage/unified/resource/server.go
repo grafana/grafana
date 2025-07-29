@@ -470,9 +470,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		if s.secure == nil {
 			return nil, AsErrorResult(fmt.Errorf("secure value store not configured"))
 		}
-		ok, err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), secure)
-		if err != nil || !ok {
-			return nil, NewBadRequestError("not able to reference secure values")
+		if err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), secure); err != nil {
+			return nil, AsErrorResult(err)
 		}
 	}
 
