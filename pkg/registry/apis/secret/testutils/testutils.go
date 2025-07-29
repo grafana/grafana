@@ -59,6 +59,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	}
 
 	tracer := noop.NewTracerProvider().Tracer("test")
+
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
 	database := database.ProvideDatabase(testDB, tracer)
@@ -77,11 +78,11 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	})
 
 	defaultKey := "SdlklWklckeLS"
-	cfg := &setting.Cfg{
-		SecretsManagement: setting.SecretsManagerSettings{
-			CurrentEncryptionProvider: "secret_key.v1",
-			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
-		},
+	cfg := setting.NewCfg()
+	cfg.SecretsManagement = setting.SecretsManagerSettings{
+		DecryptServerType:         "local",
+		CurrentEncryptionProvider: "secret_key.v1",
+		ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
@@ -126,7 +127,13 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
-	decryptService := decrypt.ProvideDecryptService(decryptStorage)
+	testCfg := setting.NewCfg()
+	testCfg.SecretsManagement = setting.SecretsManagerSettings{
+		DecryptServerType: "local",
+	}
+
+	decryptService, err := decrypt.ProvideDecryptService(testCfg, tracer, decryptStorage)
+	require.NoError(t, err)
 
 	return Sut{
 		SecureValueService:          secureValueService,
