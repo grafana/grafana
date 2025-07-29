@@ -21,6 +21,8 @@ type Preferences struct {
 
 	// Spec is the spec of the Preferences
 	Spec PreferencesSpec `json:"spec" yaml:"spec"`
+
+	Status PreferencesStatus `json:"status" yaml:"status"`
 }
 
 func (o *Preferences) GetSpec() any {
@@ -37,11 +39,15 @@ func (o *Preferences) SetSpec(spec any) error {
 }
 
 func (o *Preferences) GetSubresources() map[string]any {
-	return map[string]any{}
+	return map[string]any{
+		"status": o.Status,
+	}
 }
 
 func (o *Preferences) GetSubresource(name string) (any, bool) {
 	switch name {
+	case "status":
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -49,6 +55,13 @@ func (o *Preferences) GetSubresource(name string) (any, bool) {
 
 func (o *Preferences) SetSubresource(name string, value any) error {
 	switch name {
+	case "status":
+		cast, ok := value.(PreferencesStatus)
+		if !ok {
+			return fmt.Errorf("cannot set status type %#v, not of type PreferencesStatus", value)
+		}
+		o.Status = cast
+		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -220,6 +233,7 @@ func (o *Preferences) DeepCopyInto(dst *Preferences) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
 }
 
 // Interface compliance compile-time check
@@ -289,5 +303,17 @@ func (s *PreferencesSpec) DeepCopy() *PreferencesSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *PreferencesSpec) DeepCopyInto(dst *PreferencesSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of PreferencesStatus
+func (s *PreferencesStatus) DeepCopy() *PreferencesStatus {
+	cpy := &PreferencesStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies PreferencesStatus into another PreferencesStatus object
+func (s *PreferencesStatus) DeepCopyInto(dst *PreferencesStatus) {
 	resource.CopyObjectInto(dst, s)
 }

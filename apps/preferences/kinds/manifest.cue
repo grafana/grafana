@@ -1,9 +1,17 @@
-package folder
+package preferences
 
 manifest: {
 	appName:       "preferences"
 	groupOverride: "preferences.grafana.app"
-	kinds: [
-		preferences,
-	]
+	versions: {
+		"v0alpha1": {
+			codegen: {
+				ts: {enabled: false}
+				go: {enabled: true}
+			}
+			kinds: [
+				preferencesv0alpha1,
+			]
+		}
+	}
 }
