@@ -63,7 +63,7 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 // FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
 func (r *repositoryResources) FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error) {
 	// Use ForKind to get the dynamic client for this resource type
-	client, gvr, err := r.ResourcesManager.clients.ForKind(gvk)
+	client, gvr, err := r.clients.ForKind(gvk)
 	if err != nil {
 		return "", fmt.Errorf("get client for kind %s: %w", gvk.Kind, err)
 	}

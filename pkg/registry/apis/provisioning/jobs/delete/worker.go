@@ -122,7 +122,7 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 		return nil, fmt.Errorf("create repository resources client: %w", err)
 	}
 
-	var resolvedPaths []string
+	resolvedPaths := make([]string, 0, len(resources))
 	for _, resource := range resources {
 		result := jobs.JobResourceResult{
 			Name:   resource.Name,
