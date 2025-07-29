@@ -45,7 +45,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleEditor)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	secureValuesReader := accesscontrol.RoleRegistration{
@@ -93,7 +93,7 @@ func registerAccessControlRoles(service accesscontrol.Service) error {
 				},
 			},
 		},
-		Grants: []string{string(org.RoleEditor)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	// Keepers
