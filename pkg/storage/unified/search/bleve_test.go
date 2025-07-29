@@ -781,7 +781,7 @@ func TestBleveInMemoryIndexExpiration(t *testing.T) {
 
 	// Verify that there are no open indexes.
 	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of tenants in the index
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
 		# TYPE index_server_open_indexes gauge
 		index_server_open_indexes{index_storage="memory"} 0
 		index_server_open_indexes{index_storage="file"} 0
@@ -813,7 +813,7 @@ func TestBleveFileIndexExpiration(t *testing.T) {
 	require.Equal(t, int64(1), cnt)
 
 	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of tenants in the index
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
 		# TYPE index_server_open_indexes gauge
 		index_server_open_indexes{index_storage="memory"} 0
 		index_server_open_indexes{index_storage="file"} 1
@@ -835,7 +835,7 @@ func TestFileIndexIsReusedOnSameSizeAndRV(t *testing.T) {
 
 	// Verify one open index.
 	require.NoError(t, testutil.GatherAndCompare(reg1, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of tenants in the index
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
 		# TYPE index_server_open_indexes gauge
 		index_server_open_indexes{index_storage="memory"} 0
 		index_server_open_indexes{index_storage="file"} 1
@@ -845,7 +845,7 @@ func TestFileIndexIsReusedOnSameSizeAndRV(t *testing.T) {
 
 	// Verify that there are no open indexes after closeAllIndexes call.
 	require.NoError(t, testutil.GatherAndCompare(reg1, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of tenants in the index
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
 		# TYPE index_server_open_indexes gauge
 		index_server_open_indexes{index_storage="memory"} 0
 		index_server_open_indexes{index_storage="file"} 0
@@ -862,7 +862,7 @@ func TestFileIndexIsReusedOnSameSizeAndRV(t *testing.T) {
 	require.Equal(t, int64(10), cnt)
 
 	require.NoError(t, testutil.GatherAndCompare(reg2, bytes.NewBufferString(`
-		# HELP index_server_open_indexes Number of tenants in the index
+		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
 		# TYPE index_server_open_indexes gauge
 		index_server_open_indexes{index_storage="memory"} 0
 		index_server_open_indexes{index_storage="file"} 1
@@ -966,7 +966,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			require.Equal(t, int64(secondSize), cnt)
 
 			require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
-				# HELP index_server_open_indexes Number of tenants in the index
+				# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
 				# TYPE index_server_open_indexes gauge
 				index_server_open_indexes{index_storage="memory"} %d
 				index_server_open_indexes{index_storage="file"} %d
