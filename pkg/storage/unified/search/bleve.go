@@ -202,22 +202,47 @@ func (b *bleveBackend) BuildIndex(
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
-	var index bleve.Index
-	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
-
-	build := true
 	mapper, err := GetBleveMappings(fields)
 	if err != nil {
 		return nil, err
 	}
 
-	cachedIndex := b.getCachedIndex(key)
+	// Prepare fields before opening/creating indexes, so that we don't need to deal with closing them in case of errors.
+	standardSearchFields := resource.StandardSearchFields()
+	allFields, err := getAllFields(standardSearchFields, fields)
+	if err != nil {
+		return nil, err
+	}
 
 	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion)
 
+	// Close the newly created/opened index by default.
+	closeIndex := true
+	// This function is added via defer after new index has been created/opened, to make sure we close it properly when needed.
+	// Whether index needs closing or not is controlled by closeIndex.
+	closeIndexOnExit := func(index bleve.Index, indexDir string) {
+		if !closeIndex {
+			return
+		}
+
+		if closeErr := index.Close(); closeErr != nil {
+			logWithDetails.Error("Failed to close index after index build failure", "err", closeErr)
+		}
+		if indexDir != "" {
+			if removeErr := os.RemoveAll(indexDir); removeErr != nil {
+				logWithDetails.Error("Failed to remove index directory after index build failure", "err", removeErr)
+			}
+		}
+	}
+
 	resourceDir := filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 
+	var index bleve.Index
+	cachedIndex := b.getCachedIndex(key)
+	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
 	newIndexType := indexStorageMemory
+	build := true
+
 	if size > b.opts.FileThreshold {
 		newIndexType = indexStorageFile
 
@@ -231,6 +256,7 @@ func (b *bleveBackend) BuildIndex(
 		if index != nil {
 			build = false
 			logWithDetails.Debug("Existing index found on filesystem", "directory", filepath.Join(resourceDir, fileIndexName))
+			defer closeIndexOnExit(index, "") // Close index, but don't delete directory.
 		} else {
 			// Building index from scratch. Index name has a time component in it to be unique, but if
 			// we happen to create non-unique name, we bump the time and try again.
@@ -256,6 +282,7 @@ func (b *bleveBackend) BuildIndex(
 			}
 
 			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
+			defer closeIndexOnExit(index, indexDir) // Close index, and delete new index directory.
 		}
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
@@ -263,6 +290,7 @@ func (b *bleveBackend) BuildIndex(
 			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 		}
 		logWithDetails.Info("Building index using memory")
+		defer closeIndexOnExit(index, "") // Close index, don't cleanup directory.
 	}
 
 	// Batch all the changes
@@ -271,21 +299,18 @@ func (b *bleveBackend) BuildIndex(
 		index:        index,
 		indexStorage: newIndexType,
 		fields:       fields,
-		standard:     resource.StandardSearchFields(),
+		allFields:    allFields,
+		standard:     standardSearchFields,
 		features:     b.features,
 		tracing:      b.tracer,
-	}
-
-	idx.allFields, err = getAllFields(idx.standard, fields)
-	if err != nil {
-		return nil, err
 	}
 
 	if build {
 		start := time.Now()
 		_, err = builder(idx)
 		if err != nil {
-			return nil, err
+			logWithDetails.Error("Failed to build index", "err", err)
+			return nil, fmt.Errorf("failed to build index: %w", err)
 		}
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
@@ -302,6 +327,9 @@ func (b *bleveBackend) BuildIndex(
 	} else {
 		logWithDetails.Info("Storing index in cache", "key", key, "expiration", idx.expiration)
 	}
+
+	// We're storing index in the cache, so we can't close it.
+	closeIndex = false
 
 	b.cacheMx.Lock()
 	prev := b.cache[key]
