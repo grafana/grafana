@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -28,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
@@ -1627,28 +1625,6 @@ func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerat
 	require.NoError(t, err)
 
 	return rule
-}
-
-func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, parentUID string) {
-	t.Helper()
-	u := &user.SignedInUser{
-		UserID:         1,
-		OrgID:          orgID,
-		OrgRole:        org.RoleAdmin,
-		IsGrafanaAdmin: true,
-	}
-
-	ctx := identity.WithRequester(context.Background(), u)
-	_, err := store.FolderService.Create(ctx, &folder.CreateFolderCommand{
-		UID:          uid,
-		OrgID:        orgID,
-		Title:        title,
-		Description:  "",
-		SignedInUser: u,
-		ParentUID:    parentUID,
-	})
-
-	require.NoError(t, err)
 }
 
 func setupFolderService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
