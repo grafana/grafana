@@ -249,8 +249,9 @@ export interface ActionCellProps {
 }
 
 export interface PillCellProps {
+  theme: GrafanaTheme2;
   field: Field;
-  rowIdx: number;
+  value: TableCellValue;
 }
 
 // Comparator for sorting table values

@@ -89,6 +89,10 @@ TableColoredBackgroundCellOptions: {
 	applyToRow?: bool
 } & TableWrapTextOptions @cuetsy(kind="interface")
 
+TablePillCellOptions: {
+  type: TableCellDisplayMode & "pill"
+} & TableWrapTextOptions @cuetsy(kind="interface")
+
 // Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
 
@@ -112,9 +116,4 @@ TableFieldOptions: {
 	hideHeader?: bool
   // Enables text wrapping for column headers
   wrapHeaderText?: bool
-} @cuetsy(kind="interface")
-
-TablePillCellOptions: {
-  type: TableCellDisplayMode & "pill"
-  wrapText?: bool
 } @cuetsy(kind="interface")

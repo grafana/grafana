@@ -187,6 +187,8 @@ const PILLS_GAP = 4;
 const PILLS_TEXT_SIZE_RATIO = 12 / 14;
 
 export function getPillLineCounter(avgCharWidth: number): LineCounter {
+  const adjustedCharWidth = avgCharWidth * PILLS_TEXT_SIZE_RATIO;
+
   return (value, width) => {
     if (value == null) {
       return 0;
@@ -197,7 +199,6 @@ export function getPillLineCounter(avgCharWidth: number): LineCounter {
       return 0;
     }
 
-    const adjustedCharWidth = avgCharWidth * PILLS_TEXT_SIZE_RATIO;
     let lines = 0;
     let currentLineUse = width;
 
@@ -298,7 +299,9 @@ export function getRowHeight(
   defaultHeight: number,
   lineCounters?: LineCounterEntry[],
   lineHeight = TABLE.LINE_HEIGHT,
-  verticalPadding = 0
+  // when this is a function, the field which was measured as the maximum size will be returned, as well as the
+  // calculated number of lines, so that the consumer can use it in case the vertical padding value differs field-by-field.
+  verticalPadding: number | ((field: Field, numLines: number) => number) = TABLE.CELL_PADDING
 ): number {
   if (!lineCounters?.length) {
     return defaultHeight;
@@ -347,8 +350,13 @@ export function getRowHeight(
     maxLines = preciseCounter(maxValue, maxWidth, maxField, rowIdx);
   }
 
+  // round up to the nearest line before doing math
+  maxLines = Math.ceil(maxLines);
+
   // we want a round number of lines for rendering
-  const totalHeight = Math.ceil(maxLines) * lineHeight + verticalPadding;
+  const verticalPaddingValue =
+    typeof verticalPadding === 'function' ? verticalPadding(maxField, maxLines) : verticalPadding;
+  const totalHeight = maxLines * lineHeight + verticalPaddingValue;
   return Math.max(totalHeight, defaultHeight);
 }
 
@@ -361,9 +369,7 @@ export function shouldTextOverflow(field: Field): boolean {
   const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
-    (field.type === FieldType.string &&
-      cellOptions.type !== TableCellDisplayMode.Image &&
-      cellOptions.type !== TableCellDisplayMode.Pill) ||
+    (field.type === FieldType.string && cellOptions.type !== TableCellDisplayMode.Image) ||
     // regardless of the underlying cell type, data links cells have text overflow.
     cellOptions.type === TableCellDisplayMode.DataLinks;
 

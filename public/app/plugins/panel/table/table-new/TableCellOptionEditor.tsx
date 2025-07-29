@@ -9,7 +9,6 @@ import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
-import { PillCellOptionsEditor } from './cells/PillCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 import { TextWrapOptionsEditor } from './cells/TextWrapOptionsEditor';
 
@@ -32,6 +31,7 @@ const TEXT_WRAP_CELL_TYPES = new Set([
   TableCellDisplayMode.ColorText,
   TableCellDisplayMode.ColorBackground,
   TableCellDisplayMode.DataLinks,
+  TableCellDisplayMode.Pill,
 ]);
 
 function isTextWrapCellType(value: TableCellOptions): value is TableCellOptions & TableWrapTextOptions {
@@ -87,9 +87,6 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       )}
       {cellType === TableCellDisplayMode.Image && (
         <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
-      )}
-      {cellType === TableCellDisplayMode.Pill && (
-        <PillCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-gr
 
 import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
 
-import { TableColumnResizeActionCallback } from '../types';
+import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
 import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow, TypographyCtx } from './types';
@@ -15,6 +15,7 @@ import {
   getRowHeight,
   buildHeaderLineCounters,
   buildRowLineCounters,
+  getCellOptions,
 } from './utils';
 
 // Helper function to get displayed value
@@ -430,10 +431,6 @@ export function useRowHeight({
       // regular rows
       let result = cache[row.__index];
       if (!result) {
-        // FIXME: Pill cell has extra vertical padding, we need to figure out how to indicate that here.
-        // if (maxLinesField && getCellOptions(maxLinesField).type === TableCellDisplayMode.Pill) {
-        //   verticalPadding += 4 * (numLines - 1);
-        // }
         result = cache[row.__index] = getRowHeight(
           fields,
           row.__index,
@@ -441,7 +438,15 @@ export function useRowHeight({
           defaultHeight,
           lineCounters,
           TABLE.LINE_HEIGHT,
-          TABLE.CELL_PADDING * 2
+          (field, numLines) => {
+            // Pill cells have vertical padding between each row
+            if (getCellOptions(field).type === TableCellDisplayMode.Pill) {
+              return TABLE.CELL_PADDING * (numLines - 1) + TABLE.CELL_PADDING * 2;
+            }
+
+            // default vertical padding for cells
+            return TABLE.CELL_PADDING * 2;
+          }
         );
       }
       return result;
