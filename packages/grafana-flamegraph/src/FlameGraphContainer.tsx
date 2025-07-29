@@ -293,6 +293,7 @@ const FlameGraphContainer = ({
             isDiffMode={dataContainer.isDiffFlamegraph()}
             setCollapsedMap={setCollapsedMap}
             collapsedMap={collapsedMap}
+            data={data}
           />
         )}
 

@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { useDebounce, usePrevious } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, PluginExtensionPoints, SelectableValue } from '@grafana/data';
+import { usePluginLinks } from '@grafana/runtime';
+import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
 import { CollapsedMap } from './FlameGraph/dataTransform';
@@ -30,6 +31,8 @@ type Props = {
   collapsedMap: CollapsedMap;
 
   extraHeaderElements?: React.ReactNode;
+
+  data?: DataFrame;
 };
 
 const FlameGraphHeader = ({
@@ -50,9 +53,17 @@ const FlameGraphHeader = ({
   isDiffMode,
   setCollapsedMap,
   collapsedMap,
+  data,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
+
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.FlameGraphHeaderActions,
+    context: {
+      data,
+    },
+  });
 
   const suffix =
     localSearch !== '' ? (
@@ -84,6 +95,25 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
+        {links.map((link) => (
+          <Tooltip key={link.id} content={link.description || link.title}>
+            <Button
+              className={styles.buttonSpacing}
+              size="sm"
+              variant="primary"
+              fill="outline"
+              icon={link.icon}
+              onClick={(event) => {
+                if (link.path) {
+                  window.open(link.path, '_blank');
+                }
+                link.onClick?.(event);
+              }}
+            >
+              {link.title}
+            </Button>
+          </Tooltip>
+        ))}
         {showResetButton && (
           <Button
             variant={'secondary'}

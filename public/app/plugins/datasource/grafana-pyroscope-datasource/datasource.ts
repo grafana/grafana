@@ -1,5 +1,5 @@
 import Prism from 'prismjs';
-import { Observable, of } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 
 import {
   AbstractQuery,
@@ -18,7 +18,13 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import { VariableSupport } from './VariableSupport';
 import { defaultGrafanaPyroscopeDataQuery, defaultPyroscopeQueryType } from './dataquery.gen';
 import { PyroscopeDataSourceOptions, Query, ProfileTypeMessage } from './types';
-import { addLabelToQuery, extractLabelMatchers, grammar, toPromLikeExpr } from './utils';
+import {
+  addLabelToQuery,
+  extractLabelMatchers,
+  grammar,
+  toPromLikeExpr,
+  enrichDataFrameWithQueryContextMapper,
+} from './utils';
 
 export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeDataSourceOptions> {
   constructor(
@@ -45,10 +51,12 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
     if (!validTargets.length) {
       return of({ data: [] });
     }
-    return super.query({
-      ...request,
-      targets: validTargets,
-    });
+    return super
+      .query({
+        ...request,
+        targets: validTargets,
+      })
+      .pipe(map(enrichDataFrameWithQueryContextMapper(request, this.name)));
   }
 
   async getProfileTypes(start: number, end: number): Promise<ProfileTypeMessage[]> {

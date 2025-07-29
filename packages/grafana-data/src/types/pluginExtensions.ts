@@ -195,6 +195,7 @@ export enum PluginExtensionPoints {
   DataSourceConfig = 'grafana/datasources/config',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
+  FlameGraphHeaderActions = 'grafana/flamegraph/header/actions',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',

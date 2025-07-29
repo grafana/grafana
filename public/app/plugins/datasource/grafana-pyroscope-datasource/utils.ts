@@ -1,7 +1,15 @@
 import { invert } from 'lodash';
 import Prism, { Grammar, Token } from 'prismjs';
 
-import { AbstractLabelMatcher, AbstractLabelOperator } from '@grafana/data';
+import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  DataFrame,
+  DataQueryResponse,
+  DataQueryRequest,
+} from '@grafana/data';
+
+import { GrafanaPyroscopeDataQuery } from './dataquery.gen';
 
 export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {
   const labelMatchers: AbstractLabelMatcher[] = [];
@@ -131,3 +139,37 @@ export const grammar: Grammar = {
   },
   punctuation: /[{}(),.]/,
 };
+
+export function enrichDataFrameWithQueryContextMapper(
+  request: DataQueryRequest<GrafanaPyroscopeDataQuery>,
+  datasourceName: string
+) {
+  const validTargets = request.targets;
+  return (response: DataQueryResponse) => {
+    response.data = response.data.map((data: DataFrame) => {
+      const query = validTargets.find((target) => target.refId === data.refId);
+      if (!query || !query.datasource?.uid || !query.datasource?.type) {
+        return data;
+      }
+
+      const context = {
+        datasource: {
+          uid: query.datasource.uid,
+          type: query.datasource.type,
+          name: datasourceName,
+        },
+        start: request.range.from.valueOf(),
+        end: request.range.to.valueOf(),
+        query,
+      };
+
+      data.meta = data.meta || {};
+      data.meta.custom = {
+        ...data.meta.custom,
+        queryContext: context,
+      };
+      return data;
+    });
+    return response;
+  };
+}
