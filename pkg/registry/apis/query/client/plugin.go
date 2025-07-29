@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -65,7 +64,7 @@ var k8sNotFoundError error = &apierrors.StatusError{
 }
 
 // NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
-func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
+func newQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, accessControl accesscontrol.AccessControl) clientapi.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,
 		pCtxProvider: ctx,
@@ -110,34 +109,7 @@ func getGrafanaDataSourceSettings(ctx context.Context) (*backend.DataSourceInsta
 	return adapters.ModelToInstanceSettings(ds, decryptFunc)
 }
 
-func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*clientapi.Response, error) {
-	// middlewares may set response-http-headers through context, so we need to do extra steps
-	// first we create an isolated context to be used by query-data
-	isolatedCtx := contexthandler.CopyWithReqContext(ctx)
-
-	qdr, err := d.innerQueryData(isolatedCtx, req)
-
-	if err != nil {
-		return nil, err
-	}
-
-	rsp := &clientapi.Response{
-		QDR:     qdr,
-		Headers: nil,
-	}
-
-	// we extract the response-headers from the isolated context, and return them explicitly
-	// in the clientapi.Response structure
-	reqCtx := contexthandler.FromContext(isolatedCtx)
-	if reqCtx != nil {
-		rsp.Headers = reqCtx.Resp.Header()
-	}
-
-	return rsp, nil
-}
-
-// ExecuteQueryData implements QueryHelper.
-func (d *pluginClient) innerQueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {
 		return nil, err

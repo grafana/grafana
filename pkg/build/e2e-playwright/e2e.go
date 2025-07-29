@@ -32,12 +32,17 @@ func RunTest(
 ) (*dagger.Container, error) {
 	playwrightCommand := buildPlaywrightCommand(opts)
 
+	grafanaHost, err := opts.GrafanaService.Hostname(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	e2eContainer := opts.FrontendContainer.
 		WithWorkdir("/src").
 		WithDirectory("/src", opts.HostSrc).
 		WithMountedCache(".nx", d.CacheVolume("nx-cache")).
-		WithEnvVariable("HOST", grafanaHost).
-		WithEnvVariable("PORT", fmt.Sprint(grafanaPort)).
+		WithEnvVariable("CI", "true").
+		WithEnvVariable("GRAFANA_URL", fmt.Sprintf("http://%s:%d", grafanaHost, grafanaPort)).
 		WithServiceBinding(grafanaHost, opts.GrafanaService).
 		WithEnvVariable("bustcache", "1").
 		WithEnvVariable("PLAYWRIGHT_HTML_OPEN", "never").

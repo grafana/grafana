@@ -60,6 +60,7 @@ import {
   isOnLogOptionsChange,
   isOnNewLogsReceivedType,
   isReactNodeArray,
+  isSetDisplayedFields,
   onNewLogsReceivedType,
   Options,
 } from './types';
@@ -90,6 +91,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
    * onClickHideField?: (key: string) => void;
+   *
+   * Called from the new Log Details Panel when fields are reordered. If ommited, a default implementation is used.
+   * setDisplayedFields?: (key: string) => void;
    *
    * Passed to the LogRowMenuCell component to be rendered before the default actions in the menu.
    * logRowMenuIconsBefore?: ReactNode[];
@@ -159,7 +163,8 @@ export const LogsPanel = ({
     onNewLogsReceived,
     fontSize,
     syntaxHighlighting,
-    detailsMode,
+    detailsMode: detailsModeProp,
+    noInteractions,
     ...options
   },
   id,
@@ -517,6 +522,12 @@ export const LogsPanel = ({
 
   const onClickShowField = isOnClickShowField(options.onClickShowField) ? options.onClickShowField : showField;
   const onClickHideField = isOnClickHideField(options.onClickHideField) ? options.onClickHideField : hideField;
+  const setDisplayedFieldsFn = isSetDisplayedFields(options.setDisplayedFields)
+    ? options.setDisplayedFields
+    : setDisplayedFields;
+
+  // In Dashboards, default to inline. Otherwise, let apps control or have automatic behavior.
+  const detailsMode = detailsModeProp ? detailsModeProp : app === CoreApp.Dashboard ? 'inline' : undefined;
 
   return (
     <>
@@ -556,6 +567,7 @@ export const LogsPanel = ({
               logs={deduplicatedRows}
               logSupportsContext={showContextToggle}
               loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+              noInteractions={noInteractions}
               onClickFilterLabel={
                 isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
               }
@@ -573,7 +585,7 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
-              setDisplayedFields={setDisplayedFields}
+              setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
               showTime={showTime}
               sortOrder={sortOrder}

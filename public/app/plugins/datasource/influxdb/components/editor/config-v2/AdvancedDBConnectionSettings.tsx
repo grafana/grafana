@@ -12,8 +12,10 @@ import { InfluxVersion } from '../../../types';
 
 import { getInlineLabelStyles, HTTP_MODES } from './constants';
 import {
+  trackInfluxDBConfigV2AdvancedDbConnectionSettingsAutocompleteClicked,
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsHTTPMethodClicked,
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked,
+  trackInfluxDBConfigV2AdvancedDbConnectionSettingsMaxSeriesClicked,
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked,
   trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked,
 } from './tracking';
@@ -93,6 +95,42 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
               </InlineField>
             </InlineFieldRow>
           )}
+
+          {options.jsonData.version === InfluxVersion.InfluxQL && (
+            <InlineFieldRow>
+              <InlineField
+                label="Autocomplete Range"
+                labelWidth={30}
+                tooltip="This time range is used in the query editor's autocomplete to reduce the execution time of tag filter queries."
+              >
+                <Input
+                  className="width-15"
+                  data-testid="influxdb-v2-config-autocomplete-range"
+                  onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsAutocompleteClicked}
+                  onChange={onUpdateDatasourceJsonDataOption(props, 'showTagTime')}
+                  placeholder="12h"
+                  value={options.jsonData.showTagTime || ''}
+                />
+              </InlineField>
+            </InlineFieldRow>
+          )}
+
+          <InlineFieldRow>
+            <InlineField
+              label="Max series"
+              labelWidth={30}
+              tooltip="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
+            >
+              <Input
+                className="width-15"
+                data-testid="influxdb-v2-config-max-series"
+                onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMaxSeriesClicked}
+                onChange={onUpdateDatasourceJsonDataOption(props, 'maxSeries')}
+                placeholder="1000"
+                value={options.jsonData.maxSeries || ''}
+              />
+            </InlineField>
+          </InlineFieldRow>
         </>
       )}
     </>

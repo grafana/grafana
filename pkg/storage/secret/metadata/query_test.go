@@ -230,16 +230,6 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlSecureValueReadForDecrypt: {
-				{
-					Name: "read-for-decrypt",
-					Data: &readSecureValueForDecrypt{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Name:        "name",
-						Namespace:   "ns",
-					},
-				},
-			},
 		},
 	})
 }

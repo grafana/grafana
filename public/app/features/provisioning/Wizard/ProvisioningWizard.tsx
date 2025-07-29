@@ -6,11 +6,12 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError } from '@grafana/runtime';
-import { Alert, Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDeleteRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { getDefaultValues } from '../Config/defaults';
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { dataToSpec } from '../utils/data';
@@ -22,6 +23,8 @@ import { FinishStep } from './FinishStep';
 import { useStepStatus } from './StepStatusContext';
 import { Step, Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
+import { useCreateSyncJob } from './hooks/useCreateSyncJob';
+import { useResourceStats } from './hooks/useResourceStats';
 import { RepoType, WizardFormData, WizardStep } from './types';
 
 const appEvents = getAppEvents();
@@ -58,14 +61,15 @@ const getSteps = (): Array<Step<WizardStep>> => {
 export function ProvisioningWizard({ type }: { type: RepoType }) {
   const [activeStep, setActiveStep] = useState<WizardStep>('connection');
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
-  const [requiresMigration, setRequiresMigration] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError } = useStepStatus();
+  const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
+    useStepStatus();
 
-  const settingsQuery = useGetFrontendSettingsQuery();
+  const { data } = useGetFrontendSettingsQuery();
+  const isLegacyStorage = Boolean(data?.legacyStorage);
   const navigate = useNavigate();
 
   const steps = getSteps();
@@ -91,16 +95,24 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     handleSubmit,
   } = methods;
 
-  const repoName = watch('repositoryName');
+  const [repoName = '', repoType] = watch(['repositoryName', 'repository.type']);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
+  const { shouldSkipSync, requiresMigration } = useResourceStats(repoName, isLegacyStorage);
+  const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
+    repoName: repoName,
+    requiresMigration,
+    repoType,
+    isLegacyStorage,
+    setStepStatusInfo,
+  });
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
 
   // A different repository is marked with instance target -- nothing will succeed
   useEffect(() => {
-    if (settingsQuery.data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
+    if (data?.items.some((item) => item.target === 'instance' && item.name !== repoName)) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [
@@ -110,7 +122,7 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
 
       navigate(PROVISIONING_URL);
     }
-  }, [navigate, repoName, settingsQuery.data?.items]);
+  }, [navigate, repoName, data?.items]);
 
   const handleRepositoryDeletion = async (name: string) => {
     try {
@@ -144,9 +156,18 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         return t('provisioning.wizard.button-next', 'Finish');
       }
 
+      // If on bootstrap step and should skip sync, show finish step name
+      if (currentStep === 'bootstrap' && shouldSkipSync) {
+        const finishStepIndex = stepIndex + 2;
+        if (finishStepIndex < steps.length) {
+          return steps[finishStepIndex].name;
+        }
+        return t('provisioning.wizard.button-next', 'Finish');
+      }
+
       return steps[stepIndex + 1].name;
     },
-    [steps]
+    [steps, shouldSkipSync]
   );
 
   const handleNext = async () => {
@@ -156,7 +177,27 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     if (isLastStep) {
       navigate(PROVISIONING_URL);
     } else {
-      setActiveStep(steps[currentStepIndex + 1].id);
+      let nextStepIndex = currentStepIndex + 1;
+
+      // Skip synchronize step if no sync is needed
+      if (activeStep === 'bootstrap' && shouldSkipSync) {
+        nextStepIndex = currentStepIndex + 2; // Skip to finish step
+
+        // Create a pull job to initialize the repository
+        if (repoName) {
+          const job = await createSyncJob();
+          if (!job) {
+            return; // Don't proceed if job creation fails
+          }
+        }
+      }
+
+      if (nextStepIndex >= steps.length) {
+        navigate(PROVISIONING_URL);
+        return;
+      }
+
+      setActiveStep(steps[nextStepIndex].id);
       setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
       setStepStatusInfo({ status: 'idle' });
     }
@@ -165,11 +206,12 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
   const onSubmit = async () => {
     if (currentStepConfig?.submitOnNext) {
       // Validate form data before proceeding
-      if (activeStep === 'connection' || activeStep === 'bootstrap') {
-        const isValid = await trigger(['repository', 'repository.title']);
-        if (!isValid) {
-          return;
-        }
+      const fieldsToValidate =
+        activeStep === 'connection' ? (['repository'] as const) : (['repository', 'repository.title'] as const);
+
+      const isValid = await trigger(fieldsToValidate);
+      if (!isValid) {
+        return;
       }
 
       setIsSubmitting(true);
@@ -210,8 +252,8 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
         setIsSubmitting(false);
       }
     } else {
-      // only proceed if the job was successful
-      if (isStepSuccess) {
+      // proceed if the job was successful or had warnings
+      if (isStepSuccess || hasStepWarning) {
         handleNext();
       }
     }
@@ -222,11 +264,11 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
     if (activeStep !== 'connection' && hasStepError) {
       return true;
     }
-    // Synchronize step requires success to proceed
+    // Synchronize step requires success or warning to proceed
     if (activeStep === 'synchronize') {
-      return !isStepSuccess; // Disable next button if the step is not successful
+      return !(isStepSuccess || hasStepWarning); // Disable next button if the step is not successful or has warnings
     }
-    return isSubmitting || isCancelling || isStepRunning;
+    return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   };
 
   return (
@@ -243,23 +285,13 @@ export function ProvisioningWizard({ type }: { type: RepoType }) {
               </Text>
             </Box>
 
-            {hasStepError && <Alert severity="error" title={'error' in stepStatusInfo ? stepStatusInfo.error : ''} />}
+            {hasStepError && 'error' in stepStatusInfo && <ProvisioningAlert error={stepStatusInfo.error} />}
+            {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
 
             <div className={styles.content}>
               {activeStep === 'connection' && <ConnectStep />}
-              {activeStep === 'bootstrap' && (
-                <BootstrapStep
-                  onOptionSelect={setRequiresMigration}
-                  settingsData={settingsQuery.data}
-                  repoName={repoName ?? ''}
-                />
-              )}
-              {activeStep === 'synchronize' && (
-                <SynchronizeStep
-                  requiresMigration={requiresMigration}
-                  isLegacyStorage={Boolean(settingsQuery.data?.legacyStorage)}
-                />
-              )}
+              {activeStep === 'bootstrap' && <BootstrapStep settingsData={data} repoName={repoName} />}
+              {activeStep === 'synchronize' && <SynchronizeStep isLegacyStorage={isLegacyStorage} />}
               {activeStep === 'finish' && <FinishStep />}
             </div>
 

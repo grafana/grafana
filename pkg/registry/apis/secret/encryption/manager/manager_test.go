@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -14,7 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -43,7 +45,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.GetAllDataKeys(ctx, namespace)
+		keys, err := svc.store.ListDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -58,7 +60,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
-		keys, err := svc.store.GetAllDataKeys(ctx, namespace)
+		keys, err := svc.store.ListDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 1)
 	})
@@ -67,17 +69,16 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		reports, err := svc.usageStats.GetUsageReport(context.Background())
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.current_provider.secretKey.count"])
-		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.providers.secretKey.count"])
+		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.current_provider.secret_key.count"])
+		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.providers.secret_key.count"])
 	})
 }
 
 func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 	tracer := noop.NewTracerProvider().Tracer("test")
-	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -138,12 +139,12 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	})
 
 	t.Run("deleting DEK when no id provided must fail", func(t *testing.T) {
-		beforeDelete, err := store.GetAllDataKeys(ctx, namespace)
+		beforeDelete, err := store.ListDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		err = store.DeleteDataKey(ctx, namespace, "")
 		require.Error(t, err)
 
-		afterDelete, err := store.GetAllDataKeys(ctx, namespace)
+		afterDelete, err := store.ListDataKeys(ctx, namespace)
 		require.NoError(t, err)
 		assert.Equal(t, beforeDelete, afterDelete)
 	})
@@ -161,7 +162,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		svc := setupTestService(t)
-		assert.Equal(t, encryption.ProviderID("secretKey.v1"), svc.currentProviderID)
+		assert.Equal(t, encryption.ProviderID("secret_key.v1"), svc.providerConfig.CurrentProvider)
 	})
 
 	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
@@ -175,23 +176,29 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		cfg := &setting.Cfg{
 			Raw: raw,
 			SecretsManagement: setting.SecretsManagerSettings{
-				SecretKey:          "sdDkslslld",
-				EncryptionProvider: "secretKey.v1",
+				CurrentEncryptionProvider: "secret_key.v1",
+				ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
 			},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		tracer := noop.NewTracerProvider().Tracer("test")
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
+		require.NoError(t, err)
+
+		usageStats := &usagestats.UsageStatsMock{T: t}
+		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+		require.NoError(t, err)
+
+		ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
 		require.NoError(t, err)
 
 		encMgr, err := ProvideEncryptionManager(
 			tracer,
 			encryptionStore,
-			cfg,
-			&usagestats.UsageStatsMock{T: t},
-			encryption.ProvideThirdPartyProviderMap(),
+			usageStats,
+			enc,
+			ossProviders,
 		)
 		require.NoError(t, err)
 
@@ -199,8 +206,10 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		//override default provider with fake, and register the fake separately
 		fake := &fakeProvider{}
-		encryptionManager.providers[encryption.ProviderID("fakeProvider.v1")] = fake
-		encryptionManager.currentProviderID = "fakeProvider.v1"
+		encryptionManager.providerConfig.AvailableProviders = encryption.ProviderMap{
+			encryption.ProviderID("fakeProvider.v1"): fake,
+		}
+		encryptionManager.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
 		namespace := "test-namespace"
 		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{})
@@ -212,18 +221,180 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		svcDecryptMgr, err := ProvideEncryptionManager(
 			tracer,
 			encryptionStore,
-			cfg,
-			&usagestats.UsageStatsMock{T: t},
-			encryption.ProvideThirdPartyProviderMap(),
+			usageStats,
+			enc,
+			ossProviders,
 		)
 		require.NoError(t, err)
 
 		svcDecrypt := svcDecryptMgr.(*EncryptionManager)
-		svcDecrypt.providers[encryption.ProviderID("fakeProvider.v1")] = fake
-		svcDecrypt.currentProviderID = "fakeProvider.v1"
+		svcDecrypt.providerConfig.AvailableProviders = encryption.ProviderMap{
+			encryption.ProviderID("fakeProvider.v1"): fake,
+		}
+		svcDecrypt.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
 		_, _ = svcDecrypt.Decrypt(context.Background(), namespace, encrypted)
 		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
+	})
+}
+
+func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
+	ctx := context.Background()
+	namespace := "test-namespace"
+
+	// Generate random keys for testing
+	oldKey := util.GenerateShortUID() + util.GenerateShortUID() // 32 chars
+	newKey := util.GenerateShortUID() + util.GenerateShortUID() // 32 chars
+
+	t.Run("should encrypt with v1, upgrade to v2, encrypt with v2, and decrypt both", func(t *testing.T) {
+		// Step 1: Set up v1 configuration
+		cfgV1 := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				CurrentEncryptionProvider: "secret_key.v1",
+				ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": oldKey}},
+			},
+		}
+
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+		tracer := noop.NewTracerProvider().Tracer("test")
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
+		require.NoError(t, err)
+
+		usageStats := &usagestats.UsageStatsMock{T: t}
+		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+		require.NoError(t, err)
+
+		ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfgV1, enc)
+		require.NoError(t, err)
+
+		svcV1, err := ProvideEncryptionManager(
+			tracer,
+			encryptionStore,
+			usageStats,
+			enc,
+			ossProviders,
+		)
+		require.NoError(t, err)
+
+		// Step 2: Encrypt something with v1
+		plaintext := []byte("secret data from v1")
+		encryptedV1, err := svcV1.Encrypt(ctx, namespace, plaintext)
+		require.NoError(t, err)
+
+		// Verify v1 can decrypt its own data
+		decryptedV1, err := svcV1.Decrypt(ctx, namespace, encryptedV1)
+		require.NoError(t, err)
+		assert.Equal(t, plaintext, decryptedV1)
+
+		// Verify current provider is v1
+		encMgrV1 := svcV1.(*EncryptionManager)
+		assert.Equal(t, encryption.ProviderID("secret_key.v1"), encMgrV1.providerConfig.CurrentProvider)
+
+		// Step 3: Create new configuration with v2 as current provider
+		cfgV2 := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				CurrentEncryptionProvider: "secret_key.v2",
+				ConfiguredKMSProviders: map[string]map[string]string{
+					"secret_key.v1": {"secret_key": oldKey},
+					"secret_key.v2": {"secret_key": newKey},
+				},
+			},
+		}
+
+		// Reinitialize service with v2 configuration (reuse same store)
+		ossProvidersV2, err := osskmsproviders.ProvideOSSKMSProviders(cfgV2, enc)
+		require.NoError(t, err)
+
+		svcV2, err := ProvideEncryptionManager(
+			tracer,
+			encryptionStore,
+			usageStats,
+			enc,
+			ossProvidersV2,
+		)
+		require.NoError(t, err)
+
+		// Step 4: Ensure we can encrypt and decrypt with the new key (v2)
+		newPlaintext := []byte("secret data from v2")
+		encryptedV2, err := svcV2.Encrypt(ctx, namespace, newPlaintext)
+		require.NoError(t, err)
+
+		decryptedV2, err := svcV2.Decrypt(ctx, namespace, encryptedV2)
+		require.NoError(t, err)
+		assert.Equal(t, newPlaintext, decryptedV2)
+
+		// Verify current provider is v2
+		encMgrV2 := svcV2.(*EncryptionManager)
+		assert.Equal(t, encryption.ProviderID("secret_key.v2"), encMgrV2.providerConfig.CurrentProvider)
+
+		// Step 5: Ensure we can decrypt the old value encrypted with v1
+		decryptedOldWithV2, err := svcV2.Decrypt(ctx, namespace, encryptedV1)
+		require.NoError(t, err)
+		assert.Equal(t, plaintext, decryptedOldWithV2)
+
+		// Verify both providers are available
+		assert.Contains(t, encMgrV2.providerConfig.AvailableProviders, encryption.ProviderID("secret_key.v1"))
+		assert.Contains(t, encMgrV2.providerConfig.AvailableProviders, encryption.ProviderID("secret_key.v2"))
+		assert.Equal(t, 2, len(encMgrV2.providerConfig.AvailableProviders))
+	})
+
+	t.Run("encrypting with v1 then removing the v1 config should cause decryption to fail", func(t *testing.T) {
+		tracer := noop.NewTracerProvider().Tracer("test")
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
+		require.NoError(t, err)
+
+		usageStats := &usagestats.UsageStatsMock{T: t}
+		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+		require.NoError(t, err)
+
+		cfgV1 := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				CurrentEncryptionProvider: "secret_key.v1",
+				ConfiguredKMSProviders: map[string]map[string]string{
+					"secret_key.v1": {"secret_key": uuid.New().String()},
+				},
+			},
+		}
+
+		ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfgV1, enc)
+		require.NoError(t, err)
+
+		svcV1, err := ProvideEncryptionManager(
+			tracer,
+			encryptionStore,
+			usageStats,
+			enc,
+			ossProviders,
+		)
+		require.NoError(t, err)
+
+		rsp, err := svcV1.Encrypt(ctx, namespace, []byte("test"))
+		require.NoError(t, err)
+
+		cfgV2 := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				CurrentEncryptionProvider: "secret_key.v2",
+				ConfiguredKMSProviders: map[string]map[string]string{
+					"secret_key.v2": {"secret_key": uuid.New().String()},
+				},
+			},
+		}
+
+		ossProvidersV2, err := osskmsproviders.ProvideOSSKMSProviders(cfgV2, enc)
+		require.NoError(t, err)
+
+		svcV2, err := ProvideEncryptionManager(
+			tracer,
+			encryptionStore,
+			usageStats,
+			enc,
+			ossProvidersV2,
+		)
+		require.NoError(t, err)
+
+		_, err = svcV2.Decrypt(ctx, namespace, rsp)
+		require.Error(t, err)
 	})
 }
 
@@ -365,26 +536,29 @@ func TestIntegration_SecretsService(t *testing.T) {
 			testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 			tracer := noop.NewTracerProvider().Tracer("test")
 
-			features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
-			defaultKey := "SdlklWklckeLS"
-
 			cfg := &setting.Cfg{
 				SecretsManagement: setting.SecretsManagerSettings{
-					SecretKey:          defaultKey,
-					EncryptionProvider: "secretKey.v1",
+					CurrentEncryptionProvider: "secret_key.v1",
+					ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
 
+			enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+			require.NoError(t, err)
+
+			ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+			require.NoError(t, err)
+
 			svc, err := ProvideEncryptionManager(
 				tracer,
 				store,
-				cfg,
 				usageStats,
-				encryption.ProvideThirdPartyProviderMap(),
+				enc,
+				ossProviders,
 			)
 			require.NoError(t, err)
 
@@ -415,34 +589,28 @@ func TestIntegration_SecretsService(t *testing.T) {
 	}
 }
 
-func TestEncryptionService_ReInitReturnsError(t *testing.T) {
-	svc := setupTestService(t)
-	err := svc.InitProviders(encryption.ProviderMap{
-		"fakeProvider.v1": &fakeProvider{},
-	})
-	require.Error(t, err)
-}
-
 func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
-	cfg := &setting.Cfg{
-		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          "SdlklWklckeLS",
-			EncryptionProvider: "secretKey.v1",
-		},
-	}
+	tracer := noop.NewTracerProvider().Tracer("test")
+	usageStats := &usagestats.UsageStatsMock{T: t}
+
+	enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+	require.NoError(t, err)
 
 	svc, err := ProvideEncryptionManager(
+		tracer,
 		nil,
-		nil,
-		cfg,
-		&usagestats.UsageStatsMock{},
-		encryption.ProviderMap{
-			"fakeProvider.v1": &fakeProvider{},
+		usageStats,
+		enc,
+		encryption.ProviderConfig{
+			CurrentProvider: encryption.ProviderID("fakeProvider.v1"),
+			AvailableProviders: encryption.ProviderMap{
+				encryption.ProviderID("fakeProvider.v1"): &fakeProvider{},
+			},
 		},
 	)
 	require.NoError(t, err)
 
 	encMgr := svc.(*EncryptionManager)
-	require.Len(t, encMgr.providers, 2)
-	require.Contains(t, encMgr.providers, encryption.ProviderID("fakeProvider.v1"))
+	require.Len(t, encMgr.providerConfig.AvailableProviders, 1)
+	require.Contains(t, encMgr.providerConfig.AvailableProviders, encryption.ProviderID("fakeProvider.v1"))
 }

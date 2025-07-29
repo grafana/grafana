@@ -4,7 +4,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Alert, Label, RadioButtonGroup, Stack, Switch, TextLink } from '@grafana/ui';
+import { Alert, Label, RadioButtonGroup, Stack, Switch } from '@grafana/ui';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { ExportableResource } from '../ShareExportTab';
@@ -127,19 +127,13 @@ export function ResourceExport({
         <Alert
           title={t(
             'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
-            'Dashboard Schema V2 does not support exporting library panels to be used in another instance yet'
+            'Library panels will be converted to regular panels'
           )}
           severity="warning"
         >
           <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
-            The dynamic dashboard functionality is experimental, and has not full feature parity with current dashboards
-            behaviour. It is based on a new schema format, that does not support library panels. This means that when
-            exporting the dashboard to use it in another instance, we will not include library panels. We intend to
-            support them as we progress in the feature{' '}
-            <TextLink external href="https://grafana.com/docs/release-life-cycle/">
-              life cycle
-            </TextLink>
-            .
+            Due to limitations in the new dashboard schema (V2), library panels will be converted to regular panels with
+            embedded content during external export.
           </Trans>
         </Alert>
       )}

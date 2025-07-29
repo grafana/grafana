@@ -98,7 +98,7 @@ type OFREPBulkResponse struct {
 // OFREPFlag represents a single flag in the bulk response
 type OFREPFlag struct {
 	Key          string         `json:"key"`
-	Value        bool           `json:"value"`
+	Value        any            `json:"value"`
 	Reason       string         `json:"reason"`
 	Variant      string         `json:"variant,omitempty"`
 	Metadata     map[string]any `json:"metadata,omitempty"`

@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
+import { Count, varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -11,9 +12,11 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
+  DisplayProcessor,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
+  FieldTextAlignment,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   TableCellHeight,
@@ -23,10 +26,19 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
+import {
+  CellColors,
+  TableRow,
+  ColumnTypes,
+  FrameToRowsConverter,
+  Comparator,
+  TypographyCtx,
+  LineCounter,
+  LineCounterEntry,
+} from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export type CellHeightCalculator = (text: string, cellWidth: number) => number;
+export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
 
 /**
  * @internal
@@ -69,58 +81,190 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(cellOptions?.wrapText);
 }
 
-// matches characters which CSS
-const spaceRegex = /[\s-]/;
+/**
+ * @internal creates a typography context based on a font size and family. used to measure text
+ * and estimate size of text in cells.
+ */
+export function createTypographyContext(fontSize: number, fontFamily: string, letterSpacing = 0.15): TypographyCtx {
+  const font = `${fontSize}px ${fontFamily}`;
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
 
-export interface GetMaxWrapCellOptions {
-  colWidths: number[];
-  avgCharWidth: number;
-  wrappedColIdxs: boolean[];
+  ctx.letterSpacing = `${letterSpacing}px`;
+  ctx.font = font;
+  const txt =
+    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.";
+  const txtWidth = ctx.measureText(txt).width;
+  const avgCharWidth = txtWidth / txt.length + letterSpacing;
+  const { count } = varPreLine(ctx);
+
+  return {
+    ctx,
+    font,
+    avgCharWidth,
+    estimateLines: getTextLineEstimator(avgCharWidth),
+    wrappedCount: wrapUwrapCount(count),
+  };
 }
 
 /**
  * @internal
- * loop through the fields and their values, determine which cell is going to determine the
- * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
  */
-export function getMaxWrapCell(
+export function wrapUwrapCount(count: Count): LineCounter {
+  return (value, width) => {
+    if (value == null) {
+      return 1;
+    }
+
+    return count(String(value), width);
+  };
+}
+
+/**
+ * @internal returns a line counter which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
+ */
+export function getTextLineEstimator(avgCharWidth: number): LineCounter {
+  return (value, width) => {
+    if (!value) {
+      return -1;
+    }
+
+    // we don't have string breaking enabled in the table,
+    // so an unbroken string is by definition a single line.
+    const strValue = String(value);
+    if (!spaceRegex.test(strValue)) {
+      return -1;
+    }
+
+    const charsPerLine = width / avgCharWidth;
+    return strValue.length / charsPerLine;
+  };
+}
+
+/**
+ * @internal return a text line counter for every field which has wrapHeaderText enabled.
+ */
+export function buildHeaderLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
+  const wrappedColIdxs = fields.reduce((acc: number[], field, idx) => {
+    if (field.config?.custom?.wrapHeaderText) {
+      acc.push(idx);
+    }
+    return acc;
+  }, []);
+
+  if (wrappedColIdxs.length === 0) {
+    return undefined;
+  }
+
+  // don't bother with estimating the line counts for the headers, because it's punishing
+  // when we get it wrong and there won't be that many compared to how many rows a table might contain.
+  return [{ counter: typographyCtx.wrappedCount, fieldIdxs: wrappedColIdxs }];
+}
+
+const spaceRegex = /[\s-]/;
+
+/**
+ * @internal return a text line counter for every field which has wrapHeaderText enabled. we do this once as we're rendering
+ * the table, and then getRowHeight uses the output of this to caluclate the height of each row.
+ */
+export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyCtx): LineCounterEntry[] | undefined {
+  const result: Record<string, LineCounterEntry> = {};
+  let wrappedFields = 0;
+
+  for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
+    const field = fields[fieldIdx];
+    if (shouldTextWrap(field)) {
+      wrappedFields++;
+      // TODO: Pills, DataLinks, and JSON will have custom line counters here.
+
+      // for string fields, we really want to find the longest field ahead of time to reduce the number of calls to `count`.
+      // calling `count` is going to get a perfectly accurate line count, but it is expensive, so we'd rather estimate the line
+      // count and call the counter only for the field which will take up the most space based on its
+      if (field.type === FieldType.string) {
+        result.textCounter = result.textCounter ?? {
+          counter: typographyCtx.wrappedCount,
+          estimate: typographyCtx.estimateLines,
+          fieldIdxs: [],
+        };
+        result.textCounter.fieldIdxs.push(fieldIdx);
+      }
+    }
+  }
+
+  if (wrappedFields === 0) {
+    return undefined;
+  }
+
+  return Object.values(result);
+}
+
+// in some cases, the estimator might return a value that is less than 1, but when measured by the counter, it actually
+// realizes that it's a multi-line cell. to avoid this, we want to give a little buffer away from 1 before we fully trust
+// the estimator to have told us that a cell is single-line.
+export const SINGLE_LINE_ESTIMATE_THRESHOLD = 0.85;
+
+/**
+ * @internal
+ * loop through the fields and their values, determine which cell is going to determine the height of the row based
+ * on its content and width, and return the height in pixels of that row, with vertial padding applied.
+ */
+export function getRowHeight(
   fields: Field[],
   rowIdx: number,
-  { colWidths, avgCharWidth, wrappedColIdxs }: GetMaxWrapCellOptions
-): {
-  text: string;
-  idx: number;
-  numLines: number;
-} {
-  let maxLines = 1;
-  let maxLinesIdx = -1;
-  let maxLinesText = '';
+  columnWidths: number[],
+  defaultHeight: number,
+  lineCounters?: LineCounterEntry[],
+  lineHeight = TABLE.LINE_HEIGHT,
+  verticalPadding = 0
+): number {
+  if (!lineCounters?.length) {
+    return defaultHeight;
+  }
 
-  // TODO: consider changing how we store this, using a record by column key instead of an array
-  for (let i = 0; i < colWidths.length; i++) {
-    if (wrappedColIdxs[i]) {
-      const field = fields[i];
+  let maxLines = -1;
+  let maxValue = '';
+  let maxWidth = 0;
+  let preciseCounter: LineCounter | undefined;
+
+  for (const { estimate, counter, fieldIdxs } of lineCounters) {
+    // for some of the line counters, getting the precise count of the lines is expensive. those line counters
+    // set both an "estimate" and a "counter" function. if the cell we find to be the max was estimated, we will
+    // get the "true" value right before calculating the row height by hanging onto a reference to the counter fn.
+    const count = estimate ?? counter;
+    const isEstimating = estimate !== undefined;
+
+    for (const fieldIdx of fieldIdxs) {
+      const field = fields[fieldIdx];
       // special case: for the header, provide `-1` as the row index.
-      const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
-
-      if (cellTextRaw != null) {
-        const cellText = String(cellTextRaw);
-
-        if (spaceRegex.test(cellText)) {
-          const charsPerLine = colWidths[i] / avgCharWidth;
-          const approxLines = cellText.length / charsPerLine;
-
-          if (approxLines > maxLines) {
-            maxLines = approxLines;
-            maxLinesIdx = i;
-            maxLinesText = cellText;
-          }
+      const cellValueRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
+      if (cellValueRaw != null) {
+        const colWidth = columnWidths[fieldIdx];
+        const approxLines = count(cellValueRaw, colWidth);
+        if (approxLines > maxLines) {
+          maxLines = approxLines;
+          maxValue = cellValueRaw;
+          maxWidth = colWidth;
+          preciseCounter = isEstimating ? counter : undefined;
         }
       }
     }
   }
 
-  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
+  // if the value is -1 or the estimate for the max cell was less than the SINGLE_LINE_ESTIMATE_THRESHOLD, we trust
+  // that the estimator correctly identified that no text wrapping is needed for this row, skipping the preciseCounter.
+  if (maxLines < SINGLE_LINE_ESTIMATE_THRESHOLD) {
+    return defaultHeight;
+  }
+
+  // if we finished this row height loop with an estimate, we need to call
+  // the `preciseCounter` method to get the exact line count.
+  if (preciseCounter !== undefined) {
+    maxLines = preciseCounter(maxValue, maxWidth);
+  }
+
+  // we want a round number of lines for rendering
+  const totalHeight = Math.ceil(maxLines) * lineHeight + verticalPadding;
+  return Math.max(totalHeight, defaultHeight);
 }
 
 /**
@@ -128,46 +272,51 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
-  let type = getCellOptions(field).type;
-
-  return (
-    field.type === FieldType.string &&
+  const cellOptions = getCellOptions(field);
+  const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-    // so we need to ensure we don't apply overflow hover states for type image
-    type !== TableCellDisplayMode.Image &&
-    type !== TableCellDisplayMode.Pill &&
-    !shouldTextWrap(field) &&
-    !isCellInspectEnabled(field)
-  );
+    // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
+    (field.type === FieldType.string &&
+      cellOptions.type !== TableCellDisplayMode.Image &&
+      cellOptions.type !== TableCellDisplayMode.Pill) ||
+    // regardless of the underlying cell type, data links cells have text overflow.
+    cellOptions.type === TableCellDisplayMode.DataLinks;
+
+  return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
+}
+
+// we only want to infer justifyContent and textAlign for these cellTypes
+const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
+  TableCellDisplayMode.Auto,
+  TableCellDisplayMode.ColorText,
+  TableCellDisplayMode.ColorBackground,
+]);
+
+export type TextAlign = 'left' | 'right' | 'center';
+
+/**
+ * @internal
+ * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
+ */
+export function getAlignment(field: Field): TextAlign {
+  const align: FieldTextAlignment | undefined = field.config.custom?.align;
+
+  if (!align || align === 'auto') {
+    if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
+      return 'right';
+    }
+    return 'left';
+  }
+
+  return align;
 }
 
 /**
  * @internal
- * Returns the text alignment for a field based on its type and configuration.
+ * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
  */
-export function getTextAlign(field?: Field): Property.JustifyContent {
-  if (!field) {
-    return 'flex-start';
-  }
-
-  if (field.config.custom) {
-    const custom: TableFieldOptionsType = field.config.custom;
-
-    switch (custom.align) {
-      case 'right':
-        return 'flex-end';
-      case 'left':
-        return 'flex-start';
-      case 'center':
-        return 'center';
-    }
-  }
-
-  if (field.type === FieldType.number) {
-    return 'flex-end';
-  }
-
-  return 'flex-start';
+export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
+  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
@@ -230,7 +379,6 @@ export function getAlignmentFactor(
 
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
-const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
 const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
 
 /**
@@ -248,7 +396,7 @@ export function getCellColors(
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
-  let bgHoverColor: string | undefined = undefined;
+  // let bgHoverColor: string | undefined = undefined;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
@@ -258,23 +406,23 @@ export function getCellColors(
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-      bgHoverColor = tinycolor(displayValue.color)
-        .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
-        .toRgbString();
+      // bgHoverColor = tinycolor(displayValue.color)
+      //   .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
+      //   .toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const hoverColor = tinycolor(displayValue.color)
-        .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
-        .toRgbString();
+      // const hoverColor = tinycolor(displayValue.color)
+      //   .darken(CELL_GRADIENT_DARKENING_MULTIPLIER * darkeningFactor)
+      //   .toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
         .darken(CELL_COLOR_DARKENING_MULTIPLIER * darkeningFactor)
         .spin(CELL_GRADIENT_HUE_ROTATION_DEGREES);
       textColor = getTextColorForAlphaBackground(displayValue.color!, theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-      bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
+      // bgHoverColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${hoverColor})`;
     }
   }
 
-  return { textColor, bgColor, bgHoverColor };
+  return { textColor, bgColor };
 }
 
 /**
@@ -336,18 +484,33 @@ export function applySort(
     return rows;
   }
 
+  const sortNanos = sortColumns.map(
+    (c) => fields.find((f) => f.type === FieldType.time && getDisplayName(f) === c.columnKey)?.nanos
+  );
+
   const compareRows = (a: TableRow, b: TableRow): number => {
     let result = 0;
+
     for (let i = 0; i < sortColumns.length; i++) {
       const { columnKey, direction } = sortColumns[i];
       const compare = getComparator(columnTypes[columnKey]);
       const sortDir = direction === 'ASC' ? 1 : -1;
 
       result = sortDir * compare(a[columnKey], b[columnKey]);
+
+      if (result === 0) {
+        const nanos = sortNanos[i];
+
+        if (nanos !== undefined) {
+          result = sortDir * (nanos[a.__index] - nanos[b.__index]);
+        }
+      }
+
       if (result !== 0) {
         break;
       }
     }
+
     return result;
   };
 
@@ -513,10 +676,10 @@ export const processNestedTableRows = (
   const childRows: Map<number, TableRow> = new Map();
 
   for (const row of rows) {
-    if (Number(row.__depth) === 0) {
+    if (row.__depth === 0) {
       parentRows.push(row);
     } else {
-      childRows.set(Number(row.__index), row);
+      childRows.set(row.__index, row);
     }
   }
 
@@ -527,7 +690,7 @@ export const processNestedTableRows = (
   const result: TableRow[] = [];
   processedParents.forEach((row) => {
     result.push(row);
-    const childRow = childRows.get(Number(row.__index));
+    const childRow = childRows.get(row.__index);
     if (childRow) {
       result.push(childRow);
     }
@@ -538,7 +701,10 @@ export const processNestedTableRows = (
 
 /**
  * @internal
- * returns the display name of a field
+ * returns the display name of a field.
+ * We intentionally do not want to use @grafana/data's getFieldDisplayName here,
+ * instead we have a call to cacheFieldDisplayNames up in TablePanel to handle this
+ * before we begin.
  */
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
@@ -626,3 +792,27 @@ export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDis
     (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
   );
 }
+
+export const displayJsonValue: DisplayProcessor = (value: unknown): DisplayValue => {
+  let displayValue: string;
+
+  // Handle string values that might be JSON
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      displayValue = JSON.stringify(parsed, null, ' ');
+    } catch {
+      displayValue = value; // Keep original if not valid JSON
+    }
+  } else {
+    // For non-string values, stringify them
+    try {
+      displayValue = JSON.stringify(value, null, ' ');
+    } catch (error) {
+      // Handle circular references or other stringify errors
+      displayValue = String(value);
+    }
+  }
+
+  return { text: displayValue, numeric: Number.NaN };
+};

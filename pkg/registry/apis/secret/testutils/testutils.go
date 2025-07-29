@@ -6,35 +6,34 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
+	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
-	"github.com/stretchr/testify/require"
 )
 
 type SetupConfig struct {
 	KeeperService contracts.KeeperService
-	AllowList     map[string]struct{}
 }
 
 func defaultSetupCfg() SetupConfig {
@@ -64,16 +63,14 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	database := database.ProvideDatabase(testDB, tracer)
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
-
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, features, nil)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, nil)
 	require.NoError(t, err)
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, features, nil)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, nil)
 	require.NoError(t, err)
 
 	// Initialize access client + access control
-	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	accessControl := acimpl.ProvideAccessControl(nil)
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl, accesscontrol.ResourceAuthorizerOptions{
 		Resource: "securevalues",
 		Attr:     "uid",
@@ -82,26 +79,36 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          defaultKey,
-			EncryptionProvider: "secretKey.v1",
+			CurrentEncryptionProvider: "secret_key.v1",
+			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
+	enc, err := cipher.ProvideAESGCMCipherService(tracer, usageStats)
+	require.NoError(t, err)
+
+	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+	require.NoError(t, err)
+
 	encryptionManager, err := manager.ProvideEncryptionManager(
 		tracer,
 		store,
-		cfg,
 		usageStats,
-		encryption.ProvideThirdPartyProviderMap(),
+		enc,
+		ossProviders,
 	)
 	require.NoError(t, err)
 
 	// Initialize encrypted value storage with a fake db
-	encryptedValueStorage, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
+	encryptedValueStorage, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer)
+	require.NoError(t, err)
+
+	// Initialize global encrypted value storage with a fake db
+	globalEncryptedValueStorage, err := encryptionstorage.ProvideGlobalEncryptedValueStorage(database, tracer)
 	require.NoError(t, err)
 
 	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil)
@@ -114,32 +121,36 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
 
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, setupCfg.AllowList)
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer)
 
-	decryptStorage, err := metadata.ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
+	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
 	decryptService := decrypt.ProvideDecryptService(decryptStorage)
 
 	return Sut{
-		SecureValueService:         secureValueService,
-		SecureValueMetadataStorage: secureValueMetadataStorage,
-		DecryptStorage:             decryptStorage,
-		DecryptService:             decryptService,
-		EncryptedValueStorage:      encryptedValueStorage,
-		SQLKeeper:                  sqlKeeper,
-		Database:                   database,
+		SecureValueService:          secureValueService,
+		SecureValueMetadataStorage:  secureValueMetadataStorage,
+		DecryptStorage:              decryptStorage,
+		DecryptService:              decryptService,
+		EncryptedValueStorage:       encryptedValueStorage,
+		GlobalEncryptedValueStorage: globalEncryptedValueStorage,
+		SQLKeeper:                   sqlKeeper,
+		Database:                    database,
+		AccessClient:                accessClient,
 	}
 }
 
 type Sut struct {
-	SecureValueService         *service.SecureValueService
-	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
-	DecryptStorage             contracts.DecryptStorage
-	DecryptService             service.DecryptService
-	EncryptedValueStorage      contracts.EncryptedValueStorage
-	SQLKeeper                  *sqlkeeper.SQLKeeper
-	Database                   *database.Database
+	SecureValueService          contracts.SecureValueService
+	SecureValueMetadataStorage  contracts.SecureValueMetadataStorage
+	DecryptStorage              contracts.DecryptStorage
+	DecryptService              contracts.DecryptService
+	EncryptedValueStorage       contracts.EncryptedValueStorage
+	GlobalEncryptedValueStorage contracts.GlobalEncryptedValueStorage
+	SQLKeeper                   *sqlkeeper.SQLKeeper
+	Database                    *database.Database
+	AccessClient                types.AccessClient
 }
 
 type CreateSvConfig struct {

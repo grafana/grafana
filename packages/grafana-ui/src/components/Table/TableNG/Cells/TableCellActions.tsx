@@ -1,5 +1,5 @@
-import { WKT } from 'ol/format';
-import { Geometry } from 'ol/geom';
+import WKT from 'ol/format/WKT';
+import Geometry from 'ol/geom/Geometry';
 
 import { FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';

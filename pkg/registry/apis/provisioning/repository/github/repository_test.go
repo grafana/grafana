@@ -17,6 +17,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 func TestNewGitHub(t *testing.T) {
@@ -80,6 +81,8 @@ func TestNewGitHub(t *testing.T) {
 
 			gitRepo := git.NewMockGitRepository(t)
 
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+
 			// Call the function under test
 			repo, err := NewGitHub(
 				context.Background(),
@@ -87,6 +90,7 @@ func TestNewGitHub(t *testing.T) {
 				gitRepo,
 				factory,
 				tt.token,
+				mockSecrets,
 			)
 
 			// Check results
@@ -101,7 +105,7 @@ func TestNewGitHub(t *testing.T) {
 				assert.Equal(t, tt.expectedRepo, repo.Repo())
 				concreteRepo, ok := repo.(*githubRepository)
 				require.True(t, ok)
-				assert.Equal(t, gitRepo, concreteRepo.gitRepo)
+				assert.Equal(t, gitRepo, concreteRepo.GitRepository)
 			}
 		})
 	}
@@ -297,8 +301,8 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 			}
 
 			repo := &githubRepository{
-				config:  tt.config,
-				gitRepo: mockGitRepo,
+				config:        tt.config,
+				GitRepository: mockGitRepo,
 			}
 
 			errors := repo.Validate()
@@ -384,10 +388,10 @@ func TestGitHubRepositoryTest(t *testing.T) {
 			}
 
 			repo := &githubRepository{
-				config:  tt.config,
-				gitRepo: mockGitRepo,
-				owner:   "grafana",
-				repo:    "grafana",
+				config:        tt.config,
+				GitRepository: mockGitRepo,
+				owner:         "grafana",
+				repo:          "grafana",
 			}
 
 			result, err := repo.Test(context.Background())
@@ -798,8 +802,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Config").Return(config)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result := repo.Config()
@@ -818,8 +822,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Read", ctx, "test.yaml", "main").Return(expectedFileInfo, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.Read(ctx, "test.yaml", "main")
@@ -836,8 +840,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("ReadTree", ctx, "main").Return(expectedEntries, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.ReadTree(ctx, "main")
@@ -852,8 +856,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Create", ctx, "new-file.yaml", "main", data, "Create new file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		err := repo.Create(ctx, "new-file.yaml", "main", data, "Create new file")
@@ -867,8 +871,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Update", ctx, "existing-file.yaml", "main", data, "Update file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		err := repo.Update(ctx, "existing-file.yaml", "main", data, "Update file")
@@ -882,8 +886,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Write", ctx, "file.yaml", "main", data, "Write file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		err := repo.Write(ctx, "file.yaml", "main", data, "Write file")
@@ -896,8 +900,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("Delete", ctx, "file.yaml", "main", "Delete file").Return(nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		err := repo.Delete(ctx, "file.yaml", "main", "Delete file")
@@ -911,8 +915,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("LatestRef", ctx).Return(expectedRef, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.LatestRef(ctx)
@@ -931,8 +935,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("ListRefs", ctx).Return(gitRepoRefs, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.ListRefs(ctx)
@@ -967,8 +971,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.On("CompareFiles", ctx, "main", "feature-branch").Return(expectedChanges, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.CompareFiles(ctx, "main", "feature-branch")
@@ -981,14 +985,14 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
 		mockStagedRepo := repository.NewMockStagedRepository(t)
 		opts := repository.StageOptions{
-			PushOnWrites: true,
-			Timeout:      10 * time.Second,
+			Mode:    repository.StageModeCommitOnEach,
+			Timeout: 10 * time.Second,
 		}
 		mockGitRepo.On("Stage", ctx, opts).Return(mockStagedRepo, nil)
 
 		repo := &githubRepository{
-			config:  config,
-			gitRepo: mockGitRepo,
+			config:        config,
+			GitRepository: mockGitRepo,
 		}
 
 		result, err := repo.Stage(ctx, opts)
@@ -1045,4 +1049,169 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 		result := repo.Client()
 		assert.Equal(t, mockClient, result)
 	})
+}
+
+func TestGitHubRepository_OnDelete(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(*secrets.MockRepositorySecrets)
+		config        *provisioning.Repository
+		expectedError string
+	}{
+		{
+			name: "successful secret deletion",
+			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Delete(
+					context.Background(),
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+					},
+					"test-repo"+githubTokenSecretSuffix,
+				).Return(nil)
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+		},
+		{
+			name: "secret deletion error",
+			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Delete(
+					context.Background(),
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+					},
+					"test-repo"+githubTokenSecretSuffix,
+				).Return(errors.New("failed to delete secret"))
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+			expectedError: "delete github token secret: failed to delete secret",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+			tt.setupMock(mockSecrets)
+
+			githubRepo := &githubRepository{
+				config:  tt.config,
+				secrets: mockSecrets,
+			}
+
+			err := githubRepo.OnDelete(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			mockSecrets.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGithubRepository_Move(t *testing.T) {
+	tests := []struct {
+		name        string
+		oldPath     string
+		newPath     string
+		ref         string
+		comment     string
+		setupMock   func(*git.MockGitRepository)
+		expectedErr error
+	}{
+		{
+			name:    "successful move delegates to git repository",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old.yaml", "new.yaml", "main", "move file").Return(nil)
+			},
+			expectedErr: nil,
+		},
+		{
+			name:    "move error from git repository",
+			oldPath: "old.yaml",
+			newPath: "new.yaml",
+			ref:     "main",
+			comment: "move file",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old.yaml", "new.yaml", "main", "move file").Return(errors.New("git move failed"))
+			},
+			expectedErr: errors.New("git move failed"),
+		},
+		{
+			name:    "successful directory move",
+			oldPath: "old/",
+			newPath: "new/",
+			ref:     "main",
+			comment: "move directory",
+			setupMock: func(mockGitRepo *git.MockGitRepository) {
+				mockGitRepo.EXPECT().Move(context.Background(), "old/", "new/", "main", "move directory").Return(nil)
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock git repository
+			mockGitRepo := git.NewMockGitRepository(t)
+			mockSecrets := &secrets.MockRepositorySecrets{}
+
+			// Setup mock expectations
+			tt.setupMock(mockGitRepo)
+
+			// Create GitHub repository
+			config := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL: "https://github.com/example/repo",
+					},
+				},
+			}
+
+			githubRepo := &githubRepository{
+				config:        config,
+				GitRepository: mockGitRepo,
+				owner:         "example",
+				repo:          "repo",
+				secrets:       mockSecrets,
+			}
+
+			// Execute move operation
+			err := githubRepo.Move(context.Background(), tt.oldPath, tt.newPath, tt.ref, tt.comment)
+
+			// Verify results
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				assert.Equal(t, tt.expectedErr.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

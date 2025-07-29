@@ -44,50 +44,10 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create auth context with proper permissions
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, "svc", types.TypeUser)
 
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(sc *testutils.SetupConfig) {
-			sc.AllowList = map[string]struct{}{"group1": {}}
-		}))
+		sut := testutils.Setup(t)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "non-existent-value")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotFound)
-		require.Empty(t, exposed)
-	})
-
-	t.Run("when auth info is not in allowlist, it returns an unauthorized error", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		t.Cleanup(cancel)
-
-		svName := "sv-test"
-		svcIdentity := "svc"
-
-		// Create auth context with identity that is not in allowlist
-		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/" + svName + ":decrypt"}, svcIdentity, types.TypeUser)
-
-		// Create an allowlist that doesn't include the permission
-		allowList := map[string]struct{}{"allowed-group": {}}
-
-		// Setup service
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(sc *testutils.SetupConfig) {
-			sc.AllowList = allowList
-		}))
-
-		// Create a secure value that is not in the allowlist
-		spec := secretv1beta1.SecureValueSpec{
-			Description: "description",
-			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
-		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
-		sv.Name = svName
-		sv.Namespace = "default"
-
-		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
-		require.NoError(t, err)
-
-		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
-		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
 		require.Empty(t, exposed)
 	})
 
@@ -102,15 +62,10 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create auth context with proper permissions that match the decrypters
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, svcIdentity, types.TypeUser)
 
-		// Include the group in allowlist
-		allowList := map[string]struct{}{svcIdentity: {}}
-
 		// Setup service
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(sc *testutils.SetupConfig) {
-			sc.AllowList = allowList
-		}))
+		sut := testutils.Setup(t)
 
-		// Create a secure value that is in the allowlist
+		// Create a secure value
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
@@ -141,15 +96,10 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create auth context with proper permissions that match the decrypters
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/sv-test2:decrypt"}, svcIdentity, types.TypeUser)
 
-		// Include the group in allowlist
-		allowList := map[string]struct{}{svcIdentity: {}}
-
 		// Setup service
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(sc *testutils.SetupConfig) {
-			sc.AllowList = allowList
-		}))
+		sut := testutils.Setup(t)
 
-		// Create a secure value that is in the allowlist
+		// Create a secure value
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},

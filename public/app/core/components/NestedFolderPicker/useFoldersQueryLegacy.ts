@@ -11,7 +11,7 @@ import { PermissionLevelString } from 'app/types/acl';
 import { FolderListItemDTO } from 'app/types/folders';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { ROOT_FOLDER_ITEM } from './utils';
+import { getRootFolderItem } from './utils';
 
 type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;
 type ListFoldersRequest = QueryActionCreatorResult<
@@ -179,7 +179,7 @@ export function useFoldersQueryLegacy(
     }
 
     const rootFlatTree = createFlatList(undefined, state.rootPages, 1);
-    rootFlatTree.unshift(ROOT_FOLDER_ITEM);
+    rootFlatTree.unshift(getRootFolderItem());
 
     return rootFlatTree;
   }, [state, isBrowsing, openFolders]);

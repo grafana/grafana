@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { SelectableValue, StandardEditorProps, TraceSearchProps } from '@grafana/data';
 
 import { SpanFiltersTags } from '../../../features/explore/TraceView/components/TracePageHeader/SpanFilters/SpanFiltersTags';
-import { defaultTagFilter, SearchProps } from '../../../features/explore/TraceView/useSearch';
 import { transformDataFrames } from '../../../features/explore/TraceView/utils/transform';
+import { DEFAULT_TAG_FILTERS } from '../../../features/explore/state/constants';
 
-type Props = StandardEditorProps<SearchProps, unknown, SearchProps>;
+type Props = StandardEditorProps<TraceSearchProps, unknown, TraceSearchProps>;
 
 export const TagsEditor = ({ value, onChange, context }: Props) => {
   const trace = useMemo(() => transformDataFrames(context.data[0]), [context.data]);
@@ -15,7 +15,7 @@ export const TagsEditor = ({ value, onChange, context }: Props) => {
 
   useEffect(() => {
     if (!value.tags) {
-      onChange({ ...value, tags: [defaultTagFilter] });
+      onChange({ ...value, tags: [DEFAULT_TAG_FILTERS] });
     }
   }, [onChange, value]);
 

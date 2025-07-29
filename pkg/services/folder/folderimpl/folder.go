@@ -122,6 +122,7 @@ func ProvideService(
 			userService,
 			resourceClient,
 			sorter,
+			features,
 		)
 
 		unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
@@ -140,6 +141,7 @@ func ProvideService(
 			userService,
 			resourceClient,
 			sorter,
+			features,
 		)
 		srv.dashboardK8sClient = dashHandler
 	}
@@ -674,10 +676,6 @@ func (s *Service) GetParentsLegacy(ctx context.Context, q folder.GetParentsQuery
 		return []*folder.Folder{&folder.SharedWithMeFolder}, nil
 	}
 	return s.store.GetParents(ctx, q)
-}
-
-func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {

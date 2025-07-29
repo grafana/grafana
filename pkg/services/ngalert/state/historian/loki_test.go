@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -348,15 +349,15 @@ func TestBuildLogQuery(t *testing.T) {
 func TestMerge(t *testing.T) {
 	testCases := []struct {
 		name       string
-		res        QueryRes
+		res        lokiclient.QueryRes
 		expected   *data.Frame
 		folderUIDs []string
 	}{
 		{
 			name: "Should return values from multiple streams in right order",
-			res: QueryRes{
-				Data: QueryData{
-					Result: []Stream{
+			res: lokiclient.QueryRes{
+				Data: lokiclient.QueryData{
+					Result: []lokiclient.Stream{
 						{
 							Stream: map[string]string{
 								"from":      "state-history",
@@ -365,8 +366,8 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 								"extra":     "label",
 							},
-							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+							Values: []lokiclient.Sample{
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
 							},
 						},
 						{
@@ -376,8 +377,8 @@ func TestMerge(t *testing.T) {
 								"group":     "test-group-2",
 								"folderUID": "test-folder-1",
 							},
-							Values: []Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2"}`},
+							Values: []lokiclient.Sample{
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 					},
@@ -411,14 +412,14 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "Should handle empty values",
-			res: QueryRes{
-				Data: QueryData{
-					Result: []Stream{
+			res: lokiclient.QueryRes{
+				Data: lokiclient.QueryData{
+					Result: []lokiclient.Stream{
 						{
 							Stream: map[string]string{
 								"extra": "labels",
 							},
-							Values: []Sample{},
+							Values: []lokiclient.Sample{},
 						},
 					},
 				},
@@ -431,9 +432,9 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "Should handle multiple values in one stream",
-			res: QueryRes{
-				Data: QueryData{
-					Result: []Stream{
+			res: lokiclient.QueryRes{
+				Data: lokiclient.QueryData{
+					Result: []lokiclient.Stream{
 						{
 							Stream: map[string]string{
 								"from":      "state-history",
@@ -441,9 +442,9 @@ func TestMerge(t *testing.T) {
 								"group":     "test-group-1",
 								"folderUID": "test-folder-1",
 							},
-							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+							Values: []lokiclient.Sample{
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 						{
@@ -453,8 +454,8 @@ func TestMerge(t *testing.T) {
 								"group":     "test-group-2",
 								"folderUID": "test-folder-1",
 							},
-							Values: []Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+							Values: []lokiclient.Sample{
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
 							},
 						},
 					},
@@ -496,9 +497,9 @@ func TestMerge(t *testing.T) {
 		{
 			name:       "should filter streams by folder UID",
 			folderUIDs: []string{"test-folder-1"},
-			res: QueryRes{
-				Data: QueryData{
-					Result: []Stream{
+			res: lokiclient.QueryRes{
+				Data: lokiclient.QueryData{
+					Result: []lokiclient.Stream{
 						{
 							Stream: map[string]string{
 								"from":      "state-history",
@@ -506,9 +507,9 @@ func TestMerge(t *testing.T) {
 								"group":     "test-group-1",
 								"folderUID": "test-folder-1",
 							},
-							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+							Values: []lokiclient.Sample{
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 						{
@@ -518,8 +519,8 @@ func TestMerge(t *testing.T) {
 								"group":     "test-group-2",
 								"folderUID": "test-folder-2",
 							},
-							Values: []Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+							Values: []lokiclient.Sample{
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
 							},
 						},
 					},
@@ -553,16 +554,16 @@ func TestMerge(t *testing.T) {
 		{
 			name:       "should skip streams without folder UID if filter is specified",
 			folderUIDs: []string{"test-folder-1"},
-			res: QueryRes{
-				Data: QueryData{
-					Result: []Stream{
+			res: lokiclient.QueryRes{
+				Data: lokiclient.QueryData{
+					Result: []lokiclient.Stream{
 						{
 							Stream: map[string]string{
 								"group": "test-group-1",
 							},
-							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+							Values: []lokiclient.Sample{
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 					},
@@ -577,15 +578,15 @@ func TestMerge(t *testing.T) {
 		{
 			name:       "should return streams without folder UID if filter is not specified",
 			folderUIDs: []string{},
-			res: QueryRes{
-				Data: QueryData{
-					Result: []Stream{
+			res: lokiclient.QueryRes{
+				Data: lokiclient.QueryData{
+					Result: []lokiclient.Stream{
 						{
 							Stream: map[string]string{
 								"group": "test-group-1",
 							},
-							Values: []Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+							Values: []lokiclient.Sample{
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
 							},
 						},
 					},
@@ -624,7 +625,7 @@ func TestMerge(t *testing.T) {
 
 func TestRecordStates(t *testing.T) {
 	t.Run("writes state transitions to loki", func(t *testing.T) {
-		req := NewFakeRequester()
+		req := lokiclient.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -635,14 +636,14 @@ func TestRecordStates(t *testing.T) {
 		err := <-loki.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
-		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
+		require.Contains(t, "/loki/api/v1/push", req.LastRequest.URL.Path)
 	})
 
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
-		loki := createTestLokiBackend(t, NewFakeRequester(), met)
-		errLoki := createTestLokiBackend(t, NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
+		loki := createTestLokiBackend(t, lokiclient.NewFakeRequester(), met)
+		errLoki := createTestLokiBackend(t, lokiclient.NewFakeRequester().WithResponse(lokiclient.BadResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -676,7 +677,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 
 	t.Run("elides request if nothing to send", func(t *testing.T) {
-		req := NewFakeRequester()
+		req := lokiclient.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := []state.StateTransition{}
@@ -684,11 +685,11 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 		err := <-loki.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
-		require.Nil(t, req.lastRequest)
+		require.Nil(t, req.LastRequest)
 	})
 
 	t.Run("succeeds with special chars in labels", func(t *testing.T) {
-		req := NewFakeRequester()
+		req := lokiclient.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -703,15 +704,15 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 		err := <-loki.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
-		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
-		sent := string(readBody(t, req.lastRequest))
+		require.Contains(t, "/loki/api/v1/push", req.LastRequest.URL.Path)
+		sent := string(readBody(t, req.LastRequest))
 		require.Contains(t, sent, "contains.dot")
 		require.Contains(t, sent, "contains=equals")
 		require.Contains(t, sent, "contains🤔emoji")
 	})
 
 	t.Run("adds external labels to log lines", func(t *testing.T) {
-		req := NewFakeRequester()
+		req := lokiclient.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
@@ -721,8 +722,8 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 		err := <-loki.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
-		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
-		sent := string(readBody(t, req.lastRequest))
+		require.Contains(t, "/loki/api/v1/push", req.LastRequest.URL.Path)
+		sent := string(readBody(t, req.LastRequest))
 		require.Contains(t, sent, "externalLabelKey")
 		require.Contains(t, sent, "externalLabelValue")
 	})
@@ -739,7 +740,7 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 	usr := accesscontrol.BackgroundUser("test", 1, org.RoleNone, nil)
 
 	createLoki := func(ac AccessControl) *RemoteLokiBackend {
-		req := NewFakeRequester()
+		req := lokiclient.NewFakeRequester()
 		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rules := fakes.NewRuleStore(t)
 		f := make([]*folder.Folder, 0, len(folders))
@@ -881,10 +882,10 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 
 func createTestLokiBackend(t *testing.T, req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
-	cfg := LokiConfig{
+	cfg := lokiclient.LokiConfig{
 		WritePathURL:   url,
 		ReadPathURL:    url,
-		Encoder:        JsonEncoder{},
+		Encoder:        lokiclient.JsonEncoder{},
 		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
 	}
 	lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
@@ -915,28 +916,18 @@ func createTestRule() history_model.RuleMeta {
 	}
 }
 
-func requireSingleEntry(t *testing.T, res Stream) LokiEntry {
+func requireSingleEntry(t *testing.T, res lokiclient.Stream) LokiEntry {
 	require.Len(t, res.Values, 1)
 	return requireEntry(t, res.Values[0])
 }
 
-func requireEntry(t *testing.T, row Sample) LokiEntry {
+func requireEntry(t *testing.T, row lokiclient.Sample) LokiEntry {
 	t.Helper()
 
 	var entry LokiEntry
 	err := json.Unmarshal([]byte(row.V), &entry)
 	require.NoError(t, err)
 	return entry
-}
-
-func badResponse() *http.Response {
-	return &http.Response{
-		Status:        "400 Bad Request",
-		StatusCode:    http.StatusBadRequest,
-		Body:          io.NopCloser(bytes.NewBufferString("")),
-		ContentLength: int64(0),
-		Header:        make(http.Header, 0),
-	}
 }
 
 func readBody(t *testing.T, req *http.Request) []byte {

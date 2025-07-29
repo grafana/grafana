@@ -4,17 +4,17 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/utils/ptr"
+
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
-	"k8s.io/utils/ptr"
 )
 
 func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts.KeeperMetadataStorage, name, namespace string) string {
@@ -42,14 +42,12 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("test")
 	db := database.ProvideDatabase(testDB, tracer)
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
-
 	// Initialize the secure value storage
-	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(db, tracer, features, nil)
+	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(db, tracer, nil)
 	require.NoError(t, err)
 
 	// Initialize the keeper storage
-	keeperStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, features, nil)
+	keeperStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, nil)
 	require.NoError(t, err)
 
 	t.Run("create and read a secure value", func(t *testing.T) {
