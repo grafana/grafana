@@ -14,7 +14,11 @@ SELECT
   "ref",
   "external_id",
   "version",
-  "active"
+  "active",
+  "owner_reference_api_version",
+  "owner_reference_kind",
+  "owner_reference_name",
+  "owner_reference_uid"
 FROM
   "secret_secure_value"
 WHERE 

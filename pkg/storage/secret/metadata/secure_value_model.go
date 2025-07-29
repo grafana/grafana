@@ -10,22 +10,25 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 type secureValueDB struct {
 	// Kubernetes Metadata
-	GUID        string
-	Name        string
-	Namespace   string
-	Annotations string // map[string]string
-	Labels      string // map[string]string
-	Created     int64
-	CreatedBy   string
-	Updated     int64
-	UpdatedBy   string
+	GUID                     string
+	Name                     string
+	Namespace                string
+	Annotations              string // map[string]string
+	Labels                   string // map[string]string
+	Created                  int64
+	CreatedBy                string
+	Updated                  int64
+	UpdatedBy                string
+	OwnerReferenceAPIVersion sql.NullString
+	OwnerReferenceKind       sql.NullString
+	OwnerReferenceName       sql.NullString
+	OwnerReferenceUID        sql.NullString
 
 	// Kubernetes Status
 	Active  bool
@@ -37,10 +40,6 @@ type secureValueDB struct {
 	Decrypters  sql.NullString
 	Ref         sql.NullString
 	ExternalID  string
-}
-
-func (*secureValueDB) TableName() string {
-	return migrator.TableNameSecureValue
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
@@ -60,7 +59,6 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 	}
 
 	decrypters := make([]string, 0)
-
 	if sv.Decrypters.Valid && sv.Decrypters.String != "" {
 		if err := json.Unmarshal([]byte(sv.Decrypters.String), &decrypters); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
@@ -85,8 +83,6 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 		resource.Spec.Ref = &sv.Ref.String
 	}
 
-	resource.Status.ExternalID = sv.ExternalID
-
 	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)
 	if err != nil {
@@ -105,6 +101,21 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 	meta.SetUpdatedBy(sv.UpdatedBy)
 	meta.SetUpdatedTimestamp(&updated)
 	meta.SetResourceVersionInt64(sv.Updated)
+
+	hasOwnerReference := sv.OwnerReferenceAPIVersion.Valid && sv.OwnerReferenceAPIVersion.String != "" &&
+		sv.OwnerReferenceKind.Valid && sv.OwnerReferenceKind.String != "" &&
+		sv.OwnerReferenceName.Valid && sv.OwnerReferenceName.String != "" &&
+		sv.OwnerReferenceUID.Valid && sv.OwnerReferenceUID.String != ""
+	if hasOwnerReference {
+		meta.SetOwnerReferences([]metav1.OwnerReference{
+			{
+				APIVersion: sv.OwnerReferenceAPIVersion.String,
+				Kind:       sv.OwnerReferenceKind.String,
+				Name:       sv.OwnerReferenceName.String,
+				UID:        types.UID(sv.OwnerReferenceUID.String),
+			},
+		})
+	}
 
 	return resource, nil
 }
@@ -179,16 +190,39 @@ func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, er
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
+	var (
+		ownerReferenceAPIVersion sql.NullString
+		ownerReferenceKind       sql.NullString
+		ownerReferenceName       sql.NullString
+		ownerReferenceUID        sql.NullString
+	)
+
+	ownerReferences := meta.GetOwnerReferences()
+	if len(ownerReferences) > 1 {
+		return nil, fmt.Errorf("only one owner reference is supported, found %d", len(ownerReferences))
+	}
+	if len(ownerReferences) == 1 {
+		ownerReference := ownerReferences[0]
+		ownerReferenceAPIVersion = sql.NullString{String: ownerReference.APIVersion, Valid: true}
+		ownerReferenceKind = sql.NullString{String: ownerReference.Kind, Valid: true}
+		ownerReferenceName = sql.NullString{String: ownerReference.Name, Valid: true}
+		ownerReferenceUID = sql.NullString{String: string(ownerReference.UID), Valid: true}
+	}
+
 	return &secureValueDB{
-		GUID:        string(sv.UID),
-		Name:        sv.Name,
-		Namespace:   sv.Namespace,
-		Annotations: annotations,
-		Labels:      labels,
-		Created:     meta.GetCreationTimestamp().UnixMilli(),
-		CreatedBy:   meta.GetCreatedBy(),
-		Updated:     updatedTimestamp,
-		UpdatedBy:   meta.GetUpdatedBy(),
+		GUID:                     string(sv.UID),
+		Name:                     sv.Name,
+		Namespace:                sv.Namespace,
+		Annotations:              annotations,
+		Labels:                   labels,
+		Created:                  meta.GetCreationTimestamp().UnixMilli(),
+		CreatedBy:                meta.GetCreatedBy(),
+		Updated:                  updatedTimestamp,
+		UpdatedBy:                meta.GetUpdatedBy(),
+		OwnerReferenceAPIVersion: ownerReferenceAPIVersion,
+		OwnerReferenceKind:       ownerReferenceKind,
+		OwnerReferenceName:       ownerReferenceName,
+		OwnerReferenceUID:        ownerReferenceUID,
 
 		Version: sv.Status.Version,
 

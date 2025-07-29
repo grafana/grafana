@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/grafana/authlib/authn"
@@ -232,6 +233,28 @@ func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, permi
 			Rest: authn.AccessTokenClaims{
 				Permissions:     permissions,
 				ServiceIdentity: serviceIdentity,
+			},
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
+}
+
+func CreateOBOAuthContext(ctx context.Context, orgID, userID int64, serviceIdentity string, permissions map[string][]string) context.Context {
+	requester := &identity.StaticRequester{
+		Namespace: "org-" + strconv.Itoa(int(orgID)),
+		Type:      types.TypeUser,
+		UserID:    userID,
+		OrgID:     orgID,
+		Permissions: map[int64]map[string][]string{
+			orgID: permissions,
+		},
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				ServiceIdentity: serviceIdentity,
+				Actor: &authn.ActorClaims{
+					Subject: "user:" + strconv.Itoa(int(userID)),
+				},
 			},
 		},
 	}

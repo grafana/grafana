@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -210,23 +211,27 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	}
 	defer func() { _ = res.Close() }()
 
-	var secureValue secureValueDB
 	if !res.Next() {
 		return secureValueDB{}, contracts.ErrSecureValueNotFound
 	}
 
+	var secureValue secureValueDB
 	if err := res.Scan(
 		&secureValue.GUID, &secureValue.Name, &secureValue.Namespace,
 		&secureValue.Annotations, &secureValue.Labels,
 		&secureValue.Created, &secureValue.CreatedBy,
 		&secureValue.Updated, &secureValue.UpdatedBy,
-		&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID, &secureValue.Active, &secureValue.Version); err != nil {
+		&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref,
+		&secureValue.ExternalID, &secureValue.Active, &secureValue.Version,
+		&secureValue.OwnerReferenceAPIVersion, &secureValue.OwnerReferenceKind, &secureValue.OwnerReferenceName, &secureValue.OwnerReferenceUID,
+	); err != nil {
 		return secureValueDB{}, fmt.Errorf("failed to scan secure value row: %w", err)
 	}
 
 	if err := res.Err(); err != nil {
 		return secureValueDB{}, fmt.Errorf("read rows error: %w", err)
 	}
+
 	return secureValue, nil
 }
 
@@ -293,6 +298,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 			&row.Updated, &row.UpdatedBy,
 			&row.Description, &row.Keeper, &row.Decrypters,
 			&row.Ref, &row.ExternalID, &row.Version, &row.Active,
+			&row.OwnerReferenceAPIVersion, &row.OwnerReferenceKind, &row.OwnerReferenceName, &row.OwnerReferenceUID,
 		)
 
 		if err != nil {
@@ -432,4 +438,58 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	s.metrics.SecureValueSetExternalIDDuration.Observe(time.Since(start).Seconds())
 
 	return nil
+}
+
+func (s *secureValueMetadataStorage) MatchingOwner(ctx context.Context, namespace xkube.Namespace, ownerReference metav1.OwnerReference) ([]string, error) {
+	start := time.Now()
+
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.MatchingOwner", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.String("ownerReference.APIVersion", ownerReference.APIVersion),
+		attribute.String("ownerReference.Kind", ownerReference.Kind),
+		attribute.String("ownerReference.Name", ownerReference.Name),
+		attribute.String("ownerReference.UID", string(ownerReference.UID)),
+	))
+
+	defer func() {
+		span.End()
+		s.metrics.SecureValueMatchingOwnerDuration.Observe(time.Since(start).Seconds())
+	}()
+
+	req := secureValueMatchingOwner{
+		SQLTemplate:              sqltemplate.New(s.dialect),
+		Namespace:                namespace.String(),
+		OwnerReferenceAPIVersion: ownerReference.APIVersion,
+		OwnerReferenceKind:       ownerReference.Kind,
+		OwnerReferenceName:       ownerReference.Name,
+		OwnerReferenceUID:        string(ownerReference.UID),
+	}
+
+	q, err := sqltemplate.Execute(sqlSecureValueMatchingOwner, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueMatchingOwner.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("matching owner: %w", err)
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	secureValueNames := make([]string, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, fmt.Errorf("error reading secure value row: %w", err)
+		}
+
+		secureValueNames = append(secureValueNames, name)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+
+	return secureValueNames, nil
 }
