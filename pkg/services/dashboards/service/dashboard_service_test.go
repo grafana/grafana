@@ -2493,7 +2493,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 		dashboardStore:         &fakeStore,
 		folderService:          folderSvc,
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(featuremgmt.FlagKubernetesLibraryPanelConnections),
+		features:               featuremgmt.WithFeatures(),
 		publicDashboardService: fakePublicDashboardService,
 		k8sclient:              k8sCliMock,
 	}
