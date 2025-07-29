@@ -6,6 +6,8 @@ export function formAdvancedFiltersToRuleFilter(values: AdvancedFilters): RulesF
   return {
     freeFormWords: [],
     ...values,
+    namespace: values.namespace || undefined,
+    groupName: values.groupName || undefined,
     ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
     ruleState: values.ruleState === '*' ? undefined : values.ruleState,
     ruleType: values.ruleType === '*' ? undefined : values.ruleType,
@@ -14,8 +16,8 @@ export function formAdvancedFiltersToRuleFilter(values: AdvancedFilters): RulesF
 }
 
 export const emptyAdvancedFilters: AdvancedFilters = {
-  namespace: undefined,
-  groupName: undefined,
+  namespace: null,
+  groupName: null,
   ruleName: undefined,
   ruleType: '*',
   ruleState: '*', // "*" means any state
@@ -30,8 +32,8 @@ export const emptyAdvancedFilters: AdvancedFilters = {
 
 export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFilters {
   return {
-    namespace: filterState.namespace,
-    groupName: filterState.groupName,
+    namespace: filterState.namespace ?? null,
+    groupName: filterState.groupName ?? null,
     ruleName: filterState.ruleName,
     ruleType: filterState.ruleType ?? '*',
     ruleState: filterState.ruleState ?? '*', // "*" means any state

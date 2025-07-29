@@ -9,6 +9,7 @@ import {
   Button,
   ClickOutsideWrapper,
   Combobox,
+  ComboboxOption,
   FilterInput,
   Input,
   Label,
@@ -21,18 +22,24 @@ import {
 } from '@grafana/ui';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { alertRuleApi } from '../../../api/alertRuleApi';
+import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { RuleHealth } from '../../../search/rulesSearchParser';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../../utils/datasource';
 import { PopupCard } from '../../HoverCard';
 
 import { RulesViewModeSelector } from './RulesViewModeSelector';
 import { emptyAdvancedFilters, formAdvancedFiltersToRuleFilter, searchQueryToDefaultValues } from './utils';
 
 /**
- * Creates a portal container outside the current stacking context for dropdowns
- * that need to appear above popups/modals
+ * Custom hook that creates a DOM container for rendering dropdowns outside of popup stacking contexts.
+ * This prevents dropdowns from appearing behind modals/popups due to CSS stacking context limitations.
+ *
+ * @param zIndex - The z-index value for the portal container
+ * @returns HTMLDivElement container appended to document.body, or undefined during initial render
  */
-function usePortalContainer(zIndex: number) {
+function usePortalContainer(zIndex: number): HTMLElement | undefined {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -55,13 +62,13 @@ function usePortalContainer(zIndex: number) {
     };
   }, [zIndex]);
 
-  return containerRef.current;
+  return containerRef.current || undefined;
 }
 
 type ActiveTab = 'custom' | 'saved';
 export type AdvancedFilters = {
-  namespace?: string;
-  groupName?: string;
+  namespace?: string | null;
+  groupName?: string | null;
   ruleName?: string;
   ruleType?: PromRuleType | '*';
   ruleState: PromAlertingRuleState | '*'; // "*" means any state
@@ -129,7 +136,17 @@ export default function RulesFilter() {
             onClose={() => setIsPopupOpen(false)}
             onToggle={() => setIsPopupOpen(!isPopupOpen)}
             content={
-              <div className={styles.content} onClick={(e) => e.stopPropagation()}>
+              <div
+                className={styles.content}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                  }
+                }}
+                role="region"
+                tabIndex={-1}
+              >
                 {activeTab === 'custom' && (
                   <FilterOptions onSubmit={handleAdvancedFilters} onClear={handleClearFilters} />
                 )}
@@ -174,16 +191,143 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
   const styles = useStyles2(getStyles);
   const theme = useStyles2((theme) => theme);
   const { filterState } = useRulesFilter();
+  const isManualResetRef = useRef(false);
 
-  // Create portal container outside popup's stacking context
+  // Create portal container to render dropdowns above the popup modal
   const portalContainer = usePortalContainer(theme.zIndex.portal + 100);
 
   const defaultValues = searchQueryToDefaultValues(filterState);
+
+  // Fetch namespace and group data from all sources
+  const { currentData: grafanaPromRules = [], isLoading: isLoadingGrafanaPromRules } =
+    alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
+      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+    });
+
+  const { isLoading: isLoadingGrafanaRulerRules } = alertRuleApi.endpoints.rulerRules.useQuery({
+    rulerConfig: GRAFANA_RULER_CONFIG,
+  });
+
+  const externalDataSources = useMemo(getRulesDataSources, []);
+
+  const externalPromRulesQueries = externalDataSources.map((ds) =>
+    alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
+      ruleSourceName: ds.name,
+    })
+  );
+
+  const isLoadingNamespaces = useMemo(() => {
+    return (
+      isLoadingGrafanaPromRules ||
+      isLoadingGrafanaRulerRules ||
+      externalPromRulesQueries.some((query) => query.isLoading)
+    );
+  }, [isLoadingGrafanaPromRules, isLoadingGrafanaRulerRules, externalPromRulesQueries]);
+
+  // Combine all namespace data
+  const allNamespaceNames = useMemo(() => {
+    const namespaceSet = new Set<string>();
+
+    // Add Grafana namespaces
+    grafanaPromRules.forEach((namespace) => namespaceSet.add(namespace.name));
+
+    // Add external data source namespaces
+    externalPromRulesQueries.forEach((query) => {
+      query.currentData?.forEach((namespace) => namespaceSet.add(namespace.name));
+    });
+
+    return Array.from(namespaceSet).sort();
+  }, [grafanaPromRules, externalPromRulesQueries]);
+
+  // Create namespace options with better display names and grouping
+  const namespaceOptions = useMemo((): Array<ComboboxOption<string>> => {
+    const grafanaFolders: Array<ComboboxOption<string>> = [];
+    const externalFiles: Array<ComboboxOption<string>> = [];
+
+    allNamespaceNames.forEach((namespace) => {
+      // Handle file paths from external Prometheus data sources
+      if (namespace.includes('/') && (namespace.endsWith('.yml') || namespace.endsWith('.yaml'))) {
+        const filename = namespace.split('/').pop() || namespace;
+        externalFiles.push({
+          label: filename,
+          value: namespace,
+          description: namespace, // Show full path as description
+        });
+      } else {
+        // Grafana managed folder
+        grafanaFolders.push({
+          label: namespace,
+          value: namespace,
+          description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
+        });
+      }
+    });
+
+    // Sort each group and combine (folders first, then external files)
+    // eslint-disable-next-line no-restricted-syntax
+    grafanaFolders.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+    // eslint-disable-next-line no-restricted-syntax
+    externalFiles.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+
+    return [...grafanaFolders, ...externalFiles];
+  }, [allNamespaceNames]);
+
+  // Combine all group names
+  const allGroupNames = useMemo(() => {
+    const groupSet = new Set<string>();
+
+    // Add Grafana groups
+    grafanaPromRules.forEach((namespace) => {
+      namespace.groups.forEach((group) => groupSet.add(group.name));
+    });
+
+    // Add external data source groups
+    externalPromRulesQueries.forEach((query) => {
+      query.currentData?.forEach((namespace) => {
+        namespace.groups.forEach((group) => groupSet.add(group.name));
+      });
+    });
+
+    return Array.from(groupSet).sort();
+  }, [grafanaPromRules, externalPromRulesQueries]);
+
+  // Generate appropriate placeholder text
+  const namespacePlaceholder = useMemo(() => {
+    if (isLoadingNamespaces) {
+      return t('common.loading', 'Loading...');
+    }
+    if (namespaceOptions.length === 0) {
+      return t('alerting.rules-filter.no-namespaces', 'No folders available');
+    }
+    return t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace');
+  }, [isLoadingNamespaces, namespaceOptions.length]);
+
+  const groupPlaceholder = useMemo(() => {
+    if (isLoadingNamespaces) {
+      return t('common.loading', 'Loading...');
+    }
+    if (allGroupNames.length === 0) {
+      return t('alerting.rules-filter.no-groups', 'No groups available');
+    }
+    return t('grafana.select-group', 'Select group');
+  }, [isLoadingNamespaces, allGroupNames.length]);
 
   // turn the filterState into form default values
   const { handleSubmit, reset, register, control } = useForm<AdvancedFilters>({
     defaultValues,
   });
+
+  // Update form values when filterState changes (e.g., when popup reopens)
+  useEffect(() => {
+    // Skip if we're in the middle of a manual reset
+    if (isManualResetRef.current) {
+      isManualResetRef.current = false;
+      return;
+    }
+
+    const newDefaultValues = searchQueryToDefaultValues(filterState);
+    reset(newDefaultValues);
+  }, [filterState, reset]);
 
   const submitAdvancedFilters = handleSubmit(onSubmit);
 
@@ -197,6 +341,7 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
     <form
       onSubmit={submitAdvancedFilters}
       onReset={() => {
+        isManualResetRef.current = true;
         reset(emptyAdvancedFilters);
         onClear();
       }}
@@ -218,20 +363,42 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
           <Controller
             name="namespace"
             control={control}
-            render={({ field }) => (
-              <Combobox<string>
-                placeholder={t('alerting.rules-filter.filter-options.placeholder-namespace', 'Select namespace')}
-                options={[]}
-                onChange={field.onChange}
-                value={field.value}
-                isClearable
-              />
-            )}
+            render={({ field }) => {
+              return (
+                <Combobox<string>
+                  placeholder={namespacePlaceholder}
+                  options={namespaceOptions}
+                  onChange={(option) => field.onChange(option?.value || null)}
+                  value={field.value}
+                  loading={isLoadingNamespaces}
+                  disabled={isLoadingNamespaces || namespaceOptions.length === 0}
+                  isClearable
+                  portalContainer={portalContainer}
+                />
+              );
+            }}
           />
           <Label>
             <Trans i18nKey="alerting.search.property.evaluation-group">Evaluation group</Trans>
           </Label>
-          <Input {...register('groupName')} />
+          <Controller
+            name="groupName"
+            control={control}
+            render={({ field }) => {
+              return (
+                <Combobox<string>
+                  placeholder={groupPlaceholder}
+                  options={allGroupNames.map((name) => ({ label: name, value: name }))}
+                  onChange={(option) => field.onChange(option?.value || null)}
+                  value={field.value}
+                  loading={isLoadingNamespaces}
+                  disabled={isLoadingNamespaces || allGroupNames.length === 0}
+                  isClearable
+                  portalContainer={portalContainer}
+                />
+              );
+            }}
+          />
           <Label>
             <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
           </Label>
@@ -243,8 +410,8 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
                 options={dataSourceOptions}
                 value={field.value}
                 onChange={(selections) => field.onChange(selections.map((s) => s.value))}
-                placeholder="Select data sources"
-                portalContainer={portalContainer || undefined}
+                placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
+                portalContainer={portalContainer}
               />
             )}
           />
@@ -258,12 +425,15 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
             render={({ field }) => (
               <RadioButtonGroup<AdvancedFilters['ruleState']>
                 options={[
-                  { label: 'All', value: '*' },
-                  { label: 'Firing', value: PromAlertingRuleState.Firing },
-                  { label: 'Normal', value: PromAlertingRuleState.Inactive },
-                  { label: 'Pending', value: PromAlertingRuleState.Pending },
-                  { label: 'Recovering', value: PromAlertingRuleState.Recovering },
-                  { label: 'Unknown', value: PromAlertingRuleState.Unknown },
+                  { label: t('common.all', 'All'), value: '*' },
+                  { label: t('alerting.rules.state.firing', 'Firing'), value: PromAlertingRuleState.Firing },
+                  { label: t('alerting.rules.state.normal', 'Normal'), value: PromAlertingRuleState.Inactive },
+                  { label: t('alerting.rules.state.pending', 'Pending'), value: PromAlertingRuleState.Pending },
+                  {
+                    label: t('alerting.rules.state.recovering', 'Recovering'),
+                    value: PromAlertingRuleState.Recovering,
+                  },
+                  { label: t('alerting.rules.state.unknown', 'Unknown'), value: PromAlertingRuleState.Unknown },
                 ]}
                 value={field.value}
                 onChange={field.onChange}
@@ -279,9 +449,9 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
             render={({ field }) => (
               <RadioButtonGroup<AdvancedFilters['ruleType']>
                 options={[
-                  { label: 'All', value: '*' },
-                  { label: 'Alert rule', value: PromRuleType.Alerting },
-                  { label: 'Recording rule', value: PromRuleType.Recording },
+                  { label: t('common.all', 'All'), value: '*' },
+                  { label: t('alerting.rules.type.alert', 'Alert rule'), value: PromRuleType.Alerting },
+                  { label: t('alerting.rules.type.recording', 'Recording rule'), value: PromRuleType.Recording },
                 ]}
                 value={field.value}
                 onChange={field.onChange}
@@ -297,10 +467,10 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
             render={({ field }) => (
               <RadioButtonGroup<AdvancedFilters['ruleHealth']>
                 options={[
-                  { label: 'All', value: '*' },
-                  { label: 'OK', value: RuleHealth.Ok },
-                  { label: 'No data', value: RuleHealth.NoData },
-                  { label: 'Error', value: RuleHealth.Error },
+                  { label: t('common.all', 'All'), value: '*' },
+                  { label: t('alerting.rules.health.ok', 'OK'), value: RuleHealth.Ok },
+                  { label: t('alerting.rules.health.no-data', 'No data'), value: RuleHealth.NoData },
+                  { label: t('alerting.rules.health.error', 'Error'), value: RuleHealth.Error },
                 ]}
                 value={field.value}
                 onChange={field.onChange}
