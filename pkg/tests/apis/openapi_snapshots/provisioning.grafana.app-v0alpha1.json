@@ -3253,6 +3253,18 @@
             "description": "Ref to the branch or commit hash that should move",
             "type": "string"
           },
+          "resources": {
+            "description": "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ResourceRef"
+                }
+              ]
+            }
+          },
           "targetPath": {
             "description": "Destination path for the move (e.g. \"new-location/\")",
             "type": "string"

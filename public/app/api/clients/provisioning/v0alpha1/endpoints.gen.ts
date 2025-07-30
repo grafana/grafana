@@ -785,6 +785,8 @@ export type MoveJobOptions = {
   paths?: string[];
   /** Ref to the branch or commit hash that should move */
   ref?: string;
+  /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
+  resources?: ResourceRef[];
   /** Destination path for the move (e.g. "new-location/") */
   targetPath?: string;
 };

@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -28,7 +27,7 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	folderService := foldertest.NewFakeService()
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
@@ -40,18 +39,14 @@ func TestIntegration_GetUserVisibleNamespaces(t *testing.T) {
 		IsGrafanaAdmin: true,
 	}
 
-	folders := []struct {
-		uid       string
-		title     string
-		parentUid string
-	}{
-		{uid: uuid.NewString(), title: "folder1", parentUid: ""},
-		{uid: uuid.NewString(), title: "folder2", parentUid: ""},
-		{uid: uuid.NewString(), title: "nested/folder", parentUid: ""},
+	folders := []*folder.Folder{
+		{UID: uuid.NewString(), Title: "folder1", ParentUID: "", OrgID: 1},
+		{UID: uuid.NewString(), Title: "folder2", ParentUID: "", OrgID: 1},
+		{UID: uuid.NewString(), Title: "nested/folder", ParentUID: "", OrgID: 1},
 	}
 
 	for _, f := range folders {
-		createFolder(t, store, f.uid, f.title, 1, f.parentUid)
+		folderService.AddFolder(f)
 	}
 
 	t.Run("returns all folders", func(t *testing.T) {

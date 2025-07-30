@@ -1150,9 +1150,25 @@ func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRef"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ResourceRef"},
 	}
 }
 
