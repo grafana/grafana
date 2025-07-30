@@ -700,7 +700,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool 
 }
 
 func calculateUserGrafanaConfigHash(config remoteClient.UserGrafanaConfig) (string, error) {
-	// ignore some fields in calculating of the hash. Make sure the original struct is not modified after that
+	// Ignore some fields when calculating the hash. Make sure the original struct is not modified after that.
 	config.Default = false
 	config.CreatedAt = 0 // ignore createdAt to support comparison with hash of default config
 	config.Hash = ""
