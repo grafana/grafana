@@ -244,6 +244,20 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
+	if req.GetGroup() == "iam.grafana.app" && req.GetResource() == "resourcepermissions" {
+		// Special case for resource permissions, where the name is in the format "group-resource-id"
+		if req.GetName() == "" {
+			return nil, status.Error(codes.InvalidArgument, "name is required for resource permissions")
+		}
+		parts := strings.SplitN(req.GetName(), "-", 3)
+		if len(parts) != 3 {
+			return nil, status.Error(codes.InvalidArgument, "name must be in the format 'group-resource-id'")
+		}
+		req.Group = parts[0]
+		req.Resource = parts[1]
+		req.Name = parts[2]
+	}
+
 	action, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetVerb())
 	if err != nil {
 		return nil, err
