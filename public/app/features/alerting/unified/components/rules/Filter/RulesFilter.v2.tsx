@@ -126,7 +126,7 @@ export default function RulesFilter() {
         <ClickOutsideWrapper onClick={() => setIsPopupOpen(false)}>
           <PopupCard
             showOn="click"
-            placement="auto-end"
+            placement="auto"
             disableBlur={true}
             isOpen={isPopupOpen}
             onClose={() => setIsPopupOpen(false)}
@@ -389,6 +389,9 @@ const FilterOptions = ({ onSubmit, onClear }: FilterOptionsProps) => {
                 onChange={(selections) => field.onChange(selections.map((s) => s.value))}
                 placeholder={t('alerting.rules-filter.placeholder-data-sources', 'Select data sources')}
                 portalContainer={portalContainer}
+                width="auto"
+                minWidth={40}
+                maxWidth={80}
               />
             )}
           />
