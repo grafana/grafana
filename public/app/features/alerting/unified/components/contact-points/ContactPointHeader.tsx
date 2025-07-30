@@ -68,14 +68,14 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
    */
   const isReferencedByAnything = usingK8sApi ? Boolean(numberOfPolicies || numberOfRules) : policies.length > 0;
   /** Does the current user have permissions to edit the contact point? */
-  const hasAbilityToEdit = canEditEntity(contactPoint) && editAllowed;
+  const hasAbilityToEdit = usingK8sApi ? canEditEntity(contactPoint) : editAllowed;
   /** Can the contact point actually be edited via the UI? */
   const contactPointIsEditable = !provisioned;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
   const canEdit = editSupported && hasAbilityToEdit && contactPointIsEditable;
 
   /** Does the current user have permissions to delete the contact point? */
-  const hasAbilityToDelete = canDeleteEntity(contactPoint) && deleteAllowed;
+  const hasAbilityToDelete = usingK8sApi ? canDeleteEntity(contactPoint) : deleteAllowed;
   /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
   const contactPointIsDeleteable = !provisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
