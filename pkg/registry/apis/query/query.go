@@ -108,6 +108,7 @@ func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
+// called by mt query service and also when queryServiceFromUI is enabled, can be both mt and st
 func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
 	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
@@ -175,7 +176,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder)
+		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
 
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
@@ -199,7 +200,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	}), nil
 }
 
-func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper) (*backend.QueryDataResponse, error) {
+func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (*backend.QueryDataResponse, error) {
 	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, query := range raw.Queries {
 		jsonBytes, err := json.Marshal(query)
@@ -228,17 +229,19 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
 	if err != nil {
-		b.log.Error("failed to get instance configuration settings", "err", err)
+		connectLogger.Error("failed to get instance configuration settings", "err", err)
 		responder.Error(err)
 		return nil, err
 	}
+
+	dsQuerierLoggerWithSlug := connectLogger.New("slug", instanceConfig.Options["slug"])
 
 	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
 		b.clientSupplier,
 		ctx,
 		headers,
 		instanceConfig,
-		b.log,
+		dsQuerierLoggerWithSlug,
 	)
 
 	exprService := expr.ProvideService(
@@ -256,7 +259,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		mtDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
+	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, mtDsClientBuilder, headers)
 
 	if err != nil {
 		return qdr, err
