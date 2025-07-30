@@ -23,6 +23,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -202,6 +203,15 @@ func (b *bleveBackend) BuildIndex(
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+		attribute.Int64("size", size),
+		attribute.Int64("rv", resourceVersion),
+		attribute.String("reason", indexBuildReason),
+	)
 
 	mapper, err := GetBleveMappings(fields)
 	if err != nil {
