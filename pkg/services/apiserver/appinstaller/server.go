@@ -14,6 +14,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -51,14 +52,14 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				Resource: resource,
 			}
 			storage := s.configureStorage(gr, dualWriteSupported, restStorage)
-			if unifiedStorage, ok := storage.(grafanarest.Storage); ok && dualWriteSupported {
+			if unifiedStorage, ok := storage.(rest.Storage); ok && dualWriteSupported {
 				log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
 				dw, err := NewDualWriter(
 					s.ctx,
 					gr,
 					s.storageOpts,
 					legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
-					unifiedStorage,
+					grafanarest.Storage(unifiedStorage),
 					s.kvStore,
 					s.lock,
 					s.namespaceMapper,
@@ -69,9 +70,8 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				if err != nil {
 					return err
 				}
-				storage = dw
+				apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = dw
 			}
-			apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = storage
 		}
 	}
 
@@ -87,25 +87,31 @@ func getResourceFromStoragePath(storagePath string) (string, error) {
 }
 
 func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSupported bool, storage genericrest.Storage) genericrest.Storage {
+	var genericStorage *genericregistry.Store
 	if gs, ok := storage.(*genericregistry.Store); ok {
+		genericStorage = gs
 		// if dual write is supported, we need to modify the update strategy
 		// this is not needed for the status store
 		if dualWriteSupported {
-			gs.UpdateStrategy = &updateStrategyWrapper{
-				RESTUpdateStrategy: gs.UpdateStrategy,
+			genericStorage.UpdateStrategy = &updateStrategyWrapper{
+				RESTUpdateStrategy: genericStorage.UpdateStrategy,
 			}
 		}
-		gs.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
-		gs.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
-		return gs
 	}
 
 	// if the storage is a status store, we need to extract the underlying generic registry store
 	if statusStore, ok := storage.(*appsdkapiserver.StatusREST); ok {
-		statusStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
-		statusStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
-		return statusStore
+		genericStorage = statusStore.Store
 	}
 
-	return storage
+	// if the gernericStorage is not set, we don't need to do anything special.
+	if genericStorage == nil {
+		return storage
+	}
+
+	// shared configuration for the generic store
+	genericStorage.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+	genericStorage.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+
+	return genericStorage
 }

@@ -1600,8 +1600,8 @@ github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d h1:oXRJlb9UjVsl
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
 github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNcQogCNTd/vPkEXTr7zX8=
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
-github.com/grafana/grafana-app-sdk v0.40.2 h1:j2ftFuqhX+exYUipfEjeWDs3i7oiJkweTF8gFLL7wWU=
-github.com/grafana/grafana-app-sdk v0.40.2/go.mod h1:BbNXPNki3mtbkWxYqJsyA1Cj9AShSyaY33z8WkyfVv0=
+github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729 h1:FvsSS/HregJZS/hwZsmQ25i/4VYyXsgaI2GqFAvChxs=
+github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729/go.mod h1:BbNXPNki3mtbkWxYqJsyA1Cj9AShSyaY33z8WkyfVv0=
 github.com/grafana/grafana-app-sdk/logging v0.40.1 h1:ru+GqbaQk6jthA5l2Yo1WI/JbNXKNQmLiqNrxz7HGP4=
 github.com/grafana/grafana-app-sdk/logging v0.40.1/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
 github.com/grafana/grafana-aws-sdk v1.0.4 h1:D14UAehsOqpjliHmHzveRQ1p43KCsMzdmb7GovWj+SY=
@@ -1620,8 +1620,8 @@ github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b h1:8o
 github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:q+h3HbmqU/PposW6lq8cMle1v8vuyX1LCMrGzbabHxc=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b h1:jr+C3epmjhd5Yyob4P1Z/dPaW4LRTkU5UJLXsI4eaeM=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:WpI7TCck4P2wKTO2WJLBRcfOWvUGvTdxYu3QqS3z7jM=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017 h1:Niy+KRDWHsUVqfhZQg0oZbAQFO6QcO6a4l9V/ouDEEs=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250730164619-34019e5ec017/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730154715-ae15ba562e71 h1:7AVAgb0CalPYtUC9SJKYAkByOBGwL6r50P4QMEiJi44=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730154715-ae15ba562e71/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b h1:31MwoIKKT9Ay0ZjbT4lkfcPijiWogUWzXs2EjrCgodI=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:dLtYBp1pza5HYalezNvzlP8JDeKrZ5BKTonDgEOE0NY=
 github.com/grafana/grafana/apps/iam v0.0.0-20250627191313-2f1a6ae1712b h1:NV8v9xdM/pzjjy+1cLqUseia3bYcvQGh88vZdMW/jA0=

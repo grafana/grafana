@@ -4,7 +4,7 @@ go 1.24.5
 
 require (
 	cuelang.org/go v0.11.1
-	github.com/grafana/grafana-app-sdk v0.40.2
+	github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/stretchr/testify v1.10.0
