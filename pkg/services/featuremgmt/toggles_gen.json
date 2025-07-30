@@ -1758,19 +1758,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesLibraryPanelConnections",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-07-25T13:06:00Z"
-      },
-      "spec": {
-        "description": "Routes library panel connections requests from /api to using search",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesLibraryPanels",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2025-06-25T22:21:56Z"
