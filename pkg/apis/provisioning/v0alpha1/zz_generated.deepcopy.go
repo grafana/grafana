@@ -512,6 +512,11 @@ func (in *MoveJobOptions) DeepCopyInto(out *MoveJobOptions) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Resources != nil {
+		in, out := &in.Resources, &out.Resources
+		*out = make([]ResourceRef, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
