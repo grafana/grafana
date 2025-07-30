@@ -115,6 +115,8 @@ func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 		state := mustNestedString(result.Object, "status", "state")
 		require.Equal(t, string(provisioning.JobStateSuccess), state,
 			"historic job '%s' was not successful", job.GetName())
+		errors := mustNestedStringSlice(result.Object, "status", "errors")
+		require.Empty(t, errors, "historic job '%s' has errors: %v", job.GetName(), errors)
 	}, time.Second*10, time.Millisecond*25) {
 		// We also want to add the job details to the error when it fails.
 		job, err := h.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
@@ -219,7 +221,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagKubernetesClientDashboardsFolders,
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
@@ -318,6 +319,14 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	v, _, err := unstructured.NestedString(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []string {
+	v, _, err := unstructured.NestedStringSlice(obj, fields...)
 	if err != nil {
 		panic(err)
 	}
