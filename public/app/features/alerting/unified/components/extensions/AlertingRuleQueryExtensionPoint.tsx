@@ -35,7 +35,7 @@ export type PluginExtensionAlertingRuleContext = {
   // TODO: add rule form values for creating alerting rule from drilldown apps
 };
 
-export function AlertingRuleQueryExtentionPoint({ extensionsToShow, query }: Props): ReactElement | null {
+export function AlertingRuleQueryExtensionPoint({ extensionsToShow, query }: Props): ReactElement | null {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
