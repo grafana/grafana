@@ -508,9 +508,6 @@ func (s *searchSupport) init(ctx context.Context) error {
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
-	if s.indexMetrics != nil {
-		s.indexMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
-	}
 
 	return nil
 }
@@ -626,11 +623,6 @@ func (s *searchSupport) rebuildDashboardIndexes(ctx context.Context) error {
 		"duration", duration,
 		"rebuilt_indexes", totalBatchesIndexed,
 		"total_docs", s.search.TotalDocs())
-
-	if s.indexMetrics != nil {
-		s.indexMetrics.IndexCreationTime.WithLabelValues().Observe(duration.Seconds())
-	}
-
 	return nil
 }
 

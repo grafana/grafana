@@ -317,14 +317,29 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	if build {
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexBuilds.WithLabelValues(indexBuildReason).Inc()
+		}
+
 		start := time.Now()
 		_, err = builder(idx)
 		if err != nil {
 			logWithDetails.Error("Failed to build index", "err", err)
+			if b.indexMetrics != nil {
+				b.indexMetrics.IndexBuildFailures.Inc()
+			}
 			return nil, fmt.Errorf("failed to build index: %w", err)
 		}
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
+		}
+	} else {
+		logWithDetails.Info("Skipping index build, using existing index")
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexBuildSkipped.Inc()
+		}
 	}
 
 	// Set expiration after building the index. Only expire in-memory indexes.
