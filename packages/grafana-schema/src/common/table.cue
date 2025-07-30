@@ -15,8 +15,6 @@ TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberN
 TableWrapTextOptions: {
   // if true, wrap the text content of the cell
   wrapText?: bool
-  // if set, limits the number of lines of wrapped text to render
-  maxWrappedLines?: number
 } @cuetsy(kind="interface")
 
 // Sort by field state

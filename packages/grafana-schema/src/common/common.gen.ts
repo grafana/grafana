@@ -727,10 +727,6 @@ export enum TableCellBackgroundDisplayMode {
  */
 export interface TableWrapTextOptions {
   /**
-   * if set, limits the number of lines of wrapped text to render
-   */
-  maxWrappedLines?: number;
-  /**
    * if true, wrap the text content of the cell
    */
   wrapText?: boolean;

@@ -83,16 +83,6 @@ export function shouldTextWrap(field: Field): boolean {
 }
 
 /**
- * @internal
- * Returns the limit of number of lines that should be shown for wrapped text if set.
- */
-export function getMaxWrappedLines(field: Field): number | undefined {
-  const cellOptions = getCellOptions(field);
-  // @ts-ignore - same rationale as shouldWrapText above.
-  return cellOptions?.maxWrappedLines;
-}
-
-/**
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
  */
@@ -120,7 +110,7 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
 }
 
 /**
- * @internal wraps the uwrap count function to apply the maxWrappedLines limit if set.
+ * @internal wraps the uwrap count function to ensure that it is given a string.
  */
 export function wrapUwrapCount(count: Count): LineCounter {
   return (value, width) => {
@@ -226,21 +216,6 @@ export function buildHeaderLineCounters(fields: Field[], typographyCtx: Typograp
   return [{ counter: typographyCtx.wrappedCount, fieldIdxs: wrappedColIdxs }];
 }
 
-/**
- * @internal wraps a line counter to apply the maxWrappedLines limit if set. should be applied
- * when setting up the line counters in `buildRowLineCounters`.
- */
-function limitByMaxWrappedLines(lineCounter: LineCounter): LineCounter {
-  return (value, width, field, rowIdx) => {
-    const lineCount = lineCounter(value, width, field, rowIdx);
-    const maxWrappedLines = getMaxWrappedLines(field);
-    if (!maxWrappedLines || lineCount <= maxWrappedLines) {
-      return lineCount;
-    }
-    return maxWrappedLines;
-  };
-}
-
 const spaceRegex = /[\s-]/;
 
 /**
@@ -306,11 +281,7 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
     return undefined;
   }
 
-  return Object.values(result).map((entry) => ({
-    ...entry,
-    estimate: entry.estimate ? limitByMaxWrappedLines(entry.estimate) : undefined,
-    counter: limitByMaxWrappedLines(entry.counter),
-  }));
+  return Object.values(result);
 }
 
 // in some cases, the estimator might return a value that is less than 1, but when measured by the counter, it actually
