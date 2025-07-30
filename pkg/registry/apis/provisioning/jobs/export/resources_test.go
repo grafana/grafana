@@ -434,7 +434,7 @@ func TestExportResources_Dashboards_V2Alpha1_ClientError(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestExportResources_Dashboards_V2Alpha2(t *testing.T) {
+func TestExportResources_Dashboards_V2beta1(t *testing.T) {
 	mockItems := []unstructured.Unstructured{
 		{
 			Object: map[string]interface{}{
@@ -446,7 +446,7 @@ func TestExportResources_Dashboards_V2Alpha2(t *testing.T) {
 				"status": map[string]interface{}{
 					"conversion": map[string]interface{}{
 						"failed":        true,
-						"storedVersion": "v2alpha2",
+						"storedVersion": "v2beta1",
 					},
 				},
 			},
@@ -467,9 +467,9 @@ func TestExportResources_Dashboards_V2Alpha2(t *testing.T) {
 		resourceClients.On("ForResource", resources.DashboardResource).Return(mockClient, gvk, nil)
 
 		// Setup v2 client
-		v2Dashboard := createV2DashboardObject("v2-dashboard", "v2alpha2")
+		v2Dashboard := createV2DashboardObject("v2-dashboard", "v2beta1")
 		v2Client := &mockDynamicInterface{items: []unstructured.Unstructured{v2Dashboard}}
-		resourceClients.On("ForResource", resources.DashboardResourceV2alpha2).Return(v2Client, gvk, nil)
+		resourceClients.On("ForResource", resources.DashboardResourceV2beta1).Return(v2Client, gvk, nil)
 
 		options := resources.WriteOptions{
 			Path: "grafana",
@@ -482,7 +482,7 @@ func TestExportResources_Dashboards_V2Alpha2(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestExportResources_Dashboards_V2Alpha2_ClientError(t *testing.T) {
+func TestExportResources_Dashboards_V2beta1_ClientError(t *testing.T) {
 	mockItems := []unstructured.Unstructured{
 		{
 			Object: map[string]interface{}{
@@ -494,7 +494,7 @@ func TestExportResources_Dashboards_V2Alpha2_ClientError(t *testing.T) {
 				"status": map[string]interface{}{
 					"conversion": map[string]interface{}{
 						"failed":        true,
-						"storedVersion": "v2alpha2",
+						"storedVersion": "v2beta1",
 					},
 				},
 			},
@@ -525,7 +525,7 @@ func TestExportResources_Dashboards_V2Alpha2_ClientError(t *testing.T) {
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", resources.DashboardResourceV2alpha2).Return(nil, gvk, fmt.Errorf("v2 client error"))
+		resourceClients.On("ForResource", resources.DashboardResourceV2beta1).Return(nil, gvk, fmt.Errorf("v2 client error"))
 		resourceClients.On("ForResource", resources.DashboardResource).Return(mockClient, gvk, nil)
 	}
 

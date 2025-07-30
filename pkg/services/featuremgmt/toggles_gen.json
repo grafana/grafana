@@ -19,6 +19,19 @@
     },
     {
       "metadata": {
+        "name": "adhocFiltersInTooltips",
+        "resourceVersion": "1753712755564",
+        "creationTimestamp": "2025-07-28T14:25:55Z"
+      },
+      "spec": {
+        "description": "Enable adhoc filter buttons in visualization tooltips",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-03-05T12:01:31Z"
@@ -1718,19 +1731,6 @@
     },
     {
       "metadata": {
-        "name": "kubernetesClientDashboardsFolders",
-        "resourceVersion": "1753448760331",
-        "creationTimestamp": "2025-02-18T23:11:26Z"
-      },
-      "spec": {
-        "description": "Route the folder and dashboard service requests to k8s",
-        "stage": "GA",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "expression": "true"
-      }
-    },
-    {
-      "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1753448760331",
         "creationTimestamp": "2024-06-05T14:34:23Z"
@@ -2411,6 +2411,19 @@
         "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "postgresDSUsePGX",
+        "resourceVersion": "1753174666056",
+        "creationTimestamp": "2025-05-26T06:54:18Z",
+        "deletionTimestamp": "2025-06-03T12:45:07Z"
+      },
+      "spec": {
+        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
       }
     },
     {

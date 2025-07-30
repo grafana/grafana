@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { Box, Button, Stack } from '@grafana/ui';
 import {
   DeleteRepositoryFilesWithPathApiArg,
   DeleteRepositoryFilesWithPathApiResponse,
@@ -15,49 +14,31 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
-import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { WorkflowOption } from 'app/features/provisioning/types';
 import { useSelector } from 'app/types/store';
 
 import { useChildrenByParentUIDState, rootItemsSelector } from '../../state/hooks';
 import { findItem } from '../../state/utils';
-import { DashboardTreeSelection } from '../../types';
 import { DescendantCount } from '../BrowseActions/DescendantCount';
 import { collectSelectedItems, fetchProvisionedDashboardPath } from '../utils';
 
-import { BulkActionFailureBanner, MoveResultFailed } from './BulkActionFailureBanner';
-import { BulkActionProgress, ProgressState } from './BulkActionProgress';
+import { MoveResultFailed } from './BulkActionFailureBanner';
+import { BulkActionPostSubmitStep } from './BulkActionPostSubmitStep';
+import { ProgressState } from './BulkActionProgress';
+import { useBulkActionRequest } from './useBulkActionRequest';
+import {
+  BulkActionFormData,
+  BulkActionProvisionResourceProps,
+  BulkSuccessResponse,
+  MoveResultSuccessState,
+} from './utils';
 
-interface BulkDeleteFormData {
-  comment: string;
-  ref: string;
-  workflow?: WorkflowOption;
-}
-
-interface FormProps extends BulkDeleteProvisionResourceProps {
-  initialValues: BulkDeleteFormData;
+interface FormProps extends BulkActionProvisionResourceProps {
+  initialValues: BulkActionFormData;
   repository: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   folderPath?: string;
 }
-
-interface BulkDeleteProvisionResourceProps {
-  folderUid?: string;
-  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
-  onDismiss?: () => void;
-}
-
-type BulkSuccessResponse = Array<{
-  index: number;
-  item: DeleteRepositoryFilesWithPathApiArg;
-  data: DeleteRepositoryFilesWithPathApiResponse;
-}>;
-
-type MoveResultSuccessState = {
-  allSuccess: boolean;
-  repoUrl?: string;
-};
 
 function FormContent({ initialValues, selectedItems, repository, workflowOptions, folderPath, onDismiss }: FormProps) {
   // States
@@ -71,12 +52,12 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
 
   // Hooks
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
-  const methods = useForm<BulkDeleteFormData>({ defaultValues: initialValues });
+  const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const childrenByParentUID = useChildrenByParentUIDState();
   const rootItems = useSelector(rootItemsSelector);
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
-  const navigate = useNavigate();
+  const { handleSuccess } = useBulkActionRequest({ workflow, repository, successState, onDismiss });
 
   const getResourcePath = async (uid: string, isFolder: boolean): Promise<string | undefined> => {
     const item = findItem(rootItems?.items || [], childrenByParentUID, uid);
@@ -86,27 +67,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
     return isFolder ? `${folderPath}/${item.title}/` : fetchProvisionedDashboardPath(uid);
   };
 
-  const handleSuccess = () => {
-    if (workflow === 'branch') {
-      onDismiss?.();
-      if (successState.repoUrl) {
-        const url = buildResourceBranchRedirectUrl({
-          paramName: 'repo_url',
-          paramValue: successState.repoUrl,
-          repoType: repository.type,
-        });
-
-        navigate(url);
-        return;
-      }
-      window.location.reload();
-    } else {
-      onDismiss?.();
-      window.location.reload();
-    }
-  };
-
-  const handleSubmitForm = async (data: BulkDeleteFormData) => {
+  const handleSubmitForm = async (data: BulkActionFormData) => {
     setFailureResults(undefined);
     setHasSubmitted(true);
 
@@ -120,7 +81,10 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       });
     }
 
-    const successes: BulkSuccessResponse = [];
+    const successes: BulkSuccessResponse<
+      DeleteRepositoryFilesWithPathApiArg,
+      DeleteRepositoryFilesWithPathApiResponse
+    > = [];
     const failures: MoveResultFailed[] = [];
 
     // Iterate through each selected item and delete it
@@ -177,38 +141,11 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
       // handleSuccess(successes);
       setSuccessState({
         allSuccess: true,
-        repoUrl: successes[0].data.urls?.repositoryURL,
+        repoUrl: successes[0].data.urls?.newPullRequestURL,
       });
     } else if (failures.length > 0) {
       setFailureResults(failures);
     }
-  };
-
-  const getPostSubmitContent = () => {
-    if (progress) {
-      return <BulkActionProgress progress={progress} />;
-    }
-
-    if (successState.allSuccess) {
-      return (
-        <>
-          <Alert severity="success" title={t('browse-dashboards.bulk-delete-resources-form.progress-title', 'Success')}>
-            <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.success-message">
-              All resources have been deleted successfully.
-            </Trans>
-          </Alert>
-          <Stack gap={2}>
-            <Button onClick={() => handleSuccess()}>
-              <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-done">Done</Trans>
-            </Button>
-          </Stack>
-        </>
-      );
-    } else if (failureResults) {
-      return <BulkActionFailureBanner result={failureResults} onDismiss={() => setFailureResults(undefined)} />;
-    }
-
-    return null;
   };
 
   return (
@@ -223,7 +160,14 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
           </Box>
 
           {hasSubmitted ? (
-            getPostSubmitContent()
+            <BulkActionPostSubmitStep
+              action="delete"
+              progress={progress}
+              successState={successState}
+              failureResults={failureResults}
+              handleSuccess={handleSuccess}
+              setFailureResults={setFailureResults}
+            />
           ) : (
             <>
               <ResourceEditFormSharedFields
@@ -257,7 +201,7 @@ export function BulkDeleteProvisionedResource({
   folderUid,
   selectedItems,
   onDismiss,
-}: BulkDeleteProvisionResourceProps) {
+}: BulkActionProvisionResourceProps) {
   const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
