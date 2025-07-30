@@ -65,7 +65,8 @@ export function ScopesTree({
   }
 
   const searchArea = useMemo(() => {
-    return tree.scopeNodeId === '' ? '' : scopeNodes[tree.scopeNodeId]?.spec.title || '';
+    const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
+    return tree.scopeNodeId === '' ? '' : nodeTitle;
   }, [tree.scopeNodeId, scopeNodes]);
 
   const lastExpandedNode = !anyChildExpanded && tree.expanded;
