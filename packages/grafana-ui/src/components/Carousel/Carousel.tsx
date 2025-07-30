@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -26,6 +26,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [validImages, setValidImages] = useState<CarouselImage[]>(images);
+  const id = useId();
 
   const styles = useStyles2(getStyles);
   const resetButtonStyles = useStyles2(clearButtonStyles);
@@ -100,17 +101,22 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
   return (
     <>
       <div className={cx(styles.imageGrid)}>
-        {validImages.map((image, index) => (
-          <button
-            type="button"
-            key={image.path}
-            onClick={() => openPreview(index)}
-            className={cx(resetButtonStyles, styles.imageButton)}
-          >
-            <img src={image.path} alt={image.name} onError={() => handleImageError(image.path)} />
-            <p>{image.name}</p>
-          </button>
-        ))}
+        {validImages.map((image, index) => {
+          const imageNameId = `${id}-carousel-image-${index}`;
+          return (
+            <button
+              aria-label={t('grafana-ui.carousel.aria-label-open-image', 'Open image preview')}
+              aria-describedby={imageNameId}
+              type="button"
+              key={image.path}
+              onClick={() => openPreview(index)}
+              className={cx(resetButtonStyles, styles.imageButton)}
+            >
+              <img src={image.path} alt="" onError={() => handleImageError(image.path)} />
+              <p id={imageNameId}>{image.name}</p>
+            </button>
+          );
+        })}
       </div>
 
       {selectedIndex !== null && (
