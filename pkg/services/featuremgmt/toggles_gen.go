@@ -259,10 +259,6 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
-	// FlagKubernetesClientDashboardsFolders
-	// Route the folder and dashboard service requests to k8s
-	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
-
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
@@ -274,6 +270,10 @@ const (
 	// FlagDashboardSchemaValidationLogging
 	// Log schema validation errors so they can be analyzed later
 	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
+
+	// FlagScanRowInvalidDashboardParseFallbackEnabled
+	// Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
+	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -875,6 +875,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagPostgresDSUsePGX
+	// Enables using PGX instead of libpq for PostgreSQL datasource
+	FlagPostgresDSUsePGX = "postgresDSUsePGX"
+
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source
 	FlagTempoAlerting = "tempoAlerting"
@@ -974,4 +978,8 @@ const (
 	// FlagAlertmanagerRemoteSecondaryWithRemoteState
 	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
 	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
+
+	// FlagAdhocFiltersInTooltips
+	// Enable adhoc filter buttons in visualization tooltips
+	FlagAdhocFiltersInTooltips = "adhocFiltersInTooltips"
 )

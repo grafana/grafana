@@ -290,11 +290,6 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Route the folder and dashboard service requests to k8s
-  * @default true
-  */
-  kubernetesClientDashboardsFolders?: boolean;
-  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -306,6 +301,10 @@ export interface FeatureToggles {
   * Log schema validation errors so they can be analyzed later
   */
   dashboardSchemaValidationLogging?: boolean;
+  /**
+  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
+  */
+  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
   /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
@@ -965,6 +964,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  postgresDSUsePGX?: boolean;
+  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;
@@ -1079,4 +1082,8 @@ export interface FeatureToggles {
   * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enable adhoc filter buttons in visualization tooltips
+  */
+  adhocFiltersInTooltips?: boolean;
 }
