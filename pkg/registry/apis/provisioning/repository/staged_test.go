@@ -3,8 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/grafana/nanogit"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -117,6 +119,84 @@ func TestWrapWithStageAndPushIfPossible(t *testing.T) {
 				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
 				mockStaged.EXPECT().Push(mock.Anything).Return(nil)
 				mockStaged.EXPECT().Remove(mock.Anything).Return(errors.New("remove failed"))
+
+				return &mockStagedRepo{
+					MockStageableRepository: mockRepo,
+					MockStagedRepository:    mockStaged,
+				}
+			},
+			operation: func(repo Repository, staged bool) error {
+				return nil
+			},
+		},
+		{
+			name: "nothing to push - should not error",
+			setupMocks: func(t *testing.T) *mockStagedRepo {
+				mockRepo := NewMockStageableRepository(t)
+				mockStaged := NewMockStagedRepository(t)
+
+				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
+				mockStaged.EXPECT().Push(mock.Anything).Return(nanogit.ErrNothingToPush)
+				mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+				return &mockStagedRepo{
+					MockStageableRepository: mockRepo,
+					MockStagedRepository:    mockStaged,
+				}
+			},
+			operation: func(repo Repository, staged bool) error {
+				return nil
+			},
+		},
+		{
+			name: "nothing to commit - should not error",
+			setupMocks: func(t *testing.T) *mockStagedRepo {
+				mockRepo := NewMockStageableRepository(t)
+				mockStaged := NewMockStagedRepository(t)
+
+				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
+				mockStaged.EXPECT().Push(mock.Anything).Return(nanogit.ErrNothingToCommit)
+				mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+				return &mockStagedRepo{
+					MockStageableRepository: mockRepo,
+					MockStagedRepository:    mockStaged,
+				}
+			},
+			operation: func(repo Repository, staged bool) error {
+				return nil
+			},
+		},
+		{
+			name: "wrapped nothing to push error - should not error",
+			setupMocks: func(t *testing.T) *mockStagedRepo {
+				mockRepo := NewMockStageableRepository(t)
+				mockStaged := NewMockStagedRepository(t)
+
+				wrappedErr := fmt.Errorf("some wrapper: %w", nanogit.ErrNothingToPush)
+				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
+				mockStaged.EXPECT().Push(mock.Anything).Return(wrappedErr)
+				mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+				return &mockStagedRepo{
+					MockStageableRepository: mockRepo,
+					MockStagedRepository:    mockStaged,
+				}
+			},
+			operation: func(repo Repository, staged bool) error {
+				return nil
+			},
+		},
+		{
+			name: "wrapped nothing to commit error - should not error",
+			setupMocks: func(t *testing.T) *mockStagedRepo {
+				mockRepo := NewMockStageableRepository(t)
+				mockStaged := NewMockStagedRepository(t)
+
+				wrappedErr := fmt.Errorf("some wrapper: %w", nanogit.ErrNothingToCommit)
+				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
+				mockStaged.EXPECT().Push(mock.Anything).Return(wrappedErr)
+				mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 				return &mockStagedRepo{
 					MockStageableRepository: mockRepo,

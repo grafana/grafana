@@ -83,7 +83,7 @@ func WrapWithStageAndPushIfPossible(
 	}
 
 	if err = staged.Push(ctx); err != nil {
-		if errors.Is(err, nanogit.ErrNothingToPush) {
+		if errors.Is(err, nanogit.ErrNothingToPush) || errors.Is(err, nanogit.ErrNothingToCommit) {
 			return nil // OK, already pushed
 		}
 		return fmt.Errorf("wrapped push error: %w", err)
