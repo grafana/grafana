@@ -112,6 +112,7 @@ profile.cov
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
 /public/app/extensions
+!/public/app/extensions/.keep
 debug.test
 /examples/*/dist
 /packaging/**/*.rpm
