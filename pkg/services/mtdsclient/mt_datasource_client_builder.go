@@ -24,22 +24,20 @@ func NewNullMTDatasourceClientBuilder() MTDatasourceClientBuilder {
 }
 
 type MtDatasourceClientBuilderWithClientSupplier struct {
-	clientSupplier clientapi.DataSourceClientSupplier
-	ctx            context.Context
-	headers        map[string]string
-	instanceConfig clientapi.InstanceConfigurationSettings
-	logger         log.Logger
+	instance clientapi.Instance
+	ctx      context.Context
+	headers  map[string]string
+	logger   log.Logger
 }
 
 func (b *MtDatasourceClientBuilderWithClientSupplier) BuildClient(pluginId string, uid string) (clientapi.QueryDataClient, bool) {
-	dsClient, err := b.clientSupplier.GetDataSourceClient(
+	dsClient, err := b.instance.GetDataSourceClient(
 		b.ctx,
 		v0alpha1.DataSourceRef{
 			Type: pluginId,
 			UID:  uid,
 		},
 		b.headers,
-		b.instanceConfig,
 	)
 	if err != nil {
 		b.logger.Debug("failed to get mt ds client", "error", err)
@@ -50,18 +48,16 @@ func (b *MtDatasourceClientBuilderWithClientSupplier) BuildClient(pluginId strin
 
 // TODO: I think we might be able to refactor this to just use the client supplier directly
 func NewMtDatasourceClientBuilderWithClientSupplier(
-	clientSupplier clientapi.DataSourceClientSupplier,
+	instance clientapi.Instance,
 	ctx context.Context,
 	headers map[string]string,
-	instanceConfig clientapi.InstanceConfigurationSettings,
 	logger log.Logger,
 ) MTDatasourceClientBuilder {
 	return &MtDatasourceClientBuilderWithClientSupplier{
-		clientSupplier: clientSupplier,
-		ctx:            ctx,
-		headers:        headers,
-		instanceConfig: instanceConfig,
-		logger:         logger,
+		instance: instance,
+		ctx:      ctx,
+		headers:  headers,
+		logger:   logger,
 	}
 }
 
