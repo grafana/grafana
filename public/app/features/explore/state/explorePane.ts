@@ -46,6 +46,12 @@ export interface ChangeSizePayload {
 
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
+interface ChangeCompactModePayload {
+  exploreId: string;
+  compact: boolean;
+}
+export const changeCompactModeAction = createAction<ChangeCompactModePayload>('explore/changeCompactMode');
+
 /**
  * Tracks the state of explore panels that gets synced with the url.
  */
@@ -101,6 +107,7 @@ interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
+  compact: boolean;
   eventBridge: EventBusExtended;
 }
 
@@ -127,6 +134,10 @@ export function changeSize(exploreId: string, { width }: { width: number }): Pay
   return changeSizeAction({ exploreId, width });
 }
 
+export function changeCompactMode(exploreId: string, compact: boolean): PayloadAction<ChangeCompactModePayload> {
+  return changeCompactModeAction({ exploreId, compact });
+}
+
 export interface InitializeExploreOptions {
   exploreId: string;
   datasource: DataSourceRef | string | undefined;
@@ -136,6 +147,7 @@ export interface InitializeExploreOptions {
   correlationHelperData?: ExploreCorrelationHelperData;
   position?: number;
   eventBridge: EventBusExtended;
+  compact: boolean;
 }
 
 /**
@@ -155,6 +167,7 @@ export const initializeExplore = createAsyncThunk(
       queries,
       range,
       panelsState,
+      compact,
       correlationHelperData,
       eventBridge,
     }: InitializeExploreOptions,
@@ -177,6 +190,7 @@ export const initializeExplore = createAsyncThunk(
         range: getRange(range, getTimeZone(getState().user)),
         datasourceInstance: instance,
         history,
+        compact,
         eventBridge,
       })
     );
@@ -226,6 +240,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, containerWidth };
   }
 
+  if (changeCompactModeAction.match(action)) {
+    const compact = action.payload.compact;
+    return { ...state, compact };
+  }
+
   if (changePanelsStateAction.match(action)) {
     const { panelsState } = action.payload;
     return { ...state, panelsState };
@@ -244,7 +263,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { queries, range, datasourceInstance, history, eventBridge } = action.payload;
+    const { queries, range, datasourceInstance, history, eventBridge, compact } = action.payload;
 
     return {
       ...state,
@@ -258,6 +277,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queryResponse: createEmptyQueryResponse(),
       cache: [],
       correlations: [],
+      compact,
     };
   }
 

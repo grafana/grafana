@@ -7006,6 +7006,9 @@
         "pro-tip-define-sources-through-configuration-files": " ProTip: You can also define data sources through configuration files. "
       }
     },
+    "pane": {
+      "loading-placeholder": "Loading..."
+    },
     "prev": "Prev",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Go queryless"

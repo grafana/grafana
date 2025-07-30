@@ -74,6 +74,7 @@ export function syncFromURL(
           queries: withUniqueRefIds(queries),
           range: fromURLRange(range),
           panelsState,
+          compact: !!urlPane.compact,
           position: i,
           eventBridge: new EventBusSrv(),
         })

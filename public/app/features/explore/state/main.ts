@@ -96,6 +96,7 @@ export const splitOpen = createAsyncThunk(
         panelsState: options?.panelsState || originState?.panelsState,
         correlationHelperData: options?.correlationHelperData,
         eventBridge: new EventBusSrv(),
+        compact: !!options?.compact,
       })
     );
 
