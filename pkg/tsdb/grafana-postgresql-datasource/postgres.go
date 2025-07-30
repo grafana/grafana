@@ -325,17 +325,20 @@ func parseNetworkAddress(url string, logger log.Logger) (string, int, error) {
 		}
 	}
 
+	return host, port, nil
+}
+
 func buildBaseConnectionString(params connectionParams) string {
 	connStr := fmt.Sprintf("user='%s' host='%s' dbname='%s'",
-		escape(dsInfo.User), escape(host), escape(dsInfo.Database))
+		escape(params.user), escape(params.host), escape(params.database))
 
-	if passwd, ok := dsInfo.DecryptedSecureJSONData["password"]; ok && passwd != "" {
-		connStr += fmt.Sprintf(" password='%s'", escape(passwd))
+	if params.password != "" {
+		connStr += fmt.Sprintf(" password='%s'", escape(params.password))
 	}
 
-	if port > 0 {
-		connStr += fmt.Sprintf(" port=%d", port)
-  }
+	if params.port > 0 {
+		connStr += fmt.Sprintf(" port=%d", params.port)
+	}
 	return connStr
 }
 

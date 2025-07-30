@@ -42,7 +42,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='/var/run/postgresql' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='/var/run/postgresql' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "TCP host",
@@ -51,7 +51,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "verify-ca automatically adds disable-sni",
@@ -60,7 +60,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-ca"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-ca' sslsni=0",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' port=1234 sslmode='verify-ca' sslsni=0",
 		},
 		{
 			desc:        "TCP/port host",
@@ -69,7 +69,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-full'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' port=1234 sslmode='verify-full'",
 		},
 		{
 			desc:        "Ipv6 host",
@@ -78,7 +78,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='::1' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' host='::1' dbname='database' password='password' sslmode='verify-full'",
 		},
 		{
 			desc:        "Ipv6/port host",
@@ -87,7 +87,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='::1' dbname='database' port=1234 sslmode='verify-full'",
+			expConnStr:  "user='user' host='::1' dbname='database' password='password' port=1234 sslmode='verify-full'",
 		},
 		{
 			desc:        "Invalid port",
@@ -104,7 +104,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    `p'\assword`,
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
+			expConnStr:  `user='user' host='host' dbname='database' password='p\'\\assword' sslmode='verify-full'`,
 		},
 		{
 			desc:        "User/DB with single quote and backslash",
@@ -113,7 +113,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    `password`,
 			database:    `d'\atabase`,
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  `user='u\'\\ser' password='password' host='host' dbname='d\'\\atabase' sslmode='verify-full'`,
+			expConnStr:  `user='u\'\\ser' host='host' dbname='d\'\\atabase' password='password' sslmode='verify-full'`,
 		},
 		{
 			desc:        "Custom TLS mode disabled",
@@ -122,7 +122,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "disable"},
-			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+			expConnStr:  "user='user' host='host' dbname='database' password='password' sslmode='disable'",
 		},
 		{
 			desc:     "Custom TLS mode verify-full with certificate files",
@@ -136,7 +136,7 @@ func TestIntegrationGenerateConnectionStringPGX(t *testing.T) {
 				CertFile:     "i/am/coding/client.crt",
 				CertKeyFile:  "i/am/coding/client.key",
 			},
-			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
+			expConnStr: "user='user' host='host' dbname='database' password='password' sslmode='verify-full' " +
 				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
 		},
 	}
