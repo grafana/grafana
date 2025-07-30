@@ -26,7 +26,7 @@ VERSION=$(jq -r .version package.json)
 # Set cross-compilation env vars only on macOS (Darwin)
 if [[ "$(uname)" == "Darwin" ]]; then
   echo "Setting up cross-compilation environment for macOS"
-  export CGO_ENABLED=1
+  export CGO_ENABLED=0
   export GOOS=linux
   export GOARCH=arm64
   # export CC="zig cc -target aarch64-linux"
@@ -35,6 +35,7 @@ fi
 
 if [[ -n "$USE_ZIG" ]]; then
   echo "Using Zig for cross-compilation"
+  export CGO_ENABLED=1
   export CC="zig cc -target aarch64-linux"
   export CXX="zig c++ -target aarch64-linux"
 fi
