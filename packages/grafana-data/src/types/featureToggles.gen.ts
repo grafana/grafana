@@ -289,7 +289,7 @@ export interface FeatureToggles {
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
-    /**
+  /**
   * Routes short url requests from /api to the /apis endpoint
   */
   kubernetesShortURLs?: boolean;
