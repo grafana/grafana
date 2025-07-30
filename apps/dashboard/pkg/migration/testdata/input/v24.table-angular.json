@@ -1,0 +1,19 @@
+{
+    "schemaVersion": 23,
+    "panels": [
+        {
+            "id": 1,
+            "type": "table",
+            "title": "Table Panel",
+            "legend": true, 
+            "styles": [
+                { 
+                "thresholds": ["10", "20", "30"] , 
+                "colors": ["red", "yellow", "green"] ,
+                "pattern": "/.*/" 
+                }
+            ],
+            "targets": [{ "refId": "A" }, {}]
+        }
+    ]
+}
