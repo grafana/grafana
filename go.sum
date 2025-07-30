@@ -1620,8 +1620,8 @@ github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b h1:8o
 github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:q+h3HbmqU/PposW6lq8cMle1v8vuyX1LCMrGzbabHxc=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b h1:jr+C3epmjhd5Yyob4P1Z/dPaW4LRTkU5UJLXsI4eaeM=
 github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:WpI7TCck4P2wKTO2WJLBRcfOWvUGvTdxYu3QqS3z7jM=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250730155939-af6ac6f1d613 h1:oEJ107rkeK4GOU+cbOyK6lKz0FGo5B+Mc0zOSGWIOhg=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250730155939-af6ac6f1d613/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730154715-ae15ba562e71 h1:7AVAgb0CalPYtUC9SJKYAkByOBGwL6r50P4QMEiJi44=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730154715-ae15ba562e71/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b h1:31MwoIKKT9Ay0ZjbT4lkfcPijiWogUWzXs2EjrCgodI=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:dLtYBp1pza5HYalezNvzlP8JDeKrZ5BKTonDgEOE0NY=
 github.com/grafana/grafana/apps/iam v0.0.0-20250627191313-2f1a6ae1712b h1:NV8v9xdM/pzjjy+1cLqUseia3bYcvQGh88vZdMW/jA0=
