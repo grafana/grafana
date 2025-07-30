@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             (unknown)
-// source: consolidate.proto
+// source: consolidate/v1beta1/consolidate.proto
 
 package consolidatev1beta1
 
@@ -107,5 +107,5 @@ var SecretsConsolidator_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "consolidate.proto",
+	Metadata: "consolidate/v1beta1/consolidate.proto",
 }
