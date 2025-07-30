@@ -14,7 +14,7 @@
 
   fake-influxdb1-data:
     image: grafana/fake-data-gen
-    links:
+    depends_on:
       - influxdb1
     environment:
       FD_SERVER: influxdb1
@@ -23,7 +23,7 @@
 
   telegraf-influxdb1:
     image: telegraf:latest
-    links:
+    depends_on:
       - influxdb1
     volumes:
       - ./docker/blocks/influxdb1/telegraf.conf:/etc/telegraf/telegraf.conf:ro

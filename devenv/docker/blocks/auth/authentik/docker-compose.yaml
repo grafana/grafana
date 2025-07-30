@@ -35,8 +35,8 @@
       AUTHENTIK_HOST: http://authentik:9000
       AUTHENTIK_INSECURE: "true"
       AUTHENTIK_TOKEN: 77vDKwFWqCAsD9ykbH6vsGuMHtloM6urfeglrR9KRhWFcABtwmGGiQWHQStw
-    links:
-      - "authentik:authentik"
+    depends_on:
+      - "authentik"
 
   authentik:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.6}
@@ -61,9 +61,6 @@
       - ./certs:/certs
       - ./custom-templates:/templates
       - ./geoip:/geoip
-    links:
-      - "authentikdb:authentikdb"
-      - "authentikredis:authentikredis"
 
   authentik-worker:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.6}
@@ -86,6 +83,3 @@
       - ./certs:/certs
       - ./custom-templates:/templates
       - ./geoip:/geoip
-    links:
-      - "authentikdb:authentikdb"
-      - "authentikredis:authentikredis"
