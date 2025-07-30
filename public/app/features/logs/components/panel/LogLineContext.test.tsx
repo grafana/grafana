@@ -181,11 +181,11 @@ describe('LogLineContext', () => {
         sortOrder={LogsSortOrder.Descending}
       />
     );
-    // 1 collapsible container, 1 in before, 1 in current, 1 in after
-    await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(4));
+    // 1 in before, 1 in current, 1 in after
+    await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(3));
   });
 
-  test('should render 4 lines containing `foo123` with the same ms timestamp', async () => {
+  test('should render 3 lines containing `foo123` with the same ms timestamp', async () => {
     const dfBeforeNs = createDataFrame({
       fields: [
         {
@@ -283,9 +283,9 @@ describe('LogLineContext', () => {
       />
     );
 
-    // 1 collapsible container, 1 in before, 1 in current, 1 in after
+    // 1 in before, 1 in current, 1 in after
     await waitFor(() => {
-      expect(screen.getAllByText('foo123').length).toBe(4);
+      expect(screen.getAllByText('foo123').length).toBe(3);
     });
   });
 
