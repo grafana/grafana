@@ -1,5 +1,7 @@
 package schemaversion
 
+import "github.com/grafana/grafana/apps/dashboard/pkg/migration/utils"
+
 // V23 migrates multi variables to ensure their current property is aligned with their multi property.
 // This migration ensures that variables with multi=true have current.value and current.text as arrays,
 // and variables with multi=false have current.value and current.text as single values.
@@ -97,19 +99,19 @@ func alignCurrentWithMulti(current map[string]interface{}, multi bool) map[strin
 	if multi {
 		// Convert single values to arrays
 		if value, ok := result["value"]; ok {
-			if !isArray(value) {
+			if !utils.IsArray(value) {
 				result["value"] = []interface{}{value}
 			}
 		}
 		if text, ok := result["text"]; ok {
-			if !isArray(text) {
+			if !utils.IsArray(text) {
 				result["text"] = []interface{}{text}
 			}
 		}
 	} else {
 		// Convert arrays to single values
 		if value, ok := result["value"]; ok {
-			if isArray(value) {
+			if utils.IsArray(value) {
 				if arr, ok := value.([]interface{}); ok && len(arr) > 0 {
 					result["value"] = arr[0]
 				} else {
@@ -118,7 +120,7 @@ func alignCurrentWithMulti(current map[string]interface{}, multi bool) map[strin
 			}
 		}
 		if text, ok := result["text"]; ok {
-			if isArray(text) {
+			if utils.IsArray(text) {
 				if arr, ok := text.([]interface{}); ok && len(arr) > 0 {
 					result["text"] = arr[0]
 				} else {
@@ -129,13 +131,4 @@ func alignCurrentWithMulti(current map[string]interface{}, multi bool) map[strin
 	}
 
 	return result
-}
-
-// isArray checks if a value is an array
-func isArray(value interface{}) bool {
-	if value == nil {
-		return false
-	}
-	_, ok := value.([]interface{})
-	return ok
 }
