@@ -908,71 +908,12 @@ unifiedStorageSearchSprinkles = true
 Search requests originate from multiple sources, and the search client routes based on dual writer mode configuration:
 
 ```mermaid
-sequenceDiagram
-    participant UI as Grafana UI
-    participant DS as Dashboard Service
-    participant AS as Alerting Service
-    participant API as API Server
-    participant SC as Search Client
-    participant DW as Dual Writer Check
-    participant LS as Legacy Search
-    participant SD as Search Distributor
-    participant SA as Search API Server
-    participant US as Unified Storage
-    
-    Note over UI,AS: Multiple Request Sources
-    
-    par UI Search
-        UI->>API: Search Request
-        API->>SC: Forward Search
-    and Dashboard Service
-        DS->>SC: Find Dashboards
-    and Alerting Service
-        AS->>SC: Discover Resources
-    end
-    
-    SC->>DW: Check Dual Writer Mode for Resource Type
-    
-    alt Mode 3+ (Unified Primary)
-        DW-->>SC: Route to Unified Search
-        SC->>SD: Route to Unified Search
-        SD->>SA: Forward to Search Server
-        
-        alt Index Available
-            SA->>SA: Query Embedded Bleve Index
-        else Index Missing/Outdated
-            SA->>US: Fetch Resources (Just-in-Time)
-            US-->>SA: Resource Data
-            SA->>SA: Build/Update Bleve Index
-            SA->>SA: Query Updated Index
-        end
-        
-        SA-->>SD: Unified Results
-        SD-->>SC: Response
-        
-        par Return Unified Results
-            SC-->>API: Results
-            API-->>UI: Search Results
-        and Internal Services
-            SC-->>DS: Dashboard Results
-            SC-->>AS: Resource Results
-        end
-        
-    else Mode 0-2 (Legacy Primary)
-        DW-->>SC: Route to Legacy Search
-        SC->>LS: Route to Legacy Search
-        LS-->>SC: Legacy Results
-        
-        par Return Legacy Results
-            SC-->>API: Results  
-            API-->>UI: Search Results
-        and Internal Services
-            SC-->>DS: Dashboard Results
-            SC-->>AS: Resource Results
-        end
-    end
-    
-    Note over SC: Routing decision based on<br/>dual writer mode configuration
+flowchart TD
+    A[Search Request] --> B{Dual Writer Mode}
+    B -->|Mode 3+| C[Unified Search]
+    B -->|Mode 0-2| D[Legacy Search]
+    C --> E[Return Results]
+    D --> E
 ```
 
 #### Search Request Flow with Shadow Traffic
@@ -980,61 +921,14 @@ sequenceDiagram
 When `unifiedStorageSearchDualReaderEnabled` is enabled and resource is in dual writer Mode 1-2 (legacy primary), shadow traffic is generated:
 
 ```mermaid
-sequenceDiagram
-    participant UI as Grafana UI
-    participant DS as Dashboard Service
-    participant AS as Alerting Service
-    participant API as API Server
-    participant SC as Search Client
-    participant DW as Dual Writer Check
-    participant LS as Legacy Search
-    participant US as Unified Search
-    participant BG as Background Request
-    
-    Note over SC: Shadow Traffic Flag Enabled
-    
-    par Request Sources
-        UI->>API: Search Request
-        API->>SC: Forward Search
-    and Dashboard Service
-        DS->>SC: Find Dashboards
-    and Alerting Service
-        AS->>SC: Discover Resources
-    end
-    
-    SC->>DW: Check Dual Writer Mode for Resource Type
-    
-    alt Mode 1-2 + Shadow Flag Enabled
-        DW-->>SC: Use Legacy + Shadow Traffic
-        SC->>LS: Primary Search (Foreground)
-        SC->>BG: Shadow Search (Background, 500ms timeout)
-        
-        par Primary Path
-            LS-->>SC: Legacy Results
-        and Shadow Path
-            BG->>US: Unified Search
-            US-->>BG: Unified Results (Ignored)
-            Note over BG: Errors logged but don't fail request
-        end
-        
-        par Return Legacy Results
-            SC-->>API: Results
-            API-->>UI: Search Results
-        and Internal Services
-            SC-->>DS: Dashboard Results
-            SC-->>AS: Resource Results
-        end
-        
-    else Mode 0 or Mode 3+ or Flag Disabled
-        DW-->>SC: No Shadow Traffic
-        SC->>LS: Legacy Search Only (Mode 0)
-        Note over SC: OR Route to Unified (Mode 3+)
-        LS-->>SC: Results
-        SC-->>AS: Results
-        Note over AS: No shadow traffic:<br/>Mode 0, Mode 3+, or flag disabled
-    end
-    
-    Note over SC: Shadow traffic only for Mode 1-2<br/>with unifiedStorageSearchDualReaderEnabled
+flowchart TD
+    A[Search Request] --> B{Shadow Traffic Enabled?}
+    B -->|Yes| C[Primary: Legacy Search]
+    B -->|No| D[Single Search Path]
+    C --> E[Background: Unified Search]
+    C --> F[Return Legacy Results]
+    E --> G[Log Results for Comparison]
+    D --> H[Return Results]
 ```
 
 ### Distributor Architecture
@@ -1043,22 +937,10 @@ The Search Distributor acts as a smart proxy that routes search requests to the 
 
 ```mermaid
 flowchart TD
-    A[Incoming Search Request] --> B[Extract Namespace]
-    B --> C[Hash Namespace with FNV32]
-    C --> D[Query Hash Ring]
-    
-    D --> E{Ring Status}
-    E -->|Active Instances Available| F[Get Replication Set]
-    E -->|No Active Instances| G[Return Error]
-    
-    F --> H[Random Load Balancing]
-    H --> I[Select Instance from Replication Set]
-    I --> J[Get gRPC Client from Pool]
-    J --> K[Forward Request to Target Server]
-    
-    K --> L[Add Proxy Headers]
-    L --> M[Execute Request]
-    M --> N[Return Response]
+    A[Incoming Search Request] --> B[Hash Namespace]
+    B --> C[Select Random Instance]
+    C --> D[Proxy Request]
+    D --> E[Return Response]
 ```
 
 #### Key Features:
@@ -1073,28 +955,11 @@ flowchart TD
 The hash ring provides consistent, distributed assignment of namespaces to search API servers:
 
 ```mermaid
-graph TB
-    subgraph "Hash Ring (128 tokens per instance)"
-        A[Instance A<br/>Tokens: 0-42]
-        B[Instance B<br/>Tokens: 43-85]
-        C[Instance C<br/>Tokens: 86-127]
-    end
-    
-    subgraph "Namespace Distribution"
-        D["Namespace: 'stacks-1'<br/>Hash: 42<br/>→ Instance A"]
-        E["Namespace: 'stacks-2'<br/>Hash: 67<br/>→ Instance B"]
-        F["Namespace: 'stacks-3'<br/>Hash: 95<br/>→ Instance C"]
-    end
-    
-    subgraph "Ring States"
-        G[JOINING<br/>New instance bootstrapping]
-        H[ACTIVE<br/>Serving requests]
-        I[LEAVING<br/>Graceful shutdown]
-    end
-    
-    A --> D
-    B --> E
-    C --> F
+flowchart TD
+    A[Namespace] --> B[Hash Function]
+    B --> C[Ring Position]
+    C --> D[Assigned Instance]
+    D --> E[Search Processing]
 ```
 
 #### Ring Properties:
@@ -1110,33 +975,13 @@ Unified Search uses namespace-based sharding to distribute search indexes across
 
 ```mermaid
 flowchart LR
-    subgraph "Namespaces"
-        N1[stacks-1]
-        N2[stacks-2]
-        N3[stacks-3]
-        N4[stacks-4]
-        N5[stacks-5]
-    end
-    
-    subgraph "Hash Ring Distribution"
-        subgraph "Search Server 1"
-            I1[Indexes:<br/>• stacks-1<br/>• stacks-4]
-        end
-        
-        subgraph "Search Server 2" 
-            I2[Indexes:<br/>• stacks-2<br/>• stacks-5]
-        end
-        
-        subgraph "Search Server 3"
-            I3[Indexes:<br/>• stacks-3]
-        end
-    end
-    
-    N1 --> I1
-    N2 --> I2
-    N3 --> I3
-    N4 --> I1
-    N5 --> I2
+    A[Namespaces] --> B[Hash Ring]
+    B --> C[Search Server 1]
+    B --> D[Search Server 2]  
+    B --> E[Search Server 3]
+    C --> F[Indexes for Assigned Namespaces]
+    D --> G[Indexes for Assigned Namespaces]
+    E --> H[Indexes for Assigned Namespaces]
 ```
 
 #### Sharding Benefits:
@@ -1170,44 +1015,16 @@ Each search API server contains an embedded Bleve search engine that manages ind
 
 ```mermaid
 flowchart TD
-    subgraph "Search API Server"
-        A[Incoming Search Request] --> B{Index Exists?}
-        
-        B -->|Yes| C[Query Embedded Bleve Index]
-        B -->|No/Outdated| D[Just-in-Time Indexing]
-        
-        D --> E[Fetch Resources from Unified Storage]
-        E --> F[Build Search Documents]
-        F --> G{Index Size Threshold}
-        
-        G -->|Small < FileThreshold| H[Create Memory-based Index]
-        G -->|Large ≥ FileThreshold| I[Create Disk-based Index]
-        
-        H --> J[Store in Embedded Bleve]
-        I --> J
-        
-        J --> C
-        C --> K[Return Search Results]
-    end
+    A[Search Request] --> B{Index Ready?}
+    B -->|Yes| C[Query Index]
+    B -->|No| D[Build Index]
+    D --> E[Fetch Resources]
+    E --> F[Create Index]
+    F --> C
+    C --> G[Return Results]
     
-    subgraph "Background Indexing"
-        L[Resource Write Events] --> M[Watch Event Stream]
-        M --> N[Index Queue Processor]
-        N --> O[Batch Document Updates]
-        O --> J
-    end
-    
-    subgraph "Index Features"
-        P[Full-text Search]
-        Q[Field-based Filtering]
-        R[Permission Filtering]
-        S[Usage Insights Integration]
-    end
-    
-    C --> P
-    C --> Q
-    C --> R
-    C --> S
+    H[Resource Changes] --> I[Update Index]
+    I --> F
 ```
 
 #### Index Architecture Details:
