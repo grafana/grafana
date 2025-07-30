@@ -28,8 +28,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesClientDashboardsFolders, // Will be default on by G12
-			featuremgmt.FlagQueryService,                      // Query Library
+			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,

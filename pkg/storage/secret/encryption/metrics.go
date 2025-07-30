@@ -14,7 +14,7 @@ type DataKeyMetrics struct {
 	CreateDataKeyDuration     prometheus.Histogram
 	GetDataKeyDuration        prometheus.Histogram
 	GetCurrentDataKeyDuration prometheus.Histogram
-	GetAllDataKeysDuration    prometheus.Histogram
+	ListDataKeysDuration      prometheus.Histogram
 	DisableDataKeysDuration   prometheus.Histogram
 	DeleteDataKeyDuration     prometheus.Histogram
 }
@@ -42,11 +42,11 @@ func newDataKeyMetrics() *DataKeyMetrics {
 			Help:      "Duration of get current data key operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
-		GetAllDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		ListDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "get_all_data_keys_duration_seconds",
-			Help:      "Duration of get all data keys operations",
+			Name:      "list_data_keys_duration_seconds",
+			Help:      "Duration of list data keys operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
 		DisableDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
@@ -76,9 +76,40 @@ func NewDataKeyMetrics(reg prometheus.Registerer) *DataKeyMetrics {
 			m.CreateDataKeyDuration,
 			m.GetDataKeyDuration,
 			m.GetCurrentDataKeyDuration,
-			m.GetAllDataKeysDuration,
+			m.ListDataKeysDuration,
 			m.DisableDataKeysDuration,
 			m.DeleteDataKeyDuration,
+		)
+	}
+
+	return m
+}
+
+type GlobalDataKeyMetrics struct {
+	DisableAllDataKeysDuration prometheus.Histogram
+}
+
+func newGlobalDataKeyMetrics() *GlobalDataKeyMetrics {
+	return &GlobalDataKeyMetrics{
+
+		DisableAllDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "disable_all_data_keys_duration_seconds",
+			Help:      "Duration of disable all data keys operations",
+			Buckets:   prometheus.DefBuckets,
+		}),
+	}
+}
+
+// NewGlobalDataKeyMetrics returns an instance of the GlobalDataKeyMetrics
+// struct containing registered metrics if [reg] is not nil.
+func NewGlobalDataKeyMetrics(reg prometheus.Registerer) *GlobalDataKeyMetrics {
+	m := newGlobalDataKeyMetrics()
+
+	if reg != nil {
+		reg.MustRegister(
+			m.DisableAllDataKeysDuration,
 		)
 	}
 
