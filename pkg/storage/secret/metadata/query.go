@@ -15,18 +15,20 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate     = mustTemplate("keeper_create.sql")
-	sqlKeeperRead       = mustTemplate("keeper_read.sql")
-	sqlKeeperUpdate     = mustTemplate("keeper_update.sql")
-	sqlKeeperList       = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete     = mustTemplate("keeper_delete.sql")
-	sqlKeeperListByName = mustTemplate("keeper_listByName.sql")
+	sqlKeeperCreate = mustTemplate("keeper_create.sql")
+	sqlKeeperRead   = mustTemplate("keeper_read.sql")
+	sqlKeeperUpdate = mustTemplate("keeper_update.sql")
+	sqlKeeperList   = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete = mustTemplate("keeper_delete.sql")
 
-	sqlSecureValueListByName           = mustTemplate("secure_value_listByName.sql")
-	sqlSecureValueRead                 = mustTemplate("secure_value_read.sql")
-	sqlSecureValueList                 = mustTemplate("secure_value_list.sql")
-	sqlSecureValueCreate               = mustTemplate("secure_value_create.sql")
-	sqlSecureValueUpdateExternalId     = mustTemplate("secure_value_updateExternalId.sql")
+	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
+	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
+
+	sqlSecureValueRead             = mustTemplate("secure_value_read.sql")
+	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
+	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
+	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
+
 	sqlGetLatestSecureValueVersion     = mustTemplate("secure_value_get_latest_version.sql")
 	sqlSecureValueSetVersionToActive   = mustTemplate("secure_value_set_version_to_active.sql")
 	sqlSecureValueSetVersionToInactive = mustTemplate("secure_value_set_version_to_inactive.sql")

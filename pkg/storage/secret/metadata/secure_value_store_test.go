@@ -36,7 +36,7 @@ func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts
 	return name
 }
 
-func TestIntegrationSecureValueMetadataStorage_CreateAndRead(t *testing.T) {
+func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	ctx := context.Background()
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
