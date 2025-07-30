@@ -64,6 +64,7 @@ export function ScopesTree({
     }
   }
 
+  // Used as a label and placeholder for search field
   const searchArea = useMemo(() => {
     const nodeTitle = scopeNodes[tree.scopeNodeId]?.spec?.title || '';
     return tree.scopeNodeId === '' ? '' : nodeTitle;
