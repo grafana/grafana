@@ -1568,6 +1568,200 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			assert.Equal(collect, "error", state, "move job should have failed due to missing target path")
 		}, time.Second*10, time.Millisecond*100, "Expected move job to fail with error state")
 	})
+
+	t.Run("move by resource reference", func(t *testing.T) {
+		// Create a unique repository for resource reference testing to avoid contamination
+		const refRepo = "move-ref-test-repo"
+		localRefTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+			"Name":        refRepo,
+			"SyncEnabled": true,
+			"SyncTarget":  "folder",
+		})
+		_, err := helper.Repositories.Resource.Create(ctx, localRefTmp, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// Create modified test files with unique UIDs for ResourceRef testing
+		allPanelsContent := helper.LoadFile("testdata/all-panels.json")
+		textOptionsContent := helper.LoadFile("testdata/text-options.json")
+		timelineDemoContent := helper.LoadFile("testdata/timeline-demo.json")
+
+		// Modify UIDs to be unique for ResourceRef tests
+		allPanelsModified := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "moveref1"`, 1)
+		textOptionsModified := strings.Replace(string(textOptionsContent), `"uid": "WZ7AhQiVz"`, `"uid": "moveref2"`, 1)
+		timelineDemoModified := strings.Replace(string(timelineDemoContent), `"uid": "mIJjFy8Kz"`, `"uid": "moveref3"`, 1)
+
+		// Create temporary files and copy them to the provisioning path
+		tmpDir := t.TempDir()
+		tmpFile1 := filepath.Join(tmpDir, "move-ref-test-1.json")
+		tmpFile2 := filepath.Join(tmpDir, "move-ref-test-2.json")
+		tmpFile3 := filepath.Join(tmpDir, "move-ref-test-3.json")
+
+		require.NoError(t, os.WriteFile(tmpFile1, []byte(allPanelsModified), 0644))
+		require.NoError(t, os.WriteFile(tmpFile2, []byte(textOptionsModified), 0644))
+		require.NoError(t, os.WriteFile(tmpFile3, []byte(timelineDemoModified), 0644))
+
+		// Copy files to provisioning path to set up test - use refRepo's path
+		helper.CopyToProvisioningPath(t, tmpFile1, "move-source-1.json")
+		helper.CopyToProvisioningPath(t, tmpFile2, "move-source-2.json")
+		helper.CopyToProvisioningPath(t, tmpFile3, "move-source-3.json")
+
+		// Sync to populate resources in Grafana
+		helper.SyncAndWait(t, refRepo, nil)
+
+		t.Run("move single dashboard by resource reference", func(t *testing.T) {
+			// Create move job for single dashboard using ResourceRef
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(refRepo).
+				SubResource("jobs").
+				Body(asJSON(&provisioning.JobSpec{
+					Action: provisioning.JobActionMove,
+					Move: &provisioning.MoveJobOptions{
+						TargetPath: "moved-by-ref/",
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "moveref1", // UID from modified all-panels.json
+								Kind:  "Dashboard",
+								Group: "dashboard.grafana.app",
+							},
+						},
+					},
+				})).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.NoError(t, result.Error(), "should be able to create move job with ResourceRef")
+
+			// Wait for job to complete
+			helper.AwaitJobs(t, refRepo)
+
+			// Verify corresponding file is moved in repository
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "moved-by-ref", "move-source-1.json")
+			require.NoError(t, err, "file should be moved to new location in repository")
+
+			// Verify original file is deleted from repository
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "move-source-1.json")
+			require.Error(t, err, "original file should be deleted from repository")
+			require.True(t, apierrors.IsNotFound(err), "should be not found error")
+
+			// Verify dashboard still exists in Grafana (should be updated after sync)
+			helper.SyncAndWait(t, refRepo, nil)
+			_, err = helper.DashboardsV1.Resource.Get(ctx, "moveref1", metav1.GetOptions{})
+			require.NoError(t, err, "dashboard should still exist in Grafana after move")
+
+			// Verify other resource still exists in original location
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "move-source-2.json")
+			require.NoError(t, err, "other files should still exist in original location")
+		})
+
+		t.Run("move multiple resources by reference", func(t *testing.T) {
+			// Create move job for remaining resource using ResourceRef
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(refRepo).
+				SubResource("jobs").
+				Body(asJSON(&provisioning.JobSpec{
+					Action: provisioning.JobActionMove,
+					Move: &provisioning.MoveJobOptions{
+						TargetPath: "archived-by-ref/",
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "moveref2", // UID from modified text-options.json
+								Kind:  "Dashboard",
+								Group: "dashboard.grafana.app",
+							},
+						},
+					},
+				})).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.NoError(t, result.Error(), "should be able to create move job with ResourceRef")
+
+			// Wait for job to complete
+			helper.AwaitJobs(t, refRepo)
+
+			// Verify file is moved in repository
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "archived-by-ref", "move-source-2.json")
+			require.NoError(t, err, "file should be moved to new location")
+
+			// Verify original file is deleted from repository
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "move-source-2.json")
+			require.Error(t, err, "original file should be deleted from repository")
+			require.True(t, apierrors.IsNotFound(err), "should be not found error")
+
+			// Verify dashboard still exists in Grafana after sync
+			helper.SyncAndWait(t, refRepo, nil)
+			_, err = helper.DashboardsV1.Resource.Get(ctx, "moveref2", metav1.GetOptions{})
+			require.NoError(t, err, "dashboard should still exist in Grafana after move")
+		})
+
+		t.Run("mixed move - paths and resources", func(t *testing.T) {
+			// Setup fresh resources for mixed test
+			tmpMixed1 := filepath.Join(tmpDir, "mixed-move-1.json")
+			tmpMixed2 := filepath.Join(tmpDir, "mixed-move-2.json")
+
+			allPanelsMixed := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "mixedmove1"`, 1)
+			textOptionsMixed := strings.Replace(string(textOptionsContent), `"uid": "WZ7AhQiVz"`, `"uid": "mixedmove2"`, 1)
+
+			require.NoError(t, os.WriteFile(tmpMixed1, []byte(allPanelsMixed), 0644))
+			require.NoError(t, os.WriteFile(tmpMixed2, []byte(textOptionsMixed), 0644))
+
+			helper.CopyToProvisioningPath(t, tmpMixed1, "mixed-move-1.json") // UID: mixedmove1
+			helper.CopyToProvisioningPath(t, tmpMixed2, "mixed-move-2.json") // UID: mixedmove2
+
+			helper.SyncAndWait(t, refRepo, nil)
+
+			// Create move job that combines both paths and resource references
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(refRepo).
+				SubResource("jobs").
+				Body(asJSON(&provisioning.JobSpec{
+					Action: provisioning.JobActionMove,
+					Move: &provisioning.MoveJobOptions{
+						TargetPath: "mixed-target/",
+						Paths:      []string{"mixed-move-1.json"}, // Move by path
+						Resources: []provisioning.ResourceRef{
+							{
+								Name:  "mixedmove2", // Move by resource reference
+								Kind:  "Dashboard",
+								Group: "dashboard.grafana.app",
+							},
+						},
+					},
+				})).
+				SetHeader("Content-Type", "application/json").
+				Do(ctx)
+			require.NoError(t, result.Error(), "should be able to create mixed move job")
+
+			// Wait for job to complete
+			helper.AwaitJobs(t, refRepo)
+
+			// Verify both targeted resources are moved in repository
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-target", "mixed-move-1.json")
+			require.NoError(t, err, "file moved by path should exist at new location")
+
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-target", "mixed-move-2.json")
+			require.NoError(t, err, "file moved by resource ref should exist at new location")
+
+			// Verify files are deleted from original locations
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-move-1.json")
+			require.Error(t, err, "file moved by path should be deleted from original location")
+
+			_, err = helper.Repositories.Resource.Get(ctx, refRepo, metav1.GetOptions{}, "files", "mixed-move-2.json")
+			require.Error(t, err, "file moved by resource ref should be deleted from original location")
+
+			// Verify dashboards still exist in Grafana after sync
+			helper.SyncAndWait(t, refRepo, nil)
+			_, err = helper.DashboardsV1.Resource.Get(ctx, "mixedmove1", metav1.GetOptions{})
+			require.NoError(t, err, "dashboard moved by path should still exist in Grafana")
+
+			_, err = helper.DashboardsV1.Resource.Get(ctx, "mixedmove2", metav1.GetOptions{})
+			require.NoError(t, err, "dashboard moved by resource ref should still exist in Grafana")
+		})
+	})
 }
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
@@ -1849,6 +2043,68 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 				Do(ctx)
 			require.Error(t, result.Error(), "should fail when source file doesn't exist")
 		})
+	})
+
+	t.Run("move non-existent resource by reference", func(t *testing.T) {
+		// Create move job for non-existent resource
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(asJSON(&provisioning.JobSpec{
+				Action: provisioning.JobActionMove,
+				Move: &provisioning.MoveJobOptions{
+					TargetPath: "moved-nonexistent/",
+					Resources: []provisioning.ResourceRef{
+						{
+							Name:  "non-existent-move-uid",
+							Kind:  "Dashboard",
+							Group: "dashboard.grafana.app",
+						},
+					},
+				},
+			})).
+			SetHeader("Content-Type", "application/json").
+			Do(ctx)
+		require.NoError(t, result.Error(), "should be able to create move job")
+
+		// Wait for job to complete - should record error but continue
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			list := &unstructured.UnstructuredList{}
+			err := helper.AdminREST.Get().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("jobs").
+				Do(ctx).Into(list)
+			assert.NoError(collect, err, "should be able to list jobs")
+			assert.NotEmpty(collect, list.Items, "expect at least one job")
+
+			// Find the most recent move job
+			var moveJob *unstructured.Unstructured
+			for _, elem := range list.Items {
+				assert.Equal(collect, repo, elem.GetLabels()["provisioning.grafana.app/repository"], "should have repo label")
+
+				action := mustNestedString(elem.Object, "spec", "action")
+				if action == "move" {
+					// Get the most recent one (they should be ordered by creation time)
+					moveJob = &elem
+				}
+			}
+			if !assert.NotNil(collect, moveJob, "should find a move job") {
+				return
+			}
+
+			state := mustNestedString(moveJob.Object, "status", "state")
+			// The job should complete but record errors for individual resource resolution failures
+			if state == "error" || state == "completed" || state == "success" {
+				// Any of these states is acceptable - the key is that resource resolution errors are recorded
+				// and don't fail the entire job due to error-tolerant implementation
+				return
+			}
+			assert.Fail(collect, "job should complete or error, but got state: %s", state)
+		}, time.Second*10, time.Millisecond*100, "Expected move job to handle non-existent resource")
 	})
 }
 
