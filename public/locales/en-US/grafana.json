@@ -1548,8 +1548,7 @@
       "group-not-editable": "Selected group cannot be edited",
       "group-not-editable-description": "This group belongs to a data source that does not support editing.",
       "page-title": "Edit rule group",
-      "rule-group-error": "Error loading rule group",
-      "title": "Edit evaluation group"
+      "rule-group-error": "Error loading rule group"
     },
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
       "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
       "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
-      "synthetic-monitoring-card-title": "Synthetic Monitoring",
-      "title-alerting": "Alerting"
+      "synthetic-monitoring-card-title": "Synthetic Monitoring"
     },
     "import-to-gma": {
       "action-button": "Import",
