@@ -7,12 +7,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
+	reqSignedIn := middleware.ReqSignedIn
+	apiRoute.Post("/api/short-urls", reqSignedIn, hs.createShortURL)
+	apiRoute.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+}
 
 // createShortURL handles requests to create short URLs.
 func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Response {
