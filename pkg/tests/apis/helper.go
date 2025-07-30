@@ -807,43 +807,6 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 	})
 }
 
-// AssertJSONSnapshot compares a JSON string against a cached snapshot
-func AssertJSONSnapshot(t *testing.T, fpath string, actual string) {
-	t.Helper()
-
-	var prettyJSON bytes.Buffer
-	err := json.Indent(&prettyJSON, []byte(actual), "", "  ")
-	require.NoError(t, err)
-	pretty := prettyJSON.String()
-
-	write := false
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
-	body, err := os.ReadFile(fpath)
-	if err == nil {
-		if !assert.JSONEq(t, string(body), pretty) {
-			t.Logf("json snapshot has changed: %s", fpath)
-			t.Fail()
-			write = true
-		}
-	} else {
-		t.Errorf("missing json snapshot for: %s", fpath)
-		write = true
-	}
-
-	if write {
-		dir := filepath.Dir(fpath)
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			t.Errorf("error creating directory: %s", err.Error())
-		}
-		e2 := os.WriteFile(fpath, []byte(pretty), 0644)
-		if e2 != nil {
-			t.Errorf("error writing file: %s", e2.Error())
-		}
-	}
-}
-
 // CreateServiceAccount creates a service account with the specified name, organization, and role using the HTTP API
 func (c *K8sTestHelper) CreateServiceAccount(executingUser User, name string, orgID int64, role org.RoleType) serviceaccounts.ServiceAccountDTO {
 	c.t.Helper()
