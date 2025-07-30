@@ -18,7 +18,7 @@ describe('PillCell', () => {
 
   const expectHTML = (result: RenderResult, expected: string) => {
     let actual = ser.serializeToString(result.asFragment()).replace(/xmlns=".*?" /g, '');
-    expect(actual).toContain(expected.replace(/^\s*|\n/gm, ''));
+    expect(actual).toEqual(expected.replace(/^\s*|\n/gm, ''));
   };
 
   // one class for lightTextPill, darkTextPill
@@ -26,7 +26,7 @@ describe('PillCell', () => {
   describe('Color by hash (classic palette)', () => {
     it('single value', () => {
       expectHTML(
-        render(<PillCell field={fieldWithValues(['["value1","value2","value3"]'])} rowIdx={0} theme={theme} />),
+        render(<PillCell field={fieldWithValues(['value1'])} rowIdx={0} theme={theme} />),
         `<span style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>`
       );
     });
