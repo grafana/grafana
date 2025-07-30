@@ -251,17 +251,9 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
-	// FlagKubernetesLibraryPanelConnections
-	// Routes library panel connections requests from /api to using search
-	FlagKubernetesLibraryPanelConnections = "kubernetesLibraryPanelConnections"
-
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
-
-	// FlagKubernetesClientDashboardsFolders
-	// Route the folder and dashboard service requests to k8s
-	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
 
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
@@ -274,6 +266,10 @@ const (
 	// FlagDashboardSchemaValidationLogging
 	// Log schema validation errors so they can be analyzed later
 	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
+
+	// FlagScanRowInvalidDashboardParseFallbackEnabled
+	// Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
+	FlagScanRowInvalidDashboardParseFallbackEnabled = "scanRowInvalidDashboardParseFallbackEnabled"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -874,6 +870,10 @@ const (
 	// FlagMetricsFromProfiles
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
+
+	// FlagPostgresDSUsePGX
+	// Enables using PGX instead of libpq for PostgreSQL datasource
+	FlagPostgresDSUsePGX = "postgresDSUsePGX"
 
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source

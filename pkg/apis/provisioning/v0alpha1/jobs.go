@@ -178,6 +178,12 @@ type MoveJobOptions struct {
 
 	// Destination path for the move (e.g. "new-location/")
 	TargetPath string `json:"targetPath,omitempty"`
+
+	// Resources to move
+	// This option has been created because currently the frontend does not use
+	// standarized app platform APIs. For performance and API consistency reasons, the preferred option
+	// is it to use the paths.
+	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
 // The job status
