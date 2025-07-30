@@ -42,7 +42,7 @@ import { getTagWithoutScope, interpolateFilters } from './SearchTraceQLEditor/ut
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { TagLimitOptions } from './configuration/TagLimitSettings';
-import { MetricsQueryType, SearchTableType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { SearchTableType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   defaultTableFilter,
   durationMetric,
@@ -393,8 +393,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           subQueries.push(this.handleTraceIdQuery(options, targets.traceql, queryValue));
         } else {
           if (this.isTraceQlMetricsQuery(queryValue)) {
-            const useStreaming =
-              this.isStreamingMetricsEnabled() && targets.traceql[0].metricsQueryType === MetricsQueryType.Range;
+            const useStreaming = this.isStreamingMetricsEnabled();
             reportInteraction('grafana_traces_traceql_metrics_queried', {
               datasourceType: 'tempo',
               app: options.app ?? '',
