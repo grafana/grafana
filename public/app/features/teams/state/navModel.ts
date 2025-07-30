@@ -5,7 +5,9 @@ import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { highlightTrial } from 'app/features/admin/utils';
-import { AccessControlAction, Team, TeamPermissionLevel } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { TeamPermissionLevel } from 'app/types/acl';
+import { Team } from 'app/types/teams';
 import userProfilePng from 'img/user_profile.png';
 
 const loadingTeam = {

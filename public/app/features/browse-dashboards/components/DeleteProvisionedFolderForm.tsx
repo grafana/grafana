@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -10,7 +11,8 @@ import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/ap
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
-import { FolderDTO } from 'app/types';
+import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
+import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
@@ -22,7 +24,6 @@ interface FormProps extends DeleteProvisionedFolderFormProps {
   repository?: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   folder?: Folder;
-  isGitHub: boolean;
 }
 
 interface DeleteProvisionedFolderFormProps {
@@ -30,18 +31,11 @@ interface DeleteProvisionedFolderFormProps {
   onDismiss?: () => void;
 }
 
-function FormContent({
-  initialValues,
-  parentFolder,
-  repository,
-  workflowOptions,
-  folder,
-  isGitHub,
-  onDismiss,
-}: FormProps) {
+function FormContent({ initialValues, parentFolder, repository, workflowOptions, folder, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
 
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
+  const navigate = useNavigate();
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
@@ -66,9 +60,14 @@ function FormContent({
   // TODO: move to a hook if this useEffect shared mostly the same logic as in NewProvisionedFolderForm
   useEffect(() => {
     if (request.isSuccess && repository) {
-      if (workflow === 'branch') {
-        // TODO: handle display banner https://github.com/grafana/git-ui-sync-project/issues/300
-        // TODO: implement when BE is ready
+      const prUrl = request.data?.urls?.newPullRequestURL;
+      if (workflow === 'branch' && prUrl) {
+        const url = buildResourceBranchRedirectUrl({
+          paramName: 'new_pull_request_url',
+          paramValue: prUrl,
+          repoType: request.data?.repository?.type,
+        });
+        navigate(url);
         return;
       }
 
@@ -101,7 +100,7 @@ function FormContent({
       });
       return;
     }
-  }, [request, repository, workflow, parentFolder]);
+  }, [request, repository, workflow, parentFolder, navigate]);
 
   return (
     <FormProvider {...methods}>
@@ -126,7 +125,7 @@ function FormContent({
             isNew={false}
             workflow={workflow}
             workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
+            repository={repository}
           />
 
           {/* Delete / Cancel button */}
@@ -147,7 +146,7 @@ function FormContent({
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
+  const { workflowOptions, repository, folder, initialValues } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'delete',
     title: parentFolder?.title,
@@ -165,7 +164,6 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
       repository={repository}
       workflowOptions={workflowOptions}
       folder={folder}
-      isGitHub={isGitHub}
     />
   );
 }

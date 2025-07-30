@@ -1,20 +1,24 @@
 import { mergeMap, from } from 'rxjs';
 
 import { DataFrame, DataTransformerID, DataTransformerInfo, FieldType } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { createGeometryCollection, createLineBetween } from 'app/features/geo/format/utils';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
 import { SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 import { doGeomeryCalculation, toLineString } from './utils';
 
-export const spatialTransformer: DataTransformerInfo<SpatialTransformOptions> = {
+export const getSpatialTransformer: () => DataTransformerInfo<SpatialTransformOptions> = () => ({
   id: DataTransformerID.spatial,
-  name: 'Spatial operations',
-  description: 'Apply spatial operations to query results.',
+  name: t('transformers.get-spatial-transformer.name.spatial-operations', 'Spatial operations'),
+  description: t(
+    'transformers.get-spatial-transformer.description.apply-spatial-operations-to-query-results',
+    'Apply spatial operations to query results.'
+  ),
   defaultOptions: {},
 
   operator: (options) => (source) => source.pipe(mergeMap((data) => from(doSetGeometry(data, options)))),
-};
+});
 
 export function isLineBuilderOption(options: SpatialTransformOptions): boolean {
   return options.action === SpatialAction.Modify && options.modify?.op === SpatialOperation.LineBuilder;

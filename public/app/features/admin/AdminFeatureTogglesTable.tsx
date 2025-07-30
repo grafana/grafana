@@ -186,7 +186,7 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
                 </p>
               </div>
             }
-            confirmText="Save changes"
+            confirmText={t('admin.admin-feature-toggles-table.confirmText-save-changes', 'Save changes')}
             onConfirm={async () => {
               showSaveChangesModal(false)();
               handleSaveChanges();

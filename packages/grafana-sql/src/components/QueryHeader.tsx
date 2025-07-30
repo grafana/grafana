@@ -28,11 +28,6 @@ export interface QueryHeaderProps {
   queryRowFilter: QueryRowFilter;
 }
 
-const editorModes = [
-  { label: 'Builder', value: EditorMode.Builder },
-  { label: 'Code', value: EditorMode.Code },
-];
-
 export function QueryHeader({
   db,
   dialect,
@@ -50,6 +45,14 @@ export function QueryHeader({
   const toRawSql = db.toRawSql;
 
   const htmlId = useId();
+
+  const editorModes = [
+    {
+      label: t('grafana-sql.components.query-header.editor-modes.label-builder', 'Builder'),
+      value: EditorMode.Builder,
+    },
+    { label: t('grafana-sql.components.query-header.editor-modes.label-code', 'Code'), value: EditorMode.Code },
+  ];
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {

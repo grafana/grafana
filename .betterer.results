@@ -149,6 +149,9 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/themes/createColors.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-data/src/themes/registry.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "packages/grafana-data/src/transformations/matchers/valueMatchers/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -417,9 +420,6 @@ exports[`better eslint`] = {
     "packages/grafana-o11y-ds-frontend/src/createNodeGraphFrames.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-prometheus/src/components/PromQueryField.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-prometheus/src/components/metrics-browser/useMetricsLabelsValues.ts:5381": [
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "0"],
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "1"],
@@ -450,7 +450,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
     "packages/grafana-prometheus/src/language_utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -476,8 +477,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-prometheus/src/querybuilder/shared/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-prometheus/src/resource_clients.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -488,9 +488,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
-    ],
-    "packages/grafana-prometheus/src/test/mocks/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-prometheus/src/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -601,6 +598,9 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Combobox/useOptions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-ui/src/components/ConfirmModal/ConfirmContent.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -628,6 +628,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-ui/src/components/Icon/Icon.story.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
+    "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -760,7 +767,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "6"]
     ],
     "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -917,6 +925,15 @@ exports[`better eslint`] = {
     "public/app/core/components/Page/EditableTitle.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
+    "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
+    "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "3"]
+    ],
     "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -926,7 +943,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "6"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "7"]
     ],
     "public/app/core/components/Signup/SignupPage.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -961,9 +980,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`profiler\`)", "6"],
       [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "7"]
     ],
-    "public/app/core/navigation/mocks/routeProps.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -971,6 +987,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "0"],
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "1"],
       [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "2"]
+    ],
+    "public/app/core/reducers/navBarTree.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/core/services/ResponseQueue.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1073,11 +1093,20 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"]
     ],
+    "public/app/features/actions/ActionVariablesEditor.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/actions/ParamsEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/features/admin/AdminEditOrgPage.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "public/app/features/admin/AdminFeatureTogglesTable.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"]
     ],
     "public/app/features/admin/ServerStatsCard.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -1194,6 +1223,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/contact-points/components/ContactPointsFilter.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
+    "public/app/features/alerting/unified/components/contact-points/utils.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -1287,12 +1319,12 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rule-editor/AnnotationKeyInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/alerting/unified/components/rule-editor/AnnotationsStep.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
     "public/app/features/alerting/unified/components/rule-editor/CloudEvaluationBehavior.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/DashboardPicker.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1309,7 +1341,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "7"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "8"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "8"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "9"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -1374,6 +1407,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
     ],
+    "public/app/features/alerting/unified/components/rules/RuleListGroupView.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
+    ],
+    "public/app/features/alerting/unified/components/rules/RuleListStateView.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/components/rules/state-history/LokiStateHistory.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -1413,6 +1453,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/hooks/useAlertmanagerConfig.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/alerting/unified/hooks/useCombinedRuleNamespaces.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/hooks/useControlledFieldArray.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1436,8 +1479,15 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/rule-list/FilterViewStatus.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
+    "public/app/features/alerting/unified/rule-list/StateView.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/alerting/unified/types/receiver-form.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/alerting/unified/utils/datasource.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/features/alerting/unified/utils/misc.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1459,6 +1509,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+    ],
+    "public/app/features/alerting/unified/utils/rule-id.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
     ],
     "public/app/features/alerting/unified/utils/rules.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1527,6 +1580,9 @@ exports[`better eslint`] = {
     "public/app/features/connections/tabs/ConnectData/index.tsx:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],
+    "public/app/features/correlations/CorrelationsPage.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
@@ -1554,9 +1610,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/correlations/components/EmptyCorrelationsCTA.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/features/correlations/mocks/useCorrelations.mocks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/correlations/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1696,22 +1749,14 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/serialization/transformToV1TypesUtils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/dashboard-scene/settings/GeneralSettingsEditView.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"]
-    ],
     "public/app/features/dashboard-scene/settings/annotations/AnnotationSettingsEdit.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "6"]
     ],
     "public/app/features/dashboard-scene/settings/links/DashboardLinkForm.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -1840,7 +1885,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "7"]
     ],
     "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2221,7 +2267,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/datasources/state/selectors.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "3"]
     ],
     "public/app/features/dimensions/editors/FileUploader.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -2287,6 +2335,9 @@ exports[`better eslint`] = {
     "public/app/features/explore/TraceView/components/TracePageHeader/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TracePageHeader\`)", "0"]
     ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanLinks.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./TimelineHeaderRow\`)", "0"]
     ],
@@ -2318,6 +2369,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./DraggableManagerDemo\`)", "0"]
+    ],
+    "public/app/features/explore/TraceView/components/utils/sort.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
     ],
     "public/app/features/explore/TraceView/createSpanLink.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2355,8 +2409,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/geo/utils/frameVectorSource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/inspector/InspectDataOptions.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -2522,15 +2575,9 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/components/PluginDetailsPage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/plugins/admin/mocks/catalogPlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/plugins/admin/mocks/localPlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/plugins/admin/mocks/remotePlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+    "public/app/features/plugins/admin/helpers.ts:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/features/plugins/admin/pages/Browse.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -2566,10 +2613,10 @@ exports[`better eslint`] = {
     "public/app/features/plugins/loader/sharedDependencies.ts:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
-    "public/app/features/plugins/sandbox/distortion_map.ts:5381": [
+    "public/app/features/plugins/sandbox/distortions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/plugins/sandbox/sandbox_plugin_loader.ts:5381": [
+    "public/app/features/plugins/sandbox/sandboxPluginLoader.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
@@ -2590,20 +2637,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"]
     ],
-    "public/app/features/provisioning/Config/ConfigForm.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "7"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "8"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "9"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "10"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "11"]
-    ],
     "public/app/features/provisioning/Config/ConfigFormGithubCollapse.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
@@ -2617,27 +2650,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/provisioning/GettingStarted/SidebarItem.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/features/provisioning/Job/RecentJobs.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/features/provisioning/Repository/RepositoryCard.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
-    ],
-    "public/app/features/provisioning/Repository/RepositoryOverview.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
-      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
-    ],
-    "public/app/features/provisioning/Wizard/FinishStep.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
-    ],
-    "public/app/features/provisioning/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2733,7 +2745,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/support-bundles/SupportBundlesCreate.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/features/teams/CreateTeam.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -2813,10 +2826,6 @@ exports[`better eslint`] = {
     "public/app/features/transformers/editors/CalculateFieldTransformerEditor/WindowOptionsEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/transformers/editors/CalculateFieldTransformerEditor/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`CalculateFieldTransformerEditor\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`calculateFieldTransformRegistryItem\`)", "1"]
-    ],
     "public/app/features/transformers/editors/ConvertFieldTypeTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2882,12 +2891,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
-    "public/app/features/users/mocks/userMocks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
     "public/app/features/variables/adapters.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -2922,10 +2925,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/variables/inspect/NetworkGraph.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/variables/inspect/VariablesUnknownTable.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -2978,7 +2978,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/variables/query/reducer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "2"]
     ],
     "public/app/features/variables/shared/formatVariable.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3108,21 +3109,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"]
     ],
-    "public/app/plugins/datasource/azuremonitor/mocks/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/mocks/panelData.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/mocks/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/mocks/variables.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/datasource/azuremonitor/types/query.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "1"],
@@ -3165,14 +3151,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/plugins/datasource/cloud-monitoring/mocks/cloudMonitoringDatasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/plugins/datasource/cloud-monitoring/mocks/cloudMonitoringInstanceSettings.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/datasource/cloud-monitoring/types/query.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`../dataquery.gen\`)", "1"],
@@ -3180,9 +3158,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/cloud-monitoring/types/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/cloud-monitoring/webpack.config.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -3220,124 +3195,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/CloudWatchVariables.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-sql-test-data/commentOnlyQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-sql-test-data/multiLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-sql-test-data/partialQueryWithFunction.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-sql-test-data/partialQueryWithSubquery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-sql-test-data/singleLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-sql-test-data/whitespaceQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/commentOnlyQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/filterQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/multiLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/newCommandQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/singleLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/sortQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/whitespaceQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-ppl-test-data/multilineQueries.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-ppl-test-data/newCommandQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-ppl-test-data/singleLineQueries.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Do not use any type assertions.", "9"],
-      [0, 0, 0, "Do not use any type assertions.", "10"],
-      [0, 0, 0, "Do not use any type assertions.", "11"],
-      [0, 0, 0, "Do not use any type assertions.", "12"],
-      [0, 0, 0, "Do not use any type assertions.", "13"],
-      [0, 0, 0, "Do not use any type assertions.", "14"],
-      [0, 0, 0, "Do not use any type assertions.", "15"],
-      [0, 0, 0, "Do not use any type assertions.", "16"],
-      [0, 0, 0, "Do not use any type assertions.", "17"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-sql-test-data/multiLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-sql-test-data/multiLineIncompleteQueryWithoutNamespace.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-sql-test-data/singleLineEmptyQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-sql-test-data/singleLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-sql-test-data/singleLineTwoQueries.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/dashboardOnLoadedEvent.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/dynamic-label-test-data/afterLabelValue.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/dynamic-label-test-data/insideLabelValue.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/afterFunctionQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/secondArgAfterSearchQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/secondArgQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/singleLineEmptyQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/thirdArgAfterSearchQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/withinStringQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/monarch/Monaco.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/datasource/cloudwatch/types.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
@@ -3411,9 +3268,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/state/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/datasource/elasticsearch/configuration/mocks/configOptions.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/datasource/elasticsearch/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -3452,7 +3306,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "5"]
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/components/RandomWalkEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3470,9 +3325,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/grafana-testdata-datasource/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/grafana-testdata-datasource/webpack.config.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/datasource/grafana/components/AnnotationQueryEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -3623,10 +3475,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
-    "public/app/plugins/datasource/influxdb/mocks/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
     "public/app/plugins/datasource/influxdb/query_part.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -3653,8 +3501,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./trace\`)", "0"]
     ],
     "public/app/plugins/datasource/jaeger/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3693,13 +3540,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/loki/mocks/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/loki/mocks/metadataRequest.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3834,10 +3674,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "public/app/plugins/datasource/tempo/webpack.config.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "4"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "5"]
     ],
     "public/app/plugins/datasource/zipkin/QueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3848,9 +3687,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/zipkin/utils/transforms.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/zipkin/webpack.config.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
     ],
     "public/app/plugins/panel/annolist/AnnoListPanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3889,9 +3725,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"]
     ],
+    "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"]
+    ],
     "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
+    ],
+    "public/app/plugins/panel/dashlist/DashList.tsx:5381": [
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "0"],
+      [0, 0, 0, "Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.", "1"]
     ],
     "public/app/plugins/panel/debug/CursorView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3953,9 +3796,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/geomap/layers/basemaps/esri.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/panel/geomap/layers/data/geojsonDynamic.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/panel/geomap/layers/data/routeLayer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -3969,9 +3809,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/panel/geomap/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./panelcfg.gen\`)", "0"]
-    ],
-    "public/app/plugins/panel/geomap/utils/layers.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/geomap/utils/tooltip.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4099,7 +3936,7 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/table/table-new/cells/ColorBackgroundCellOptionsEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "public/app/plugins/panel/table/table-new/cells/ImageCellOptionsEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -4195,9 +4032,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/types/acl.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`OrgRole\`)", "0"]
-    ],
     "public/app/types/alerting.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -4218,29 +4052,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
-    ],
-    "public/app/types/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`CoreEvents\`)", "0"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "6"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "7"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "8"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "9"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "10"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "11"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "12"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "13"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "14"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "15"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "16"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "17"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "18"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "19"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "20"]
     ],
     "public/app/types/jquery/jquery.d.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4311,6 +4122,15 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/ButtonCascader/ButtonCascader.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
+    "packages/grafana-ui/src/components/CallToActionCard/CallToActionCard.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/ColorPickerInput.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/SeriesColorPicker.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
     "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
@@ -4326,10 +4146,25 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/DateTimePickers/WeekStartPicker.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
+    "packages/grafana-ui/src/components/Dropdown/ButtonSelect.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/FormField/FormField.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/InfoTooltip/InfoTooltip.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/List/List.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
     "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/SecretFormField/SecretFormField.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/SecretTextArea/SecretTextArea.story.tsx:5381": [
@@ -4344,6 +4179,9 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/Segment/SegmentInput.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
+    "packages/grafana-ui/src/components/Select/SelectPerf.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
     "packages/grafana-ui/src/components/Slider/RangeSlider.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
@@ -4353,7 +4191,19 @@ exports[`no undocumented stories`] = {
     "packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
+    "packages/grafana-ui/src/components/TableInputCSV/TableInputCSV.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/BorderRadius.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/EmotionPerfTest.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
     "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/Typography.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/UnitPicker/UnitPicker.story.tsx:5381": [
@@ -4367,6 +4217,83 @@ exports[`no undocumented stories`] = {
     ],
     "packages/grafana-ui/src/components/VizTooltip/SeriesTable.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/utils/useDelayedSwitch.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ]
+  }`
+};
+
+exports[`no skipping a11y tests in stories`] = {
+  value: `{
+    "packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/ColorPicker.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/FileDropzone/FileDropzone.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/FormField/FormField.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Layout/Stack/Stack.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Link/TextLink.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Menu/Menu.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Modal/Modal.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PageLayout/PageToolbar.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/PanelChrome.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/QueryField/QueryField.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ScrollContainer/ScrollContainer.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Select/Select.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Slider/RangeSlider.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Slider/Slider.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Table/Table.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
+    ],
+    "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx:5381": [
+      [0, 0, 0, "No skipping of a11y tests in stories. Please fix the component or story instead.", "5381"]
     ]
   }`
 };

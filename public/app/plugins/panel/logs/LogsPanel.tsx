@@ -60,6 +60,7 @@ import {
   isOnLogOptionsChange,
   isOnNewLogsReceivedType,
   isReactNodeArray,
+  isSetDisplayedFields,
   onNewLogsReceivedType,
   Options,
 } from './types';
@@ -91,6 +92,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
    * onClickHideField?: (key: string) => void;
    *
+   * Called from the new Log Details Panel when fields are reordered. If ommited, a default implementation is used.
+   * setDisplayedFields?: (key: string) => void;
+   *
    * Passed to the LogRowMenuCell component to be rendered before the default actions in the menu.
    * logRowMenuIconsBefore?: ReactNode[];
    *
@@ -114,6 +118,12 @@ interface LogsPanelProps extends PanelProps<Options> {
    * When the feature toggle newLogsPanel is enabled, you can pass extra options to the LogLineMenu component.
    * These options are an array of items with { label, onClick } or { divider: true } for dividers.
    * logLineMenuCustomItems?: LogLineMenuCustomItem[];
+   *
+   * Use the default, bigger, font size, or a smaller one. Defaults to "default".
+   * fontSize?: 'default' | 'small'
+   *
+   * Set the mode used by the Log Details panel. Displayed as a sidebar, or inline below the log line. Defaults to "inline".
+   * detailsMode?: 'inline' | 'sidebar'
    */
 }
 interface LogsPermalinkUrlState {
@@ -153,6 +163,8 @@ export const LogsPanel = ({
     onNewLogsReceived,
     fontSize,
     syntaxHighlighting,
+    detailsMode: detailsModeProp,
+    noInteractions,
     ...options
   },
   id,
@@ -510,6 +522,12 @@ export const LogsPanel = ({
 
   const onClickShowField = isOnClickShowField(options.onClickShowField) ? options.onClickShowField : showField;
   const onClickHideField = isOnClickHideField(options.onClickHideField) ? options.onClickHideField : hideField;
+  const setDisplayedFieldsFn = isSetDisplayedFields(options.setDisplayedFields)
+    ? options.setDisplayedFields
+    : setDisplayedFields;
+
+  // In Dashboards, default to inline. Otherwise, let apps control or have automatic behavior.
+  const detailsMode = detailsModeProp ? detailsModeProp : app === CoreApp.Dashboard ? 'inline' : undefined;
 
   return (
     <>
@@ -535,6 +553,7 @@ export const LogsPanel = ({
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
               dedupStrategy={dedupStrategy}
+              detailsMode={detailsMode}
               displayedFields={displayedFields}
               enableLogDetails={enableLogDetails}
               fontSize={fontSize}
@@ -548,6 +567,7 @@ export const LogsPanel = ({
               logs={deduplicatedRows}
               logSupportsContext={showContextToggle}
               loadMore={enableInfiniteScrolling ? loadMoreLogs : undefined}
+              noInteractions={noInteractions}
               onClickFilterLabel={
                 isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
               }
@@ -565,6 +585,7 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
+              setDisplayedFields={setDisplayedFieldsFn}
               showControls={Boolean(showControls)}
               showTime={showTime}
               sortOrder={sortOrder}

@@ -10,6 +10,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
@@ -65,7 +66,7 @@ func TestPassword_AuthenticatePassword(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvidePassword(loginattempttest.FakeLoginAttemptService{ExpectedValid: !tt.blockLogin}, tt.clients...)
+			c := ProvidePassword(loginattempttest.FakeLoginAttemptService{ExpectedValid: !tt.blockLogin}, tracing.InitializeTracerForTest(), tt.clients...)
 			r := &authn.Request{
 				OrgID: 12345,
 				HTTPRequest: &http.Request{

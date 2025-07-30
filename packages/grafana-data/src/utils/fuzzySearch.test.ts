@@ -48,6 +48,14 @@ describe('fuzzySearch', () => {
     expect(result.map((idx) => haystack[idx])).toEqual(['A水']);
   });
 
+  it('should do case-insensitive substring match when needle contains non-ascii characters', () => {
+    const haystack = ['Über'];
+    const needle = 'ü';
+    const result = fuzzySearch(haystack, needle);
+
+    expect(result.map((idx) => haystack[idx])).toEqual(['Über']);
+  });
+
   it('should handle multiple non-latin characters', () => {
     const haystack = ['台灣省', '台中市', '台北市', '台南市', '南投縣', '高雄市', '台中第一高級中學'];
     const needle = '南';

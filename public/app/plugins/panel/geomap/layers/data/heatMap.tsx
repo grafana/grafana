@@ -1,4 +1,4 @@
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 
@@ -46,9 +46,11 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
   /**
    * Function that configures transformation and returns a transformer
+   * @param map
    * @param options
+   * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<HeatmapConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     const location = await getLocationMatchers(options.location);

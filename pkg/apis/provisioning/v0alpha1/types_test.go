@@ -23,6 +23,16 @@ func TestRepositoryType_IsGit(t *testing.T) {
 			want:     true,
 		},
 		{
+			name:     "bitbucket",
+			repoType: v0alpha1.BitbucketRepositoryType,
+			want:     true,
+		},
+		{
+			name:     "gitlab",
+			repoType: v0alpha1.GitLabRepositoryType,
+			want:     true,
+		},
+		{
 			name:     "local",
 			repoType: v0alpha1.LocalRepositoryType,
 			want:     false,

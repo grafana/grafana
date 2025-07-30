@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"slices"
 	"time"
 
@@ -73,6 +74,7 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 		Region:             region,
 		AccessKey:          ds.Settings.AccessKey,
 		SecretKey:          ds.Settings.SecretKey,
+		HTTPClient:         &http.Client{},
 	}
 	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
 		authSettings.ProxyOptions = ds.ProxyOpts

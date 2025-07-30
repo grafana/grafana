@@ -138,7 +138,12 @@ export const StyleEditor = (props: Props) => {
                       settings: {
                         resourceType: 'icon',
                         folderName: ResourceFolderName.Marker,
-                        placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                        placeholderText: hasTextLabel
+                          ? t('geomap.style-editor.placeholderText-select-symbol', 'Select a symbol')
+                          : t(
+                              'geomap.style-editor.placeholderText-select-symbol-or-add-text',
+                              'Select a symbol or add a text label'
+                            ),
                         placeholderValue: defaultStyleConfig.symbol.fixed,
                         showSourceRadio: false,
                         maxFiles,
@@ -228,7 +233,12 @@ export const StyleEditor = (props: Props) => {
                   settings: {
                     resourceType: MediaType.Icon,
                     folderName: ResourceFolderName.Marker,
-                    placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                    placeholderText: hasTextLabel
+                      ? t('geomap.style-editor.placeholderText-select-symbol', 'Select a symbol')
+                      : t(
+                          'geomap.style-editor.placeholderText-select-symbol-or-add-text',
+                          'Select a symbol or add a text label'
+                        ),
                     placeholderValue: defaultStyleConfig.symbol.fixed,
                     showSourceRadio: false,
                     maxFiles,

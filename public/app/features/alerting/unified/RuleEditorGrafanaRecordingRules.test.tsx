@@ -9,7 +9,7 @@ import { FeatureToggles } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup } from './mocks/grafanaRulerApi';

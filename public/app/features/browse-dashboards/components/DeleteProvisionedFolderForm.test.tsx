@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 import { ProvisionedFolderFormDataResult, useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
@@ -16,9 +16,21 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom-v5-compat', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
   provisioningAPI: {
+    endpoints: {
+      listRepository: {
+        select: jest.fn(() => () => ({ data: { items: [] } })),
+      },
+    },
+  },
+  provisioningAPIv0alpha1: {
     endpoints: {
       listRepository: {
         select: jest.fn(() => () => ({ data: { items: [] } })),
@@ -99,7 +111,6 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
     { label: 'Write directly', value: 'write' },
     { label: 'Create branch', value: 'branch' },
   ],
-  isGitHub: true,
   repository: mockRepository,
   folder: mockFolder,
   initialValues: mockFormData,
@@ -140,6 +151,7 @@ function setup(
     ...renderResult,
     onDismiss,
     mockDeleteRepoFile,
+    mockNavigate,
     clickDeleteButton,
   };
 }
@@ -147,6 +159,7 @@ function setup(
 describe('DeleteProvisionedFolderForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockNavigate.mockClear();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     // Mock window.location.href
     Object.defineProperty(window, 'location', {
@@ -272,13 +285,23 @@ describe('DeleteProvisionedFolderForm', () => {
       });
     });
 
-    it('should handle branch workflow success without navigation', async () => {
+    it('should handle branch workflow success with navigation', async () => {
       const branchFormData = { ...mockFormData, workflow: 'branch' } as unknown as typeof mockFormData;
-      const successState = { isLoading: false, isSuccess: true, isError: false, error: null };
-      setup({}, { ...defaultHookData, initialValues: branchFormData }, successState);
+      const successState = {
+        isLoading: false,
+        isSuccess: true,
+        isError: false,
+        error: null,
+        data: { urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } },
+      };
+      const { mockNavigate } = setup({}, { ...defaultHookData, initialValues: branchFormData }, successState);
 
       await waitFor(() => {
-        expect(window.location.href).toBe('');
+        const expectedParams = new URLSearchParams();
+        expectedParams.set('new_pull_request_url', 'https://github.com/test/repo/pull/new');
+        const expectedUrl = `/dashboards?${expectedParams.toString()}`;
+
+        expect(mockNavigate).toHaveBeenCalledWith(expectedUrl);
       });
     });
   });

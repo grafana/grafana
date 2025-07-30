@@ -739,6 +739,47 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.True(t, usr.IsDisabled)
 	})
 
+	t.Run("Update IsProvisioned", func(t *testing.T) {
+		// Create a user with IsProvisioned set to false (default)
+		id, err := userStore.Insert(context.Background(), &user.User{
+			Name:    "provisioned_user",
+			Email:   "provisioned@test.com",
+			Login:   "provisioned_user",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		// Verify initial state
+		usr, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.False(t, usr.IsProvisioned)
+
+		// Update user to set IsProvisioned to true
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:        id,
+			IsProvisioned: boolPtr(true),
+		})
+		require.NoError(t, err)
+
+		// Verify IsProvisioned is now true
+		usr, err = userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.True(t, usr.IsProvisioned)
+
+		// Update user to set IsProvisioned to false
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:        id,
+			IsProvisioned: boolPtr(false),
+		})
+		require.NoError(t, err)
+
+		// Verify IsProvisioned is now false
+		usr, err = userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.False(t, usr.IsProvisioned)
+	})
+
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
 		ss = db.InitTestDB(t)
 
@@ -1022,6 +1063,9 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 func TestIntegrationMetricsUsage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	quotaService := quotaimpl.ProvideService(ss, cfg)

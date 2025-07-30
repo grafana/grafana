@@ -341,7 +341,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
 			SectionID: navtree.NavIDCfg,
 			Text:      "Advisor",
-			SubTitle:  "Keep Grafana running smoothly and securely",
+			SubTitle:  "Run checks and get suggestions to fix issues",
 			IsNew:     true,
 		}
 	}

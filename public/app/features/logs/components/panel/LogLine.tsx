@@ -10,6 +10,7 @@ import { Button, Icon, Tooltip } from '@grafana/ui';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
+import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
@@ -26,6 +27,7 @@ export interface Props {
   displayedFields: string[];
   index: number;
   log: LogListModel;
+  logs: LogListModel[];
   showTime: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
@@ -40,6 +42,7 @@ export const LogLine = ({
   displayedFields,
   index,
   log,
+  logs,
   style,
   styles,
   onClick,
@@ -50,12 +53,13 @@ export const LogLine = ({
   wrapLogMessage,
 }: Props) => {
   return (
-    <div style={style}>
+    <div style={wrapLogMessage ? style : { ...style, width: 'max-content', minWidth: '100%' }}>
       <LogLineComponent
         displayedFields={displayedFields}
         height={style.height}
         index={index}
         log={log}
+        logs={logs}
         styles={styles}
         onClick={onClick}
         onOverflow={onOverflow}
@@ -78,6 +82,7 @@ const LogLineComponent = memo(
     height,
     index,
     log,
+    logs,
     styles,
     onClick,
     onOverflow,
@@ -88,6 +93,7 @@ const LogLineComponent = memo(
   }: LogLineComponentProps) => {
     const {
       detailsDisplayed,
+      detailsMode,
       dedupStrategy,
       enableLogDetails,
       fontSize,
@@ -235,6 +241,7 @@ const LogLineComponent = memo(
             </Button>
           </div>
         )}
+        {detailsMode === 'inline' && detailsShown && <InlineLogLineDetails logs={logs} log={log} />}
       </>
     );
   }
@@ -316,7 +323,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   const { matchingUids, search } = useLogListSearchContext();
 
   const highlight = useMemo(() => {
-    const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
+    const searchWords = syntaxHighlighting && log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
     if (search && matchingUids?.includes(log.uid)) {
       searchWords.push(search);
     }
@@ -324,7 +331,7 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
       return undefined;
     }
     return { searchWords, highlightClassName: styles.matchHighLight };
-  }, [log.searchWords, log.uid, matchingUids, search, styles.matchHighLight]);
+  }, [log.searchWords, log.uid, matchingUids, search, styles.matchHighLight, syntaxHighlighting]);
 
   if (log.hasAnsi) {
     return (
@@ -365,15 +372,16 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     debug: '#6E9FFF',
     trace: '#6ed0e0',
     info: '#6CCF8E',
-    metadata: theme.colors.text.primary,
-    parsedField: theme.colors.text.primary,
+    metadata: theme.colors.text.secondary,
+    default: theme.colors.text.primary,
+    parsedField: theme.colors.text.secondary,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(4).toRgbString();
+  const hoverColor = tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
 
   return {
     logLine: css({
-      color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
+      color: colors.default,
       display: 'flex',
       gap: theme.spacing(0.5),
       flexDirection: 'row',
@@ -397,7 +405,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
       '& .log-syntax-highlight': {
         '.log-token-string': {
-          color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
+          color: colors.default,
         },
         '.log-token-duration': {
           color: theme.colors.success.text,
@@ -410,7 +418,6 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
         },
         '.log-token-key': {
           color: colors.parsedField,
-          opacity: 0.9,
           fontWeight: theme.typography.fontWeightMedium,
         },
         '.log-token-json-key': {
@@ -443,7 +450,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: hoverColor,
+      background: tinycolor(theme.colors.background.canvas).darken(2).toRgbString(),
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),

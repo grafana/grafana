@@ -27,20 +27,48 @@ FieldTypeMatcherEditor.displayName = 'FieldTypeMatcherEditor';
 
 // Select options for all field types.
 // This is not eported to the published package, but used internally
-export const allFieldTypeIconOptions: Array<SelectableValue<FieldType>> = [
-  { value: FieldType.number, label: 'Number', icon: getFieldTypeIconName(FieldType.number) },
-  { value: FieldType.string, label: 'String', icon: getFieldTypeIconName(FieldType.string) },
-  { value: FieldType.time, label: 'Time', icon: getFieldTypeIconName(FieldType.time) },
-  { value: FieldType.boolean, label: 'Boolean', icon: getFieldTypeIconName(FieldType.boolean) },
-  { value: FieldType.trace, label: 'Traces', icon: getFieldTypeIconName(FieldType.trace) },
-  { value: FieldType.enum, label: 'Enum', icon: getFieldTypeIconName(FieldType.enum) },
-  { value: FieldType.other, label: 'Other', icon: getFieldTypeIconName(FieldType.other) },
+export const getAllFieldTypeIconOptions: () => Array<SelectableValue<FieldType>> = () => [
+  {
+    value: FieldType.number,
+    label: t('grafana-ui.matchers-ui.get-all-field-type-icon-options.label-number', 'Number'),
+    icon: getFieldTypeIconName(FieldType.number),
+  },
+  {
+    value: FieldType.string,
+    label: t('grafana-ui.matchers-ui.get-all-field-type-icon-options.label-string', 'String'),
+    icon: getFieldTypeIconName(FieldType.string),
+  },
+  {
+    value: FieldType.time,
+    label: t('grafana-ui.matchers-ui.get-all-field-type-icon-options.label-time', 'Time'),
+    icon: getFieldTypeIconName(FieldType.time),
+  },
+  {
+    value: FieldType.boolean,
+    label: t('grafana-ui.matchers-ui.get-all-field-type-icon-options.label-boolean', 'Boolean'),
+    icon: getFieldTypeIconName(FieldType.boolean),
+  },
+  {
+    value: FieldType.trace,
+    label: t('grafana-ui.matchers-ui.get-all-field-type-icon-options.label-traces', 'Traces'),
+    icon: getFieldTypeIconName(FieldType.trace),
+  },
+  {
+    value: FieldType.enum,
+    label: t('grafana-ui.matchers-ui.get-all-field-type-icon-options.label-enum', 'Enum'),
+    icon: getFieldTypeIconName(FieldType.enum),
+  },
+  {
+    value: FieldType.other,
+    label: t('grafana-ui.matchers-ui.get-all-field-type-icon-options.label-other', 'Other'),
+    icon: getFieldTypeIconName(FieldType.other),
+  },
 ];
 
 const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
   return useMemo(() => {
     const counts: Map<FieldType, number> = new Map();
-    for (const t of allFieldTypeIconOptions) {
+    for (const t of getAllFieldTypeIconOptions()) {
       counts.set(t.value!, 0);
     }
     for (const frame of data) {
@@ -61,7 +89,7 @@ const useSelectOptions = (counts: Map<string, number>, opt?: string): Array<Sele
   return useMemo(() => {
     let found = false;
     const options: Array<SelectableValue<string>> = [];
-    for (const t of allFieldTypeIconOptions) {
+    for (const t of getAllFieldTypeIconOptions()) {
       const count = counts.get(t.value!);
       const match = opt === t.value;
       if (count || match) {

@@ -1,6 +1,6 @@
 import { Trans } from '@grafana/i18n';
 import { Box, Stack, Text } from '@grafana/ui';
-import { LdapUser } from 'app/types';
+import { LdapUser } from 'app/types/ldap';
 
 import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserMappingInfo } from './LdapUserMappingInfo';

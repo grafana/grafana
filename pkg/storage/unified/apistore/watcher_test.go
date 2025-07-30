@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -134,9 +135,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 		require.NoError(t, err)
 	case StorageTypeUnified:
-		if testing.Short() {
-			t.Skip("skipping integration test")
-		}
+		tests.SkipIntegrationTestInShortMode(t)
 		dbstore := infraDB.InitTestDB(t)
 		cfg := setting.NewCfg()
 
@@ -190,7 +189,10 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	return ctx, store, destroyFunc, nil
 }
 
-func TestWatch(t *testing.T) {
+func TestIntegrationWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	for _, s := range []StorageType{StorageTypeFile, StorageTypeUnified} {
 		t.Run(string(s), func(t *testing.T) {
 			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))

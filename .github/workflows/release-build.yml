@@ -1,6 +1,10 @@
 name: Build Release Packages
 on:
   workflow_dispatch:
+  schedule:
+    # Every weeknight at midnight
+    # "Scheduled workflows will only run on the default branch." (docs.github.com)
+    - cron: "0 0 * * 1-5"
   push:
     branches:
       - release-*.*.*
@@ -96,8 +100,8 @@ jobs:
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT} = process.env;
-
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, GITHUB_EVENT_NAME} = process.env;
+            
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
@@ -108,6 +112,7 @@ jobs:
                   "build-id": String(BUILD_ID),
                   "bucket": BUCKET,
                   "grafana-commit": GRAFANA_COMMIT,
+                  "source-event": GITHUB_EVENT_NAME,
                 }
             })
 
@@ -128,22 +133,31 @@ jobs:
         include:
           - name: linux-amd64
             artifacts: targz:grafana:linux/amd64,deb:grafana:linux/amd64,rpm:grafana:linux/amd64,docker:grafana:linux/amd64,docker:grafana:linux/amd64:ubuntu,npm:grafana,storybook
+            verify: true
           - name: linux-arm64
             artifacts: targz:grafana:linux/arm64,deb:grafana:linux/arm64,rpm:grafana:linux/arm64,docker:grafana:linux/arm64,docker:grafana:linux/arm64:ubuntu
+            verify: false
           - name: linux-s390x
             artifacts: targz:grafana:linux/s390x,deb:grafana:linux/s390x,rpm:grafana:linux/s390x,docker:grafana:linux/s390x,docker:grafana:linux/s390x:ubuntu
+            verify: true
           - name: linux-armv7
             artifacts: targz:grafana:linux/arm/v7,deb:grafana:linux/arm/v7,docker:grafana:linux/arm/v7,docker:grafana:linux/arm/v7:ubuntu
+            verify: true
           - name: linux-armv6
             artifacts: targz:grafana:linux/arm/v6,deb:grafana:linux/arm/v6
+            verify: true
           - name: windows-amd64
             artifacts: targz:grafana:windows/amd64,zip:grafana:windows/amd64,msi:grafana:windows/amd64
+            verify: true
           - name: windows-arm64
             artifacts: targz:grafana:windows/arm64,zip:grafana:windows/arm64
+            verify: true
           - name: darwin-amd64
             artifacts: targz:grafana:darwin/amd64
+            verify: true
           - name: darwin-arm64
             artifacts: targz:grafana:darwin/arm64
+            verify: true
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@main
       - uses: actions/checkout@v4
@@ -162,7 +176,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ needs.setup.outputs.version }}
           output: artifacts-${{ matrix.name }}.txt
-          verify: true
+          verify: ${{ matrix.verify }}
           build-id: ${{ github.run_id }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -186,5 +200,5 @@ jobs:
       bucket: grafana-prerelease
       pattern: artifacts-*
       run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}
+      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod

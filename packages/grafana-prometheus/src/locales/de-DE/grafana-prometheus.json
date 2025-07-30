@@ -2,341 +2,510 @@
   "grafana-prometheus": {
     "components": {
       "annotation-query-editor": {
-        "annotation-data-load-error": "",
-        "aria-label-lower-limit-parameter": "",
-        "label-min-step": "",
-        "label-series-value-as-timestamp": "",
+        "annotation-data-load-error": "Fehler beim Laden der Anmerkungsdaten!",
+        "aria-label-lower-limit-parameter": "Untergrenze für den Schrittparameter festlegen",
+        "label-min-step": "Min. Schritt",
+        "label-series-value-as-timestamp": "Reihenwert als Zeitstempel",
         "label-tags": "Tags",
-        "label-text": "",
+        "label-text": "Text",
         "label-title": "Titel",
-        "placeholder-auto": "",
-        "tooltip-either-pattern-example-instance-replaced-label": "",
-        "tooltip-min-step": "",
-        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": ""
+        "placeholder-auto": "Auto",
+        "tooltip-either-pattern-example-instance-replaced-label": "Verwenden Sie entweder den Namen oder ein Muster. Ein Beispiel: {{labelTemplate}} wird durch den Label-Wert für das Label {{labelName}} ersetzt.",
+        "tooltip-min-step": "Eine zusätzliche Untergrenze für den Schrittparameter der Prometheus-Abfrage und für die Variablen <2>{{intervalVar}}</2> und <4>{{rateIntervalVar}}</4>.",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "Die Einheit des Zeitstempels ist Millisekunden. Wenn die Einheit des Reihenwerts Sekunden ist, multiplizieren Sie den Bereichsvektor mit 1000."
       },
       "get-query-type-options": {
         "description": {
-          "instant-query-range": ""
+          "instant-query-range": "Eine Instant-Abfrage und eine Bereichsabfrage ausführen"
         },
         "label": {
-          "both": ""
+          "both": "Beides"
         },
         "range-options": {
           "description": {
-            "query-range": ""
+            "query-range": "Abfrage über einen bestimmten Zeitraum ausführen"
           },
           "label": {
-            "instant": "",
-            "range": ""
+            "instant": "Instant",
+            "range": "Bereich"
           }
         }
       },
       "label-selector": {
-        "aria-label-filter-expression-for-label": "",
-        "description-select-labels": "",
-        "select-labels-to-search-in": ""
+        "aria-label-filter-expression-for-label": "Filterausdruck für Label",
+        "description-select-labels": "Sobald die Label-Werte ausgewählt sind, werden nur mögliche Label-Kombinationen angezeigt.",
+        "select-labels-to-search-in": "2. Wählen Sie Labels aus, in denen gesucht werden soll"
       },
       "metric-selector": {
-        "aria-label-filter-expression-for-metric": "",
-        "aria-label-limit-results-from-series-endpoint": "",
-        "description-series-limit": "",
-        "label-select-metric": "",
-        "select-a-metric": "",
-        "series-limit": ""
+        "aria-label-filter-expression-for-metric": "Filterausdruck für Metrik",
+        "aria-label-limit-results-from-series-endpoint": "Ergebnisse vom Reihenendpunkt begrenzen",
+        "description-series-limit": "Die Grenze gilt für alle Metriken, Labels und Werte. Wenn Sie das Feld leer lassen, wird die Standardgrenze verwendet. Durch eine Einstellung auf 0 wird die Grenze deaktiviert und alles abgerufen – dies kann zu Leistungsproblemen führen.",
+        "label-select-metric": "Sobald eine Metrik ausgewählt ist, werden nur mögliche Labels angezeigt. Labels werden durch die folgende Reihengrenze begrenzt.",
+        "select-a-metric": "1. Metrik auswählen",
+        "series-limit": "Reihengrenze"
       },
       "prom-cheat-sheet": {
-        "prom-ql-cheat-sheet": ""
+        "prom-ql-cheat-sheet": "PromQL Cheat Sheet"
       },
       "prom-exemplar-field": {
-        "exemplars": "",
-        "tooltip-disable-query": "",
-        "tooltip-enable-query": ""
+        "exemplars": "Exemplare",
+        "tooltip-disable-query": "Abfrage mit Exemplaren deaktivieren",
+        "tooltip-enable-query": "Abfrage mit Exemplaren aktivieren"
       },
       "prom-explore-extra-field": {
-        "aria-label-prometheus-extra-field": "",
-        "aria-label-query-type-field": "",
-        "aria-label-step-field": "",
-        "min-step": "",
-        "query-type": "",
-        "tooltip-units-builtin-variables-example-interval-rateinterval": ""
+        "aria-label-prometheus-extra-field": "Zusätzliches Feld in Prometheus",
+        "aria-label-query-type-field": "Abfragetyp-Feld",
+        "aria-label-step-field": "Schrittfeld",
+        "min-step": "Min. Schritt",
+        "query-type": "Abfragetyp",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "Hier können Zeiteinheiten und integrierte Variablen verwendet werden, zum Beispiel: {{example1}}, {{example2}}, {{example3}}, {{example4}}, {{example5}}, {{example6}}, {{example7}} (Standardwert bei fehlender Einheit: {{default}})"
       },
       "prom-query-field": {
-        "placeholder-enter-a-prom-ql-query": ""
+        "placeholder-enter-a-prom-ql-query": "Geben Sie eine PromQL-Abfrage ein …"
       },
       "prom-variable-query-editor": {
-        "aria-label-classic-query": "",
-        "aria-label-metric-regex": "",
-        "aria-label-metric-selector": "",
-        "aria-label-prometheus-query": "",
-        "aria-label-query-type": "",
-        "aria-label-series-query": "",
-        "label-classic-query": "",
+        "aria-label-classic-query": "Klassische Abfrage",
+        "aria-label-metric-regex": "Metrik-Regex",
+        "aria-label-metric-selector": "Metrik-Selektor",
+        "aria-label-prometheus-query": "Prometheus-Abfrage",
+        "aria-label-query-type": "Abfragetyp",
+        "aria-label-series-query": "Reihenabfrage",
+        "label-classic-query": "Klassische Abfrage",
         "label-label": "Label",
-        "label-metric-regex": "",
+        "label-metric-regex": "Metrik-RegEx",
         "label-query": "Abfrage",
-        "label-query-type": "",
-        "label-series-query": "",
-        "placeholder-classic-query": "",
-        "placeholder-metric-regex": "",
-        "placeholder-prometheus-query": "",
+        "label-query-type": "Abfragetyp",
+        "label-series-query": "Reihenabfrage",
+        "placeholder-classic-query": "Klassische Abfrage",
+        "placeholder-metric-regex": "Metrik-Regex",
+        "placeholder-prometheus-query": "Prometheus-Abfrage",
         "placeholder-select-query-type": "Abfragetyp auswählen",
-        "placeholder-series-query": "",
-        "returns-metrics-matching-specified-metric-regex": "",
-        "tooltip-classic-query": "",
-        "tooltip-label": "",
-        "tooltip-metric-regex": "",
-        "tooltip-query": "",
-        "tooltip-query-type": "",
-        "tooltip-series-query": ""
+        "placeholder-series-query": "Reihenabfrage",
+        "returns-metrics-matching-specified-metric-regex": "Gibt eine Liste von Metriken zurück, die mit dem angegebenen Metrik-Regex übereinstimmen.",
+        "tooltip-classic-query": "Die ursprüngliche Implementierung des Prometheus-Variablen-Abfrageeditors. Geben Sie eine Zeichenfolge mit dem richtigen Abfragetyp und den richtigen Parametern ein, wie in diesen Dokumenten beschrieben. Zum Beispiel: {{exampleQuery}}.",
+        "tooltip-label": "Gibt eine Liste von Label-Werten für den Label-Namen in allen Metriken zurück, es sei denn, die Metrik ist angegeben.",
+        "tooltip-metric-regex": "Gibt eine Liste von Label-Namen zurück, die optional gemäß dem angegebenen Metrik-Regex gefiltert werden.",
+        "tooltip-query": "Gibt eine Liste der Prometheus-Abfrageergebnisse für die Abfrage zurück. Dies kann Prometheus-Funktionen umfassen, z. B. {{exampleQuery}}.",
+        "tooltip-query-type": "Das Prometheus-Datenquellen-Plugin bietet die folgenden Abfragetypen für Vorlagenvariablen.",
+        "tooltip-series-query": "Geben Sie eine Metrik mit Labels ein, nur eine Metrik oder nur Labels, z. B. {{example1}}, {{example2}} oder {{example3}}. Gibt eine Liste der Zeitreihen zurück, die den eingegebenen Daten zugeordnet sind."
       },
       "selector-actions": {
-        "aria-label-selector": "",
-        "aria-label-selector-clear-button": "",
-        "aria-label-use-selector-as-metrics-button": "",
-        "aria-label-use-selector-for-query-button": "",
-        "aria-label-validate-submit-button": "",
+        "aria-label-selector": "Selektor",
+        "aria-label-selector-clear-button": "Löschen-Schaltfläche des Selektors",
+        "aria-label-use-selector-as-metrics-button": "Schaltfläche zur Verwendung des Selektors als Metrik",
+        "aria-label-use-selector-for-query-button": "Schaltfläche zur Verwendung des Selektors für die Abfrage",
+        "aria-label-validate-submit-button": "Validieren und Absenden-Schaltfläche",
         "clear": "Löschen",
-        "resulting-selector": "",
-        "use-as-rate-query": "",
-        "use-query": "",
-        "validate-selector": ""
+        "resulting-selector": "4. Resultierender Selektor",
+        "use-as-rate-query": "Als Bewertungsabfrage verwenden",
+        "use-query": "Abfrage verwenden",
+        "validate-selector": "Selektor validieren"
       },
       "value-selector": {
-        "aria-label-filter-expression-for-label-values": "",
-        "aria-label-values-for": "",
-        "description-search-field-values-across-selected-labels": "",
-        "select-multiple-values-for-your-labels": ""
+        "aria-label-filter-expression-for-label-values": "Filterausdruck für Label-Werte",
+        "aria-label-values-for": "Werte für {{labelKey}}",
+        "description-search-field-values-across-selected-labels": "Verwenden Sie das Suchfeld, um Werte über mehrere ausgewählte Labels zu finden.",
+        "select-multiple-values-for-your-labels": "3. Wählen Sie (mehrere) Werte für Ihre Labels aus"
       }
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-allow-as-recording-rules-target": "",
-        "label-manage-alerts-via-alerting-ui": "",
+        "label-allow-as-recording-rules-target": "Als Ziel für Aufnahmeregeln zulassen",
+        "label-manage-alerts-via-alerting-ui": "Benachrichtigungen über Alerting-UI verwalten",
         "title-alerting": "Meldungen",
-        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-allow-as-recording-rules-target": "Erlauben, dass diese Datenquelle als Ziel für das Schreiben von Aufnahmeregeln ausgewählt wird.",
         "tooltip-manage-alerts-via-alerting-ui": "Verwalten Sie Warnregeln für diese Datenquelle. Fügen Sie eine Altermanager-Datenquelle hinzu, um andere Warnressourcen zu verwalten."
       },
       "config-editor": {
-        "browser-access-mode-error": "",
-        "description-advanced-settings": "",
+        "browser-access-mode-error": "Der Browserzugriffsmodus in der Prometheus-Datenquelle ist nicht mehr verfügbar. Wechseln Sie in den Serverzugriffsmodus.",
+        "description-advanced-settings": "Zusätzliche Einstellungen sind optionale Einstellungen, die für mehr Kontrolle über Ihre Datenquelle konfiguriert werden können.",
         "title-advanced-settings": "Erweiterte Einstellungen",
         "title-error": "Fehler"
       },
       "data-source-http-settings-overhaul": {
         "tooltip-browser-access-mode": "Ihre Zugriffsmethode ist <1>Browser</1>, d. h. die URL muss über den Browser zugänglich sein.",
-        "tooltip-http-url": "",
+        "tooltip-http-url": "Geben Sie eine vollständige HTTP-URL an (z. B. {{exampleURL}})",
         "tooltip-server-access-mode": "Ihre Zugriffsmethode ist <1>Server</1>, d. h. die URL muss über das Grafana-Backend/den Grafana-Server zugänglich sein."
       },
       "docs-tip": {
-        "visit-docs-for-more-details-here": ""
+        "visit-docs-for-more-details-here": "Weitere Details finden Sie hier in der Dokumentation."
       },
       "exemplar-setting": {
         "label-data-source": "Datenquelle",
-        "label-internal-link": "",
+        "label-internal-link": "Interner Link",
         "label-label-name": "Label-Name",
-        "label-remove-exemplar-link": "",
+        "label-remove-exemplar-link": "Exemplar-Link entfernen",
         "label-url": "URL",
-        "label-url-label": "",
-        "placeholder-go-to-examplecom": "",
-        "placeholder-httpsexamplecomvalueraw": "",
-        "placeholder-trace-id": "",
-        "title-remove-exemplar-link": "",
-        "tooltip-data-source": "",
-        "tooltip-internal-link": "",
-        "tooltip-label-name": "",
-        "tooltip-url": "",
-        "tooltip-url-label": ""
+        "label-url-label": "URL-Label",
+        "placeholder-go-to-examplecom": "Zu example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "Exemplar-Link entfernen",
+        "tooltip-data-source": "Die Datenquelle, zu der das Exemplar navigiert.",
+        "tooltip-internal-link": "Aktivieren Sie diese Option, wenn Sie einen internen Link haben. Wenn dies aktiviert ist, wird der Datenquellen-Selektor angezeigt. Wählen Sie den Backend-Tracing-Datenspeicher für Ihre Exemplar-Daten aus.",
+        "tooltip-label-name": "Der Name des Felds im Label-Objekt, das für den Erhalt der TraceID verwendet werden soll.",
+        "tooltip-url": "Die URL des Trace-Backends, die der Nutzer zur Ansicht des Trace aufrufen würde",
+        "tooltip-url-label": "Damit können Sie das Schaltflächen-Label im Feld der Exemplar-TraceID überschreiben."
       },
       "exemplars-settings": {
         "add": "Hinzufügen",
-        "no-exemplars-configurations": "",
-        "title-exemplars": ""
+        "no-exemplars-configurations": "Keine Exemplar-Konfigurationen",
+        "title-exemplars": "Exemplare"
       },
       "prom-settings": {
-        "aria-label-default-editor": "",
-        "aria-label-prom-type-type": "",
-        "aria-label-prometheus-type": "",
-        "aria-label-select-http-method": "",
-        "label-cache-level": "",
-        "label-custom-query-parameters": "",
-        "label-default-editor": "",
-        "label-disable-metrics-lookup": "",
-        "label-disable-recording-rules-beta": "",
-        "label-http-method": "",
-        "label-incremental-querying-beta": "",
-        "label-metric-names-suggestion-limit": "",
-        "label-prom-type-version": "",
-        "label-prometheus-type": "",
-        "label-query-overlap-window": "",
-        "label-query-timeout": "",
-        "label-scrape-interval": "",
-        "label-series-limit": "",
-        "label-use-series-endpoint": "",
-        "more-info": "",
-        "placeholder-example-maxsourceresolutionmtimeout": "",
-        "title-interval-behaviour": "",
-        "title-other": "",
+        "aria-label-default-editor": "Standard-Editor (Code oder Builder)",
+        "aria-label-prom-type-type": "{{promType}} Typ",
+        "aria-label-prometheus-type": "Prometheus-Typ",
+        "aria-label-select-http-method": "HTTP-Methode auswählen",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-cache-level": "Cache-Level",
+        "label-custom-query-parameters": "Benutzerdefinierte Abfrageparameter",
+        "label-default-editor": "Standard-Editor",
+        "label-disable-metrics-lookup": "Metrik-Suche deaktivieren",
+        "label-disable-recording-rules-beta": "Aufnahmeregeln deaktivieren (Beta)",
+        "label-http-method": "HTTP-Methode",
+        "label-incremental-querying-beta": "Inkrementelle Abfrage (Beta)",
+        "label-metric-names-suggestion-limit": "Begrenzung der Vorschläge für Metriknamen",
+        "label-prom-type-version": "{{promType}} Version",
+        "label-prometheus-type": "Prometheus-Typ",
+        "label-query-overlap-window": "Fenster der Abfrage-Überschneidung",
+        "label-query-timeout": "Abfrage-Timeout",
+        "label-scrape-interval": "Scrape-Intervall",
+        "label-series-limit": "Reihengrenze",
+        "label-use-series-endpoint": "Reihenendpunkt verwenden",
+        "more-info": "Weitere Informationen zur Konfiguration des Typs und der Version von Prometheus in Datenquellen finden Sie in der <2>Bereitstellungsdokumentation</2>.",
+        "placeholder-example-maxsourceresolutionmtimeout": "Beispiel: {{example}}",
+        "title-interval-behaviour": "Intervallverhalten",
+        "title-other": "Sonstiges",
         "title-performance": "Leistung",
-        "title-query-editor": "",
-        "tooltip-cache-level": "",
-        "tooltip-custom-query-parameters": "",
-        "tooltip-default-editor": "",
-        "tooltip-disable-metrics-lookup": "",
-        "tooltip-disable-recording-rules-beta": "",
-        "tooltip-http-method": "",
-        "tooltip-incremental-querying-beta": "",
-        "tooltip-metric-names-suggestion-limit": "",
-        "tooltip-prom-type-version": "",
-        "tooltip-prometheus-type": "",
-        "tooltip-query-overlap-window": "",
-        "tooltip-query-timeout": "",
-        "tooltip-scrape-interval": "",
-        "tooltip-series-limit": "",
-        "tooltip-use-series-endpoint": ""
+        "title-query-editor": "Abfrage-Editor",
+        "tooltip-cache-level": "Legt die Browser-Cache-Level für Editor-Abfragen fest. Für Datenquellen mit hoher Kardinalität werden höhere Cache-Einstellungen empfohlen.",
+        "tooltip-custom-query-parameters": "Fügen Sie der URL der Prometheus-Abfrage benutzerdefinierte Parameter hinzu. Zum Beispiel {{example1}}, {{example2}}, {{example3}} oder {{example4}}. Mehrere Parameter sollten mit {{concatenationChar}} verknüpft werden.",
+        "tooltip-default-editor": "Legen Sie die Standard-Editoroption für alle Nutzer dieser Datenquelle fest.",
+        "tooltip-disable-metrics-lookup": "Wenn diese Option aktiviert ist, werden die Metrikauswahl und die Unterstützung für Metriken/Labels im Rahmen der Autovervollständigung des Abfragefelds deaktiviert. Dies hilft, wenn Sie Leistungsprobleme mit größeren Prometheus-Instanzen haben. ",
+        "tooltip-disable-recording-rules-beta": "Diese Funktion deaktiviert die Aufnahmeregeln. Wenn Sie dies aktivieren, wird die Dashboard-Leistung verbessert",
+        "tooltip-http-method": "Sie können entweder die HTTP-Methode POST oder GET für die Abfrage Ihrer Prometheus-Datenquelle verwenden. POST ist die empfohlene Methode, da sie größere Abfragen ermöglicht. Ändern Sie dies zu GET, wenn Ihre Prometheus-Version älter als 2.1 ist oder POST-Abfragen in Ihrem Netzwerk beschränkt sind.",
+        "tooltip-incremental-querying-beta": "Diese Funktion ändert das Standardverhalten von relativen Abfragen, sodass immer neue Daten von der Prometheus-Instanz abgefragt werden. Stattdessen werden Abfrageergebnisse zwischengespeichert und nur neue Datensätze abgefragt. Wenn Sie dies aktivieren, wird die Datenbank- und Netzwerklast reduziert.",
+        "tooltip-metric-names-suggestion-limit": "Die maximale Anzahl an Metriknamen, die im Code-Modus des Abfrage-Editors als Vorschläge im Rahmen der Autovervollständigung angezeigt werden können.",
+        "tooltip-prom-type-version": "Nutzen Sie diese Option, um die Version Ihrer Instanz von {{promType}} festzulegen, wenn sie nicht automatisch konfiguriert wird.",
+        "tooltip-prometheus-type": "Stellen Sie dies auf den Typ Ihrer Prometheus-Datenbank ein, z. B. Prometheus, Cortex, Mimir oder Thanos. Wenn Sie dieses Feld ändern, werden Ihre aktuellen Einstellungen gespeichert. Bestimmte Typen von Prometheus unterstützen entweder verschiedene APIs oder nicht. Zum Beispiel unterstützen manche Typen Regex-Matching für Label-Abfragen, um die Leistung zu verbessern. Manche Typen haben eine API für Metadaten. Wenn Sie dies falsch einstellen, kann es bei der Abfrage von Metriken und Labels zu einem ungewöhnlichen Verhalten kommen. Bitte prüfen Sie Ihre Prometheus-Dokumentation, um sicherzugehen, dass Sie den richtigen Typ eingeben.",
+        "tooltip-query-overlap-window": "Stellen Sie eine Dauer ein, zum Beispiel {{example1}} oder {{example2}} oder {{example3}}. Standardwert: {{default}}. Diese Dauer wird zur Dauer jeder inkrementellen Abfrage hinzugefügt.",
+        "tooltip-query-timeout": "Legen Sie das Prometheus-Abfrage-Timeout fest.",
+        "tooltip-scrape-interval": "Dieses Intervall gibt an, wie oft Prometheus ein Scraping für Ziele durchführt. Stellen Sie dies auf das typische Scrape- und Bewertungsintervall ein, das in Ihrer Prometheus-Konfigurationsdatei konfiguriert ist. Wenn Sie dies auf einen größeren Wert als das Intervall Ihrer Prometheus-Konfigurationsdatei einstellen, wertet Grafana die Daten gemäß diesem Intervall aus und Sie sehen weniger Datenpunkte. Standardmäßig {{default}}.",
+        "tooltip-series-limit": "Die Grenze gilt für alle Ressourcen (Metriken, Labels und Werte) für beide Endpunkte (Reihen und Labels). Wenn Sie das Feld leer lassen, wird die Standardgrenze verwendet (40.000). Durch eine Einstellung auf 0 wird die Grenze deaktiviert und alles abgerufen – dies kann zu Leistungsproblemen führen. Die Standardgrenze beträgt 40.000.",
+        "tooltip-use-series-endpoint": "Wenn diese Option aktiviert ist, wird der Reihenendpunkt mit dem Parameter {{exampleParameter}} gegenüber dem Endpunkt der Label-Werte mit dem Parameter {{exampleParameter}} bevorzugt. Obwohl der Endpunkt der Label-Werte als leistungsfähiger gilt, könnten manche Nutzer die Reihe bevorzugen, da sie über eine POST-Methode verfügt, während der Endpunkt der Label-Werte nur über eine GET-Methode verfügt."
+      }
+    },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
       }
     },
     "querybuilder": {
       "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "",
-        "disable-text-wrap": ""
+        "content-filter-metric-names-regex-search-using": "Filtern Sie Metriknamen per Regex-Suche und nutzen Sie dabei einen zusätzlichen Aufruf der Prometheus-API.",
+        "disable-text-wrap": "Textumbruch deaktivieren"
       },
       "feedback-link": {
         "give-feedback": "Feedback geben",
-        "title-give-feedback": ""
+        "title-give-feedback": "Der Metrik-Explorer ist neu. Bitte teilen Sie uns mit, wie wir ihn verbessern können."
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
+      },
+      "get-placeholders": {
+        "browse": "",
+        "include-null-metadata": "",
+        "metadata-search-switch": "",
+        "set-use-backend": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
       },
       "handle-function": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Das Abfrage-Parsing ist unklar."
         }
       },
       "label-filter-item": {
-        "aria-label-remove": "",
-        "placeholder-select-label": "",
+        "aria-label-remove": "Entfernen von {{name}}",
+        "placeholder-select-label": "Label auswählen",
         "placeholder-select-value": "Wert auswählen"
       },
       "label-filters": {
-        "label-filters": "",
-        "label-label-filters": "",
-        "tooltip-label-filters": ""
+        "label-filters": "Label-Filter",
+        "label-label-filters": "Label-Filter",
+        "tooltip-label-filters": "Optional: wird verwendet, um die Metrikauswahl für diesen Abfragetyp zu filtern."
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
       },
       "metric-combobox": {
         "async-select": {
-          "aria-label-open-metrics-explorer": "",
-          "placeholder-select-metric": "",
-          "tooltip-open-metrics-explorer": ""
+          "aria-label-open-metrics-explorer": "Metrik-Explorer öffnen",
+          "placeholder-select-metric": "Metrik auswählen",
+          "tooltip-open-metrics-explorer": "Metrik-Explorer öffnen"
         },
         "label-metric": "Metrik",
-        "tooltip-metric": ""
+        "tooltip-metric": "Optional: gibt eine Liste von Label-Werten für den Label-Namen in der angegebenen Metrik zurück."
       },
       "metrics-modal": {
-        "additional-settings": "",
+        "additional-settings": "Zusätzliche Einstellungen",
         "aria-label-additional-settings": "Zusätzliche Einstellungen",
-        "aria-label-browse-metrics": "",
-        "currently-selected": "",
-        "metrics-pre-filtered": "",
-        "placeholder-results-per-page": "",
-        "results-per-page": "",
-        "title-metrics-explorer": "",
-        "results-amount_one": "",
-        "results-amount_other": ""
+        "aria-label-browse-metrics": "Metriken durchsuchen",
+        "currently-selected": "Aktuell ausgewählt: {{selected}}",
+        "metrics-pre-filtered": "Diese Metriken wurden anhand der Labels, die in den Label-Filtern ausgewählt wurden, vorgefiltert.",
+        "placeholder-results-per-page": "Ergebnisse pro Seite",
+        "results-per-page": "Ergebnisse pro Seite",
+        "title-metrics-explorer": "Metrik-Explorer",
+        "results-amount_one": "{{num}} von {{count}} Ergebnissen werden angezeigt",
+        "results-amount_other": "{{num}} von {{count}} Ergebnissen werden angezeigt"
       },
       "nested-query": {
         "label": {
-          "ignoring": "",
+          "ignoring": "Ignorieren",
           "on": "Aktiviert"
         },
         "operator": "Bediener",
-        "tooltip-remove-match": "",
-        "vector-matches": ""
+        "tooltip-remove-match": "Übereinstimmung entfernen",
+        "vector-matches": "Vektorübereinstimmungen"
       },
       "operation-editor": {
-        "not-found": "",
-        "title-remove": ""
+        "not-found": "Vorgang {{id}} nicht gefunden",
+        "title-remove": "Entfernen von {{name}}"
       },
       "operation-header": {
         "placeholder-replace-with": "Ersetzen mit",
-        "title-click-to-view-alternative-operations": "",
-        "title-remove-operation": ""
+        "title-click-to-view-alternative-operations": "Klicken Sie zur Anzeige alternativer Vorgänge",
+        "title-remove-operation": "Vorgang entfernen"
       },
       "operation-info-button": {
-        "title-click-to-show-description": "",
-        "title-remove-operation": ""
+        "title-click-to-show-description": "Klicken Sie zur Ansicht der Beschreibung",
+        "title-remove-operation": "Operation entfernen"
       },
       "operation-list": {
-        "operations": "",
+        "operations": "Vorgänge",
         "placeholder-search": "Suche",
-        "title-add-operation": ""
+        "title-add-operation": "Vorgang hinzufügen"
       },
       "operation-param-editor": {
-        "title-add": "",
-        "title-remove": ""
+        "title-add": "{{name}} hinzufügen",
+        "title-remove": "{{name}} entfernen"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
       },
       "prom-query-builder-options": {
-        "aria-label-lower-limit-parameter": "",
-        "aria-label-select-resolution": "",
-        "label-exemplars": "",
+        "aria-label-lower-limit-parameter": "Untergrenze für den Schrittparameter festlegen",
+        "aria-label-select-resolution": "Auflösung auswählen",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
+        "label-exemplars": "Exemplare",
         "label-format": "Format",
-        "label-min-step": "",
-        "label-resolution": "",
+        "label-min-step": "Min. Schritt",
+        "label-resolution": "Auflösung",
         "label-type": "Typ",
-        "placeholder-auto": "",
+        "placeholder-auto": "Auto",
         "title-options": "Optionen",
-        "tooltip-min-step": ""
+        "tooltip-min-step": "Eine zusätzliche Untergrenze für den Schrittparameter der Prometheus-Abfrage und für die Variablen <2>{{interval}}</2> und <4>{{rateInterval}}</4>."
       },
       "prom-query-code-editor-autocomplete-info": {
-        "autocomplete-suggestions-limited": "",
-        "tooltip-autocomplete-suggestions-limited": ""
+        "autocomplete-suggestions-limited": "Vorschläge der Autovervollständigung begrenzt",
+        "tooltip-autocomplete-suggestions-limited": "Die Anzahl der Metriknamen überschreitet die Grenze der Autovervollständigung. Es werden nur die für {{autocompleteLimit}} relevantesten Metriken angezeigt. Sie können die Grenze in den Datenquelleneinstellungen anpassen."
       },
       "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
         "kick-start-your-query": "Starten Sie Ihre Abfrage",
-        "label-explain": "",
-        "run-queries": "",
-        "title-parsing-error-switch-builder": ""
+        "label-explain": "Erklären",
+        "run-queries": "Abfragen ausführen",
+        "title-parsing-error-switch-builder": "Parsing-Fehler: In den Builder-Modus wechseln?"
       },
       "prom-query-legend-editor": {
-        "label-legend": "",
-        "placeholder-select-legend-mode": "",
-        "tooltip-legend": ""
+        "label-legend": "Legende",
+        "placeholder-select-legend-mode": "Legendenmodus auswählen",
+        "tooltip-legend": "Überschreibung des Reihennamens oder Vorlage. Beispiel: {{templateExample}} wird durch den Label-Wert für {{labelName}} ersetzt."
       },
       "query-builder-hints": {
-        "hint-details": ""
+        "hint-details": "Hinweis: {{hintDetails}}"
       },
-      "query-editor-hints": {
-        "hint-details": ""
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
       },
       "query-pattern": {
-        "apply-query": "",
-        "aria-label-apply-query-starter-button": "",
-        "aria-label-back-button": "",
-        "aria-label-create-new-query-button": "",
-        "aria-label-raw-query": "",
-        "aria-label-use-this-query-button": "",
+        "apply-query": "Abfrage anwenden",
+        "aria-label-apply-query-starter-button": "Schaltfläche zur Anwendung des Abfrage-Starters",
+        "aria-label-back-button": "Zurück-Schaltfläche",
+        "aria-label-create-new-query-button": "Schaltfläche zur Erstellung einer neuen Abfrage",
+        "aria-label-raw-query": "{{patternName}} Rohabfrage",
+        "aria-label-use-this-query-button": "Schaltfläche zum Nutzen dieser Abfrage",
         "back": "Zurück",
-        "create-new-query": "",
+        "create-new-query": "Neue Abfrage erstellen",
         "use-this-query": "Diese Abfrage nutzen"
       },
       "query-patterns-modal": {
-        "aria-label-close-kick-start-your-query-modal": "",
+        "aria-label-close-kick-start-your-query-modal": "Modal zum Starten Ihrer Abfrage schließen",
         "aria-label-kick-start-your-query-modal": "Starten Sie Ihr Abfrage-Modal",
-        "aria-label-toggle-query-starter": "",
+        "aria-label-toggle-query-starter": "Öffnen und Schließen der {{patternType}} Abfrage-Starter-Karte",
         "close": "Schließen",
-        "description-kick-start-your-query": "",
-        "label-toggle-query-starter": "",
+        "description-kick-start-your-query": "Starten Sie Ihre Abfrage, indem Sie eine dieser Abfragen auswählen. Sie können dann mit dem Abschluss Ihrer Abfrage fortfahren.",
+        "label-toggle-query-starter": "{{patternType}} Abfrage-Starter",
         "title-kick-start-your-query": "Starten Sie Ihre Abfrage"
       },
       "raw-query": {
-        "aria-label-selector": ""
+        "aria-label-selector": "Selektor"
       },
       "results-table": {
-        "content-descriptive-type": "",
+        "content-descriptive-type": "Bei der Erstellung von {{descriptiveType}} zeigt Prometheus mehrere Reihen mit dem Typ Counter. ",
         "description": "Beschreibung",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
         "name": "Name",
         "select": "Auswählen",
         "type": "Typ"
       },
       "update-function-args": {
         "text": {
-          "query-parsing-is-ambiguous": ""
+          "query-parsing-is-ambiguous": "Das Abfrage-Parsing ist unklar."
         }
       }
     }

@@ -3,7 +3,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
 import { setupMswServer } from '../mockApi';

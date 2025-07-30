@@ -41,7 +41,8 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
-	if errors.Is(err, dashboards.ErrFolderVersionMismatch) {
+	if errors.Is(err, dashboards.ErrFolderVersionMismatch) ||
+		k8sErrors.IsAlreadyExists(err) {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": dashboards.ErrFolderVersionMismatch.Error()})
 	}
 

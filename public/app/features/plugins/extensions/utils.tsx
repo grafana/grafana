@@ -20,8 +20,9 @@ import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
+import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
+import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
@@ -38,17 +39,18 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   };
 }
 
-export function createOpenModalFunction(pluginId: string): PluginExtensionEventHelpers['openModal'] {
+export function createOpenModalFunction(config: AddedLinkRegistryItem): PluginExtensionEventHelpers['openModal'] {
   return async (options) => {
     const { title, body, width, height } = options;
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: wrapWithPluginContext<ModalWrapperProps>(
-          pluginId,
-          getModalWrapper({ title, body, width, height }),
-          baseLog
-        ),
+        component: wrapWithPluginContext<ModalWrapperProps>({
+          pluginId: config.pluginId,
+          extensionTitle: config.title,
+          Component: getModalWrapper({ title, body, width, height, config }),
+          log: baseLog,
+        }),
       })
     );
   };
@@ -58,7 +60,17 @@ type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
-export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>, log: ExtensionsLog) => {
+export const wrapWithPluginContext = <T,>({
+  pluginId,
+  extensionTitle,
+  Component,
+  log,
+}: {
+  pluginId: string;
+  extensionTitle: string;
+  Component: React.ComponentType<T>;
+  log: ExtensionsLog;
+}) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const {
       error,
@@ -85,7 +97,9 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     return (
       <PluginContextProvider meta={pluginMeta}>
-        <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+        <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
+          <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+        </ExtensionErrorBoundary>
       </PluginContextProvider>
     );
   };
@@ -102,13 +116,27 @@ const getModalWrapper = ({
   body: Body,
   width,
   height,
-}: PluginExtensionOpenModalOptions) => {
+  config,
+}: PluginExtensionOpenModalOptions & { config: AddedLinkRegistryItem }) => {
   const className = css({ width, height });
 
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
     return (
       <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-        <Body onDismiss={onDismiss} />
+        {/* 
+          We also add an error boundary here (apart from the one in the `wrapWithPluginContext`) 
+          so the error appears inside the modal (and not at the bottom of the page.)
+        */}
+        <ExtensionErrorBoundary
+          pluginId={config.pluginId}
+          extensionTitle={config.title}
+          fallbackAlwaysVisible={true}
+          log={baseLog}
+        >
+          <div data-plugin-sandbox={config.pluginId} data-testid="plugin-sandbox-wrapper">
+            <Body onDismiss={onDismiss} />
+          </div>
+        </ExtensionErrorBoundary>
       </Modal>
     );
   };
@@ -223,6 +251,7 @@ interface ProxyOptions {
   log?: ExtensionsLog;
   source?: MutationSource;
   pluginId?: string;
+  pluginVersion?: string;
 }
 
 /**
@@ -233,6 +262,7 @@ interface ProxyOptions {
  * @param options.log The logger to use
  * @param options.source The source of the mutation
  * @param options.pluginId The id of the plugin that is mutating the object
+ * @param options.pluginVersion The version of the plugin that is mutating the object
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
 export function getMutationObserverProxy<T extends object>(obj: T, options?: ProxyOptions): T {
@@ -240,31 +270,40 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
     return obj;
   }
 
-  const { log = baseLog, source = 'extension', pluginId = 'unknown' } = options ?? {};
+  const { log = baseLog, source = 'extension', pluginId = 'unknown', pluginVersion = 'unknown' } = options ?? {};
   const cache = new WeakMap();
   const logFunction = isGrafanaDevMode() ? log.error.bind(log) : log.warning.bind(log); // should show error during local development
 
   return new Proxy(obj, {
     deleteProperty(target, prop) {
-      logFunction(`Attempted to delete object property "${String(prop)}" from ${source} with id ${pluginId}`, {
-        stack: new Error().stack ?? '',
-      });
+      logFunction(
+        `Attempted to delete object property "${String(prop)}" from ${source} with id ${pluginId} and version ${pluginVersion}`,
+        {
+          stack: new Error().stack ?? '',
+        }
+      );
       Reflect.deleteProperty(target, prop);
       return true;
     },
     defineProperty(target, prop, descriptor) {
       // because immer (used by RTK) calls Object.isFrozen and Object.freeze we know that defineProperty will be called
       // behind the scenes as well so we only log message with debug level to minimize the noise and false positives
-      log.debug(`Attempted to define object property "${String(prop)}" from ${source} with id ${pluginId}`, {
-        stack: new Error().stack ?? '',
-      });
+      log.debug(
+        `Attempted to define object property "${String(prop)}" from ${source} with id ${pluginId} and version ${pluginVersion}`,
+        {
+          stack: new Error().stack ?? '',
+        }
+      );
       Reflect.defineProperty(target, prop, descriptor);
       return true;
     },
     set(target, prop, newValue) {
-      logFunction(`Attempted to mutate object property "${String(prop)}" from ${source} with id ${pluginId}`, {
-        stack: new Error().stack ?? '',
-      });
+      logFunction(
+        `Attempted to mutate object property "${String(prop)}" from ${source} with id ${pluginId} and version ${pluginVersion}`,
+        {
+          stack: new Error().stack ?? '',
+        }
+      );
       Reflect.set(target, prop, newValue);
       return true;
     },
@@ -290,7 +329,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
-          cache.set(value, getMutationObserverProxy(value, { log, source, pluginId }));
+          cache.set(value, getMutationObserverProxy(value, { log, source, pluginId, pluginVersion }));
         }
         return cache.get(value);
       }
@@ -308,6 +347,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
  * @param options.log The logger to use
  * @param options.source The source of the mutation
  * @param options.pluginId The id of the plugin that is mutating the object
+ * @param options.pluginVersion The version of the plugin that is mutating the object
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
 export function writableProxy<T>(value: T, options?: ProxyOptions): T {
@@ -316,10 +356,10 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
     return value;
   }
 
-  const { log = baseLog, source = 'extension', pluginId = 'unknown' } = options ?? {};
+  const { log = baseLog, source = 'extension', pluginId = 'unknown', pluginVersion = 'unknown' } = options ?? {};
 
   // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
-  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, source });
+  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, pluginVersion, source });
 }
 
 function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {
@@ -491,7 +531,7 @@ export function getLinkExtensionOnClick(
 
       const helpers: PluginExtensionEventHelpers = {
         context,
-        openModal: createOpenModalFunction(pluginId),
+        openModal: createOpenModalFunction(config),
         openSidebar: (componentTitle, context) => {
           appEvents.publish(
             new OpenExtensionSidebarEvent({
@@ -500,6 +540,9 @@ export function getLinkExtensionOnClick(
               componentTitle,
             })
           );
+        },
+        closeSidebar: () => {
+          appEvents.publish(new CloseExtensionSidebarEvent());
         },
       };
 

@@ -52,6 +52,7 @@
       "button-use-query": "使用此查詢",
       "label-categories": "分類",
       "label-query-results": "查詢結果：{{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "所有分類",
       "placeholder-search-logs": "搜尋「紀錄查詢」",
       "text-loading": "正在載入…"
@@ -161,6 +162,8 @@
       "tooltip-limit": "限制傳回的列數（預設為 1000）。"
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "基本紀錄查詢會根據掃描的資料量產生費用。",
       "label-logs": "紀錄",
       "title-basic-logs-queries": "基本紀錄查詢",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure 紀錄會啟動您的查詢按鈕",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "啟動您的查詢",
       "button-run-query": "執行查詢",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "服務",
       "placeholder-service": "服務…",
       "title-switch-mode": "要切換編輯器模式嗎？"
@@ -223,7 +233,7 @@
       "title-error-occurred": "從 Azure Monitor 請求資源時發生錯誤"
     },
     "scope-selector": {
-      "label": ""
+      "label": "範圍"
     },
     "search": {
       "aria-label-resource-search": "資源搜尋",

@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import * as api from '../api';
@@ -30,10 +30,10 @@ import {
 import PluginDetailsPage from './PluginDetails';
 
 jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-  const mockedRuntime = { ...original };
-  mockedRuntime.config.buildInfo.version = 'v8.1.0';
-  return mockedRuntime;
+  const runtime = jest.requireActual('@grafana/runtime');
+  runtime.config.buildInfo.version = 'v8.1.0';
+
+  return runtime;
 });
 
 jest.mock('../hooks/usePluginConfig.tsx', () => ({
@@ -42,11 +42,6 @@ jest.mock('../hooks/usePluginConfig.tsx', () => ({
       meta: {},
     },
   })),
-}));
-
-jest.mock('../helpers.ts', () => ({
-  ...jest.requireActual('../helpers.ts'),
-  updatePanels: jest.fn(),
 }));
 
 jest.mock('app/core/core', () => ({
@@ -85,6 +80,7 @@ describe('Plugin details page', () => {
   const id = 'my-plugin';
   const originalWindowLocation = window.location;
   let dateNow: jest.SpyInstance<number, []>;
+  const originalBackendSrv = getBackendSrv();
 
   beforeAll(() => {
     dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00
@@ -100,6 +96,7 @@ describe('Plugin details page', () => {
     jest.clearAllMocks();
     config.pluginAdminExternalManageEnabled = false;
     config.licenseInfo.enabledFeatures = {};
+    setBackendSrv(originalBackendSrv);
   });
 
   afterAll(() => {
@@ -421,6 +418,11 @@ describe('Plugin details page', () => {
     it('should show a confirm modal when trying to uninstall a plugin', async () => {
       // @ts-ignore
       api.uninstallPlugin = jest.fn();
+
+      setBackendSrv({
+        ...originalBackendSrv,
+        get: jest.fn().mockResolvedValue({ panels: [] }),
+      });
 
       const { queryByText, getByRole, findByRole, user } = renderPluginDetails({
         id,
@@ -883,11 +885,6 @@ describe('Plugin details page', () => {
         isDataSourceEditor: false,
         isOrgAdmin: true,
       });
-      config.featureToggles.pluginsDetailsRightPanel = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.pluginsDetailsRightPanel = false;
     });
 
     it('should display Latest release date and report a concern information', async () => {

@@ -60,7 +60,8 @@ import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { getState } from 'app/store/store';
-import { ExploreItemState, useDispatch } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+import { useDispatch } from 'app/types/store';
 
 import {
   contentOutlineTrackPinAdded,
@@ -688,7 +689,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]
   );
 
-  const hasUnescapedContent = useMemo(() => checkUnescapedContent(logRows), [logRows]);
   const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
   const navigationRange = useMemo(() => createNavigationRange(logRows), [logRows]);
   const infiniteScrollAvailable = useMemo(
@@ -1034,7 +1034,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   logsMeta={logsMeta}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   onLogOptionsChange={onLogOptionsChange}
-                  hasUnescapedContent={hasUnescapedContent}
                   filterLevels={filterLevels}
                 />
               </div>
@@ -1144,6 +1143,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}
+                  setDisplayedFields={setDisplayedFields}
                   showControls
                   showTime={showTime}
                   sortOrder={logsSortOrder}
@@ -1256,10 +1256,6 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       ...(config.featureToggles.logsInfiniteScrolling && { marginBottom: '0px' }),
     }),
   };
-};
-
-const checkUnescapedContent = (logRows: LogRowModel[]) => {
-  return logRows.some((r) => r.hasUnescapedContent);
 };
 
 const dedupRows = (logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {

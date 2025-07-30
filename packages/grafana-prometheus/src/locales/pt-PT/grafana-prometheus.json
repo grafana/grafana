@@ -157,6 +157,10 @@
         "aria-label-prom-type-type": "",
         "aria-label-prometheus-type": "",
         "aria-label-select-http-method": "",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
         "label-cache-level": "",
         "label-custom-query-parameters": "",
         "label-default-editor": "",
@@ -195,6 +199,117 @@
         "tooltip-use-series-endpoint": ""
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
     "querybuilder": {
       "additional-settings": {
         "content-filter-metric-names-regex-search-using": "",
@@ -203,6 +318,36 @@
       "feedback-link": {
         "give-feedback": "Dar feedback",
         "title-give-feedback": ""
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
+      },
+      "get-placeholders": {
+        "browse": "",
+        "include-null-metadata": "",
+        "metadata-search-switch": "",
+        "set-use-backend": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
       },
       "handle-function": {
         "text": {
@@ -218,6 +363,10 @@
         "label-filters": "",
         "label-label-filters": "",
         "tooltip-label-filters": ""
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
       },
       "metric-combobox": {
         "async-select": {
@@ -271,9 +420,21 @@
         "title-add": "",
         "title-remove": ""
       },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
+      },
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
         "label-exemplars": "",
         "label-format": "Formato",
         "label-min-step": "",
@@ -288,6 +449,8 @@
         "tooltip-autocomplete-suggestions-limited": ""
       },
       "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
         "kick-start-your-query": "Dê início à sua consulta",
         "label-explain": "",
         "run-queries": "",
@@ -301,8 +464,11 @@
       "query-builder-hints": {
         "hint-details": ""
       },
-      "query-editor-hints": {
-        "hint-details": ""
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
       },
       "query-pattern": {
         "apply-query": "",
@@ -330,6 +496,9 @@
       "results-table": {
         "content-descriptive-type": "",
         "description": "Descrição",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
         "name": "Nome",
         "select": "Selecionar",
         "type": "Tipo"

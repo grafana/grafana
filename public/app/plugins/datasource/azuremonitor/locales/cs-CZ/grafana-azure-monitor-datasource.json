@@ -52,6 +52,7 @@
       "button-use-query": "Použít tento dotaz",
       "label-categories": "Kategorie",
       "label-query-results": "Výsledky dotazu: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Všechny kategorie",
       "placeholder-search-logs": "Hledat dotazy protokolů",
       "text-loading": "Načítání…"
@@ -161,6 +162,8 @@
       "tooltip-limit": "Omezte počet vrácených řádků (výchozí hodnota je 1 000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Dotazy na základní protokoly jsou zpoplatněny na základě množství naskenovaných dat.",
       "label-logs": "Protokoly",
       "title-basic-logs-queries": "Dotazy na základní protokoly",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Tlačítko Spustit dotaz protokolů Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Spustit dotaz",
       "button-run-query": "Spustit dotaz",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Služba",
       "placeholder-service": "Služba…",
       "title-switch-mode": "Přepnout režim editoru?"
@@ -223,7 +233,7 @@
       "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Rozsah"
     },
     "search": {
       "aria-label-resource-search": "Vyhledávání zdrojů",

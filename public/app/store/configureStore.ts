@@ -2,7 +2,7 @@ import { configureStore as reduxConfigureStore, createListenerMiddleware } from 
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
-import { alertingAPIv0alpha1 } from '@grafana/alerting/unstable';
+import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/unstable';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
@@ -43,7 +43,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
         listenerMiddleware.middleware,
         alertingApi.middleware,
-        alertingAPIv0alpha1.middleware,
+        alertingPackageAPI.middleware,
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,

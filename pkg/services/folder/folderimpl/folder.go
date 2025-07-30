@@ -112,37 +112,35 @@ func ProvideService(
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		k8sHandler := client.NewK8sHandler(
-			dual,
-			request.GetNamespaceMapper(cfg),
-			folderv1.FolderResourceInfo.GroupVersionResource(),
-			restConfig.GetRestConfig,
-			dashboardStore,
-			userService,
-			resourceClient,
-			sorter,
-		)
+	k8sHandler := client.NewK8sHandler(
+		dual,
+		request.GetNamespaceMapper(cfg),
+		folderv1.FolderResourceInfo.GroupVersionResource(),
+		restConfig.GetRestConfig,
+		dashboardStore,
+		userService,
+		resourceClient,
+		sorter,
+		features,
+	)
 
-		unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
+	unifiedStore := ProvideUnifiedStore(k8sHandler, userService, tracer)
 
-		srv.unifiedStore = unifiedStore
-		srv.k8sclient = k8sHandler
-	}
+	srv.unifiedStore = unifiedStore
+	srv.k8sclient = k8sHandler
 
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		dashHandler := client.NewK8sHandler(
-			dual,
-			request.GetNamespaceMapper(cfg),
-			dashboardv1.DashboardResourceInfo.GroupVersionResource(),
-			restConfig.GetRestConfig,
-			dashboardStore,
-			userService,
-			resourceClient,
-			sorter,
-		)
-		srv.dashboardK8sClient = dashHandler
-	}
+	dashHandler := client.NewK8sHandler(
+		dual,
+		request.GetNamespaceMapper(cfg),
+		dashboardv1.DashboardResourceInfo.GroupVersionResource(),
+		restConfig.GetRestConfig,
+		dashboardStore,
+		userService,
+		resourceClient,
+		sorter,
+		features,
+	)
+	srv.dashboardK8sClient = dashHandler
 
 	return srv
 }
@@ -199,32 +197,22 @@ func (s *Service) DBMigration(db db.DB) {
 func (s *Service) CountFoldersInOrg(ctx context.Context, orgID int64) (int64, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.CountFoldersInOrg")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.unifiedStore.CountInOrg(ctx, orgID)
-	}
-
-	return s.store.CountInOrg(ctx, orgID)
+	return s.unifiedStore.CountInOrg(ctx, orgID)
 }
 
 func (s *Service) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (model.HitList, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.SearchFolders")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		// TODO:
-		// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
-		// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
-		return s.searchFoldersFromApiServer(ctx, q)
-	}
-	return nil, fmt.Errorf("cannot be called on the legacy folder service")
+	// TODO:
+	// - implement filtering by alerting folders and k6 folders (see the dashboards store `FindDashboards` method for reference)
+	// - implement fallback on search client in unistore to go to legacy store (will need to read from dashboard store)
+	return s.searchFoldersFromApiServer(ctx, q)
 }
 
 func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetFolders")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.getFoldersFromApiServer(ctx, q)
-	}
-	return s.GetFoldersLegacy(ctx, q)
+	return s.getFoldersFromApiServer(ctx, q)
 }
 
 func (s *Service) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -284,10 +272,7 @@ func (s *Service) GetFoldersLegacy(ctx context.Context, q folder.GetFoldersQuery
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.Get")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.getFromApiServer(ctx, q)
-	}
-	return s.GetLegacy(ctx, q)
+	return s.getFromApiServer(ctx, q)
 }
 
 func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
@@ -375,10 +360,7 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetChildren")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.getChildrenFromApiServer(ctx, q)
-	}
-	return s.GetChildrenLegacy(ctx, q)
+	return s.getChildrenFromApiServer(ctx, q)
 }
 
 func (s *Service) GetChildrenLegacy(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
@@ -658,10 +640,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetParents")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.getParentsFromApiServer(ctx, q)
-	}
-	return s.GetParentsLegacy(ctx, q)
+	return s.getParentsFromApiServer(ctx, q)
 }
 
 func (s *Service) GetParentsLegacy(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -676,15 +655,8 @@ func (s *Service) GetParentsLegacy(ctx context.Context, q folder.GetParentsQuery
 	return s.store.GetParents(ctx, q)
 }
 
-func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
-}
-
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.createOnApiServer(ctx, cmd)
-	}
-	return s.CreateLegacy(ctx, cmd)
+	return s.createOnApiServer(ctx, cmd)
 }
 
 func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -802,10 +774,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.Update")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.updateOnApiServer(ctx, cmd)
-	}
-	return s.UpdateLegacy(ctx, cmd)
+	return s.updateOnApiServer(ctx, cmd)
 }
 
 func (s *Service) UpdateLegacy(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
@@ -945,10 +914,7 @@ func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int6
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	ctx, span := s.tracer.Start(ctx, "folder.Delete")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.deleteFromApiServer(ctx, cmd)
-	}
-	return s.DeleteLegacy(ctx, cmd)
+	return s.deleteFromApiServer(ctx, cmd)
 }
 
 func (s *Service) DeleteLegacy(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
@@ -1069,10 +1035,7 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.Move")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.moveOnApiServer(ctx, cmd)
-	}
-	return s.MoveLegacy(ctx, cmd)
+	return s.moveOnApiServer(ctx, cmd)
 }
 
 func (s *Service) MoveLegacy(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
@@ -1298,11 +1261,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.GetDescendantCounts")
 	defer span.End()
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		return s.getDescendantCountsFromApiServer(ctx, q)
-	}
-
-	return s.GetDescendantCountsLegacy(ctx, q)
+	return s.getDescendantCountsFromApiServer(ctx, q)
 }
 
 func (s *Service) GetDescendantCountsLegacy(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {

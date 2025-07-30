@@ -200,7 +200,7 @@ describe('createSpanLinkFactory', () => {
             datasource: 'loki1_uid',
             queries: [
               {
-                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | label_format log_line_contains_trace_id=`{{ contains "7946b05c2e2e4e5a" __line__  }}` | log_line_contains_trace_id="true" OR trace_id="7946b05c2e2e4e5a" | label_format log_line_contains_span_id=`{{ contains "6605c7b08e715d6c" __line__  }}` | log_line_contains_span_id="true" OR span_id="6605c7b08e715d6c"',
+                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | label_format log_line_contains_trace_id=`{{ contains "7946b05c2e2e4e5a" __line__  }}` | log_line_contains_trace_id="true" or trace_id="7946b05c2e2e4e5a" | label_format log_line_contains_span_id=`{{ contains "6605c7b08e715d6c" __line__  }}` | log_line_contains_span_id="true" or span_id="6605c7b08e715d6c"',
                 refId: '',
               },
             ],
@@ -1513,6 +1513,91 @@ describe('createSpanLinkFactory', () => {
       expect(links).toBeDefined();
       expect(links![0].type).toBe(SpanLinkType.Profiles);
       expect(decodeURIComponent(links![0].href)).toContain('spanName=\\"operation\\"');
+    });
+  });
+
+  describe('should return victorialogs link', () => {
+    const victoriaLogsUID = 'victoriaLogsUID';
+
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return {
+            uid: victoriaLogsUID,
+            name: 'VictoriaLogs',
+            type: 'victoriametrics-logs-datasource',
+          } as unknown as DataSourceInstanceSettings;
+        },
+      } as unknown as DataSourceSrv);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('with default keys when tags not configured', () => {
+      const createLink = setupSpanLinkFactory({}, victoriaLogsUID);
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"victoriaLogsUID","queries":[{"expr":"cluster:=\\"cluster1\\" AND hostname:=\\"hostname1\\" AND service_namespace:=\\"namespace1\\"","refId":""}]}'
+        )}`
+      );
+    });
+
+    it('formats query correctly if filterByTraceID and filterBySpanID is true', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          datasourceUid: victoriaLogsUID,
+          filterByTraceID: true,
+          filterBySpanID: true,
+        },
+        victoriaLogsUID
+      );
+
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"victoriaLogsUID","queries":[{"expr":"span_id:=\\"6605c7b08e715d6c\\" AND trace_id:=\\"7946b05c2e2e4e5a\\" AND cluster:=\\"cluster1\\" AND hostname:=\\"hostname1\\" AND service_namespace:=\\"namespace1\\"","refId":""}]}'
+        )}`
+      );
+    });
+
+    it('should format multiple tags correctly', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [{ key: 'ip' }, { key: 'hostname' }],
+        },
+        victoriaLogsUID
+      );
+
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'hostname', value: 'hostname1' },
+              { key: 'ip', value: '192.168.0.1' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"victoriaLogsUID","queries":[{"expr":"hostname:=\\"hostname1\\" AND ip:=\\"192.168.0.1\\"","refId":""}]}'
+        )}`
+      );
     });
   });
 });

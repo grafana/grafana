@@ -23,6 +23,13 @@ import { LogLineDetails, Props } from './LogLineDetails';
 import { LogListContext, LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
@@ -40,6 +47,7 @@ const setup = (
 
   const props: Props = {
     containerElement: document.createElement('div'),
+    focusLogLine: jest.fn(),
     logs,
     onResize: jest.fn(),
     ...(propOverrides || {}),
@@ -198,8 +206,8 @@ describe('LogLineDetails', () => {
       setup(undefined, { entry: '' });
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
       expect(screen.queryByText('Links')).not.toBeInTheDocument();
-      expect(screen.queryByText('Indexed labels')).not.toBeInTheDocument();
-      expect(screen.queryByText('Parsed fields')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Indexed label/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Parsed field/)).not.toBeInTheDocument();
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
     });
   });
@@ -400,8 +408,8 @@ describe('LogLineDetails', () => {
       expect(screen.getByText('value2')).toBeInTheDocument();
       expect(screen.getByText('label3')).toBeInTheDocument();
       expect(screen.getByText('value3')).toBeInTheDocument();
-      expect(screen.getByText('Indexed labels')).toBeInTheDocument();
-      expect(screen.getByText('Parsed fields')).toBeInTheDocument();
+      expect(screen.getByText(/Indexed label/)).toBeInTheDocument();
+      expect(screen.getByText(/Parsed field/)).toBeInTheDocument();
       expect(screen.getByText('Structured metadata')).toBeInTheDocument();
     });
     test('should not show label types if they are unavailable or not supported', () => {
@@ -427,8 +435,8 @@ describe('LogLineDetails', () => {
       expect(screen.getByText('value3')).toBeInTheDocument();
 
       expect(screen.getByText('Fields')).toBeInTheDocument();
-      expect(screen.queryByText('Indexed labels')).not.toBeInTheDocument();
-      expect(screen.queryByText('Parsed fields')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Indexed label/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Parsed field/)).not.toBeInTheDocument();
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
     });
 
@@ -455,6 +463,147 @@ describe('LogLineDetails', () => {
       await userEvent.type(input, 'something else');
 
       expect(screen.getAllByText('No results to display.')).toHaveLength(3);
+    });
+  });
+
+  describe('Label types', () => {
+    test('Does not show displayed fields controls if not present', () => {
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.queryByText('Displayed fields')).not.toBeInTheDocument();
+    });
+
+    test('Does not show displayed fields controls if required props are not present', () => {
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } }, { displayedFields: ['key1', 'key2'] });
+      expect(screen.queryByText('Displayed fields')).not.toBeInTheDocument();
+    });
+
+    test('Shows displayed fields controls if required props are present', async () => {
+      const setDisplayedFields = jest.fn();
+      const onClickHideField = jest.fn();
+      setup(
+        undefined,
+        { labels: { key1: 'label1', key2: 'label2' } },
+        { displayedFields: ['key1', 'key2'], setDisplayedFields, onClickHideField }
+      );
+
+      expect(screen.getByText('Organize displayed fields')).toBeInTheDocument();
+      expect(screen.queryAllByLabelText('Remove field')).toHaveLength(0);
+
+      await userEvent.click(screen.getByText('Organize displayed fields'));
+
+      expect(screen.getAllByLabelText('Remove field')).toHaveLength(2);
+
+      await userEvent.click(screen.getAllByLabelText('Remove field')[0]);
+
+      expect(onClickHideField).toHaveBeenCalledWith('key1');
+    });
+
+    test('Exposes buttons to reorder displayed fields', async () => {
+      const setDisplayedFields = jest.fn();
+      const onClickHideField = jest.fn();
+      setup(
+        undefined,
+        { labels: { key1: 'label1', key2: 'label2' } },
+        { displayedFields: ['key1', 'key2', 'key3'], setDisplayedFields, onClickHideField }
+      );
+
+      await userEvent.click(screen.getByText('Organize displayed fields'));
+
+      expect(screen.getAllByLabelText('Remove field')).toHaveLength(3);
+      expect(screen.getAllByLabelText('Move down')).toHaveLength(3);
+      expect(screen.getAllByLabelText('Move up')).toHaveLength(3);
+
+      await userEvent.click(screen.getAllByLabelText('Move down')[0]);
+
+      expect(setDisplayedFields).toHaveBeenCalledWith(['key2', 'key1', 'key3']);
+
+      await userEvent.click(screen.getAllByLabelText('Move up')[2]);
+
+      expect(setDisplayedFields).toHaveBeenCalledWith(['key1', 'key3', 'key2']);
+    });
+  });
+
+  describe('Multiple log details', () => {
+    test('Does not render tabs when displaying a single log', () => {
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.queryAllByRole('tab')).toHaveLength(0);
+    });
+
+    test('Renders multiple log details', async () => {
+      const logs = [
+        createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
+        createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
+      ];
+      setup({ logs }, undefined, { showDetails: logs });
+
+      expect(screen.queryAllByRole('tab')).toHaveLength(2);
+
+      await userEvent.click(screen.getByText('Log line'));
+
+      expect(screen.getAllByText('First log')).toHaveLength(1);
+      expect(screen.getAllByText('Second log')).toHaveLength(2);
+
+      await userEvent.click(screen.queryAllByRole('tab')[0]);
+
+      expect(screen.getAllByText('First log')).toHaveLength(2);
+      expect(screen.getAllByText('Second log')).toHaveLength(1);
+    });
+
+    test('Changes details focus when logs are added and removed', async () => {
+      const logs = [
+        createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
+        createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
+      ];
+
+      const props: Props = {
+        containerElement: document.createElement('div'),
+        focusLogLine: jest.fn(),
+        logs: [logs[0]],
+        onResize: jest.fn(),
+      };
+
+      const contextData: LogListContextData = {
+        ...defaultValue,
+        showDetails: [logs[0]],
+      };
+
+      const { rerender } = render(
+        <LogListContext.Provider value={contextData}>
+          <LogLineDetails {...props} />
+        </LogListContext.Provider>
+      );
+
+      expect(screen.queryAllByRole('tab')).toHaveLength(0);
+
+      await userEvent.click(screen.getByText('Log line'));
+      // Tab not displayed, only line body
+      expect(screen.getAllByText('First log')).toHaveLength(1);
+
+      contextData.showDetails = logs;
+      props.logs = logs;
+
+      rerender(
+        <LogListContext.Provider value={contextData}>
+          <LogLineDetails {...props} />
+        </LogListContext.Provider>
+      );
+
+      expect(screen.queryAllByRole('tab')).toHaveLength(2);
+      // Tab and log line body
+      expect(screen.getAllByText('Second log')).toHaveLength(2);
+
+      contextData.showDetails = [logs[1]];
+      props.logs = [logs[1]];
+
+      rerender(
+        <LogListContext.Provider value={contextData}>
+          <LogLineDetails {...props} />
+        </LogListContext.Provider>
+      );
+
+      expect(screen.queryAllByRole('tab')).toHaveLength(0);
+      // Tab not displayed, only line body
+      expect(screen.getAllByText('Second log')).toHaveLength(1);
     });
   });
 });

@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';

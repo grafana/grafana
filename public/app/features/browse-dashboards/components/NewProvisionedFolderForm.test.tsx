@@ -6,8 +6,8 @@ import { getAppEvents } from '@grafana/runtime';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { FolderDTO } from 'app/types/folders';
 
-import { FolderDTO } from '../../../types';
 import { ProvisionedFolderFormDataResult, useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
@@ -37,6 +37,13 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
 jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   return {
     useCreateRepositoryFilesWithPathMutation: jest.fn(),
+    provisioningAPIv0alpha1: {
+      endpoints: {
+        listRepository: {
+          select: jest.fn().mockReturnValue(() => ({ data: { items: [] } })),
+        },
+      },
+    },
   };
 });
 
@@ -139,7 +146,6 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     { label: 'Commit directly', value: 'write' },
     { label: 'Create a branch', value: 'branch' },
   ],
-  isGitHub: true,
   initialValues: {
     title: '',
     comment: '',
@@ -161,7 +167,7 @@ describe('NewProvisionedFolderForm', () => {
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
     // Mock usePullRequestParam
-    (usePullRequestParam as jest.Mock).mockReturnValue(null);
+    (usePullRequestParam as jest.Mock).mockReturnValue({});
 
     // Mock useCreateRepositoryFilesWithPathMutation
     const mockCreate = jest.fn();
@@ -409,7 +415,7 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show PR link when PR URL is available', () => {
-    (usePullRequestParam as jest.Mock).mockReturnValue('https://github.com/grafana/grafana/pull/1234');
+    (usePullRequestParam as jest.Mock).mockReturnValue({ prURL: 'https://github.com/grafana/grafana/pull/1234' });
 
     setup();
 

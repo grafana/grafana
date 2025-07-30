@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,6 +83,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
+	err = featuremgmt.InitOpenFeatureWithCfg(cfg)
+	require.NoError(t, err)
 	env, err := server.InitializeForTest(t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 

@@ -31,7 +31,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardMeta, KioskMode, SaveDashboardResponseDTO, DashboardDTO } from 'app/types/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
@@ -383,13 +383,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    let versionRsp;
-    if (config.featureToggles.kubernetesClientDashboardsFolders) {
-      // the id here is the resource version in k8s, use this instead to get the specific version
-      versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
-    } else {
-      versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
-    }
+    // the id here is the resource version in k8s, use this instead to get the specific version
+    let versionRsp = await historySrv.restoreDashboard(version.uid, version.id);
 
     if (!Number.isInteger(versionRsp.version)) {
       return false;

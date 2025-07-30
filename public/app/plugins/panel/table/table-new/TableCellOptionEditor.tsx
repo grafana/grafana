@@ -91,6 +91,7 @@ let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
   { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
+  { value: { type: TableCellDisplayMode.Pill }, label: 'Pill' },
 ];
 
 const getStyles = (theme: GrafanaTheme2) => ({

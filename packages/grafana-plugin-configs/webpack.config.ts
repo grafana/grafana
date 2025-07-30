@@ -2,15 +2,14 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
-// @ts-expect-error - there are no types for this package
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
-import { type Configuration, BannerPlugin } from 'webpack';
+import webpack, { type Configuration } from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 
-import { DIST_DIR } from './constants';
-import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
+import { DIST_DIR } from './constants.ts';
+import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.ts';
 
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {
@@ -32,7 +31,7 @@ function skipFiles(f: string): boolean {
   return true;
 }
 
-type Env = {
+export type Env = {
   [key: string]: true | string | Env;
 };
 
@@ -54,9 +53,13 @@ const config = async (env: Env): Promise<Configuration> => {
     cache: {
       type: 'filesystem',
       buildDependencies: {
-        config: [__filename],
+        config: [import.meta.filename],
       },
-      cacheDirectory: path.resolve(__dirname, '../../node_modules/.cache/webpack', path.basename(process.cwd())),
+      cacheDirectory: path.resolve(
+        import.meta.dirname,
+        '../../node_modules/.cache/webpack',
+        path.basename(process.cwd())
+      ),
     },
 
     context: process.cwd(),
@@ -114,7 +117,7 @@ const config = async (env: Env): Promise<Configuration> => {
           test: /module\.tsx?$/,
           use: [
             {
-              loader: require.resolve('imports-loader'),
+              loader: 'imports-loader',
               options: {
                 imports: `side-effects grafana-public-path`,
               },
@@ -125,10 +128,10 @@ const config = async (env: Env): Promise<Configuration> => {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            loader: require.resolve('swc-loader'),
+            loader: 'swc-loader',
             options: {
               jsc: {
-                baseUrl: path.resolve(__dirname),
+                baseUrl: path.resolve(import.meta.dirname),
                 target: 'es2015',
                 loose: false,
                 parser: {
@@ -209,7 +212,7 @@ const config = async (env: Env): Promise<Configuration> => {
     plugins: [
       virtualPublicPath,
       // Insert create plugin version information into the bundle so Grafana will load from cdn with script tags.
-      new BannerPlugin({
+      new webpack.BannerPlugin({
         banner: '/* [create-plugin] version: 5.22.0 */',
         raw: true,
         entryOnly: true,
@@ -264,7 +267,7 @@ const config = async (env: Env): Promise<Configuration> => {
               extensions: ['.ts', '.tsx'],
               lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
               cacheLocation: path.resolve(
-                __dirname,
+                import.meta.dirname,
                 '../../node_modules/.cache/eslint-webpack-plugin',
                 path.basename(process.cwd()),
                 '.eslintcache'

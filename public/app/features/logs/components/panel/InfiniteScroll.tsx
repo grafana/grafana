@@ -154,6 +154,7 @@ export const InfiniteScroll = ({
           displayedFields={displayedFields}
           index={index}
           log={logs[index]}
+          logs={logs}
           onClick={onClick}
           showTime={showTime}
           style={style}
