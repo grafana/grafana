@@ -25,7 +25,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-drone
@@ -75,7 +75,7 @@ steps:
   - go install github.com/bazelbuild/buildtools/buildifier@latest
   - buildifier --lint=warn -mode=check -r .
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: lint-starlark
 trigger:
   event:
@@ -140,7 +140,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -150,7 +150,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -159,7 +159,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-jsonnet
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -210,7 +210,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-package
   pull: always
   volumes:
@@ -472,7 +472,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-cue
 trigger:
   event:
@@ -542,7 +542,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-cue
 trigger:
   branch: main
@@ -609,7 +609,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -619,7 +619,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -628,7 +628,7 @@ steps:
   - apk add --update make
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: verify-gen-jsonnet
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -678,7 +678,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-package
   pull: always
   volumes:
@@ -1156,7 +1156,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -1286,7 +1286,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -1427,7 +1427,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --artifacts-editions=oss --tag $${DRONE_TAG} --src-bucket
@@ -1519,7 +1519,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - yarn install --immutable || yarn install --immutable
@@ -1619,7 +1619,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -1716,7 +1716,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: compile-build-cmd
 - commands:
   - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
@@ -1790,7 +1790,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -1867,7 +1867,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -1986,7 +1986,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -2036,264 +2036,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: rgm-nightly-build
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
-    | tar zx -C /bin
-  - apk add docker
-  - export GRAFANA_DIR=$$(pwd)
-  - export GITHUB_TOKEN=$(cat /github-app/token)
-  - ./pkg/build/daggerbuild/scripts/drone_build_nightly_grafana.sh
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-    ALPINE_BASE: alpine:3.21.3
-    CDN_DESTINATION:
-      from_secret: rgm_cdn_destination
-    DESTINATION:
-      from_secret: destination
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOWNLOADS_DESTINATION:
-      from_secret: rgm_downloads_destination
-    GCOM_API_KEY:
-      from_secret: grafana_api_key
-    GCP_KEY_BASE64:
-      from_secret: gcp_key_base64
-    GPG_PASSPHRASE:
-      from_secret: packages_gpg_passphrase
-    GPG_PRIVATE_KEY:
-      from_secret: packages_gpg_private_key
-    GPG_PUBLIC_KEY:
-      from_secret: packages_gpg_public_key
-    NPM_TOKEN:
-      from_secret: npm_token
-    STORYBOOK_DESTINATION:
-      from_secret: rgm_storybook_destination
-    UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
-  name: rgm-build
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: github-app
-    path: /github-app
-- commands:
-  - mkdir -p $${DESTINATION}/$${DRONE_BUILD_EVENT}
-  - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp -r $${DRONE_WORKSPACE}/dist/* $${DESTINATION}/$${DRONE_BUILD_EVENT}
-  depends_on:
-  - rgm-build
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-    CDN_DESTINATION:
-      from_secret: rgm_cdn_destination
-    DESTINATION:
-      from_secret: destination
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOWNLOADS_DESTINATION:
-      from_secret: rgm_downloads_destination
-    GCOM_API_KEY:
-      from_secret: grafana_api_key
-    GCP_KEY_BASE64:
-      from_secret: gcp_key_base64
-    GPG_PASSPHRASE:
-      from_secret: packages_gpg_passphrase
-    GPG_PRIVATE_KEY:
-      from_secret: packages_gpg_private_key
-    GPG_PUBLIC_KEY:
-      from_secret: packages_gpg_public_key
-    NPM_TOKEN:
-      from_secret: npm_token
-    STORYBOOK_DESTINATION:
-      from_secret: rgm_storybook_destination
-  image: google/cloud-sdk:alpine
-  name: rgm-copy
-trigger:
-  cron:
-    include:
-    - nightly-release
-  event:
-    include:
-    - cron
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- rgm-nightly-build
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: rgm-nightly-publish
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - mkdir -p $${DRONE_WORKSPACE}/dist
-  - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp -r $${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*
-    $${DRONE_WORKSPACE}/dist
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-    CDN_DESTINATION:
-      from_secret: rgm_cdn_destination
-    DESTINATION:
-      from_secret: destination
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOWNLOADS_DESTINATION:
-      from_secret: rgm_downloads_destination
-    GCOM_API_KEY:
-      from_secret: grafana_api_key
-    GCP_KEY_BASE64:
-      from_secret: gcp_key_base64
-    GPG_PASSPHRASE:
-      from_secret: packages_gpg_passphrase
-    GPG_PRIVATE_KEY:
-      from_secret: packages_gpg_private_key
-    GPG_PUBLIC_KEY:
-      from_secret: packages_gpg_public_key
-    NPM_TOKEN:
-      from_secret: npm_token
-    STORYBOOK_DESTINATION:
-      from_secret: rgm_storybook_destination
-  image: google/cloud-sdk:alpine
-  name: rgm-copy
-- commands:
-  - wget -qO- https://github.com/dagger/dagger/releases/download/v0.18.8/dagger_v0.18.8_linux_amd64.tar.gz
-    | tar zx -C /bin
-  - apk add docker
-  - export GRAFANA_DIR=$$(pwd)
-  - export GITHUB_TOKEN=$(cat /github-app/token)
-  - ./pkg/build/daggerbuild/scripts/drone_publish_nightly_grafana.sh
-  depends_on:
-  - rgm-copy
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-    ALPINE_BASE: alpine:3.21.3
-    CDN_DESTINATION:
-      from_secret: rgm_cdn_destination
-    DESTINATION:
-      from_secret: destination
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USERNAME:
-      from_secret: docker_username
-    DOWNLOADS_DESTINATION:
-      from_secret: rgm_downloads_destination
-    GCOM_API_KEY:
-      from_secret: grafana_api_key
-    GCP_KEY_BASE64:
-      from_secret: gcp_key_base64
-    GPG_PASSPHRASE:
-      from_secret: packages_gpg_passphrase
-    GPG_PRIVATE_KEY:
-      from_secret: packages_gpg_private_key
-    GPG_PUBLIC_KEY:
-      from_secret: packages_gpg_public_key
-    NPM_TOKEN:
-      from_secret: npm_token
-    STORYBOOK_DESTINATION:
-      from_secret: rgm_storybook_destination
-    UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
-  name: rgm-publish
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: github-app
-    path: /github-app
-- depends_on:
-  - rgm-publish
-  image: us.gcr.io/kubernetes-dev/package-publish:latest
-  name: publish-deb
-  privileged: true
-  settings:
-    access_key_id:
-      from_secret: packages_access_key_id
-    gpg_passphrase:
-      from_secret: packages_gpg_passphrase
-    gpg_private_key:
-      from_secret: packages_gpg_private_key
-    gpg_public_key:
-      from_secret: packages_gpg_public_key
-    package_path: file:///drone/src/dist/*.deb
-    secret_access_key:
-      from_secret: packages_secret_access_key
-    service_account_json:
-      from_secret: packages_service_account
-    target_bucket: grafana-packages
-- depends_on:
-  - rgm-publish
-  image: us.gcr.io/kubernetes-dev/package-publish:latest
-  name: publish-rpm
-  privileged: true
-  settings:
-    access_key_id:
-      from_secret: packages_access_key_id
-    gpg_passphrase:
-      from_secret: packages_gpg_passphrase
-    gpg_private_key:
-      from_secret: packages_gpg_private_key
-    gpg_public_key:
-      from_secret: packages_gpg_public_key
-    package_path: file:///drone/src/dist/*.rpm
-    secret_access_key:
-      from_secret: packages_secret_access_key
-    service_account_json:
-      from_secret: packages_service_account
-    target_bucket: grafana-packages
-trigger:
-  cron:
-    include:
-    - nightly-release
-  event:
-    include:
-    - cron
 type: docker
 volumes:
 - host:
@@ -2369,7 +2111,7 @@ steps:
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
     UBUNTU_BASE: ubuntu:22.04
-  image: golang:1.24.4-alpine
+  image: golang:1.24.5-alpine
   name: rgm-build
   pull: always
   volumes:
@@ -2424,367 +2166,6 @@ volumes:
 - name: github-app
   path: /github-app
 - name: github-app
-  temp: {}
----
-clone:
-  retries: 3
-kind: pipeline
-name: scan-grafana/grafana:latest-image
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
-  environment:
-    GCR_CREDENTIALS:
-      from_secret: gcr_credentials
-  image: docker:dind
-  name: authenticate-gcr
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
-  depends_on:
-  - authenticate-gcr
-  image: aquasec/trivy:0.21.0
-  name: scan-unknown-low-medium-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
-  depends_on:
-  - authenticate-gcr
-  environment:
-    GOOGLE_APPLICATION_CREDENTIALS:
-      from_secret: gcr_credentials_json
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- image: plugins/slack
-  name: slack-notify-failure
-  settings:
-    channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for grafana/grafana:latest failed: {{build.link}}'
-    webhook:
-      from_secret: slack_webhook_backend
-  when:
-    status: failure
-trigger:
-  cron: nightly
-  event: cron
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: config
-  temp: {}
----
-clone:
-  retries: 3
-kind: pipeline
-name: scan-grafana/grafana:main-image
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
-  environment:
-    GCR_CREDENTIALS:
-      from_secret: gcr_credentials
-  image: docker:dind
-  name: authenticate-gcr
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
-  depends_on:
-  - authenticate-gcr
-  image: aquasec/trivy:0.21.0
-  name: scan-unknown-low-medium-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
-  depends_on:
-  - authenticate-gcr
-  environment:
-    GOOGLE_APPLICATION_CREDENTIALS:
-      from_secret: gcr_credentials_json
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- image: plugins/slack
-  name: slack-notify-failure
-  settings:
-    channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for grafana/grafana:main failed: {{build.link}}'
-    webhook:
-      from_secret: slack_webhook_backend
-  when:
-    status: failure
-trigger:
-  cron: nightly
-  event: cron
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: config
-  temp: {}
----
-clone:
-  retries: 3
-kind: pipeline
-name: scan-grafana/grafana:latest-ubuntu-image
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
-  environment:
-    GCR_CREDENTIALS:
-      from_secret: gcr_credentials
-  image: docker:dind
-  name: authenticate-gcr
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
-  depends_on:
-  - authenticate-gcr
-  image: aquasec/trivy:0.21.0
-  name: scan-unknown-low-medium-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
-  depends_on:
-  - authenticate-gcr
-  environment:
-    GOOGLE_APPLICATION_CREDENTIALS:
-      from_secret: gcr_credentials_json
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- image: plugins/slack
-  name: slack-notify-failure
-  settings:
-    channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for grafana/grafana:latest-ubuntu failed:
-      {{build.link}}'
-    webhook:
-      from_secret: slack_webhook_backend
-  when:
-    status: failure
-trigger:
-  cron: nightly
-  event: cron
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: config
-  temp: {}
----
-clone:
-  retries: 3
-kind: pipeline
-name: scan-grafana/grafana:main-ubuntu-image
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
-  environment:
-    GCR_CREDENTIALS:
-      from_secret: gcr_credentials
-  image: docker:dind
-  name: authenticate-gcr
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
-  depends_on:
-  - authenticate-gcr
-  image: aquasec/trivy:0.21.0
-  name: scan-unknown-low-medium-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
-  depends_on:
-  - authenticate-gcr
-  environment:
-    GOOGLE_APPLICATION_CREDENTIALS:
-      from_secret: gcr_credentials_json
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- image: plugins/slack
-  name: slack-notify-failure
-  settings:
-    channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for grafana/grafana:main-ubuntu failed:
-      {{build.link}}'
-    webhook:
-      from_secret: slack_webhook_backend
-  when:
-    status: failure
-trigger:
-  cron: nightly
-  event: cron
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: config
-  temp: {}
----
-clone:
-  retries: 3
-kind: pipeline
-name: scan-build-test-and-publish-docker-images
-platform:
-  arch: amd64
-  os: linux
-steps:
-- commands:
-  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
-  environment:
-    GCR_CREDENTIALS:
-      from_secret: gcr_credentials
-  image: docker:dind
-  name: authenticate-gcr
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM docker:27-cli
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.24.4-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22.16.0-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:22-bookworm
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.21.3
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ubuntu:22.04
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/package-publish:latest
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:latest
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:14.3.2
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
-  depends_on:
-  - authenticate-gcr
-  image: aquasec/trivy:0.21.0
-  name: scan-unknown-low-medium-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL docker:27-cli
-  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
-  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.24.4-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL node:22.16.0-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL node:22-bookworm
-  - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
-  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.21.3
-  - trivy --exit-code 1 --severity HIGH,CRITICAL ubuntu:22.04
-  - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
-  - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
-  - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/package-publish:latest
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:latest
-  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:14.3.2
-  - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
-  - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
-  depends_on:
-  - authenticate-gcr
-  environment:
-    GOOGLE_APPLICATION_CREDENTIALS:
-      from_secret: gcr_credentials_json
-  image: aquasec/trivy:0.21.0
-  name: scan-high-critical-vulnerabilities
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  - name: config
-    path: /root/.docker/
-- image: plugins/slack
-  name: slack-notify-failure
-  settings:
-    channel: grafana-backend-ops
-    template: 'Nightly docker image scan job for build-images failed: {{build.link}}'
-    webhook:
-      from_secret: slack_webhook_backend
-  when:
-    status: failure
-trigger:
-  cron: nightly
-  event: cron
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
-- name: config
   temp: {}
 ---
 get:
@@ -2986,6 +2367,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 70e5888d6be34ca57086672bc58d6de7de0029210e4485190571452972774e54
+hmac: bfbdbe4aeedbcdc8778dd67abdfe94a75a20bdb314d1c53418cf2c2ea7a9f0c9
 
 ...

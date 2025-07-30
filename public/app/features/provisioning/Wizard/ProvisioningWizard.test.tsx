@@ -38,6 +38,10 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useCreateRepositoryJobsMutation: jest.fn(),
 }));
 
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  PAGE_SIZE: 20,
+}));
+
 const mockUseCreateOrUpdateRepository = useCreateOrUpdateRepository as jest.MockedFunction<
   typeof useCreateOrUpdateRepository
 >;
@@ -115,27 +119,23 @@ describe('ProvisioningWizard', () => {
       isLoading: false,
       error: null,
       refetch: jest.fn(),
-    } as ReturnType<typeof useGetFrontendSettingsQuery>);
+    });
 
     mockUseGetRepositoryFilesQuery.mockReturnValue({
       data: [],
       isLoading: false,
       error: null,
       refetch: jest.fn(),
-    } as ReturnType<typeof useGetRepositoryFilesQuery>);
+    });
 
     mockUseGetResourceStatsQuery.mockReturnValue({
       data: {
-        dashboards: 0,
-        datasources: 0,
-        folders: 0,
-        libraryPanels: 0,
-        alertRules: 0,
+        instance: [],
       },
       isLoading: false,
       error: null,
       refetch: jest.fn(),
-    } as ReturnType<typeof useGetResourceStatsQuery>);
+    });
 
     const mockCreateJob = jest.fn();
     mockUseCreateRepositoryJobsMutation.mockReturnValue([
@@ -194,6 +194,14 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should progress through first 3 steps successfully', async () => {
+      mockUseGetResourceStatsQuery.mockReturnValue({
+        data: {
+          instance: [{ group: 'dashboard.grafana.app', count: 1 }],
+        },
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
@@ -217,6 +225,49 @@ describe('ProvisioningWizard', () => {
         expect(screen.getByRole('heading', { name: /3\. Synchronize with external storage/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Begin synchronization/i })).toBeInTheDocument();
       });
+    });
+
+    it('should skip sync step when there are no resources', async () => {
+      mockUseGetResourceStatsQuery.mockReturnValue({
+        data: {
+          instance: [], // No resources
+        },
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
+        data: {
+          items: [], // No files
+        },
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      } as ReturnType<typeof useGetRepositoryFilesQuery>);
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await fillConnectionForm(user, 'github', {
+        token: 'test-token',
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+        path: '/',
+      });
+
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
+      });
+
+      // Should show "Choose additional settings" button instead of "Synchronize with external storage"
+      expect(screen.getByRole('button', { name: /Choose additional settings/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Synchronize with external storage/i })).not.toBeInTheDocument();
+
+      // Verify that the sync step (step 3) would be skipped in the button text logic
+      const nextButton = screen.getByRole('button', { name: /Choose additional settings/i });
+      expect(nextButton).toBeInTheDocument();
     });
   });
 
@@ -355,7 +406,7 @@ describe('ProvisioningWizard', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/admin/provisioning');
     });
 
-    it('should handle cancel on subsequent steps with repository deletion', async () => {
+    it('should handle going back to previous step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       await fillConnectionForm(user, 'github', {
@@ -371,10 +422,10 @@ describe('ProvisioningWizard', () => {
         expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole('button', { name: /Cancel/i }));
+      await user.click(screen.getByRole('button', { name: /Previous/i }));
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/admin/provisioning');
+        expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
       });
     });
 
@@ -424,6 +475,16 @@ describe('ProvisioningWizard', () => {
     });
 
     it('should show button text changes based on current step', async () => {
+      // Mock resources to ensure sync step is not skipped
+      mockUseGetResourceStatsQuery.mockReturnValue({
+        data: {
+          instance: [{ group: 'dashboard.grafana.app', count: 1 }],
+        },
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeInTheDocument();

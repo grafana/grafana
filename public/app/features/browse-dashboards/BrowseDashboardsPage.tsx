@@ -93,11 +93,23 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   const folder = folderDTO ?? rootFolderDTO;
 
-  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
+  const {
+    canEditFolders,
+    canDeleteFolders,
+    canDeleteDashboards,
+    canEditDashboards,
+    canCreateDashboards,
+    canCreateFolders,
+  } = getFolderPermissions(folder);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
-  const canSelect = canEditFolders || canEditDashboards;
+  const permissions = {
+    canEditFolders,
+    canEditDashboards,
+    canDeleteFolders,
+    canDeleteDashboards,
+  };
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -183,14 +195,14 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             {({ width, height }) =>
               isSearching ? (
                 <SearchView
-                  canSelect={canSelect}
+                  permissions={permissions}
                   width={width}
                   height={height}
                   searchState={searchState}
                   searchStateManager={stateManager}
                 />
               ) : (
-                <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
+                <BrowseView permissions={permissions} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

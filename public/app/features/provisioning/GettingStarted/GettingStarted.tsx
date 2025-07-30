@@ -7,7 +7,8 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { Repository, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import provisioningSvg from 'img/provisioning/provisioning.svg';
+
+import provisioningSvg from '../img/provisioning.svg';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';

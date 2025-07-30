@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "12.1.0-pre",
+  "version": "12.2.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -53,11 +53,11 @@
     "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "dependencies": {
-    "@grafana/data": "12.1.0-pre",
-    "@grafana/e2e-selectors": "12.1.0-pre",
+    "@grafana/data": "12.2.0-pre",
+    "@grafana/e2e-selectors": "12.2.0-pre",
     "@grafana/faro-web-sdk": "^1.13.2",
-    "@grafana/schema": "12.1.0-pre",
-    "@grafana/ui": "12.1.0-pre",
+    "@grafana/schema": "12.2.0-pre",
+    "@grafana/ui": "12.2.0-pre",
     "@types/systemjs": "6.15.3",
     "history": "4.10.1",
     "lodash": "4.17.21",
@@ -71,7 +71,7 @@
     "@rollup/plugin-node-resolve": "16.0.1",
     "@rollup/plugin-terser": "0.4.4",
     "@testing-library/dom": "10.4.0",
-    "@testing-library/react": "16.2.0",
+    "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.14",

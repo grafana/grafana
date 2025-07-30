@@ -383,6 +383,7 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "AI Alert Rule Button failed to load",
+        "feedback-button": "AI Feedback Button failed to load",
         "improve-annotations-button": "AI Improve Annotations Button failed to load",
         "improve-labels-button": "AI Improve Labels Button failed to load",
         "template-button": "AI Template Button failed to load",
@@ -1547,11 +1548,11 @@
       "group-not-editable": "Selected group cannot be edited",
       "group-not-editable-description": "This group belongs to a data source that does not support editing.",
       "page-title": "Edit rule group",
-      "rule-group-error": "Error loading rule group",
-      "title": "Edit evaluation group"
+      "rule-group-error": "Error loading rule group"
     },
     "group-loader": {
-      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
+      "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
+      "no-rules": "No rules found in this group"
     },
     "group-status": {
       "content-the-group-is-being-deleted": "The group is being deleted"
@@ -1581,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
       "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
       "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
-      "synthetic-monitoring-card-title": "Synthetic Monitoring",
-      "title-alerting": "Alerting"
+      "synthetic-monitoring-card-title": "Synthetic Monitoring"
     },
     "import-to-gma": {
       "action-button": "Import",
@@ -2466,7 +2466,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
-      "draft-new-rule": "Draft a new rule",
       "ds-error": {
         "title": "Cannot load rules for this datasource"
       },
@@ -2492,6 +2491,7 @@
       "new-alert-rule": "New alert rule",
       "new-datasource-recording-rule": "New Data source recording rule",
       "new-grafana-recording-rule": "New Grafana recording rule",
+      "new-rule-for-export": "New alert rule for export",
       "pagination": {
         "next-page": "Show more…"
       },
@@ -2802,6 +2802,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Refresh preview",
+      "empty-state": "Add template content to see preview",
       "label-preview": "Preview",
       "refresh": "Refresh"
     },
@@ -3479,7 +3480,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
-      "bulk-delete-provisioned-resources-not-implemented": "Bulk delete for provisioned resources is not implemented yet.",
+      "bulk-move-provisioned-resources": "Bulk Move Provisioned Resources",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3511,6 +3512,35 @@
     },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
+    },
+    "bulk-action-resources-form": {
+      "all-deleted": "All resources have been deleted successfully",
+      "all-moved": "All resources have been moved successfully",
+      "button-done": "Done",
+      "failed-alert_one": "{{count}} items failed",
+      "failed-alert_other": "{{count}} items failed",
+      "progress-title": "Success"
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
+      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
+      "error-path-not-found": "Path not found"
+    },
+    "bulk-move-resources-form": {
+      "button-cancel": "Cancel",
+      "button-move": "Move",
+      "button-moving": "Moving...",
+      "deleting": "Deleting",
+      "error-file-content-not-found": "File content not found",
+      "error-path-not-found": "Path not found",
+      "error-target-folder-path-missing": "Target folder path is missing",
+      "error-title": "Target Folder Error",
+      "move-warning": "This will move selected folders and their descendants. In total, this will affect:",
+      "moving": "Moving",
+      "progress": "Progress: {{current}} of {{total}}",
+      "target-folder": "Target Folder"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
@@ -4547,6 +4577,11 @@
     },
     "edit-actions": {
       "add": "Add {{typeName}}",
+      "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "duplicate-panel": "Duplicate panel",
+      "edit-query-result-rule": "Change query result rule",
+      "edit-template-variable-rule": "Change template variable rule",
+      "edit-time-range-rule": "Change time range rule",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -4561,6 +4596,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "Element",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
@@ -5331,6 +5367,20 @@
       "tags-expected-array": "tags expected array",
       "tags-expected-strings": "tags expected array of strings"
     },
+    "variable": {
+      "description": {
+        "action": "Change variable description"
+      },
+      "hide": {
+        "action": "Change variable hide option"
+      },
+      "label": {
+        "action": "Change variable label"
+      },
+      "name": {
+        "action": "Change variable name"
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Restore to version {{version}}",
       "label-view-json-diff": "View JSON diff",
@@ -5770,7 +5820,6 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
-      "partial-failure-warning": "Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -6956,6 +7005,9 @@
         "pro-tip-define-sources-through-configuration-files": " ProTip: You can also define data sources through configuration files. "
       }
     },
+    "pane": {
+      "loading-placeholder": "Loading..."
+    },
     "prev": "Prev",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Go queryless"
@@ -7141,6 +7193,7 @@
           "start-time": "Start Time:"
         }
       },
+      "share-span": "Share",
       "warnings": "Warnings"
     },
     "span-filters": {
@@ -7221,18 +7274,24 @@
       "split-tooltip": "Split the pane",
       "split-widen": "Widen pane"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "Copy Trace ID",
-      "ariaLabel-export-trace": "Export Trace",
-      "give-feedback": "Give feedback",
-      "label-copied": "Copied!",
-      "label-export": "Export",
-      "label-trace-id": "Trace ID",
-      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Partial trace",
-      "tooltip-url": "{{url}} or {{target}} or {{path}}"
+      "duration": "Duration",
+      "export-started": "Export started",
+      "give-feedback": "Feedback",
+      "link-copied": "Link copied to clipboard",
+      "path": "Path",
+      "route": "Route",
+      "services": "Services",
+      "share": "Share",
+      "share-copy-link": "Copy link",
+      "share-export-json": "Export as JSON",
+      "share-tooltip": "Share trace",
+      "start-time": "Start time",
+      "target": "Target",
+      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana.",
+      "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
+      "trace-id": "Trace ID",
+      "url": "URL"
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Clear filters button",
@@ -7488,6 +7547,7 @@
     },
     "description-initial-view": "This location will show when the panel first loads.",
     "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
+    "description-no-repeat": "Prevent the map from repeating horizontally",
     "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
     "description-show-attribution": "Show the map source attribution info in the lower right",
     "description-show-debug": "Show map info",
@@ -7547,6 +7607,7 @@
     },
     "name-initial-view": "Initial view",
     "name-mouse-wheel-zoom": "Mouse wheel zoom",
+    "name-no-repeat": "No map repeating",
     "name-share-view": "Share view",
     "name-show-attribution": "Show attribution",
     "name-show-debug": "Show debug",
@@ -7720,6 +7781,409 @@
       }
     }
   },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "Feet/sec²",
+            "name-g-unit": "G unit",
+            "name-meters-sec": "Meters/sec²"
+          },
+          "name": "Acceleration"
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "Arc Minutes",
+            "name-arc-seconds": "Arc Seconds",
+            "name-degrees": "Degrees (°)",
+            "name-gradian": "Gradian",
+            "name-radians": "Radians"
+          },
+          "name": "Angle"
+        },
+        "area": {
+          "formats": {
+            "name-acres": "Acres (ac)",
+            "name-hectares": "Hectares (ha)",
+            "name-square-feet": "Square Feet (ft²)",
+            "name-square-meters": "Square Meters (m²)",
+            "name-square-miles": "Square Miles (mi²)"
+          },
+          "name": "Area"
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "On / Off",
+            "name-true-false": "True / False",
+            "name-yes-no": "Yes / No"
+          },
+          "name": "Boolean"
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "EFLOP/s",
+            "name-flops": "FLOP/s",
+            "name-gflops": "GFLOP/s",
+            "name-mflops": "MFLOP/s",
+            "name-pflops": "PFLOP/s",
+            "name-tflops": "TFLOP/s",
+            "name-yflops": "YFLOP/s",
+            "name-zflops": "ZFLOP/s"
+          },
+          "name": "Computation"
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "gram per cubic meter (g/m³)",
+            "name-g-nm3": "gram per normal cubic meter (g/Nm³)",
+            "name-mg-dl": "milligrams per decilitre (mg/dL)",
+            "name-mg-m3": "milligram per cubic meter (mg/m³)",
+            "name-mg-nm3": "milligram per normal cubic meter (mg/Nm³)",
+            "name-mmol-l": "millimoles per litre (mmol/L)",
+            "name-ng-m3": "nanogram per cubic meter (ng/m³)",
+            "name-ng-nm3": "nanogram per normal cubic meter (ng/Nm³)",
+            "name-ppb": "parts-per-billion (ppb)",
+            "name-ppm": "parts-per-million (ppm)",
+            "name-ug-m3": "microgram per cubic meter (μg/m³)",
+            "name-ug-nm3": "microgram per normal cubic meter (μg/Nm³)"
+          },
+          "name": "Concentration"
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "Bulgarian Lev (BGN)",
+            "name-brl": "Real (R$)",
+            "name-btc": "Bitcoin (฿)",
+            "name-chf": "Swiss franc (CHF)",
+            "name-czk": "Czech koruna (czk)",
+            "name-dkk": "Danish Krone (kr)",
+            "name-eur": "Euro (€)",
+            "name-gbp": "Pounds (£)",
+            "name-idr": "Indonesian Rupiah (Rp)",
+            "name-ils": "Israeli New Shekels (₪)",
+            "name-inr": "Indian Rupee (₹)",
+            "name-isk": "Icelandic Króna (kr)",
+            "name-jpy": "Yen (¥)",
+            "name-krw": "South Korean Won (₩)",
+            "name-mbtc": "Milli Bitcoin (฿)",
+            "name-myr": "Malaysian Ringgit (RM)",
+            "name-nok": "Norwegian Krone (kr)",
+            "name-php": "Philippine Peso (PHP)",
+            "name-pln": "Polish Złoty (PLN)",
+            "name-pyg": "Guaraní (₲)",
+            "name-rub": "Rubles (₽)",
+            "name-sek": "Swedish Krona (kr)",
+            "name-try": "Turkish Lira (₺)",
+            "name-uah": "Hryvnias (₴)",
+            "name-ubtc": "Micro Bitcoin (฿)",
+            "name-usd": "Dollars ($)",
+            "name-uyu": "Uruguay Peso (UYU)",
+            "name-vnd": "Vietnamese Dong (VND)",
+            "name-xpf": "CFP franc (XPF)",
+            "name-zar": "South African Rand (R)"
+          },
+          "name": "Currency"
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "bits(IEC)",
+            "name-bits-si": "bits(SI)",
+            "name-bytes-iec": "bytes(IEC)",
+            "name-bytes-si": "bytes(SI)",
+            "name-gibibytes": "gibibytes",
+            "name-gigabytes": "gigabytes",
+            "name-kibibytes": "kibibytes",
+            "name-kilobytes": "kilobytes",
+            "name-mebibytes": "mebibytes",
+            "name-megabytes": "megabytes",
+            "name-pebibytes": "pebibytes",
+            "name-petabytes": "petabytes",
+            "name-tebibytes": "tebibytes",
+            "name-terabytes": "terabytes"
+          },
+          "name": "Data"
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "bits/sec(IEC)",
+            "name-bits-sec-si": "bits/sec(SI)",
+            "name-bytes-sec-iec": "bytes/sec(IEC)",
+            "name-bytes-sec-si": "bytes/sec(SI)",
+            "name-gibibits-sec": "gibibits/sec",
+            "name-gibibytes-sec": "gibibytes/sec",
+            "name-gigabits-sec": "gigabits/sec",
+            "name-gigabytes-sec": "gigabytes/sec",
+            "name-kibibits-sec": "kibibits/sec",
+            "name-kibibytes-sec": "kibibytes/sec",
+            "name-kilobits-sec": "kilobits/sec",
+            "name-kilobytes-sec": "kilobytes/sec",
+            "name-mebibits-sec": "mebibits/sec",
+            "name-mebibytes-sec": "mebibytes/sec",
+            "name-megabits-sec": "megabits/sec",
+            "name-megabytes-sec": "megabytes/sec",
+            "name-packets-sec": "packets/sec",
+            "name-pebibits-sec": "pebibits/sec",
+            "name-pebibytes-sec": "pebibytes/sec",
+            "name-petabits-sec": "petabits/sec",
+            "name-petabytes-sec": "petabytes/sec",
+            "name-tebibits-sec": "tebibits/sec",
+            "name-tebibytes-sec": "tebibytes/sec",
+            "name-terabits-sec": "terabits/sec",
+            "name-terabytes-sec": "terabytes/sec"
+          },
+          "name": "Data rate"
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "Datetime default",
+            "name-datetime-iso": "Datetime ISO",
+            "name-datetime-iso-no-date": "Datetime ISO (No date if today)",
+            "name-datetime-local": "Datetime local",
+            "name-datetime-local-no-date": "Datetime local (No date if today)",
+            "name-datetime-us": "Datetime US",
+            "name-datetime-us-no-date": "Datetime US (No date if today)",
+            "name-from-now": "From Now"
+          },
+          "name": "Date & time"
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "Ampere (A)",
+            "name-ampere-hour": "Ampere-hour (Ah)",
+            "name-decibel-milliwatt": "Decibel-milliwatt (dBm)",
+            "name-electron-volt": "Electron volt (eV)",
+            "name-farad": "Farad (F)",
+            "name-femtofarad": "Femtofarad (fF)",
+            "name-gigawatt": "Gigawatt (GW)",
+            "name-henry": "Henry (H)",
+            "name-joule": "Joule (J)",
+            "name-kiloampere": "Kiloampere (kA)",
+            "name-kiloampere-hour": "Kiloampere-hour (kAh)",
+            "name-kiloohm": "Kiloohm (kΩ)",
+            "name-kilovolt": "Kilovolt (kV)",
+            "name-kilovolt-ampere": "Kilovolt-Ampere (kVA)",
+            "name-kilovolt-ampere-reactive": "Kilovolt-Ampere reactive (kVAr)",
+            "name-kilowatt": "Kilowatt (kW)",
+            "name-kilowatt-hour": "Kilowatt-hour (kWh)",
+            "name-kilowatt-min": "Kilowatt-min (kWm)",
+            "name-lumens": "Lumens (Lm)",
+            "name-megaohm": "Megaohm (MΩ)",
+            "name-megawatt": "Megawatt (MW)",
+            "name-megawatt-hour": "Megawatt-hour (MWh)",
+            "name-microfarad": "Microfarad (µF)",
+            "name-microhenry": "Microhenry (µH)",
+            "name-milliampere": "Milliampere (mA)",
+            "name-milliampere-hour": "Milliampere-hour (mAh)",
+            "name-millihenry": "Millihenry (mH)",
+            "name-milliohm": "Milliohm (mΩ)",
+            "name-millivolt": "Millivolt (mV)",
+            "name-milliwatt": "Milliwatt (mW)",
+            "name-nanofarad": "Nanofarad (nF)",
+            "name-ohm": "Ohm (Ω)",
+            "name-picofarad": "Picofarad (pF)",
+            "name-volt": "Volt (V)",
+            "name-volt-ampere": "Volt-Ampere (VA)",
+            "name-volt-ampere-reactive": "Volt-Ampere reactive (VAr)",
+            "name-watt": "Watt (W)",
+            "name-watt-hour": "Watt-hour (Wh)",
+            "name-watt-hour-per-kg": "Watt-hour per Kilogram (Wh/kg)",
+            "name-watt-square-meter": "Watt per square meter (W/m²)"
+          },
+          "name": "Energy"
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "Cubic feet/min (cfm)",
+            "name-cubic-feet-sec": "Cubic feet/sec (cfs)",
+            "name-cubic-meters-sec": "Cubic meters/sec (cms)",
+            "name-gallons-min": "Gallons/min (gpm)",
+            "name-litre-hour": "Litre/hour",
+            "name-litre-min": "Litre/min (L/min)",
+            "name-lux": "Lux (lx)",
+            "name-millilitre-min": "milliLitre/min (mL/min)"
+          },
+          "name": "Flow"
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "Kilonewton-meters (kNm)",
+            "name-kilonewtons": "Kilonewtons (kN)",
+            "name-newton-meters": "Newton-meters (Nm)",
+            "name-newtons": "Newtons (N)"
+          },
+          "name": "Force"
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "exahashes/sec",
+            "name-gigahashes-sec": "gigahashes/sec",
+            "name-hashes-sec": "hashes/sec",
+            "name-kilohashes-sec": "kilohashes/sec",
+            "name-megahashes-sec": "megahashes/sec",
+            "name-petahashes-sec": "petahashes/sec",
+            "name-terahashes-sec": "terahashes/sec"
+          },
+          "name": "Hash rate"
+        },
+        "length": {
+          "formats": {
+            "name-feet": "feet (ft)",
+            "name-inch": "inch (in)",
+            "name-kilometer": "kilometer (km)",
+            "name-meter": "meter (m)",
+            "name-mile": "mile (mi)",
+            "name-millimeter": "millimeter (mm)"
+          },
+          "name": "Length"
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "gram (g)",
+            "name-kilogram": "kilogram (kg)",
+            "name-metric-ton": "metric ton (t)",
+            "name-milligram": "milligram (mg)",
+            "name-pound": "pound (lb)"
+          },
+          "name": "Mass"
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "Candela (cd)",
+            "name-decibel": "Decibel",
+            "name-hexadecimal": "Hexadecimal",
+            "name-hexadecimal-0x": "Hexadecimal (0x)",
+            "name-humidity": "Humidity (%H)",
+            "name-locale": "Locale format",
+            "name-number": "Number",
+            "name-percent-1": "Percent (0.0-1.0)",
+            "name-percent-100": "Percent (0-100)",
+            "name-pixels": "Pixels",
+            "name-scientific": "Scientific notation",
+            "name-short": "short",
+            "name-si-short": "SI short",
+            "name-string": "String"
+          },
+          "name": "Misc"
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "Bars",
+            "name-hectopascals": "Hectopascals",
+            "name-inches-mercury": "Inches of mercury",
+            "name-kilobars": "Kilobars",
+            "name-kilopascals": "Kilopascals",
+            "name-millibars": "Millibars",
+            "name-pascals": "Pascals",
+            "name-psi": "PSI"
+          },
+          "name": "Pressure"
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "Becquerel (Bq)",
+            "name-curie": "curie (Ci)",
+            "name-exposure": "Exposure (C/kg)",
+            "name-gray": "Gray (Gy)",
+            "name-microsievert": "microSievert (µSv)",
+            "name-microsievert-hour": "microSievert/hour (µSv/h)",
+            "name-millisievert": "milliSievert (mSv)",
+            "name-millisievert-hour": "milliSievert/hour (mSv/h)",
+            "name-rad": "rad",
+            "name-rem": "rem",
+            "name-roentgen": "roentgen (R)",
+            "name-sievert": "Sievert (Sv)",
+            "name-sievert-hour": "Sievert/hour (Sv/h)"
+          },
+          "name": "Radiation"
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "Degrees per second (°/s)",
+            "name-gigahertz": "Gigahertz (GHz)",
+            "name-hertz": "Hertz (Hz)",
+            "name-kilohertz": "Kilohertz (kHz)",
+            "name-megahertz": "Megahertz (MHz)",
+            "name-radians-sec": "Radians per second (rad/s)",
+            "name-rpm": "Revolutions per minute (rpm)"
+          },
+          "name": "Rotational Speed"
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "Celsius (°C)",
+            "name-fahrenheit": "Fahrenheit (°F)",
+            "name-kelvin": "Kelvin (K)"
+          },
+          "name": "Temperature"
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "counts/min (cpm)",
+            "name-counts-sec": "counts/sec (cps)",
+            "name-events-min": "events/min (epm)",
+            "name-events-sec": "events/sec (eps)",
+            "name-io-ops-sec": "I/O ops/sec (iops)",
+            "name-messages-min": "messages/min (mpm)",
+            "name-messages-sec": "messages/sec (mps)",
+            "name-ops-min": "ops/min (opm)",
+            "name-ops-sec": "ops/sec (ops)",
+            "name-reads-min": "reads/min (rpm)",
+            "name-reads-sec": "reads/sec (rps)",
+            "name-records-min": "records/min (rpm)",
+            "name-records-sec": "records/sec (rps)",
+            "name-requests-min": "requests/min (rpm)",
+            "name-requests-sec": "requests/sec (rps)",
+            "name-rows-min": "rows/min (rpm)",
+            "name-rows-sec": "rows/sec (rps)",
+            "name-writes-min": "writes/min (wpm)",
+            "name-writes-sec": "writes/sec (wps)"
+          },
+          "name": "Throughput"
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "clock (ms)",
+            "name-clock-s": "clock (s)",
+            "name-days": "days (d)",
+            "name-duration-dhms": "duration (d hh:mm:ss)",
+            "name-duration-hms": "duration (hh:mm:ss)",
+            "name-duration-ms": "duration (ms)",
+            "name-duration-s": "duration (s)",
+            "name-hertz": "Hertz (1/s)",
+            "name-hours": "hours (h)",
+            "name-microseconds": "microseconds (µs)",
+            "name-milliseconds": "milliseconds (ms)",
+            "name-minutes": "minutes (m)",
+            "name-nanoseconds": "nanoseconds (ns)",
+            "name-seconds": "seconds (s)",
+            "name-timeticks": "Timeticks (s/100)"
+          },
+          "name": "Time"
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "kilometers/hour (km/h)",
+            "name-knot": "knot (kn)",
+            "name-meters-second": "meters/second (m/s)",
+            "name-miles-hour": "miles/hour (mph)"
+          },
+          "name": "Velocity"
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "cubic decimeter",
+            "name-cubic-meter": "cubic meter",
+            "name-gallons": "gallons",
+            "name-litre": "litre (L)",
+            "name-millilitre": "millilitre (mL)",
+            "name-normal-cubic-meter": "Normal cubic meter"
+          },
+          "name": "Volume"
+        }
+      }
+    }
+  },
   "grafana-ui": {
     "action-editor": {
       "button": {
@@ -7843,6 +8307,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": "Open image preview"
+    },
     "cascader": {
       "clear-button": "Clear selection"
     },
@@ -7855,6 +8322,7 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
+      "aria-label-delete": "Delete",
       "cancel": "Cancel",
       "confirmText-delete": "Delete"
     },
@@ -8178,7 +8646,10 @@
         "no-data": "No data"
       },
       "no-values-label": "No values",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sparkline": {
+        "no-data": "no data"
+      }
     },
     "tags": {
       "list-label": "Tags"
@@ -8278,6 +8749,7 @@
       "footer-add-annotation": "Add annotation",
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
+      "footer-filter-for-value": "Filter for '{{value}}'",
       "timestamp": "Timestamp"
     },
     "week-start-picker": {
@@ -8830,9 +9302,9 @@
       "type": {
         "loki": {
           "indexed-label_one": "Indexed label",
-          "indexed-label_other": "Indexed labels",
+          "indexed-label_other": "Indexed label",
           "parsedl-label_one": "Parsed field",
-          "parsedl-label_other": "Parsed fields",
+          "parsedl-label_other": "Parsed field",
           "structured-metadata_one": "Structured metadata",
           "structured-metadata_other": "Structured metadata"
         }
@@ -8911,6 +9383,7 @@
       "move-displayed-field-down": "Move down",
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
@@ -8929,6 +9402,9 @@
       "copy-log": "Copy log line",
       "hide-details": "Show log details",
       "icon-label": "Log menu",
+      "log-line": "Log line",
+      "log-line-explainer": "Explain this log line in a concise way",
+      "open-assistant": "Explain this log line in Assistant",
       "pin-to-outline": "Pin log",
       "show-context": "Show context",
       "show-details": "Hide log details",
@@ -10522,12 +10998,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "not-saved": "The value is not yet saved in the Grafana database",
-      "open-pull-request-in-git-hub": "Open pull request in GitHub",
-      "view-pull-request-in-git-hub": "View pull request in GitHub"
+      "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
+      "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
+      "open-in-repo-button": "Open in {{repoType}}",
+      "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
+      "view-pull-request-in-repo": "View pull request in {{repoType}}"
     },
-    "title-created-branch-git-hub": "A new resource has been created in a branch in GitHub.",
-    "title-loaded-pull-request-git-hub": "This resource is loaded from a pull request in GitHub."
+    "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
+    "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
     "banner": {
@@ -10553,12 +11032,16 @@
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
+      "dashboards-count_one": "{{count}} dashboard",
+      "dashboards-count_other": "{{count}} dashboard",
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "ext-storage": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
+      "folders-count_one": "{{count}} folder",
+      "folders-count_other": "{{count}} folder",
       "grafana": "Grafana instance",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
@@ -10633,10 +11116,10 @@
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
+    "error-title-default": "Error",
     "expanded-row": {
       "job-specification": "Job Specification",
-      "summary": "Summary",
-      "title-error": "Error"
+      "summary": "Summary"
     },
     "features-list": {
       "actions": {
@@ -10781,9 +11264,13 @@
       "starting": "Starting...",
       "status": {
         "title-error-running-job": "Error running job",
-        "title-job-completed-successfully": "Job completed successfully"
+        "title-success-running-job": "Job completed successfully",
+        "title-warning-running-job": "Job completed with warnings"
       },
-      "summary": "Summary"
+      "summary": "Summary",
+      "title": {
+        "error-fetching-active-job": "Error fetching active job"
+      }
     },
     "local": {
       "path-description": "Local file system path to the repository",
@@ -10926,6 +11413,12 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "success-title-default": "Success",
+    "sync-job": {
+      "error-no-job-id": "Failed to start job",
+      "error-no-repository-name": "No repository name provided",
+      "error-starting-job": "Error starting job"
+    },
     "sync-repository": {
       "body-edit-configuration": "Edit the configuration",
       "button-edit": "Edit",
@@ -10936,9 +11429,6 @@
       "tooltip-unhealthy-repository": "Unable to pull an unhealthy repository"
     },
     "synchronize-step": {
-      "error-no-job-id": "Failed to start job",
-      "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job",
       "synchronization-description": "Include commits for each historical value",
       "synchronization-options": "Synchronization options"
     },
@@ -10947,6 +11437,7 @@
       "go-to": "Go to",
       "make-sure": "Make sure to include these permissions"
     },
+    "warning-title-default": "Warning",
     "wizard": {
       "alert-point-1": "Resources won't be able to be created, edited, or deleted during this process. In the last step, they will disappear.",
       "alert-point-2": "Once provisioning is complete, resources will reappear and be managed through external storage.",
@@ -10955,6 +11446,12 @@
       "alert-title": "Important: No data or configuration will be lost, but dashboards will be temporarily unavailable for a few minutes.",
       "button-next": "Finish",
       "button-start": "Begin synchronization",
+      "discard-modal": {
+        "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
+        "confirm": "Yes, discard",
+        "dismiss": "Keep working",
+        "title": "Discard repository setup?"
+      },
       "step-bootstrap": "Choose what to synchronize",
       "step-connect": "Connect",
       "step-finish": "Choose additional settings",
@@ -10969,6 +11466,7 @@
     "wizard-content": {
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
+      "button-previous": "Previous",
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists"
     }
@@ -12996,7 +13494,7 @@
         "create-new-data-frame": "Create a new data frame containing values predicted by a statistical model."
       },
       "name": {
-        "regression-analysis": "Regression analysis"
+        "trendline": "Trendline"
       }
     },
     "regression-transformer-editor": {
@@ -13018,6 +13516,9 @@
         }
       },
       "regression": "regression",
+      "tags": {
+        "regression-analysis": "Regression analysis"
+      },
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer": {

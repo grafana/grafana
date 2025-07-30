@@ -6,6 +6,50 @@ contactPoints:
         - uid: dingding-uid
           type: dingding
           settings:
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: '{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved'
             msgType: actionCard
             title: 'Alerts firing: {{ len .Alerts.Firing }}'
@@ -15,6 +59,50 @@ contactPoints:
           type: discord
           settings:
             avatar_url: http://avatar
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             title: test-title
             url: http://localhost
@@ -31,6 +119,50 @@ contactPoints:
         - uid: googlechat-uid
           type: googlechat
           settings:
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             title: test-title
             url: http://localhost
@@ -43,6 +175,50 @@ contactPoints:
             description: Test Description
             fields:
                 test-field: test-value
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             issue_type: Test Issue Type
             labels:
                 - Test Label
@@ -63,6 +239,50 @@ contactPoints:
             apiVersion: v2
             description: test-description
             details: test-details
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             kafkaClusterId: "12345"
             kafkaRestProxy: http://localhost/
             kafkaTopic: test-topic
@@ -73,6 +293,50 @@ contactPoints:
           type: LINE
           settings:
             description: test-description
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             title: test-title
             token: test
           disableResolveMessage: false
@@ -97,6 +361,50 @@ contactPoints:
           type: oncall
           settings:
             authorization_scheme: basic
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             httpMethod: PUT
             maxAlerts: "2"
             message: test-message
@@ -112,6 +420,50 @@ contactPoints:
             apiUrl: http://localhost
             autoClose: false
             description: test-description
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             overridePriority: false
             responders:
@@ -131,6 +483,50 @@ contactPoints:
             client_url: http://localhost/test-client-url
             component: test-component
             group: test-group
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             integrationKey: test-api-key
             severity: test-severity
             source: test-source
@@ -150,6 +546,50 @@ contactPoints:
             apiToken: test-api-token
             device: test-device
             expire: 333
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             okPriority: 2
             okSound: test-ok-sound
@@ -167,6 +607,50 @@ contactPoints:
             check: test-check
             entity: test-entity
             handler: test-handler
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             namespace: test-namespace
             url: http://localhost
@@ -209,6 +693,50 @@ contactPoints:
         - uid: teams-uid
           type: teams
           settings:
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             sectiontitle: test-second-title
             title: test-title
@@ -221,6 +749,50 @@ contactPoints:
             chatid: "12345678"
             disable_notifications: true
             disable_web_page_preview: true
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             message_thread_id: "13579"
             parse_mode: html
@@ -232,6 +804,50 @@ contactPoints:
             api_secret: test-secret
             description: test-description
             gateway_id: '*1234567'
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             recipient_id: '*1234567'
             title: test-title
           disableResolveMessage: false
@@ -239,6 +855,50 @@ contactPoints:
           type: victorops
           settings:
             description: test-description
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             messageType: test-messagetype
             title: test-title
             url: http://localhost
@@ -248,6 +908,50 @@ contactPoints:
           settings:
             api_url: http://localhost
             bot_token: "12345"
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             room_id: test-room-id
           disableResolveMessage: false
@@ -344,6 +1048,50 @@ contactPoints:
             agent_id: test-agent_id
             corp_id: test-corp_id
             endpointUrl: http://localhost/test-endpointUrl
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: test-client-secret
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx
+                            MDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60
+                            2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3
+                            WMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML
+                            -----END CERTIFICATE-----
+                        clientCertificate: |-
+                            -----BEGIN CERTIFICATE-----
+                            MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+                            DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+                            EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+                            7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+                            5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+                            BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+                            NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+                            Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+                            6MF9+Yw1Yy0t
+                            -----END CERTIFICATE-----
+                        clientKey: |-
+                            -----BEGIN EC PRIVATE KEY-----
+                            MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+                            AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+                            EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+                            -----END EC PRIVATE KEY-----
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
             message: test-message
             msgtype: markdown
             secret: test-secret

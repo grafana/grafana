@@ -121,7 +121,7 @@ func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource
 	return nil, nil
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
@@ -246,7 +246,7 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 				InitMaxCount:  tt.initMaxSize,
 			}
 
-			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil)
+			support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, support)
 
@@ -304,7 +304,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMaxCount:  0,
 	}
 
-	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil)
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -317,7 +317,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"})
+			_, _ = support.getOrCreateIndex(context.Background(), NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
 		}()
 	}
 
@@ -331,4 +331,58 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
 	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
 	require.Equal(t, int64(11111111), search.buildIndexCalls[0].resourceVersion)
+}
+
+func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
+	// Setup mock implementations
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	search := &slowSearchBackend{
+		mockSearchBackend: mockSearchBackend{},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"group": "resource",
+		},
+	}
+
+	// Create search support with the specified initMaxSize
+	opts := SearchOptions{
+		Backend:       search,
+		Resources:     supplier,
+		WorkerThreads: 1,
+		InitMinCount:  1, // set min count to default for this test
+		InitMaxCount:  0,
+	}
+
+	support, err := newSearchSupport(opts, storage, nil, nil, noop.NewTracerProvider().Tracer("test"), nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+	defer cancel()
+
+	_, err = support.getOrCreateIndex(ctx, NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, "test")
+	// Make sure we get context deadline error
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+
+	// Wait until indexing is finished.
+	search.wg.Wait()
+
+	require.NotEmpty(t, search.buildIndexCalls)
+}
+
+type slowSearchBackend struct {
+	mockSearchBackend
+	wg sync.WaitGroup
+}
+
+func (m *slowSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, reason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
+	m.wg.Add(1)
+	defer m.wg.Done()
+	time.Sleep(1 * time.Second)
+	return m.mockSearchBackend.BuildIndex(ctx, key, size, resourceVersion, fields, reason, builder)
 }
