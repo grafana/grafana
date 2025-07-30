@@ -859,7 +859,7 @@ func appendValueFromString(iter *sdkjsoniter.Iterator, field *data.Field) error 
 		return err
 	}
 
-	// #nosec G103
+	// #nosec G103 -- nosemgrep: use-of-unsafe-block
 	// Convert string to float64 without allocation
 	// https://github.com/search?q=org%3Agrafana+yoloString&type=code
 	v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&buf)), 64)
