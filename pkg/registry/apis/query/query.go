@@ -264,7 +264,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		return nil, err
 	}
 
-	dsQuerierLoggerWithSlug := connectLogger.New("slug", instanceConfig.Options["slug"])
+	dsQuerierLoggerWithSlug := connectLogger.New("slug", instanceConfig.Options["slug"], "ruleuid", headers["X-Rule-Uid"])
 
 	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
 		b.clientSupplier,
