@@ -3469,6 +3469,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "취소",
       "cannot-move-folders": "폴더는 이동할 수 없습니다.",
       "confirmation-text": "삭제",
@@ -3502,21 +3503,32 @@
       "this-folder-is-empty": "이 폴더는 비어 있습니다"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_other": ""
     },
     "bulk-delete-resources-form": {
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_other": "경고 규칙 {{count}}개",
@@ -4548,6 +4560,7 @@
     "edit-actions": {
       "add": "{{typeName}} 추가",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5334,6 +5347,20 @@
       "invalid-json": "유효하지 않은 JSON",
       "tags-expected-array": "태그로 배열을 입력해야 합니다.",
       "tags-expected-strings": "태그로 문자열 배열을 입력해야 합니다."
+    },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
     },
     "version-history-comparison": {
       "button-restore": "{{version}} 버전으로 복구",
@@ -7490,6 +7517,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7549,6 +7577,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8248,6 +8277,9 @@
     "card": {
       "option": "옵션"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "선택 초기화"
     },
@@ -8260,6 +8292,7 @@
       "aria-label-selected-color": "{{colorLabel}} 색상"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "취소",
       "confirmText-delete": ""
     },
@@ -8686,6 +8719,7 @@
       "footer-add-annotation": "주석 추가",
       "footer-click-to-action": "클릭하여 {{actionTitle}} 작업 수행",
       "footer-click-to-navigate": "클릭하여 {{linkTitle}} 열기",
+      "footer-filter-for-value": "",
       "timestamp": "시간 기록"
     },
     "week-start-picker": {
@@ -11186,6 +11220,7 @@
       "starting": "시작하는 중...",
       "status": {
         "title-error-running-job": "작업 실행 중 오류 발생",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "요약",
@@ -11334,6 +11369,7 @@
       "label-current-step": "현재 단계",
       "label-pending-step": "보류 중인 단계"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11366,6 +11402,12 @@
       "alert-title": "중요: 데이터나 구성은 손실되지 않지만 대시보드를 몇 분 동안 일시적으로 사용할 수 없습니다.",
       "button-next": "완료",
       "button-start": "동기화 시작",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "동기화할 항목 선택",
       "step-connect": "연결",
       "step-finish": "추가 설정 선택",
@@ -11380,6 +11422,7 @@
     "wizard-content": {
       "button-cancel": "취소",
       "button-cancelling": "취소 중...",
+      "button-previous": "",
       "button-submitting": "제출 중…",
       "error-instance-repository-exists": "인스턴스 리포지토리가 이미 존재합니다"
     }
@@ -13401,7 +13444,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13423,6 +13466,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "예측할 X, Y 포인트 수"
     },
     "rename-by-regex-transformer": {
