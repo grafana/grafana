@@ -37,7 +37,6 @@ type StorageMetrics struct {
 	SecureValueMetadataListCount      prometheus.Counter
 	SecureValueSetExternalIDDuration  prometheus.Histogram
 	SecureValueSetStatusDuration      prometheus.Histogram
-	SecureValueMatchingOwnerDuration  prometheus.Histogram
 
 	DecryptDuration     *prometheus.HistogramVec
 	DecryptRequestCount *prometheus.CounterVec
@@ -197,13 +196,6 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem: subsystem,
 			Name:      "secure_value_set_status_duration_seconds",
 			Help:      "Duration of secure value set status operations",
-			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueMatchingOwnerDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_matching_owner_duration_seconds",
-			Help:      "Duration of secure value matching owner operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
 

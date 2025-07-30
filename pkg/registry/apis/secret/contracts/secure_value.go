@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -38,7 +37,6 @@ type SecureValueMetadataStorage interface {
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
-	MatchingOwner(ctx context.Context, namespace xkube.Namespace, ownerReference metav1.OwnerReference) (secureValueNames []string, err error)
 }
 
 type SecureValueService interface {

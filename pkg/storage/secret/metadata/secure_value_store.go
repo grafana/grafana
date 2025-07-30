@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -438,58 +437,4 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	s.metrics.SecureValueSetExternalIDDuration.Observe(time.Since(start).Seconds())
 
 	return nil
-}
-
-func (s *secureValueMetadataStorage) MatchingOwner(ctx context.Context, namespace xkube.Namespace, ownerReference metav1.OwnerReference) ([]string, error) {
-	start := time.Now()
-
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.MatchingOwner", trace.WithAttributes(
-		attribute.String("namespace", namespace.String()),
-		attribute.String("ownerReference.APIVersion", ownerReference.APIVersion),
-		attribute.String("ownerReference.Kind", ownerReference.Kind),
-		attribute.String("ownerReference.Name", ownerReference.Name),
-		attribute.String("ownerReference.UID", string(ownerReference.UID)),
-	))
-
-	defer func() {
-		span.End()
-		s.metrics.SecureValueMatchingOwnerDuration.Observe(time.Since(start).Seconds())
-	}()
-
-	req := secureValueMatchingOwner{
-		SQLTemplate:              sqltemplate.New(s.dialect),
-		Namespace:                namespace.String(),
-		OwnerReferenceAPIVersion: ownerReference.APIVersion,
-		OwnerReferenceKind:       ownerReference.Kind,
-		OwnerReferenceName:       ownerReference.Name,
-		OwnerReferenceUID:        string(ownerReference.UID),
-	}
-
-	q, err := sqltemplate.Execute(sqlSecureValueMatchingOwner, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueMatchingOwner.Name(), err)
-	}
-
-	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("matching owner: %w", err)
-	}
-
-	defer func() { _ = rows.Close() }()
-
-	secureValueNames := make([]string, 0)
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return nil, fmt.Errorf("error reading secure value row: %w", err)
-		}
-
-		secureValueNames = append(secureValueNames, name)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("read rows error: %w", err)
-	}
-
-	return secureValueNames, nil
 }

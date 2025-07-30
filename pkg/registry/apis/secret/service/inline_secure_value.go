@@ -133,23 +133,9 @@ func (s *inlineSecureValueService) UpdateSecureValues(ctx context.Context, owner
 		return nil, fmt.Errorf("owner reference must have a valid API version, kind, name, and UID")
 	}
 
-	ownedSecureValues, err := s.svMetadataStorage.MatchingOwner(ctx, xkube.Namespace(owner.Namespace), owner.ToOwnerReference())
-	if err != nil {
-		return nil, fmt.Errorf("error fetching secure values owned by %v: %w", ownerReference, err)
-	}
-
 	fieldsToCreate := make([]string, 0)
 	fieldsToRemove := make([]string, 0)
 	fieldsCanBeReferenced := make([]string, 0)
-
-	// Values that no longer exist in the request but are owned by the resource will be removed.
-	orphanSecureValues := s.findOrphanSecureValues(ownedSecureValues, values)
-	for _, orphan := range orphanSecureValues {
-		values["remove_"+orphan] = common.InlineSecureValue{
-			Name:   orphan,
-			Remove: true,
-		}
-	}
 
 	newState := make(common.InlineSecureValues, 0)
 
@@ -272,24 +258,6 @@ func (s *inlineSecureValueService) UpdateSecureValues(ctx context.Context, owner
 	}
 
 	return newState, nil
-}
-
-func (s *inlineSecureValueService) findOrphanSecureValues(currentlyOwnedValues []string, requestedValues common.InlineSecureValues) []string {
-	namedReferences := make(map[string]struct{}, 0)
-	for _, value := range requestedValues {
-		if value.Name != "" {
-			namedReferences[value.Name] = struct{}{}
-		}
-	}
-
-	orphanSecureValues := make([]string, 0)
-	for _, ownedName := range currentlyOwnedValues {
-		if _, exists := namedReferences[ownedName]; !exists {
-			orphanSecureValues = append(orphanSecureValues, ownedName)
-		}
-	}
-
-	return orphanSecureValues
 }
 
 func (s *inlineSecureValueService) secureValueOwnedByResource(

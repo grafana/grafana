@@ -444,48 +444,6 @@ func TestIntegration_InlineSecureValue_UpdateSecureValues(t *testing.T) {
 		}
 	})
 
-	t.Run("when there's existing secure values owned by the resource which are no longer referenced, they are deleted", func(t *testing.T) {
-		tu := testutils.Setup(t)
-
-		ctx := testutils.CreateOBOAuthContext(t.Context(), defaultOrgID, 1, "service-identity-name", map[string][]string{
-			"securevalues:read": {"securevalues:uid:*"},
-		})
-
-		sv1 := "test-sv-1"
-		_, err := tu.CreateSv(ctx, func(cfg *testutils.CreateSvConfig) {
-			cfg.Sv.Name = sv1
-			cfg.Sv.Namespace = defaultNs
-			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
-		})
-		require.NoError(t, err)
-
-		sv2 := "test-sv-2"
-		_, err = tu.CreateSv(ctx, func(cfg *testutils.CreateSvConfig) {
-			cfg.Sv.Name = sv2
-			cfg.Sv.Namespace = defaultNs
-			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
-		})
-		require.NoError(t, err)
-
-		values := common.InlineSecureValues{
-			"fieldA": {
-				Create: common.NewSecretValue("test-value-a"),
-			},
-			"fieldB": {
-				Name: sv1,
-			},
-		}
-
-		svc := service.ProvideInlineSecureValueService(tracer, tu.SecureValueService, tu.SecureValueMetadataStorage, tu.AccessClient)
-
-		newState, err := svc.UpdateSecureValues(ctx, owner, values)
-		require.NoError(t, err)
-		require.Len(t, newState, 2)
-
-		_, err = tu.SecureValueService.Read(ctx, xkube.Namespace(defaultNs), sv2)
-		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
-	})
-
 	t.Run("when trying to remove a secure value that is not owned by the resource, it returns an error", func(t *testing.T) {
 		tu := testutils.Setup(t)
 

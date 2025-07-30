@@ -238,19 +238,6 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlSecureValueMatchingOwner: {
-				{
-					Name: "matchingOwner",
-					Data: &secureValueMatchingOwner{
-						SQLTemplate:              mocks.NewTestingSQLTemplate(),
-						Namespace:                "ns",
-						OwnerReferenceAPIVersion: "prometheus.datasource.grafana.com/v1alpha1",
-						OwnerReferenceKind:       "DataSourceConfig",
-						OwnerReferenceName:       "prom-config",
-						OwnerReferenceUID:        "1234",
-					},
-				},
-			},
 		},
 	})
 }

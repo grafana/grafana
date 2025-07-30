@@ -30,7 +30,6 @@ var (
 	sqlGetLatestSecureValueVersion     = mustTemplate("secure_value_get_latest_version.sql")
 	sqlSecureValueSetVersionToActive   = mustTemplate("secure_value_set_version_to_active.sql")
 	sqlSecureValueSetVersionToInactive = mustTemplate("secure_value_set_version_to_inactive.sql")
-	sqlSecureValueMatchingOwner        = mustTemplate("secure_value_matching_owner.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -207,14 +206,3 @@ type updateExternalIdSecureValue struct {
 func (r updateExternalIdSecureValue) Validate() error {
 	return nil // TODO
 }
-
-type secureValueMatchingOwner struct {
-	sqltemplate.SQLTemplate
-	Namespace                string
-	OwnerReferenceAPIVersion string
-	OwnerReferenceKind       string
-	OwnerReferenceName       string
-	OwnerReferenceUID        string
-}
-
-func (r secureValueMatchingOwner) Validate() error { return nil }
