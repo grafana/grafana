@@ -7,7 +7,6 @@ labels:
     - oss
     - cloud
     - enterprise
-  stage: experimental
 keywords:
   - grafana
   - grafana advisor
@@ -17,7 +16,7 @@ keywords:
 
 # Grafana Advisor
 
-{{< docs/experimental product="Grafana Advisor" featureFlag="grafanaAdvisor" >}}
+{{< docs/public-preview product="Grafana Advisor" featureFlag="grafanaAdvisor" >}}
 
 ## Overview
 
