@@ -467,7 +467,7 @@ export const PMM_NAV_MONGO: NavModelItem = {
     },
     {
       id: 'mongo-summary',
-      text: 'Summary',
+      text: 'Instance Summary',
       icon: 'percona-nav-summary',
       url: `${config.appSubUrl}/d/mongodb-instance-summary/mongodb-instance-summary`,
       hideFromTabs: true,
@@ -504,17 +504,10 @@ export const PMM_NAV_MONGO: NavModelItem = {
       ],
     },
     {
-      id: 'mongo-memory-details',
-      text: 'InMemory',
+      id: 'mongo-pbm-details',
+      text: 'Backup Status',
       icon: 'sitemap',
-      url: `${config.appSubUrl}/d/mongodb-inmemory/mongodb-inmemory-details`,
-      hideFromTabs: true,
-    },
-    {
-      id: 'mondo-wiredtiger-details',
-      text: 'WiredTiger',
-      icon: 'sitemap',
-      url: `${config.appSubUrl}/d/mongodb-wiredtiger/mongodb-wiredtiger-details`,
+      url: `${config.appSubUrl}/d/mongodb-pbm-details/mongodb-pbm-details`,
       hideFromTabs: true,
     },
     {
