@@ -2,7 +2,6 @@ import {
   PluginExtensionAddedLinkConfig,
   PluginExtensionPoints,
   PluginExtensionDataSourceConfigActionsContext,
-  DataSourceConfigErrorStatusContext,
 } from '@grafana/data';
 
 import { createAddedLinkConfig } from '../../plugins/extensions/utils';
@@ -14,14 +13,14 @@ export function getDataSourceExtensionConfigs(): PluginExtensionAddedLinkConfig[
       createAddedLinkConfig<PluginExtensionDataSourceConfigActionsContext>({
         // This is called at the top level, so will break if we add a translation here 😱
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        title: 'View in Monitoring Tool',
+        title: 'View in Metrics Drilldown',
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        description: 'Open this datasource in external monitoring dashboard',
+        description: 'Open this datasource in Grafana Metrics Drilldown',
         targets: [PluginExtensionPoints.DataSourceConfigActions],
         icon: 'external-link-alt',
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         category: 'External Tools',
-        path: '/a/grafana/placeholder', // Placeholder path for initial validation (overridden by configure function)
+        path: '/a/grafana-metricsdrilldown-app/drilldown', // Placeholder path for initial validation (overridden by configure function)
         configure: (context) => {
           // Only show for prometheus datasources
           if (context?.dataSource?.type !== 'prometheus') {
@@ -30,23 +29,9 @@ export function getDataSourceExtensionConfigs(): PluginExtensionAddedLinkConfig[
 
           // Return dynamic path with context
           return {
-            path: `https://monitoring-tool.com/datasource/${context.dataSource.uid}`,
+            path: `/a/grafana-metricsdrilldown-app/drilldown?var-ds=${context.dataSource.uid}`,
           };
         },
-      }),
-
-      // Example: Add troubleshooting link for error status
-      createAddedLinkConfig<DataSourceConfigErrorStatusContext>({
-        // This is called at the top level, so will break if we add a translation here 😱
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        title: 'Troubleshooting Guide',
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        description: 'Get help resolving this datasource issue',
-        targets: [PluginExtensionPoints.DataSourceConfigErrorStatus],
-        icon: 'question-circle',
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        category: 'Help',
-        path: '/a/grafana/docs/troubleshooting/datasources',
       }),
     ];
   } catch (error) {
