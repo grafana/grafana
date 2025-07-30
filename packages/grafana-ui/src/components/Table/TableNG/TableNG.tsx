@@ -999,7 +999,7 @@ const getCellStyles = (
         justifyContent: 'center',
         alignItems: getJustifyContent(textAlign),
       }),
-      '.data-link': {
+      '> a': {
         flexWrap: 'nowrap',
         ...(!shouldWrap && {
           paddingInline: theme.spacing(0.5),
@@ -1019,7 +1019,7 @@ const getCellStyles = (
       display: 'inline-flex',
       gap: theme.spacing(0.5),
       flexWrap: shouldWrap ? 'wrap' : 'nowrap',
-      '.pill': {
+      '> span': {
         display: 'flex',
         padding: theme.spacing(0.25, 0.75),
         borderRadius: theme.shape.radius.default,

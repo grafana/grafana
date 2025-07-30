@@ -26,7 +26,6 @@ export function PillCell({ rowIdx, field, theme }: PillCellProps) {
 
   return pills.map((pill) => (
     <span
-      className="pill"
       key={pill.key}
       style={{
         backgroundColor: pill.bgColor,
