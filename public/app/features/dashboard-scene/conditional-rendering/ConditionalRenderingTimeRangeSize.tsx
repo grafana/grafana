@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { rangeUtil, SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
