@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -65,7 +66,20 @@ func (s *ResourcePermissionSqlBackend) ListIterator(ctx context.Context, req *re
 		return 0, fmt.Errorf("failed to parse continue token: %w", err)
 	}
 
+	// Parse namespace to get OrgID
+	namespaceInfo, err := request.NamespaceInfoFrom(ctx, false)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse namespace: %w", err)
+	}
+
+	// Default to org 1 if no valid org ID is found
+	orgID := namespaceInfo.OrgID
+	if orgID < 1 {
+		orgID = 1
+	}
+
 	query := &ListResourcePermissionsQuery{
+		OrgID: orgID,
 		Pagination: common.Pagination{
 			Limit:    req.Limit,
 			Continue: token.id,

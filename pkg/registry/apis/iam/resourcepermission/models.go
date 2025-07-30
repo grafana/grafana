@@ -1,12 +1,11 @@
 package resourcepermission
 
 import (
-	"database/sql"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -18,32 +17,21 @@ var (
 )
 
 type ListResourcePermissionsQuery struct {
-	UID string
+	UID   string
+	OrgID int64
 
 	Pagination common.Pagination
 }
 
 type flatResourcePermission struct {
-	ID               int64          `xorm:"id"`
-	RoleName         string         `xorm:"role_name"`
-	RoleUID          string         `xorm:"role_uid"`
-	OrgID            int64          `xorm:"org_id"`
-	Action           string         `xorm:"action"`
-	Scope            string         `xorm:"scope"`
-	Created          time.Time      `xorm:"created"`
-	Updated          time.Time      `xorm:"updated"`
-	UserID           sql.NullInt64  `xorm:"user_id"`
-	UserOrgID        sql.NullInt64  `xorm:"user_org_id"`
-	UserUID          sql.NullString `xorm:"user_uid"`
-	UserLogin        sql.NullString `xorm:"user_login"`
-	UserName         sql.NullString `xorm:"user_name"`
-	UserEmail        sql.NullString `xorm:"user_email"`
-	IsServiceAccount bool           `xorm:"is_service_account"`
-	TeamID           sql.NullInt64  `xorm:"team_id"`
-	TeamUID          sql.NullString `xorm:"team_uid"`
-	TeamName         sql.NullString `xorm:"team_name"`
-	BuiltInOrgID     sql.NullInt64  `xorm:"builtin_org_id"`
-	BuiltInRole      sql.NullString `xorm:"builtin_role"`
+	ID               int64     `xorm:"id"`
+	Action           string    `xorm:"action"`
+	Scope            string    `xorm:"scope"`
+	Created          time.Time `xorm:"created"`
+	Updated          time.Time `xorm:"updated"`
+	SubjectUID       string    `xorm:"subject_uid"`
+	SubjectType      string    `xorm:"subject_type"` // 'user', 'team', or 'builtin'
+	IsServiceAccount bool      `xorm:"is_service_account"`
 }
 
 func toV0ResourcePermission(flatPerms []flatResourcePermission) *v0alpha1.ResourcePermission {
@@ -59,19 +47,16 @@ func toV0ResourcePermission(flatPerms []flatResourcePermission) *v0alpha1.Resour
 	var permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
 	var permissionName string
 
-	if first.UserID.Valid {
-		name = first.UserUID.String
+	switch first.SubjectType {
+	case "user":
+		name = first.SubjectUID
 		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser
-		permissionName = first.UserUID.String
-	} else if first.TeamID.Valid {
-		name = first.TeamUID.String
+		permissionName = first.SubjectUID
+	case "team":
+		name = first.SubjectUID
 		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindTeam
-		permissionName = first.TeamUID.String
-	} else if first.BuiltInRole.Valid {
-		name = first.BuiltInRole.String
-		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindBasicRole
-		permissionName = first.BuiltInRole.String
-	} else {
+		permissionName = first.SubjectUID
+	default:
 		// Default case, shouldn't happen but handle gracefully
 		name = "unknown"
 		permissionKind = v0alpha1.ResourcePermissionSpecPermissionKindUser

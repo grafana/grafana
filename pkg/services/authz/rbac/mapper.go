@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -58,6 +59,85 @@ func (t translation) HasFolderSupport() bool {
 	return t.folderSupport
 }
 
+// resourcePermissionTranslation handles the special case of resource permissions
+// where the name format is "{group}-{resource}-{id}" and needs to be translated
+// to the target resource's permission scope and actions.
+// Currently focused on dashboards only.
+type resourcePermissionTranslation struct{}
+
+func (r resourcePermissionTranslation) Action(verb string) (string, bool) {
+	// For dashboard resource permissions, map to dashboard permission actions
+	switch verb {
+	case utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbGetPermissions:
+		return "dashboards.permissions:read", true
+	case utils.VerbUpdate, utils.VerbPatch, utils.VerbSetPermissions:
+		return "dashboards.permissions:write", true
+	default:
+		return "", false
+	}
+}
+
+func (r resourcePermissionTranslation) Scope(name string) string {
+	// Parse name format: "dashboard.grafana.app-dashboards-dash123"
+	// Extract dashboard ID and build proper scope
+	dashboardID := r.parseDashboardPermissionName(name)
+	if dashboardID == "" {
+		return "unknown:uid:" + name
+	}
+
+	return "dashboards:uid:" + dashboardID
+}
+
+func (r resourcePermissionTranslation) Prefix() string {
+	// Dashboard resource permissions target dashboard resources
+	return "dashboards:uid:"
+}
+
+func (r resourcePermissionTranslation) AllActions() []string {
+	return []string{
+		"dashboards.permissions:read",
+		"dashboards.permissions:write",
+	}
+}
+
+func (r resourcePermissionTranslation) HasFolderSupport() bool {
+	return false // Resource permissions themselves don't support folders
+}
+
+// parseDashboardPermissionName parses names like "dashboard.grafana.app-dashboards-dash123"
+// and returns the dashboard ID
+func (r resourcePermissionTranslation) parseDashboardPermissionName(name string) string {
+	// Expected format: "dashboard.grafana.app-dashboards-{dashboard-id}"
+	// Example: "dashboard.grafana.app-dashboards-dash123"
+
+	parts := strings.Split(name, "-")
+	if len(parts) < 3 {
+		return ""
+	}
+
+	// Look for the "dashboards" part
+	dashboardsIndex := -1
+	for i, part := range parts {
+		if part == "dashboards" {
+			dashboardsIndex = i
+			break
+		}
+	}
+
+	if dashboardsIndex == -1 || dashboardsIndex >= len(parts)-1 {
+		return ""
+	}
+
+	// Everything after "dashboards" is the dashboard ID (rejoin in case ID contains dashes)
+	dashboardID := strings.Join(parts[dashboardsIndex+1:], "-")
+
+	return dashboardID
+}
+
+func newResourcePermissionTranslation() Mapping {
+	return resourcePermissionTranslation{}
+}
+
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
@@ -67,9 +147,9 @@ type MapperRegistry interface {
 	GetAll(group string) []Mapping
 }
 
-type mapper map[string]map[string]translation
+type mapper map[string]map[string]Mapping
 
-func newResourceTranslation(resource string, attribute string, folderSupport bool) translation {
+func newResourceTranslation(resource string, attribute string, folderSupport bool) Mapping {
 	defaultMapping := func(r string) map[string]string {
 		return map[string]string{
 			utils.VerbGet:              fmt.Sprintf("%s:read", r),
@@ -94,7 +174,7 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 }
 
 func NewMapperRegistry() MapperRegistry {
-	mapper := mapper(map[string]map[string]translation{
+	mapper := mapper(map[string]map[string]Mapping{
 		"dashboard.grafana.app": {
 			"dashboards": newResourceTranslation("dashboards", "uid", true),
 		},
@@ -120,7 +200,7 @@ func NewMapperRegistry() MapperRegistry {
 				},
 				folderSupport: false,
 			},
-			"resourcepermissions": newResourceTranslation("resourcepermissions", "uid", false),
+			"resourcepermissions": newResourcePermissionTranslation(),
 		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),
@@ -155,7 +235,7 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 		return nil, false
 	}
 
-	return &t, true
+	return t, true
 }
 
 func (m mapper) GetAll(group string) []Mapping {
@@ -166,7 +246,7 @@ func (m mapper) GetAll(group string) []Mapping {
 
 	translations := make([]Mapping, 0, len(resources))
 	for _, t := range resources {
-		translations = append(translations, &t)
+		translations = append(translations, t)
 	}
 
 	return translations
