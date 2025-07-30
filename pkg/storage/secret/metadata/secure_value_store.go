@@ -3,18 +3,21 @@ package metadata
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
@@ -40,16 +43,39 @@ type secureValueMetadataStorage struct {
 	tracer  trace.Tracer
 }
 
-func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, svmCreateErr error) {
 	start := time.Now()
+	name := sv.GetName()
+	namespace := sv.GetNamespace()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Create", trace.WithAttributes(
-		attribute.String("name", sv.GetName()),
-		attribute.String("namespace", sv.GetNamespace()),
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
 		attribute.String("actorUID", actorUID),
 	))
 	defer span.End()
 
-	// Set inside of the transaction callback
+	defer func() {
+		args := []any{
+			"name", name,
+			"namespace", namespace,
+			"actorUID", actorUID,
+		}
+
+		success := svmCreateErr == nil
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Create failed")
+			span.RecordError(svmCreateErr)
+			args = append(args, "error", svmCreateErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Create", args...)
+
+		s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueMetadataCreateCount.WithLabelValues(strconv.FormatBool(success)).Inc()
+	}()
+
+	// Set inside the transaction callback
 	var row *secureValueDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
@@ -145,9 +171,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
-	s.metrics.SecureValueMetadataCreateDuration.Observe(time.Since(start).Seconds())
-	s.metrics.SecureValueMetadataCreateCount.Inc()
-
 	return createdSecureValue, nil
 }
 
@@ -230,7 +253,7 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv1beta1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (_ *secretv1beta1.SecureValue, readErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Read", trace.WithAttributes(
 		attribute.String("name", name),
@@ -238,6 +261,13 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		attribute.Bool("isForUpdate", opts.ForUpdate),
 	))
 	defer span.End()
+
+	defer func() {
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", "namespace", namespace, "name", name, "success", readErr != nil, "error", readErr)
+
+		s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueMetadataGetCount.Inc()
+	}()
 
 	secureValue, err := s.readActiveVersion(ctx, namespace, name, opts)
 	if err != nil {
@@ -248,9 +278,6 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	if err != nil {
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
-
-	s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
-	s.metrics.SecureValueMetadataGetCount.Inc()
 
 	return secureValueKub, nil
 }
