@@ -971,7 +971,6 @@ github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQa
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
 github.com/grafana/gomemcache v0.0.0-20250228145437-da7b95fd2ac1/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
 github.com/grafana/grafana-app-sdk v0.40.1/go.mod h1:4P8h7VB6KcDjX9bAoBQc6IP8iNylxe6bSXLR9gA39gM=
-github.com/grafana/grafana-app-sdk v0.40.2/go.mod h1:BbNXPNki3mtbkWxYqJsyA1Cj9AShSyaY33z8WkyfVv0=
 github.com/grafana/grafana-app-sdk/logging v0.38.0/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
 github.com/grafana/grafana-app-sdk/logging v0.39.0 h1:3GgN5+dUZYqq74Q+GT9/ET+yo+V54zWQk/Q2/JsJQB4=
 github.com/grafana/grafana-app-sdk/logging v0.39.0/go.mod h1:WhDENSnaGHtyVVwZGVnAR7YLvh2xlLDYR3D7E6h7XVk=
@@ -995,6 +994,7 @@ github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250506052906-7a2
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250616135341-59c2f154336b/go.mod h1:OIlvNnUufYDhBXa4xK4CyzPI2C69ZJkHy5+aFDyPtXw=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250616145019-8d27f12428cb/go.mod h1:OIlvNnUufYDhBXa4xK4CyzPI2C69ZJkHy5+aFDyPtXw=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:eR8wca74ADgxBrvX0uNpdB1qnPaGx/KhCm4Xj8oqHfQ=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730154715-ae15ba562e71/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
 github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d/go.mod h1:HQprw3MmiYj5OUV9CZnkwA1FKDZBmYACuAB3oDvUOmI=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
