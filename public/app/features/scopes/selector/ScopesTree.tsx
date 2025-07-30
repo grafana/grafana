@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -63,11 +64,20 @@ export function ScopesTree({
     }
   }
 
+  const searchArea = useMemo(() => {
+    return tree.scopeNodeId === '' ? '' : scopeNodes[tree.scopeNodeId]?.spec.title || '';
+  }, [tree.scopeNodeId, scopeNodes]);
+
   const lastExpandedNode = !anyChildExpanded && tree.expanded;
 
   return (
     <>
-      <ScopesTreeSearch anyChildExpanded={anyChildExpanded} onNodeUpdate={onNodeUpdate} treeNode={tree} />
+      <ScopesTreeSearch
+        anyChildExpanded={anyChildExpanded}
+        searchArea={searchArea}
+        onNodeUpdate={onNodeUpdate}
+        treeNode={tree}
+      />
       {tree.scopeNodeId === '' &&
         !anyChildExpanded &&
         recentScopes &&
