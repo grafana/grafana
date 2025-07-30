@@ -376,6 +376,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
+        app={CoreApp.PanelEditor}
       />
 
       <Stack gap={2}>
@@ -393,7 +394,9 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
               <Button
                 icon="plus"
                 onClick={() =>
-                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), onSelectQueryFromLibrary)
+                  openQueryLibraryDrawer(getDatasourceNames(datasource, queries), onSelectQueryFromLibrary, {
+                    context: CoreApp.PanelEditor,
+                  })
                 }
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQueryFromLibrary}
