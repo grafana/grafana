@@ -7,6 +7,7 @@ import uPlot from 'uplot';
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
+import { AdHocFilterModel } from '../../../internal';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
@@ -28,6 +29,7 @@ export const enum TooltipHoverMode {
 }
 
 type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
+type GetAdHocFiltersCallback = (seriesIdx: number, dataIdx: number) => AdHocFilterModel[];
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
@@ -43,6 +45,7 @@ interface TooltipPlugin2Props {
 
   onSelectRange?: OnSelectRangeCallback;
   getDataLinks?: GetDataLinksCallback;
+  getAdHocFilters?: GetAdHocFiltersCallback;
 
   render: (
     u: uPlot,
@@ -53,7 +56,8 @@ interface TooltipPlugin2Props {
     // selected time range (for annotation triggering)
     timeRange: TimeRange2 | null,
     viaSync: boolean,
-    dataLinks: LinkModel[]
+    dataLinks: LinkModel[],
+    adHocFilters: AdHocFilterModel[]
   ) => React.ReactNode;
 
   maxWidth?: number;
@@ -107,6 +111,7 @@ const MIN_ZOOM_DIST = 5;
 const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
 
 const getDataLinksFallback: GetDataLinksCallback = () => [];
+const getAdHocFiltersFallback: GetAdHocFiltersCallback = () => [];
 
 const userAgentIsMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
@@ -124,6 +129,7 @@ export const TooltipPlugin2 = ({
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
+  getAdHocFilters = getAdHocFiltersFallback,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -142,6 +148,9 @@ export const TooltipPlugin2 = ({
 
   const getLinksRef = useRef(getDataLinks);
   getLinksRef.current = getDataLinks;
+
+  const getAdHocFiltersRef = useRef(getAdHocFilters);
+  getAdHocFiltersRef.current = getAdHocFilters;
 
   useLayoutEffect(() => {
     sizeRef.current?.observer.disconnect();
@@ -202,6 +211,7 @@ export const TooltipPlugin2 = ({
     let closestSeriesIdx: number | null = null;
     let viaSync = false;
     let dataLinks: LinkModel[] = [];
+    let adHocFilters: AdHocFilterModel[] = [];
 
     // for onceClick link rendering during mousemoves we use these pre-generated first links or actions
     // these will be wrong if the titles have interpolation using the hovered *value*
@@ -273,7 +283,8 @@ export const TooltipPlugin2 = ({
                 dismiss,
                 selectedRange,
                 viaSync,
-                _isPinned ? dataLinks : closestSeriesIdx != null ? persistentLinks[closestSeriesIdx] : []
+                _isPinned ? dataLinks : closestSeriesIdx != null ? persistentLinks[closestSeriesIdx] : [],
+                _isPinned ? adHocFilters : []
               )
             : null,
         dismiss,
@@ -293,6 +304,7 @@ export const TooltipPlugin2 = ({
       _isHovering = false;
       _plot!.setCursor({ left: -10, top: -10 });
       dataLinks = [];
+      adHocFilters = [];
 
       scheduleRender(prevIsPinned);
     };
@@ -351,6 +363,7 @@ export const TooltipPlugin2 = ({
           // if tooltip visible, not pinned, and within proximity to a series/point
           else if (_isHovering && !_isPinned && closestSeriesIdx != null) {
             dataLinks = getLinksRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
+            adHocFilters = getAdHocFiltersRef.current(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
             const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
             if (oneClickLink != null) {

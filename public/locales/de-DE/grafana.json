@@ -2468,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurieren",
-      "draft-new-rule": "Neue Regel entwerfen",
       "ds-error": {
         "title": "Regeln für diese Datenquelle können nicht geladen werden"
       },
@@ -2494,6 +2493,7 @@
       "new-alert-rule": "Neue Warnregel",
       "new-datasource-recording-rule": "Neue Datenquelle-Aufnahmeregel",
       "new-grafana-recording-rule": "Neue Grafana-Aufnahmeregel",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Mehr anzeigen …"
       },
@@ -3482,6 +3482,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Abbrechen",
       "cannot-move-folders": "Ordner können nicht verschoben werden",
       "confirmation-text": "Löschen",
@@ -3515,6 +3516,10 @@
       "this-folder-is-empty": "Dieser Ordner ist leer"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3522,15 +3527,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} Alarmierungsregel",
@@ -4566,6 +4578,11 @@
     },
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Verschieben von {{typeName}}",
       "panel-background": "Panel-Hintergrund ändern",
       "panel-description": "Panel-Beschreibung ändern",
@@ -4580,6 +4597,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "element": "",
         "local-variable": "Lokale Variable",
         "multiple-elements": "Mehrere Elemente",
         "multiple-elements-delete-text": "Sind Sie sicher, dass Sie diese Elemente löschen möchten?",
@@ -5350,6 +5368,20 @@
       "tags-expected-array": "Array der jeweiligen Tags",
       "tags-expected-strings": "String-Array der jeweiligen Tags"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Auf Version {{version}} wiederherstellen",
       "label-view-json-diff": "JSON-Diff anzeigen",
@@ -5789,7 +5821,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7160,6 +7191,7 @@
           "start-time": "Startzeit:"
         }
       },
+      "share-span": "",
       "warnings": "Warnungen"
     },
     "span-filters": {
@@ -7507,6 +7539,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7566,6 +7599,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8265,6 +8299,9 @@
     "card": {
       "option": "Option"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Auswahl löschen"
     },
@@ -8277,6 +8314,7 @@
       "aria-label-selected-color": "{{colorLabel}} Farbe"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Abbrechen",
       "confirmText-delete": ""
     },
@@ -8703,6 +8741,7 @@
       "footer-add-annotation": "Anmerkung hinzufügen",
       "footer-click-to-action": "Klicken, um zu {{actionTitle}}",
       "footer-click-to-navigate": "Zum Öffnen von {{linkTitle}} klicken",
+      "footer-filter-for-value": "",
       "timestamp": "Zeitstempel"
     },
     "week-start-picker": {
@@ -10951,15 +10990,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11069,10 +11108,10 @@
       "title-instant-updates-requests-webhooks": "Sofortige Updates und Pull-Requests mit Webhooks.",
       "title-visual-previews-in-pull-requests": "Visuelle Vorschauen in Pull-Requests mit Bildwiedergabe"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Auftragsspezifikation",
-      "summary": "Zusammenfassung",
-      "title-error": "Fehler"
+      "summary": "Zusammenfassung"
     },
     "features-list": {
       "actions": {
@@ -11217,10 +11256,13 @@
       "starting": "Wird gestartet ...",
       "status": {
         "title-error-running-job": "Fehler bei der Ausführung des Auftrags",
-        "title-job-completed-successfully": "Auftrag erfolgreich abgeschlossen",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
-      "summary": "Zusammenfassung"
+      "summary": "Zusammenfassung",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11363,6 +11405,7 @@
       "label-current-step": "Aktueller Schritt",
       "label-pending-step": "Ausstehender Schritt"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11386,6 +11429,7 @@
       "go-to": "Weiter zu",
       "make-sure": "Achten Sie darauf, dass diese Berechtigungen berücksichtigt werden"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Während dieses Vorgangs können keine Ressourcen erstellt, bearbeitet oder gelöscht werden. Im letzten Schritt werden sie entfernt.",
       "alert-point-2": "Sobald die Bereitstellung abgeschlossen ist, werden die Ressourcen wieder angezeigt und über einen externen Speicher verwaltet.",
@@ -11394,6 +11438,12 @@
       "alert-title": "Wichtig: Es gehen keine Daten oder Konfigurationen verloren, aber die Dashboards sind für einige Minuten vorübergehend nicht verfügbar.",
       "button-next": "Fertigstellen",
       "button-start": "Synchronisierung starten",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "step-connect": "Verbinden",
       "step-finish": "Zusätzliche Einstellungen auswählen",
@@ -11408,6 +11458,7 @@
     "wizard-content": {
       "button-cancel": "Abbrechen",
       "button-cancelling": "Abbrechen ...",
+      "button-previous": "",
       "button-submitting": "Übertragen …",
       "error-instance-repository-exists": "Das Instanz-Repository existiert bereits"
     }
@@ -13435,7 +13486,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13457,6 +13508,9 @@
         }
       },
       "regression": "Regression",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Anzahl der zu prognostizierenden X-, Y-Punkte"
     },
     "rename-by-regex-transformer": {

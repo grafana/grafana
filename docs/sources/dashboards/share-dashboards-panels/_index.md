@@ -259,7 +259,6 @@ To share a personalized, direct link to your panel within your organization, fol
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view it.
 1. (Optional) To [generate an image of the panel as a PNG file](ref:image-rendering), customize the image settings:
-
    - **Width** - In pixels. The default is 1000.
    - **Height** - In pixels. The default is 500.
    - **Scale factor** - The default is 1.

@@ -13,6 +13,8 @@ import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
 
+import { buildResourceBranchRedirectUrl } from './utils';
+
 export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
@@ -82,9 +84,13 @@ export function DeleteProvisionedDashboardForm({
   const onBranchSuccess = (path: string, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
     onDismiss();
-    navigate(
-      `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}?pull_request_url=${urls?.newPullRequestURL}`
-    );
+    const url = buildResourceBranchRedirectUrl({
+      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+      paramName: 'pull_request_url',
+      paramValue: urls?.newPullRequestURL,
+      repoType: request.data?.repository?.type,
+    });
+    navigate(url);
   };
 
   useProvisionedRequestHandler({

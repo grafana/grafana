@@ -113,7 +113,7 @@ Here is an overview of version support through 2026:
 | 11.3.x                    | October 22, 2024   | July 22, 2025        | Not Supported                 |
 | 11.4.x                    | December 5, 2024   | September 5, 2025    | Security & Critical Bugs Only |
 | 11.5.x                    | January 28, 2025   | October 28, 2025     | Security & Critical Bugs Only |
-| 11.6.x (Last minor of 11) | March 25, 2025     | May 25, 2026         | Security & Critical Bugs Only |
+| 11.6.x (Last minor of 11) | March 25, 2025     | June 25, 2026        | Security & Critical Bugs Only |
 | 12.0.x                    | May 5, 2025        | February 5, 2026     | Security & Critical Bugs Only |
 | 12.1.x                    | July 22, 2025      | April 22, 2026       | Full Support until next minor |
 | 12.2.x                    | September 23, 2025 | June 23, 2026        | Yet to be released            |
@@ -124,14 +124,12 @@ Here is an overview of version support through 2026:
 The level of support changes as new versions of Grafana are released. Here are the key details:
 
 - **Full Support**:
-
   - All new features
   - All bug fixes
   - Security patches
   - Regular updates
 
 - **Security & Critical Bugs Only**:
-
   - Security vulnerability patches
   - Critical bug fixes that cause feature degradation
   - No new features
