@@ -161,7 +161,6 @@ export interface TableCellRendererProps {
   showFilters: boolean;
   justifyContent: Property.JustifyContent;
   getActions?: GetActionsFunctionLocal;
-  maxWrappedLines?: number;
 }
 
 export type ContextMenuProps = {

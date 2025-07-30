@@ -70,7 +70,6 @@ import {
   getDisplayName,
   getIsNestedTable,
   getJustifyContent,
-  getMaxWrappedLines,
   getVisibleFields,
   isCellInspectEnabled,
   shouldTextOverflow,
@@ -351,7 +350,6 @@ export function TableNG(props: TableNGProps) {
 
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
-        const maxWrappedLines = getMaxWrappedLines(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
@@ -375,7 +373,6 @@ export function TableNG(props: TableNGProps) {
               cellType,
               textAlign,
               shouldWrap,
-              maxWrappedLines,
               shouldOverflow,
               canBeColorized,
               isMonospace
@@ -948,7 +945,6 @@ const getCellStyles = (
   cellType: TableCellDisplayMode,
   textAlign: TextAlign,
   shouldWrap: boolean,
-  maxWrappedLines: number | undefined,
   shouldOverflow: boolean,
   isColorized: boolean,
   isMonospace: boolean
@@ -996,16 +992,6 @@ const getCellStyles = (
 
     ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
     ...(isMonospace && { fontFamily: 'monospace' }),
-    // ...(maxWrappedLines !== undefined && {
-    //   // height properties need to override the default settings.
-    //   height: 'auto',
-    //   minHeight: 'none',
-    //   // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
-    //   '-webkit-line-clamp': String(maxWrappedLines),
-    //   display: '-webkit-box',
-    //   '-webkit-box-orient': 'vertical',
-    //   overflowY: 'hidden',
-    // }),
 
     ...(cellType === TableCellDisplayMode.DataLinks && {
       ...(shouldWrap && {
