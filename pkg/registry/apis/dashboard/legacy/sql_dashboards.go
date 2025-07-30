@@ -62,7 +62,8 @@ type dashboardSqlAccess struct {
 	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
 	provisioning provisioning.ProvisioningService
-	features     featuremgmt.FeatureToggles
+
+	invalidDashboardParseFallbackEnabled bool
 
 	// Use for writing (not reading)
 	dashStore             dashboards.Store
@@ -88,15 +89,15 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
-		sql:                   sql,
-		namespacer:            namespacer,
-		dashStore:             dashStore,
-		provisioning:          provisioning,
-		dashboardSearchClient: *dashboardSearchClient,
-		libraryPanelSvc:       libraryPanelSvc,
-		accessControl:         accessControl,
-		log:                   log.New("dashboard.legacysql"),
-		features:              features,
+		sql:                                  sql,
+		namespacer:                           namespacer,
+		dashStore:                            dashStore,
+		provisioning:                         provisioning,
+		dashboardSearchClient:                *dashboardSearchClient,
+		libraryPanelSvc:                      libraryPanelSvc,
+		accessControl:                        accessControl,
+		log:                                  log.New("dashboard.legacysql"),
+		invalidDashboardParseFallbackEnabled: features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
 	}
 }
 
@@ -259,8 +260,7 @@ func generateFallbackDashboard(data []byte, title, uid string) ([]byte, error) {
 }
 
 func (a *dashboardSqlAccess) parseDashboard(dash *dashboardV1.Dashboard, data []byte, id int64, title string) error {
-	err := dash.Spec.UnmarshalJSON(data)
-	if err != nil {
+	if err := dash.Spec.UnmarshalJSON(data); err != nil {
 		a.log.Warn("error unmarshalling dashboard spec. Generating fallback dashboard data", "error", err, "uid", dash.UID, "name", dash.Name)
 		dash.Spec = *dashboardV0.NewDashboardSpec()
 
@@ -270,8 +270,7 @@ func (a *dashboardSqlAccess) parseDashboard(dash *dashboardV1.Dashboard, data []
 			return err
 		}
 
-		err = dash.Spec.UnmarshalJSON(dashboardData)
-		if err != nil {
+		if err = dash.Spec.UnmarshalJSON(dashboardData); err != nil {
 			a.log.Warn("error unmarshalling fallback dashboard data", "error", err, "uid", dash.UID, "name", dash.Name)
 			return err
 		}
@@ -384,14 +383,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if len(data) > 0 {
-			if a.features.IsEnabled(context.Background(), featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled) {
-				err := a.parseDashboard(dash, data, dashboard_id, title)
-				if err != nil {
+			if a.invalidDashboardParseFallbackEnabled {
+				if err := a.parseDashboard(dash, data, dashboard_id, title); err != nil {
 					return row, err
 				}
 			} else {
-				err := dash.Spec.UnmarshalJSON(data)
-				if err != nil {
+				if err := dash.Spec.UnmarshalJSON(data); err != nil {
 					return row, fmt.Errorf("JSON unmarshal error for: %s // %w", dash.Name, err)
 				}
 			}

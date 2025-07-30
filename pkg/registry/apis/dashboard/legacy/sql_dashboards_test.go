@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -33,10 +32,10 @@ func TestScanRow(t *testing.T) {
 	provisioner := provisioning.NewProvisioningServiceMock(context.Background())
 	provisioner.GetDashboardProvisionerResolvedPathFunc = func(name string) string { return "provisioner" }
 	store := &dashboardSqlAccess{
-		namespacer:   func(_ int64) string { return "default" },
-		provisioning: provisioner,
-		log:          log.New("test"),
-		features:     featuremgmt.WithFeatures(),
+		namespacer:                           func(_ int64) string { return "default" },
+		provisioning:                         provisioner,
+		log:                                  log.New("test"),
+		invalidDashboardParseFallbackEnabled: false,
 	}
 
 	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
@@ -218,10 +217,10 @@ func TestScanRow(t *testing.T) {
 
 		// store with feature flag enabled
 		store = &dashboardSqlAccess{
-			namespacer:   func(_ int64) string { return "default" },
-			provisioning: provisioner,
-			log:          log.New("test"),
-			features:     featuremgmt.WithFeatures(featuremgmt.FlagScanRowInvalidDashboardParseFallbackEnabled),
+			namespacer:                           func(_ int64) string { return "default" },
+			provisioning:                         provisioner,
+			log:                                  log.New("test"),
+			invalidDashboardParseFallbackEnabled: true,
 		}
 
 		row, err = store.scanRow(resultRows, false)
