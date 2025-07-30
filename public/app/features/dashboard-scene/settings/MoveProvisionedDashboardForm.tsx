@@ -117,8 +117,7 @@ export function MoveProvisionedDashboardForm({
     }
   };
 
-  const onWriteSuccess = (info: ProvisionedOperationInfo) => {
-    // Dashboard state management (now in the correct place)
+  const onWriteSuccess = () => {
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     if (targetFolderUID && targetFolderTitle) {
@@ -140,9 +139,13 @@ export function MoveProvisionedDashboardForm({
   useProvisionedRequestHandler({
     request: moveRequest,
     workflow,
+    successMessage: t(
+      'dashboard-scene.move-provisioned-dashboard-form.success-message',
+      'Dashboard moved successfully'
+    ),
     resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess: (data, info) => onBranchSuccess(info),
+      onBranchSuccess: (_, info) => onBranchSuccess(info),
       onWriteSuccess,
     },
   });

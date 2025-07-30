@@ -27,7 +27,6 @@ interface RequestHandlers<T> {
     resource: Resource<T>
   ) => void;
   onWriteSuccess?: (info: ProvisionedOperationInfo, resource: Resource<T>) => void;
-  onNewResourceSuccess?: (resource: Resource<T>, info: ProvisionedOperationInfo) => void;
   onError?: (error: unknown, info: ProvisionedOperationInfo) => void;
   onDismiss?: () => void;
 }
@@ -51,29 +50,6 @@ interface ResourceConfig {
  *
  * This hook is intentionally decoupled from specific components (like DashboardScene) to promote reusability.
  * Components are responsible for their own state management through specific workflow handlers.
- *
- * @example
- * // Dashboard component handles its own state
- * useProvisionedRequestHandler({
- *   request,
- *   resourceType: 'dashboard',
- *   handlers: {
- *     onWriteSuccess: (info) => {
- *       dashboard.setState({ isDirty: false });
- *       navigate('/dashboards');
- *     },
- *   }
- * });
- *
- * @example
- * // Folder component doesn't need dashboard state
- * useProvisionedRequestHandler({
- *   request,
- *   resourceType: 'folder',
- *   handlers: {
- *     onNewResourceSuccess: (resource) => navigate(`/folders/${resource.metadata.name}`),
- *   }
- * });
  */
 export function useProvisionedRequestHandler<T>({
   request,
