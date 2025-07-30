@@ -381,6 +381,8 @@ async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, tit
   await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(JSON.stringify(testV2Dashboard));
   await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
+  await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+  await page.locator('div[data-testid="data-source-card"]').first().click();
   await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
 }
 
