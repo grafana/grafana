@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';

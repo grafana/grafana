@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -101,8 +101,8 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 				User:     subject,
 				Relation: common.RelationSetView,
 				Object: common.NewGroupResourceIdent(
-					dashboardV2alpha2.DashboardResourceInfo.GroupResource().Group,
-					dashboardV2alpha2.DashboardResourceInfo.GroupResource().Resource,
+					dashboardV2beta1.DashboardResourceInfo.GroupResource().Group,
+					dashboardV2beta1.DashboardResourceInfo.GroupResource().Resource,
 					"",
 				),
 			},

@@ -12,7 +12,7 @@ import (
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -24,7 +24,7 @@ var (
 	FolderResource            = folders.FolderResourceInfo.GroupVersionResource()
 	DashboardResource         = dashboardV1.DashboardResourceInfo.GroupVersionResource()
 	DashboardResourceV2alpha1 = dashboardV2alpha1.DashboardResourceInfo.GroupVersionResource()
-	DashboardResourceV2alpha2 = dashboardV2alpha2.DashboardResourceInfo.GroupVersionResource()
+	DashboardResourceV2beta1  = dashboardV2beta1.DashboardResourceInfo.GroupVersionResource()
 
 	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}

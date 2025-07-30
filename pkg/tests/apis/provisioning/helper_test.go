@@ -25,7 +25,7 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashboardsV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -51,7 +51,7 @@ type provisioningTestHelper struct {
 	DashboardsV0       *apis.K8sResourceClient
 	DashboardsV1       *apis.K8sResourceClient
 	DashboardsV2alpha1 *apis.K8sResourceClient
-	DashboardsV2alpha2 *apis.K8sResourceClient
+	DashboardsV2beta1  *apis.K8sResourceClient
 	AdminREST          *rest.RESTClient
 	EditorREST         *rest.RESTClient
 	ViewerREST         *rest.RESTClient
@@ -270,10 +270,10 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
 	})
-	dashboardsV2alpha2 := helper.GetResourceClient(apis.ResourceClientArgs{
+	dashboardsV2beta1 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR:       dashboardsV2alpha2.DashboardResourceInfo.GroupVersionResource(),
+		GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
 	})
 
 	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
@@ -313,7 +313,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		DashboardsV0:       dashboardsV0,
 		DashboardsV1:       dashboardsV1,
 		DashboardsV2alpha1: dashboardsV2alpha1,
-		DashboardsV2alpha2: dashboardsV2alpha2,
+		DashboardsV2beta1:  dashboardsV2beta1,
 	}
 }
 

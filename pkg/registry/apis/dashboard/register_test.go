@@ -14,7 +14,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashv2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -177,8 +177,8 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
+				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
-				dashv2alpha2.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
@@ -189,8 +189,8 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
+				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
-				dashv2alpha2.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
@@ -199,10 +199,10 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 				featuremgmt.FlagDashboardNewLayouts,
 			},
 			expected: []schema.GroupVersion{
+				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
 				dashv1.DashboardResourceInfo.GroupVersion(),
-				dashv2alpha2.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 	}

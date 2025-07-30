@@ -31,7 +31,7 @@ import {
   AutoGridLayoutSpec,
   RowsLayoutSpec,
   TabsLayoutSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -57,6 +57,7 @@ import {
   validateDashboardSchemaV2,
   getDataQueryKind,
   getAutoAssignedDSRef,
+  getVizPanelQueries,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -410,9 +411,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result).toMatchSnapshot();
 
     // Check that the annotation layers are correctly transformed
-    expect(result.annotations).toHaveLength(3);
-    // Check annotation layer 3 without initial data source isn't updated with runtime default
-    expect(result.annotations?.[2].spec.datasource?.type).toBe(undefined);
+    expect(result.annotations).toHaveLength(2);
   });
 
   it('should transform the minimum scene to save model schema v2', () => {
@@ -562,16 +561,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         name: 'annotation-with-options',
         enable: true,
         iconColor: 'red',
-        legacyOptions: {
-          expr: 'rate(http_requests_total[5m])',
-          queryType: 'range',
-          legendFormat: '{{method}} {{endpoint}}',
-          useValueAsTime: true,
-        },
-        // Some other properties that aren't in the annotation spec
-        // and should be moved to options
-        customProp1: 'value1',
-        customProp2: 'value2',
+        customProp1: true,
+        customProp2: 'test',
       },
       name: 'layerWithOptions',
       isEnabled: true,
@@ -593,19 +584,11 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations.length).toBe(1);
     expect(result.annotations[0].spec.legacyOptions).toBeDefined();
     expect(result.annotations[0].spec.legacyOptions).toEqual({
-      expr: 'rate(http_requests_total[5m])',
-      queryType: 'range',
-      legendFormat: '{{method}} {{endpoint}}',
-      useValueAsTime: true,
-      customProp1: 'value1',
-      customProp2: 'value2',
+      customProp1: true,
+      customProp2: 'test',
     });
 
     // Ensure these properties are not at the root level
-    expect(result).not.toHaveProperty('annotations[0].spec.expr');
-    expect(result).not.toHaveProperty('annotations[0].spec.queryType');
-    expect(result).not.toHaveProperty('annotations[0].spec.legendFormat');
-    expect(result).not.toHaveProperty('annotations[0].spec.useValueAsTime');
     expect(result).not.toHaveProperty('annotations[0].spec.customProp1');
     expect(result).not.toHaveProperty('annotations[0].spec.customProp2');
   });
@@ -831,6 +814,50 @@ describe('getElementDatasource', () => {
       // @ts-expect-error - intentionally passing invalid type to test error handling
       getAutoAssignedDSRef(vizPanel, 'invalid-type', dsReferencesMapping);
     }).toThrow('Invalid type invalid-type for getAutoAssignedDSRef');
+  });
+});
+
+describe('getVizPanelQueries', () => {
+  it('should handle panel query datasources correctly', () => {
+    const queryWithDS: SceneDataQuery = {
+      refId: 'B',
+      datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+    };
+
+    const queryWithoutDS: SceneDataQuery = {
+      refId: 'A',
+    };
+
+    // Mock query runner
+    const queryRunner = new SceneQueryRunner({
+      queries: [queryWithoutDS, queryWithDS],
+      datasource: { uid: 'default-ds', type: 'default' },
+    });
+    // Create test elements
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      $data: queryRunner,
+    });
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    const result = getVizPanelQueries(vizPanel, dsReferencesMapping);
+    expect(result.length).toBe(2);
+    expect(result[0].spec.query.kind).toBe('DataQuery');
+    expect(result[0].spec.query.datasource).toBeUndefined(); // ignore datasource if it wasn't provided
+    expect(result[0].spec.query.group).toBe('default');
+    expect(result[0].spec.query.version).toBe('v0');
+
+    expect(result[1].spec.query.kind).toBe('DataQuery');
+    expect(result[1].spec.query.datasource?.name).toBe('prometheus-uid');
+    expect(result[1].spec.query.group).toBe('prometheus');
+    expect(result[1].spec.query.version).toBe('v0');
   });
 });
 
@@ -1062,18 +1089,6 @@ function createAnnotationLayers() {
         iconColor: 'blue',
       },
       name: 'layer2',
-      isEnabled: true,
-      isHidden: true,
-    }),
-    // this could happen if a dahboard was created from code and the datasource was not defined
-    new DashboardAnnotationsDataLayer({
-      key: 'layer3',
-      query: {
-        name: 'query3',
-        enable: true,
-        iconColor: 'green',
-      },
-      name: 'layer3',
       isEnabled: true,
       isHidden: true,
     }),

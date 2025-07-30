@@ -658,9 +658,9 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	_, err = helper.DashboardsV2alpha1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
 
-	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2alpha2.yaml")
-	_, err = helper.DashboardsV2alpha2.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create v2alpha2 dashboard")
+	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	_, err = helper.DashboardsV2beta1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2beta1 dashboard")
 
 	// Now for the repository.
 	const repo = "local-repository"
@@ -701,7 +701,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
 		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
 		{title: "Test dashboard. Created at v2alpha1", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2alpha1", fileName: "test-dashboard-created-at-v2alpha1.json"},
-		{title: "Test dashboard. Created at v2alpha2", apiVersion: "dashboard.grafana.app/v2alpha2", name: "test-v2alpha2", fileName: "test-dashboard-created-at-v2alpha2.json"},
+		{title: "Test dashboard. Created at v2beta1", apiVersion: "dashboard.grafana.app/v2beta1", name: "test-v2beta1", fileName: "test-dashboard-created-at-v2beta1.json"},
 	} {
 		fpath := filepath.Join(helper.ProvisioningPath, test.fileName)
 		//nolint:gosec // we are ok with reading files in testdata

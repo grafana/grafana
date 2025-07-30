@@ -13,7 +13,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
-	dashv2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
@@ -152,9 +152,9 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			expectedTitle: "test123",
 		},
 		{
-			name: "v2alpha2 should set layout if it is not set",
-			inputObj: &dashv2alpha2.Dashboard{
-				Spec: dashv2alpha2.DashboardSpec{
+			name: "v2beta1 should set layout if it is not set",
+			inputObj: &dashv2beta1.Dashboard{
+				Spec: dashv2beta1.DashboardSpec{
 					Title: "test123",
 				},
 			},
@@ -215,7 +215,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 						require.Equal(t, schemaversion.LATEST_VERSION, schemaVersion, "dashboard should be migrated to the latest version")
 					}
 				case *dashv2alpha1.Dashboard:
-				case *dashv2alpha2.Dashboard:
+				case *dashv2beta1.Dashboard:
 					require.Equal(t, tt.expectedTitle, v.Spec.Title, "title should be set")
 					require.NotNil(t, v.Spec.Layout, "layout should be set")
 					require.NotNil(t, v.Spec.Layout.GridLayoutKind, "layout should be a GridLayout")
