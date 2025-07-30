@@ -289,12 +289,7 @@ export interface FeatureToggles {
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;
-  /**
-  * Route the folder and dashboard service requests to k8s
-  * @default true
-  */
-  kubernetesClientDashboardsFolders?: boolean;
-  /**
+    /**
   * Routes short url requests from /api to the /apis endpoint
   */
   kubernetesShortURLs?: boolean;
@@ -1083,4 +1078,8 @@ export interface FeatureToggles {
   * @default false
   */
   alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enable adhoc filter buttons in visualization tooltips
+  */
+  adhocFiltersInTooltips?: boolean;
 }

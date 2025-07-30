@@ -13,6 +13,7 @@ import {
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { getTargetFolderPathInRepo } from 'app/features/browse-dashboards/components/BulkActions/utils';
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
@@ -74,8 +75,7 @@ export function MoveProvisionedDashboardForm({
       return;
     }
 
-    const folderAnnotations = targetFolder.metadata.annotations || {};
-    const targetFolderPath = folderAnnotations[AnnoKeySourcePath] || targetFolderTitle;
+    const targetFolderPath = getTargetFolderPathInRepo({ targetFolder });
 
     const filename = currentSourcePath.split('/').pop();
     const newPath = `${targetFolderPath}/${filename}`;
