@@ -13,7 +13,6 @@ import {
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
-import { fmt } from '../xychart/utils';
 
 import { isTooltipScrollable } from './utils';
 
@@ -71,17 +70,9 @@ export const TimeSeriesTooltip = ({
     mode,
     sortOrder,
     (field) => field.type === FieldType.number || field.type === FieldType.enum,
-    hideZeros
+    hideZeros,
+    _rest
   );
-
-  _rest?.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.tooltip) {
-      contentItems.push({
-        label: field.state?.displayName ?? field.name,
-        value: fmt(field, field.values[dataIdxs[0]!]),
-      });
-    }
-  });
 
   let footer: ReactNode;
 

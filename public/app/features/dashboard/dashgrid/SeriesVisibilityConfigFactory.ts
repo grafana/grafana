@@ -97,7 +97,7 @@ function createOverride(
     value: {
       viz: true,
       legend: false,
-      tooltip: false,
+      tooltip: true,
     },
   };
 
@@ -118,7 +118,7 @@ function createOverride(
         value: {
           viz: true,
           legend: false,
-          tooltip: false,
+          tooltip: true,
         },
       },
     ],

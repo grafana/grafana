@@ -927,6 +927,10 @@ export class DashboardMigrator {
       }
     }
 
+    if (oldVersion < 42) {
+      panelUpgrades.push(migrateHideFromFunctionality);
+    }
+
     /**
      * -==- Add migration here -==-
      * Your migration should go below the previous
@@ -1476,6 +1480,26 @@ function ensureXAxisVisibility(panel: PanelModel) {
         ],
       };
     }
+  }
+
+  return panel;
+}
+
+function migrateHideFromFunctionality(panel: PanelModel) {
+  // migrate overrides with hideFrom.viz = true to also set tooltip = true
+  // this includes the __systemRef override
+  if (panel.fieldConfig && panel.fieldConfig.overrides) {
+    panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((override) => {
+      if (override.properties) {
+        override.properties = override.properties.map((property) => {
+          if (property.id === 'custom.hideFrom' && property.value?.viz === true) {
+            property.value.tooltip = true;
+          }
+          return property;
+        });
+      }
+      return override;
+    });
   }
 
   return panel;
