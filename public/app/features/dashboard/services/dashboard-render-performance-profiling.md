@@ -39,7 +39,7 @@ dashboard_performance_metrics =
 
 ## Tracked Interactions
 
-The system tracks various dashboard interaction types automatically using the [`@grafana/scenes`](https://github.com/grafana/scenes) library. Each interaction is captured with a specific origin identifier that describes the type of user action performed.
+The system tracks various dashboard interaction types automatically using the [`@grafana/scenes`](https://github.com/grafana/scenes) library. Each interaction is captured with a specific origin identifier that describes the type of user action performed. In Grafana, these interaction events are then reported as `dashboard_render` events with interaction type information included.
 
 ### Core Performance-Tracked Interactions
 
@@ -52,7 +52,7 @@ The following dashboard interaction types are tracked for dashboard render perfo
 | `time_range_change`      | Time picker changes        | When user changes time range in time picker              |
 | `filter_added`           | Ad-hoc filter addition     | When user adds a new filter to the dashboard             |
 | `filter_removed`         | Ad-hoc filter removal      | When user removes a filter from the dashboard            |
-| `filter_changes`         | Ad-hoc filter modification | When user changes filter values or operators             |
+| `filter_changed`         | Ad-hoc filter modification | When user changes filter values or operators             |
 | `filter_restored`        | Ad-hoc filter restoration  | When user restores a previously applied filter           |
 | `variable_value_changed` | Variable value changes     | When user changes dashboard variable values              |
 | `scopes_changed`         | Scopes modifications       | When user modifies dashboard scopes                      |
