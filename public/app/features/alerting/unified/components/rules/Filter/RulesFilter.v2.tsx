@@ -16,8 +16,6 @@ import {
   MultiCombobox,
   RadioButtonGroup,
   Stack,
-  Tab,
-  TabsBar,
   useStyles2,
 } from '@grafana/ui';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -65,7 +63,6 @@ function usePortalContainer(zIndex: number): HTMLElement | undefined {
   return containerRef.current || undefined;
 }
 
-type ActiveTab = 'custom' | 'saved';
 export type AdvancedFilters = {
   namespace?: string | null;
   groupName?: string | null;
@@ -88,7 +85,6 @@ type SearchQueryForm = {
 export default function RulesFilter() {
   const styles = useStyles2(getStyles);
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { searchQuery, updateFilters } = useRulesFilter();
 
@@ -147,27 +143,8 @@ export default function RulesFilter() {
                 role="region"
                 tabIndex={-1}
               >
-                {activeTab === 'custom' && (
-                  <FilterOptions onSubmit={handleAdvancedFilters} onClear={handleClearFilters} />
-                )}
-                {/* {activeTab === 'saved' && <SavedSearches />} */}
+                <FilterOptions onSubmit={handleAdvancedFilters} onClear={handleClearFilters} />
               </div>
-            }
-            header={
-              <TabsBar hideBorder className={styles.fixTabsMargin}>
-                <Tab
-                  active={activeTab === 'custom'}
-                  icon="filter"
-                  label={t('alerting.rules-filter.filter-options.label-custom-filter', 'Custom filter')}
-                  onChangeTab={() => setActiveTab('custom')}
-                />
-                {/* <Tab
-                  active={activeTab === 'saved'}
-                  icon="bookmark"
-                  label={t('alerting.rules-filter.filter-options.label-saved-searches', 'Saved searches')}
-                  onChangeTab={() => setActiveTab('saved')}
-                /> */}
-              </TabsBar>
             }
           >
             <Button name="filter" icon="filter" variant="secondary" aria-label={filterButtonLabel}>
@@ -495,9 +472,6 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     content: css({
       padding: theme.spacing(1),
-    }),
-    fixTabsMargin: css({
-      marginTop: theme.spacing(-1),
     }),
     grid: css({
       display: 'grid',
