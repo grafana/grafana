@@ -195,12 +195,12 @@ func deduplicatePaths(paths []string) []string {
 		return paths
 	}
 
-	seen := make(map[string]bool, len(paths))
+	seen := make(map[string]struct{}, len(paths))
 	result := make([]string, 0, len(paths))
 
 	for _, path := range paths {
-		if !seen[path] {
-			seen[path] = true
+		if _, exists := seen[path]; !exists {
+			seen[path] = struct{}{}
 			result = append(result, path)
 		}
 	}
