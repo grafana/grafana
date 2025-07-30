@@ -270,6 +270,14 @@ You can enable infinite panning in a canvas when pan and zoom is enabled. This a
 Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
 {{< /admonition >}}
 
+### Tooltip options
+
+The **Tooltip mode** setting controls the display of tooltips when hovering over canvas elements that are connected to data, data links, or actions.
+The options are:
+
+- **Enabled** - Show a tooltip when the cursor hovers over an element.
+- **Disabled** - Tooltips are not shown on hover.
+
 ### Layer options
 
 The **Layer** options let you add elements to the canvas and control its appearance:

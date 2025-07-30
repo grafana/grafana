@@ -113,6 +113,10 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
   connections: [],
 };
 
+export interface CanvasTooltip {
+  mode: ui.TooltipDisplayMode;
+}
+
 export interface Options {
   /**
    * Enable infinite pan
@@ -148,6 +152,10 @@ export interface Options {
    * Show all available element types
    */
   showAdvancedTypes: boolean;
+  /**
+   * Controls tooltip options
+   */
+  tooltip: CanvasTooltip;
 }
 
 export const defaultOptions: Partial<Options> = {
