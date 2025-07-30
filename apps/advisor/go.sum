@@ -663,10 +663,10 @@ github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6k
 github.com/grafana/dataplane/sdata v0.0.9/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914 h1:qcSGhr691f1mmPHwg2svGyO40Ex92G02aOyHzP6XHCE=
 github.com/grafana/dskit v0.0.0-20250611075409-46f51e1ce914/go.mod h1:OiN4P4aC6LwLzLbEupH3Ue83VfQoNMfG48rsna8jI/E=
-github.com/grafana/grafana-app-sdk v0.40.1 h1:W8d1CQSgMg/d37xf/0t4PiSa7wVD21XFE8mF6P59YSg=
-github.com/grafana/grafana-app-sdk v0.40.1/go.mod h1:4P8h7VB6KcDjX9bAoBQc6IP8iNylxe6bSXLR9gA39gM=
-github.com/grafana/grafana-app-sdk/logging v0.40.0 h1:3LHA0pFM9mGGFyq6qoHvJOGEe0H0OVhzzlOKd4Ehu+E=
-github.com/grafana/grafana-app-sdk/logging v0.40.0/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
+github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729 h1:FvsSS/HregJZS/hwZsmQ25i/4VYyXsgaI2GqFAvChxs=
+github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729/go.mod h1:BbNXPNki3mtbkWxYqJsyA1Cj9AShSyaY33z8WkyfVv0=
+github.com/grafana/grafana-app-sdk/logging v0.40.1 h1:ru+GqbaQk6jthA5l2Yo1WI/JbNXKNQmLiqNrxz7HGP4=
+github.com/grafana/grafana-app-sdk/logging v0.40.1/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
 github.com/grafana/grafana-aws-sdk v1.0.4 h1:D14UAehsOqpjliHmHzveRQ1p43KCsMzdmb7GovWj+SY=
 github.com/grafana/grafana-aws-sdk v1.0.4/go.mod h1:hO7q7yWV+t6dmiyJjMa3IbuYnYkBua+G/IAlOPVIYKE=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 h1:0TYrkzAc3u0HX+9GK86cGrLTUAcmQfl3/LEB3tL+SOA=

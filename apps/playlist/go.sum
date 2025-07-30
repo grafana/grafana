@@ -47,10 +47,10 @@ github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 h1:BHT72Gu3keYf3ZEu2J
 github.com/google/pprof v0.0.0-20250403155104-27863c87afa6/go.mod h1:boTsfXsheKC2y+lKOCMpSfarhxDeIzfZG1jqGcPl3cA=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/grafana/grafana-app-sdk v0.40.1 h1:W8d1CQSgMg/d37xf/0t4PiSa7wVD21XFE8mF6P59YSg=
-github.com/grafana/grafana-app-sdk v0.40.1/go.mod h1:4P8h7VB6KcDjX9bAoBQc6IP8iNylxe6bSXLR9gA39gM=
-github.com/grafana/grafana-app-sdk/logging v0.40.0 h1:3LHA0pFM9mGGFyq6qoHvJOGEe0H0OVhzzlOKd4Ehu+E=
-github.com/grafana/grafana-app-sdk/logging v0.40.0/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
+github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729 h1:FvsSS/HregJZS/hwZsmQ25i/4VYyXsgaI2GqFAvChxs=
+github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729/go.mod h1:BbNXPNki3mtbkWxYqJsyA1Cj9AShSyaY33z8WkyfVv0=
+github.com/grafana/grafana-app-sdk/logging v0.40.1 h1:ru+GqbaQk6jthA5l2Yo1WI/JbNXKNQmLiqNrxz7HGP4=
+github.com/grafana/grafana-app-sdk/logging v0.40.1/go.mod h1:otUD9XpJD7A5sCLb8mcs9hIXGdeV6lnhzVwe747g4RU=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 h1:X5VWvz21y3gzm9Nw/kaUeku/1+uBhcekkmy4IkffJww=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1/go.mod h1:Zanoh4+gvIgluNqcfMVTJueD4wSS5hT7zTt4Mrutd90=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=

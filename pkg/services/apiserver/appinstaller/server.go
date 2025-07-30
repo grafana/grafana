@@ -8,11 +8,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
+	genericrest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -38,17 +40,9 @@ type serverWrapper struct {
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
 	log := logging.FromContext(s.ctx)
-	legacyProvider, ok := s.installer.(LegacyStorageProvider)
-	if !ok {
-		return s.GenericAPIServer.InstallAPIGroup(apiGroupInfo)
-	}
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
 		for storagePath, restStorage := range storageMap {
-			genericStorage, ok := restStorage.(*genericregistry.Store)
-			if !ok {
-				log.Error("Expected generic registry store", "storagePath", storagePath, "version", v)
-				continue
-			}
+			legacyProvider, dualWriteSupported := s.installer.(LegacyStorageProvider)
 			resource, err := getResourceFromStoragePath(storagePath)
 			if err != nil {
 				return err
@@ -57,29 +51,27 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				Group:    s.installer.ManifestData().Group,
 				Resource: resource,
 			}
-			genericStorage.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
-			genericStorage.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
-			genericStorage.UpdateStrategy = &updateStrategyWrapper{
-				RESTUpdateStrategy: genericStorage.UpdateStrategy,
+			storage := s.configureStorage(gr, dualWriteSupported, restStorage)
+			if unifiedStorage, ok := storage.(rest.Storage); ok && dualWriteSupported {
+				log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+				dw, err := NewDualWriter(
+					s.ctx,
+					gr,
+					s.storageOpts,
+					legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
+					grafanarest.Storage(unifiedStorage),
+					s.kvStore,
+					s.lock,
+					s.namespaceMapper,
+					s.dualWriteService,
+					s.dualWriterMetrics,
+					s.builderMetrics,
+				)
+				if err != nil {
+					return err
+				}
+				apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = dw
 			}
-
-			dw, err := NewDualWriter(
-				s.ctx,
-				gr,
-				s.storageOpts,
-				legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
-				grafanarest.Storage(genericStorage),
-				s.kvStore,
-				s.lock,
-				s.namespaceMapper,
-				s.dualWriteService,
-				s.dualWriterMetrics,
-				s.builderMetrics,
-			)
-			if err != nil {
-				return err
-			}
-			apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = dw
 		}
 	}
 
@@ -92,4 +84,34 @@ func getResourceFromStoragePath(storagePath string) (string, error) {
 		return "", fmt.Errorf("invalid storage path: %s", storagePath)
 	}
 	return parts[0], nil
+}
+
+func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSupported bool, storage genericrest.Storage) genericrest.Storage {
+	var genericStorage *genericregistry.Store
+	if gs, ok := storage.(*genericregistry.Store); ok {
+		genericStorage = gs
+		// if dual write is supported, we need to modify the update strategy
+		// this is not needed for the status store
+		if dualWriteSupported {
+			genericStorage.UpdateStrategy = &updateStrategyWrapper{
+				RESTUpdateStrategy: genericStorage.UpdateStrategy,
+			}
+		}
+	}
+
+	// if the storage is a status store, we need to extract the underlying generic registry store
+	if statusStore, ok := storage.(*appsdkapiserver.StatusREST); ok {
+		genericStorage = statusStore.Store
+	}
+
+	// if the gernericStorage is not set, we don't need to do anything special.
+	if genericStorage == nil {
+		return storage
+	}
+
+	// shared configuration for the generic store
+	genericStorage.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+	genericStorage.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+
+	return genericStorage
 }

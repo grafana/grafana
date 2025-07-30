@@ -7,8 +7,8 @@ require (
 	github.com/google/go-github/v70 v70.0.0
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.40.1
-	github.com/grafana/grafana-app-sdk/logging v0.40.0
+	github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729
+	github.com/grafana/grafana-app-sdk/logging v0.40.1
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725144121-b1592b5e36d2
 	github.com/stretchr/testify v1.10.0
