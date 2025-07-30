@@ -158,7 +158,7 @@ export const getContentItems = (
         colorIndicator,
         colorPlacement,
         lineStyle: field.config.custom?.lineStyle,
-        isHidden: true,
+        isHiddenFromViz: true,
       });
     }
   });

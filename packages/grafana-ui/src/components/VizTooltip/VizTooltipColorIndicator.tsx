@@ -19,7 +19,7 @@ interface Props {
   colorIndicator?: ColorIndicator;
   position?: ColorIndicatorPosition;
   lineStyle?: LineStyle;
-  isHidden?: boolean; // for hidden metadata
+  isHollow?: boolean;
 }
 
 export type ColorIndicatorStyles = ReturnType<typeof getStyles>;
@@ -29,11 +29,11 @@ export const VizTooltipColorIndicator = ({
   colorIndicator = DEFAULT_COLOR_INDICATOR,
   position = ColorIndicatorPosition.Leading,
   lineStyle,
-  isHidden,
+  isHollow,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  if (isHidden) {
+  if (isHollow) {
     return (
       <div
         style={{ border: `1px solid ${color}` }}
