@@ -3714,7 +3714,11 @@ __metadata:
   resolution: "@grafana/test-utils@workspace:packages/grafana-test-utils"
   dependencies:
     "@grafana/tsconfig": "npm:^2.0.0"
+    "@swc/core": "npm:1.10.12"
+    "@swc/jest": "npm:^0.2.26"
+    "@types/jest": "npm:29.5.14"
     "@types/node": "npm:22.16.5"
+    jest: "npm:29.7.0"
     msw: "npm:2.10.4"
     typescript: "npm:5.8.3"
   languageName: unknown
