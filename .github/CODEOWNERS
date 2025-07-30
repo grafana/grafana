@@ -720,6 +720,23 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/reducers/ @grafana/grafana-frontend-platform
 /public/app/core/selectors/ @grafana/grafana-frontend-platform
 /public/app/core/services/echo/ @grafana/grafana-frontend-platform
+/public/app/core/services/FetchQueue* @grafana/grafana-frontend-platform
+/public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
+/public/app/core/services/keybindingSrv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/mousetrap/ @grafana/grafana-frontend-platform
+/public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
+/public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
+/public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
+/public/app/core/services/backend_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/context_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/impression_srv.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/store.test.ts @grafana/grafana-frontend-platform
+/public/app/core/specs/time_series2.test.ts @grafana/dataviz-squad
+/public/app/core/store.ts @grafana/grafana-frontend-platform
+/public/app/core/time_series2.ts @grafana/dataviz-squad
+/public/app/core/trustedTypePolicies.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
