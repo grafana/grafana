@@ -1,6 +1,7 @@
 package resourcepermission
 
 import (
+	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +15,13 @@ import (
 var (
 	_ iam.ResourcePermissionStorageBackend = (*ResourcePermissionSqlBackend)(nil)
 	_ resource.ListIterator                = (*listIterator)(nil)
+
+	ErrDatabaseHelper                = fmt.Errorf("failed to get database")
+	ErrResourcePermissionNotFound    = fmt.Errorf("resource permission not found")
+	ErrEmptyResourcePermissionName   = fmt.Errorf("resource permission name cannot be empty")
+	ErrNameMismatch                  = fmt.Errorf("name mismatch")
+	ErrNamespaceMismatch             = fmt.Errorf("namespace mismatch")
+	ErrInvalidResourcePermissionSpec = fmt.Errorf("invalid resource permission spec")
 )
 
 type ListResourcePermissionsQuery struct {

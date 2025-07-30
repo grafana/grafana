@@ -63,15 +63,18 @@ func (t translation) HasFolderSupport() bool {
 // where the name format is "{group}-{resource}-{id}" and needs to be translated
 // to the target resource's permission scope and actions.
 // Currently focused on dashboards only.
-type resourcePermissionTranslation struct{}
+type resourcePermissionTranslation struct {
+	resource string
+}
 
 func (r resourcePermissionTranslation) Action(verb string) (string, bool) {
-	// For dashboard resource permissions, map to dashboard permission actions
 	switch verb {
-	case utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbGetPermissions:
-		return "dashboards.permissions:read", true
-	case utils.VerbUpdate, utils.VerbPatch, utils.VerbSetPermissions:
-		return "dashboards.permissions:write", true
+	case utils.VerbGet, utils.VerbList, utils.VerbWatch:
+		return r.resource + ".permissions:read", true
+	case utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch:
+		return r.resource + ".permissions:write", true
+	case utils.VerbDelete, utils.VerbDeleteCollection:
+		return r.resource + ".permissions:write", true
 	default:
 		return "", false
 	}
@@ -85,7 +88,7 @@ func (r resourcePermissionTranslation) Scope(name string) string {
 		return "unknown:uid:" + name
 	}
 
-	return "dashboards:uid:" + dashboardID
+	return r.resource + ":uid:" + dashboardID
 }
 
 func (r resourcePermissionTranslation) Prefix() string {

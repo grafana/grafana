@@ -1,0 +1,26 @@
+apiVersion: iam.grafana.app/v0alpha1
+kind: ResourcePermission
+metadata:
+  name: dashboard-editor-permission-v2
+  namespace: default
+spec:
+  resource:
+    apiGroup: dashboard.grafana.app
+    resource: dashboards
+    name: dashboard-123
+  permissions:
+  - kind: User
+    name: user-456
+    verbs:
+    - read
+    - write
+    - update
+  - kind: Team
+    name: editors-team
+    verbs:
+    - read
+    - write
+  - kind: BasicRole
+    name: Editor
+    verbs:
+    - read 

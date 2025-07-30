@@ -31,6 +31,16 @@ func TestResourcePermissionTranslation(t *testing.T) {
 	assert.True(t, ok, "get verb should be supported")
 	assert.Equal(t, "dashboards.permissions:read", readAction, "get should map to dashboards.permissions:read")
 
+	// Test action mapping for create verb
+	createAction, ok := mapping.Action("create")
+	assert.True(t, ok, "create verb should be supported")
+	assert.Equal(t, "dashboards.permissions:write", createAction, "create should map to dashboards.permissions:write")
+
+	// Test action mapping for delete verb
+	deleteAction, ok := mapping.Action("delete")
+	assert.True(t, ok, "delete verb should be supported")
+	assert.Equal(t, "dashboards.permissions:write", deleteAction, "delete should map to dashboards.permissions:write")
+
 	// Test complex dashboard ID with dashes
 	complexScope := mapping.Scope("dashboard.grafana.app-dashboards-my-complex-dash-id")
 	assert.Equal(t, "dashboards:uid:my-complex-dash-id", complexScope, "should handle dashboard IDs with dashes")

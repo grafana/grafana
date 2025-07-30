@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
@@ -55,6 +56,8 @@ type listIterator struct {
 	keys []string
 	// current key index
 	currentKeyIndex int
+	// Track the highest resource version seen during iteration
+	listRV int64
 }
 
 func (r *listIterator) Close() error {
@@ -108,6 +111,15 @@ func (r *listIterator) Next() bool {
 
 		r.row = resourcePermission
 		r.currentKeyIndex++
+
+		// Update listRV with the highest resource version seen
+		// Use timestamp-based versioning for now (consistent with write operations)
+		if resourcePermission != nil {
+			currentRV := int64(time.Now().UnixMilli())
+			if r.listRV < currentRV {
+				r.listRV = currentRV
+			}
+		}
 
 		// Set the continue token based on the first permission in the group
 		if len(perms) > 0 {
