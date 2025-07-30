@@ -199,6 +199,10 @@
         "tooltip-use-series-endpoint": "勾選此選項將優先使用具有 {{exampleParameter}} 參數的序列端點，而非具有 {{exampleParameter}} 參數的標籤值端點。雖然標籤值端點被視為擁有更佳效能，但有些使用者可能會更喜歡該序列，因為它具有 POST 方法，而標籤值端點僅具有 GET 方法。"
       }
     },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
     "prom-query-legend-editor": {
       "get-legend-mode-options": {
         "description-auto": "",

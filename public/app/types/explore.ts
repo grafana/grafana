@@ -234,6 +234,11 @@ export interface ExploreItemState {
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 
   correlations?: CorrelationData[];
+
+  /**
+   * If set to true, all query rows will be collapsed initially and the content outline will be hidden
+   */
+  compact: boolean;
 }
 
 export interface ExploreUpdateState {

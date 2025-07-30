@@ -291,6 +291,30 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		}
 	})
 
+	t.Run("with empty rule group name should return 400", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		emptyNameGroup := apimodels.PrometheusRuleGroup{
+			Name:     "",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", emptyNameGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "rule group name must not be empty")
+	})
+
 	t.Run("with valid request should return 202", func(t *testing.T) {
 		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
@@ -547,6 +571,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		fldr.ParentUID = ""
 		folderService.ExpectedFolder = fldr
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		folderService.AddFolder(fldr)
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// Create rules in both folders
@@ -645,6 +670,8 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 		fldr2 := randFolder()
 		fldr2.ParentUID = ""
 		folderService.ExpectedFolders = []*folder.Folder{fldr, fldr2}
+		folderService.AddFolder(fldr)
+		folderService.AddFolder(fldr2)
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr, fldr2)
 
 		// Create a Grafana rule for each Prometheus rule
@@ -774,6 +801,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		// Create a folder in the root
 		fldr := randFolder()
 		fldr.ParentUID = ""
+		folderService.AddFolder(fldr)
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
@@ -1567,7 +1595,18 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
-		amCfg := apimodels.AlertmanagerUserConfig{}
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"route": {
+					"receiver": "default"
+				},
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
 		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -1584,6 +1623,26 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, http.StatusBadRequest, response.Status())
 		require.Contains(t, string(response.Body()), "format should be 'key=value,key2=value2'")
+	})
+
+	t.Run("should return error when alertmanager config has empty route", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(mergeMatchersHeader, "env=prod")
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "failed to parse alertmanager config")
 	})
 }
 
