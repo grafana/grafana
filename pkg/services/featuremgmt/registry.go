@@ -484,13 +484,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "kubernetesClientDashboardsFolders",
-			Description: "Route the folder and dashboard service requests to k8s",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -1867,6 +1860,13 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",
+		},
+		{
+			Name:         "adhocFiltersInTooltips",
+			Description:  "Enable adhoc filter buttons in visualization tooltips",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
 		},
 	}
 )

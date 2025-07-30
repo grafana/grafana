@@ -222,12 +222,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			// NOTE: when using this feature toggle, the read is always v0!
-			// featuremgmt.FlagKubernetesClientDashboardsFolders
-		},
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
