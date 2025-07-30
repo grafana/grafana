@@ -7275,18 +7275,24 @@
       "split-tooltip": "Split the pane",
       "split-widen": "Widen pane"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "Copy Trace ID",
-      "ariaLabel-export-trace": "Export Trace",
-      "give-feedback": "Give feedback",
-      "label-copied": "Copied!",
-      "label-export": "Export",
-      "label-trace-id": "Trace ID",
-      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Partial trace",
-      "tooltip-url": "{{url}} or {{target}} or {{path}}"
+      "duration": "Duration",
+      "export-started": "Export started",
+      "give-feedback": "Feedback",
+      "link-copied": "Link copied to clipboard",
+      "path": "Path",
+      "route": "Route",
+      "services": "Services",
+      "share": "Share",
+      "share-copy-link": "Copy link",
+      "share-export-json": "Export as JSON",
+      "share-tooltip": "Share trace",
+      "start-time": "Start time",
+      "target": "Target",
+      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana.",
+      "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
+      "trace-id": "Trace ID",
+      "url": "URL"
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Clear filters button",
