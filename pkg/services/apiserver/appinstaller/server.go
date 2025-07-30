@@ -14,7 +14,6 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -52,14 +51,14 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				Resource: resource,
 			}
 			storage := s.configureStorage(gr, dualWriteSupported, restStorage)
-			if unifiedStorage, ok := storage.(rest.Storage); ok && dualWriteSupported {
+			if unifiedStorage, ok := storage.(grafanarest.Storage); ok && dualWriteSupported {
 				log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
 				dw, err := NewDualWriter(
 					s.ctx,
 					gr,
 					s.storageOpts,
 					legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
-					grafanarest.Storage(unifiedStorage),
+					unifiedStorage,
 					s.kvStore,
 					s.lock,
 					s.namespaceMapper,
