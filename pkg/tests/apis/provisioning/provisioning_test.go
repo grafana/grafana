@@ -1866,7 +1866,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	require.NoError(t, err, "should be able to create first dashboard")
 	dashboard1Name := dashboard1Obj.GetName()
 
-	dashboard2 := helper.LoadYAMLOrJSONFile("testdata/text-options.json") 
+	dashboard2 := helper.LoadYAMLOrJSONFile("testdata/text-options.json")
 	dashboard2Obj, err := helper.DashboardsV1.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create second dashboard")
 	dashboard2Name := dashboard2Obj.GetName()
@@ -1899,12 +1899,12 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	// Verify both dashboards are now managed by repo1
 	managedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Equal(t, repo1, managedDash1.GetAnnotations()[utils.AnnoKeyManagerIdentity], 
+	require.Equal(t, repo1, managedDash1.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"dashboard1 should be managed by first repo")
 
 	managedDash2, err := helper.DashboardsV1.Resource.Get(ctx, dashboard2Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Equal(t, repo1, managedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity], 
+	require.Equal(t, repo1, managedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"dashboard2 should be managed by first repo")
 
 	// Create a third dashboard that won't be claimed by the first repo
@@ -1925,7 +1925,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	_, err = helper.Repositories.Resource.Create(ctx, createBody2, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create second repository")
 
-	// Count files in first repo before second export 
+	// Count files in first repo before second export
 	printFileTree(t, helper.ProvisioningPath)
 	files1Before, err := countFilesInDir(helper.ProvisioningPath)
 	require.NoError(t, err)
@@ -1940,7 +1940,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 		Body(asJSON(&provisioning.JobSpec{
 			Push: &provisioning.ExportJobOptions{
 				Folder: "", // export entire instance
-				Path:   "", // no prefix necessary for testing  
+				Path:   "", // no prefix necessary for testing
 			},
 		})).
 		Do(ctx)
@@ -1957,25 +1957,25 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	// Since the first two dashboards are already managed by repo1, they should be skipped
 	expectedNewFiles := 1 // Only dashboard3 should be exported
 	actualNewFiles := files1After - files1Before
-	require.Equal(t, expectedNewFiles, actualNewFiles, 
-		"second repository should only export unmanaged dashboards (expected %d new files, got %d)", 
+	require.Equal(t, expectedNewFiles, actualNewFiles,
+		"second repository should only export unmanaged dashboards (expected %d new files, got %d)",
 		expectedNewFiles, actualNewFiles)
 
 	// Verify dashboard3 is now managed by repo2
 	newlyManagedDash3, err := helper.DashboardsV1.Resource.Get(ctx, dashboard3Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Equal(t, repo2, newlyManagedDash3.GetAnnotations()[utils.AnnoKeyManagerIdentity], 
+	require.Equal(t, repo2, newlyManagedDash3.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"dashboard3 should now be managed by second repo")
 
 	// Verify dashboard1 and dashboard2 are still managed by repo1 (unchanged)
 	stillManagedDash1, err := helper.DashboardsV1.Resource.Get(ctx, dashboard1Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Equal(t, repo1, stillManagedDash1.GetAnnotations()[utils.AnnoKeyManagerIdentity], 
+	require.Equal(t, repo1, stillManagedDash1.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"dashboard1 should still be managed by first repo")
 
 	stillManagedDash2, err := helper.DashboardsV1.Resource.Get(ctx, dashboard2Name, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Equal(t, repo1, stillManagedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity], 
+	require.Equal(t, repo1, stillManagedDash2.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 		"dashboard2 should still be managed by first repo")
 }
 
