@@ -23,7 +23,7 @@ func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, 
 		nxPack  = fmt.Sprintf("yarn nx exec --projects=$(cat nx.json | jq -r '.release.groups.grafanaPackages.projects | join(\",\")') -- yarn pack --out %s", out)
 	)
 
-	return builder.WithExec([]string{"mkdir", "-p", "npm-artifacts"}).
+	return builder.WithExec([]string{"mkdir", "npm-artifacts"}).
 		WithEnvVariable("SHELL", "/bin/bash").
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"/bin/bash", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaBuild, nxBuild)}).
