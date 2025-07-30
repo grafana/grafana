@@ -282,10 +282,6 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Routes library panel connections requests from /api to using search
-  */
-  kubernetesLibraryPanelConnections?: boolean;
-  /**
   * Use the kubernetes API in the frontend for dashboards
   */
   kubernetesDashboards?: boolean;

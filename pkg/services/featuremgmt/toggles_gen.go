@@ -251,10 +251,6 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
-	// FlagKubernetesLibraryPanelConnections
-	// Routes library panel connections requests from /api to using search
-	FlagKubernetesLibraryPanelConnections = "kubernetesLibraryPanelConnections"
-
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
