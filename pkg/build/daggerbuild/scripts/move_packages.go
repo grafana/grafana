@@ -488,7 +488,7 @@ func getHandler(name string, handlers map[string]HandlerFunc) (HandlerFunc, stri
 	if filepath.Base(name) == "storybook" {
 		return StorybookHandler, ""
 	}
-	if filepath.Base(name) == "npm-packages" {
+	if filepath.Base(name) == "npm-artifacts" {
 		return NPMHandler, ""
 	}
 	panic("no handler found")
