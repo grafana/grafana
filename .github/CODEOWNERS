@@ -675,13 +675,15 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 # public folder
 /public/app/api/ @grafana/grafana-frontend-platform
+/public/app/core/actions/ @grafana/grafana-frontend-platform
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
 /public/app/core/components/AppChrome/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Branding/ @grafana/grafana-frontend-platform
 /public/app/core/components/Breadcrumbs/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/BouncingLoader/ @grafana/grafana-frontend-platform
-/public/app/core/components/context/ @grafana/grafana-frontend-platform
+/public/app/core/components/CloseButton/ @grafana/grafana-frontend-platform
+/public/app/core/components/DynamicImports/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Footer/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/ForgottenPassword/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
@@ -700,18 +702,25 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/PageNotFound/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PluginHelp/ @grafana/plugins-platform-frontend
 /public/app/core/components/RolePickerDrawer/ @grafana/identity-access-team
+/public/app/core/components/Select/ @grafana/grafana-frontend-platform
 /public/app/core/components/SharedPreferences/ @grafana/grafana-frontend-platform
 /public/app/core/components/Signup/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/SVG/ @grafana/dataviz-squad
+/public/app/core/components/TagFilter/ @grafana/grafana-frontend-platform
 /public/app/core/components/Theme/ @grafana/grafana-frontend-platform
 /public/app/core/components/ThemeSelector/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
+/public/app/core/context/ @grafana/grafana-frontend-platform
+/public/app/core/crash/ @grafana/observability-traces-and-profiling
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/core/icons/ @grafana/grafana-frontend-platform
 /public/app/core/navigation/ @grafana/grafana-search-navigate-organise
-/public/app/core/utils/navBarItem-translations @grafana/grafana-search-navigate-organise
+/public/app/core/reducers/ @grafana/grafana-frontend-platform
+/public/app/core/selectors/ @grafana/grafana-frontend-platform
+/public/app/core/services/echo/ @grafana/grafana-frontend-platform
+/public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 # Temp owners until Enterprise team takes over
