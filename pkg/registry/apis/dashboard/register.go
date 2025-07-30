@@ -143,7 +143,7 @@ func RegisterAPIService(
 		folderClient:                 folderClient,
 
 		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, accessControl),
+			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, accessControl, features),
 			DashboardService: dashboardService,
 		},
 		reg: reg,

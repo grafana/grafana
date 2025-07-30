@@ -502,6 +502,12 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
+			Name:        "scanRowInvalidDashboardParseFallbackEnabled",
+			Description: "Enable fallback parsing behavior when scan row encounters invalid dashboard JSON",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:            "datasourceQueryTypes",
 			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
 			Stage:           FeatureStageExperimental,
