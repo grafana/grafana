@@ -4,6 +4,7 @@ import { config, usePluginLinks } from '@grafana/runtime';
 import { Button, Dropdown, LinkButton, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
+import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { useDataSource } from '../state/hooks';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
@@ -11,15 +12,6 @@ import { constructDataSourceExploreUrl } from '../utils';
 interface Props {
   uid: string;
 }
-
-const allowedPluginIds = [
-  'grafana-lokiexplore-app',
-  'grafana-exploretraces-app',
-  'grafana-metricsdrilldown-app',
-  'grafana-pyroscope-app',
-  'grafana-monitoring-app',
-  'grafana-troubleshooting-app',
-];
 
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
@@ -39,7 +31,7 @@ export function EditDataSourceActions({ uid }: Props) {
     limitPerPlugin: 1,
   });
 
-  const links = allLinks.filter((link) => allowedPluginIds.includes(link.pluginId));
+  const links = allLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
 
   // Only render dropdown if there are multiple actions to show
   const hasActions = hasExploreRights || (!isLoading && links.length > 0);

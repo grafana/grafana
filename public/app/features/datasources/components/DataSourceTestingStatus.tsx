@@ -9,6 +9,7 @@ import { TestingStatus, config, usePluginLinks } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
+import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
 import { trackCreateDashboardClicked } from '../tracking';
 
 export type Props = {
@@ -17,15 +18,6 @@ export type Props = {
   dataSource: DataSourceSettingsType;
 };
 
-// Allowed plugins for the DataSourceConfigStatus extension point
-const allowedPlugins = [
-  'grafana-lokiexplore-app',
-  'grafana-exploretraces-app',
-  'grafana-metricsdrilldown-app',
-  'grafana-pyroscope-app',
-  'grafana-monitoring-app',
-  'grafana-troubleshooting-app',
-];
 interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
   title: string;
   severity?: AlertVariant;
@@ -188,8 +180,8 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   });
 
   // Filter to only allow grafana-owned plugins
-  const statusLinks = allStatusLinks.filter((link) => allowedPlugins.includes(link.pluginId));
-  const errorLinks = allErrorLinks.filter((link) => allowedPlugins.includes(link.pluginId));
+  const statusLinks = allStatusLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
+  const errorLinks = allErrorLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
 
   // Combine links: show error-specific only for errors, status-general for all
   const extensionLinks = severity === 'error' ? [...statusLinks, ...errorLinks] : statusLinks;
