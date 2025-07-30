@@ -22,7 +22,7 @@ type BleveIndexMetrics struct {
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
-	return &BleveIndexMetrics{
+	m := &BleveIndexMetrics{
 		IndexLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "index_server_index_latency_seconds",
 			Help:                            "Time (in seconds) until index is updated with new event",
@@ -64,4 +64,9 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Help: "Number of times index build has been skipped due to existing valid index being found on disk",
 		}),
 	}
+
+	// Initialize labels.
+	m.OpenIndexes.WithLabelValues("file").Set(0)
+	m.OpenIndexes.WithLabelValues("memory").Set(0)
+	return m
 }
