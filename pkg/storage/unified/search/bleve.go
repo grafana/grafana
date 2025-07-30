@@ -23,6 +23,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	bleveSearch "github.com/blevesearch/bleve/v2/search/searcher"
 	index "github.com/blevesearch/bleve_index_api"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -197,10 +198,20 @@ func (b *bleveBackend) BuildIndex(
 	size int64,
 	resourceVersion int64,
 	fields resource.SearchableDocumentFields,
+	indexBuildReason string,
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("namespace", key.Namespace),
+		attribute.String("group", key.Group),
+		attribute.String("resource", key.Resource),
+		attribute.Int64("size", size),
+		attribute.Int64("rv", resourceVersion),
+		attribute.String("reason", indexBuildReason),
+	)
 
 	mapper, err := GetBleveMappings(fields)
 	if err != nil {
@@ -214,7 +225,7 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion)
+	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion, "reason", indexBuildReason)
 
 	// Close the newly created/opened index by default.
 	closeIndex := true
@@ -306,14 +317,29 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	if build {
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexBuilds.WithLabelValues(indexBuildReason).Inc()
+		}
+
 		start := time.Now()
 		_, err = builder(idx)
 		if err != nil {
 			logWithDetails.Error("Failed to build index", "err", err)
+			if b.indexMetrics != nil {
+				b.indexMetrics.IndexBuildFailures.Inc()
+			}
 			return nil, fmt.Errorf("failed to build index: %w", err)
 		}
 		elapsed := time.Since(start)
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
+		}
+	} else {
+		logWithDetails.Info("Skipping index build, using existing index")
+		if b.indexMetrics != nil {
+			b.indexMetrics.IndexBuildSkipped.Inc()
+		}
 	}
 
 	// Set expiration after building the index. Only expire in-memory indexes.
