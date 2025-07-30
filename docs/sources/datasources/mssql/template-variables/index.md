@@ -71,7 +71,7 @@ You can also create a key/value variable using a query that returns two columns 
 
 This is useful when you want to display a user-friendly label (like a hostname) but use a different underlying value (like an ID).
 
-Note that the values in the _`_text` column should be unique. If there are duplicates, Grafana uses only the first matching entry.
+Note that the values in the `_text` column should be unique. If there are duplicates, Grafana uses only the first matching entry.
 
 ```sql
 SELECT hostname __text, id __value FROM host

@@ -86,8 +86,7 @@ This document provides instructions for configuring the Microsoft SQL Server dat
 
 - Grafana comes with a built-in MSSQL data source plugin, eliminating the need to install a plugin.
 
-- You must have the `Organization administrator` role to configure the Postgres data source.
-  Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
+- You must have the `Organization administrator` role to configure the MSSQL data source. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
 - Familiarize yourself with your MSSQL security configuration and gather any necessary security certificates and client keys.
 
@@ -107,7 +106,12 @@ Grafana takes you to the **Settings** tab, where you will set up your Microsoft 
 
 ## Configure the data source in the UI
 
-Following are configuration options for the Microsoft SQL Server data source:
+Following are configuration options for the Microsoft SQL Server data source.
+
+{{< admonition type="warning" >}}
+Kerberos is not supported in Grafana Cloud.
+{{< /admonition >}}
+
 
 | **Setting** | **Description** |
 |-------------|----------------|
@@ -167,7 +171,6 @@ Additional settings are optional settings you configure for more control over yo
 | **Connection timeout**    | Specifies the maximum number of seconds to wait when attempting to connect to the database before timing out. A value of `0` (the default) disables the timeout.                            |
 
 **Windows ADS Advanced Settings**
-
 
 | Setting                  | Description                                                                                                                                                                                                                       | Default             |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|

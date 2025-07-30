@@ -503,9 +503,9 @@ DECLARE
 EXEC dbo.sp_test_epoch @from, @to
 ```
 
-This uses Grafana's built-in macros to convert the selected time range into epoch time ($__unixEpochFrom() and $__unixEpochTo()), which are passed to the stored procedure as input parameters.
+This uses Grafana built-in macros to convert the selected time range into epoch time ($__unixEpochFrom() and $__unixEpochTo()), which are passed to the stored procedure as input parameters.
 
-### Stored procedure with datetime format
+### Stored procedure with `datetime` format
 
 You can define a stored procedure to return all the data needed to render four series in a graph panel.
 
@@ -547,7 +547,7 @@ END
 
 ```
 
-To call this stored procedure from a graph panel, use the following query with Grafana's built-in macros to populate the time range dynamically:
+To call this stored procedure from a graph panel, use the following query with Grafana built-in macros to populate the time range dynamically:
 
 ```sql
 DECLARE
