@@ -34,11 +34,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-tab
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Amazon CloudWatch query editor
 
-Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize and alert on logs and metrics stored in Amazon CloudWatch.  It's located on the Explore page. For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize and alert on logs and metrics stored in Amazon CloudWatch.  It's located on the [Explore](ref:explore) page. For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 
 
@@ -53,52 +58,122 @@ The CloudWatch data source can query data from both CloudWatch metrics and Cloud
 - [CloudWatch Metrics](#query-cloudwatch-metrics)
 - [CloudWatch Logs](#query-cloudwatch-logs)
 
-{{< figure src="/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch API modes" >}}
+<!-- {{< figure src="/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch API modes" >}} -->
 
-Select which API to query by using the query mode drop-down to the right of the **Region** setting.
+
+Select which API to query using the query mode drop-down to the right of the **Region** setting.
+
 
 ## CloudWatch Metrics query editor components
 
-Namespace: The AWS service namespace (e.g., AWS/EC2, AWS/Lambda, or your custom namespace).
+The following are components of the CloudWatch query editor.
 
-Metric name: The name of the metric you want to visualize (e.g., CPUUtilization).
+| **Setting**        | **Description** |
+|------------------|-----------------|
+| **Region**       | Select an AWS region if it differs from the default. |
+| **Namespace**    | The AWS service namespace. Examples: `AWS/EC2`, `AWS_Lambda`. |
+| **Metric name**  | The name of the metric you want to visualize. Example: `CPUUtilization`. |
+| **Statistic**    | Choose how to aggregate your data. Examples: `sum`, `average`, `maximum`. |
+| **Dimensions**   | Select dimensions from the drop-down. Examples: `InstanceId`, `FunctionName`, `latency`. You can add several dimensions to your query. |
+| **Match exact**  | _Optional_. When enabled, this option restricts query results to metrics that precisely match the specified dimensions and their values. All dimensions of the queried metric must be explicitly defined in the query to ensure an exact schema match. If disabled, the query will also return metrics that match the defined schema but possess additional dimensions. |
+| **ID**           | _Optional_. The ID is used to reference this query in math expressions. It must start with a lowercase letter and can include letters, numbers, and underscores. |
+| **Period**       | The minimum time interval, in seconds, between data points. The default is `auto`. |
+| **Label**        | _Optional_. Add a customized time series legend name. |
 
-Dimensions: Filters like InstanceId, FunctionName, etc.
-
-Statistic/Period: Choose how to aggregate the data (e.g., Average, Sum) and over what period (e.g., 1m, 5m).
-
-Region: Select the AWS region if it differs from the default.
 
 
+<!-- 
+Region: Select an AWS region if it differs from the default. 
+
+Namespace: The AWS service namespace Examples: `AWS/EC2`, `AWS_Lambda`.
+
+Metric name: The name of the metric you want to visualize Example: `CPUUtilization`.
+
+Statistic: Choose how to aggregate your data Examples: `sum`, `average`, `maximum`.
+
+Dimensions: Select dimensions from the drop-down. Examples include `InstanceId`, `FunctionName`, `latency`. You can add several dimensions to your query.
+
+Match exact: _Optional_. When enabled, this option restricts query results to metrics that precisely match the specified dimensions and their values. All dimensions of the queried metric must be explicitly defined in the query to ensure an exact schema match. If disabled, the query will also return metrics that match the defined schema but possess additional dimensions.
+
+Toggle to show only metrics that contain exactly the diemensions 
+
+ID: _Optional_. The ID is used to reference this query in math expressions. It must start with a lowercase letter and can include letters, numbers, and underscores.
+
+Period:  he minimum time interval, in seconds, between data points. The default is `auto`. 
+
+Label:  _Optional_. Add a customized time series legend name. -->
 
 ## Query CloudWatch metrics
 
-You can build two types of queries with the CloudWatch query editor:
+You can create two types of queries in the CloudWatch query editor:
 
-- [Metric Search](#create-a-metric-search-query)
-- [Metric Query](#create-a-metric-insights-query), which uses the Metrics Insights feature
+- [Metric Search](#create-a-metric-search-queries), which help you retrieve and filter available metrics.
+- [Metric Query](#create-a-metric-insights-queries), which use the Metrics Insights feature to fetch tie series data.
 
-### Create a Metric Search query
+The query type you use depends on how you want to interact with AWS metrics. Use the drop-down in the upper middle of the query editor to select which type you want to create.
 
-To create a valid Metric Search query, specify the namespace, metric name, and at least one statistic. Dimensions are optional, but for a dimension to be considered part of the query it must have both a key and a value.
+### Metric Search queries
 
-If you enable `Match Exact`, you must also specify all dimensions of the metric you're querying so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. With `Match Exact` enabled the query only returns metrics that have the specified dimensions and no others, so dimensions that are on the metric but that are not being filtered on must be added as a wildcard (`*`) filter.
-If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter. With `Match Exact` disabled the query returns any metrics that match the namespace, metric name, and all defined dimensions, whether or not they have additional dimensions.
+Metric search queries help you discover and filter available metrics. These queries use wildcards and filters to find metrics without needing to know exact metric names.
+
+A valid metric query requires a specified namespace, metric name, and at least one statistic.  Dimensions are optional, but if included, you must provide both a key and a value.
+
+The `Match Exact` option controls how dimension filtering is applied to metric queries. When you enable `match exact`, the query returns only metrics whose dimensions precisely match the specified criteria. 
+
+This requites:
+
+- All dimensions present on the target metric must be explicitly specified
+- Dimensions you don't want to filter by must use a wildcard (*) filter
+- The metric schema must match exactly as defined in the [CloudWatch metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) documentation.
+
+When `Match Exact` is disabled, you can specify any subset of dimensions for filtering. The query returns metrics that:
+
+- Match the specified namespace and metric name.
+- Match all defined dimension filters.
+- May contain additional dimensions beyond those specified.
+
+This mode provides more flexible querying but may return metrics with unexpected additional dimensions.
+
 The data source returns up to 100 metrics matching your filter criteria.
 
-You can also augment queries by using [template variables](../template-variables/).
+Enhance metric queries using template variables to create dynamic, reusable dashboards.
+
+<!-- You can also use [template variables](ref:) to enhance metric queries and create dynamic, reusable dashboards. -->
+
+
+
+
+<!-- When using the `Match Exact`option, you must also specify all dimensions of the metric you're querying so that the [metric schema](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) matches exactly. With `Match Exact` enabled the query only returns metrics that have the specified dimensions and no others, so dimensions that are on the metric but that are not being filtered on must be added as a wildcard (`*`) filter.
+
+When Match Exact is enabled, your query will only return metrics whose dimensions precisely match the specified criteria. For any dimensions present on the metric that you do not wish to filter by, you must explicitly specify them using a wildcard (`*`) filter. -->
+
+
+<!-- If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter. With `Match Exact` disabled the query returns any metrics that match the namespace, metric name, and all defined dimensions, whether or not they have additional dimensions.
+The data source returns up to 100 metrics matching your filter criteria.
+
+You can also augment queries by using [template variables](../template-variables/). -->
 
 #### Create dynamic queries with dimension wildcards
 
-Use the asterisk (`*`) wildcard for one or more dimension values to monitor a dynamic list of metrics.
+Use the asterisk (`*`) wildcard for dimension values to create dynamic queries that automatically monitor changing sets of AWS resources. 
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
 
-In this example, the query returns all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization`, and also queries ANY value for the `InstanceId` dimension.
-This can help you monitor metrics for AWS resources, like EC2 instances or containers.
+The query returns the average CPU utilization for all EC2 instances in the default region. Since Match Exact is disabled and InstanceId uses a wildcard, it will retrieve metrics for any EC2 instance regardless of other dimensions that might be present on the metrics.
 
+
+<!-- {{< figure src="/static/img/docs/cloudwatch/cloudwatch-dimension-wildcard-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}} -->
+
+When an auto-scaling event creates new instances, they automatically appear in the graph. There is no need to manually track instance IDs. Currently, this feature supports retrieving up to 100 metrics."
+
+
+
+<!-- 
+In this example, the query returns all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization`, and also queries ANY value for the `InstanceId` dimension.
+This can help you monitor metrics for AWS resources, like EC2 instances or containers. -->
+<!-- 
 When an auto-scaling event creates new instances, they automatically appear in the graph without you having to track the new instance IDs.
-This capability is currently limited to retrieving up to 100 metrics.
+This capability is currently limited to retrieving up to 100 metrics. -->
 
 You can expand the [Query inspector](ref:query-transform-data-navigate-the-query-tab) button and click `Meta Data` to see the search expression that's automatically built to support wildcards.
 
@@ -149,7 +224,7 @@ The provided link is valid for any account but displays the expected metrics onl
 
 This feature is not available for metrics based on [metric math expressions](#metric-math-expressions).
 
-### Create a Metric Insights query
+### Metric Insights queries
 
 The Metrics Query option in the CloudWatch data source is referred to as **Metric Insights** in the AWS console.
 It's a fast, flexible, SQL-based query engine that you can use to identify trends and patterns across millions of operational metrics in real time.
