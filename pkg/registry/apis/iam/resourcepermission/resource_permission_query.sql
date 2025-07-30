@@ -1,3 +1,20 @@
+-- No need to handle the provisioned permissions (what comes from fixed or custom roles)
+-- We only care about managed roles
+-- This query retrieves permissions for users, teams, basic roles that are associated with managed roles
+-- and the permissions that are associated with those roles.
+-- The query is designed to return permissions for dashboards, but we need to replace with {{ .ArgList .Query.Actions }}
+-- The query can also be improved to filter by scope ({{ .Arg .Query.UID }}) for the get case.
+
+-- select br.role as basic, u.uid as user, t.uid as team r.name, p.action, p.scope from role as r
+-- inner join permission as p on r.id = p.role_id
+-- left join user_role as ur on ur.role_id = r.id
+-- left join user as u on ur.user_id = u.id
+-- left join team_role as tr on tr.role_id = r.id
+-- left join team as t on tr.team_id = t.id
+-- left join builtin_role as br on br.role_id = r.id
+-- where r.name like "managed:%" and p.action IN ("dashboards:admin", "dashboards:edit", "dashboards:view")
+--   and r.org_id = {{ .Arg .Query.OrgID }}; 
+
 SELECT 
 	p.id, p.action, p.scope, p.created, p.updated,
 	COALESCE(u.uid, t.uid) as subject_uid,
