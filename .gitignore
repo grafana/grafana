@@ -107,6 +107,7 @@ profile.cov
 /pkg/build/cmd/artifactspage.go
 /pkg/build/cmd/artifactspage.tmpl.html
 /pkg/build/cmd/exportversion.go
+/pkg/build/cmd/enterprise.go
 /pkg/server/wireexts_enterprise.go
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 !/pkg/extensions/main.go
