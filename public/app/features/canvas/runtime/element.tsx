@@ -10,10 +10,11 @@ import {
   ValueLinkConfig,
   OneClickMode,
   ActionModel,
+  ActionVariableInput,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { ConfirmModal } from '@grafana/ui';
+import { ConfirmModal, VariablesInputModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions/context';
@@ -59,7 +60,15 @@ export class ElementState implements LayerElement {
 
   // cached for tooltips/mousemove
   oneClickMode = OneClickMode.Off;
-  showConfirmation = false;
+  showActionConfirmation = false;
+
+  showActionVarsModal = false;
+  actionVars: ActionVariableInput = {};
+
+  setActionVars = (vars: ActionVariableInput) => {
+    this.actionVars = vars;
+    this.forceUpdate();
+  };
 
   constructor(
     public item: CanvasElementItem,
@@ -395,6 +404,8 @@ export class ElementState implements LayerElement {
       this.oneClickMode = OneClickMode.Link;
     } else if (this.options.actions?.some((action) => action.oneClick === true)) {
       this.oneClickMode = OneClickMode.Action;
+    } else {
+      this.oneClickMode = OneClickMode.Off;
     }
 
     if (frames) {
@@ -706,8 +717,16 @@ export class ElementState implements LayerElement {
         window.open(primaryDataLink.href, primaryDataLink.target ?? '_self');
       }
     } else if (this.oneClickMode === OneClickMode.Action) {
-      this.showConfirmation = true;
-      this.forceUpdate();
+      const primaryAction = this.getPrimaryAction();
+      const actionHasVariables = primaryAction?.variables && primaryAction.variables.length > 0;
+
+      if (actionHasVariables) {
+        this.showActionVarsModal = true;
+        this.forceUpdate();
+      } else {
+        this.showActionConfirmation = true;
+        this.forceUpdate();
+      }
     } else {
       this.handleTooltip(event);
       this.onTooltipCallback();
@@ -749,7 +768,7 @@ export class ElementState implements LayerElement {
 
     return (
       <>
-        {this.showConfirmation && action && (
+        {this.showActionConfirmation && action && (
           <ConfirmModal
             isOpen={true}
             title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
@@ -757,17 +776,42 @@ export class ElementState implements LayerElement {
             confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
             confirmButtonVariant="primary"
             onConfirm={() => {
-              this.showConfirmation = false;
-              action.onClick(new MouseEvent('click'));
+              this.showActionConfirmation = false;
+              action.onClick(new MouseEvent('click'), null, this.actionVars);
               this.forceUpdate();
             }}
             onDismiss={() => {
-              this.showConfirmation = false;
+              this.showActionConfirmation = false;
               this.forceUpdate();
             }}
           />
         )}
       </>
+    );
+  };
+
+  renderVariablesInputModal = (action: ActionModel | undefined) => {
+    if (!action || !action.variables || action.variables.length === 0) {
+      return;
+    }
+
+    const onModalContinue = () => {
+      this.showActionVarsModal = false;
+      this.showActionConfirmation = true;
+      this.forceUpdate();
+    };
+
+    return (
+      <VariablesInputModal
+        action={action}
+        variables={this.actionVars}
+        setVariables={this.setActionVars}
+        onDismiss={() => {
+          this.showActionVarsModal = false;
+          this.forceUpdate();
+        }}
+        onShowConfirm={onModalContinue}
+      />
     );
   };
 
@@ -795,7 +839,8 @@ export class ElementState implements LayerElement {
             isSelected={isSelected}
           />
         </div>
-        {this.showConfirmation && this.renderActionsConfirmModal(this.getPrimaryAction())}
+        {this.showActionConfirmation && this.renderActionsConfirmModal(this.getPrimaryAction())}
+        {this.showActionVarsModal && this.renderVariablesInputModal(this.getPrimaryAction())}
       </>
     );
   }
