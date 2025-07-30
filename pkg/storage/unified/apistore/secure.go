@@ -66,11 +66,12 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueSuppo
 		}
 	}
 
-	owner := utils.ToObjectReference(obj)
-	secure, err = store.UpdateSecureValues(ctx, owner, secure)
-	if err != nil {
-		return false, err
-	}
+	// TODO!!!
+	// owner := utils.ToObjectReference(obj)
+	// secure, err = store.UpdateSecureValues(ctx, owner, secure)
+	// if err != nil {
+	// 	return false, err
+	// }
 	// TODO: calculate change from the response
 	return changed, obj.SetSecureValues(secure)
 }
@@ -86,13 +87,11 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 		return fmt.Errorf("secure value support is not configured (delete)")
 	}
 
-	for k, v := range secure {
-		v.Remove = true // Set the remove flag on everything
-		secure[k] = v
-	}
-	_, err = store.UpdateSecureValues(ctx, utils.ToObjectReference(obj), secure)
-	if err != nil {
-		return err
+	owner := utils.ToObjectReference(obj)
+	for _, v := range secure {
+		if err = store.DeleteInline(ctx, owner, v.Name); err != nil {
+			return err
+		}
 	}
 	return obj.SetSecureValues(nil) // remove them from the object
 }

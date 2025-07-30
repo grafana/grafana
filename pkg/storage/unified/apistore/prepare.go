@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,59 +16,56 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
-	authtypes "github.com/grafana/authlib/types"
-
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func logN(n, b float64) float64 {
-	return math.Log(n) / math.Log(b)
-}
+type objectForStorage struct {
+	// The value to save in unistore
+	raw bytes.Buffer
 
-// Slightly modified function from https://github.com/dustin/go-humanize (MIT).
-func formatBytes(numBytes int) string {
-	base := 1024.0
-	sizes := []string{"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}
-	if numBytes < 10 {
-		return fmt.Sprintf("%d B", numBytes)
-	}
-	e := math.Floor(logN(float64(numBytes), base))
-	suffix := sizes[int(e)]
-	val := math.Floor(float64(numBytes)/math.Pow(base, e)*10+0.5) / 10
-	return fmt.Sprintf("%.1f %s", val, suffix)
+	// apply permissions (defined in the resource body)
+	grantPermissions string
+
+	// These secrets where created, should be cleaned up if storage fails
+	createdSecrets []string
+
+	// These should be deleted if storage succeeds
+	deleteSecrets []string
 }
 
 // Called on create
-func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) ([]byte, string, error) {
-	info, ok := authtypes.AuthInfoFrom(ctx)
+func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) (objectForStorage, error) {
+	v := objectForStorage{}
+	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return nil, "", errors.New("missing auth info")
+		return v, errors.New("missing auth info")
 	}
 
 	obj, err := utils.MetaAccessor(newObject)
 	if err != nil {
-		return nil, "", err
+		return v, err
 	}
 	if obj.GetName() == "" {
-		return nil, "", storage.NewInvalidObjError("", "missing name")
+		return v, storage.NewInvalidObjError("", "missing name")
 	}
 	if obj.GetResourceVersion() != "" {
-		return nil, "", storage.ErrResourceVersionSetOnCreate
+		return v, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetUID() == "" {
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
 	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
-		return nil, "", apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 	}
 
-	grantPermisions := obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
-	if grantPermisions != "" {
+	v.grantPermissions = obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
+	if v.grantPermissions != "" {
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
-		return nil, "", err
+		return v, err
 	}
 
 	if s.opts.RequireDeprecatedInternalID {
@@ -94,36 +91,35 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 
 	_, err = handleSecureValues(ctx, s.opts.SecureValues, obj, nil)
 	if err != nil {
-		return nil, "", err
+		return v, err
 	}
 
-	var buf bytes.Buffer
-	if err = s.codec.Encode(newObject, &buf); err != nil {
-		return nil, "", err
+	err = s.codec.Encode(newObject, &v.raw)
+	if err == nil {
+		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
-
-	val, err := s.handleLargeResources(ctx, obj, buf)
-	return val, grantPermisions, err
+	return v, err
 }
 
 // Called on update
-func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object) ([]byte, error) {
-	info, ok := authtypes.AuthInfoFrom(ctx)
+func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object) (objectForStorage, error) {
+	v := objectForStorage{}
+	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return nil, errors.New("missing auth info")
+		return v, errors.New("missing auth info")
 	}
 
 	obj, err := utils.MetaAccessor(updateObject)
 	if err != nil {
-		return nil, err
+		return v, err
 	}
 	if obj.GetName() == "" {
-		return nil, fmt.Errorf("updated object must have a name")
+		return v, fmt.Errorf("updated object must have a name")
 	}
 
 	previous, err := utils.MetaAccessor(previousObject)
 	if err != nil {
-		return nil, err
+		return v, err
 	}
 
 	if previous.GetUID() == "" {
@@ -138,7 +134,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	if obj.GetName() != previous.GetName() {
-		return nil, fmt.Errorf("name mismatch between existing and updated object")
+		return v, fmt.Errorf("name mismatch between existing and updated object")
 	}
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
@@ -155,13 +151,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	changed, err := handleSecureValues(ctx, s.opts.SecureValues, obj, previous)
 	if err != nil {
-		return nil, err
+		return v, err
 	}
 
 	// Check if we should bump the generation
 	if obj.GetFolder() != previous.GetFolder() {
 		if !s.opts.EnableFolderSupport {
-			return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 		}
 		// TODO: check that we can move the folder?
 		changed = true
@@ -185,7 +181,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 		// Only validate when the generation has changed
 		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
-			return nil, err
+			return v, err
 		}
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
@@ -193,19 +189,20 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	var buf bytes.Buffer
-	if err = s.codec.Encode(updateObject, &buf); err != nil {
-		return nil, err
+	err = s.codec.Encode(updateObject, &v.raw)
+	if err == nil {
+		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
-	return s.handleLargeResources(ctx, obj, buf)
+	return v, err
 }
 
-func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {
+// The bytes buffer will be reset with the proper value
+func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf *bytes.Buffer) error {
 	support := s.opts.LargeObjectSupport
 	size := buf.Len()
 	if support != nil && size > support.Threshold() {
 		if support.MaxSize() > 0 && size > support.MaxSize() {
-			return nil, fmt.Errorf("request object is too big (%s > %s)", formatBytes(size), formatBytes(support.MaxSize()))
+			return fmt.Errorf("request object is too big (%s > %s)", humanize.Bytes(uint64(size)), humanize.Bytes(uint64(support.MaxSize())))
 		}
 
 		key := &resourcepb.ResourceKey{
@@ -217,19 +214,17 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 
 		err := support.Deconstruct(ctx, key, s.store, obj, buf.Bytes())
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		buf.Reset()
 		orig, ok := obj.GetRuntimeObject()
 		if !ok {
-			return nil, fmt.Errorf("error using object as runtime object")
+			return fmt.Errorf("error using object as runtime object")
 		}
 
 		// Now encode the smaller version
-		if err = s.codec.Encode(orig, &buf); err != nil {
-			return nil, err
-		}
+		return s.codec.Encode(orig, buf)
 	}
-	return buf.Bytes(), nil
+	return nil
 }

@@ -2,12 +2,9 @@ package metadata
 
 import (
 	"context"
-	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
 	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -20,7 +17,7 @@ import (
 var _ contracts.InlineSecureValueSupport = (*inlineStorage)(nil)
 
 func ProvideInlineSecureValueSupport(
-	db contracts.SecureValueMetadataStorage,
+	db contracts.SecureValueService,
 	access authlib.AccessClient,
 ) (contracts.InlineSecureValueSupport, error) {
 	return &inlineStorage{
@@ -32,8 +29,48 @@ func ProvideInlineSecureValueSupport(
 // TODO! this needs real attention :) and likely explicit support from the DB
 // inlineStorage is the actual implementation of the secure value (metadata) storage.
 type inlineStorage struct {
-	db     contracts.SecureValueMetadataStorage
+	db     contracts.SecureValueService
 	access authlib.AccessChecker
+}
+
+// CreateInline implements contracts.InlineSecureValueSupport.
+func (i *inlineStorage) CreateInline(ctx context.Context, owner common.ObjectReference, value common.RawSecureValue) (string, error) {
+	actor, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return "", apierrors.NewBadRequest("missing auth info")
+	}
+	if owner.Name == "" {
+		return "", apierrors.NewBadRequest("missing owner name")
+	}
+	if value.IsZero() {
+		return "", apierrors.NewBadRequest("missing value")
+	}
+
+	v, err := i.db.Create(ctx, &secret.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       owner.Namespace,
+			OwnerReferences: []metav1.OwnerReference{owner.ToOwnerReference()},
+		},
+	}, actor.GetUID())
+	if err != nil {
+		return "", err
+	}
+	return v.Name, nil
+}
+
+// DeleteInline implements contracts.InlineSecureValueSupport.
+func (i *inlineStorage) DeleteInline(ctx context.Context, owner common.ObjectReference, name string) error {
+	_, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewBadRequest("missing auth info")
+	}
+	if owner.Name == "" {
+		return apierrors.NewBadRequest("missing owner name")
+	}
+
+	// TODO, make sure the owner is right!
+	_, err := i.db.Delete(ctx, xkube.Namespace(owner.Namespace), name)
+	return err
 }
 
 // CanReference implements contracts.InlineSecureValueSupport.
@@ -60,7 +97,7 @@ func (i *inlineStorage) CanReference(ctx context.Context, owner common.ObjectRef
 		}
 
 		// ???? Read requires view?  do we have a read that does not require view
-		v, err := i.db.Read(ctx, xkube.Namespace(owner.Namespace), value.Name, contracts.ReadOpts{})
+		v, err := i.db.Read(ctx, xkube.Namespace(owner.Namespace), value.Name)
 		if err != nil || v == nil {
 			return apierrors.NewBadRequest("unable to reference secure value")
 		}
@@ -83,65 +120,4 @@ func (i *inlineStorage) CanReference(ctx context.Context, owner common.ObjectRef
 	}
 
 	return nil // Yes, can reference
-}
-
-// UpdateSecureValues implements contracts.InlineSecureValueSupport.
-func (i *inlineStorage) UpdateSecureValues(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) (common.InlineSecureValues, error) {
-	actor, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, apierrors.NewBadRequest("missing auth info")
-	}
-
-	keep := make(common.InlineSecureValues, len(values))
-	for key, secure := range values {
-		var prev *secret.SecureValue
-		if secure.Name != "" {
-			// The user may not be able to read the value if it is owned
-			prev, _ = i.db.Read(ctx, xkube.Namespace(owner.Namespace), secure.Name, contracts.ReadOpts{})
-			if prev == nil {
-				if secure.Remove {
-					continue // OK if not found
-				}
-				if secure.Create.IsZero() {
-					return nil, apierrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{
-						field.Invalid(field.NewPath("secure", key, "name"),
-							secure.Name, "Unable to read secure value")})
-				}
-				secure.Name = "" // previous value not found
-			}
-		}
-
-		if secure.Remove {
-			if prev != nil {
-				// TODO... only if owned by the owner
-				fmt.Printf("TODO... delete previous value")
-				// if err := i.db.Delete(ctx, xkube.Namespace(owner.Namespace), prev.Name); err != nil {
-				// 	return nil, err
-				// }
-			}
-			continue
-		}
-
-		if !secure.Create.IsZero() {
-			if prev != nil {
-				// TODO: CHECK if the value has actually changed
-				fmt.Printf("TODO... check if value has changed %+v\n", prev)
-			}
-			v, err := i.db.Create(ctx, &secret.SecureValue{
-				ObjectMeta: v1.ObjectMeta{
-					OwnerReferences: []v1.OwnerReference{owner.ToOwnerReference()},
-				},
-			}, actor.GetUID())
-			if err != nil {
-				return nil, err
-			}
-			secure = common.InlineSecureValue{Name: v.Name}
-		}
-
-		keep[key] = secure
-	}
-
-	// TODO? clean up any orphan secure values?
-
-	return keep, nil
 }
