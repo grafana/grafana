@@ -377,6 +377,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // TraceQL
     if (targets.traceql?.length) {
       try {
         const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
@@ -393,7 +394,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           subQueries.push(this.handleTraceIdQuery(options, targets.traceql, queryValue));
         } else {
           if (this.isTraceQlMetricsQuery(queryValue)) {
-            const useStreaming = this.isStreamingMetricsEnabled();
+            const useStreaming =
+              this.isStreamingMetricsEnabled() &&
+              options.app !== CoreApp.CloudAlerting &&
+              options.app !== CoreApp.UnifiedAlerting;
+
             reportInteraction('grafana_traces_traceql_metrics_queried', {
               datasourceType: 'tempo',
               app: options.app ?? '',
@@ -422,6 +427,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // Search
     if (targets.traceqlSearch?.length) {
       if (targets.traceqlSearch[0].groupBy) {
         return of({
@@ -498,6 +504,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // Upload
     if (targets.upload?.length) {
       if (this.uploadedJson) {
         reportInteraction('grafana_traces_json_file_uploaded', {
@@ -523,6 +530,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // Service Map
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
       reportInteraction('grafana_traces_service_graph_queried', {
         datasourceType: 'tempo',
