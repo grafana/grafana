@@ -358,6 +358,7 @@ export { type UPlotConfigPrepFn } from './components/uPlot/config/UPlotConfigBui
 export * from './components/PanelChrome/types';
 export { Label as BrowserLabel } from './components/BrowserLabel/Label';
 export { PanelContainer } from './components/PanelContainer/PanelContainer';
+export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 
 // -----------------------------------------------------
 // Graveyard: exported, but no longer used internally
