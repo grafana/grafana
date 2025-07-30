@@ -26,6 +26,7 @@ interface BaseProps {
   disabledSeconds?: () => number[];
   placeholder?: string;
   allowEmpty?: boolean;
+  id?: string;
 }
 
 interface AllowEmptyProps extends BaseProps {
@@ -52,6 +53,7 @@ export const TimeOfDayPicker = ({
   disabledHours,
   disabledMinutes,
   disabledSeconds,
+  id,
   placeholder,
   // note: we can't destructure allowEmpty/onChange here
   // in order to discriminate the types properly later in the onChange handler
@@ -62,6 +64,7 @@ export const TimeOfDayPicker = ({
 
   return (
     <RcPicker<Moment>
+      id={id}
       generateConfig={generateConfig}
       locale={locale}
       allowClear={
