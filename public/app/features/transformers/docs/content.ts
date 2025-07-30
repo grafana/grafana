@@ -1590,25 +1590,27 @@ ${buildImageContent(
     },
   },
   regression: {
-    name: 'Regression analysis',
+    name: 'Trendline',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
 Use this transformation to create a new data frame containing values predicted by a statistical model. This is useful for finding a trend in chaotic data. It works by fitting a mathematical function to the data, using either linear or polynomial regression. The data frame can then be used in a visualization to display a trendline.
 
 There are two different models:
 
-- **Linear regression** - Fits a linear function to the data.
+- **Linear** - Fits a linear function to the data.
 ${buildImageContent(
   '/static/img/docs/transformations/linear-regression.png',
   imageRenderType,
   'A time series visualization with a straight line representing the linear function'
 )}
-- **Polynomial regression** - Fits a polynomial function to the data.
+- **Polynomial** - Fits a polynomial function to the data.
 ${buildImageContent(
   '/static/img/docs/transformations/polynomial-regression.png',
   imageRenderType,
   'A time series visualization with a curved line representing the polynomial function'
 )}
+
+> **Note:** This transformation was previously called regression analysis.
   `;
     },
   },

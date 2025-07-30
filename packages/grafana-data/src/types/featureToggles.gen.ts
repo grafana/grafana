@@ -290,11 +290,6 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
-  * Route the folder and dashboard service requests to k8s
-  * @default true
-  */
-  kubernetesClientDashboardsFolders?: boolean;
-  /**
   * Disable schema validation for dashboards/v1
   */
   dashboardDisableSchemaValidationV1?: boolean;
@@ -965,6 +960,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables using PGX instead of libpq for PostgreSQL datasource
+  */
+  postgresDSUsePGX?: boolean;
+  /**
   * Enables creating alerts from Tempo data source
   */
   tempoAlerting?: boolean;
@@ -994,6 +993,10 @@ export interface FeatureToggles {
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
+  /**
+  * Enables create, delete, and update mutations for resources owned by IAM identity
+  */
+  kubernetesAuthnMutation?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1070,4 +1073,13 @@ export interface FeatureToggles {
   * Enables adhoc filtering support for the dashboard datasource
   */
   dashboardDsAdHocFiltering?: boolean;
+  /**
+  * Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
+  * @default false
+  */
+  alertmanagerRemoteSecondaryWithRemoteState?: boolean;
+  /**
+  * Enable adhoc filter buttons in visualization tooltips
+  */
+  adhocFiltersInTooltips?: boolean;
 }

@@ -484,13 +484,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "kubernetesClientDashboardsFolders",
-			Description: "Route the folder and dashboard service requests to k8s",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,
@@ -1663,6 +1656,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "postgresDSUsePGX",
+			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
 			Name:         "tempoAlerting",
 			Description:  "Enables creating alerts from Tempo data source",
 			Stage:        FeatureStageExperimental,
@@ -1710,6 +1709,14 @@ var (
 		{
 			Name:              "kubernetesAuthzApis",
 			Description:       "Registers AuthZ /apis endpoint",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
+			Name:              "kubernetesAuthnMutation",
+			Description:       "Enables create, delete, and update mutations for resources owned by IAM identity",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
@@ -1847,6 +1854,22 @@ var (
 		{
 			Name:         "dashboardDsAdHocFiltering",
 			Description:  "Enables adhoc filtering support for the dashboard datasource",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:              "alertmanagerRemoteSecondaryWithRemoteState",
+			Description:       "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:         "adhocFiltersInTooltips",
+			Description:  "Enable adhoc filter buttons in visualization tooltips",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
 			FrontendOnly: true,

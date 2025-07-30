@@ -5,7 +5,6 @@ import { getAppEvents } from '@grafana/runtime';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   useCreateRepositoryFilesWithPathMutation,
-  useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -26,7 +25,6 @@ jest.mock('@grafana/runtime', () => {
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useGetRepositoryFilesWithPathQuery: jest.fn(),
   useCreateRepositoryFilesWithPathMutation: jest.fn(),
-  useDeleteRepositoryFilesWithPathMutation: jest.fn(),
   provisioningAPIv0alpha1: {
     endpoints: {
       listRepository: {
@@ -109,13 +107,6 @@ const mockCreateRequest = {
   error: null,
 };
 
-const mockDeleteRequest = {
-  isSuccess: false,
-  isError: false,
-  isLoading: false,
-  error: null,
-};
-
 describe('MoveProvisionedDashboardForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -155,8 +146,6 @@ describe('MoveProvisionedDashboardForm', () => {
     });
 
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([jest.fn(), mockCreateRequest]);
-
-    (useDeleteRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([jest.fn(), mockDeleteRequest]);
 
     (useProvisionedRequestHandler as jest.Mock).mockReturnValue(undefined);
   });

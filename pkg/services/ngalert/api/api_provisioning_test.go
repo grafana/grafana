@@ -29,14 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
@@ -47,14 +43,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -68,6 +60,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationProvisioningApi(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("policies", func(t *testing.T) {
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -350,14 +345,6 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				orgID := int64(2)
 
 				rule := createTestAlertRule("rule", orgID)
-				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-					UID:          rule.FolderUID,
-					Title:        "Folder Title",
-					OrgID:        orgID,
-					SignedInUser: &user.SignedInUser{OrgID: orgID},
-				})
-				require.NoError(t, err)
-
 				insertRuleInOrg(t, sut, rule, orgID)
 				rule.FolderUID = "does-not-exist"
 
@@ -459,14 +446,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"true"}}
 				rc.OrgID = 3
 				rule := createTestAlertRule("rule", 1)
-
-				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-					UID:          "folder-uid",
-					Title:        "Folder Title",
-					OrgID:        rc.OrgID,
-					SignedInUser: &user.SignedInUser{OrgID: rc.OrgID},
-				})
-				require.NoError(t, err)
+				rule.FolderUID = "folder-uid3"
 
 				response := sut.RoutePostAlertRule(&rc, rule)
 
@@ -483,13 +463,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				rule.UID = uid
 
 				orgID := int64(3)
-				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-					UID:          "folder-uid",
-					Title:        "Folder Title",
-					OrgID:        orgID,
-					SignedInUser: &user.SignedInUser{OrgID: orgID},
-				})
-				require.NoError(t, err)
+				rule.FolderUID = "folder-uid3"
 
 				insertRuleInOrg(t, sut, rule, orgID)
 				rc := createTestRequestCtx()
@@ -557,14 +531,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			uid := util.GenerateShortUID()
 			rule := createTestAlertRule("rule", 3)
 			rule.UID = uid
-
-			_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-				UID:          rule.FolderUID,
-				Title:        "Folder Title",
-				OrgID:        rule.OrgID,
-				SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
-			})
-			require.NoError(t, err)
+			rule.FolderUID = "folder-uid3"
 
 			insertRuleInOrg(t, sut, rule, 3)
 
@@ -1626,6 +1593,9 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 }
 
 func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
 		env := createTestEnv(t, testConfig)
 		env.ac = &recordingAccessControlFake{
@@ -2047,7 +2017,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, _ := db.InitTestDBWithCfg(t)
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -2071,14 +2041,39 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
-	require.NoError(t, err)
-
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	fStore := folderimpl.ProvideStore(sqlStore)
-	folderService := folderimpl.ProvideService(
-		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	folderService := foldertest.NewFakeService()
+	folder1 := &folder.Folder{
+		UID:      "folder-uid",
+		Title:    "Folder Title",
+		Fullpath: "Folder Title",
+		OrgID:    1,
+	}
+	folder2 := &folder.Folder{
+		UID:       "folder-uid2",
+		Title:     "Folder Title2",
+		ParentUID: "folder-uid",
+		Fullpath:  "Folder Title2",
+		OrgID:     1,
+	}
+	folder3 := &folder.Folder{
+		UID:       "folder-uid3",
+		Title:     "Folder Title3",
+		ParentUID: "folder-uid",
+		Fullpath:  "Folder Title3",
+		OrgID:     3,
+	}
+	folderService.SetFolders(map[string]*folder.Folder{
+		"folder-uid":  folder1,
+		"folder-uid2": folder2,
+		"folder-uid3": folder3,
+	})
+	folderService.ExpectedFolders = []*folder.Folder{
+		folder1,
+		folder2,
+		folder3,
+	}
+	// if not one of the two above, return ErrFolderNotFound
+	folderService.ExpectedError = dashboards.ErrFolderNotFound
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,
@@ -2097,23 +2092,6 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			},
 		*/
 	}
-
-	parent, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
-		OrgID:        1,
-		UID:          "folder-uid",
-		Title:        "Folder Title",
-		SignedInUser: user,
-	})
-	require.NoError(t, err)
-
-	_, err = folderService.Create(context.Background(), &folder.CreateFolderCommand{
-		OrgID:        1,
-		UID:          "folder-uid2",
-		Title:        "Folder Title2",
-		ParentUID:    parent.UID,
-		SignedInUser: user,
-	})
-	require.NoError(t, err)
 
 	ruleAuthz := &fakes.FakeRuleService{}
 

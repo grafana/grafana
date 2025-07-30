@@ -46,6 +46,9 @@ func batchInsertPermissions(cnt int, sqlStore db.DB) error {
 // TestIntegrationMigrateScopeSplit tests the scope split migration
 // also tests the scope split truncation logic
 func TestIntegrationMigrateScopeSplitTruncation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	sqlStore := db.InitTestDB(t)
 	logger := log.New("accesscontrol.migrator.test")
 
