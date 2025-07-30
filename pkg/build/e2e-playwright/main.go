@@ -8,6 +8,7 @@ import (
 	"os/signal"
 
 	"dagger.io/dagger"
+	"github.com/grafana/grafana/pkg/build/e2eutil"
 	"github.com/urfave/cli/v3"
 )
 
@@ -143,7 +144,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		},
 	})
 
-	frontendContainer, err := WithFrontendContainer(ctx, d, yarnHostSrc)
+	frontendContainer, err := e2eutil.WithFrontendContainer(ctx, d, yarnHostSrc)
 	if err != nil {
 		return fmt.Errorf("failed to create frontend container: %w", err)
 	}

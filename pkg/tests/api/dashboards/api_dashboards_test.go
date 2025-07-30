@@ -19,10 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -32,29 +34,249 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func TestIntegrationDashboardServiceValidation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	orgPayload := map[string]interface{}{
+		"name": "Org B",
+	}
+	orgPayloadBytes, err := json.Marshal(orgPayload)
+	require.NoError(t, err)
+
+	orgURL := fmt.Sprintf("http://admin:admin@%s/api/orgs", grafanaListedAddr)
+	orgResp, err := http.Post(orgURL, "application/json", bytes.NewBuffer(orgPayloadBytes)) // nolint:gosec
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, orgResp.StatusCode)
+	err = orgResp.Body.Close()
+	require.NoError(t, err)
+
+	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Login:          "admin-org2",
+		Password:       "admin",
+		IsAdmin:        true,
+		OrgID:          2,
+	})
+
+	savedFolder := createFolder(t, grafanaListedAddr, "Saved folder")
+	savedDashInFolder := createDashboard(t, grafanaListedAddr, "Saved dash in folder", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
+	savedDashInGeneralFolder := createDashboard(t, grafanaListedAddr, "Saved dashboard in general folder", 0, "")
+
+	t.Run("When saving a dashboard with non-existing id in org A", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"id":    123412321,
+				"title": "Expect error",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When saving a dashboard with existing ID from org A in org B", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin-org2", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"id":    savedDashInFolder.ID, // nolint:staticcheck
+				"title": "Expect error",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When saving a dashboard with same UID in org A and org B, should be okay", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin-org2", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"uid":   savedDashInFolder.UID,
+				"title": "Saved dash in folder",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When creating a dashboard in General folder with same name as dashboard in other folder", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"title": "Saved dash in folder",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+	t.Run("When creating a dashboard in other folder with same name as dashboard in General folder", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"uid":   savedDashInFolder,
+				"title": "Dash with existing uid in other org",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When creating a folder with same name as dashboard in other folder", func(t *testing.T) {
+		f := createFolder(t, grafanaListedAddr, "Saved dashboard in general folder")
+		require.Equal(t, f.Title, "Saved dashboard in general folder")
+	})
+
+	t.Run("When saving a dashboard without id and uid and unique title in folder", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"title": "Unique",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When saving a dashboard with id 0", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"id":    0,
+				"title": "Dash with zero id",
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When saving a dashboard in non-existing folder", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"title": "no folder",
+			},
+			"folderUid": "non-existing-folder",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When saving a dashboard with incorrect version but no overwrite", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"uid":     savedDashInFolder.UID,
+				"version": 1,
+			},
+			"folderUid": savedDashInFolder.FolderUID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When saving a dashboard with current version and overwrite is true", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"uid":     savedDashInFolder.UID,
+				"version": savedDashInFolder.Version,
+				"title":   "Saved dash in folder",
+			},
+			"folderUid": savedDashInFolder.FolderUID,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When saving a dashboard with no version set and title set to a folder title", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"uid":   savedDashInFolder.UID,
+				"title": "Saved folder",
+			},
+			"folderUid": savedDashInFolder.FolderUID,
+			"overwrite": true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When updating uid with id", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"id":    savedDashInFolder.ID, // nolint:staticcheck
+				"uid":   "new-uid",
+				"title": "Updated title",
+			},
+			"folderUid": savedDashInFolder.FolderUID,
+			"overwrite": true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+	t.Run("When updating uid with a dashboard already using that uid", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"id":    savedDashInFolder.ID, // nolint:staticcheck
+				"uid":   savedDashInGeneralFolder.UID,
+				"title": "Updated title",
+			},
+			"folderUid": savedDashInFolder.FolderUID,
+			"overwrite": true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When trying to update to a folder", func(t *testing.T) {
+		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"id":    savedDashInFolder.ID, // nolint:staticcheck
+				"uid":   savedDashInFolder.UID,
+				"title": "Updated title",
+			},
+			"isFolder":  true,
+			"folderUid": savedDashInFolder.FolderUID,
+			"overwrite": true,
+		})
+		require.NoError(t, err)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+}
+
 func TestIntegrationDashboardQuota(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testDashboardQuota(t, []string{})
-}
-
-func TestIntegrationDashboardQuotaK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	testDashboardQuota(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testDashboardQuota(t *testing.T, featureToggles []string) {
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableQuota:          true,
-		DashboardOrgQuota:    &dashboardQuota,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous:  true,
+		EnableQuota:       true,
+		DashboardOrgQuota: &dashboardQuota,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -110,27 +332,9 @@ func testDashboardQuota(t *testing.T, featureToggles []string) {
 }
 
 func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	testUpdatingProvisionionedDashboards(t, []string{})
-}
-
-func TestIntegrationUpdatingProvisionionedDashboardsK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	// will be the default in g12
-	testUpdatingProvisionionedDashboards(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testUpdatingProvisionionedDashboards(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
 	})
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
@@ -187,7 +391,7 @@ providers:
 		var dashboardID int64
 		for _, d := range *dashboardList {
 			dashboardUID = d.UID
-			dashboardID = d.ID
+			dashboardID = d.ID // nolint:staticcheck
 		}
 		assert.Equal(t, int64(1), dashboardID)
 
@@ -281,34 +485,9 @@ providers:
 }
 
 func TestIntegrationCreate(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	testCreate(t, []string{})
-}
-
-func TestIntegrationCreateK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	testCreate(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func TestIntegrationPreserveSchemaVersion(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	testPreserveSchemaVersion(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testCreate(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -461,10 +640,9 @@ func intPtr(n int) *int {
 	return &n
 }
 
-func testPreserveSchemaVersion(t *testing.T, featureToggles []string) {
+func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -553,25 +731,8 @@ func testPreserveSchemaVersion(t *testing.T, featureToggles []string) {
 }
 
 func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	testImportDashboardWithLibraryPanels(t, []string{})
-}
-
-func TestIntegrationImportDashboardWithLibraryPanelsK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	testImportDashboardWithLibraryPanels(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testImportDashboardWithLibraryPanels(t *testing.T, featureToggles []string) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
-		EnableFeatureToggles: featureToggles,
+		DisableAnonymous: true,
 	})
 
 	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
@@ -759,6 +920,299 @@ func testImportDashboardWithLibraryPanels(t *testing.T, featureToggles []string)
 			require.NoError(t, err)
 			assert.Len(t, connectionsRes.Result, 1)
 			assert.Equal(t, importResp.UID, connectionsRes.Result[0].ConnectionUID)
+		})
+	})
+}
+
+func createDashboard(t *testing.T, grafanaListedAddr string, title string, folderID int64, folderUID string) *dashboards.Dashboard {
+	t.Helper()
+
+	buf := &bytes.Buffer{}
+	err := json.NewEncoder(buf).Encode(map[string]interface{}{
+		"dashboard": map[string]interface{}{
+			"title": title,
+		},
+		"folderId":  folderID,
+		"folderUid": folderUID,
+		"overwrite": true,
+	})
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", buf)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	t.Cleanup(func() {
+		err := resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	var saveResp struct {
+		Status    string `json:"status"`
+		Slug      string `json:"slug"`
+		Version   int64  `json:"version"`
+		ID        int64  `json:"id"`
+		UID       string `json:"uid"`
+		URL       string `json:"url"`
+		FolderUID string `json:"folderUid"`
+	}
+	err = json.Unmarshal(b, &saveResp)
+	require.NoError(t, err)
+	require.NotEmpty(t, saveResp.UID)
+
+	return &dashboards.Dashboard{
+		ID:        saveResp.ID, // nolint:staticcheck
+		UID:       saveResp.UID,
+		Slug:      saveResp.Slug,
+		Version:   int(saveResp.Version),
+		FolderUID: saveResp.FolderUID,
+	}
+}
+
+func postDashboard(t *testing.T, grafanaListedAddr, user, password string, payload map[string]interface{}) (*http.Response, error) {
+	t.Helper()
+
+	payloadBytes, err := json.Marshal(payload)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("http://%s:%s@%s/api/dashboards/db", user, password, grafanaListedAddr)
+	return http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+}
+
+func TestIntegrationDashboardServicePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Login:          "editor",
+		Password:       "editor",
+		IsAdmin:        false,
+	})
+	tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleViewer),
+		Login:          "viewer",
+		Password:       "viewer",
+		IsAdmin:        false,
+	})
+	savedFolder := createFolder(t, grafanaListedAddr, "Saved folder")
+	otherSavedFolder := createFolder(t, grafanaListedAddr, "Other saved folder")
+	savedDashInFolder := createDashboard(t, grafanaListedAddr, "Saved dash in folder", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
+	savedDashInGeneralFolder := createDashboard(t, grafanaListedAddr, "Saved dashboard in general folder", 0, "")
+
+	t.Run("When creating a new dashboard in the General folder, requires create permissions scoped to the general folder", func(t *testing.T) {
+		dashboardPayload := map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"title": "Dash",
+			},
+			"overwrite": true,
+		}
+
+		payloadBytes, err := json.Marshal(dashboardPayload)
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://viewer:viewer@%s/api/dashboards/db", grafanaListedAddr)
+		resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+
+		u = fmt.Sprintf("http://editor:editor@%s/api/dashboards/db", grafanaListedAddr)
+		resp, err = http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When creating a new dashboard in other folder, requires create permissions scoped to the other folder", func(t *testing.T) {
+		dashboardPayload := map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"title": "Dash",
+			},
+			"folderUid": otherSavedFolder.UID,
+			"overwrite": true,
+		}
+
+		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+
+		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When creating a new dashboard by existing UID in folder, requires write permissions on the existing dashboard", func(t *testing.T) {
+		dashboardPayload := map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"uid":   savedDashInFolder.UID,
+				"title": "New dash",
+			},
+			"folderUid": savedFolder.UID,
+			"overwrite": true,
+		}
+
+		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+
+		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When moving a dashboard by existing uid to other folder from General folder, requires dashboard creation permissions on the destination folder and write access to the dashboard", func(t *testing.T) {
+		dashboardPayload := map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"uid":   savedDashInGeneralFolder.UID,
+				"title": "Dash",
+			},
+			"folderUid": otherSavedFolder.UID,
+			"overwrite": true,
+		}
+
+		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+
+		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("When moving a dashboard by existing uid to the General folder from other folder, requires dashboard creation permissions on the general folder and write access to the dashboard", func(t *testing.T) {
+		dashboardPayload := map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"uid":   savedDashInFolder.UID,
+				"title": "Dash",
+			},
+			"folderUid": "",
+			"overwrite": true,
+		}
+
+		resp, err := postDashboard(t, grafanaListedAddr, "viewer", "viewer", dashboardPayload)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+
+		resp, err = postDashboard(t, grafanaListedAddr, "editor", "editor", dashboardPayload)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		err = resp.Body.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("RBAC tests", func(t *testing.T) {
+		setFolderPermissions := func(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
+			t.Helper()
+
+			permissionPayload := map[string]interface{}{
+				"items": permissions,
+			}
+
+			payloadBytes, err := json.Marshal(permissionPayload)
+			require.NoError(t, err)
+
+			u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/permissions", grafanaListedAddr, folderUID)
+			resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			err = resp.Body.Close()
+			require.NoError(t, err)
+		}
+
+		searchDashboards := func(t *testing.T, grafanaListedAddr string, userLogin, userPassword string) []map[string]interface{} {
+			t.Helper()
+
+			u := fmt.Sprintf("http://%s:%s@%s/api/search?type=dash-db", userLogin, userPassword, grafanaListedAddr)
+			resp, err := http.Get(u) // nolint:gosec
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			defer resp.Body.Close() // nolint:errcheck
+
+			var results []map[string]interface{}
+			err = json.NewDecoder(resp.Body).Decode(&results)
+			require.NoError(t, err)
+
+			return results
+		}
+
+		noneUserID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleNone),
+			Login:          "noneuser",
+			Password:       "noneuser",
+			IsAdmin:        false,
+		})
+		parentFolder := createFolder(t, grafanaListedAddr, "parent")
+		childFolder := createFolder(t, grafanaListedAddr, "child")
+		createDashboard(t, grafanaListedAddr, "dashboard in root", 0, "")
+		createDashboard(t, grafanaListedAddr, "dashboard in parent", parentFolder.ID, parentFolder.UID) // nolint:staticcheck
+		createDashboard(t, grafanaListedAddr, "dashboard in child", childFolder.ID, childFolder.UID)    // nolint:staticcheck
+
+		viewPermissions := []map[string]interface{}{
+			{
+				"permission": 1,
+				"userId":     noneUserID,
+			},
+		}
+		t.Run("it should not return folder if ACL is not set for parent folder", func(t *testing.T) {
+			results := searchDashboards(t, grafanaListedAddr, "noneuser", "noneuser")
+			assert.Empty(t, results, "Should not return any dashboards when no permissions are set")
+		})
+
+		t.Run("it should return child folder when user has permission to read child folder", func(t *testing.T) {
+			setFolderPermissions(t, grafanaListedAddr, childFolder.UID, viewPermissions)
+			results := searchDashboards(t, grafanaListedAddr, "noneuser", "noneuser")
+
+			foundTitles := make([]string, 0)
+			for _, result := range results {
+				if title, ok := result["title"].(string); ok {
+					foundTitles = append(foundTitles, title)
+				}
+			}
+
+			assert.Contains(t, foundTitles, "dashboard in child", "Should return dashboard in child folder")
+		})
+
+		t.Run("it should return parent folder when user has permission to read parent folder but no permission to read child folder", func(t *testing.T) {
+			setFolderPermissions(t, grafanaListedAddr, parentFolder.UID, viewPermissions)
+			setFolderPermissions(t, grafanaListedAddr, childFolder.UID, []map[string]interface{}{})
+
+			results := searchDashboards(t, grafanaListedAddr, "noneuser", "noneuser")
+
+			foundTitles := make([]string, 0)
+			for _, result := range results {
+				if title, ok := result["title"].(string); ok {
+					foundTitles = append(foundTitles, title)
+				}
+			}
+
+			assert.Contains(t, foundTitles, "dashboard in parent", "Should return dashboard in parent folder")
+			assert.NotContains(t, foundTitles, "dashboard in child", "Should not return dashboard in child folder")
 		})
 	})
 }

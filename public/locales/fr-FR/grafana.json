@@ -3482,6 +3482,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Annuler",
       "cannot-move-folders": "Les dossiers ne peuvent pas être déplacés",
       "confirmation-text": "Supprimer",
@@ -3515,6 +3516,10 @@
       "this-folder-is-empty": "Ce dossier est vide"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3522,15 +3527,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
@@ -4567,6 +4579,7 @@
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5354,6 +5367,20 @@
       "invalid-json": "JSON non valide",
       "tags-expected-array": "balises attendues tableau",
       "tags-expected-strings": "balises attendues tableau de chaînes"
+    },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
     },
     "version-history-comparison": {
       "button-restore": "Restaurer la version {{version}}",
@@ -7512,6 +7539,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7571,6 +7599,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8270,6 +8299,9 @@
     "card": {
       "option": "option"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Effacer la sélection"
     },
@@ -8282,6 +8314,7 @@
       "aria-label-selected-color": "Couleur {{colorLabel}}"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Annuler",
       "confirmText-delete": ""
     },
@@ -8708,6 +8741,7 @@
       "footer-add-annotation": "Ajouter une annotation",
       "footer-click-to-action": "Cliquez pour {{actionTitle}}",
       "footer-click-to-navigate": "Cliquez pour ouvrir {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Horodatage"
     },
     "week-start-picker": {
@@ -11222,6 +11256,7 @@
       "starting": "Démarrage...",
       "status": {
         "title-error-running-job": "Erreur lors de l’exécution de la mission",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Synthèse",
@@ -11370,6 +11405,7 @@
       "label-current-step": "Étape actuelle",
       "label-pending-step": "Étape en attente"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11402,6 +11438,12 @@
       "alert-title": "Important : aucune donnée ou configuration ne sera perdue, mais les tableaux de bord seront temporairement indisponibles pendant quelques minutes.",
       "button-next": "Terminer",
       "button-start": "Commencer la synchronisation",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Choisir ce qui doit être synchronisé",
       "step-connect": "Connecter",
       "step-finish": "Choisir des paramètres supplémentaires",
@@ -11416,6 +11458,7 @@
     "wizard-content": {
       "button-cancel": "Annuler",
       "button-cancelling": "Annulation...",
+      "button-previous": "",
       "button-submitting": "Envoi…",
       "error-instance-repository-exists": "Le référentiel d’instances existe déjà"
     }
@@ -13443,7 +13486,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13465,6 +13508,9 @@
         }
       },
       "regression": "régression",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Nombre de points X, Y à prédire"
     },
     "rename-by-regex-transformer": {
