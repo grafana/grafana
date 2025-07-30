@@ -1,17 +1,17 @@
 import { ReactNode } from 'react';
 
-import { Field, FieldType, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
 import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
-import { TableCellRendererProps } from '../types';
+import { TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
 
 import { ActionsCell } from './ActionsCell';
-import AutoCell from './AutoCell';
+import { AutoCell, getColorCellStyles, getJsonCellStyles } from './AutoCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { DataLinksCell } from './DataLinksCell';
+import { DataLinksCell, getStyles as getDataLinksStyles } from './DataLinksCell';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
-import { PillCell } from './PillCell';
+import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell } from './SparklineCell';
 
 export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
@@ -92,6 +92,14 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.Pill]: PILL_RENDERER,
 };
 
+const CELL_STYLES: Partial<Record<TableCellOptions['type'], TableCellStyles>> = {
+  [TableCellDisplayMode.ColorBackground]: getColorCellStyles,
+  [TableCellDisplayMode.ColorText]: getColorCellStyles,
+  [TableCellDisplayMode.DataLinks]: getDataLinksStyles,
+  [TableCellDisplayMode.JSONView]: getJsonCellStyles,
+  [TableCellDisplayMode.Pill]: getPillStyles,
+};
+
 /** @internal */
 export function getCellRenderer(field: Field, cellOptions: TableCellOptions): TableCellRenderer {
   const cellType = cellOptions?.type ?? TableCellDisplayMode.Auto;
@@ -105,6 +113,15 @@ export function getCellRenderer(field: Field, cellOptions: TableCellOptions): Ta
   }
 
   return CELL_RENDERERS[cellType] ?? AUTO_RENDERER;
+}
+
+/** @internal */
+export function getCellSpecificStyles(
+  cellType: TableCellOptions['type'],
+  theme: GrafanaTheme2,
+  options: TableCellStyleOptions
+): string | undefined {
+  return CELL_STYLES[cellType]?.(theme, options);
 }
 
 /** @internal */

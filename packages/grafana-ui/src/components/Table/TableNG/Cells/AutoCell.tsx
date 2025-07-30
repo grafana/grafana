@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
+
 import { formattedValueToString } from '@grafana/data';
 
 import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
-import { AutoCellProps } from '../types';
+import { AutoCellProps, TableCellStyles } from '../types';
 
-export default function AutoCell({ value, field, rowIdx }: AutoCellProps) {
+export function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
   return (
@@ -12,3 +14,24 @@ export default function AutoCell({ value, field, rowIdx }: AutoCellProps) {
     </MaybeWrapWithLink>
   );
 }
+
+export const getColorCellStyles: TableCellStyles = () =>
+  css({
+    // helps when cells have a bg color
+    backgroundClip: 'padding-box !important',
+    a: {
+      color: 'inherit',
+      textDecoration: 'underline',
+    },
+  });
+
+export const getJsonCellStyles: TableCellStyles = (_theme, { textWrap, shouldOverflow }) =>
+  css({
+    fontFamily: 'monospace',
+    ...(textWrap && { whiteSpace: 'pre' }),
+    ...(shouldOverflow && {
+      '&:hover, &[aria-selected=true]': {
+        whiteSpace: 'pre',
+      },
+    }),
+  });

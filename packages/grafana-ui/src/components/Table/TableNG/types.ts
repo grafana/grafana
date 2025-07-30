@@ -19,6 +19,8 @@ import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
 
+import { TextAlign } from './utils';
+
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 
@@ -253,6 +255,14 @@ export interface PillCellProps {
   field: Field;
   rowIdx: number;
 }
+
+export interface TableCellStyleOptions {
+  textWrap: boolean;
+  textAlign: TextAlign;
+  shouldOverflow: boolean;
+}
+
+export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;

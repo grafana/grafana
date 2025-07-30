@@ -41,7 +41,7 @@ import { DataLinksActionsTooltipState } from '../utils';
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellActions } from './Cells/TableCellActions';
-import { getCellRenderer } from './Cells/renderers';
+import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
@@ -53,7 +53,15 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
-import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps } from './types';
+import {
+  TableNGProps,
+  TableRow,
+  TableSummaryRow,
+  TableColumn,
+  ContextMenuProps,
+  TableCellStyles,
+  TableCellStyleOptions,
+} from './types';
 import {
   applySort,
   computeColWidths,
@@ -74,7 +82,6 @@ import {
   isCellInspectEnabled,
   shouldTextOverflow,
   shouldTextWrap,
-  TextAlign,
   withDataLinksActionsTooltip,
 } from './utils';
 
@@ -349,36 +356,16 @@ export function TableNG(props: TableNGProps) {
           : undefined;
 
         const shouldOverflow = shouldTextOverflow(field);
-        const shouldWrap = shouldTextWrap(field);
+        const textWrap = shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
-        const isMonospace = cellType === TableCellDisplayMode.JSONView;
+        const cellStyleOptions: TableCellStyleOptions = { textAlign, textWrap, shouldOverflow };
 
         result.colsWithTooltip[displayName] = withTooltip;
 
-        // get static cell class based on col props
-
-        let cellClass = '';
-
-        switch (cellType) {
-          case TableCellDisplayMode.Auto:
-          case TableCellDisplayMode.ColorBackground:
-          case TableCellDisplayMode.ColorText:
-          case TableCellDisplayMode.DataLinks:
-          case TableCellDisplayMode.JSONView:
-          case TableCellDisplayMode.Pill:
-            cellClass = getCellStyles(
-              theme,
-              cellType,
-              textAlign,
-              shouldWrap,
-              shouldOverflow,
-              canBeColorized,
-              isMonospace
-            );
-            break;
-        }
+        const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
+        const cellSpecificStyles = getCellSpecificStyles(cellType, theme, cellStyleOptions);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -417,7 +404,14 @@ export function TableNG(props: TableNGProps) {
             };
           }
 
-          return <Cell key={key} {...props} className={clsx(props.className, cellClass)} style={style} />; // TODO: remove expensive concat
+          return (
+            <Cell
+              key={key}
+              {...props}
+              className={clsx(props.className, defaultCellStyles, cellSpecificStyles)}
+              style={style}
+            />
+          );
         };
 
         result.cellRootRenderers[displayName] = renderCellRoot;
@@ -939,90 +933,31 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
     },
   });
 
-const getCellStyles = (
-  theme: GrafanaTheme2,
-  cellType: TableCellDisplayMode,
-  textAlign: TextAlign,
-  shouldWrap: boolean,
-  shouldOverflow: boolean,
-  isColorized: boolean,
-  isMonospace: boolean
-) =>
+const getDefaultCellStyles: TableCellStyles = (theme, { textAlign, textWrap, shouldOverflow }) =>
   css({
     display: 'flex',
     alignItems: 'center',
     textAlign,
     justifyContent: getJustifyContent(textAlign),
     minHeight: '100%',
-    backgroundClip: 'padding-box !important', // helps when cells have a bg color
-
-    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
-    ...(isMonospace && { fontFamily: 'monospace' }),
-
+    ...(textWrap && { whiteSpace: 'pre-line' }),
     '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': {
         display: 'flex',
       },
       ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
-        whiteSpace: isMonospace ? 'pre' : 'pre-line',
+        whiteSpace: 'pre-line',
         height: 'fit-content',
         minWidth: 'fit-content',
-        ...(cellType === TableCellDisplayMode.Pill && {
-          flexWrap: 'wrap',
-        }),
       }),
     },
-
     a: {
       cursor: 'pointer',
-      ...(isColorized
-        ? {
-            color: 'inherit',
-            textDecoration: 'underline',
-          }
-        : {
-            color: theme.colors.text.link,
-            textDecoration: 'none',
-            '&:hover': {
-              textDecoration: 'underline',
-            },
-          }),
+      color: theme.colors.text.link,
+      textDecoration: 'none',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
     },
-
-    ...(cellType === TableCellDisplayMode.DataLinks && {
-      ...(shouldWrap && {
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: getJustifyContent(textAlign),
-      }),
-      '> a': {
-        flexWrap: 'nowrap',
-        ...(!shouldWrap && {
-          paddingInline: theme.spacing(0.5),
-          borderRight: `2px solid ${theme.colors.border.medium}`,
-          '&:first-child': {
-            paddingInlineStart: 0,
-          },
-          '&:last-child': {
-            paddingInlineEnd: 0,
-            borderRight: 'none',
-          },
-        }),
-      },
-    }),
-
-    ...(cellType === TableCellDisplayMode.Pill && {
-      display: 'inline-flex',
-      gap: theme.spacing(0.5),
-      flexWrap: shouldWrap ? 'wrap' : 'nowrap',
-      '> span': {
-        display: 'flex',
-        padding: theme.spacing(0.25, 0.75),
-        borderRadius: theme.shape.radius.default,
-        fontSize: theme.typography.bodySmall.fontSize,
-        lineHeight: theme.typography.bodySmall.lineHeight,
-        whiteSpace: 'nowrap',
-      },
-    }),
   });
