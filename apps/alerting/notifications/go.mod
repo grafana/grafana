@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/alerting/notifications
 go 1.24.5
 
 require (
-	github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729
+	github.com/grafana/grafana-app-sdk v0.40.2
 	github.com/grafana/grafana-app-sdk/logging v0.40.1
 	k8s.io/apimachinery v0.33.3
 	k8s.io/apiserver v0.33.3
