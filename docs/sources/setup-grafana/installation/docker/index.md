@@ -227,7 +227,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
        container_name: grafana
        restart: unless-stopped
        ports:
-        - '3000:3000'
+         - '3000:3000'
    ```
 
 1. To run `docker-compose.yaml`, run the following command:
@@ -354,12 +354,12 @@ services:
     container_name: grafana
     restart: unless-stopped
     environment:
-     - GF_SERVER_ROOT_URL=http://my.grafana.server/
-     - GF_PLUGINS_PREINSTALL=grafana-clock-panel
+      - GF_SERVER_ROOT_URL=http://my.grafana.server/
+      - GF_PLUGINS_PREINSTALL=grafana-clock-panel
     ports:
-     - '3000:3000'
+      - '3000:3000'
     volumes:
-     - 'grafana_storage:/var/lib/grafana'
+      - 'grafana_storage:/var/lib/grafana'
 volumes:
   grafana_storage: {}
 ```
