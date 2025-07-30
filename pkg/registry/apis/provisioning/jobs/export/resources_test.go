@@ -542,8 +542,8 @@ func TestExportResources_Dashboards_SkipsManagedResources(t *testing.T) {
 	meta, err := utils.MetaAccessor(&dashboard)
 	require.NoError(t, err)
 	meta.SetManagerProperties(utils.ManagerProperties{
-		Kind:        utils.ManagerKindClassicFP,
-		Identity:    "file-provisioning",
+		Kind:        utils.ManagerKindTerraform,
+		Identity:    "terraform-provisioning",
 		AllowsEdits: false,
 		Suspended:   false,
 	})

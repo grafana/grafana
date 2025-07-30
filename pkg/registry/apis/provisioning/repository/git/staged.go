@@ -231,6 +231,9 @@ func (r *stagedGitRepository) Push(ctx context.Context) error {
 		if errors.Is(err, nanogit.ErrNothingToPush) {
 			return repository.ErrNothingToPush
 		}
+		if errors.Is(err, nanogit.ErrNothingToCommit) {
+			return repository.ErrNothingToCommit
+		}
 		return err
 	}
 	return nil

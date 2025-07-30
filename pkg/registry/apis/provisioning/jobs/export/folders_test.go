@@ -497,8 +497,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
 		meta.SetManagerProperties(utils.ManagerProperties{
-			Kind:        utils.ManagerKindClassicFP,
-			Identity:    "file-provisioning",
+			Kind:        utils.ManagerKindTerraform,
+			Identity:    "terraform-provisioning",
 			AllowsEdits: false,
 			Suspended:   false,
 		})

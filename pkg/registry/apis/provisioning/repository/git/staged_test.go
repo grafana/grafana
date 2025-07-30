@@ -1057,7 +1057,7 @@ func TestStagedGitRepository_Push(t *testing.T) {
 
 			if tt.wantError != nil {
 				// For nanogit error conversion tests, use ErrorIs to verify type conversion
-				if tt.wantError == repository.ErrNothingToPush || tt.wantError == repository.ErrNothingToCommit {
+				if errors.Is(tt.wantError, repository.ErrNothingToPush) || errors.Is(tt.wantError, repository.ErrNothingToCommit) {
 					require.ErrorIs(t, err, tt.wantError)
 				} else {
 					require.EqualError(t, err, tt.wantError.Error())
