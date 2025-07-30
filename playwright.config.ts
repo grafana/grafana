@@ -274,5 +274,14 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
+    {
+      name: 'dashboard-cujs',
+      testDir: path.join(testDirRoot, '/dashboard-cujs'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
   ],
 });
