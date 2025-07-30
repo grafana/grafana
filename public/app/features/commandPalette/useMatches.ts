@@ -1,7 +1,8 @@
-import uFuzzy from '@leeoniya/ufuzzy';
 import { ActionImpl, Priority, useKBar } from 'kbar';
 import { useThrottledValue } from 'kbar/lib/utils';
 import * as React from 'react';
+
+import { fuzzySearch } from '@grafana/data';
 
 // From https://github.dev/timc1/kbar/blob/main/src/useMatches.tsx
 // TODO: Go back to useMatches from kbar when https://github.com/timc1/kbar/issues/255 is fixed
@@ -169,8 +170,6 @@ type Match = {
 };
 
 function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
-  const ufuzzy = useUfuzzy();
-
   const value = React.useMemo(
     () => ({
       filtered,
@@ -188,58 +187,14 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
 
     const haystack = throttledFiltered.map(({ name, keywords }) => `${name} ${keywords ?? ''}`.toLowerCase());
 
-    const results: Match[] = [];
+    const matchingIndices = fuzzySearch(haystack, throttledSearch);
 
-    // If the search term is too long, then just do a simple substring search.
-    // We don't expect users to actually hit this frequently, but want to prevent browser hangs
-    if (throttledSearch.length > FUZZY_SEARCH_LIMIT) {
-      const query = throttledSearch.toLowerCase();
-
-      for (let haystackIndex = 0; haystackIndex < haystack.length; haystackIndex++) {
-        const haystackItem = haystack[haystackIndex];
-
-        // Use the position of the match as a stand-in for score
-        const substringPosition = haystackItem.indexOf(query);
-
-        if (substringPosition > -1) {
-          const score = substringPosition * -1; // lower position of the match should be a higher priority score
-          const action = throttledFiltered[haystackIndex];
-          results.push({ score, action });
-        }
-      }
-    } else {
-      const termCount = ufuzzy.split(throttledSearch).length;
-      const infoThresh = Infinity;
-      const oooLimit = termCount < 5 ? 4 : 0;
-
-      const [, info, order] = ufuzzy.search(haystack, throttledSearch, oooLimit, infoThresh);
-
-      if (info && order) {
-        for (let orderIndex = 0; orderIndex < order.length; orderIndex++) {
-          const actionIndex = order[orderIndex];
-          const score = order.length - orderIndex;
-          const action = throttledFiltered[info.idx[actionIndex]];
-          results.push({ score, action });
-        }
-      }
-    }
+    // Convert indices back to Match objects with proper scoring
+    const results: Match[] = matchingIndices.map((index, order) => ({
+      action: throttledFiltered[index],
+      score: matchingIndices.length - order, // Higher score for better ranked matches
+    }));
 
     return results;
-  }, [throttledFiltered, throttledSearch, ufuzzy]);
-}
-
-const FUZZY_SEARCH_LIMIT = 25;
-
-function useUfuzzy(): uFuzzy {
-  const ref = React.useRef<uFuzzy>();
-
-  if (!ref.current) {
-    ref.current = new uFuzzy({
-      // See https://github.com/leeoniya/uFuzzy#options
-      intraMode: 0, // don't allow for typos/extra letters
-      intraIns: 0, // require each term in the search to appear exactly
-    });
-  }
-
-  return ref.current;
+  }, [throttledFiltered, throttledSearch]);
 }
