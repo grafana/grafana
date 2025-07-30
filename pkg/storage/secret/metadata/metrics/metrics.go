@@ -25,8 +25,8 @@ type StorageMetrics struct {
 	KeeperMetadataListCount               prometheus.Counter
 	KeeperMetadataGetKeeperConfigDuration prometheus.Histogram
 
-	SecureValueMetadataCreateDuration prometheus.Histogram
-	SecureValueMetadataCreateCount    prometheus.Counter
+	SecureValueMetadataCreateDuration *prometheus.HistogramVec
+	SecureValueMetadataCreateCount    *prometheus.CounterVec
 	SecureValueMetadataUpdateDuration prometheus.Histogram
 	SecureValueMetadataUpdateCount    prometheus.Counter
 	SecureValueMetadataDeleteDuration prometheus.Histogram
@@ -119,19 +119,19 @@ func newStorageMetrics() *StorageMetrics {
 		}),
 
 		// Secure value metrics
-		SecureValueMetadataCreateDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+		SecureValueMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_create_duration_seconds",
 			Help:      "Duration of secure value metadata create operations",
 			Buckets:   prometheus.DefBuckets,
-		}),
-		SecureValueMetadataCreateCount: prometheus.NewCounter(prometheus.CounterOpts{
+		}, []string{"successful"}),
+		SecureValueMetadataCreateCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_metadata_create_count",
 			Help:      "Count of secure value metadata create operations",
-		}),
+		}, []string{"successful"}),
 		SecureValueMetadataUpdateDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
