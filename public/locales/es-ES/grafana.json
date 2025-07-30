@@ -3482,6 +3482,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Cancelar",
       "cannot-move-folders": "Las carpetas no se pueden mover",
       "confirmation-text": "Eliminar",
@@ -3515,6 +3516,10 @@
       "this-folder-is-empty": "Esta carpeta está vacía"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_other": ""
     },
@@ -3522,15 +3527,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
@@ -4567,6 +4579,7 @@
     "edit-actions": {
       "add": "Añadir {{typeName}}",
       "add-conditional-rule": "",
+      "duplicate-panel": "",
       "edit-query-result-rule": "",
       "edit-template-variable-rule": "",
       "edit-time-range-rule": "",
@@ -5354,6 +5367,20 @@
       "invalid-json": "JSON no válido",
       "tags-expected-array": "etiquetas: matriz prevista",
       "tags-expected-strings": "etiquetas: matriz de cadenas prevista"
+    },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
     },
     "version-history-comparison": {
       "button-restore": "Restaurar a la versión {{version}} ",
@@ -8272,6 +8299,9 @@
     "card": {
       "option": "opción"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Eliminar selección"
     },
@@ -8284,6 +8314,7 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Cancelar",
       "confirmText-delete": ""
     },
@@ -8710,6 +8741,7 @@
       "footer-add-annotation": "Añadir anotación",
       "footer-click-to-action": "Haz clic para {{actionTitle}}",
       "footer-click-to-navigate": "Haz clic para abrir {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Marca de tiempo"
     },
     "week-start-picker": {
@@ -11224,6 +11256,7 @@
       "starting": "Empezando...",
       "status": {
         "title-error-running-job": "Error al ejecutar el trabajo",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Resumen",
@@ -11372,6 +11405,7 @@
       "label-current-step": "Paso actual",
       "label-pending-step": "Paso pendiente"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11404,6 +11438,12 @@
       "alert-title": "Importante: No se perderán datos ni configuraciones, pero los dashboards no estarán disponibles temporalmente durante unos minutos.",
       "button-next": "Terminar",
       "button-start": "Iniciar la sincronización",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Elegir qué sincronizar",
       "step-connect": "Conectarse",
       "step-finish": "Elegir ajustes adicionales",
@@ -11418,6 +11458,7 @@
     "wizard-content": {
       "button-cancel": "Cancelar",
       "button-cancelling": "Cancelando... ",
+      "button-previous": "",
       "button-submitting": "Enviando...",
       "error-instance-repository-exists": "El repositorio de instancias ya existe"
     }
