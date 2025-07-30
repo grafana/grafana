@@ -15,6 +15,7 @@ SELECT
   {{ .Ident "external_id" }},
   {{ .Ident "version" }},
   {{ .Ident "active" }},
+  {{ .Ident "owner_reference_api_group" }},
   {{ .Ident "owner_reference_api_version" }},
   {{ .Ident "owner_reference_kind" }},
   {{ .Ident "owner_reference_name" }}

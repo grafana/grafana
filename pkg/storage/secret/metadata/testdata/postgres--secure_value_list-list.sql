@@ -15,6 +15,7 @@ SELECT
   "external_id",
   "version",
   "active",
+  "owner_reference_api_group",
   "owner_reference_api_version",
   "owner_reference_kind",
   "owner_reference_name"

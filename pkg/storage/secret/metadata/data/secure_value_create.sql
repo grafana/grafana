@@ -20,6 +20,9 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ if .Row.Ref.Valid }}
   {{ .Ident "ref" }},
   {{ end }}
+  {{ if .Row.OwnerReferenceAPIGroup.Valid }}
+  {{ .Ident "owner_reference_api_group" }},
+  {{ end }}
   {{ if .Row.OwnerReferenceAPIVersion.Valid }}
   {{ .Ident "owner_reference_api_version" }},
   {{ end }}
@@ -51,6 +54,9 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ end }}
   {{ if .Row.Ref.Valid }}
   {{ .Arg .Row.Ref.String }},
+  {{ end }}
+  {{ if .Row.OwnerReferenceAPIGroup.Valid }}
+  {{ .Arg .Row.OwnerReferenceAPIGroup.String }},
   {{ end }}
   {{ if .Row.OwnerReferenceAPIVersion.Valid }}
   {{ .Arg .Row.OwnerReferenceAPIVersion.String }},

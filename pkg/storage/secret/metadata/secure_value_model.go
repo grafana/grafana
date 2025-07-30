@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -25,6 +26,7 @@ type secureValueDB struct {
 	CreatedBy                string
 	Updated                  int64
 	UpdatedBy                string
+	OwnerReferenceAPIGroup   sql.NullString
 	OwnerReferenceAPIVersion sql.NullString
 	OwnerReferenceKind       sql.NullString
 	OwnerReferenceName       sql.NullString
@@ -102,13 +104,14 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 	meta.SetUpdatedTimestamp(&updated)
 	meta.SetResourceVersionInt64(sv.Updated)
 
-	hasOwnerReference := sv.OwnerReferenceAPIVersion.Valid && sv.OwnerReferenceAPIVersion.String != "" &&
+	hasOwnerReference := sv.OwnerReferenceAPIGroup.Valid && sv.OwnerReferenceAPIGroup.String != "" &&
+		sv.OwnerReferenceAPIVersion.Valid && sv.OwnerReferenceAPIVersion.String != "" &&
 		sv.OwnerReferenceKind.Valid && sv.OwnerReferenceKind.String != "" &&
 		sv.OwnerReferenceName.Valid && sv.OwnerReferenceName.String != ""
 	if hasOwnerReference {
 		meta.SetOwnerReferences([]metav1.OwnerReference{
 			{
-				APIVersion: sv.OwnerReferenceAPIVersion.String,
+				APIVersion: schema.GroupVersion{Group: sv.OwnerReferenceAPIGroup.String, Version: sv.OwnerReferenceAPIVersion.String}.String(),
 				Kind:       sv.OwnerReferenceKind.String,
 				Name:       sv.OwnerReferenceName.String,
 			},
@@ -189,6 +192,7 @@ func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, er
 	}
 
 	var (
+		ownerReferenceAPIGroup   sql.NullString
 		ownerReferenceAPIVersion sql.NullString
 		ownerReferenceKind       sql.NullString
 		ownerReferenceName       sql.NullString
@@ -200,7 +204,17 @@ func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, er
 	}
 	if len(ownerReferences) == 1 {
 		ownerReference := ownerReferences[0]
-		ownerReferenceAPIVersion = toNullString(&ownerReference.APIVersion)
+
+		gv, err := schema.ParseGroupVersion(ownerReference.APIVersion)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse owner reference API version %s: %w", ownerReference.APIVersion, err)
+		}
+		if gv.Group == "" {
+			return nil, fmt.Errorf("malformed api version %s requires <group>/<version> format", ownerReference.APIVersion)
+		}
+
+		ownerReferenceAPIGroup = toNullString(&gv.Group)
+		ownerReferenceAPIVersion = toNullString(&gv.Version)
 		ownerReferenceKind = toNullString(&ownerReference.Kind)
 		ownerReferenceName = toNullString(&ownerReference.Name)
 	}
@@ -215,6 +229,7 @@ func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, er
 		CreatedBy:                meta.GetCreatedBy(),
 		Updated:                  updatedTimestamp,
 		UpdatedBy:                meta.GetUpdatedBy(),
+		OwnerReferenceAPIGroup:   ownerReferenceAPIGroup,
 		OwnerReferenceAPIVersion: ownerReferenceAPIVersion,
 		OwnerReferenceKind:       ownerReferenceKind,
 		OwnerReferenceName:       ownerReferenceName,
