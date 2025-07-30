@@ -18,7 +18,7 @@ import { getTargetFolderPathInRepo } from 'app/features/browse-dashboards/compon
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler } from '../utils/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler, ProvisionedResourceContext } from '../utils/useProvisionedRequestHandler';
 
 import { buildResourceBranchRedirectUrl } from './utils';
 
@@ -117,7 +117,7 @@ export function MoveProvisionedDashboardForm({
     }
   };
 
-  const onWriteSuccess = () => {
+  const onWriteSuccess = (context: ProvisionedResourceContext) => {
     panelEditor?.onDiscard();
     if (targetFolderUID && targetFolderTitle) {
       onSuccess(targetFolderUID, targetFolderTitle);
@@ -125,22 +125,26 @@ export function MoveProvisionedDashboardForm({
     navigate('/dashboards');
   };
 
-  const onBranchSuccess = () => {
+  const onBranchSuccess = (context: ProvisionedResourceContext) => {
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
       paramName: 'new_pull_request_url',
       paramValue: moveRequest?.data?.urls?.newPullRequestURL,
-      repoType: moveRequest?.data?.repository?.type,
+      repoType: context.repoType,
     });
     navigate(url);
   };
 
   useProvisionedRequestHandler({
-    dashboard,
     request: moveRequest,
     workflow,
+    resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess,
+      // Dashboard-specific state management (decoupled from hook)
+      onSuccess: () => {
+        dashboard.setState({ isDirty: false });
+      },
+      onBranchSuccess: (data, context) => onBranchSuccess(context),
       onWriteSuccess,
     },
   });

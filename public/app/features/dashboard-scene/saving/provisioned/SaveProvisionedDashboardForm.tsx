@@ -19,6 +19,7 @@ import { ResourceEditFormSharedFields } from '../../components/Provisioned/Resou
 import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
+import { ProvisionedResourceContext } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { ProvisionedDashboardFormData } from '../shared';
 
@@ -60,14 +61,15 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onRequestError = (error: unknown) => {
+  const onRequestError = (error: unknown, context: ProvisionedResourceContext) => {
     appEvents.publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'), error],
     });
   };
 
-  const onWriteSuccess = () => {
+  const onWriteSuccess = (context: ProvisionedResourceContext) => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     drawer.onClose();
     locationService.partial({
@@ -77,6 +79,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onNewDashboardSuccess = (upsert: Resource<Dashboard>) => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     drawer.onClose();
     const url = locationUtil.assureBaseUrl(
@@ -90,7 +93,7 @@ export function SaveProvisionedDashboardForm({
     navigate(url);
   };
 
-  const onBranchSuccess = (ref: string, path: string) => {
+  const onBranchSuccess = (ref: string, path: string, context: ProvisionedResourceContext) => {
     panelEditor?.onDiscard();
     drawer.onClose();
 
@@ -98,17 +101,21 @@ export function SaveProvisionedDashboardForm({
       baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
       paramName: 'ref',
       paramValue: ref,
-      repoType: request.data?.repository?.type,
+      repoType: context.repoType,
     });
     navigate(url);
   };
 
   useProvisionedRequestHandler({
-    dashboard,
     request,
     workflow,
+    resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess: ({ ref, path }) => onBranchSuccess(ref, path),
+      // Dashboard-specific state management (decoupled from hook)
+      onSuccess: () => {
+        dashboard.setState({ isDirty: false });
+      },
+      onBranchSuccess: ({ ref, path }, context) => onBranchSuccess(ref, path, context),
       onWriteSuccess,
       onNewDashboardSuccess,
       onError: onRequestError,

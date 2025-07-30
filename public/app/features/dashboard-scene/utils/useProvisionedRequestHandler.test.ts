@@ -53,6 +53,33 @@ describe('useProvisionedRequestHandler', () => {
       expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
       expect(handlers.onNewDashboardSuccess).not.toHaveBeenCalled();
     });
+
+    it('should call onError handler with repository type', () => {
+      const { request, handlers, dashboard } = setup({
+        requestOverrides: {
+          isError: true,
+          isSuccess: false,
+          error: new Error('Test error'),
+        },
+      });
+
+      renderHook(() =>
+        useProvisionedRequestHandler({
+          dashboard,
+          request,
+          repository: {
+            type: 'github',
+            name: 'test-repo',
+            target: 'folder',
+            title: 'Test Repository',
+            workflows: [],
+          },
+          handlers,
+        })
+      );
+
+      expect(handlers.onError).toHaveBeenCalledWith(new Error('Test error'), 'github');
+    });
   });
 
   describe('when request is successful', () => {

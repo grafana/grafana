@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -12,6 +11,10 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
 import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
+import {
+  useProvisionedRequestHandler,
+  ProvisionedResourceContext,
+} from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
 import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
@@ -57,50 +60,59 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     });
   };
 
-  // TODO: move to a hook if this useEffect shared mostly the same logic as in NewProvisionedFolderForm
-  useEffect(() => {
-    if (request.isSuccess && repository) {
-      const prUrl = request.data?.urls?.newPullRequestURL;
-      if (workflow === 'branch' && prUrl) {
-        const url = buildResourceBranchRedirectUrl({
-          paramName: 'new_pull_request_url',
-          paramValue: prUrl,
-          repoType: request.data?.repository?.type,
-        });
-        navigate(url);
-        return;
-      }
-
-      if (workflow === 'write') {
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [
-            t(
-              'browse-dashboards.delete-provisioned-folder-form.alert-folder-deleted-successfully',
-              'Folder deleted successfully'
-            ),
-          ],
-        });
-        // Navigate back to parent folder if it exists, otherwise go to dashboards root
-        if (parentFolder?.parentUid) {
-          window.location.href = getFolderURL(parentFolder.parentUid);
-        } else {
-          window.location.href = '/dashboards';
-        }
-      }
-    }
-
-    if (request.isError) {
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'),
-          request.error,
-        ],
+  const handleBranchSuccess = (
+    { path, urls }: { ref: string; path: string; urls?: Record<string, string> },
+    context: ProvisionedResourceContext
+  ) => {
+    const prUrl = urls?.newPullRequestURL;
+    if (prUrl) {
+      const url = buildResourceBranchRedirectUrl({
+        paramName: 'new_pull_request_url',
+        paramValue: prUrl,
+        repoType: context.repoType,
       });
-      return;
+      navigate(url);
     }
-  }, [request, repository, workflow, parentFolder, navigate]);
+  };
+
+  const handleWriteSuccess = (context: ProvisionedResourceContext) => {
+    getAppEvents().publish({
+      type: AppEvents.alertSuccess.name,
+      payload: [
+        t(
+          'browse-dashboards.delete-provisioned-folder-form.alert-folder-deleted-successfully',
+          'Folder deleted successfully'
+        ),
+      ],
+    });
+    // Navigate back to parent folder if it exists, otherwise go to dashboards root
+    if (parentFolder?.parentUid) {
+      window.location.href = getFolderURL(parentFolder.parentUid);
+    } else {
+      window.location.href = '/dashboards';
+    }
+  };
+
+  const handleError = (error: unknown, context: ProvisionedResourceContext) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'), error],
+    });
+  };
+
+  // Use the repository-type and resource-type aware provisioned request handler
+  useProvisionedRequestHandler({
+    request,
+    workflow,
+    resourceType: 'folder',
+    repository,
+    handlers: {
+      onDismiss,
+      onBranchSuccess: handleBranchSuccess,
+      onWriteSuccess: handleWriteSuccess,
+      onError: handleError,
+    },
+  });
 
   return (
     <FormProvider {...methods}>
