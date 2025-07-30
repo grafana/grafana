@@ -130,9 +130,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0.5, 0),
 
       '& > label :last-child': css({
-        //gap: 0,
-        fontSize: `${theme.typography.pxToRem(14)} !important`,
-        lineHeight: `${theme.typography.pxToRem(22)} !important`,
+        fontSize: theme.typography.pxToRem(14),
+        lineHeight: theme.typography.pxToRem(22),
+        fontWeight: theme.typography.fontWeightRegular,
       }),
     }),
     titlePadding: css({
