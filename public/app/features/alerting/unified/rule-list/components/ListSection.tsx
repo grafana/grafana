@@ -65,6 +65,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // unfortunately we have to resort to this since we can't overwrite the styles of the list items individually
     // unless we clone the React Elements and modify className
     'li[role=treeitem]': {
+      listStyle: 'none',
+      position: 'relative',
       paddingLeft: theme.spacing(6.5),
 
       '&:before': {

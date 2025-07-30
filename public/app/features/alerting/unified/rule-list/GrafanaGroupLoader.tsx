@@ -3,17 +3,16 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Pagination, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { prometheusApi } from '../api/prometheusApi';
-import { usePagination } from '../hooks/usePagination';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
+import { useContinuousPagination } from '../hooks/usePagination';
+import { DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP, RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
-
-const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP_LIST_VIEW_V2 = 100;
+import { LoadMoreButton } from './components/LoadMoreButton';
 
 const { useGetGrafanaGroupsQuery } = prometheusApi;
 
@@ -53,11 +52,7 @@ export function GrafanaGroupLoader({
     return promResponse?.data.groups.at(0)?.rules ?? [];
   }, [promResponse]);
 
-  const { pageItems, page, numberOfPages, onPageChange } = usePagination(
-    rules,
-    1,
-    DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP_LIST_VIEW_V2
-  );
+  const { pageItems, hasMore, loadMore } = useContinuousPagination(rules, DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP);
 
   if (isPromResponseLoading) {
     return (
@@ -101,34 +96,18 @@ export function GrafanaGroupLoader({
           />
         );
       })}
-      <div className={styles.paginationWrapper}>
-        {numberOfPages > 1 && (
-          <Pagination
-            currentPage={page}
-            numberOfPages={numberOfPages}
-            onNavigate={onPageChange}
-            hideWhenSinglePage
-            className={styles.pagination}
-          />
-        )}
-      </div>
+      {hasMore && (
+        <li aria-selected="false" role="treeitem" className={styles.loadMoreWrapper}>
+          <LoadMoreButton onClick={loadMore} />
+        </li>
+      )}
     </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  pagination: css({
-    display: 'flex',
-    margin: 0,
+  loadMoreWrapper: css({
+    listStyle: 'none',
     paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(0.25),
-    justifyContent: 'center',
-    float: 'none',
-  }),
-  paginationWrapper: css({
-    display: 'flex',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginLeft: theme.spacing(2.5),
   }),
 });
