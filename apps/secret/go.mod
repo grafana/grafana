@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/secret
 go 1.24.5
 
 require (
-	github.com/grafana/grafana-app-sdk v0.40.2-0.20250730002332-adbfcf3d2729
+	github.com/grafana/grafana-app-sdk v0.40.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250710134100-1f3dc0533caf
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.74.2
