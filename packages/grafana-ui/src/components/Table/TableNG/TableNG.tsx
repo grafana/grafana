@@ -822,6 +822,7 @@ const getGridStyles = (
     border: 'none',
 
     '.rdg-cell': {
+      padding: TABLE.CELL_PADDING,
       '&:last-child': {
         borderInlineEnd: 'none',
       },
@@ -844,8 +845,6 @@ const getGridStyles = (
     '.rdg-header-row, .rdg-summary-row': {
       '.rdg-cell': {
         zIndex: theme.zIndex.tooltip - 1,
-        paddingInline: TABLE.CELL_PADDING,
-        paddingBlock: TABLE.CELL_PADDING,
       },
     },
   }),
@@ -954,9 +953,11 @@ const getCellStyles = (
     alignItems: 'center',
     textAlign,
     justifyContent: getJustifyContent(textAlign),
-    padding: TABLE.CELL_PADDING,
     minHeight: '100%',
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
+
+    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
+    ...(isMonospace && { fontFamily: 'monospace' }),
 
     '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': {
@@ -966,7 +967,6 @@ const getCellStyles = (
         zIndex: theme.zIndex.tooltip - 2,
         whiteSpace: isMonospace ? 'pre' : 'pre-line',
         height: 'fit-content',
-        maxHeight: 'none',
         minWidth: 'fit-content',
         ...(cellType === TableCellDisplayMode.Pill && {
           flexWrap: 'wrap',
@@ -989,9 +989,6 @@ const getCellStyles = (
             },
           }),
     },
-
-    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
-    ...(isMonospace && { fontFamily: 'monospace' }),
 
     ...(cellType === TableCellDisplayMode.DataLinks && {
       ...(shouldWrap && {
