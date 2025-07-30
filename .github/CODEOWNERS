@@ -676,8 +676,10 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 # public folder
 /public/app/api/ @grafana/grafana-frontend-platform
 /public/app/core/actions/ @grafana/grafana-frontend-platform
+/public/app/core/app_events.ts @grafana/grafana-frontend-platform
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
+/public/app/core/components/AppNotifications/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/AppChrome/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/Branding/ @grafana/grafana-frontend-platform
 /public/app/core/components/Breadcrumbs/ @grafana/grafana-search-navigate-organise
@@ -692,6 +694,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/InviteUserButton/ @grafana/sharing-squad
 /public/app/core/components/Layers/ @grafana/dataviz-squad
 /public/app/core/components/Login/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/NativeScrollbar.tsx @grafana/grafana-search-navigate-organise
 /public/app/core/components/NavLandingPage/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/NestedFolderPicker/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
@@ -700,7 +703,9 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/PageInfo/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageLoader/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageNotFound/ @grafana/grafana-search-navigate-organise
+/public/app/core/components/PasswordField/ @grafana/grafana-frontend-platform
 /public/app/core/components/PluginHelp/ @grafana/plugins-platform-frontend
+/public/app/core/components/QueryOperationRow/ @grafana/dashboards-squad
 /public/app/core/components/RolePickerDrawer/ @grafana/identity-access-team
 /public/app/core/components/Select/ @grafana/grafana-frontend-platform
 /public/app/core/components/SharedPreferences/ @grafana/grafana-frontend-platform
@@ -715,6 +720,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/context/ @grafana/grafana-frontend-platform
 /public/app/core/crash/ @grafana/observability-traces-and-profiling
 /public/app/core/history/ @grafana/observability-traces-and-profiling
+/public/app/core/hooks/useNavModel.ts @grafana/grafana-search-navigate-organise
 /public/app/core/icons/ @grafana/grafana-frontend-platform
 /public/app/core/navigation/ @grafana/grafana-search-navigate-organise
 /public/app/core/reducers/ @grafana/grafana-frontend-platform
@@ -733,11 +739,12 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/impression_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/store.test.ts @grafana/grafana-frontend-platform
-/public/app/core/specs/time_series2.test.ts @grafana/dataviz-squad
+/public/app/core/specs/time_series.test.ts @grafana/dataviz-squad
 /public/app/core/store.ts @grafana/grafana-frontend-platform
 /public/app/core/time_series2.ts @grafana/dataviz-squad
 /public/app/core/trustedTypePolicies.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
+/public/app/core/utils/fetch* @grafana/grafana-frontend-platform
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 # Temp owners until Enterprise team takes over
