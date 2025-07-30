@@ -9,10 +9,10 @@ import {
   VizTooltipWrapper,
   getContentItems,
   VizTooltipItem,
+  AdHocFilterModel,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
-import { fmt } from '../xychart/utils';
 
 import { isTooltipScrollable } from './utils';
 
@@ -41,6 +41,7 @@ export interface TimeSeriesTooltipProps {
   replaceVariables?: InterpolateFunction;
   dataLinks: LinkModel[];
   hideZeros?: boolean;
+  adHocFilters?: AdHocFilterModel[];
 }
 
 export const TimeSeriesTooltip = ({
@@ -56,6 +57,7 @@ export const TimeSeriesTooltip = ({
   replaceVariables = (str) => str,
   dataLinks,
   hideZeros,
+  adHocFilters,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -68,17 +70,9 @@ export const TimeSeriesTooltip = ({
     mode,
     sortOrder,
     (field) => field.type === FieldType.number || field.type === FieldType.enum,
-    hideZeros
+    hideZeros,
+    _rest
   );
-
-  _rest?.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.tooltip) {
-      contentItems.push({
-        label: field.state?.displayName ?? field.name,
-        value: fmt(field, field.values[dataIdxs[0]!]),
-      });
-    }
-  });
 
   let footer: ReactNode;
 
@@ -90,7 +84,9 @@ export const TimeSeriesTooltip = ({
       const dataIdx = dataIdxs[seriesIdx]!;
       const actions = getFieldActions(series, field, replaceVariables, dataIdx);
 
-      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+      footer = (
+        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} adHocFilters={adHocFilters} />
+      );
     }
   }
 
