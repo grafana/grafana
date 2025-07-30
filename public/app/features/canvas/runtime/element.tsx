@@ -566,7 +566,7 @@ export class ElementState implements LayerElement {
         break;
       case VerticalConstraint.Center:
         const elementCenter = elementContainer ? relativeTop + height / 2 : 0;
-        const parentCenter = parentContainer ? parentContainer.height / 2 : 0;
+        const parentCenter = scene.height / 2; // Use scene height instead of scaled viewport height
         const distanceFromCenter = parentCenter - elementCenter;
         placement.top = distanceFromCenter;
         placement.height = height;
@@ -592,7 +592,7 @@ export class ElementState implements LayerElement {
         break;
       case HorizontalConstraint.Center:
         const elementCenter = elementContainer ? relativeLeft + width / 2 : 0;
-        const parentCenter = parentContainer ? parentContainer.width / 2 : 0;
+        const parentCenter = scene.width / 2; // Use scene width instead of scaled viewport width
         const distanceFromCenter = parentCenter - elementCenter;
         placement.left = distanceFromCenter;
         placement.width = width;
@@ -802,12 +802,12 @@ export class ElementState implements LayerElement {
 
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
-  applyResize = (event: OnResize, transformScale = 1) => {
+  applyResize = (event: OnResize) => {
     const placement = this.options.placement!;
 
     const style = event.target.style;
-    let deltaX = event.delta[0] / transformScale;
-    let deltaY = event.delta[1] / transformScale;
+    let deltaX = event.delta[0];
+    let deltaY = event.delta[1];
     let dirLR = event.direction[0];
     let dirTB = event.direction[1];
 
@@ -829,7 +829,7 @@ export class ElementState implements LayerElement {
       placement.left! -= deltaX;
       placement.width = event.width;
       if (config.featureToggles.canvasPanelPanZoom) {
-        style.transform = `translate(${placement.left}px, ${placement.top}px)`;
+        style.transform = `translate(${placement.left}px, ${placement.top}px) rotate(${placement.rotation ?? 0}deg)`;
       } else {
         style.left = `${placement.left}px`;
       }
@@ -840,7 +840,7 @@ export class ElementState implements LayerElement {
       placement.top! -= deltaY;
       placement.height = event.height;
       if (config.featureToggles.canvasPanelPanZoom) {
-        style.transform = `translate(${placement.left}px, ${placement.top}px)`;
+        style.transform = `translate(${placement.left}px, ${placement.top}px) rotate(${placement.rotation ?? 0}deg)`;
       } else {
         style.top = `${placement.top}px`;
       }
