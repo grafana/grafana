@@ -9369,7 +9369,7 @@
       "older-logs": "older",
       "open-in-split-view": "Open in split view",
       "title-log-context": "Log context",
-      "title-log-line": "Log line"
+      "title-log-line": "Referenced log line"
     },
     "log-line-details": {
       "clear-search": "Clear",

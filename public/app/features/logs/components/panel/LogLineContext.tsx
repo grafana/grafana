@@ -225,11 +225,7 @@ export const LogLineContext = memo(
           collapsible={true}
           isOpen={showLog}
           onToggle={() => setShowLog(!showLog)}
-          label={
-            <div className={styles.logPreview}>
-              {showLog ? t('logs.log-line-context.title-log-line', 'Log line') : log.entry.substring(0, 300)}
-            </div>
-          }
+          label={t('logs.log-line-context.title-log-line', 'Referenced log line')}
         >
           <div>{log.entry}</div>
         </Collapse>
