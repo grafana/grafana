@@ -15,6 +15,8 @@ export function getDashboardInteractionCallback(uid: string, title: string) {
     const payload = {
       duration: e.duration,
       networkDuration: e.networkDuration,
+      startTs: e.startTs,
+      endTs: e.endTs,
       totalJSHeapSize: e.totalJSHeapSize,
       usedJSHeapSize: e.usedJSHeapSize,
       jsHeapSizeLimit: e.jsHeapSizeLimit,

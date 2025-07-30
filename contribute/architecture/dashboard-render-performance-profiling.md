@@ -1,6 +1,6 @@
 # Grafana Dashboard Render Performance Metrics
 
-This documentation describes the dashboard load performance metrics exposed from Grafana's frontend.
+This documentation describes the dashboard render performance metrics exposed from Grafana's frontend.
 
 ## Overview
 
@@ -63,6 +63,8 @@ The interactions mentioned above are reported to Echo service as well as sent to
 const payload = {
   duration: e.duration,
   networkDuration: e.networkDuration,
+  startTs: e.startTs,
+  endTs: e.endTs,
   totalJSHeapSize: e.totalJSHeapSize,
   usedJSHeapSize: e.usedJSHeapSize,
   jsHeapSizeLimit: e.jsHeapSizeLimit,
@@ -96,6 +98,8 @@ interface SceneInteractionProfileEvent {
   totalJSHeapSize: number; // JavaScript heap size metrics
   usedJSHeapSize: number; // Used JavaScript heap size
   jsHeapSizeLimit: number; // JavaScript heap size limit
+  startTs: number; // Profile start timestamp
+  endTs: number; // Profile end timestamp
 }
 ```
 
@@ -106,12 +110,12 @@ For each tracked interaction, the system collects:
 - **Dashboard Metadata**: UID, title
 - **Performance Metrics**: Duration, network duration
 - **Memory Metrics**: JavaScript heap usage statistics
-- **Timing Information**: Time since boot
+- **Timing Information**: Time since boot, profile start and end timestamps
 - **Interaction Context**: Type of user interaction
 
 ## Debugging and Development
 
-### Enable Debug Logging
+### Enable Profiler Debug Logging
 
 To observe profiling events in the browser console:
 
@@ -119,7 +123,7 @@ To observe profiling events in the browser console:
 localStorage.setItem('grafana.debug.scenes', 'true');
 ```
 
-### Console Output
+#### Console Output
 
 When debug logging is enabled, you'll see console logs for each profiling event:
 
@@ -127,6 +131,22 @@ When debug logging is enabled, you'll see console logs for each profiling event:
 SceneRenderProfiler: Profile started: {origin: <NAME_OF_INTERACTION>, crumbs: Array(0)}
 ... // intermediate steps adding profile crumbs
 SceneRenderProfiler: Stopped recording, total measured time (network included): 2123
+```
+
+### Enable Echo Service Debug Logging
+
+To observe Echo events in the browser console:
+
+```javascript
+_debug.echo.enable();
+```
+
+#### Console Output
+
+When Echo debug logging is enabled, you'll see console logs for each profiling event captured by Echo service:
+
+```
+[EchoSrv: interaction event]: {interactionName: 'dashboard_render', properties: {…}, meta: {…}}
 ```
 
 ### Browser Performance Profiler
@@ -156,6 +176,8 @@ The system reports the following data for each interaction:
   uid: string,                  // Dashboard UID
   duration: number,             // Total duration
   networkDuration: number,      // Network time
+  startTs: number,              // Profile start timestamp
+  endTs: number,                // Profile end timestamp
   totalJSHeapSize: number,      // Memory metrics
   usedJSHeapSize: number,
   jsHeapSizeLimit: number,
@@ -174,3 +196,4 @@ The profiler is integrated into dashboard creation paths and uses a singleton pa
 - [PR #108658 - Dashboard: Tweak interaction tracking](https://github.com/grafana/grafana/pull/108658)
 - [PR #1195 - Enhance SceneRenderProfiler with additional interaction tracking](https://github.com/grafana/scenes/pull/1195)
 - [PR #1198 - Make SceneRenderProfiler optional and injectable](https://github.com/grafana/scenes/pull/1198)
+- [PR #1199 - SceneRenderProfiler: add start and end timestamps to profile events](https://github.com/grafana/scenes/pull/1199)
