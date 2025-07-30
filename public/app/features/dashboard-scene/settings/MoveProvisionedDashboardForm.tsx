@@ -127,6 +127,7 @@ export function MoveProvisionedDashboardForm({
   };
 
   const onBranchSuccess = (info: ProvisionedOperationInfo) => {
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
       paramName: 'new_pull_request_url',
@@ -134,6 +135,16 @@ export function MoveProvisionedDashboardForm({
       repoType: info.repoType,
     });
     navigate(url);
+  };
+
+  const onError = (error: unknown) => {
+    getAppEvents().publish({
+      type: AppEvents.alertError.name,
+      payload: [
+        t('dashboard-scene.move-provisioned-dashboard-form.alert-error-moving-dashboard', 'Error moving dashboard'),
+        error,
+      ],
+    });
   };
 
   useProvisionedRequestHandler({
@@ -147,6 +158,8 @@ export function MoveProvisionedDashboardForm({
     handlers: {
       onBranchSuccess: (_, info) => onBranchSuccess(info),
       onWriteSuccess,
+      onDismiss,
+      onError,
     },
   });
 

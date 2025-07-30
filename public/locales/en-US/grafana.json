@@ -5818,6 +5818,7 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
+      "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },

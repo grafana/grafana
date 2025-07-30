@@ -68,7 +68,7 @@ export function SaveProvisionedDashboardForm({
   };
 
   const handleNewDashboard = (upsert: Resource<Dashboard>) => {
-    // Navigation for new dashboards (resource-specific concern)
+    // Navigation for new dashboards
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: upsert.metadata.name,
@@ -79,7 +79,7 @@ export function SaveProvisionedDashboardForm({
     navigate(url);
   };
 
-  const onWriteSuccess = (info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+  const onWriteSuccess = (_: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
     if (isNew && upsert?.metadata.name) {
       handleNewDashboard(upsert);
     } else {
@@ -105,7 +105,6 @@ export function SaveProvisionedDashboardForm({
   };
 
   const onDismiss = () => {
-    // Reset the dirty state and close the drawer
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     drawer.onClose();
@@ -118,11 +117,9 @@ export function SaveProvisionedDashboardForm({
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      // onNewResourceSuccess: onNewDashboardSuccess,
       onError: onRequestError,
       onDismiss,
     },
-    isNew,
   });
 
   // Submit handler for saving the form data

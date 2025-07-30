@@ -325,26 +325,10 @@ describe('DeleteProvisionedFolderForm', () => {
         isError: false,
         error: null,
         data: {
-          urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' },
-          repository: {
-            name: 'test-repo',
-            namespace: 'default',
-            title: 'Test Repository',
-            type: 'git',
-          },
-          resource: {
-            type: {
-              kind: 'Folder',
-            },
-            upsert: {
-              apiVersion: 'v1',
-              kind: 'Folder',
-              metadata: { name: 'test-folder', uid: 'test-folder-uid' },
-              spec: { title: 'Test Folder' },
-            },
-          },
+          ...MOCK_DATA,
           ref: 'feature-branch',
           path: 'folders/test-folder.json',
+          urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' },
         },
       };
       const { mockNavigate } = setup({}, { ...defaultHookData, initialValues: branchFormData }, successState);

@@ -60,7 +60,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     });
   };
 
-  const handleBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
+  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
     if (prUrl) {
       const url = buildResourceBranchRedirectUrl({
@@ -72,7 +72,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     }
   };
 
-  const handleWriteSuccess = (info: ProvisionedOperationInfo) => {
+  const onWriteSuccess = () => {
     // Navigate back to parent folder if it exists, otherwise go to dashboards root
     if (parentFolder?.parentUid) {
       window.location.href = getFolderURL(parentFolder.parentUid);
@@ -81,7 +81,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     }
   };
 
-  const handleError = (error: unknown, info: ProvisionedOperationInfo) => {
+  const onError = (error: unknown) => {
     getAppEvents().publish({
       type: AppEvents.alertError.name,
       payload: [t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'), error],
@@ -100,9 +100,9 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     repository,
     handlers: {
       onDismiss,
-      onBranchSuccess: handleBranchSuccess,
-      onWriteSuccess: handleWriteSuccess,
-      onError: handleError,
+      onBranchSuccess,
+      onWriteSuccess,
+      onError,
     },
   });
 

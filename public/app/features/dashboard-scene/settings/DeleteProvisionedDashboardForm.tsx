@@ -67,7 +67,7 @@ export function DeleteProvisionedDashboardForm({
 
   const navigate = useNavigate();
 
-  const onRequestError = (error: unknown) => {
+  const onError = (error: unknown) => {
     getAppEvents().publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'), error],
@@ -104,7 +104,7 @@ export function DeleteProvisionedDashboardForm({
       onDismiss,
       onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
       onWriteSuccess,
-      onError: onRequestError,
+      onError,
     },
   });
 

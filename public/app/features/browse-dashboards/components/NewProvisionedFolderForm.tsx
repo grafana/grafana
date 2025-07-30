@@ -49,7 +49,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 
   const [workflow, title] = watch(['workflow', 'title']);
 
-  const handleBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
+  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
     if (prUrl) {
       const url = buildResourceBranchRedirectUrl({
@@ -61,7 +61,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     }
   };
 
-  const handleWriteSuccess = (resource: Resource<FolderDTO>) => {
+  const onWriteSuccess = (resource: Resource<FolderDTO>) => {
     // Navigation for new folders (resource-specific concern)
     if (resource?.metadata?.name) {
       navigate(`/dashboards/f/${resource.metadata.name}/`);
@@ -78,16 +78,13 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     }
   };
 
-  const handleError = (error: unknown) => {
-    // Provider-specific error handling could be added here based on info.repoType
-    const errorMessage = t(
-      'browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder',
-      'Error creating folder'
-    );
-
+  const onError = (error: unknown) => {
     getAppEvents().publish({
       type: AppEvents.alertError.name,
-      payload: [errorMessage, error],
+      payload: [
+        t('browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder', 'Error creating folder'),
+        error,
+      ],
     });
   };
 
@@ -99,9 +96,9 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     resourceType: 'folder',
     handlers: {
       onDismiss,
-      onBranchSuccess: handleBranchSuccess,
-      onWriteSuccess: (_, resource) => handleWriteSuccess(resource),
-      onError: handleError,
+      onBranchSuccess,
+      onWriteSuccess: (_, resource) => onWriteSuccess(resource),
+      onError,
     },
   });
 

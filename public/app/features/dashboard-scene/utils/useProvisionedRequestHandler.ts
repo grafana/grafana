@@ -16,7 +16,7 @@ type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert'
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {
   repoType: RepoType;
-  resourceType: ResourceType;
+  resourceType?: ResourceType;
   workflow?: string;
 }
 
@@ -57,7 +57,7 @@ export function useProvisionedRequestHandler<T>({
   handlers,
   successMessage,
   repository,
-  resourceType = 'dashboard', // Default to dashboard for backward compatibility
+  resourceType,
 }: {
   request: ProvisionedRequest;
   workflow?: string;
@@ -84,7 +84,7 @@ export function useProvisionedRequestHandler<T>({
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const resourceData = resource.upsert as Resource<T>;
 
-      // Success message (configurable or resource-specific)
+      // Success message
       const message = successMessage || getContextualSuccessMessage(info);
       getAppEvents().publish({
         type: AppEvents.alertSuccess.name,
@@ -95,25 +95,21 @@ export function useProvisionedRequestHandler<T>({
       if (workflow === 'branch' && handlers.onBranchSuccess && ref && path) {
         const branchData = { ref, path, urls };
         handlers.onBranchSuccess?.(branchData, info, resourceData);
-        return;
       }
 
-      // Handle write workflow
+      // Write workflow
       if (workflow === 'write' && handlers.onWriteSuccess) {
         handlers.onWriteSuccess(info, resourceData);
       }
 
-      // Call onDismiss if provided (typically for modals/forms)
       handlers.onDismiss?.();
     }
   }, [request, workflow, handlers, successMessage, repository, resourceType]);
 }
 
-// Helper function to get contextual success messages
 function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
   const { resourceType } = info;
 
-  // Use proper i18n with fallback messages
   if (resourceType === 'dashboard') {
     return t('provisioned-resource-request-handler-dashboard', 'Dashboard saved successfully');
   } else if (resourceType === 'folder') {
@@ -124,5 +120,4 @@ function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
   return t('provisioned-resource-request-handler', 'Resource saved successfully');
 }
 
-// Type exports for external use
 export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };
