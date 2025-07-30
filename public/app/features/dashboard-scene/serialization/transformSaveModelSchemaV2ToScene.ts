@@ -51,6 +51,10 @@ import {
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import {
+  getDashboardInteractionCallback,
+  getDashboardSceneProfiler,
+} from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
@@ -157,6 +161,15 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   //createLayoutManager(dashboard);
 
+  const queryController = new behaviors.SceneQueryController(
+    {
+      enableProfiling:
+        config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === metadata.name) !== -1,
+      onProfileComplete: getDashboardInteractionCallback(metadata.name, dashboard.title),
+    },
+    getDashboardSceneProfiler()
+  );
+
   const dashboardScene = new DashboardScene(
     {
       description: dashboard.description,
@@ -184,7 +197,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         new behaviors.CursorSync({
           sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
         }),
-        new behaviors.SceneQueryController(),
+        queryController,
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
