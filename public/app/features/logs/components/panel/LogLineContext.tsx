@@ -287,7 +287,7 @@ export const LogLineContext = memo(
               }
             />
           )}
-          {aboveState === LoadingState.Done && (
+          {belowState === LoadingState.Done && (
             <Trans i18nKey="logs.log-line-context.no-more-logs-available">No more logs available.</Trans>
           )}
         </div>

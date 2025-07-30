@@ -71,6 +71,7 @@ export const InfiniteScroll = ({
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
   const styles = useStyles2(getStyles, virtualization);
+  const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -80,12 +81,14 @@ export const InfiniteScroll = ({
     // New logs are from infinite scrolling
     if (infiniteLoaderState === 'loading') {
       // out-of-bounds if no new logs returned
-      setInfiniteLoaderState(logs.length === prevLogs.length ? 'out-of-bounds' : 'idle');
+      setInfiniteLoaderState(
+        logs.length === prevLogs.length && infiniteScrollMode === 'interval' ? 'out-of-bounds' : 'idle'
+      );
     } else {
       lastLogOfPage.current = [];
       setAutoScroll(true);
     }
-  }, [infiniteLoaderState, logs, prevLogs]);
+  }, [infiniteLoaderState, infiniteScrollMode, logs, prevLogs]);
 
   useEffect(() => {
     if (prevSortOrder && prevSortOrder !== sortOrder) {
@@ -138,6 +141,9 @@ export const InfiniteScroll = ({
       if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top') {
         if (infiniteScrollMode === 'unlimited' && scrollDirection === ScrollDirection.Top) {
           setInfiniteLoaderState('pre-scroll-top');
+          resetStateTimeout.current = setTimeout(() => {
+            setInfiniteLoaderState((state) => (state === 'pre-scroll-top' ? 'idle' : state));
+          }, 10000);
           return;
         }
         return;
@@ -156,8 +162,23 @@ export const InfiniteScroll = ({
     };
   }, [infiniteLoaderState, infiniteScrollMode, loadMore, logs.length, onLoadMore, scrollElement]);
 
-  const loadMoreBottom = useCallback(() => {
+  useEffect(() => {
+    return () => {
+      if (resetStateTimeout.current) {
+        clearTimeout(resetStateTimeout.current);
+      }
+    };
+  }, []);
+
+  const loadMoreTop = useCallback(() => {
+    if (resetStateTimeout.current) {
+      clearTimeout(resetStateTimeout.current);
+    }
     onLoadMore(ScrollDirection.Top);
+  }, [onLoadMore]);
+
+  const loadMoreBottom = useCallback(() => {
+    onLoadMore(ScrollDirection.Bottom);
   }, [onLoadMore]);
 
   const Renderer = useCallback(
@@ -228,7 +249,18 @@ export const InfiniteScroll = ({
 
   const itemCount = logs.length && loadMore && infiniteLoaderState !== 'idle' ? logs.length + 1 : logs.length;
 
-  return <>{children({ getItemKey, itemCount, onItemsRendered, Renderer })}</>;
+  return (
+    <>
+      {infiniteLoaderState === 'pre-scroll-top' && (
+        <div className={styles.loadMoreTopContainer}>
+          <LogLineMessage style={{}} styles={styles} onClick={loadMoreTop}>
+            {t('logs.infinite-scroll.load-more', 'Scroll to load more')}
+          </LogLineMessage>
+        </div>
+      )}
+      {children({ getItemKey, itemCount, onItemsRendered, Renderer })}
+    </>
+  );
 };
 
 function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder) {
