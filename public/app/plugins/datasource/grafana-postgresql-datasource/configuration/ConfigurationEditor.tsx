@@ -10,7 +10,14 @@ import {
 } from '@grafana/data';
 import { ConfigSection, ConfigSubSection, DataSourceDescription, EditorStack } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { ConnectionLimits, Divider, TLSSecretsConfig, useMigrateDatabaseFields } from '@grafana/sql';
+import {
+  ConnectionLimits,
+  Divider,
+  MaxLifetimeField,
+  MaxOpenConnectionsField,
+  TLSSecretsConfig,
+  useMigrateDatabaseFields,
+} from '@grafana/sql';
 import {
   Input,
   Select,
@@ -74,6 +81,14 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
     return (value: SelectableValue) => {
       updateDatasourcePluginJsonDataOption(props, property, value.value);
     };
+  };
+
+  const onMaxConnectionsChanged = (number?: number) => {
+    updateDatasourcePluginJsonDataOption(props, 'maxOpenConns', number);
+  };
+
+  const onMaxLifetimeChanged = (number?: number) => {
+    updateDatasourcePluginJsonDataOption(props, 'connMaxLifetime', number);
   };
 
   const onTimeScaleDBChanged = (event: SyntheticEvent<HTMLInputElement>) => {
@@ -153,11 +168,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
           />
         </Field>
-      </ConfigSection>
 
-      <Divider />
-
-      <ConfigSection title="TLS/SSL Auth Details" isCollapsible>
         <Field
           label={
             <Label>
@@ -184,6 +195,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             width={WIDTH_LONG}
           />
         </Field>
+
         {options.jsonData.sslmode !== PostgresTLSModes.disable ? (
           <Field
             label={
@@ -220,8 +232,12 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             />
           </Field>
         ) : null}
-        {jsonData.sslmode !== PostgresTLSModes.disable ? (
-          <>
+      </ConfigSection>
+
+      {jsonData.sslmode !== PostgresTLSModes.disable ? (
+        <>
+          <Divider />
+          <ConfigSection title="TLS/SSL Auth Details">
             {jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (
               <TLSSecretsConfig
                 showCACert={
@@ -313,9 +329,9 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
                 </Field>
               </>
             )}
-          </>
-        ) : null}
-      </ConfigSection>
+          </ConfigSection>
+        </>
+      ) : null}
 
       <Divider />
 
@@ -396,8 +412,18 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           </Field>
         </ConfigSubSection>
 
-        <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
-
+        {config.featureToggles.postgresDSUsePGX ? (
+          <ConfigSubSection title="Connection limits">
+            <MaxOpenConnectionsField
+              labelWidth={WIDTH_LONG}
+              jsonData={jsonData}
+              onMaxConnectionsChanged={onMaxConnectionsChanged}
+            />
+            <MaxLifetimeField labelWidth={WIDTH_LONG} jsonData={jsonData} onMaxLifetimeChanged={onMaxLifetimeChanged} />
+          </ConfigSubSection>
+        ) : (
+          <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
+        )}
         {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
