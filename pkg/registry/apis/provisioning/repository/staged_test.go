@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/nanogit"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -136,7 +135,7 @@ func TestWrapWithStageAndPushIfPossible(t *testing.T) {
 				mockStaged := NewMockStagedRepository(t)
 
 				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
-				mockStaged.EXPECT().Push(mock.Anything).Return(nanogit.ErrNothingToPush)
+				mockStaged.EXPECT().Push(mock.Anything).Return(ErrNothingToPush)
 				mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 				return &mockStagedRepo{
@@ -155,7 +154,7 @@ func TestWrapWithStageAndPushIfPossible(t *testing.T) {
 				mockStaged := NewMockStagedRepository(t)
 
 				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
-				mockStaged.EXPECT().Push(mock.Anything).Return(nanogit.ErrNothingToCommit)
+				mockStaged.EXPECT().Push(mock.Anything).Return(ErrNothingToCommit)
 				mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
 
 				return &mockStagedRepo{
@@ -173,7 +172,7 @@ func TestWrapWithStageAndPushIfPossible(t *testing.T) {
 				mockRepo := NewMockStageableRepository(t)
 				mockStaged := NewMockStagedRepository(t)
 
-				wrappedErr := fmt.Errorf("some wrapper: %w", nanogit.ErrNothingToPush)
+				wrappedErr := fmt.Errorf("some wrapper: %w", ErrNothingToPush)
 				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
 				mockStaged.EXPECT().Push(mock.Anything).Return(wrappedErr)
 				mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
@@ -193,7 +192,7 @@ func TestWrapWithStageAndPushIfPossible(t *testing.T) {
 				mockRepo := NewMockStageableRepository(t)
 				mockStaged := NewMockStagedRepository(t)
 
-				wrappedErr := fmt.Errorf("some wrapper: %w", nanogit.ErrNothingToCommit)
+				wrappedErr := fmt.Errorf("some wrapper: %w", ErrNothingToCommit)
 				mockRepo.EXPECT().Stage(mock.Anything, StageOptions{}).Return(mockStaged, nil)
 				mockStaged.EXPECT().Push(mock.Anything).Return(wrappedErr)
 				mockStaged.EXPECT().Remove(mock.Anything).Return(nil)

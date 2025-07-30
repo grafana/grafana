@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -995,6 +996,50 @@ func TestStagedGitRepository_Push(t *testing.T) {
 			expectPushCalls:   1,
 			expectCommitCalls: 1,
 		},
+		{
+			name: "returns repository ErrNothingToPush when nanogit returns ErrNothingToPush",
+			opts: repository.StageOptions{},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.PushReturns(nanogit.ErrNothingToPush)
+			},
+			wantError:         repository.ErrNothingToPush,
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
+		},
+		{
+			name: "returns repository ErrNothingToCommit when nanogit returns ErrNothingToCommit",
+			opts: repository.StageOptions{},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				mockWriter.PushReturns(nanogit.ErrNothingToCommit)
+			},
+			wantError:         repository.ErrNothingToCommit,
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
+		},
+		{
+			name: "returns repository ErrNothingToPush when nanogit returns wrapped ErrNothingToPush",
+			opts: repository.StageOptions{},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				// Use fmt.Errorf with %w to create a wrapped error that errors.Is can detect
+				wrappedErr := fmt.Errorf("git operation failed: %w", nanogit.ErrNothingToPush)
+				mockWriter.PushReturns(wrappedErr)
+			},
+			wantError:         repository.ErrNothingToPush,
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
+		},
+		{
+			name: "returns repository ErrNothingToCommit when nanogit returns wrapped ErrNothingToCommit",
+			opts: repository.StageOptions{},
+			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
+				// Use fmt.Errorf with %w to create a wrapped error that errors.Is can detect
+				wrappedErr := fmt.Errorf("git operation failed: %w", nanogit.ErrNothingToCommit)
+				mockWriter.PushReturns(wrappedErr)
+			},
+			wantError:         repository.ErrNothingToCommit,
+			expectPushCalls:   1,
+			expectCommitCalls: 0,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1007,7 +1052,12 @@ func TestStagedGitRepository_Push(t *testing.T) {
 			err := stagedRepo.Push(context.Background())
 
 			if tt.wantError != nil {
-				require.EqualError(t, err, tt.wantError.Error())
+				// For nanogit error conversion tests, use ErrorIs to verify type conversion
+				if tt.wantError == repository.ErrNothingToPush || tt.wantError == repository.ErrNothingToCommit {
+					require.ErrorIs(t, err, tt.wantError)
+				} else {
+					require.EqualError(t, err, tt.wantError.Error())
+				}
 			} else {
 				require.NoError(t, err)
 			}
