@@ -38,10 +38,7 @@ type serverWrapper struct {
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
 	log := logging.FromContext(s.ctx)
-	legacyProvider, ok := s.installer.(LegacyStorageProvider)
-	if !ok {
-		return s.GenericAPIServer.InstallAPIGroup(apiGroupInfo)
-	}
+	legacyProvider, hasLegacyProvider := s.installer.(LegacyStorageProvider)
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
 		for storagePath, restStorage := range storageMap {
 			genericStorage, ok := restStorage.(*genericregistry.Store)
@@ -57,29 +54,35 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				Group:    s.installer.ManifestData().Group,
 				Resource: resource,
 			}
+			// Update key functions for the storage
 			genericStorage.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
 			genericStorage.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
 			genericStorage.UpdateStrategy = &updateStrategyWrapper{
 				RESTUpdateStrategy: genericStorage.UpdateStrategy,
 			}
 
-			dw, err := NewDualWriter(
-				s.ctx,
-				gr,
-				s.storageOpts,
-				legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
-				grafanarest.Storage(genericStorage),
-				s.kvStore,
-				s.lock,
-				s.namespaceMapper,
-				s.dualWriteService,
-				s.dualWriterMetrics,
-				s.builderMetrics,
-			)
-			if err != nil {
-				return err
+			// If there's a legacy provider, set up the dual writer
+			if hasLegacyProvider {
+				dw, err := NewDualWriter(
+					s.ctx,
+					gr,
+					s.storageOpts,
+					legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
+					grafanarest.Storage(genericStorage),
+					s.kvStore,
+					s.lock,
+					s.namespaceMapper,
+					s.dualWriteService,
+					s.dualWriterMetrics,
+					s.builderMetrics,
+				)
+				if err != nil {
+					return err
+				}
+				apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = dw
+			} else {
+				apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = genericStorage
 			}
-			apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = dw
 		}
 	}
 
