@@ -252,23 +252,23 @@ describe('applyFieldOverrides', () => {
         { name: 'value', type: FieldType.number, values: [10, 20] },
       ],
     });
-    const f0 = createDataFrame({
-      name: 'A',
-      fields: [
-        {
-          name: 'message',
-          type: FieldType.string,
-          values: ['foo'],
-        },
-        {
-          name: 'frame',
-          type: FieldType.frame,
-          values: [f0Internal],
-        },
-      ],
-    });
 
     it('will apply field overrides to the fields within the frame', () => {
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['foo'],
+          },
+          {
+            name: 'frame',
+            type: FieldType.frame,
+            values: [f0Internal],
+          },
+        ],
+      });
       const withOverrides = applyFieldOverrides({
         data: [f0],
         fieldConfig: {
@@ -283,6 +283,38 @@ describe('applyFieldOverrides', () => {
       });
 
       expect(withOverrides[0].fields[1].values[0].fields[1].state.range.max).toBe(30);
+    });
+
+    it('will not crash when some of the nested frames are undefined', () => {
+      const f0 = createDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['foo', 'bar'],
+          },
+          {
+            name: 'frame',
+            type: FieldType.frame,
+            values: [f0Internal, undefined],
+          },
+        ],
+      });
+      expect(() =>
+        applyFieldOverrides({
+          data: [f0],
+          fieldConfig: {
+            defaults: {
+              max: 30,
+            },
+            overrides: [],
+          },
+          replaceVariables: (value) => value,
+          theme: createTheme(),
+          fieldConfigRegistry: customFieldRegistry,
+        })
+      ).not.toThrow();
     });
   });
 

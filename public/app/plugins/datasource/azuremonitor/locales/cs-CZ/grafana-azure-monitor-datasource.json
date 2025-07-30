@@ -233,7 +233,7 @@
       "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě"
     },
     "scope-selector": {
-      "label": ""
+      "label": "Rozsah"
     },
     "search": {
       "aria-label-resource-search": "Vyhledávání zdrojů",

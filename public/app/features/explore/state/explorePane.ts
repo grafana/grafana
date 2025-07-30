@@ -43,6 +43,7 @@ export interface ChangeSizePayload {
   exploreId: string;
   width: number;
 }
+
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
 interface ChangeCompactModePayload {
@@ -58,7 +59,9 @@ interface ChangePanelsState {
   exploreId: string;
   panelsState: ExplorePanelsState;
 }
+
 export const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
+
 export function changePanelState(
   exploreId: string,
   panel: PreferredVisualisationType,
@@ -89,6 +92,7 @@ interface ChangeCorrelationHelperData {
   exploreId: string;
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 }
+
 export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
   'explore/changeCorrelationHelperData'
 );
@@ -106,17 +110,20 @@ interface InitializeExplorePayload {
   compact: boolean;
   eventBridge: EventBusExtended;
 }
+
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
 export interface SetUrlReplacedPayload {
   exploreId: string;
 }
+
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
 
 export interface SaveCorrelationsPayload {
   exploreId: string;
   correlations: CorrelationData[];
 }
+
 export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('explore/saveCorrelationsAction');
 
 /**
@@ -142,6 +149,7 @@ export interface InitializeExploreOptions {
   eventBridge: EventBusExtended;
   compact: boolean;
 }
+
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -228,7 +236,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = timeReducer(state, action);
 
   if (changeSizeAction.match(action)) {
-    const containerWidth = action.payload.width;
+    const containerWidth = Math.floor(action.payload.width);
     return { ...state, containerWidth };
   }
 

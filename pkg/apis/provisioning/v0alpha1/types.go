@@ -64,6 +64,8 @@ type GitRepositoryConfig struct {
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
+	// TokenUser is the user that will be used to access the repository if it's a personal access token.
+	TokenUser string `json:"tokenUser,omitempty"`
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
@@ -82,6 +84,8 @@ type BitbucketRepositoryConfig struct {
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
+	// TokenUser is the user that will be used to access the repository if it's a personal access token.
+	TokenUser string `json:"tokenUser,omitempty"`
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
@@ -291,6 +295,7 @@ const (
 	ResourceActionCreate ResourceAction = "create"
 	ResourceActionUpdate ResourceAction = "update"
 	ResourceActionDelete ResourceAction = "delete"
+	ResourceActionMove   ResourceAction = "move"
 )
 
 // This is a container type for any resource type

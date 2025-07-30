@@ -380,6 +380,16 @@
     "add-button": {
       "add-more": "Añadir más"
     },
+    "ai": {
+      "error-boundary": {
+        "alert-rule-button": "",
+        "feedback-button": "",
+        "improve-annotations-button": "",
+        "improve-labels-button": "",
+        "template-button": "",
+        "triage-button": ""
+      }
+    },
     "alert": {
       "alert-state": "Estado de la alerta",
       "annotations": "Anotaciones",
@@ -1542,7 +1552,8 @@
       "title": "Editar grupo de evaluación"
     },
     "group-loader": {
-      "group-load-failed": "Error al cargar las reglas del grupo {{ groupName }} en {{ namespaceName }}"
+      "group-load-failed": "Error al cargar las reglas del grupo {{ groupName }} en {{ namespaceName }}",
+      "no-rules": ""
     },
     "group-status": {
       "content-the-group-is-being-deleted": "El grupo se está eliminando"
@@ -2457,7 +2468,6 @@
     },
     "rule-list": {
       "configure-datasource": "Configurar",
-      "draft-new-rule": "Redactar una nueva regla",
       "ds-error": {
         "title": "No se pueden cargar las reglas para esta fuente de datos"
       },
@@ -2483,6 +2493,7 @@
       "new-alert-rule": "Nueva regla de alerta",
       "new-datasource-recording-rule": "Nueva regla de registro de fuente de datos",
       "new-grafana-recording-rule": "Nueva regla de registro de Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Mostrar más..."
       },
@@ -2793,6 +2804,7 @@
     },
     "template-preview": {
       "aria-label-refresh-preview": "Actualizar vista previa",
+      "empty-state": "",
       "label-preview": "Vista previa",
       "refresh": "Actualizar"
     },
@@ -3247,6 +3259,11 @@
       "id-token-attribute-name-label": "Nombre del atributo del token de ID",
       "login-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de inicios de sesión del usuario a partir del token de ID de usuario.",
       "login-attribute-path-label": "Ruta del atributo de inicio de sesión",
+      "login-prompt-consent": "",
+      "login-prompt-description": "",
+      "login-prompt-label": "",
+      "login-prompt-login": "",
+      "login-prompt-select-account": "",
       "managed-identity-client-id-description": "El ID de cliente de identidad administrada de la credencial de identidad federada de su aplicación OAuth2.",
       "managed-identity-client-id-label": "ID de cliente de identidad gestionada de FIC",
       "name-attribute-path-description": "Expresión JMESPath que se utilizará para la búsqueda de nombres de usuario a partir del token de ID de usuario. \nEste nombre se utilizará como nombre para mostrar del usuario.",
@@ -3344,6 +3361,9 @@
     "provider-config-page": {
       "text-badge-enabled": "Activado",
       "text-badge-not-enabled": "No habilitada"
+    },
+    "scim-banner": {
+      "message": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "El punto final .well-known/openid-configuration para tu IdP",
@@ -3461,6 +3481,7 @@
   },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "",
       "cancel-button": "Cancelar",
       "cannot-move-folders": "Las carpetas no se pueden mover",
       "confirmation-text": "Eliminar",
@@ -3479,7 +3500,9 @@
       "move-modal-text": "Esta acción moverá el siguiente contenido:",
       "move-modal-title": "Mover",
       "moving": "Moviendo...",
-      "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta."
+      "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta.",
+      "selected-mix-resources-modal-text": "",
+      "selected-mix-resources-modal-title": ""
     },
     "actions": {
       "button-to-recently-deleted": "Eliminados recientemente"
@@ -3490,6 +3513,24 @@
     },
     "browse-view": {
       "this-folder-is-empty": "Esta carpeta está vacía"
+    },
+    "bulk-action-resources-form": {
+      "failed-alert_one": "",
+      "failed-alert_other": ""
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "button-done": "",
+      "delete-warning": "",
+      "error-path-not-found": "",
+      "progress-title": "",
+      "success-message": ""
+    },
+    "bulk-move-resources-form": {
+      "deleting": "",
+      "progress": ""
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
@@ -3541,6 +3582,7 @@
       "empty-message": "No se ha encontrado ninguna carpeta",
       "error-title": "Error al cargar las carpetas",
       "non-folder-item": "{{itemKind}} {{itemUID}} no es una carpeta",
+      "root-title": "",
       "search-placeholder": "Buscar carpetas",
       "unknown-error": "Error desconocido"
     },
@@ -4524,6 +4566,10 @@
     },
     "edit-actions": {
       "add": "Añadir {{typeName}}",
+      "add-conditional-rule": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Cambiar fondo del panel",
       "panel-description": "Cambiar descripción del panel",
@@ -4538,6 +4584,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Panel de control",
+        "element": "",
         "local-variable": "Variable local",
         "multiple-elements": "Múltiples elementos",
         "multiple-elements-delete-text": "¿Seguro que quieres eliminar estos elementos?",
@@ -5747,7 +5794,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -5913,8 +5959,8 @@
         "title-someone-else-has-updated-this-dashboard": "Otra persona ha actualizado este dashboard",
         "would-still-dashboard": "¿Seguro que quieres guardar este dashboard?"
       },
-      "schema-v2-library-panels-export": "La funcionalidad del dashboard dinámico es experimental y no tiene una paridad de características completa con el comportamiento actual de los dashboards. Se basa en un nuevo formato de esquema, que no admite paneles de librería. Esto significa que al exportar el dashboard para usarlo en otra instancia, no se incluirán paneles de librería. Tenemos la intención de admitirlos a medida que avanzamos en el <2>ciclo de vida</2> de la función.",
-      "schema-v2-library-panels-export-title": "El esquema de dashboard V2 aún no admite la exportación de paneles de librería para su uso en otra instancia",
+      "schema-v2-library-panels-export": "",
+      "schema-v2-library-panels-export-title": "",
       "title-dashboard-drastically-changed": "El dashboard ha cambiado de forma irreversible"
     },
     "save-dashboard-form-common-options": {
@@ -7118,6 +7164,7 @@
           "start-time": "Hora de comienzo:"
         }
       },
+      "share-span": "",
       "warnings": "Advertencias"
     },
     "span-filters": {
@@ -7465,6 +7512,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7524,6 +7572,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -7694,6 +7743,409 @@
     "dashboard": {
       "edit-pane": {
         "go-back": "Volver"
+      }
+    }
+  },
+  "grafana-data": {
+    "valueFormats": {
+      "categories": {
+        "acceleration": {
+          "formats": {
+            "name-feet-sec": "",
+            "name-g-unit": "",
+            "name-meters-sec": ""
+          },
+          "name": ""
+        },
+        "angle": {
+          "formats": {
+            "name-arc-minutes": "",
+            "name-arc-seconds": "",
+            "name-degrees": "",
+            "name-gradian": "",
+            "name-radians": ""
+          },
+          "name": ""
+        },
+        "area": {
+          "formats": {
+            "name-acres": "",
+            "name-hectares": "",
+            "name-square-feet": "",
+            "name-square-meters": "",
+            "name-square-miles": ""
+          },
+          "name": ""
+        },
+        "boolean": {
+          "formats": {
+            "name-on-off": "",
+            "name-true-false": "",
+            "name-yes-no": ""
+          },
+          "name": ""
+        },
+        "computation": {
+          "formats": {
+            "name-eflops": "",
+            "name-flops": "",
+            "name-gflops": "",
+            "name-mflops": "",
+            "name-pflops": "",
+            "name-tflops": "",
+            "name-yflops": "",
+            "name-zflops": ""
+          },
+          "name": ""
+        },
+        "concentration": {
+          "formats": {
+            "name-g-m3": "",
+            "name-g-nm3": "",
+            "name-mg-dl": "",
+            "name-mg-m3": "",
+            "name-mg-nm3": "",
+            "name-mmol-l": "",
+            "name-ng-m3": "",
+            "name-ng-nm3": "",
+            "name-ppb": "",
+            "name-ppm": "",
+            "name-ug-m3": "",
+            "name-ug-nm3": ""
+          },
+          "name": ""
+        },
+        "currency": {
+          "formats": {
+            "name-bgn": "",
+            "name-brl": "",
+            "name-btc": "",
+            "name-chf": "",
+            "name-czk": "",
+            "name-dkk": "",
+            "name-eur": "",
+            "name-gbp": "",
+            "name-idr": "",
+            "name-ils": "",
+            "name-inr": "",
+            "name-isk": "",
+            "name-jpy": "",
+            "name-krw": "",
+            "name-mbtc": "",
+            "name-myr": "",
+            "name-nok": "",
+            "name-php": "",
+            "name-pln": "",
+            "name-pyg": "",
+            "name-rub": "",
+            "name-sek": "",
+            "name-try": "",
+            "name-uah": "",
+            "name-ubtc": "",
+            "name-usd": "",
+            "name-uyu": "",
+            "name-vnd": "",
+            "name-xpf": "",
+            "name-zar": ""
+          },
+          "name": ""
+        },
+        "data": {
+          "formats": {
+            "name-bits-iec": "",
+            "name-bits-si": "",
+            "name-bytes-iec": "",
+            "name-bytes-si": "",
+            "name-gibibytes": "",
+            "name-gigabytes": "",
+            "name-kibibytes": "",
+            "name-kilobytes": "",
+            "name-mebibytes": "",
+            "name-megabytes": "",
+            "name-pebibytes": "",
+            "name-petabytes": "",
+            "name-tebibytes": "",
+            "name-terabytes": ""
+          },
+          "name": ""
+        },
+        "data-rate": {
+          "formats": {
+            "name-bits-sec-iec": "",
+            "name-bits-sec-si": "",
+            "name-bytes-sec-iec": "",
+            "name-bytes-sec-si": "",
+            "name-gibibits-sec": "",
+            "name-gibibytes-sec": "",
+            "name-gigabits-sec": "",
+            "name-gigabytes-sec": "",
+            "name-kibibits-sec": "",
+            "name-kibibytes-sec": "",
+            "name-kilobits-sec": "",
+            "name-kilobytes-sec": "",
+            "name-mebibits-sec": "",
+            "name-mebibytes-sec": "",
+            "name-megabits-sec": "",
+            "name-megabytes-sec": "",
+            "name-packets-sec": "",
+            "name-pebibits-sec": "",
+            "name-pebibytes-sec": "",
+            "name-petabits-sec": "",
+            "name-petabytes-sec": "",
+            "name-tebibits-sec": "",
+            "name-tebibytes-sec": "",
+            "name-terabits-sec": "",
+            "name-terabytes-sec": ""
+          },
+          "name": ""
+        },
+        "date-time": {
+          "formats": {
+            "name-datetime-default": "",
+            "name-datetime-iso": "",
+            "name-datetime-iso-no-date": "",
+            "name-datetime-local": "",
+            "name-datetime-local-no-date": "",
+            "name-datetime-us": "",
+            "name-datetime-us-no-date": "",
+            "name-from-now": ""
+          },
+          "name": ""
+        },
+        "energy": {
+          "formats": {
+            "name-ampere": "",
+            "name-ampere-hour": "",
+            "name-decibel-milliwatt": "",
+            "name-electron-volt": "",
+            "name-farad": "",
+            "name-femtofarad": "",
+            "name-gigawatt": "",
+            "name-henry": "",
+            "name-joule": "",
+            "name-kiloampere": "",
+            "name-kiloampere-hour": "",
+            "name-kiloohm": "",
+            "name-kilovolt": "",
+            "name-kilovolt-ampere": "",
+            "name-kilovolt-ampere-reactive": "",
+            "name-kilowatt": "",
+            "name-kilowatt-hour": "",
+            "name-kilowatt-min": "",
+            "name-lumens": "",
+            "name-megaohm": "",
+            "name-megawatt": "",
+            "name-megawatt-hour": "",
+            "name-microfarad": "",
+            "name-microhenry": "",
+            "name-milliampere": "",
+            "name-milliampere-hour": "",
+            "name-millihenry": "",
+            "name-milliohm": "",
+            "name-millivolt": "",
+            "name-milliwatt": "",
+            "name-nanofarad": "",
+            "name-ohm": "",
+            "name-picofarad": "",
+            "name-volt": "",
+            "name-volt-ampere": "",
+            "name-volt-ampere-reactive": "",
+            "name-watt": "",
+            "name-watt-hour": "",
+            "name-watt-hour-per-kg": "",
+            "name-watt-square-meter": ""
+          },
+          "name": ""
+        },
+        "flow": {
+          "formats": {
+            "name-cubic-feet-min": "",
+            "name-cubic-feet-sec": "",
+            "name-cubic-meters-sec": "",
+            "name-gallons-min": "",
+            "name-litre-hour": "",
+            "name-litre-min": "",
+            "name-lux": "",
+            "name-millilitre-min": ""
+          },
+          "name": ""
+        },
+        "force": {
+          "formats": {
+            "name-kilonewton-meters": "",
+            "name-kilonewtons": "",
+            "name-newton-meters": "",
+            "name-newtons": ""
+          },
+          "name": ""
+        },
+        "hash-rate": {
+          "formats": {
+            "name-exahashes-sec": "",
+            "name-gigahashes-sec": "",
+            "name-hashes-sec": "",
+            "name-kilohashes-sec": "",
+            "name-megahashes-sec": "",
+            "name-petahashes-sec": "",
+            "name-terahashes-sec": ""
+          },
+          "name": ""
+        },
+        "length": {
+          "formats": {
+            "name-feet": "",
+            "name-inch": "",
+            "name-kilometer": "",
+            "name-meter": "",
+            "name-mile": "",
+            "name-millimeter": ""
+          },
+          "name": ""
+        },
+        "mass": {
+          "formats": {
+            "name-gram": "",
+            "name-kilogram": "",
+            "name-metric-ton": "",
+            "name-milligram": "",
+            "name-pound": ""
+          },
+          "name": ""
+        },
+        "misc": {
+          "formats": {
+            "name-candala": "",
+            "name-decibel": "",
+            "name-hexadecimal": "",
+            "name-hexadecimal-0x": "",
+            "name-humidity": "",
+            "name-locale": "",
+            "name-number": "",
+            "name-percent-1": "",
+            "name-percent-100": "",
+            "name-pixels": "",
+            "name-scientific": "",
+            "name-short": "",
+            "name-si-short": "",
+            "name-string": ""
+          },
+          "name": ""
+        },
+        "pressure": {
+          "formats": {
+            "name-bars": "",
+            "name-hectopascals": "",
+            "name-inches-mercury": "",
+            "name-kilobars": "",
+            "name-kilopascals": "",
+            "name-millibars": "",
+            "name-pascals": "",
+            "name-psi": ""
+          },
+          "name": ""
+        },
+        "radiation": {
+          "formats": {
+            "name-becquerel": "",
+            "name-curie": "",
+            "name-exposure": "",
+            "name-gray": "",
+            "name-microsievert": "",
+            "name-microsievert-hour": "",
+            "name-millisievert": "",
+            "name-millisievert-hour": "",
+            "name-rad": "",
+            "name-rem": "",
+            "name-roentgen": "",
+            "name-sievert": "",
+            "name-sievert-hour": ""
+          },
+          "name": ""
+        },
+        "rotational-speed": {
+          "formats": {
+            "name-degrees-sec": "",
+            "name-gigahertz": "",
+            "name-hertz": "",
+            "name-kilohertz": "",
+            "name-megahertz": "",
+            "name-radians-sec": "",
+            "name-rpm": ""
+          },
+          "name": ""
+        },
+        "temperature": {
+          "formats": {
+            "name-celsius": "",
+            "name-fahrenheit": "",
+            "name-kelvin": ""
+          },
+          "name": ""
+        },
+        "throughput": {
+          "formats": {
+            "name-counts-min": "",
+            "name-counts-sec": "",
+            "name-events-min": "",
+            "name-events-sec": "",
+            "name-io-ops-sec": "",
+            "name-messages-min": "",
+            "name-messages-sec": "",
+            "name-ops-min": "",
+            "name-ops-sec": "",
+            "name-reads-min": "",
+            "name-reads-sec": "",
+            "name-records-min": "",
+            "name-records-sec": "",
+            "name-requests-min": "",
+            "name-requests-sec": "",
+            "name-rows-min": "",
+            "name-rows-sec": "",
+            "name-writes-min": "",
+            "name-writes-sec": ""
+          },
+          "name": ""
+        },
+        "time": {
+          "formats": {
+            "name-clock-ms": "",
+            "name-clock-s": "",
+            "name-days": "",
+            "name-duration-dhms": "",
+            "name-duration-hms": "",
+            "name-duration-ms": "",
+            "name-duration-s": "",
+            "name-hertz": "",
+            "name-hours": "",
+            "name-microseconds": "",
+            "name-milliseconds": "",
+            "name-minutes": "",
+            "name-nanoseconds": "",
+            "name-seconds": "",
+            "name-timeticks": ""
+          },
+          "name": ""
+        },
+        "velocity": {
+          "formats": {
+            "name-kilometers-hour": "",
+            "name-knot": "",
+            "name-meters-second": "",
+            "name-miles-hour": ""
+          },
+          "name": ""
+        },
+        "volume": {
+          "formats": {
+            "name-cubic-decimeter": "",
+            "name-cubic-meter": "",
+            "name-gallons": "",
+            "name-litre": "",
+            "name-millilitre": "",
+            "name-normal-cubic-meter": ""
+          },
+          "name": ""
+        }
       }
     }
   },
@@ -7936,6 +8388,60 @@
       "previous-label": "Mes anterior",
       "select-placeholder": "Seleccionar fecha y hora"
     },
+    "date-time-pickers": {
+      "month-options": {
+        "label-april": "",
+        "label-august": "",
+        "label-december": "",
+        "label-february": "",
+        "label-january": "",
+        "label-july": "",
+        "label-june": "",
+        "label-march": "",
+        "label-may": "",
+        "label-november": "",
+        "label-october": "",
+        "label-september": ""
+      },
+      "quick-options": {
+        "day-before-yesterday": "",
+        "last-1-hour": "",
+        "last-1-year": "",
+        "last-12-hours": "",
+        "last-15-mins": "",
+        "last-2-days": "",
+        "last-2-years": "",
+        "last-24-hours": "",
+        "last-3-hours": "",
+        "last-30-days": "",
+        "last-30-mins": "",
+        "last-5-mins": "",
+        "last-5-years": "",
+        "last-6-hours": "",
+        "last-6-months": "",
+        "last-7-days": "",
+        "last-90-days": "",
+        "previous-fiscal-quarter": "",
+        "previous-fiscal-year": "",
+        "previous-month": "",
+        "previous-week": "",
+        "previous-year": "",
+        "this-day-last-week": "",
+        "this-fiscal-quarter": "",
+        "this-fiscal-quarter-so-far": "",
+        "this-fiscal-year": "",
+        "this-fiscal-year-so-far": "",
+        "this-month": "",
+        "this-month-so-far": "",
+        "this-week": "",
+        "this-week-so-far": "",
+        "this-year": "",
+        "this-year-so-far": "",
+        "today": "",
+        "today-so-far": "",
+        "yesterday": ""
+      }
+    },
     "drawer": {
       "close": "Cerrar"
     },
@@ -7982,6 +8488,20 @@
       "description-fields-with-value": "",
       "field-name-picker": {
         "placeholder": ""
+      },
+      "get-all-field-type-icon-options": {
+        "label-boolean": "",
+        "label-enum": "",
+        "label-number": "",
+        "label-other": "",
+        "label-string": "",
+        "label-time": "",
+        "label-traces": ""
+      },
+      "get-list-of-query-ref-ids": {
+        "description": "",
+        "label": "",
+        "label-missing-ref-id": ""
       },
       "name-field-name-by-regex-matcher": "",
       "name-fields-by-query": "",
@@ -8087,7 +8607,10 @@
         "no-data": ""
       },
       "no-values-label": "Sin valores",
-      "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas"
+      "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas",
+      "sparkline": {
+        "no-data": ""
+      }
     },
     "tags": {
       "list-label": "Etiquetas"
@@ -8820,8 +9343,11 @@
       "move-displayed-field-down": "",
       "move-displayed-field-up": "",
       "no-details": "",
+      "open-assistant": "",
       "pin-line": "",
       "remove-displayed-field": "",
+      "remove-log": "",
+      "scroll-to-logline": "",
       "search": {
         "no-results": ""
       },
@@ -8836,6 +9362,9 @@
       "copy-log": "Copiar línea de registro",
       "hide-details": "Mostrar detalles del log",
       "icon-label": "Menú de registro",
+      "log-line": "",
+      "log-line-explainer": "",
+      "open-assistant": "",
       "pin-to-outline": "Anclar registro",
       "show-context": "Mostrar contexto",
       "show-details": "Ocultar detalles del log",
@@ -9669,7 +10198,9 @@
       "aria-label": "Ayuda"
     },
     "invite-user": {
-      "invite-new-member-button": "Invitar a un nuevo miembro"
+      "invite-button": "",
+      "invite-new-member-button": "Invitar a un nuevo miembro",
+      "invite-tooltip": ""
     },
     "item": {
       "add-bookmark": "Añadir a marcadores",
@@ -10427,16 +10958,38 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
       "message": "Esta función se encuentra actualmente en desarrollo activo. Para obtener la mejor experiencia y las últimas mejoras, recomendamos utilizar la <2>compilación nocturna</2> de Grafana."
+    },
+    "bitbucket": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
     },
     "bootstrap-step": {
       "description-clear-repository-connection": "Añade un nombre claro para esta conexión de repositorio",
@@ -10447,8 +11000,12 @@
       "label-display-name": "Nombre que mostrar",
       "placeholder-my-repository-connection": "Mi conexión de repositorio",
       "text-loading-resource-information": "Cargando información de recursos...",
+      "dashboards-count_one": "",
+      "dashboards-count_other": "",
       "files-count_one": "{{count}} archivos",
-      "files-count_other": "{{count}} archivos"
+      "files-count_other": "{{count}} archivos",
+      "folders-count_one": "",
+      "folders-count_other": ""
     },
     "check-repository": {
       "check": "Verificar"
@@ -10459,36 +11016,20 @@
       "button-save": "Guardar",
       "button-saving": "Guardando…",
       "description-enabled": "Una vez que la extracción automática está habilitada, el objetivo no se puede cambiar.",
-      "description-path": "Ruta a un subdirectorio en el repositorio Git",
       "description-read-only": "Los recursos no se pueden modificar a través de Grafana.",
-      "description-repository-url": "Introduce la URL del repositorio GitHub",
       "description-title": "Un nombre legible para la configuración",
       "error-required": "Este campo es obligatorio.",
       "error-save-repository": "Error al guardar los ajustes del repositorio",
-      "error-valid-github-url": "Introduce una URL de repositorio GitHub válida",
       "label-automatic-pulling": "Extracción automática",
-      "label-branch": "Rama",
       "label-enabled": "Activado",
-      "label-github-token": "Token de GitHub",
       "label-interval-seconds": "Intervalo (segundos)",
-      "label-local-path": "Ruta local",
-      "label-path": "Ruta",
-      "label-pr-workflow": "Habilitar la opción de solicitud de extracción al guardar",
       "label-repository-type": "Tipo de repositorio",
-      "label-repository-url": "URL del repositorio",
       "label-target": "Destino",
       "label-title": "Título",
       "option-entire-instance": "Instancia completa",
-      "option-github": "GitHub",
-      "option-local": "Local",
       "option-managed-folder": "Carpeta administrada",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "ghp_tuTokenAquí1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/nombre-usuario/nombre-repo",
       "placeholder-interval-seconds": "60",
-      "placeholder-local-path": "/ruta/a/repo",
-      "placeholder-my-config": "Mi configuración",
-      "placeholder-select-repository-type": "Seleccionar tipo de repositorio"
+      "placeholder-my-config": "Mi configuración"
     },
     "config-form-github-collapse": {
       "description-realtime-feedback": "<0>Configura webhooks</0> para obtener actualizaciones instantáneas en Grafana en cuanto se realicen los cambios. Revisa y aprueba los cambios mediante solicitudes de extracción antes de que se publiquen.",
@@ -10502,26 +11043,7 @@
     },
     "connect-repository-button": {
       "configure": "Configurar",
-      "configure-file": "Configurar el aprovisionamiento de archivos",
-      "configure-git-sync": "Configurar Git Sync",
       "repository-limit-info-alert": "Se ha alcanzado el límite del repositorio ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Rama que se utilizará para el repositorio GitHub",
-      "description-github-path": "Esta es la ruta a un subdirectorio en tu repositorio de GitHub donde se almacenarán y aprovisionarán los paneles",
-      "description-paste-your-git-hub-personal-access-token": "Pega tu token de acceso personal de GitHub",
-      "description-repository-url": "Pega la URL de tu repositorio de GitHub",
-      "error-field-required": "Este campo es obligatorio.",
-      "error-invalid-github-url": "Introduce una URL de repositorio GitHub válida",
-      "label-access-token": "Token de acceso a GitHub",
-      "label-branch": "Nombre de la rama",
-      "label-local-path": "Ruta local",
-      "label-path": "Ruta al subdirectorio en el repositorio",
-      "label-repository-url": "URL del repositorio GitHub",
-      "placeholder-branch": "principal",
-      "placeholder-github-token": "github_pat_tuTokenAquí1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/nombre_de_usuario/repo",
-      "placeholder-local-path": "/ruta/a/repo"
     },
     "delete-repository-button": {
       "button-delete": "Eliminar",
@@ -10554,17 +11076,17 @@
       "title-instant-updates-requests-webhooks": "Actualizaciones instantáneas y solicitudes de extracción con webhooks.",
       "title-visual-previews-in-pull-requests": "Vistas previas visuales en solicitudes de extracción con renderizado de imágenes"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Especificación del trabajo",
-      "summary": "Resumen",
-      "title-error": "Error"
+      "summary": "Resumen"
     },
     "features-list": {
       "actions": {
         "set-up-required-feature-toggles": "Configurar los conmutadores de características necesarios"
       },
-      "manage-dashboards-provision-updates-automatically": "Gestiona los dashboards como código en GitHub y aprovisiona las actualizaciones de forma automática",
-      "manage-your-dashboards-with-remote-provisioning": "Comenzar con GitSync",
+      "manage-dashboards-provision-updates-automatically": "",
+      "manage-your-dashboards-with-remote-provisioning": "",
       "store-dashboards-in-version-controlled-storage": "Almacena los dashboards en un almacenamiento controlado por versiones para mejorar la organización y el seguimiento del historial"
     },
     "file-history-page": {
@@ -10585,18 +11107,16 @@
     },
     "finish-step": {
       "description-enable-previews": "Añade una vista previa de la imagen de los cambios del dashboard en las solicitudes de extracción. Las imágenes de tus paneles de Grafana se compartirán en tu repositorio Git y serán visibles para cualquier persona con acceso al repositorio.",
+      "description-generate-dashboard-previews": "",
       "description-image-rendering": "Requiere renderizado de imágenes. <2>Configurar el renderizado de imágenes</2>",
-      "description-often-shall-instance-updates-git-hub": "¿Con qué frecuencia la instancia extraerá actualizaciones de GitHub?",
-      "description-pr-enable-description": "Permite a los usuarios elegir si desean abrir una solicitud de extracción al guardar los cambios. Si el repositorio no permite cambios directos en la rama principal, es posible que aún se requiera una solicitud de extracción.",
+      "description-preview-requirements": "",
       "description-read-only": "Los recursos no se pueden modificar a través de Grafana.",
-      "description-webhooks-enable": "Permite a los usuarios elegir si desean abrir una solicitud de extracción al guardar los cambios. Si el repositorio no permite cambios directos en la rama principal, es posible que aún se requiera una solicitud de extracción.",
+      "description-sync-interval": "",
+      "error-sync-interval-required": "",
       "label-enable-previews": "Habilitar las vistas previas del dashboard en las solicitudes de extracción",
-      "label-pr-workflow": "Habilitar la opción de solicitud de extracción al guardar",
+      "label-generate-dashboard-previews": "",
       "label-read-only": "Solo lectura",
-      "label-update-instance-interval-seconds": "Actualizar el intervalo de la instancia (segundos)",
-      "placeholder": "60",
-      "text-setup-later": "Siempre puedes configurar esto más tarde",
-      "title-enhance-github": "Mejora tu experiencia en GitHub"
+      "label-sync-interval": ""
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No hay resultados que coincidan con tu consulta",
@@ -10627,6 +11147,57 @@
       "header": "Aprovisionamiento",
       "subtitle-provisioning-feature": "Ver y gestionar tus conexiones de aprovisionamiento"
     },
+    "git": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "token-user-description": "",
+      "token-user-label": "",
+      "token-user-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "github": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
+    "gitlab": {
+      "branch-description": "",
+      "branch-label": "",
+      "branch-required": "",
+      "path-description": "",
+      "path-label": "",
+      "pr-workflow-description": "",
+      "pr-workflow-label": "",
+      "token-description": "",
+      "token-label": "",
+      "token-required": "",
+      "url-description": "",
+      "url-label": "",
+      "url-pattern": "",
+      "url-required": ""
+    },
     "history-view": {
       "not-found": "No encontrado"
     },
@@ -10653,9 +11224,17 @@
       "starting": "Empezando...",
       "status": {
         "title-error-running-job": "Error al ejecutar el trabajo",
-        "title-job-completed-successfully": "Trabajo completado con éxito"
+        "title-warning-running-job": ""
       },
-      "summary": "Resumen"
+      "summary": "Resumen",
+      "title": {
+        "error-fetching-active-job": ""
+      }
+    },
+    "local": {
+      "path-description": "",
+      "path-label": "",
+      "path-required": ""
     },
     "mode-options": {
       "folder": {
@@ -10681,7 +11260,7 @@
     },
     "repository-actions": {
       "settings": "Configuración",
-      "source-code": "Código fuente"
+      "source-code": ""
     },
     "repository-card": {
       "get-repository-meta": {
@@ -10746,6 +11325,24 @@
       "title-legacy-storage": "Almacenamiento heredado",
       "title-queued-for-deletion": "En cola para su eliminación"
     },
+    "repository-type-cards": {
+      "choose-provider": "",
+      "configure-file": "",
+      "configure-with-provider": "",
+      "provider-not-listed": ""
+    },
+    "repository-types": {
+      "bitbucket": "",
+      "bitbucket-description": "",
+      "github": "",
+      "github-description": "",
+      "gitlab": "",
+      "gitlab-description": "",
+      "local": "",
+      "local-description": "",
+      "pure-git": "",
+      "pure-git-description": ""
+    },
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Vista previa del dashboard",
@@ -10775,6 +11372,11 @@
       "label-current-step": "Paso actual",
       "label-pending-step": "Paso pendiente"
     },
+    "sync-job": {
+      "error-no-job-id": "",
+      "error-no-repository-name": "",
+      "error-starting-job": ""
+    },
     "sync-repository": {
       "body-edit-configuration": "Editar la configuración",
       "button-edit": "Editar",
@@ -10785,9 +11387,6 @@
       "tooltip-unhealthy-repository": "No se puede extraer un repositorio que no está en buen estado"
     },
     "synchronize-step": {
-      "error-no-job-id": "Error al iniciar el trabajo",
-      "error-no-repository-name": "No se proporcionó ningún nombre de repositorio",
-      "error-starting-job": "Error al iniciar el trabajo",
       "synchronization-description": "Incluir confirmaciones para cada valor histórico",
       "synchronization-options": "Opciones de sincronización"
     },
@@ -10796,6 +11395,7 @@
       "go-to": "Ir a",
       "make-sure": "Asegúrate de incluir estos permisos"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Los recursos no se podrán crear, editar ni eliminar durante este proceso. En el último paso, desaparecerán.",
       "alert-point-2": "Una vez que se complete el aprovisionamiento, los recursos volverán a aparecer y se gestionarán a través de un almacenamiento externo.",
@@ -11863,7 +12463,6 @@
       },
       "label-apply-to-entire-row": "Aplicar a toda la fila",
       "label-background-display-mode": "Modo de visualización del fondo",
-      "label-wrap-text": "Ajustar texto",
       "wrap-text": "Ajustar texto"
     },
     "column-alignment-options": {
@@ -12846,7 +13445,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -12868,6 +13467,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Número de puntos X,Y para predecir"
     },
     "rename-by-regex-transformer": {

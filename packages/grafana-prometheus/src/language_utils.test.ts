@@ -10,6 +10,7 @@ import {
   getPrometheusTime,
   getRangeSnapInterval,
   processLabels,
+  removeQuotesIfExist,
   toPromLikeQuery,
   truncateResult,
 } from './language_utils';
@@ -187,6 +188,18 @@ describe('expandRecordingRules()', () => {
       },
     };
     const expected = `rate(prometheus_http_requests_total{job="prometheus", four="tops"} + prom_http_requests_sum{job="prometheus", second="album"}`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
+  });
+
+  it('when there is an empty label value it should still be able to expand the rule', () => {
+    const query = `sum(max by (cluster, container) (pod_cpu:active:kube_limits{container!="", cluster=~"pink"}))`;
+    const mapping = {
+      'pod_cpu:active:kube_limits': {
+        expandedQuery: `kube_limits{job!="", resource="cpu"} * on (namespace, pod, cluster) group_left () max by (namespace, pod, cluster) ((kube_pod_status_phase{phase=~"Pending|Running"} == 1))`,
+      },
+    };
+    const expected = `sum(max by (cluster, container) (kube_limits{job!="", resource="cpu", container!="", cluster=~"pink"} * on (namespace, pod, cluster) group_left () max by (namespace, pod, cluster) ((kube_pod_status_phase{phase=~"Pending|Running", container!="", cluster=~"pink"} == 1))))`;
     const result = expandRecordingRules(query, mapping);
     expect(result).toBe(expected);
   });
@@ -542,5 +555,61 @@ describe('processLabels', () => {
         'label2.with.dot': ['value2'],
       },
     });
+  });
+});
+
+describe('removeQuotesIfExist', () => {
+  it('removes quotes from a string with double quotes', () => {
+    const input = '"hello"';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('hello');
+  });
+
+  it('returns the original string if it does not start and end with quotes', () => {
+    const input = 'hello';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('hello');
+  });
+
+  it('returns the original string if it has mismatched quotes', () => {
+    const input = '"hello';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('"hello');
+  });
+
+  it('removes quotes for strings with special characters inside quotes', () => {
+    const input = '"hello, world!"';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('hello, world!');
+  });
+
+  it('removes quotes for strings with spaces inside quotes', () => {
+    const input = '"   "';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('   ');
+  });
+
+  it('returns the original string for an empty string', () => {
+    const input = '';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('');
+  });
+
+  it('returns the original string if the string only has a single quote character', () => {
+    const input = '"';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('"');
+  });
+
+  it('handles strings with nested quotes correctly', () => {
+    const input = '"nested \"quotes\""';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('nested \"quotes\"');
+  });
+
+  it('removes quotes from a numeric string wrapped in quotes', () => {
+    const input = '"12345"';
+    const result = removeQuotesIfExist(input);
+    expect(result).toBe('12345');
   });
 });

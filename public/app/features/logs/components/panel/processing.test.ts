@@ -1,4 +1,5 @@
 import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine, createLogRow } from '../mocks/logRow';
@@ -345,5 +346,45 @@ describe('preProcessLogs', () => {
       expect(longLog.collapsed).toBe(false);
       expect(longLog.body).toBe(entry);
     });
+  });
+});
+
+describe('OTel logs', () => {
+  let originalOtelLogsFormatting = config.featureToggles.otelLogsFormatting;
+  afterAll(() => {
+    config.featureToggles.otelLogsFormatting = originalOtelLogsFormatting;
+  });
+
+  test('Requires a feature flag', () => {
+    const log = createLogLine({
+      labels: {
+        severity_number: '1',
+        telemetry_sdk_language: 'php',
+        scope_name: 'scope',
+        aws_ignore: 'ignored',
+        key: 'value',
+        otel: 'otel',
+      },
+      entry: `place="luna" 1ms 3 KB`,
+    });
+    expect(log.otelLanguage).toBeDefined();
+    expect(log.body).toEqual(`place="luna" 1ms 3 KB`);
+  });
+
+  test('Augments OTel log lines', () => {
+    config.featureToggles.otelLogsFormatting = true;
+    const log = createLogLine({
+      labels: {
+        severity_number: '1',
+        telemetry_sdk_language: 'php',
+        scope_name: 'scope',
+        aws_ignore: 'ignored',
+        key: 'value',
+        otel: 'otel',
+      },
+      entry: `place="luna" 1ms 3 KB`,
+    });
+    expect(log.otelLanguage).toBeDefined();
+    expect(log.body).toEqual(`place="luna" 1ms 3 KB key=value otel=otel`);
   });
 });

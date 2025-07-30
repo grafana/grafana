@@ -38,6 +38,13 @@ func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, op
 	}
 
 	// General validations.
+	if sv.Name == "" {
+		errs = append(errs, field.Required(field.NewPath("metadata", "name"), "a `name` is required"))
+	}
+	if sv.Namespace == "" {
+		errs = append(errs, field.Required(field.NewPath("metadata", "namespace"), "a `namespace` is required"))
+	}
+
 	if sv.Spec.Value != nil && len(*sv.Spec.Value) > contracts.SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES {
 		errs = append(
 			errs,

@@ -26,7 +26,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { FieldColorModeId, TableCellHeight } from '@grafana/schema';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -52,25 +52,29 @@ import {
   useRowHeight,
   useScrollbarWidth,
   useSortedRows,
-  useTypographyCtx,
 } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps } from './types';
 import {
+  applySort,
+  computeColWidths,
+  createTypographyContext,
+  displayJsonValue,
+  extractPixelValue,
   frameToRecords,
+  getAlignment,
+  getApplyToRowBgFn,
+  getCellColors,
+  getCellLinks,
+  getCellOptions,
   getDefaultRowHeight,
   getDisplayName,
   getIsNestedTable,
-  getTextAlign,
+  getJustifyContent,
   getVisibleFields,
-  shouldTextOverflow,
-  getApplyToRowBgFn,
-  computeColWidths,
-  applySort,
-  getCellColors,
-  getCellOptions,
-  shouldTextWrap,
   isCellInspectEnabled,
-  getCellLinks,
+  shouldTextOverflow,
+  shouldTextWrap,
+  TextAlign,
   withDataLinksActionsTooltip,
 } from './utils';
 
@@ -157,9 +161,8 @@ export function TableNG(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
   const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
-  const defaultHeaderHeight = getDefaultRowHeight(theme, TableCellHeight.Sm);
   const [isInspecting, setIsInspecting] = useState(false);
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
@@ -169,13 +172,20 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
     [width, hasNestedFrames, scrollbarWidth]
   );
-  const typographyCtx = useTypographyCtx();
+  const typographyCtx = useMemo(
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
+      ),
+    [theme]
+  );
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    defaultHeight: defaultHeaderHeight,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
@@ -185,7 +195,6 @@ export function TableNG(props: TableNGProps) {
     fields: visibleFields,
     hasNestedFrames,
     defaultHeight: defaultRowHeight,
-    headerHeight,
     expandedRows,
     typographyCtx,
   });
@@ -208,7 +217,11 @@ export function TableNG(props: TableNGProps) {
   });
 
   // Create a map of column key to text wrap
-  const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
+  const footerCalcs = useFooterCalcs(sortedRows, visibleFields, {
+    enabled: hasFooter,
+    footerOptions,
+    isCountRowsSet,
+  });
   const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   const renderRow = useMemo(
@@ -279,7 +292,6 @@ export function TableNG(props: TableNGProps) {
       };
 
       let lastRowIdx = -1;
-      let _rowHeight = 0;
       // shared when whole row will be styled by a single cell's color
       let rowCellStyle: Partial<CSSProperties> = {
         color: undefined,
@@ -307,7 +319,16 @@ export function TableNG(props: TableNGProps) {
           field.display = getDisplayProcessor({ field, theme });
         }
 
-        const justifyContent = getTextAlign(field);
+        // attach JSONCell custom display function to JSONView cell type
+        if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
+          field.display = displayJsonValue;
+        }
+
+        // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
+        // the text-align css property, and for others, we'll use justify-content to align the cell
+        // contents with flexbox. We always just get both and provide both when styling the cell.
+        const textAlign = getAlignment(field);
+        const justifyContent = getJustifyContent(textAlign);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent);
@@ -332,6 +353,7 @@ export function TableNG(props: TableNGProps) {
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
+        const isMonospace = cellType === TableCellDisplayMode.JSONView;
 
         result.colsWithTooltip[displayName] = withTooltip;
 
@@ -344,7 +366,16 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.ColorBackground:
           case TableCellDisplayMode.ColorText:
           case TableCellDisplayMode.DataLinks:
-            cellClass = getCellStyles(theme, justifyContent, shouldWrap, shouldOverflow, withTooltip, canBeColorized);
+          case TableCellDisplayMode.JSONView:
+            cellClass = getCellStyles(
+              theme,
+              textAlign,
+              shouldWrap,
+              shouldOverflow,
+              canBeColorized,
+              isMonospace,
+              cellType === TableCellDisplayMode.DataLinks
+            );
             break;
         }
 
@@ -356,7 +387,6 @@ export function TableNG(props: TableNGProps) {
 
           // meh, this should be cached by the renderRow() call?
           if (rowIdx !== lastRowIdx) {
-            _rowHeight = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
             lastRowIdx = rowIdx;
 
             rowCellStyle.color = undefined;
@@ -395,6 +425,9 @@ export function TableNG(props: TableNGProps) {
         const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
           const rowIdx = props.row.__index;
           const value = props.row[props.column.key];
+          // TODO: it would be nice to get rid of passing height down as a prop. but this value
+          // is cached so the cost of calling for every cell is low.
+          const height = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
           const frame = data;
 
           return (
@@ -403,7 +436,7 @@ export function TableNG(props: TableNGProps) {
                 cellOptions,
                 frame,
                 field,
-                height: _rowHeight,
+                height,
                 justifyContent,
                 rowIdx,
                 theme,
@@ -517,12 +550,19 @@ export function TableNG(props: TableNGProps) {
       },
       renderCell: ({ row }) => {
         if (row.__depth === 0) {
+          const rowIdx = row.__index;
+
           return (
             <RowExpander
               height={defaultRowHeight}
-              isExpanded={expandedRows[row.__index] ?? false}
+              isExpanded={expandedRows.has(rowIdx)}
               onCellExpand={() => {
-                setExpandedRows({ ...expandedRows, [row.__index]: !expandedRows[row.__index] });
+                if (expandedRows.has(rowIdx)) {
+                  expandedRows.delete(rowIdx);
+                } else {
+                  expandedRows.add(rowIdx);
+                }
+                setExpandedRows(new Set(expandedRows));
               }}
             />
           );
@@ -548,7 +588,7 @@ export function TableNG(props: TableNGProps) {
             {...commonDataGridProps}
             className={clsx(styles.grid, styles.gridNested)}
             headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
-            headerRowHeight={hasNestedHeaders ? defaultHeaderHeight : 0}
+            headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
             columns={nestedColumns}
             rows={expandedRecords}
             renderers={{ renderRow, renderCell: renderCellRoot }}
@@ -567,7 +607,6 @@ export function TableNG(props: TableNGProps) {
     crossFilterOrder,
     crossFilterRows,
     data,
-    defaultHeaderHeight,
     defaultRowHeight,
     enableSharedCrosshair,
     expandedRows,
@@ -614,11 +653,17 @@ export function TableNG(props: TableNGProps) {
         rows={paginatedRows}
         headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
-        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
+        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault, target }) => {
           // Note: could be column.field; JS says yes, but TS says no!
           const field = columns[column.idx].field;
 
-          if (colsWithTooltip[getDisplayName(field)]) {
+          if (
+            colsWithTooltip[getDisplayName(field)] &&
+            target instanceof HTMLElement &&
+            // this walks up the tree to find either a faux link wrapper or the cell root
+            // it then only proceeds if we matched the faux link wrapper
+            target.closest('a[aria-haspopup], .rdg-cell')?.matches('a')
+          ) {
             const rowIdx = row.__index;
             setTooltipState({
               coords: {
@@ -710,16 +755,11 @@ export function TableNG(props: TableNGProps) {
  * this is passed to the top-level `renderRow` prop on DataGrid. applies aria attributes and custom event handlers.
  */
 const renderRowFactory =
-  (
-    fields: Field[],
-    panelContext: PanelContext,
-    expandedRows: Record<string, boolean>,
-    enableSharedCrosshair: boolean
-  ) =>
+  (fields: Field[], panelContext: PanelContext, expandedRows: Set<number>, enableSharedCrosshair: boolean) =>
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
     const rowIdx = row.__index;
-    const isExpanded = !!expandedRows[rowIdx];
+    const isExpanded = expandedRows.has(rowIdx);
 
     // Don't render non expanded child rows
     if (row.__depth === 1 && !isExpanded) {
@@ -762,6 +802,8 @@ const getGridStyles = (
     '--rdg-header-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
     '--rdg-border-color': theme.colors.border.weak,
     '--rdg-color': theme.colors.text.primary,
+    '--rdg-summary-border-color': theme.colors.border.weak,
+    '--rdg-summary-border-width': '1px',
 
     // note: this cannot have any transparency since default cells that
     // overlay/overflow on hover inherit this background and need to occlude cells below
@@ -778,7 +820,27 @@ const getGridStyles = (
 
     border: 'none',
 
-    '.rdg-summary-row': {
+    '.rdg-cell': {
+      '&:last-child': {
+        borderInlineEnd: 'none',
+      },
+    },
+
+    // add a box shadow on hover and selection for all body cells
+    '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
+      '&:hover, &[aria-selected=true]': {
+        boxShadow: theme.shadows.z2,
+      },
+      // selected cells should appear below hovered cells.
+      '&:hover': {
+        zIndex: theme.zIndex.tooltip - 2,
+      },
+      '&[aria-selected=true]': {
+        zIndex: theme.zIndex.tooltip - 3,
+      },
+    },
+
+    '.rdg-header-row, .rdg-summary-row': {
       '.rdg-cell': {
         zIndex: theme.zIndex.tooltip - 1,
         paddingInline: TABLE.CELL_PADDING,
@@ -879,40 +941,39 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
-  justifyContent: Property.JustifyContent,
+  textAlign: TextAlign,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  hasTooltip: boolean,
-  isColorized: boolean
+  isColorized: boolean,
+  isMonospace: boolean,
+  // TODO: replace this with cellTypeStyles: TemplateStringsArray object
+  isLinkCell: boolean
 ) =>
   css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent,
+    textAlign,
+    justifyContent: getJustifyContent(textAlign),
     paddingInline: TABLE.CELL_PADDING,
     minHeight: '100%',
     backgroundClip: 'padding-box !important', // helps when cells have a bg color
-    ...(shouldWrap && { whiteSpace: 'pre-line' }),
-    ...(hasTooltip && { cursor: 'pointer' }),
-
-    '&:last-child': {
-      borderInlineEnd: 'none',
-    },
+    ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
+    ...(isMonospace && { fontFamily: 'monospace' }),
 
     // should omit if no cell actions, and no shouldOverflow
-    '&:hover': {
+    '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': {
         display: 'flex',
       },
       ...(shouldOverflow && {
-        zIndex: theme.zIndex.tooltip - 2,
         whiteSpace: 'pre-line',
         height: 'fit-content',
         minWidth: 'fit-content',
+        ...(isMonospace && { whiteSpace: 'pre' }),
       }),
     },
 
-    [hasTooltip ? '&' : 'a']: {
+    a: {
       cursor: 'pointer',
       ...(isColorized
         ? {
@@ -927,4 +988,22 @@ const getCellStyles = (
             },
           }),
     },
+
+    ...(isLinkCell && {
+      '> a': {
+        // display: 'inline', // textWrap ? 'block' : 'inline',
+        whiteSpace: 'nowrap',
+        paddingInline: theme.spacing(1),
+        borderRight: `2px solid ${theme.colors.border.medium}`,
+
+        '&:first-of-type': {
+          paddingInlineStart: 0,
+        },
+
+        '&:last-of-type': {
+          borderRight: 'none',
+          paddingInlineEnd: 0,
+        },
+      },
+    }),
   });

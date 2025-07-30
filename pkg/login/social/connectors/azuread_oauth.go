@@ -336,7 +336,7 @@ func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption)
 		opts = append(opts, oauth2.SetAuthURLParam("domain_hint", domainHint))
 	}
 
-	return s.Config.AuthCodeURL(state, opts...)
+	return s.getAuthCodeURL(state, opts...)
 }
 
 func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {

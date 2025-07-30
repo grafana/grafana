@@ -22,8 +22,8 @@ export default function useExtensionActions(): CommandPaletteAction[] {
       priority: EXTENSIONS_PRIORITY,
       id: link.id,
       name: link.title,
-      target: link.path,
       perform: () => link.onClick && link.onClick(),
+      url: link.path,
     }));
   }, [links]);
 }

@@ -3,6 +3,9 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -21,7 +24,8 @@ import (
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardsV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -41,15 +45,16 @@ type provisioningTestHelper struct {
 	*apis.K8sTestHelper
 	ProvisioningPath string
 
-	Repositories *apis.K8sResourceClient
-	Jobs         *apis.K8sResourceClient
-	Folders      *apis.K8sResourceClient
-	DashboardsV0 *apis.K8sResourceClient
-	DashboardsV1 *apis.K8sResourceClient
-	DashboardsV2 *apis.K8sResourceClient
-	AdminREST    *rest.RESTClient
-	EditorREST   *rest.RESTClient
-	ViewerREST   *rest.RESTClient
+	Repositories       *apis.K8sResourceClient
+	Jobs               *apis.K8sResourceClient
+	Folders            *apis.K8sResourceClient
+	DashboardsV0       *apis.K8sResourceClient
+	DashboardsV1       *apis.K8sResourceClient
+	DashboardsV2alpha1 *apis.K8sResourceClient
+	DashboardsV2alpha2 *apis.K8sResourceClient
+	AdminREST          *rest.RESTClient
+	EditorREST         *rest.RESTClient
+	ViewerREST         *rest.RESTClient
 }
 
 func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options *provisioning.SyncJobOptions) {
@@ -110,6 +115,8 @@ func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 		state := mustNestedString(result.Object, "status", "state")
 		require.Equal(t, string(provisioning.JobStateSuccess), state,
 			"historic job '%s' was not successful", job.GetName())
+		errors := mustNestedStringSlice(result.Object, "status", "errors")
+		require.Empty(t, errors, "historic job '%s' has errors: %v", job.GetName(), errors)
 	}, time.Second*10, time.Millisecond*25) {
 		// We also want to add the job details to the error when it fails.
 		job, err := h.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
@@ -182,8 +189,12 @@ func (h *provisioningTestHelper) RenderObject(t *testing.T, filePath string, val
 // CopyToProvisioningPath copies a file to the provisioning path.
 // The from path is relative to test file's directory.
 func (h *provisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to string) {
+	fullPath := path.Join(h.ProvisioningPath, to)
+	err := os.MkdirAll(path.Dir(fullPath), 0750)
+	require.NoError(t, err, "failed to create directories for provisioning path")
+
 	file := h.LoadFile(from)
-	err := os.WriteFile(path.Join(h.ProvisioningPath, to), file, 0600)
+	err = os.WriteFile(fullPath, file, 0600)
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
@@ -255,10 +266,15 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 	})
-	dashboardsV2 := helper.GetResourceClient(apis.ResourceClientArgs{
+	dashboardsV2alpha1 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR:       dashboardV2.DashboardResourceInfo.GroupVersionResource(),
+		GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
+	})
+	dashboardsV2alpha2 := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       dashboardsV2alpha2.DashboardResourceInfo.GroupVersionResource(),
 	})
 
 	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
@@ -289,20 +305,29 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		ProvisioningPath: provisioningPath,
 		K8sTestHelper:    helper,
 
-		Repositories: repositories,
-		AdminREST:    adminClient,
-		EditorREST:   editorClient,
-		ViewerREST:   viewerClient,
-		Jobs:         jobs,
-		Folders:      folders,
-		DashboardsV0: dashboardsV0,
-		DashboardsV1: dashboardsV1,
-		DashboardsV2: dashboardsV2,
+		Repositories:       repositories,
+		AdminREST:          adminClient,
+		EditorREST:         editorClient,
+		ViewerREST:         viewerClient,
+		Jobs:               jobs,
+		Folders:            folders,
+		DashboardsV0:       dashboardsV0,
+		DashboardsV1:       dashboardsV1,
+		DashboardsV2alpha1: dashboardsV2alpha1,
+		DashboardsV2alpha2: dashboardsV2alpha2,
 	}
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	v, _, err := unstructured.NestedString(obj, fields...)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+func mustNestedStringSlice(obj map[string]interface{}, fields ...string) []string {
+	v, _, err := unstructured.NestedStringSlice(obj, fields...)
 	if err != nil {
 		panic(err)
 	}
@@ -323,4 +348,45 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return repo
+}
+
+// postFilesRequest performs a direct HTTP POST request to the files API.
+// This bypasses Kubernetes REST client limitations with '/' characters in subresource names.
+type filesPostOptions struct {
+	targetPath   string // The target file/directory path
+	originalPath string // Source path for move operations (optional)
+	message      string // Commit message (optional)
+	body         string // Request body content (optional)
+	ref          string // Git ref/branch (optional)
+}
+
+func (h *provisioningTestHelper) postFilesRequest(t *testing.T, repo string, opts filesPostOptions) *http.Response {
+	addr := h.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	baseUrl := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
+		addr, repo, opts.targetPath)
+
+	// Build the URL with proper query parameter encoding
+	parsedUrl, err := url.Parse(baseUrl)
+	require.NoError(t, err)
+	params := parsedUrl.Query()
+
+	if opts.originalPath != "" {
+		params.Set("originalPath", opts.originalPath)
+	}
+	if opts.message != "" {
+		params.Set("message", opts.message)
+	}
+	if opts.ref != "" {
+		params.Set("ref", opts.ref)
+	}
+	parsedUrl.RawQuery = params.Encode()
+
+	req, err := http.NewRequest(http.MethodPost, parsedUrl.String(), strings.NewReader(opts.body))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	return resp
 }

@@ -13,14 +13,14 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { useState, useEffect, memo, useCallback } from 'react';
+import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
 
-import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { GrafanaTheme2, TraceSearchProps, SelectableValue, toOption } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { defaultFilters, SearchProps } from '../../../useSearch';
+import { DEFAULT_SPAN_FILTERS } from '../../../../state/constants';
 import { getTraceServiceNames, getTraceSpanNames } from '../../../utils/tags';
 import SearchBarInput from '../../common/SearchBarInput';
 import { Trace } from '../../types/trace';
@@ -31,8 +31,8 @@ import { SpanFiltersTags } from './SpanFiltersTags';
 
 export type SpanFilterProps = {
   trace: Trace;
-  search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
+  search: TraceSearchProps;
+  setSearch: (newSearch: TraceSearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
@@ -57,6 +57,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
+  const prevTraceIdRef = useRef<string>();
 
   const durationRegex = /^\d+(?:\.\d)?\d*(?:ns|us|µs|ms|s|m|h)$/;
 
@@ -65,11 +66,20 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setSpanNames(undefined);
     setTagKeys(undefined);
     setTagValues({});
-    setSearch(defaultFilters);
+    setSearch(DEFAULT_SPAN_FILTERS);
   }, [setSearch]);
 
   useEffect(() => {
-    clear();
+    // Only clear filters when trace ID actually changes (not on initial mount)
+    const currentTraceId = trace?.traceID;
+
+    const traceHasChanged = prevTraceIdRef.current && prevTraceIdRef.current !== currentTraceId;
+
+    if (traceHasChanged) {
+      clear();
+    }
+
+    prevTraceIdRef.current = currentTraceId;
   }, [clear, trace]);
 
   const setShowSpanFilterMatchesOnly = useCallback(
@@ -90,7 +100,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     return null;
   }
 
-  const setSpanFiltersSearch = (spanSearch: SearchProps) => {
+  const setSpanFiltersSearch = (spanSearch: TraceSearchProps) => {
     setFocusedSpanIndexForSearch(-1);
     setFocusedSpanIdForSearch('');
     setSearch(spanSearch);

@@ -1,7 +1,12 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
+import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardViewItemWithUIItems } from '../types';
+import { useChildrenByParentUIDState } from '../state/hooks';
+import { findItem } from '../state/utils';
+import { DashboardTreeSelection, DashboardViewItemWithUIItems, BrowseDashboardsPermissions } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
   return baseId + item.uid;
@@ -56,4 +61,62 @@ export function formatFolderName(folderName?: string): string {
   }
 
   return result;
+}
+
+// Fetch provisioned dashboard path in repository
+export async function fetchProvisionedDashboardPath(uid: string): Promise<string | undefined> {
+  try {
+    const dto = await getDashboardAPI().getDashboardDTO(uid);
+    const sourcePath =
+      'meta' in dto
+        ? dto.meta.k8s?.annotations?.[AnnoKeySourcePath] || dto.meta.provisionedExternalId
+        : dto.metadata?.annotations?.[AnnoKeySourcePath];
+    return `${sourcePath}`;
+  } catch (error) {
+    console.error('Error fetching provisioned dashboard path:', error);
+    return undefined;
+  }
+}
+
+// Collect selected dashboard and folder from the DashboardTreeSelection
+// This is used to prepare the items for bulk delete operation.
+export function collectSelectedItems(
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
+  childrenByParentUID: ReturnType<typeof useChildrenByParentUIDState>,
+  rootItems: DashboardViewItem[] = []
+) {
+  const targets: Array<{ uid: string; isFolder: boolean; displayName: string }> = [];
+
+  // folders
+  for (const [uid, selected] of Object.entries(selectedItems.folder)) {
+    if (selected) {
+      const item = findItem(rootItems, childrenByParentUID, uid);
+      targets.push({ uid, isFolder: true, displayName: item?.title || uid });
+    }
+  }
+
+  // dashboards
+  for (const [uid, selected] of Object.entries(selectedItems.dashboard)) {
+    if (selected) {
+      const item = findItem(rootItems, childrenByParentUID, uid);
+      targets.push({ uid, isFolder: false, displayName: item?.title || uid });
+    }
+  }
+
+  return targets;
+}
+
+export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions) {
+  const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
+  return itemKind === 'folder'
+    ? Boolean(canEditFolders || canDeleteFolders)
+    : Boolean(canEditDashboards || canDeleteDashboards);
+}
+
+export function canSelectItems(permissions: BrowseDashboardsPermissions) {
+  const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
+  // Users can select items only if they have both edit and delete permissions for at least one item type
+  const canSelectFolders = canEditFolders || canDeleteFolders;
+  const canSelectDashboards = canEditDashboards || canDeleteDashboards;
+  return Boolean(canSelectFolders || canSelectDashboards);
 }

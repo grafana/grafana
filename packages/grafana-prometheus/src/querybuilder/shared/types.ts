@@ -99,3 +99,17 @@ export interface VisualQueryModeller {
 
   getOperationDef(id: string): QueryBuilderOperationDef | undefined;
 }
+
+export interface VisualQueryBinary<T> {
+  operator: string;
+  vectorMatchesType?: 'on' | 'ignoring';
+  vectorMatches?: string;
+  query: T;
+}
+
+export interface PrometheusVisualQuery {
+  metric?: string;
+  labels: QueryBuilderLabelFilter[];
+  operations: QueryBuilderOperation[];
+  binaryQueries?: Array<VisualQueryBinary<PrometheusVisualQuery>>;
+}
