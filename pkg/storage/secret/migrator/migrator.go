@@ -152,4 +152,26 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Cols: []string{"namespace", "label", "active"},
 		Type: migrator.IndexType,
 	}))
+
+	// Owner Reference columns
+	mg.AddMigration("add owner_reference_api_version column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_api_version",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_kind column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_kind",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add owner_reference_name column to "+TableNameSecureValue, migrator.NewAddColumnMigration(secureValueTable, &migrator.Column{
+		Name:     "owner_reference_name",
+		Type:     migrator.DB_NVarchar,
+		Length:   253, // Limit enforced by K8s.
+		Nullable: true,
+	}))
 }

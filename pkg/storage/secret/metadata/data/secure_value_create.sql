@@ -20,6 +20,15 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ if .Row.Ref.Valid }}
   {{ .Ident "ref" }},
   {{ end }}
+  {{ if .Row.OwnerReferenceAPIVersion.Valid }}
+  {{ .Ident "owner_reference_api_version" }},
+  {{ end }}
+  {{ if .Row.OwnerReferenceKind.Valid }}
+  {{ .Ident "owner_reference_kind" }},
+  {{ end }}
+  {{ if .Row.OwnerReferenceName.Valid }}
+  {{ .Ident "owner_reference_name" }},
+  {{ end }}
   {{ .Ident "external_id" }}
 ) VALUES (
   {{ .Arg .Row.GUID }},
@@ -42,6 +51,15 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ end }}
   {{ if .Row.Ref.Valid }}
   {{ .Arg .Row.Ref.String }},
+  {{ end }}
+  {{ if .Row.OwnerReferenceAPIVersion.Valid }}
+  {{ .Arg .Row.OwnerReferenceAPIVersion.String }},
+  {{ end }}
+  {{ if .Row.OwnerReferenceKind.Valid }}
+  {{ .Arg .Row.OwnerReferenceKind.String }},
+  {{ end }}
+  {{ if .Row.OwnerReferenceName.Valid }}
+  {{ .Arg .Row.OwnerReferenceName.String }},
   {{ end }}
   {{ .Arg .Row.ExternalID }}
 );

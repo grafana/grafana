@@ -14,6 +14,9 @@ INSERT INTO `secret_secure_value` (
   `keeper`,
   `decrypters`,
   `ref`,
+  `owner_reference_api_version`,
+  `owner_reference_kind`,
+  `owner_reference_name`,
   `external_id`
 ) VALUES (
   'abc',
@@ -31,5 +34,8 @@ INSERT INTO `secret_secure_value` (
   'keeper_test',
   'decrypters_test',
   'ref_test',
+  'prometheus.datasource.grafana.app/v0alpha1',
+  'DataSource',
+  'prom-config',
   'extId'
 );
