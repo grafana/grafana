@@ -242,9 +242,15 @@ export const StyleEditor = (props: Props) => {
               value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
               onChange={onAlignVerticalChange}
               options={[
-                { value: VerticalAlign.Top, label: capitalize(VerticalAlign.Top) },
-                { value: VerticalAlign.Center, label: capitalize(VerticalAlign.Center) },
-                { value: VerticalAlign.Bottom, label: capitalize(VerticalAlign.Bottom) },
+                { value: VerticalAlign.Top, label: t('geomap.style-editor.vertical-align-options.label-top', 'Top') },
+                {
+                  value: VerticalAlign.Center,
+                  label: t('geomap.style-editor.vertical-align-options.label-center', 'Center'),
+                },
+                {
+                  value: VerticalAlign.Bottom,
+                  label: t('geomap.style-editor.vertical-align-options.label-bottom', 'Bottom'),
+                },
               ]}
             />
           </Field>
@@ -253,9 +259,18 @@ export const StyleEditor = (props: Props) => {
               value={value?.symbolAlign?.horizontal ?? defaultStyleConfig.symbolAlign.horizontal}
               onChange={onAlignHorizontalChange}
               options={[
-                { value: HorizontalAlign.Left, label: capitalize(HorizontalAlign.Left) },
-                { value: HorizontalAlign.Center, label: capitalize(HorizontalAlign.Center) },
-                { value: HorizontalAlign.Right, label: capitalize(HorizontalAlign.Right) },
+                {
+                  value: HorizontalAlign.Left,
+                  label: t('geomap.style-editor.horizontal-align-options.label-left', 'Left'),
+                },
+                {
+                  value: HorizontalAlign.Center,
+                  label: t('geomap.style-editor.horizontal-align-options.label-center', 'Center'),
+                },
+                {
+                  value: HorizontalAlign.Right,
+                  label: t('geomap.style-editor.horizontal-align-options.label-right', 'Right'),
+                },
               ]}
             />
           </Field>
