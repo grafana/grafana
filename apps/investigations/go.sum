@@ -351,8 +351,8 @@ github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 h1:0TYrkzAc3u0HX+9GK86cGrLTUAc
 github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0/go.mod h1:H9sVh9A4yg5egMGZeh0mifxT1Q/uqwKe1LBjBJU6pN8=
 github.com/grafana/grafana-plugin-sdk-go v0.278.0 h1:5/rIYparLi02pofdaag8wnjspMMVNCi8cZhC4cdC3Ho=
 github.com/grafana/grafana-plugin-sdk-go v0.278.0/go.mod h1:+8NXT/XUJ/89GV6FxGQ366NZ3nU+cAXDMd0OUESF9H4=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250730143415-c28b2215e06b h1:PiBa9ebAZVs0shxF04nZJHZUIhv2KnGg1yzrYEm7mPU=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250730143415-c28b2215e06b/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730154715-ae15ba562e71 h1:7AVAgb0CalPYtUC9SJKYAkByOBGwL6r50P4QMEiJi44=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730154715-ae15ba562e71/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725152715-69d3b9023cec h1:cg1GbDVZ7goqDrqoMzqeN4AeAcD271MGYjOvdVTDwfw=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250725152715-69d3b9023cec/go.mod h1:3ZgUe0E3rIhI026xF4DKFptOst/jpDHJ/Sn+bRODzI4=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b h1:QyJLJn3xwFTIXu9KPZujsrIUN0X8DdiR9b2h75L0AfI=
