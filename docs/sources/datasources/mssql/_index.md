@@ -50,56 +50,55 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   transformations:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
   alerting:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
   visualizations:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
   variables:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
   annotate-visualizations:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
   set-up-grafana-monitoring:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
   configure-mssql-data-source:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure
   mssql-query-editor:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
   mssql-template-variables:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
   query-caching:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
-
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
 ---
 
 # Microsoft SQL Server (MSSQL) data source

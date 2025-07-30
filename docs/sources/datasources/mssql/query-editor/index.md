@@ -40,15 +40,15 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
   explore:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Microsoft SQL Server query editor
 
-Grafana provides a query editor for the  Microsoft SQL Server data source, which is located on the [Explore page](ref:explore). You can also access the MSSQL query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
+Grafana provides a query editor for the Microsoft SQL Server data source, which is located on the [Explore page](ref:explore). You can also access the MSSQL query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
 
 This topic explains querying specific to the MSSQL data source.
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data). For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
@@ -84,7 +84,7 @@ In addition to writing queries, the query editor also allows you to create and u
 
 The following components will help you build a T-SQL query:
 
-- **Format** - Select a format response from the drop-down for the MSSQL query. The default is **Table**. Refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries) for more information and examples. If you select the **Time series** format option, you must include a `time` column. 
+- **Format** - Select a format response from the drop-down for the MSSQL query. The default is **Table**. Refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries) for more information and examples. If you select the **Time series** format option, you must include a `time` column.
 
 - **Dataset** - Select a database to query from the drop-down. Grafana automatically populates the drop-down with all databases the user has access to. If a default database is configured in the Data Source Configuration page or via a provisioning file, users will be limited to querying only that predefined database.
 
@@ -93,13 +93,15 @@ The following components will help you build a T-SQL query:
 - **Table** - Select a table from the drop-down. After selecting a database, the next drop-down displays all available tables in that database.
 
 - **Data operations** - _Optional_. Select an aggregation or a macro from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **garbage can icon** to remove data operations.
+
   - **Column** - Select a column on which to run the aggregation.
   - **Interval** - Select an interval from the drop-down. You'll see this option when you choose a `time group` macro from the drop-down.
   - **Fill** - _Optional_. Add a `FILL` method to populate missing time intervals with default values (such as NULL, 0, or a specified value) when no data exists for those intervals. This ensures continuity in the time series, avoiding gaps in visualizations.
   - **Alias** - _Optional_. Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
 
 - **Filter** - Toggle to add filters.
-  - **Filter by column value** - _Optional_. If you toggle **Filter** you can add a column to filter by from the drop-down. To filter by additional columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added, use the `AND` or `OR` operators to define how conditions are evaluated. `AND` requires all conditions to be true, while `OR` requires any condition to be true.  Use the second drop-down to select the filter value. To remove a filter, click the **X icon** next to it. If you select a `date-type` column, you can use macros from the operator list and choose `timeFilter` to insert the `$\_\_timeFilter` macro into your query with the selected date column. 
+
+  - **Filter by column value** - _Optional_. If you toggle **Filter** you can add a column to filter by from the drop-down. To filter by additional columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added, use the `AND` or `OR` operators to define how conditions are evaluated. `AND` requires all conditions to be true, while `OR` requires any condition to be true. Use the second drop-down to select the filter value. To remove a filter, click the **X icon** next to it. If you select a `date-type` column, you can use macros from the operator list and choose `timeFilter` to insert the `$\_\_timeFilter` macro into your query with the selected date column.
 
     After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the `$\_\_timeFilter` macro to the query with the selected date column. Refer to [Macros](#macros) for more information.
 
@@ -146,27 +148,26 @@ To simplify syntax and to allow for dynamic components, such as date range filte
 Use macros in the `SELECT` clause to simplify the creation of time series queries.
 From the **Data operations** drop-down, choose a macro such as `$\_\_timeGroup` or `$\_\_timeGroupAlias`. Then, select a time column from the **Column** drop-down and a time interval from the **Interval** drop-down. This generates a time-series query based on your selected time grouping.
 
-
-| **Macro**                                              | **Description**                                                                                                                                                                                                                         |
-|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `$__time(dateColumn)`                                  | Renames the specified column to `_time`. <br/>Example: `dateColumn AS time`                                                                                                                                                                           |
-| `$__timeEpoch(dateColumn)`                             | Converts a `DATETIME` column to a Unix timestamp and renames it to `_time`. <br/>Example: `DATEDIFF(second, '1970-01-01', dateColumn) AS time`                                                                                                        |
-| `$__timeFilter(dateColumn)`                            | Adds a time range filter for the specified column. <br/>Example: `dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'`                                                                                                                |
-| `$__timeFrom()`                                        | Returns the start of the current time range. <br/>Example: `'2017-04-21T05:01:17Z'`                                                                                                                                                                   |
-| `$__timeTo()`                                          | Returns the end of the current time range. <br/>Example: `'2017-04-21T05:06:17Z'`                                                                                                                                                                     |
-| `$__timeGroup(dateColumn, '5m'[, fillValue])`          | Groups the specified time column into intervals (e.g., 5 minutes). Optionally fills gaps with a value like `0`, `NULL`, or `previous`. <br/>Example: `CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) AS bigint) * 300`              |
-| `$__timeGroup(dateColumn, '5m', 0)`                    | Same as above, with `0` used to fill missing data points.                                                                                                                                                                                             |
-| `$__timeGroup(dateColumn, '5m', NULL)`                 | Same as above, with `NULL` used for missing data points.                                                                                                                                                                                              |
-| `$__timeGroup(dateColumn, '5m', previous)`             | Same as above, using the previous value to fill gaps. If no previous value exists, `NULL` is used.                                                                                                                                                    |
-| `$__timeGroupAlias(dateColumn, '5m')`                  | Same as `$__timeGroup`, but also adds an alias to the resulting column.                                                                                                                                                                               |
-| `$__unixEpochFilter(dateColumn)`                       | Adds a time range filter using Unix timestamps. <br/>Example: `dateColumn > 1494410783 AND dateColumn < 1494497183`                                                                                                                                   |
-| `$__unixEpochFrom()`                                   | Returns the start of the current time range as a Unix timestamp. <br/>Example: `1494410783`                                                                                                                                                           |
-| `$__unixEpochTo()`                                     | Returns the end of the current time range as a Unix timestamp. <br/>Example: `1494497183`                                                                                                                                                             |
-| `$__unixEpochNanoFilter(dateColumn)`                   | Adds a time range filter using nanosecond-precision Unix timestamps. <br/>Example: `dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872`                                                                                            |
-| `$__unixEpochNanoFrom()`                               | Returns the start of the current time range as a nanosecond Unix timestamp. <br/>Example: `1494410783152415214`                                                                                                                                       |
-| `$__unixEpochNanoTo()`                                 | Returns the end of the current time range as a nanosecond Unix timestamp. <br/>Example: `1494497183142514872`                                                                                                                                         |
-| `$__unixEpochGroup(dateColumn, '5m', [fillMode])`      | Same as `$__timeGroup`, but for Unix timestamps. Optional `fillMode` controls how to handle missing points.                                                                                                                                           |
-| `$__unixEpochGroupAlias(dateColumn, '5m', [fillMode])` | Same as above, but adds an alias to the grouped column.                                                                                                                                                                                               |
+| **Macro**                                              | **Description**                                                                                                                                                                                                                          |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$__time(dateColumn)`                                  | Renames the specified column to `_time`. <br/>Example: `dateColumn AS time`                                                                                                                                                              |
+| `$__timeEpoch(dateColumn)`                             | Converts a `DATETIME` column to a Unix timestamp and renames it to `_time`. <br/>Example: `DATEDIFF(second, '1970-01-01', dateColumn) AS time`                                                                                           |
+| `$__timeFilter(dateColumn)`                            | Adds a time range filter for the specified column. <br/>Example: `dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'`                                                                                                  |
+| `$__timeFrom()`                                        | Returns the start of the current time range. <br/>Example: `'2017-04-21T05:01:17Z'`                                                                                                                                                      |
+| `$__timeTo()`                                          | Returns the end of the current time range. <br/>Example: `'2017-04-21T05:06:17Z'`                                                                                                                                                        |
+| `$__timeGroup(dateColumn, '5m'[, fillValue])`          | Groups the specified time column into intervals (e.g., 5 minutes). Optionally fills gaps with a value like `0`, `NULL`, or `previous`. <br/>Example: `CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) AS bigint) * 300` |
+| `$__timeGroup(dateColumn, '5m', 0)`                    | Same as above, with `0` used to fill missing data points.                                                                                                                                                                                |
+| `$__timeGroup(dateColumn, '5m', NULL)`                 | Same as above, with `NULL` used for missing data points.                                                                                                                                                                                 |
+| `$__timeGroup(dateColumn, '5m', previous)`             | Same as above, using the previous value to fill gaps. If no previous value exists, `NULL` is used.                                                                                                                                       |
+| `$__timeGroupAlias(dateColumn, '5m')`                  | Same as `$__timeGroup`, but also adds an alias to the resulting column.                                                                                                                                                                  |
+| `$__unixEpochFilter(dateColumn)`                       | Adds a time range filter using Unix timestamps. <br/>Example: `dateColumn > 1494410783 AND dateColumn < 1494497183`                                                                                                                      |
+| `$__unixEpochFrom()`                                   | Returns the start of the current time range as a Unix timestamp. <br/>Example: `1494410783`                                                                                                                                              |
+| `$__unixEpochTo()`                                     | Returns the end of the current time range as a Unix timestamp. <br/>Example: `1494497183`                                                                                                                                                |
+| `$__unixEpochNanoFilter(dateColumn)`                   | Adds a time range filter using nanosecond-precision Unix timestamps. <br/>Example: `dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872`                                                                               |
+| `$__unixEpochNanoFrom()`                               | Returns the start of the current time range as a nanosecond Unix timestamp. <br/>Example: `1494410783152415214`                                                                                                                          |
+| `$__unixEpochNanoTo()`                                 | Returns the end of the current time range as a nanosecond Unix timestamp. <br/>Example: `1494497183142514872`                                                                                                                            |
+| `$__unixEpochGroup(dateColumn, '5m', [fillMode])`      | Same as `$__timeGroup`, but for Unix timestamps. Optional `fillMode` controls how to handle missing points.                                                                                                                              |
+| `$__unixEpochGroupAlias(dateColumn, '5m', [fillMode])` | Same as above, but adds an alias to the grouped column.                                                                                                                                                                                  |
 
 ### View the interpolated query
 
@@ -212,9 +213,7 @@ SELECT * FROM [mssql_types]
 
 {{< figure src="/static/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-
-Use the keyword `AS` to define an alias in your query to rename a column or table. 
-
+Use the keyword `AS` to define an alias in your query to rename a column or table.
 
 **Example query with output:**
 
@@ -346,10 +345,10 @@ You can add annotation queries in the Dashboard menu's **Annotations** view.
 
 | Name      | Description                                                                                                       |
 | --------- | ----------------------------------------------------------------------------------------------------------------- |
-| `time`    | The name of the date/time field. Can be a column with a native SQL date/time data type or epoch value.          |
+| `time`    | The name of the date/time field. Can be a column with a native SQL date/time data type or epoch value.            |
 | `timeend` | _Optional_ name of the end date/time field. Can be a column with a native SQL date/time data type or epoch value. |
-| `text`    | Field containing the event description.                                                                                          |
-| `tags`    | _Optional_ field used for event tags, formatted as a comma-separated string.                                            |
+| `text`    | Field containing the event description.                                                                           |
+| `tags`    | _Optional_ field used for event tags, formatted as a comma-separated string.                                      |
 
 **Example database tables:**
 
@@ -413,7 +412,7 @@ Stored procedures have been verified to work with Grafana queries. However, note
 Stored procedures can be used in table, time series, and annotation queries, provided that the returned data matches the expected column names and formats described in the relevant previous sections in this document.
 
 {{< admonition type="note" >}}
-Grafana macro functions do not work inside stored procedures. 
+Grafana macro functions do not work inside stored procedures.
 {{< /admonition >}}
 
 {{< figure src="/static/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
@@ -503,7 +502,7 @@ DECLARE
 EXEC dbo.sp_test_epoch @from, @to
 ```
 
-This uses Grafana built-in macros to convert the selected time range into epoch time ($__unixEpochFrom() and $__unixEpochTo()), which are passed to the stored procedure as input parameters.
+This uses Grafana built-in macros to convert the selected time range into epoch time ($**unixEpochFrom() and $**unixEpochTo()), which are passed to the stored procedure as input parameters.
 
 ### Stored procedure with `datetime` format
 
