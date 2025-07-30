@@ -689,7 +689,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg)
+	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg, shortURLService)
 	if err != nil {
 		return nil, err
 	}
@@ -1254,7 +1254,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg)
+	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg, shortURLService)
 	if err != nil {
 		return nil, err
 	}
