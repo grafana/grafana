@@ -21,6 +21,7 @@ import { formatPrometheusLabelFilters } from '../formatter';
 
 import { generateMetricData } from './helpers';
 import { MetricData, MetricsData } from './types';
+import { fuzzySearch } from './uFuzzy';
 
 export const DEFAULT_RESULTS_PER_PAGE = 25;
 
@@ -111,7 +112,8 @@ export const MetricsModalContextProvider: FC<PropsWithChildren<MetricsModalConte
             return; // Ignore outdated results
           }
 
-          const resultsOptions: MetricsData = results.map((m) => generateMetricData(m, languageProvider));
+          const [fuzzyOrderedMetrics] = fuzzySearch(results, queryString);
+          const resultsOptions: MetricsData = fuzzyOrderedMetrics.map((m) => generateMetricData(m, languageProvider));
 
           setMetricsData(resultsOptions);
           setIsLoading(false);
