@@ -141,7 +141,7 @@ export const grammar: Grammar = {
   punctuation: /[{}(),.]/,
 };
 
-type FlameGraphQueryContext = {
+type PyroscopeQueryContext = {
   datasource: DataSourceRef & { name: string };
   start: number;
   end: number;
@@ -160,7 +160,7 @@ export function enrichDataFrameWithQueryContextMapper(
         return data;
       }
 
-      const context: FlameGraphQueryContext = {
+      const context: PyroscopeQueryContext = {
         datasource: {
           uid: query.datasource.uid,
           type: query.datasource.type,
