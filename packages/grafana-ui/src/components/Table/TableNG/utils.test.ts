@@ -41,6 +41,7 @@ import {
   applySort,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
   wrapUwrapCount,
+  getDataLinksCounter,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -864,6 +865,63 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('getDataLinksCounter', () => {
+    it('counts number of valid links using getCellLinks', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        values: ['value1'],
+        getLinks: jest.fn((): LinkModel[] => [
+          { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
+          { title: 'Invalid Link', target: '_blank', origin: { datasourceUid: 'test' } } as LinkModel, // No href or onClick
+          {
+            title: 'Link w',
+            href: 'asdf',
+            target: '_blank',
+            origin: { datasourceUid: 'test' },
+            onClick: jest.fn(() => {}),
+          },
+        ]),
+      };
+
+      const counter = getDataLinksCounter();
+      expect(counter('my value', 100, field, 0)).toBe(2);
+    });
+
+    it('does not call getLinks after calling it once for a given field', () => {
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        values: ['value1'],
+        getLinks: jest.fn((): LinkModel[] => [
+          { title: 'Link 1', href: 'http://example.com/1', target: '_blank', origin: { datasourceUid: 'test' } },
+          { title: 'Invalid Link', target: '_blank', origin: { datasourceUid: 'test' } } as LinkModel, // No href or onClick
+          {
+            title: 'Link w',
+            href: 'asdf',
+            target: '_blank',
+            origin: { datasourceUid: 'test' },
+            onClick: jest.fn(() => {}),
+          },
+        ]),
+      };
+
+      const counter = getDataLinksCounter();
+      expect(counter('my value', 100, field, 0)).toBe(2);
+      expect(counter('another value', 150, field, 15)).toBe(2);
+      expect(counter('yet another value', 300, field, 0)).toBe(2);
+      expect(field.getLinks).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getPillLineCounter', () => {
+    it.todo('counts up the number of lines using the pill measuring method');
+    it.todo('returns 0 if value is null');
+    it.todo('returns 0 if no pills are inferred');
+  });
+
   describe('buildHeaderLineCounters', () => {
     const ctx = {
       fontFamily: 'sans-serif',
@@ -970,8 +1028,6 @@ describe('TableNG utils', () => {
     it.todo('sets up line counting for pills if present and wrapping is on');
 
     it.todo('sets up line counting for datalinks if present and wrapping is on');
-
-    it.todo('clamps the line count to the max wrapped lines for a field if set');
   });
 
   describe('getRowHeight', () => {
