@@ -45,17 +45,17 @@ The system tracks various dashboard interaction types automatically using the [`
 
 The following dashboard interaction types are tracked for dashboard render performance profiling:
 
-| Interaction Type         | Trigger                    | Description                           | When Measured                                            |
-| ------------------------ | -------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `dashboard_view`         | Initial dashboard view     | Initial dashboard rendering           | When user first loads or navigates to a dashboard        |
-| `refresh`                | Manual/Auto refresh        | Dashboard refresh operations          | When user clicks refresh button or auto-refresh triggers |
-| `time_range_change`      | Time picker changes        | Time range modifications              | When user changes time range in time picker              |
-| `filter_added`           | Ad-hoc filter addition     | Adding new ad-hoc filters             | When user adds a new filter to the dashboard             |
-| `filter_removed`         | Ad-hoc filter removal      | Removing existing ad-hoc filters      | When user removes a filter from the dashboard            |
-| `filter_changes`         | Ad-hoc filter modification | Modifying existing ad-hoc filters     | When user changes filter values or operators             |
-| `filter_restored`        | Ad-hoc filter restoration  | Restoring previously removed filters  | When user restores a previously applied filter           |
-| `variable_value_changed` | Variable value changes     | Template variable value modifications | When user changes dashboard variable values              |
-| `scopes_changed`         | Scopes modifications       | Dashboard scopes changes              | When user modifies dashboard scopes                      |
+| Interaction Type         | Trigger                    | When Measured                                            |
+| ------------------------ | -------------------------- | -------------------------------------------------------- |
+| `dashboard_view`         | Dashboard view             | When user loads or navigates to a dashboard              |
+| `refresh`                | Manual/Auto refresh        | When user clicks refresh button or auto-refresh triggers |
+| `time_range_change`      | Time picker changes        | When user changes time range in time picker              |
+| `filter_added`           | Ad-hoc filter addition     | When user adds a new filter to the dashboard             |
+| `filter_removed`         | Ad-hoc filter removal      | When user removes a filter from the dashboard            |
+| `filter_changes`         | Ad-hoc filter modification | When user changes filter values or operators             |
+| `filter_restored`        | Ad-hoc filter restoration  | When user restores a previously applied filter           |
+| `variable_value_changed` | Variable value changes     | When user changes dashboard variable values              |
+| `scopes_changed`         | Scopes modifications       | When user modifies dashboard scopes                      |
 
 The interactions mentioned above are reported to Echo service as well as sent to [Faro](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/) as `dashboard_render` measurements:
 
