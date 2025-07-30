@@ -1,0 +1,85 @@
+{
+  "title": "V21 Data Links Series to Field Migration Test Dashboard",
+  "schemaVersion": 20,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Panel with data links",
+      "id": 1,
+      "options": {
+        "dataLinks": [
+          {
+            "url": "http://mylink.com?series=${__series.labels}&${__series.labels.a}",
+            "title": "Data Link 1"
+          },
+          {
+            "url": "http://anotherlink.com?param=${__series.labels}",
+            "title": "Data Link 2"
+          }
+        ]
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with field options links",
+      "id": 2,
+      "options": {
+        "fieldOptions": {
+          "defaults": {
+            "links": [
+              {
+                "url": "http://mylink.com?series=${__series.labels}&${__series.labels.x}",
+                "title": "Field Link 1"
+              },
+              {
+                "url": "http://fieldlink.com?field=${__series.labels}",
+                "title": "Field Link 2"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "graph",
+      "title": "Panel with both link types",
+      "id": 3,
+      "options": {
+        "dataLinks": [
+          {
+            "url": "http://mylink.com?series=${__series.labels}",
+            "title": "Graph Data Link"
+          }
+        ],
+        "fieldOptions": {
+          "defaults": {
+            "links": [
+              {
+                "url": "http://mylink.com?field=${__series.labels}",
+                "title": "Graph Field Link"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Panel without series labels",
+      "id": 4,
+      "options": {
+        "dataLinks": [
+          {
+            "url": "http://mylink.com?other=${__field.labels}",
+            "title": "No Series Labels Link"
+          }
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Panel without options",
+      "id": 5
+    }
+  ]
+} 
