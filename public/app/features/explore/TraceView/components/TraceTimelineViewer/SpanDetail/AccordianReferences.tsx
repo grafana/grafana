@@ -45,7 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: autoColor(theme, '#e4e4e4'),
     color: 'inherit',
     display: 'block',
-    padding: '0.25rem 0.5rem',
+    padding: '0.25rem 0',
     '&:hover': {
       background: autoColor(theme, '#dadada'),
     },

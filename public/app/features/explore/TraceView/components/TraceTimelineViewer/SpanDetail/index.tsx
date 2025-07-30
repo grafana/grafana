@@ -99,6 +99,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: '0 1rem',
       marginBottom: '0.25rem',
     }),
+    content: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
     listWrapper: css({
       overflow: 'hidden',
       flexGrow: 1,
@@ -340,7 +343,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         <ShareSpanButton focusSpanLink={focusSpanLink} />
       </div>
       <div className={styles.linkList}>{linksComponent}</div>
-      <div>
+      <div className={styles.content}>
         <div>
           <AccordianKeyValues
             data={tags}
@@ -399,7 +402,7 @@ export default function SpanDetail(props: SpanDetailProps) {
               return (
                 <TextArea
                   className={styles.Textarea}
-                  style={{ cursor: 'unset' }}
+                  style={{ cursor: 'unset', fontSize: 'unset', fontFamily: 'monospace' }}
                   readOnly
                   cols={10}
                   rows={10}

@@ -43,6 +43,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
         background: autoColor(theme, '#e8e8e8'),
       },
     }),
+    headerLabel: css({
+      width: '120px',
+      display: 'inline-block',
+    }),
     headerEmpty: css({
       label: 'headerEmpty',
       background: 'none',
@@ -161,9 +165,8 @@ export default function AccordianKeyValues({
         data-testid="AccordianKeyValues--header"
       >
         {arrow}
-        <strong data-test={markers.LABEL}>
+        <strong data-test={markers.LABEL} className={styles.headerLabel}>
           {label}
-          {showDataSummaryFields && ':'}
         </strong>
         {showDataSummaryFields && (
           <span className={css({ marginLeft: '0.7em' })}>
