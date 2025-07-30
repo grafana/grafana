@@ -64,8 +64,31 @@ func (t translation) HasFolderSupport() bool {
 // to the target resource's permission scope and actions.
 // Currently focused on dashboards only.
 type resourcePermissionTranslation struct {
-	resource string
+	mapper MapperRegistry
 }
+
+// Case 1:
+// Group: iam.grafana.app
+// Resource: resourcepermissions
+// Name: dashboard.grafana.app_dashboards_dash123
+// Verb: create
+
+// This should translate to:
+// dashboards.permissions:write
+// Scope: dashboards:uid:dash123
+
+// Case 2:
+// Group: iam.grafana.app
+// Resource: resourcepermissions
+// Name: folders.grafana.app_folders_fold123
+// Verb: create
+
+// This should translate to:
+// folders.permissions:write
+// Scope: folders:uid:fold123
+
+// Problem the action function only takes the verb and not the resource name
+// therefore it's impossible to determine the correct action (e.g. dashboards vs folders).
 
 func (r resourcePermissionTranslation) Action(verb string) (string, bool) {
 	switch verb {
@@ -81,14 +104,18 @@ func (r resourcePermissionTranslation) Action(verb string) (string, bool) {
 }
 
 func (r resourcePermissionTranslation) Scope(name string) string {
-	// Parse name format: "dashboard.grafana.app-dashboards-dash123"
-	// Extract dashboard ID and build proper scope
-	dashboardID := r.parseDashboardPermissionName(name)
-	if dashboardID == "" {
-		return "unknown:uid:" + name
+	parts := strings.Split(name, "_")
+	if len(parts) < 3 {
+		return ""
 	}
-
-	return r.resource + ":uid:" + dashboardID
+	if parts[0] != "dashboard.grafana.app" && parts[0] != "folders.grafana.app" {
+		return ""
+	}
+	mapper, ok := r.mapper.Get(parts[0], parts[1])
+	if !ok {
+		return ""
+	}
+	return mapper.Scope(parts[2])
 }
 
 func (r resourcePermissionTranslation) Prefix() string {
@@ -105,36 +132,6 @@ func (r resourcePermissionTranslation) AllActions() []string {
 
 func (r resourcePermissionTranslation) HasFolderSupport() bool {
 	return false // Resource permissions themselves don't support folders
-}
-
-// parseDashboardPermissionName parses names like "dashboard.grafana.app-dashboards-dash123"
-// and returns the dashboard ID
-func (r resourcePermissionTranslation) parseDashboardPermissionName(name string) string {
-	// Expected format: "dashboard.grafana.app-dashboards-{dashboard-id}"
-	// Example: "dashboard.grafana.app-dashboards-dash123"
-
-	parts := strings.Split(name, "-")
-	if len(parts) < 3 {
-		return ""
-	}
-
-	// Look for the "dashboards" part
-	dashboardsIndex := -1
-	for i, part := range parts {
-		if part == "dashboards" {
-			dashboardsIndex = i
-			break
-		}
-	}
-
-	if dashboardsIndex == -1 || dashboardsIndex >= len(parts)-1 {
-		return ""
-	}
-
-	// Everything after "dashboards" is the dashboard ID (rejoin in case ID contains dashes)
-	dashboardID := strings.Join(parts[dashboardsIndex+1:], "-")
-
-	return dashboardID
 }
 
 func newResourcePermissionTranslation() Mapping {
