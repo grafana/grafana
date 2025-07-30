@@ -3,8 +3,9 @@ import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@g
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
 import { MaybeWrapWithLink } from '../MaybeWrapWithLink';
+import { TABLE } from '../constants';
 import { BarGaugeCellProps } from '../types';
-import { extractPixelValue, getCellOptions, getAlignmentFactor } from '../utils';
+import { getCellOptions, getAlignmentFactor } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -23,7 +24,7 @@ const defaultScale: ThresholdsConfig = {
 export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
-  const heightOffset = extractPixelValue(theme.spacing(1));
+  const heightOffset = TABLE.CELL_PADDING * 2;
 
   let config = getFieldConfigWithMinMax(field, false);
   if (!config.thresholds) {
@@ -45,12 +46,14 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
   }
 
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
+  // clamp the height of the gauge so it isn't stretched for large rows
+  const renderedHeight = Math.min(height - heightOffset, TABLE.MAX_CELL_HEIGHT);
 
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
       <BarGauge
         width={width}
-        height={height - heightOffset}
+        height={renderedHeight}
         field={config}
         display={field.display}
         text={{ valueSize: 14 }}

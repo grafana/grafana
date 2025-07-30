@@ -36,10 +36,10 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { TableCellDisplayMode } from '../types';
 import { DataLinksActionsTooltipState } from '../utils';
 
-import { HeaderCell } from './Cells/HeaderCell';
-import { RowExpander } from './Cells/RowExpander';
-import { TableCellActions } from './Cells/TableCellActions';
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
+import { HeaderCell } from './components/HeaderCell';
+import { RowExpander } from './components/RowExpander';
+import { TableCellActions } from './components/TableCellActions';
 import { COLUMN, TABLE } from './constants';
 import {
   useColumnResize,
@@ -356,7 +356,7 @@ export function TableNG(props: TableNGProps) {
         result.colsWithTooltip[displayName] = withTooltip;
 
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
-        const cellSpecificStyles = getCellSpecificStyles(cellType, theme, cellStyleOptions);
+        const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -423,7 +423,6 @@ export function TableNG(props: TableNGProps) {
                 frame,
                 field,
                 height,
-                justifyContent,
                 rowIdx,
                 theme,
                 value,

@@ -107,9 +107,7 @@ module.exports = [
       '**/mocks/**/*.{ts,tsx}',
       '**/spec/**/*.{ts,tsx}',
     ],
-    rules: {
-      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-    },
+    rules: { '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }] },
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
@@ -151,10 +149,24 @@ module.exports = [
       ],
     },
   },
+  { files: ['public/app/**/*.{ts,tsx}'], rules: { 'no-barrel-files/no-barrel-files': 'error' } },
   {
-    files: ['public/app/**/*.{ts,tsx}'],
+    // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
     rules: {
-      'no-barrel-files/no-barrel-files': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/themes/ThemeContext'],
+              importNames: ['useStyles2', 'useTheme2'],
+              message:
+                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        },
+      ],
     },
   },
 ];

@@ -704,6 +704,7 @@ export enum TableCellDisplayMode {
   Custom = 'custom',
   DataLinks = 'data-links',
   Gauge = 'gauge',
+  Geo = 'geo',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
   JSONView = 'json-view',
@@ -836,6 +837,10 @@ export interface TablePillCellOptions extends TableWrapTextOptions {
   type: TableCellDisplayMode.Pill;
 }
 
+export interface TableGeoCellOptions {
+  type: TableCellDisplayMode.Geo;
+}
+
 /**
  * Height of a table cell
  */
@@ -850,7 +855,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableGeoCellOptions);
 
 /**
  * Use UTC/GMT timezone

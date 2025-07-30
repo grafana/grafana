@@ -161,7 +161,6 @@ export interface TableCellRendererProps {
   theme: GrafanaTheme2;
   cellInspect: boolean;
   showFilters: boolean;
-  justifyContent: Property.JustifyContent;
   getActions?: GetActionsFunctionLocal;
 }
 
@@ -195,7 +194,6 @@ export interface RowExpanderNGProps {
 
 export interface SparklineCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -216,7 +214,6 @@ export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
   height: number;
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
   rowIdx: number;
 }
@@ -228,7 +225,6 @@ export interface DataLinksCellProps {
 
 export interface GeoCellProps {
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   height: number;
 }
 
