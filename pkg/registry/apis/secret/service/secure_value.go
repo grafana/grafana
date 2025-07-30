@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -12,8 +14,13 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/codes"
 )
+
+var _ contracts.SecureValueService = (*SecureValueService)(nil)
 
 type SecureValueService struct {
 	tracer                     trace.Tracer
@@ -22,6 +29,7 @@ type SecureValueService struct {
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
+	metrics                    *metrics.SecureValueServiceMetrics
 }
 
 func ProvideSecureValueService(
@@ -31,6 +39,7 @@ func ProvideSecureValueService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService contracts.KeeperService,
+	reg prometheus.Registerer,
 ) contracts.SecureValueService {
 	return &SecureValueService{
 		tracer:                     tracer,
@@ -39,26 +48,76 @@ func ProvideSecureValueService(
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
+		metrics:                    metrics.NewSecureValueServiceMetrics(reg),
 	}
 }
 
-func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
+func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, createErr error) {
+	start := time.Now()
+	name, namespace := sv.GetName(), sv.GetNamespace()
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Create", trace.WithAttributes(
-		attribute.String("name", sv.GetName()),
-		attribute.String("namespace", sv.GetNamespace()),
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
 		attribute.String("actor", actorUID),
 	))
 	defer span.End()
+
+	defer func() {
+		args := []any{
+			"name", name,
+			"namespace", namespace,
+			"actorUID", actorUID,
+		}
+
+		success := createErr == nil
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueService.Create failed")
+			span.RecordError(createErr)
+			args = append(args, "error", createErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueService.Create finished", args...)
+
+		s.metrics.SecureValueCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueCreateCount.WithLabelValues(strconv.FormatBool(success)).Inc()
+	}()
+
 	return s.createNewVersion(ctx, sv, actorUID)
 }
 
-func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error) {
+func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, sync bool, updateErr error) {
+	start := time.Now()
+	name, namespace := newSecureValue.GetName(), newSecureValue.GetNamespace()
+
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Update", trace.WithAttributes(
-		attribute.String("name", newSecureValue.GetName()),
-		attribute.String("namespace", newSecureValue.GetNamespace()),
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
 		attribute.String("actor", actorUID),
 	))
 	defer span.End()
+
+	defer func() {
+		args := []any{
+			"name", name,
+			"namespace", namespace,
+			"actorUID", actorUID,
+			"sync", sync,
+		}
+
+		success := updateErr == nil
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueService.Update failed")
+			span.RecordError(updateErr)
+			args = append(args, "error", updateErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueService.Update finished", args...)
+
+		s.metrics.SecureValueUpdateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueUpdateCount.WithLabelValues(strconv.FormatBool(success)).Inc()
+	}()
 
 	if newSecureValue.Spec.Value == nil {
 		currentVersion, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{})
@@ -136,21 +195,65 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, sv *secretv1b
 	return createdSv, nil
 }
 
-func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error) {
+func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1beta1.SecureValue, readErr error) {
+	start := time.Now()
+
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Read", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 	))
+
+	defer func() {
+		args := []any{
+			"name", name,
+			"namespace", namespace,
+		}
+
+		success := readErr == nil
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueService.Read failed")
+			span.RecordError(readErr)
+			args = append(args, "error", readErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueService.Read finished", args...)
+
+		s.metrics.SecureValueReadDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueReadCount.WithLabelValues(strconv.FormatBool(success)).Inc()
+	}()
+
 	defer span.End()
 
 	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: false})
 }
 
-func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error) {
+func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (_ *secretv1beta1.SecureValueList, listErr error) {
+	start := time.Now()
+
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.List", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 	))
 	defer span.End()
+
+	defer func() {
+		args := []any{
+			"namespace", namespace,
+		}
+
+		success := listErr == nil
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueService.List failed")
+			span.RecordError(listErr)
+			args = append(args, "error", listErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueService.List finished", args...)
+
+		s.metrics.SecureValueListDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueListCount.WithLabelValues(strconv.FormatBool(success)).Inc()
+	}()
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
@@ -188,12 +291,34 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 	}, nil
 }
 
-func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error) {
+func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1beta1.SecureValue, deleteErr error) {
+	start := time.Now()
+
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Delete", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 	))
 	defer span.End()
+
+	defer func() {
+		args := []any{
+			"name", name,
+			"namespace", namespace,
+		}
+
+		success := deleteErr == nil
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueService.Delete failed")
+			span.RecordError(deleteErr)
+			args = append(args, "error", deleteErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueService.Delete finished", args...)
+
+		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueDeleteCount.WithLabelValues(strconv.FormatBool(success)).Inc()
+	}()
 
 	// TODO: does this need to be for update?
 	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: true})

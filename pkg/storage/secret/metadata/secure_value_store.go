@@ -56,8 +56,8 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 
 	defer func() {
 		args := []any{
+			"name", name,
 			"namespace", namespace,
-			"secret_name", name,
 			"actorUID", actorUID,
 		}
 
@@ -253,7 +253,7 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv1beta1.SecureValue, error) {
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (_ *secretv1beta1.SecureValue, readErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Read", trace.WithAttributes(
 		attribute.String("name", name),
@@ -261,6 +261,13 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		attribute.Bool("isForUpdate", opts.ForUpdate),
 	))
 	defer span.End()
+
+	defer func() {
+		logging.FromContext(ctx).Info("SecretValueMetadata read", "namespace", namespace, "name", name, "success", readErr != nil, "error", readErr)
+
+		s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueMetadataGetCount.Inc()
+	}()
 
 	secureValue, err := s.readActiveVersion(ctx, namespace, name, opts)
 	if err != nil {
@@ -271,9 +278,6 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	if err != nil {
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
-
-	s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
-	s.metrics.SecureValueMetadataGetCount.Inc()
 
 	return secureValueKub, nil
 }
