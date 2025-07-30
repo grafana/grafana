@@ -1486,17 +1486,6 @@ function ensureXAxisVisibility(panel: PanelModel) {
 }
 
 function migrateHideFromFunctionality(panel: PanelModel) {
-  // hideFrom.viz implies hideFrom.tooltip
-  if (panel.fieldConfig && panel.fieldConfig.defaults && panel.fieldConfig.defaults.custom) {
-    const hideFrom = panel.fieldConfig.defaults.custom.hideFrom;
-    if (hideFrom) {
-      panel.fieldConfig.defaults.custom.hideFrom = {
-        tooltip: hideFrom.viz === true ? hideFrom.viz : (hideFrom.tooltip ?? false),
-        ...panel.fieldConfig.defaults.custom.hideFrom,
-      };
-    }
-  }
-
   // migrate overrides with hideFrom.viz = true to also set tooltip = true
   // this includes the __systemRef override
   if (panel.fieldConfig && panel.fieldConfig.overrides) {
