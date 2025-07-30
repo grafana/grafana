@@ -47,12 +47,9 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow, ref, title] = watch(['workflow', 'ref', 'title']);
+  const [workflow, title] = watch(['workflow', 'title']);
 
-  const handleBranchSuccess = (
-    { path, urls }: { ref: string; path: string; urls?: Record<string, string> },
-    info: ProvisionedOperationInfo
-  ) => {
+  const handleBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
     if (prUrl) {
       const url = buildResourceBranchRedirectUrl({
@@ -64,7 +61,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     }
   };
 
-  const handleNewResourceSuccess = (resource: Resource, info: ProvisionedOperationInfo) => {
+  const handleWriteSuccess = (resource: Resource<FolderDTO>) => {
     // Navigation for new folders (resource-specific concern)
     if (resource?.metadata?.name) {
       navigate(`/dashboards/f/${resource.metadata.name}/`);
@@ -81,7 +78,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
     }
   };
 
-  const handleError = (error: unknown, info: ProvisionedOperationInfo) => {
+  const handleError = (error: unknown) => {
     // Provider-specific error handling could be added here based on info.repoType
     const errorMessage = t(
       'browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder',
@@ -95,20 +92,15 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
   };
 
   // Use the repository-type and resource-type aware provisioned request handler
-  useProvisionedRequestHandler({
+  useProvisionedRequestHandler<FolderDTO>({
     request,
     workflow,
-    isNew: true,
     repository,
-    resourceType: 'folder', // Specify this is a folder resource
-    successMessage: t(
-      'browse-dashboards.new-provisioned-folder-form.alert-folder-created-successfully',
-      'Folder created successfully'
-    ),
+    resourceType: 'folder',
     handlers: {
       onDismiss,
       onBranchSuccess: handleBranchSuccess,
-      onNewResourceSuccess: handleNewResourceSuccess,
+      onWriteSuccess: (_, resource) => handleWriteSuccess(resource),
       onError: handleError,
     },
   });

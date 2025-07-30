@@ -67,25 +67,22 @@ export function DeleteProvisionedDashboardForm({
 
   const navigate = useNavigate();
 
-  const onRequestError = (error: unknown, info: ProvisionedOperationInfo) => {
+  const onRequestError = (error: unknown) => {
     getAppEvents().publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'), error],
     });
   };
 
-  const onWriteSuccess = (info: ProvisionedOperationInfo) => {
-    // Dashboard state management (now in the correct place)
+  const onWriteSuccess = () => {
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
-    onDismiss();
     // TODO reset search state instead
     window.location.href = '/dashboards';
   };
 
   const onBranchSuccess = (path: string, info: ProvisionedOperationInfo, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
-    onDismiss();
     const url = buildResourceBranchRedirectUrl({
       baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
       paramName: 'pull_request_url',
@@ -99,7 +96,12 @@ export function DeleteProvisionedDashboardForm({
     request,
     workflow,
     resourceType: 'dashboard',
+    successMessage: t(
+      'dashboard-scene.delete-provisioned-dashboard-form.success-message',
+      'Dashboard deleted successfully'
+    ),
     handlers: {
+      onDismiss,
       onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
       onWriteSuccess,
       onError: onRequestError,

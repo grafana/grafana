@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
 import {
   DeleteRepositoryFilesWithPathApiResponse,
   GetRepositoryFilesWithPathApiResponse,
@@ -12,30 +11,24 @@ import {
 import { Resource } from 'app/features/apiserver/types';
 import { RepoType } from 'app/features/provisioning/Wizard/types';
 
-// Resource type definitions for scalability
 type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
 
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {
   repoType: RepoType;
   resourceType: ResourceType;
-  isNew?: boolean;
   workflow?: string;
 }
 
-// Clean, decoupled handlers interface
-interface RequestHandlers {
-  // Modern contextual handlers
+interface RequestHandlers<T> {
   onBranchSuccess?: (
     data: { ref: string; path: string; urls?: Record<string, string> },
-    info: ProvisionedOperationInfo
+    info: ProvisionedOperationInfo,
+    resource: Resource<T>
   ) => void;
-  onWriteSuccess?: (info: ProvisionedOperationInfo) => void;
-  onNewResourceSuccess?: (resource: Resource, info: ProvisionedOperationInfo) => void;
+  onWriteSuccess?: (info: ProvisionedOperationInfo, resource: Resource<T>) => void;
+  onNewResourceSuccess?: (resource: Resource<T>, info: ProvisionedOperationInfo) => void;
   onError?: (error: unknown, info: ProvisionedOperationInfo) => void;
-
-  // Special handlers for backward compatibility
-  onNewDashboardSuccess?: (resource: Resource<Dashboard>) => void;
   onDismiss?: () => void;
 }
 
@@ -82,19 +75,17 @@ interface ResourceConfig {
  *   }
  * });
  */
-export function useProvisionedRequestHandler({
+export function useProvisionedRequestHandler<T>({
   request,
   workflow,
   handlers,
-  isNew,
   successMessage,
   repository,
   resourceType = 'dashboard', // Default to dashboard for backward compatibility
 }: {
   request: ProvisionedRequest;
   workflow?: string;
-  handlers: RequestHandlers;
-  isNew?: boolean;
+  handlers: RequestHandlers<T>;
   successMessage?: string;
   repository?: RepositoryView;
   resourceType?: ResourceType;
@@ -104,7 +95,6 @@ export function useProvisionedRequestHandler({
     const info: ProvisionedOperationInfo = {
       repoType,
       resourceType,
-      isNew,
       workflow,
     };
 
@@ -114,17 +104,9 @@ export function useProvisionedRequestHandler({
     }
 
     if (request.isSuccess && request.data) {
-      // Call onDismiss if provided (typically for modals/forms)
-      handlers.onDismiss?.();
-
       const { ref, path, urls, resource } = request.data;
-
-      // Branch workflow
-      if (workflow === 'branch' && ref && path) {
-        const branchData = { ref, path, urls };
-        handlers.onBranchSuccess?.(branchData, info);
-        return;
-      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const resourceData = resource.upsert as Resource<T>;
 
       // Success message (configurable or resource-specific)
       const message = successMessage || getContextualSuccessMessage(info);
@@ -133,26 +115,22 @@ export function useProvisionedRequestHandler({
         payload: [message],
       });
 
-      // Handle new resource creation (orthogonal to workflow type)
-      if (isNew && resource?.upsert && handlers.onNewResourceSuccess) {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const resourceData = resource.upsert as Resource;
-        handlers.onNewResourceSuccess(resourceData, info);
+      // Branch workflow
+      if (workflow === 'branch' && handlers.onBranchSuccess && ref && path) {
+        const branchData = { ref, path, urls };
+        handlers.onBranchSuccess?.(branchData, info, resourceData);
+        return;
       }
 
-      // Handle write workflow (can happen for both new and existing resources)
+      // Handle write workflow
       if (workflow === 'write' && handlers.onWriteSuccess) {
-        console.log('hook ------- onWriteSuccess', info);
-        handlers.onWriteSuccess(info);
+        handlers.onWriteSuccess(info, resourceData);
       }
 
-      // Legacy dashboard handler for backward compatibility
-      if (isNew && resource?.upsert && handlers.onNewDashboardSuccess && resourceType === 'dashboard') {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        handlers.onNewDashboardSuccess(resource.upsert as Resource<Dashboard>);
-      }
+      // Call onDismiss if provided (typically for modals/forms)
+      handlers.onDismiss?.();
     }
-  }, [request, workflow, handlers, isNew, successMessage, repository, resourceType]);
+  }, [request, workflow, handlers, successMessage, repository, resourceType]);
 }
 
 // Helper function to get contextual success messages
@@ -171,9 +149,4 @@ function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
 }
 
 // Type exports for external use
-export type {
-  ResourceType,
-  ProvisionedOperationInfo,
-  RequestHandlers,
-  ResourceConfig,
-};
+export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };

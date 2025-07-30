@@ -57,11 +57,6 @@ export function SaveProvisionedDashboardForm({
 
   // Update the form if default values change
   useEffect(() => {
-    console.log('useEffect - defaultValues changed:', {
-      defaultValues,
-      currentFormValues: methods.getValues(),
-      timestamp: new Date().toISOString()
-    });
     reset(defaultValues);
   }, [defaultValues, reset]);
 
@@ -72,47 +67,7 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
-  const onWriteSuccess = (info: ProvisionedOperationInfo) => {
-    console.log('onWriteSuccess - starting cleanup');
-    
-    // Check current URL state
-    const currentLocation = locationService.getLocation();
-    console.log('onWriteSuccess - current URL state:', {
-      search: currentLocation.search,
-      pathname: currentLocation.pathname,
-      searchParams: new URLSearchParams(currentLocation.search)
-    });
-    
-    console.log('onWriteSuccess - dashboard state:', {
-      editPanel: dashboard.state.editPanel,
-      viewPanelScene: dashboard.state.viewPanelScene,
-      isEditing: dashboard.state.isEditing,
-      isDirty: dashboard.state.isDirty
-    });
-    
-    // Set state FIRST, before any other operations that might trigger changes
-    dashboard.setState({ isDirty: false });
-    panelEditor?.onDiscard();
-
-    console.log('onWriteSuccess - about to close drawer', drawer);
-    // Then handle UI cleanup
-    drawer.onClose();
-    
-    console.log('onWriteSuccess - drawer close called, clearing URL params');
-    // Dashboard state management (now in the correct place)
-    locationService.partial({
-      viewPanel: null,
-      editPanel: null,
-      editview: null,
-    });
-    
-    console.log('onWriteSuccess - all cleanup complete');
-  };
-
-  const onNewDashboardSuccess = (upsert: Resource<Dashboard>) => {
-    console.log('onNewDashboardSuccess', upsert);
-    dashboard.setState({ isDirty: false });
-    drawer.onClose();
+  const handleNewDashboard = (upsert: Resource<Dashboard>) => {
     // Navigation for new dashboards (resource-specific concern)
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
@@ -124,31 +79,48 @@ export function SaveProvisionedDashboardForm({
     navigate(url);
   };
 
-  const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo) => {
-    console.log('onBranchSuccess', info);
-    // Branch workflow - don't clear dirty state (changes only in branch)
+  const onWriteSuccess = (info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    if (isNew && upsert?.metadata.name) {
+      handleNewDashboard(upsert);
+    } else {
+      locationService.partial({
+        viewPanel: null,
+        editPanel: null,
+      });
+    }
+  };
+
+  const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
+    if (isNew && upsert?.metadata?.name) {
+      handleNewDashboard(upsert);
+    } else {
+      const url = buildResourceBranchRedirectUrl({
+        baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        paramName: 'ref',
+        paramValue: ref,
+        repoType: info.repoType,
+      });
+      navigate(url);
+    }
+  };
+
+  const onDismiss = () => {
+    // Reset the dirty state and close the drawer
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     drawer.onClose();
-
-    const url = buildResourceBranchRedirectUrl({
-      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
-      paramName: 'ref',
-      paramValue: ref,
-      repoType: info.repoType,
-    });
-    navigate(url);
   };
 
-  useProvisionedRequestHandler({
+  useProvisionedRequestHandler<Dashboard>({
     request,
     workflow,
     resourceType: 'dashboard',
     handlers: {
-      onBranchSuccess: ({ ref, path }, info) => onBranchSuccess(ref, path, info),
+      onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      onNewDashboardSuccess,
+      // onNewResourceSuccess: onNewDashboardSuccess,
       onError: onRequestError,
+      onDismiss,
     },
     isNew,
   });

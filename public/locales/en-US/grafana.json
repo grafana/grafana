@@ -3565,12 +3565,12 @@
       "tags-column": "Tags"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Folder deleted successfully",
       "api-error": "Failed to delete folder",
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:"
+      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "success-message": "Folder deleted successfully"
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
@@ -3613,7 +3613,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Error creating folder",
-      "alert-folder-created-successfully": "Folder created successfully",
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
@@ -5639,6 +5638,7 @@
       "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
+      "success-message": "Dashboard deleted successfully",
       "title-this-repository-is-read-only": "This repository is read only"
     },
     "description-label": {
