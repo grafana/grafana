@@ -849,20 +849,6 @@ describe('TableNG utils', () => {
       expect(wrappedCount(null, 100, field, 0)).toBe(1);
       expect(wrappedCount(undefined, 100, field, 0)).toBe(1);
     });
-
-    it('clamps the line count to the max wrapped lines if set', () => {
-      expect(
-        wrapUwrapCount(jest.fn(() => 3))(
-          'asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23',
-          200,
-          {
-            ...field,
-            config: { custom: { cellOptions: { wrapText: true, maxWrappedLines: 2 } } },
-          },
-          0
-        )
-      ).toBe(2);
-    });
   });
 
   describe('getTextLineEstimator', () => {
@@ -876,25 +862,12 @@ describe('TableNG utils', () => {
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
       expect(counter('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field, 0)).toBe(2.5);
     });
-
-    it('clamps the line count to the maxWrappedLines if set', () => {
-      expect(
-        counter(
-          'asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23',
-          200,
-          {
-            ...field,
-            config: { custom: { cellOptions: { wrapText: true, maxWrappedLines: 2 } } },
-          },
-          0
-        )
-      ).toBe(2);
-    });
   });
 
   describe('buildHeaderLineCounters', () => {
     const ctx = {
-      font: '14px sans-serif',
+      fontFamily: 'sans-serif',
+      letterSpacing: 0.15,
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
       avgCharWidth: 7,
@@ -935,9 +908,9 @@ describe('TableNG utils', () => {
 
   describe('buildRowLineCounters', () => {
     const ctx = {
-      font: '14px sans-serif',
+      fontFamily: 'sans-serif',
+      letterSpacing: 0.15,
       ctx: {} as CanvasRenderingContext2D,
-      count: jest.fn(() => 2),
       wrappedCount: jest.fn(() => 2),
       estimateLines: jest.fn(() => 2),
       avgCharWidth: 7,
@@ -993,6 +966,12 @@ describe('TableNG utils', () => {
       const counters = buildRowLineCounters(fields, ctx);
       expect(counters).toBeUndefined();
     });
+
+    it.todo('sets up line counting for pills if present and wrapping is on');
+
+    it.todo('sets up line counting for datalinks if present and wrapping is on');
+
+    it.todo('clamps the line count to the max wrapped lines for a field if set');
   });
 
   describe('getRowHeight', () => {

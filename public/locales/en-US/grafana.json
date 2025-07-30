@@ -12548,7 +12548,13 @@
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields",
     "text-wrap-options": {
-      "label-wrap-text": "Wrap text"
+      "label-wrap-text": "Wrap text",
+      "max-wrapped-lines": {
+        "description": "Limits the number of lines displayed when wrapping text in a cell.",
+        "label": "Wrapped line limit",
+        "text-alpha": "Alpha"
+      },
+      "max-wrapped-lines-placeholder": "none"
     }
   },
   "table-new": {

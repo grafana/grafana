@@ -351,7 +351,7 @@ export function TableNG(props: TableNGProps) {
 
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
-        const maxWrappedLines = shouldWrap ? getMaxWrappedLines(field) : undefined;
+        const maxWrappedLines = getMaxWrappedLines(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
@@ -375,10 +375,10 @@ export function TableNG(props: TableNGProps) {
               cellType,
               textAlign,
               shouldWrap,
+              maxWrappedLines,
               shouldOverflow,
               canBeColorized,
-              isMonospace,
-              maxWrappedLines
+              isMonospace
             );
             break;
         }
@@ -948,10 +948,10 @@ const getCellStyles = (
   cellType: TableCellDisplayMode,
   textAlign: TextAlign,
   shouldWrap: boolean,
+  maxWrappedLines: number | undefined,
   shouldOverflow: boolean,
   isColorized: boolean,
-  isMonospace: boolean,
-  maxWrappedLines?: number
+  isMonospace: boolean
 ) =>
   css({
     display: 'flex',
@@ -966,13 +966,12 @@ const getCellStyles = (
       '.table-cell-actions': {
         display: 'flex',
       },
-      ...((shouldOverflow || maxWrappedLines) && {
+      ...(shouldOverflow && {
         zIndex: theme.zIndex.tooltip - 2,
         whiteSpace: isMonospace ? 'pre' : 'pre-line',
         height: 'fit-content',
         maxHeight: 'none',
         minWidth: 'fit-content',
-        '-webkit-line-clamp': 'none',
         ...(cellType === TableCellDisplayMode.Pill && {
           flexWrap: 'wrap',
         }),
@@ -997,18 +996,16 @@ const getCellStyles = (
 
     ...(shouldWrap && { whiteSpace: isMonospace ? 'pre' : 'pre-line' }),
     ...(isMonospace && { fontFamily: 'monospace' }),
-    ...(maxWrappedLines && {
-      // height properties need to override the default settings.
-      height: 'auto',
-      // FIXME: this line causes the table to get out of alignment when 2 or more fields are wrapped
-      maxHeight: maxWrappedLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2,
-      minHeight: 'none',
-      // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
-      display: '-webkit-box',
-      '-webkit-line-clamp': String(maxWrappedLines),
-      '-webkit-box-orient': 'vertical',
-      overflowY: 'hidden',
-    }),
+    // ...(maxWrappedLines !== undefined && {
+    //   // height properties need to override the default settings.
+    //   height: 'auto',
+    //   minHeight: 'none',
+    //   // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
+    //   '-webkit-line-clamp': String(maxWrappedLines),
+    //   display: '-webkit-box',
+    //   '-webkit-box-orient': 'vertical',
+    //   overflowY: 'hidden',
+    // }),
 
     ...(cellType === TableCellDisplayMode.DataLinks && {
       ...(shouldWrap && {
@@ -1016,7 +1013,7 @@ const getCellStyles = (
         justifyContent: 'center',
         alignItems: getJustifyContent(textAlign),
       }),
-      '> a': {
+      '.data-link': {
         flexWrap: 'nowrap',
         ...(!shouldWrap && {
           paddingInline: theme.spacing(0.5),
@@ -1036,7 +1033,7 @@ const getCellStyles = (
       display: 'inline-flex',
       gap: theme.spacing(0.5),
       flexWrap: shouldWrap ? 'wrap' : 'nowrap',
-      '> span': {
+      '.pill': {
         display: 'flex',
         padding: theme.spacing(0.25, 0.75),
         borderRadius: theme.shape.radius.default,

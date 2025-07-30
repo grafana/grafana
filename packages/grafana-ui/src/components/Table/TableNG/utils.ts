@@ -92,14 +92,6 @@ export function getMaxWrappedLines(field: Field): number | undefined {
   return cellOptions?.maxWrappedLines;
 }
 
-function limitByMaxWrappedLines(lineCount: number, field: Field): number {
-  const maxWrappedLines = getMaxWrappedLines(field);
-  if (!maxWrappedLines || lineCount <= maxWrappedLines) {
-    return lineCount;
-  }
-  return maxWrappedLines;
-}
-
 /**
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
@@ -131,12 +123,12 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
  * @internal wraps the uwrap count function to apply the maxWrappedLines limit if set.
  */
 export function wrapUwrapCount(count: Count): LineCounter {
-  return (value, width, field) => {
+  return (value, width) => {
     if (value == null) {
       return 1;
     }
 
-    return limitByMaxWrappedLines(count(String(value), width), field);
+    return count(String(value), width);
   };
 }
 
@@ -144,7 +136,7 @@ export function wrapUwrapCount(count: Count): LineCounter {
  * @internal returns a line counter which guesstimates a number of lines in a text cell based on the typography context's avgCharWidth.
  */
 export function getTextLineEstimator(avgCharWidth: number): LineCounter {
-  return (value, width, field) => {
+  return (value, width) => {
     if (!value) {
       return -1;
     }
@@ -157,7 +149,7 @@ export function getTextLineEstimator(avgCharWidth: number): LineCounter {
     }
 
     const charsPerLine = width / avgCharWidth;
-    return limitByMaxWrappedLines(strValue.length / charsPerLine, field);
+    return strValue.length / charsPerLine;
   };
 }
 
@@ -234,6 +226,21 @@ export function buildHeaderLineCounters(fields: Field[], typographyCtx: Typograp
   return [{ counter: typographyCtx.wrappedCount, fieldIdxs: wrappedColIdxs }];
 }
 
+/**
+ * @internal wraps a line counter to apply the maxWrappedLines limit if set. should be applied
+ * when setting up the line counters in `buildRowLineCounters`.
+ */
+function limitByMaxWrappedLines(lineCounter: LineCounter): LineCounter {
+  return (value, width, field, rowIdx) => {
+    const lineCount = lineCounter(value, width, field, rowIdx);
+    const maxWrappedLines = getMaxWrappedLines(field);
+    if (!maxWrappedLines || lineCount <= maxWrappedLines) {
+      return lineCount;
+    }
+    return maxWrappedLines;
+  };
+}
+
 const spaceRegex = /[\s-]/;
 
 /**
@@ -251,7 +258,10 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
 
       const cellType = getCellOptions(field).type;
       if (cellType === TableCellDisplayMode.DataLinks) {
-        result.dataLinksCounter = result.dataLinksCounter ?? { counter: getDataLinksCounter(), fieldIdxs: [] };
+        result.dataLinksCounter = result.dataLinksCounter ?? {
+          counter: getDataLinksCounter(),
+          fieldIdxs: [],
+        };
         result.dataLinksCounter.fieldIdxs.push(fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         if (!result.pillCounter) {
@@ -296,7 +306,11 @@ export function buildRowLineCounters(fields: Field[], typographyCtx: TypographyC
     return undefined;
   }
 
-  return Object.values(result);
+  return Object.values(result).map((entry) => ({
+    ...entry,
+    estimate: entry.estimate ? limitByMaxWrappedLines(entry.estimate) : undefined,
+    counter: limitByMaxWrappedLines(entry.counter),
+  }));
 }
 
 // in some cases, the estimator might return a value that is less than 1, but when measured by the counter, it actually

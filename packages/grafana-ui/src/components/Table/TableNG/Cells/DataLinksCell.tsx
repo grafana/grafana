@@ -9,7 +9,7 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   }
 
   return links.map((link, idx) => (
-    <a key={idx} onClick={link.onClick} href={link.href} target={link.target}>
+    <a className="data-link" key={idx} onClick={link.onClick} href={link.href} target={link.target}>
       {link.title}
     </a>
   ));

@@ -27,7 +27,7 @@ describe('PillCell', () => {
     it('single value', () => {
       expectHTML(
         render(<PillCell field={fieldWithValues(['["value1","value2","value3"]'])} rowIdx={0} theme={theme} />),
-        `<span style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>`
+        `<span class="pill" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>`
       );
     });
 
@@ -44,9 +44,9 @@ describe('PillCell', () => {
       expectHTML(
         render(<PillCell field={fieldWithValues(['value1,value2,value3'])} rowIdx={0} theme={theme} />),
         `
-        <span style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
-        <span style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
-        <span style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
+        <span class="pill" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
+        <span class="pill" style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
+        <span class="pill" style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
         `
       );
     });
@@ -55,9 +55,9 @@ describe('PillCell', () => {
       expectHTML(
         render(<PillCell field={fieldWithValues(['["value1","value2","value3"]'])} rowIdx={0} theme={theme} />),
         `
-        <span style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
-        <span style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
-        <span style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
+        <span class="pill" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
+        <span class="pill" style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
+        <span class="pill" style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
         `
       );
     });
@@ -98,10 +98,10 @@ describe('PillCell', () => {
       expectHTML(
         render(<PillCell field={field} rowIdx={0} theme={theme} />),
         `
-        <span style="background-color: rgb(0, 255, 0); color: rgb(0, 0, 0);">success</span>
-        <span style="background-color: rgb(255, 0, 0); color: rgb(0, 0, 0);">error</span>
-        <span style="background-color: rgb(255, 255, 0); color: rgb(0, 0, 0);">warning</span>
-        <span style="background-color: rgb(255, 120, 10); color: rgb(0, 0, 0);">unknown</span>
+        <span class="pill" style="background-color: rgb(0, 255, 0); color: rgb(0, 0, 0);">success</span>
+        <span class="pill" style="background-color: rgb(255, 0, 0); color: rgb(0, 0, 0);">error</span>
+        <span class="pill" style="background-color: rgb(255, 255, 0); color: rgb(0, 0, 0);">warning</span>
+        <span class="pill" style="background-color: rgb(255, 120, 10); color: rgb(0, 0, 0);">unknown</span>
         `
       );
     });

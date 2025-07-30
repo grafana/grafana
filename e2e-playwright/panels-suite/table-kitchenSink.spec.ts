@@ -70,19 +70,19 @@ test.describe(
       // text wrapping is enabled by default on this panel.
       await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
-      // // set the maxWrappedLines to 2, and confirm that the height shrinks.
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text line limit'))
-      //   .last()
-      //   .fill('2');
-      // await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
+      // set the maxWrappedLines to 2, and confirm that the height shrinks.
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text line limit'))
+        .last()
+        .fill('2');
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeLessThan(100);
 
-      // // confirm that unsetting the maxWrappedLines restores the height.
-      // await dashboardPage
-      //   .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text line limit'))
-      //   .last()
-      //   .clear();
-      // await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
+      // confirm that unsetting the maxWrappedLines restores the height.
+      await dashboardPage
+        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Wrap text line limit'))
+        .last()
+        .clear();
+      await expect(getCellHeight(page, 1, longTextColIdx)).resolves.toBeGreaterThan(100);
 
       // toggle the lorem ipsum column's wrap text toggle and confirm that the height shrinks.
       await dashboardPage
