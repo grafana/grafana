@@ -1,4 +1,4 @@
-import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, getDefaultTimeRange, ScopedVars } from '@grafana/data';
+import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, ScopedVars } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
@@ -24,18 +24,6 @@ const mockTimeRange = {
     to: dateTime(1546380000000),
   },
 };
-
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
-  getDefaultTimeRange: jest.fn().mockImplementation(() => ({
-    from: dateTime(0),
-    to: dateTime(1),
-    raw: {
-      from: dateTime(0),
-      to: dateTime(1),
-    },
-  })),
-}));
 
 describe('Language completion provider', () => {
   describe('start', () => {
@@ -208,8 +196,16 @@ describe('Language completion provider', () => {
         .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
       const languageProvider = new LanguageProvider(datasource);
       languageProvider.request = jest.fn().mockResolvedValue([]);
+      jest.spyOn(languageProvider, 'getDefaultTimeRange').mockImplementation(() => ({
+        from: dateTime(0),
+        to: dateTime(1),
+        raw: {
+          from: dateTime(0),
+          to: dateTime(1),
+        },
+      }));
       languageProvider.fetchLabelValues('testKey');
-      expect(getDefaultTimeRange).toHaveBeenCalled();
+      expect(languageProvider.getDefaultTimeRange).toHaveBeenCalled();
       expect(languageProvider.request).toHaveBeenCalled();
       expect(languageProvider.request).toHaveBeenCalledWith('label/testKey/values', {
         end: 1,
@@ -765,7 +761,7 @@ describe('Query imports', () => {
           maxLines: DEFAULT_MAX_LINES_SAMPLE,
           refId: 'data-samples',
         },
-        getDefaultTimeRange()
+        languageProvider.getDefaultTimeRange()
       );
     });
 
@@ -786,7 +782,7 @@ describe('Query imports', () => {
           maxLines: 5,
           refId: 'data-samples',
         },
-        getDefaultTimeRange()
+        languageProvider.getDefaultTimeRange()
       );
     });
 
