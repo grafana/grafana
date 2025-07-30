@@ -673,8 +673,8 @@ github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0 h1:0TYrkzAc3u0HX+9GK86cGrLTUAc
 github.com/grafana/grafana-azure-sdk-go/v2 v2.2.0/go.mod h1:H9sVh9A4yg5egMGZeh0mifxT1Q/uqwKe1LBjBJU6pN8=
 github.com/grafana/grafana-plugin-sdk-go v0.278.0 h1:5/rIYparLi02pofdaag8wnjspMMVNCi8cZhC4cdC3Ho=
 github.com/grafana/grafana-plugin-sdk-go v0.278.0/go.mod h1:+8NXT/XUJ/89GV6FxGQ366NZ3nU+cAXDMd0OUESF9H4=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250716132114-6fd75ebc5441 h1:+TSbaxCXBZrKkdROWBzdWna8uStE1f9LYd7GiqjVfz8=
-github.com/grafana/grafana/apps/dashboard v0.0.0-20250716132114-6fd75ebc5441/go.mod h1:1XWiRSVuDQiayapHhQiDc4S4e9GzEZgg/3GeNCuDgn4=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730143415-c28b2215e06b h1:PiBa9ebAZVs0shxF04nZJHZUIhv2KnGg1yzrYEm7mPU=
+github.com/grafana/grafana/apps/dashboard v0.0.0-20250730143415-c28b2215e06b/go.mod h1:/iuseD/cEpXDiy7MpL+4qBFZ3H6esnUJTYzpoJMw9dw=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b h1:31MwoIKKT9Ay0ZjbT4lkfcPijiWogUWzXs2EjrCgodI=
 github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:dLtYBp1pza5HYalezNvzlP8JDeKrZ5BKTonDgEOE0NY=
 github.com/grafana/grafana/apps/secret v0.0.0-20250711114246-c9b2126c4ad5 h1:+fMhUoqwGdY8ntH0GL2icJa3uk+bTiIMicawDG2r9Uc=
