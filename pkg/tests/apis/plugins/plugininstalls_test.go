@@ -50,6 +50,32 @@ func TestIntegrationPluginInstalls(t *testing.T) {
 		require.Equal(t, pluginName, created.GetName())
 	})
 
+	t.Run("create plugin install with status is ignored", func(t *testing.T) {
+		helper := setupHelper(t)
+		ctx := context.Background()
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvrPluginInstalls,
+		})
+		pluginName := "test-plugin-create-with-status"
+		pluginInstall := helper.LoadYAMLOrJSON(fmt.Sprintf(`{
+			"apiVersion": "plugins.grafana.app/v0alpha1",
+			"kind": "PluginInstall",
+			"metadata": {"name": "%s"},
+			"spec": {"version": "1.0.0"},
+			"status": {"message": "should be ignored"}
+		}`, pluginName))
+		created, err := client.Resource.Create(ctx, pluginInstall, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		require.Equal(t, pluginName, created.GetName())
+		// Status should be empty as it's ignored on create
+		status, found, err := unstructured.NestedMap(created.Object, "status")
+		require.NoError(t, err)
+		require.True(t, found) // status field should exist
+		require.Empty(t, status) // but it should be empty
+	})
+
 	t.Run("get plugin install", func(t *testing.T) {
 		helper := setupHelper(t)
 		ctx := context.Background()
@@ -97,6 +123,82 @@ func TestIntegrationPluginInstalls(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, updated)
 		require.Equal(t, "2.0.0", updated.Object["spec"].(map[string]interface{})["version"])
+	})
+
+	t.Run("update plugin install with status is ignored", func(t *testing.T) {
+		helper := setupHelper(t)
+		ctx := context.Background()
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvrPluginInstalls,
+		})
+		pluginName := "test-plugin-update-with-status"
+		pluginInstall := helper.LoadYAMLOrJSON(fmt.Sprintf(`{
+			"apiVersion": "plugins.grafana.app/v0alpha1",
+			"kind": "PluginInstall",
+			"metadata": {"name": "%s"},
+			"spec": {"version": "1.0.0"}
+		}`, pluginName))
+		created, err := client.Resource.Create(ctx, pluginInstall, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// Try to update the status via a normal update
+		withStatus := created.DeepCopy()
+		withStatus.Object["status"] = map[string]interface{}{
+			"message": "should be ignored",
+		}
+		updated, err := client.Resource.Update(ctx, withStatus, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+
+		// The status should not have been updated
+		status, found, err := unstructured.NestedMap(updated.Object, "status")
+		require.NoError(t, err)
+		require.True(t, found)
+		require.Empty(t, status)
+
+		// also check with get
+		fetched, err := client.Resource.Get(ctx, pluginName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, fetched)
+		status, found, err = unstructured.NestedMap(fetched.Object, "status")
+		require.NoError(t, err)
+		require.True(t, found)
+		require.Empty(t, status)
+	})
+
+	t.Run("update plugin install status", func(t *testing.T) {
+		helper := setupHelper(t)
+		ctx := context.Background()
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvrPluginInstalls,
+		})
+		pluginName := "test-plugin-status"
+		pluginInstall := helper.LoadYAMLOrJSON(fmt.Sprintf(`{
+			"apiVersion": "plugins.grafana.app/v0alpha1",
+			"kind": "PluginInstall",
+			"metadata": {"name": "%s"},
+			"spec": {"version": "1.0.0"}
+		}`, pluginName))
+		created, err := client.Resource.Create(ctx, pluginInstall, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// Update the status
+		status := created.DeepCopy()
+		status.Object["status"] = map[string]interface{}{
+			"message": "hello",
+		}
+		updated, err := client.Resource.UpdateStatus(ctx, status, metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, updated)
+		require.Equal(t, "hello", updated.Object["status"].(map[string]interface{})["message"])
+
+		// Get the status
+		fetched, err := client.Resource.Get(ctx, pluginName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, fetched)
+		require.Equal(t, "hello", fetched.Object["status"].(map[string]interface{})["message"])
 	})
 
 	t.Run("list plugin installs", func(t *testing.T) {
