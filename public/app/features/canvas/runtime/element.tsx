@@ -802,12 +802,12 @@ export class ElementState implements LayerElement {
 
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
-  applyResize = (event: OnResize, transformScale = 1) => {
+  applyResize = (event: OnResize) => {
     const placement = this.options.placement!;
 
     const style = event.target.style;
-    let deltaX = event.delta[0] / transformScale;
-    let deltaY = event.delta[1] / transformScale;
+    let deltaX = event.delta[0];
+    let deltaY = event.delta[1];
     let dirLR = event.direction[0];
     let dirTB = event.direction[1];
 

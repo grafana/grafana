@@ -303,7 +303,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     .on('resize', (event) => {
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
       if (targetedElement) {
-        targetedElement.applyResize(event, scene.scale ?? 1);
+        targetedElement.applyResize(event);
 
         if (scene.connections.connectionsNeedUpdate(targetedElement) && scene.moveableActionCallback) {
           scene.moveableActionCallback(true);
@@ -316,7 +316,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       for (let event of e.events) {
         const targetedElement = findElementByTarget(event.target, scene.root.elements);
         if (targetedElement) {
-          targetedElement.applyResize(event, scene.scale ?? 1);
+          targetedElement.applyResize(event);
 
           if (!needsUpdate) {
             needsUpdate = scene.connections.connectionsNeedUpdate(targetedElement);
