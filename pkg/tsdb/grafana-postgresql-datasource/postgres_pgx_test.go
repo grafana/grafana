@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -181,7 +182,7 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	// change to true to run the PostgreSQL tests
-	const runPostgresTests = false
+	const runPostgresTests = true
 
 	if !isTestDbPostgres() && !runPostgresTests {
 		t.Skip()
@@ -1378,5 +1379,19 @@ func TestIntegrationPostgresPGX(t *testing.T) {
 			require.NotNil(t, frames[0].Fields)
 			require.Empty(t, frames[0].Fields)
 		})
+	})
+
+	t.Run("Test Postgres connection with pgpass file", func(t *testing.T) {
+		require.NoError(t, preparePgpassFile(t))
+		require.FileExists(t, os.Getenv("PGPASSFILE"), "Make sure that PGPASSFILE is set and file exists")
+
+		cnnstr := postgresTestDBConnString()
+		require.NotContains(t, cnnstr, "password=", "Make sure that password is not in the connection string")
+
+		pgpassPool, _, err := newPostgresPGX(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+		require.NoError(t, err)
+
+		_, err = pgpassPool.Query(t.Context(), "SELECT 1") // Test connection
+		require.NoError(t, err)
 	})
 }
