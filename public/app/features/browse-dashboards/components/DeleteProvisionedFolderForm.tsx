@@ -13,7 +13,7 @@ import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/sha
 import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import {
   useProvisionedRequestHandler,
-  ProvisionedResourceContext,
+  ProvisionedOperationInfo,
 } from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
 import { FolderDTO } from 'app/types/folders';
 
@@ -62,20 +62,20 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
 
   const handleBranchSuccess = (
     { path, urls }: { ref: string; path: string; urls?: Record<string, string> },
-    context: ProvisionedResourceContext
+    info: ProvisionedOperationInfo
   ) => {
     const prUrl = urls?.newPullRequestURL;
     if (prUrl) {
       const url = buildResourceBranchRedirectUrl({
         paramName: 'new_pull_request_url',
         paramValue: prUrl,
-        repoType: context.repoType,
+        repoType: info.repoType,
       });
       navigate(url);
     }
   };
 
-  const handleWriteSuccess = (context: ProvisionedResourceContext) => {
+  const handleWriteSuccess = (info: ProvisionedOperationInfo) => {
     getAppEvents().publish({
       type: AppEvents.alertSuccess.name,
       payload: [
@@ -93,7 +93,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     }
   };
 
-  const handleError = (error: unknown, context: ProvisionedResourceContext) => {
+  const handleError = (error: unknown, info: ProvisionedOperationInfo) => {
     getAppEvents().publish({
       type: AppEvents.alertError.name,
       payload: [t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'), error],

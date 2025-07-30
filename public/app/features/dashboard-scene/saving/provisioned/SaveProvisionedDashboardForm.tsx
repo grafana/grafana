@@ -18,8 +18,7 @@ import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks
 import { ResourceEditFormSharedFields } from '../../components/Provisioned/ResourceEditFormSharedFields';
 import { buildResourceBranchRedirectUrl } from '../../settings/utils';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
-import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
-import { ProvisionedResourceContext } from '../../utils/useProvisionedRequestHandler';
+import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
 import { SaveDashboardFormCommonOptions } from '../SaveDashboardForm';
 import { ProvisionedDashboardFormData } from '../shared';
 
@@ -58,30 +57,63 @@ export function SaveProvisionedDashboardForm({
 
   // Update the form if default values change
   useEffect(() => {
+    console.log('useEffect - defaultValues changed:', {
+      defaultValues,
+      currentFormValues: methods.getValues(),
+      timestamp: new Date().toISOString()
+    });
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onRequestError = (error: unknown, context: ProvisionedResourceContext) => {
+  const onRequestError = (error: unknown, info: ProvisionedOperationInfo) => {
     appEvents.publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.save-provisioned-dashboard-form.api-error', 'Error saving dashboard'), error],
     });
   };
 
-  const onWriteSuccess = (context: ProvisionedResourceContext) => {
+  const onWriteSuccess = (info: ProvisionedOperationInfo) => {
+    console.log('onWriteSuccess - starting cleanup');
+    
+    // Check current URL state
+    const currentLocation = locationService.getLocation();
+    console.log('onWriteSuccess - current URL state:', {
+      search: currentLocation.search,
+      pathname: currentLocation.pathname,
+      searchParams: new URLSearchParams(currentLocation.search)
+    });
+    
+    console.log('onWriteSuccess - dashboard state:', {
+      editPanel: dashboard.state.editPanel,
+      viewPanelScene: dashboard.state.viewPanelScene,
+      isEditing: dashboard.state.isEditing,
+      isDirty: dashboard.state.isDirty
+    });
+    
+    // Set state FIRST, before any other operations that might trigger changes
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
+
+    console.log('onWriteSuccess - about to close drawer', drawer);
+    // Then handle UI cleanup
     drawer.onClose();
+    
+    console.log('onWriteSuccess - drawer close called, clearing URL params');
+    // Dashboard state management (now in the correct place)
     locationService.partial({
       viewPanel: null,
       editPanel: null,
+      editview: null,
     });
+    
+    console.log('onWriteSuccess - all cleanup complete');
   };
 
   const onNewDashboardSuccess = (upsert: Resource<Dashboard>) => {
+    console.log('onNewDashboardSuccess', upsert);
     dashboard.setState({ isDirty: false });
-    panelEditor?.onDiscard();
     drawer.onClose();
+    // Navigation for new dashboards (resource-specific concern)
     const url = locationUtil.assureBaseUrl(
       getDashboardUrl({
         uid: upsert.metadata.name,
@@ -89,11 +121,13 @@ export function SaveProvisionedDashboardForm({
         currentQueryParams: window.location.search,
       })
     );
-
     navigate(url);
   };
 
-  const onBranchSuccess = (ref: string, path: string, context: ProvisionedResourceContext) => {
+  const onBranchSuccess = (ref: string, path: string, info: ProvisionedOperationInfo) => {
+    console.log('onBranchSuccess', info);
+    // Branch workflow - don't clear dirty state (changes only in branch)
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     drawer.onClose();
 
@@ -101,7 +135,7 @@ export function SaveProvisionedDashboardForm({
       baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
       paramName: 'ref',
       paramValue: ref,
-      repoType: context.repoType,
+      repoType: info.repoType,
     });
     navigate(url);
   };
@@ -111,11 +145,7 @@ export function SaveProvisionedDashboardForm({
     workflow,
     resourceType: 'dashboard',
     handlers: {
-      // Dashboard-specific state management (decoupled from hook)
-      onSuccess: () => {
-        dashboard.setState({ isDirty: false });
-      },
-      onBranchSuccess: ({ ref, path }, context) => onBranchSuccess(ref, path, context),
+      onBranchSuccess: ({ ref, path }, info) => onBranchSuccess(ref, path, info),
       onWriteSuccess,
       onNewDashboardSuccess,
       onError: onRequestError,

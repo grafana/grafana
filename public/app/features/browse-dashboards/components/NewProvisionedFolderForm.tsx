@@ -14,7 +14,7 @@ import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/sha
 import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import {
   useProvisionedRequestHandler,
-  ProvisionedResourceContext,
+  ProvisionedOperationInfo,
 } from 'app/features/dashboard-scene/utils/useProvisionedRequestHandler';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -51,38 +51,38 @@ function FormContent({ initialValues, repository, workflowOptions, folder, onDis
 
   const handleBranchSuccess = (
     { path, urls }: { ref: string; path: string; urls?: Record<string, string> },
-    context: ProvisionedResourceContext
+    info: ProvisionedOperationInfo
   ) => {
     const prUrl = urls?.newPullRequestURL;
     if (prUrl) {
       const url = buildResourceBranchRedirectUrl({
         paramName: 'new_pull_request_url',
         paramValue: prUrl,
-        repoType: context.repoType,
+        repoType: info.repoType,
       });
       navigate(url);
     }
   };
 
-  const handleNewResourceSuccess = (resource: Resource, context: ProvisionedResourceContext) => {
+  const handleNewResourceSuccess = (resource: Resource, info: ProvisionedOperationInfo) => {
+    // Navigation for new folders (resource-specific concern)
     if (resource?.metadata?.name) {
       navigate(`/dashboards/f/${resource.metadata.name}/`);
       return;
     }
 
-    // Fallback to provisioning URL with repository type context
+    // Fallback to provisioning URL
     if (repository?.name && request.data?.path) {
       let url = `${PROVISIONING_URL}/${repository.name}/file/${request.data.path}`;
       if (request.data.ref?.length) {
         url += '?ref=' + request.data.ref;
       }
-      // Could add provider-specific URL modifications here in the future
       navigate(url);
     }
   };
 
-  const handleError = (error: unknown, context: ProvisionedResourceContext) => {
-    // Provider-specific error handling could be added here based on context.repoType
+  const handleError = (error: unknown, info: ProvisionedOperationInfo) => {
+    // Provider-specific error handling could be added here based on info.repoType
     const errorMessage = t(
       'browse-dashboards.new-provisioned-folder-form.alert-error-creating-folder',
       'Error creating folder'

@@ -5651,9 +5651,6 @@
         }
       }
     },
-    "edit-provisioned-dashboard-form": {
-      "success": "Dashboard changes saved successfully"
-    },
     "email-list": {
       "aria-label-emailmenu": "Toggle email menu"
     },
@@ -11000,6 +10997,9 @@
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
+  "provisioned-resource-request-handler": "Resource saved successfully",
+  "provisioned-resource-request-handler-dashboard": "Dashboard saved successfully",
+  "provisioned-resource-request-handler-folder": "Folder created successfully",
   "provisioning": {
     "banner": {
       "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."

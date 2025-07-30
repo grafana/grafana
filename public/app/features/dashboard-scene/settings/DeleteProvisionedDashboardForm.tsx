@@ -11,7 +11,7 @@ import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler, ProvisionedResourceContext } from '../utils/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler, ProvisionedOperationInfo } from '../utils/useProvisionedRequestHandler';
 
 import { buildResourceBranchRedirectUrl } from './utils';
 
@@ -67,34 +67,32 @@ export function DeleteProvisionedDashboardForm({
 
   const navigate = useNavigate();
 
-  const onRequestError = (error: unknown, context: ProvisionedResourceContext) => {
+  const onRequestError = (error: unknown, info: ProvisionedOperationInfo) => {
     getAppEvents().publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard'), error],
     });
   };
 
-  const onWriteSuccess = (context: ProvisionedResourceContext) => {
+  const onWriteSuccess = (info: ProvisionedOperationInfo) => {
+    // Dashboard state management (now in the correct place)
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     onDismiss();
     // TODO reset search state instead
     window.location.href = '/dashboards';
   };
 
-  const onBranchSuccess = (path: string, context: ProvisionedResourceContext, urls?: Record<string, string>) => {
+  const onBranchSuccess = (path: string, info: ProvisionedOperationInfo, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
     onDismiss();
     const url = buildResourceBranchRedirectUrl({
       baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
       paramName: 'pull_request_url',
       paramValue: urls?.newPullRequestURL,
-      repoType: context.repoType,
+      repoType: info.repoType,
     });
     navigate(url);
-  };
-
-  const handleSuccess = (context: ProvisionedResourceContext) => {
-    dashboard.setState({ isDirty: false });
   };
 
   useProvisionedRequestHandler({
@@ -102,8 +100,7 @@ export function DeleteProvisionedDashboardForm({
     workflow,
     resourceType: 'dashboard',
     handlers: {
-      onSuccess: handleSuccess,
-      onBranchSuccess: ({ path, urls }, context) => onBranchSuccess(path, context, urls),
+      onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
       onWriteSuccess,
       onError: onRequestError,
     },

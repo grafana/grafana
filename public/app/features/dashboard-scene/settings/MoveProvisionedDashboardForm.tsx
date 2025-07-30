@@ -18,7 +18,7 @@ import { getTargetFolderPathInRepo } from 'app/features/browse-dashboards/compon
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
-import { useProvisionedRequestHandler, ProvisionedResourceContext } from '../utils/useProvisionedRequestHandler';
+import { useProvisionedRequestHandler, ProvisionedOperationInfo } from '../utils/useProvisionedRequestHandler';
 
 import { buildResourceBranchRedirectUrl } from './utils';
 
@@ -117,7 +117,9 @@ export function MoveProvisionedDashboardForm({
     }
   };
 
-  const onWriteSuccess = (context: ProvisionedResourceContext) => {
+  const onWriteSuccess = (info: ProvisionedOperationInfo) => {
+    // Dashboard state management (now in the correct place)
+    dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     if (targetFolderUID && targetFolderTitle) {
       onSuccess(targetFolderUID, targetFolderTitle);
@@ -125,12 +127,12 @@ export function MoveProvisionedDashboardForm({
     navigate('/dashboards');
   };
 
-  const onBranchSuccess = (context: ProvisionedResourceContext) => {
+  const onBranchSuccess = (info: ProvisionedOperationInfo) => {
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
       paramName: 'new_pull_request_url',
       paramValue: moveRequest?.data?.urls?.newPullRequestURL,
-      repoType: context.repoType,
+      repoType: info.repoType,
     });
     navigate(url);
   };
@@ -140,11 +142,7 @@ export function MoveProvisionedDashboardForm({
     workflow,
     resourceType: 'dashboard',
     handlers: {
-      // Dashboard-specific state management (decoupled from hook)
-      onSuccess: () => {
-        dashboard.setState({ isDirty: false });
-      },
-      onBranchSuccess: (data, context) => onBranchSuccess(context),
+      onBranchSuccess: (data, info) => onBranchSuccess(info),
       onWriteSuccess,
     },
   });
