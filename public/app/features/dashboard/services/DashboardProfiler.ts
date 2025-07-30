@@ -12,27 +12,21 @@ export function getDashboardSceneProfiler() {
 
 export function getDashboardInteractionCallback(uid: string, title: string) {
   return (e: SceneInteractionProfileEvent) => {
-    reportInteraction('dashboard_render', {
-      interactionType: e.origin,
-      uid,
+    const payload = {
       duration: e.duration,
       networkDuration: e.networkDuration,
       totalJSHeapSize: e.totalJSHeapSize,
       usedJSHeapSize: e.usedJSHeapSize,
       jsHeapSizeLimit: e.jsHeapSizeLimit,
+      timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
+    };
+
+    reportInteraction('dashboard_render', {
+      interactionType: e.origin,
+      uid,
+      ...payload,
     });
 
-    logMeasurement(
-      `dashboard_render`,
-      {
-        duration: e.duration,
-        networkDuration: e.networkDuration,
-        totalJSHeapSize: e.totalJSHeapSize,
-        usedJSHeapSize: e.usedJSHeapSize,
-        jsHeapSizeLimit: e.jsHeapSizeLimit,
-        timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
-      },
-      { interactionType: e.origin, dashboard: uid, title: title }
-    );
+    logMeasurement(`dashboard_render`, payload, { interactionType: e.origin, dashboard: uid, title: title });
   };
 }
