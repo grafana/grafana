@@ -1008,13 +1008,15 @@ func TestStagedGitRepository_Push(t *testing.T) {
 		},
 		{
 			name: "returns repository ErrNothingToCommit when nanogit returns ErrNothingToCommit",
-			opts: repository.StageOptions{},
+			opts: repository.StageOptions{
+				Mode: repository.StageModeCommitOnlyOnce,
+			},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
-				mockWriter.PushReturns(nanogit.ErrNothingToCommit)
+				mockWriter.CommitReturns(nil, nanogit.ErrNothingToCommit)
 			},
 			wantError:         repository.ErrNothingToCommit,
-			expectPushCalls:   1,
-			expectCommitCalls: 0,
+			expectPushCalls:   0,
+			expectCommitCalls: 1,
 		},
 		{
 			name: "returns repository ErrNothingToPush when nanogit returns wrapped ErrNothingToPush",
@@ -1030,15 +1032,17 @@ func TestStagedGitRepository_Push(t *testing.T) {
 		},
 		{
 			name: "returns repository ErrNothingToCommit when nanogit returns wrapped ErrNothingToCommit",
-			opts: repository.StageOptions{},
+			opts: repository.StageOptions{
+				Mode: repository.StageModeCommitOnlyOnce,
+			},
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				// Use fmt.Errorf with %w to create a wrapped error that errors.Is can detect
 				wrappedErr := fmt.Errorf("git operation failed: %w", nanogit.ErrNothingToCommit)
-				mockWriter.PushReturns(wrappedErr)
+				mockWriter.CommitReturns(nil, wrappedErr)
 			},
 			wantError:         repository.ErrNothingToCommit,
-			expectPushCalls:   1,
-			expectCommitCalls: 0,
+			expectPushCalls:   0,
+			expectCommitCalls: 1,
 		},
 	}
 
