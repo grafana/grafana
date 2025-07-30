@@ -11,6 +11,7 @@ import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/ap
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
+import { buildResourceBranchRedirectUrl } from 'app/features/dashboard-scene/settings/utils';
 import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
@@ -61,7 +62,12 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
     if (request.isSuccess && repository) {
       const prUrl = request.data?.urls?.newPullRequestURL;
       if (workflow === 'branch' && prUrl) {
-        navigate(`/dashboards?new_pull_request_url=${prUrl}`);
+        const url = buildResourceBranchRedirectUrl({
+          paramName: 'new_pull_request_url',
+          paramValue: prUrl,
+          repoType: request.data?.repository?.type,
+        });
+        navigate(url);
         return;
       }
 

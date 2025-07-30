@@ -2458,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "配置",
-      "draft-new-rule": "起草新规则",
       "ds-error": {
         "title": "无法加载此数据源的规则"
       },
@@ -2484,6 +2483,7 @@
       "new-alert-rule": "新建警报规则",
       "new-datasource-recording-rule": "新的数据源录制规则",
       "new-grafana-recording-rule": "新的 Grafana 录制规则",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "显示更多..."
       },
@@ -3469,6 +3469,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "取消",
       "cannot-move-folders": "文件夹无法移动",
       "confirmation-text": "删除",
@@ -3502,21 +3503,32 @@
       "this-folder-is-empty": "此文件夹为空"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_other": ""
     },
     "bulk-delete-resources-form": {
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_other": "{{count}} 条警告规则",
@@ -4547,6 +4559,11 @@
     },
     "edit-actions": {
       "add": "添加{{typeName}}",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "移动{{typeName}}",
       "panel-background": "更改面板背景",
       "panel-description": "更改面板描述",
@@ -4561,6 +4578,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "仪表板",
+        "element": "",
         "local-variable": "局部变量",
         "multiple-elements": "多个元素",
         "multiple-elements-delete-text": "您确定要删除这些元素吗？",
@@ -5330,6 +5348,20 @@
       "tags-expected-array": "标签预期数组",
       "tags-expected-strings": "标签预期字符串数组"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "恢复到版本 {{version}}",
       "label-view-json-diff": "查看 JSON 差异",
@@ -5768,7 +5800,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7138,6 +7169,7 @@
           "start-time": "开始时间："
         }
       },
+      "share-span": "",
       "warnings": "警告"
     },
     "span-filters": {
@@ -7485,6 +7517,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7544,6 +7577,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8243,6 +8277,9 @@
     "card": {
       "option": "选项"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "清除选择"
     },
@@ -8255,6 +8292,7 @@
       "aria-label-selected-color": "{{colorLabel}} 颜色"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "取消",
       "confirmText-delete": ""
     },
@@ -8681,6 +8719,7 @@
       "footer-add-annotation": "添加注释",
       "footer-click-to-action": "点击以 {{actionTitle}}",
       "footer-click-to-navigate": "点击打开 {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "时间戳"
     },
     "week-start-picker": {
@@ -10918,15 +10957,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11033,10 +11072,10 @@
       "title-instant-updates-requests-webhooks": "通过 Webhook 实现即时更新和拉取请求。",
       "title-visual-previews-in-pull-requests": "具有图像渲染功能的拉取请求可视化预览"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "作业规范",
-      "summary": "摘要",
-      "title-error": "错误"
+      "summary": "摘要"
     },
     "features-list": {
       "actions": {
@@ -11181,10 +11220,13 @@
       "starting": "正在启动...",
       "status": {
         "title-error-running-job": "运行作业时出错",
-        "title-job-completed-successfully": "作业已成功完成",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
-      "summary": "摘要"
+      "summary": "摘要",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11327,6 +11369,7 @@
       "label-current-step": "当前步骤",
       "label-pending-step": "待处理步骤"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11350,6 +11393,7 @@
       "go-to": "前往",
       "make-sure": "务必包含以下权限"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "在此过程中将无法创建、编辑或删除资源。在最后一步中，它们将消失。",
       "alert-point-2": "预配完成后，资源将重新出现并通过外部存储进行管理。",
@@ -11358,6 +11402,12 @@
       "alert-title": "重要提示：数据或配置不会丢失，但数据面板将在几分钟内暂时不可用。",
       "button-next": "完成",
       "button-start": "开始同步",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "选择要同步的内容",
       "step-connect": "连接",
       "step-finish": "选择附加设置",
@@ -11372,6 +11422,7 @@
     "wizard-content": {
       "button-cancel": "取消",
       "button-cancelling": "正在取消...",
+      "button-previous": "",
       "button-submitting": "正在提交...",
       "error-instance-repository-exists": "实例存储库已存在"
     }
@@ -13393,7 +13444,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13415,6 +13466,9 @@
         }
       },
       "regression": "回归",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "要预测的 X,Y 点的数量"
     },
     "rename-by-regex-transformer": {

@@ -2488,7 +2488,6 @@
     },
     "rule-list": {
       "configure-datasource": "Настроить",
-      "draft-new-rule": "Составить новое правило",
       "ds-error": {
         "title": "Невозможно загрузить правила для этого источника данных"
       },
@@ -2514,6 +2513,7 @@
       "new-alert-rule": "Новое правило оповещения",
       "new-datasource-recording-rule": "Новое правило записи источника данных",
       "new-grafana-recording-rule": "Новое правило записи Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Показать еще…"
       },
@@ -3508,6 +3508,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Отмена",
       "cannot-move-folders": "Папки нельзя перемещать",
       "confirmation-text": "Удалить",
@@ -3541,6 +3542,10 @@
       "this-folder-is-empty": "Папка пуста"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_few": "",
       "failed-alert_many": "",
@@ -3550,15 +3555,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} правило оповещения",
@@ -4604,6 +4616,11 @@
     },
     "edit-actions": {
       "add": "Добавить {{typeName}}",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Изменить фон панели",
       "panel-description": "Изменить описание панели",
@@ -4618,6 +4635,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Дашборд",
+        "element": "",
         "local-variable": "Локальная переменная",
         "multiple-elements": "Несколько элементов",
         "multiple-elements-delete-text": "Действительно удалить элементы?",
@@ -5390,6 +5408,20 @@
       "tags-expected-array": "ожидаемый массив тегов",
       "tags-expected-strings": "ожидаемый массив строк тегов"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Восстановить до версии {{version}} ",
       "label-view-json-diff": "Просмотр JSON Diff",
@@ -5831,7 +5863,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7204,6 +7235,7 @@
           "start-time": "Время начала:"
         }
       },
+      "share-span": "",
       "warnings": "Предупреждения"
     },
     "span-filters": {
@@ -7551,6 +7583,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7610,6 +7643,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8309,6 +8343,9 @@
     "card": {
       "option": "параметр"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Очистить выбор"
     },
@@ -8321,6 +8358,7 @@
       "aria-label-selected-color": "{{colorLabel}} цвет"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Отмена",
       "confirmText-delete": ""
     },
@@ -8747,6 +8785,7 @@
       "footer-add-annotation": "Добавить аннотацию",
       "footer-click-to-action": "Нажмите, чтобы {{actionTitle}}",
       "footer-click-to-navigate": "Нажмите, чтобы открыть {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Метка времени"
     },
     "week-start-picker": {
@@ -11017,15 +11056,15 @@
   },
   "provisioned-resource-preview-banner": {
     "preview-banner": {
-      "behind-branch": "",
-      "new-branch": "",
+      "behind-branch-text": "",
       "not-saved": "",
-      "open-git-hub": "",
-      "open-pull-request-in-git-hub": "",
-      "view-pull-request-in-git-hub": ""
+      "open-in-repo-button": "",
+      "open-pull-request-in-repo": "",
+      "view-in-repo-button": "",
+      "view-pull-request-in-repo": ""
     },
-    "title-created-branch-git-hub": "",
-    "title-loaded-pull-request-git-hub": ""
+    "title-created-branch-in-repo": "",
+    "title-loaded-pull-request-in-repo": ""
   },
   "provisioning": {
     "banner": {
@@ -11141,10 +11180,10 @@
       "title-instant-updates-requests-webhooks": "Мгновенные обновления и запросы на включение изменений с помощью веб-перехватчиков",
       "title-visual-previews-in-pull-requests": "Просмотр в запросах на включение изменений с визуализацией изображений"
     },
+    "error-title-default": "",
     "expanded-row": {
       "job-specification": "Спецификация задания",
-      "summary": "Сводка",
-      "title-error": "Ошибка"
+      "summary": "Сводка"
     },
     "features-list": {
       "actions": {
@@ -11289,10 +11328,13 @@
       "starting": "Запуск...",
       "status": {
         "title-error-running-job": "Ошибка при выполнении задания",
-        "title-job-completed-successfully": "Задание завершено",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
-      "summary": "Сводка"
+      "summary": "Сводка",
+      "title": {
+        "error-fetching-active-job": ""
+      }
     },
     "local": {
       "path-description": "",
@@ -11435,6 +11477,7 @@
       "label-current-step": "Текущий шаг",
       "label-pending-step": "Предстоящий шаг"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11458,6 +11501,7 @@
       "go-to": "Перейти к",
       "make-sure": "Обязательно включите эти разрешения"
     },
+    "warning-title-default": "",
     "wizard": {
       "alert-point-1": "Во время этого процесса невозможно создавать, редактировать или удалять ресурсы. На последнем шаге они исчезнут.",
       "alert-point-2": "После завершения подготовки ресурсы снова появятся и будут управляться через внешнее хранилище.",
@@ -11466,6 +11510,12 @@
       "alert-title": "Важно. Данные и конфигурация не будут потеряны, однако дашборды будут недоступны в течение нескольких минут.",
       "button-next": "Готово",
       "button-start": "Начать синхронизацию",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Выберите, что синхронизировать",
       "step-connect": "Подключить",
       "step-finish": "Выберите дополнительные параметры",
@@ -11480,6 +11530,7 @@
     "wizard-content": {
       "button-cancel": "Отмена",
       "button-cancelling": "Отмена...",
+      "button-previous": "",
       "button-submitting": "Отправка...",
       "error-instance-repository-exists": "Репозиторий экземпляров уже существует"
     }
@@ -13519,7 +13570,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13541,6 +13592,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Количество точек X, Y для прогнозирования"
     },
     "rename-by-regex-transformer": {

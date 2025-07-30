@@ -16,6 +16,9 @@ export default defineConfig<PluginOptions>({
   reporter: [
     ['html'], // pretty
   ],
+  expect: {
+    timeout: 10_000,
+  },
   use: {
     baseURL: process.env.GRAFANA_URL ?? DEFAULT_URL,
     trace: 'retain-on-failure',
@@ -211,8 +214,8 @@ export default defineConfig<PluginOptions>({
       dependencies: ['authenticate'],
     },
     {
-      name: 'scenarios',
-      testDir: path.join(testDirRoot, '/scenarios'),
+      name: 'unauthenticated',
+      testDir: path.join(testDirRoot, '/unauthenticated'),
       use: {
         ...devices['Desktop Chrome'],
       },
