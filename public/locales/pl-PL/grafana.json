@@ -2488,7 +2488,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfiguruj",
-      "draft-new-rule": "Zaprojektuj nową regułę",
       "ds-error": {
         "title": "Nie można załadować reguł dla tego źródła danych"
       },
@@ -2514,6 +2513,7 @@
       "new-alert-rule": "Nowa reguła alertu",
       "new-datasource-recording-rule": "Nowa reguła rejestracji źródła danych",
       "new-grafana-recording-rule": "Nowa reguła rejestracji w usłudze Grafana",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Pokaż więcej…"
       },
@@ -3508,6 +3508,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Anuluj",
       "cannot-move-folders": "Nie można przenosić folderów",
       "confirmation-text": "Usuń",
@@ -3541,6 +3542,10 @@
       "this-folder-is-empty": "Ten folder jest pusty"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_one": "",
       "failed-alert_few": "",
       "failed-alert_many": "",
@@ -3550,15 +3555,22 @@
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_one": "{{count}} reguła alertu",
@@ -4604,6 +4616,11 @@
     },
     "edit-actions": {
       "add": "Dodaj: {{typeName}}",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "",
       "panel-background": "Zmień tło panelu",
       "panel-description": "Zmień opis panelu",
@@ -4618,6 +4635,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Pulpit",
+        "element": "",
         "local-variable": "Zmienna lokalna",
         "multiple-elements": "Wiele elementów",
         "multiple-elements-delete-text": "Czy na pewno chcesz usunąć te elementy?",
@@ -5390,6 +5408,20 @@
       "tags-expected-array": "znaczniki oczekiwały tablicy",
       "tags-expected-strings": "znaczniki oczekiwały tablicy łańcuchów"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Przywróć do wersji {{version}}",
       "label-view-json-diff": "Wyświetl plik diff JSON",
@@ -5831,7 +5863,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7552,6 +7583,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7611,6 +7643,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8310,6 +8343,9 @@
     "card": {
       "option": "opcja"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Usuń zaznaczone"
     },
@@ -8322,6 +8358,7 @@
       "aria-label-selected-color": "Kolor {{colorLabel}}"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Anuluj",
       "confirmText-delete": ""
     },
@@ -8748,6 +8785,7 @@
       "footer-add-annotation": "Dodaj komentarz",
       "footer-click-to-action": "Kliknij, aby podjąć działanie: {{actionTitle}}",
       "footer-click-to-navigate": "Kliknij, aby otworzyć {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Znacznik czasu"
     },
     "week-start-picker": {
@@ -11290,6 +11328,7 @@
       "starting": "Uruchamianie…",
       "status": {
         "title-error-running-job": "Błąd uruchamiania zadania",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Podsumowanie",
@@ -11438,6 +11477,7 @@
       "label-current-step": "Aktualny krok",
       "label-pending-step": "Oczekujący krok"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11470,6 +11510,12 @@
       "alert-title": "Ważne: dane ani konfiguracja nie zostaną utracone, ale pulpity będą niedostępne przez kilka minut.",
       "button-next": "Zakończ",
       "button-start": "Rozpocznij synchronizację",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Wybierz, co chcesz zsynchronizować",
       "step-connect": "Połącz",
       "step-finish": "Wybierz dodatkowe ustawienia",
@@ -11484,6 +11530,7 @@
     "wizard-content": {
       "button-cancel": "Anuluj",
       "button-cancelling": "Anulowanie…",
+      "button-previous": "",
       "button-submitting": "Zgłaszanie…",
       "error-instance-repository-exists": "Repozytorium instancji już istnieje"
     }
@@ -13523,7 +13570,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13545,6 +13592,9 @@
         }
       },
       "regression": "",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Liczba punktów X,Y do prognozowania"
     },
     "rename-by-regex-transformer": {

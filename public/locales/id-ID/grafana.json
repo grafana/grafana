@@ -2458,7 +2458,6 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurasikan",
-      "draft-new-rule": "Buat draf aturan baru",
       "ds-error": {
         "title": "Tidak dapat memuat aturan untuk sumber data ini"
       },
@@ -2484,6 +2483,7 @@
       "new-alert-rule": "Aturan peringatan baru",
       "new-datasource-recording-rule": "Aturan Perekaman sumber data baru",
       "new-grafana-recording-rule": "Aturan Perekaman Grafana baru",
+      "new-rule-for-export": "",
       "pagination": {
         "next-page": "Tampilkan lebih banyak..."
       },
@@ -3469,6 +3469,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "",
+      "bulk-move-provisioned-resources": "",
       "cancel-button": "Batalkan",
       "cannot-move-folders": "Folder tidak dapat dipindahkan",
       "confirmation-text": "Hapus",
@@ -3502,21 +3503,32 @@
       "this-folder-is-empty": "Folder ini kosong"
     },
     "bulk-action-resources-form": {
+      "all-deleted": "",
+      "all-moved": "",
+      "button-done": "",
+      "progress-title": "",
       "failed-alert_other": ""
     },
     "bulk-delete-resources-form": {
       "button-cancel": "",
       "button-delete": "",
       "button-deleting": "",
-      "button-done": "",
       "delete-warning": "",
-      "error-path-not-found": "",
-      "progress-title": "",
-      "success-message": ""
+      "error-path-not-found": ""
     },
     "bulk-move-resources-form": {
+      "button-cancel": "",
+      "button-move": "",
+      "button-moving": "",
       "deleting": "",
-      "progress": ""
+      "error-file-content-not-found": "",
+      "error-path-not-found": "",
+      "error-target-folder-path-missing": "",
+      "error-title": "",
+      "move-warning": "",
+      "moving": "",
+      "progress": "",
+      "target-folder": ""
     },
     "counts": {
       "alertRule_other": "{{count}} aturan peringatan",
@@ -4547,6 +4559,11 @@
     },
     "edit-actions": {
       "add": "Tambahkan {{typeName}}",
+      "add-conditional-rule": "",
+      "duplicate-panel": "",
+      "edit-query-result-rule": "",
+      "edit-template-variable-rule": "",
+      "edit-time-range-rule": "",
       "move": "Pindahkan {{typeName}}",
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
@@ -4561,6 +4578,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dasbor",
+        "element": "",
         "local-variable": "Variabel lokal",
         "multiple-elements": "Beberapa elemen",
         "multiple-elements-delete-text": "Anda yakin ingin menghapus elemen ini?",
@@ -5330,6 +5348,20 @@
       "tags-expected-array": "tag array yang diharapkan",
       "tags-expected-strings": "tag array yang diharapkan dari string"
     },
+    "variable": {
+      "description": {
+        "action": ""
+      },
+      "hide": {
+        "action": ""
+      },
+      "label": {
+        "action": ""
+      },
+      "name": {
+        "action": ""
+      }
+    },
     "version-history-comparison": {
       "button-restore": "Pulihkan ke versi {{version}}",
       "label-view-json-diff": "Lihat diff JSON",
@@ -5768,7 +5800,6 @@
       "move-action": "",
       "move-read-only-message": "",
       "moving": "",
-      "partial-failure-warning": "",
       "target-path-label": "",
       "title-this-repository-is-read-only": ""
     },
@@ -7486,6 +7517,7 @@
     },
     "description-initial-view": "",
     "description-mouse-wheel-zoom": "",
+    "description-no-repeat": "",
     "description-share-view": "",
     "description-show-attribution": "",
     "description-show-debug": "",
@@ -7545,6 +7577,7 @@
     },
     "name-initial-view": "",
     "name-mouse-wheel-zoom": "",
+    "name-no-repeat": "",
     "name-share-view": "",
     "name-show-attribution": "",
     "name-show-debug": "",
@@ -8244,6 +8277,9 @@
     "card": {
       "option": "opsi"
     },
+    "carousel": {
+      "aria-label-open-image": ""
+    },
     "cascader": {
       "clear-button": "Hapus pilihan"
     },
@@ -8256,6 +8292,7 @@
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
     "confirm-button": {
+      "aria-label-delete": "",
       "cancel": "Batalkan",
       "confirmText-delete": ""
     },
@@ -8682,6 +8719,7 @@
       "footer-add-annotation": "Tambahkan anotasi",
       "footer-click-to-action": "Klik untuk {{actionTitle}} ",
       "footer-click-to-navigate": "Klik untuk membuka {{linkTitle}}",
+      "footer-filter-for-value": "",
       "timestamp": "Stempel Waktu"
     },
     "week-start-picker": {
@@ -11182,6 +11220,7 @@
       "starting": "Memulai...",
       "status": {
         "title-error-running-job": "Kesalahan saat menjalankan pekerjaan",
+        "title-success-running-job": "",
         "title-warning-running-job": ""
       },
       "summary": "Ringkasan",
@@ -11330,6 +11369,7 @@
       "label-current-step": "Langkah saat ini",
       "label-pending-step": "Langkah tertunda"
     },
+    "success-title-default": "",
     "sync-job": {
       "error-no-job-id": "",
       "error-no-repository-name": "",
@@ -11362,6 +11402,12 @@
       "alert-title": "Penting: Tidak ada data atau konfigurasi yang akan hilang, tetapi dasbor tidak akan tersedia sementara selama beberapa menit.",
       "button-next": "Selesai",
       "button-start": "Mulai sinkronisasi",
+      "discard-modal": {
+        "body": "",
+        "confirm": "",
+        "dismiss": "",
+        "title": ""
+      },
       "step-bootstrap": "Pilih item yang akan disinkronkan",
       "step-connect": "Hubungkan",
       "step-finish": "Pilih pengaturan tambahan",
@@ -11376,6 +11422,7 @@
     "wizard-content": {
       "button-cancel": "Batalkan",
       "button-cancelling": "Membatalkan...",
+      "button-previous": "",
       "button-submitting": "Mengirim...",
       "error-instance-repository-exists": "Repositori instans sudah ada"
     }
@@ -13397,7 +13444,7 @@
         "create-new-data-frame": ""
       },
       "name": {
-        "regression-analysis": ""
+        "trendline": ""
       }
     },
     "regression-transformer-editor": {
@@ -13419,6 +13466,9 @@
         }
       },
       "regression": "regresi",
+      "tags": {
+        "regression-analysis": ""
+      },
       "tooltip-number-of-xy-points-to-predict": "Jumlah poin X,Y untuk diprediksi"
     },
     "rename-by-regex-transformer": {

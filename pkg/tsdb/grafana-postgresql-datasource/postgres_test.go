@@ -169,7 +169,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 				UID:                     tt.uid,
 			}
 
-			connStr, err := svc.generateConnectionString(ds)
+			connStr, err := svc.generateConnectionString(ds, tt.tlsSettings, false)
 
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
