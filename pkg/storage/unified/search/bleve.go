@@ -197,6 +197,7 @@ func (b *bleveBackend) BuildIndex(
 	size int64,
 	resourceVersion int64,
 	fields resource.SearchableDocumentFields,
+	indexBuildReason string,
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
@@ -214,7 +215,7 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion)
+	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion, "reason", indexBuildReason)
 
 	// Close the newly created/opened index by default.
 	closeIndex := true

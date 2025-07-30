@@ -90,7 +90,7 @@ type SearchBackend interface {
 	// Depending on the size, the backend may choose different options (eg: memory vs disk).
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
-	BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, nonStandardFields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error)
+	BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, nonStandardFields SearchableDocumentFields, indexBuildReason string, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error)
 
 	// TotalDocs returns the total number of documents across all indexes.
 	TotalDocs() int64
@@ -196,7 +196,7 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.
 			Namespace: req.Namespace,
 			Group:     info.Group,
 			Resource:  info.Resource,
-		})
+		}, "listManagedObjects")
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -237,7 +237,7 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb
 			Namespace: req.Namespace,
 			Group:     info.Group,
 			Resource:  info.Resource,
-		})
+		}, "countManagedObjects")
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -282,7 +282,7 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
-	idx, err := s.getOrCreateIndex(ctx, nsr)
+	idx, err := s.getOrCreateIndex(ctx, nsr, "search")
 	if err != nil {
 		return &resourcepb.ResourceSearchResponse{
 			Error: AsErrorResult(err),
@@ -294,7 +294,7 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 	for i, f := range req.Federated {
 		nsr.Group = f.Group
 		nsr.Resource = f.Resource
-		federate[i], err = s.getOrCreateIndex(ctx, nsr)
+		federate[i], err = s.getOrCreateIndex(ctx, nsr, "federatedSearch")
 		if err != nil {
 			return &resourcepb.ResourceSearchResponse{
 				Error: AsErrorResult(err),
@@ -323,7 +323,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 				Namespace: req.Namespace,
 				Group:     parts[0],
 				Resource:  parts[1],
-			})
+			}, "getStats")
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -367,7 +367,7 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 			Namespace: req.Namespace,
 			Group:     stat.Group,
 			Resource:  stat.Resource,
-		})
+		}, "getStats")
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -449,8 +449,12 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 				return err
 			}
 
-			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
-			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
+			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "rebuild", rebuild)
+			reason := "init"
+			if rebuild {
+				reason = "rebuild"
+			}
+			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion, reason)
 			return err
 		})
 	}
@@ -630,7 +634,7 @@ func (s *searchSupport) rebuildDashboardIndexes(ctx context.Context) error {
 	return nil
 }
 
-func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource, reason string) (ResourceIndex, error) {
 	if s == nil || s.search == nil {
 		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
 	}
@@ -672,7 +676,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 			}
 		}
 
-		idx, _, err = s.build(ctx, key, size, rv)
+		idx, _, err = s.build(ctx, key, size, rv, reason)
 		if err != nil {
 			return nil, fmt.Errorf("error building search index, %w", err)
 		}
@@ -693,7 +697,7 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 	}
 }
 
-func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {
+func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64, indexBuildReason string) (ResourceIndex, int64, error) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
@@ -705,7 +709,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 	fields := s.builders.GetFields(nsr)
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
+	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, indexBuildReason, func(index ResourceIndex) (int64, error) {
 		rv, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 			Limit: 1000000000000, // big number
 			Options: &resourcepb.ListOptions{
@@ -799,7 +803,7 @@ func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResou
 	s.log.Debug("Building empty index", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "rv", rv)
 
 	// Build an empty index by passing a builder function that doesn't add any documents
-	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, func(index ResourceIndex) (int64, error) {
+	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, "empty", func(index ResourceIndex) (int64, error) {
 		// Return the resource version without adding any documents to the index
 		return rv, nil
 	})
