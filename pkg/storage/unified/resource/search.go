@@ -541,7 +541,7 @@ func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 		Group:     evt.Key.Group,
 		Resource:  evt.Key.Resource,
 	}
-	index, err := s.getOrCreateIndex(ctx, nsr)
+	index, err := s.getOrCreateIndex(ctx, nsr, "dispatchEvent")
 	if err != nil {
 		s.log.Warn("error getting index for watch event", "error", err)
 		span.RecordError(err)
