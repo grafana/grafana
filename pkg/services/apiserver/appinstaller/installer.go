@@ -134,7 +134,6 @@ func InstallAPIs(
 	builderMetrics *builder.BuilderMetrics,
 ) error {
 	logger := logging.FromContext(ctx)
-
 	for _, installer := range appInstallers {
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
 		wrapper := &serverWrapper{
