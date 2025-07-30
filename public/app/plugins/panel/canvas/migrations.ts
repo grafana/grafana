@@ -82,17 +82,11 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
     if (root?.elements) {
       for (const element of root.elements) {
         for (const connection of element.connections || []) {
-          if (connection.direction) {
+          if (connection.direction && typeof connection.direction === 'string') {
             // convert old direction to new format
             connection.direction = {
               mode: 'fixed',
               fixed: connection.direction,
-            };
-          } else {
-            // default to forward
-            connection.direction = {
-              mode: 'fixed',
-              fixed: 'forward',
             };
           }
         }
