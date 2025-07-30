@@ -576,8 +576,12 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	starService := starimpl.ProvideService(sqlStore)
 	searchSearchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service15, service13, requestConfigProvider)
+	ossConfigProvider, err := setting.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
 	mtDatasourceClientBuilder := mtdsclient.NewNullMTDatasourceClientBuilder()
-	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, mtDatasourceClientBuilder)
+	exprService := expr.ProvideService(ossConfigProvider, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, mtDatasourceClientBuilder)
 	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, mtDatasourceClientBuilder)
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
 	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, sqlStore, secretsService, usageStats, queryServiceImpl, featureToggles, accessControl, dashboardService, repositoryImpl, orgService, eventualRestConfigProvider)
@@ -1136,8 +1140,12 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	starService := starimpl.ProvideService(sqlStore)
 	searchSearchService := search2.ProvideService(cfg, sqlStore, starService, dashboardService, folderimplService, featureToggles, sortService)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service15, service13, requestConfigProvider)
+	ossConfigProvider, err := setting.ProvideService(cfg)
+	if err != nil {
+		return nil, err
+	}
 	mtDatasourceClientBuilder := mtdsclient.NewNullMTDatasourceClientBuilder()
-	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, mtDatasourceClientBuilder)
+	exprService := expr.ProvideService(ossConfigProvider, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, mtDatasourceClientBuilder)
 	queryServiceImpl := query.ProvideService(cfg, cacheServiceImpl, exprService, ossDataSourceRequestValidator, middlewareHandler, plugincontextProvider, mtDatasourceClientBuilder)
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
 	grafanaLive, err := live.ProvideService(plugincontextProvider, cfg, routeRegisterImpl, pluginstoreService, middlewareHandler, cacheService, cacheServiceImpl, sqlStore, secretsService, usageStats, queryServiceImpl, featureToggles, accessControl, dashboardService, repositoryImpl, orgService, eventualRestConfigProvider)

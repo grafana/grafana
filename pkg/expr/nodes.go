@@ -107,7 +107,7 @@ func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars
 	return gn.Command.Execute(ctx, now, vars, s.tracer, s.metrics)
 }
 
-func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.Cfg) (*CMDNode, error) {
+func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg setting.ConfigProvider) (*CMDNode, error) {
 	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)

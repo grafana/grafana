@@ -262,7 +262,6 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 
 		rawQueryProp := make(map[string]any)
 		queryBytes, err := query.JSON.MarshalJSON()
-
 		if err != nil {
 			return nil, err
 		}
