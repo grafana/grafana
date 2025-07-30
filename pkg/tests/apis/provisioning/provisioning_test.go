@@ -1761,7 +1761,6 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			_, err = helper.DashboardsV1.Resource.Get(ctx, "mixedmove2", metav1.GetOptions{})
 			require.NoError(t, err, "dashboard moved by resource ref should still exist in Grafana")
 		})
-
 	})
 }
 
