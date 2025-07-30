@@ -871,6 +871,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagPostgresDSUsePGX
+	// Enables using PGX instead of libpq for PostgreSQL datasource
+	FlagPostgresDSUsePGX = "postgresDSUsePGX"
+
 	// FlagTempoAlerting
 	// Enables creating alerts from Tempo data source
 	FlagTempoAlerting = "tempoAlerting"
