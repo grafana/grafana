@@ -10,13 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -25,14 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -826,31 +819,42 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// dashboard store commands that should be called.
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
-
 	fStore := folderimpl.ProvideStore(db)
-	folderSvc := folderimpl.ProvideService(
-		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(db),
-		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
-	// create parent folder
-	parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          "parent",
-		OrgID:        orgID,
+	// create in both the folder & dashboard tables
+	parent, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:        "parent",
-		SignedInUser: usr,
-	})
-	require.NoError(t, err)
-
-	// create subfolder
-	subfolder, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          "subfolder",
-		ParentUID:    "parent",
 		OrgID:        orgID,
-		Title:        "subfolder",
+		UID:          "parent",
 		SignedInUser: usr,
 	})
 	require.NoError(t, err)
-
+	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID: orgID,
+		Dashboard: simplejson.NewFromAny(map[string]any{
+			"title": "parent",
+			"uid":   parent.UID,
+		}),
+		IsFolder: true,
+	})
+	require.NoError(t, err)
+	subfolder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title:        "subfolder",
+		OrgID:        orgID,
+		UID:          "subfolder",
+		ParentUID:    parent.UID,
+		SignedInUser: usr,
+	})
+	require.NoError(t, err)
+	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:     orgID,
+		FolderUID: parent.UID,
+		Dashboard: simplejson.NewFromAny(map[string]any{
+			"title": "subfolder",
+			"uid":   subfolder.UID,
+		}),
+		IsFolder: true,
+	})
+	require.NoError(t, err)
 	// create a root level dashboard
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID: orgID,

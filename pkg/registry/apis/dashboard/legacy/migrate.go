@@ -32,8 +32,9 @@ type MigrateOptions struct {
 	LargeObjects apistore.LargeObjectSupport
 	BlobStore    resourcepb.BlobStoreClient
 	Resources    []schema.GroupResource
-	WithHistory  bool // only applies to dashboards
-	OnlyCount    bool // just count the values
+	WithHistory  bool   // only applies to dashboards
+	OnlyCount    bool   // just count the values
+	StackID      string // stack identifier for logging
 	Progress     func(count int, msg string)
 }
 
@@ -135,6 +136,7 @@ func (a *dashboardSqlAccess) Migrate(ctx context.Context, opts MigrateOptions) (
 
 	// Now run each migration
 	blobStore := BlobStoreInfo{}
+	opts.StackID = fmt.Sprintf("%d", info.StackID) // Pass stack ID through options
 	a.log.Info("start migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	for _, m := range migratorFuncs {
 		blobs, err := m(ctx, info.OrgID, opts, stream)
@@ -310,6 +312,7 @@ func (a *dashboardSqlAccess) migrateDashboards(ctx context.Context, orgId int64,
 				"dashboard", row.Dash.Name,
 				"uid", row.Dash.UID,
 				"id", id,
+				"stackId", opts.StackID,
 				"namespace", opts.Namespace,
 			)
 			opts.Progress(-2, fmt.Sprintf("rejected: id:%s, uid:%s", id, row.Dash.Name))
