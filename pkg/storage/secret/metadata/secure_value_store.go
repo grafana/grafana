@@ -64,12 +64,12 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv1bet
 		success := svmCreateErr == nil
 		args = append(args, "success", success)
 		if !success {
-			span.SetStatus(codes.Error, "SecretValueMetadata creation failed")
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Create failed")
 			span.RecordError(svmCreateErr)
 			args = append(args, "error", svmCreateErr)
 		}
 
-		logging.FromContext(ctx).Info("SecretValueMetadata created", args...)
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Create", args...)
 
 		s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 		s.metrics.SecureValueMetadataCreateCount.WithLabelValues(strconv.FormatBool(success)).Inc()
@@ -263,7 +263,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	defer span.End()
 
 	defer func() {
-		logging.FromContext(ctx).Info("SecretValueMetadata read", "namespace", namespace, "name", name, "success", readErr != nil, "error", readErr)
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Read", "namespace", namespace, "name", name, "success", readErr != nil, "error", readErr)
 
 		s.metrics.SecureValueMetadataGetDuration.Observe(time.Since(start).Seconds())
 		s.metrics.SecureValueMetadataGetCount.Inc()
