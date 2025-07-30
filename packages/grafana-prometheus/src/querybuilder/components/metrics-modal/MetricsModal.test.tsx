@@ -149,14 +149,6 @@ describe('MetricsModal', () => {
       expect(metricABucket).toBeInTheDocument();
     });
 
-    const showSettingsButton = screen.getByTestId(metricsModaltestIds.showAdditionalSettings);
-    expect(showSettingsButton).toBeInTheDocument();
-    await userEvent.click(showSettingsButton);
-
-    const metadataSwitch = screen.getByTestId(metricsModaltestIds.searchWithMetadata);
-    expect(metadataSwitch).toBeInTheDocument();
-    await userEvent.click(metadataSwitch);
-
     const searchMetric = screen.getByTestId(metricsModaltestIds.searchMetric);
     expect(searchMetric).toBeInTheDocument();
     await userEvent.type(searchMetric, 'functions');

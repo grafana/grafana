@@ -1,13 +1,7 @@
 import { PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { PromMetricsMetadata } from '../../../types';
 
-import {
-  calculatePageList,
-  calculateResultsPerPage,
-  generateMetricData,
-  getPlaceholders,
-  getPromTypes,
-} from './helpers';
+import { calculatePageList, generateMetricData, getPlaceholders, getPromTypes } from './helpers';
 import { MetricsData } from './types';
 
 // Mock the language provider
@@ -219,52 +213,6 @@ describe('helpers.ts', () => {
     });
   });
 
-  describe('calculateResultsPerPage', () => {
-    it('should return default when results is less than 1', () => {
-      expect(calculateResultsPerPage(0, 25, 100)).toBe(25);
-      expect(calculateResultsPerPage(-5, 25, 100)).toBe(25);
-    });
-
-    it('should return 1 when default is less than 1', () => {
-      expect(calculateResultsPerPage(0, 0, 100)).toBe(1);
-      expect(calculateResultsPerPage(-1, -5, 100)).toBe(1);
-    });
-
-    it('should return max when results exceeds max', () => {
-      expect(calculateResultsPerPage(150, 25, 100)).toBe(100);
-    });
-
-    it('should return results when within valid range', () => {
-      expect(calculateResultsPerPage(50, 25, 100)).toBe(50);
-      expect(calculateResultsPerPage(1, 25, 100)).toBe(1);
-      expect(calculateResultsPerPage(100, 25, 100)).toBe(100);
-    });
-
-    it('should handle non-integer inputs', () => {
-      expect(calculateResultsPerPage(50.5, 25, 100)).toBe(25); // Not an integer
-      expect(calculateResultsPerPage(NaN, 25, 100)).toBe(25);
-      expect(calculateResultsPerPage(Infinity, 25, 100)).toBe(25);
-    });
-
-    it('should handle edge cases', () => {
-      expect(calculateResultsPerPage(1, 1, 1)).toBe(1);
-      expect(calculateResultsPerPage(1, 10, 5)).toBe(1);
-    });
-
-    it('should handle zero max value', () => {
-      expect(calculateResultsPerPage(5, 10, 0)).toBe(0);
-    });
-
-    it('should handle negative max value', () => {
-      expect(calculateResultsPerPage(5, 10, -1)).toBe(-1);
-    });
-
-    it('should handle large numbers', () => {
-      expect(calculateResultsPerPage(999999, 25, 1000000)).toBe(999999);
-      expect(calculateResultsPerPage(1000001, 25, 1000000)).toBe(1000000);
-    });
-  });
-
   describe('getPromTypes', () => {
     it('should return array of Prometheus types', () => {
       const types = getPromTypes();
@@ -325,7 +273,7 @@ describe('helpers.ts', () => {
     it('should return object with all required placeholders', () => {
       const placeholders = getPlaceholders();
 
-      const expectedKeys = ['browse', 'metadataSearchSwitch', 'filterType', 'includeNullMetadata', 'setUseBackend'];
+      const expectedKeys = ['browse', 'filterType'];
 
       expect(Object.keys(placeholders)).toEqual(expectedKeys);
     });
@@ -350,10 +298,7 @@ describe('helpers.ts', () => {
       const placeholders = getPlaceholders();
 
       expect(placeholders.browse).toMatch(/search/i);
-      expect(placeholders.metadataSearchSwitch).toMatch(/description/i);
       expect(placeholders.filterType).toMatch(/type/i);
-      expect(placeholders.includeNullMetadata).toMatch(/metadata/i);
-      expect(placeholders.setUseBackend).toMatch(/regex/i);
     });
 
     it('should have descriptive placeholder text', () => {

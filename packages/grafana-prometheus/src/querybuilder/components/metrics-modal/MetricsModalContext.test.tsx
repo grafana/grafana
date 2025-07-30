@@ -210,7 +210,7 @@ describe('MetricsModalContext', () => {
         '__name__',
         '{__name__=~".*test.*"}'
       );
-      expect(result.current.metricsData).toHaveLength(2);
+      expect(result.current.metricsData).toHaveLength(1);
     });
 
     it('should handle backend search error', async () => {

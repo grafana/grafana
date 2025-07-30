@@ -58,18 +58,6 @@ export function calculatePageList(metricsData: MetricsData, resultsPerPage: numb
   return Array.from({ length: totalPages }, (_, i) => i + 1);
 }
 
-export const calculateResultsPerPage = (results: number, defaultResults: number, max: number): number => {
-  if (!Number.isInteger(results) || results < 1) {
-    return Math.max(1, defaultResults);
-  }
-
-  if (results > max) {
-    return max;
-  }
-
-  return results;
-};
-
 export const getPromTypes: () => PromFilterOption[] = () => [
   {
     value: 'counter',
@@ -131,15 +119,5 @@ export const getPromTypes: () => PromFilterOption[] = () => [
 
 export const getPlaceholders = () => ({
   browse: t('grafana-prometheus.querybuilder.get-placeholders.browse', 'Search metrics by name'),
-  metadataSearchSwitch: t(
-    'grafana-prometheus.querybuilder.get-placeholders.metadata-search-switch',
-    'Include description in search'
-  ),
   filterType: t('grafana-prometheus.querybuilder.get-placeholders.type', 'Filter by type'),
-  includeNullMetadata: t(
-    'grafana-prometheus.querybuilder.get-placeholders.include-null-metadata',
-    'Include results with no metadata'
-  ),
-  setUseBackend: t('grafana-prometheus.querybuilder.get-placeholders.set-use-backend', 'Enable regex search'),
-  disableTextWrap: t('grafana-prometheus.querybuilder.additional-settings.disable-text-wrap', 'Disable text wrap'),
 });

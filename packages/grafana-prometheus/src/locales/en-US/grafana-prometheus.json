@@ -307,10 +307,6 @@
       }
     },
     "querybuilder": {
-      "additional-settings": {
-        "content-filter-metric-names-regex-search-using": "Filter metric names by regex search, using an additional call on the Prometheus API.",
-        "disable-text-wrap": "Disable text wrap"
-      },
       "feedback-link": {
         "give-feedback": "Give feedback",
         "title-give-feedback": "The metrics explorer is new, please let us know how we can improve it"
@@ -324,9 +320,6 @@
       },
       "get-placeholders": {
         "browse": "Search metrics by name",
-        "include-null-metadata": "Include results with no metadata",
-        "metadata-search-switch": "Include description in search",
-        "set-use-backend": "Enable regex search",
         "type": "Filter by type"
       },
       "get-prom-types": {
@@ -374,8 +367,6 @@
         "tooltip-metric": "Optional: returns a list of label values for the label name in the specified metric."
       },
       "metrics-modal": {
-        "additional-settings": "Additional Settings",
-        "aria-label-additional-settings": "Additional settings",
         "aria-label-browse-metrics": "Browse metrics",
         "currently-selected": "Currently selected: {{selected}}",
         "metrics-pre-filtered": "These metrics have been pre-filtered by labels chosen in the label filters.",
