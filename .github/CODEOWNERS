@@ -675,7 +675,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 # public folder
 /public/app/api/ @grafana/grafana-frontend-platform
-/public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
 /public/app/core/components/GraphNG/ @grafana/dataviz-squad
@@ -683,15 +682,14 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
-/public/app/dev-utils.ts @grafana/grafana-frontend-platform
-
 /public/app/core/history/ @grafana/observability-traces-and-profiling
-/public/app/features/admin/ @grafana/identity-access-team
+/public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 # Temp owners until Enterprise team takes over
 /public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
 /public/app/features/actions/ @grafana/dataviz-squad
+/public/app/features/admin/ @grafana/identity-access-team
 /public/app/features/auth-config/ @grafana/identity-squad
 /public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/canvas/ @grafana/dataviz-squad
