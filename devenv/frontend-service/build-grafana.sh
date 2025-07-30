@@ -29,6 +29,12 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export CGO_ENABLED=1
   export GOOS=linux
   export GOARCH=arm64
+  # export CC="zig cc -target aarch64-linux"
+  # export CXX="zig c++ -target aarch64-linux"
+fi
+
+if [[ -n "$USE_ZIG" ]]; then
+  echo "Using Zig for cross-compilation"
   export CC="zig cc -target aarch64-linux"
   export CXX="zig c++ -target aarch64-linux"
 fi

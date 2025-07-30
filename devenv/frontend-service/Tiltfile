@@ -1,7 +1,9 @@
 config.define_bool("docker-builder")
+config.define_bool("use-zig")
 cfg = config.parse()
 
 use_docker_builder = cfg.get('docker-builder', False)
+use_zig = cfg.get('docker-builder', False)
 
 # --- Frontend processes
 local_resource(
@@ -36,15 +38,16 @@ build_backend_resource_deps = []
 build_backend_env = {}
 if use_docker_builder:
   build_backend_resource_deps = ['build builder']
-  build_backend_env = {
-    'USE_DOCKER_BUILDER': "true",
-  }
+  build_backend_env['USE_DOCKER_BUILDER'] = "true"
   local_resource(
     "build builder",
     cmd="docker build -f ./grafana-fs-builder.dockerfile -t grafana-fs-builder .",
     allow_parallel=True,
     labels=["local"]
   )
+
+if use_zig:
+  build_backend_env['USE_ZIG'] = "true"
 
 local_resource(
   'backend-build',
