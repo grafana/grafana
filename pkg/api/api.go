@@ -551,7 +551,6 @@ func (hs *HTTPServer) registerRoutes() {
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
 		}, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
-
 	}, reqSignedIn)
 
 	// admin api
