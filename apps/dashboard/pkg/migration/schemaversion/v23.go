@@ -71,7 +71,6 @@ func isMulti(variable map[string]interface{}) bool {
 	return hasMulti
 }
 
-// isEmptyObject checks if a value is an empty object
 func isEmptyObject(value interface{}) bool {
 	if value == nil {
 		return true
