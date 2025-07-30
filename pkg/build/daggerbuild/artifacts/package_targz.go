@@ -164,7 +164,7 @@ func NewTarball(
 	if err != nil {
 		return nil, err
 	}
-	frontendArtifact, err := NewFrontend(ctx, log, version, artifact, enterprise, src, cache)
+	frontendArtifact, err := NewFrontend(ctx, log, artifact, version, enterprise, src, cache)
 	if err != nil {
 		return nil, err
 	}
@@ -363,19 +363,27 @@ func verifyTarball(
 		Platform: platform,
 	}).From("ubuntu:22.04").
 		WithExec([]string{"apt-get", "update", "-yq"}).
-		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates", "libfontconfig1"}).
+		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates"}).
 		WithDirectory("/src", archive).
+		WithMountedTemp("/tmp").
 		WithWorkdir("/src")
 
 	if err := e2e.ValidateLicense(ctx, service, "/src/LICENSE", enterprise); err != nil {
 		return err
 	}
 
-	service = service.
-		WithExec([]string{"./bin/grafana", "server"}).
-		WithExposedPort(3000)
+	svc := service.
+		WithEnvVariable("GF_PATHS_PLUGINS", "/tmp").
+		WithEnvVariable("GF_LOG_LEVEL", "error").
+		WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
+		Args: []string{"./bin/grafana", "server"},
+	})
+	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarnCache, nodeVersion)
+	if err != nil {
+		return err
+	}
 
-	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, service.AsService(), src, yarnCache, nodeVersion)); err != nil {
+	if _, err := containers.ExitError(ctx, result); err != nil {
 		return err
 	}
 	return nil

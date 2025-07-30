@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -13,13 +15,23 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	ctx, span := s.tracer.Start(ctx, "server.Write")
 	defer span.End()
 
-	if err := authorize(ctx, req.GetNamespace()); err != nil {
+	res, err := s.write(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to perform write request", "error", err, "namespace", req.GetNamespace())
+		return nil, errors.New("failed to perform write request")
+	}
+
+	return res, nil
+}
+
+func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*authzextv1.WriteResponse, error) {
+	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
 	storeInf, err := s.getStoreInfo(ctx, req.Namespace)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
 	writeTuples := make([]*openfgav1.TupleKey, 0)
@@ -49,6 +61,7 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 
 	_, err = s.openfga.Write(ctx, writeReq)
 	if err != nil {
+		s.logger.Error("failed to perform openfga Write request", "error", errors.Unwrap(err))
 		return nil, err
 	}
 

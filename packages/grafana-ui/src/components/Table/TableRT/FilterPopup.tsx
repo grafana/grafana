@@ -3,10 +3,14 @@ import { useCallback, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 
-import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../..';
-import { useStyles2, useTheme2 } from '../../../themes';
-import { t, Trans } from '../../../utils/i18n';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { Button } from '../../Button/Button';
+import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { Label } from '../../Forms/Label';
+import { IconButton } from '../../IconButton/IconButton';
+import { Stack } from '../../Layout/Stack/Stack';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from '../utils';
 
 import { FilterList } from './FilterList';

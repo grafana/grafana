@@ -1,15 +1,17 @@
 import { useCallback } from 'react';
 
-import { useDispatch } from 'app/types/store';
-import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../api/alertRuleApi';
-import { PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
+import { PromRulesResponse, prometheusApi, usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
 interface UseGeneratorHookOptions {
+  /**
+   * Whether to populate the RTKQ cache with the groups.
+   * Populating cache might harm performance when fetching a lot of groups or fetching multiple pages
+   */
   populateCache?: boolean;
   limitAlerts?: number;
 }
@@ -19,8 +21,7 @@ interface FetchGroupsOptions {
   groupNextToken?: string;
 }
 
-export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
-  const dispatch = useDispatch();
+export function usePrometheusGroupsGenerator() {
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
@@ -32,66 +33,52 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
           ...fetchOptions,
         }).unwrap();
 
-        if (hookOptions.populateCache) {
-          response.data.groups.forEach((group) => {
-            dispatch(
-              prometheusApi.util.upsertQueryData(
-                'getGroups',
-                { ruleSource: { uid: ruleSource.uid }, namespace: group.file, groupName: group.name },
-                { data: { groups: [group] }, status: 'success' }
-              )
-            );
-          });
-        }
-
         return response;
       };
 
       yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
     },
-    [getGroups, dispatch, hookOptions.populateCache]
+    [getGroups]
   );
 }
 
+interface GrafanaPromApiFilter {
+  state?: PromAlertingRuleState[];
+  health?: RuleHealth[];
+  contactPoint?: string;
+}
+
+interface GrafanaFetchGroupsOptions extends FetchGroupsOptions {
+  filter?: GrafanaPromApiFilter;
+}
+
 export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
-  const dispatch = useDispatch();
   const [getGrafanaGroups] = useLazyGetGrafanaGroupsQuery();
+  const { populateGroupsResponseCache } = usePopulateGrafanaPrometheusApiCache();
 
   const getGroupsAndProvideCache = useCallback(
-    async (fetchOptions: FetchGroupsOptions) => {
-      const response = await getGrafanaGroups({ ...fetchOptions, limitAlerts: hookOptions.limitAlerts }).unwrap();
+    async (fetchOptions: GrafanaFetchGroupsOptions) => {
+      const response = await getGrafanaGroups({
+        ...fetchOptions,
+        limitAlerts: hookOptions.limitAlerts,
+        ...fetchOptions.filter,
+      }).unwrap();
 
-      // This is not mandatory to preload ruler rules, but it improves the UX
-      // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
       if (hookOptions.populateCache) {
-        const cacheAndRulerPreload = response.data.groups.map(async (group) => {
-          dispatch(
-            alertRuleApi.util.prefetch(
-              'getGrafanaRulerGroup',
-              { folderUid: group.folderUid, groupName: group.name },
-              { force: true }
-            )
-          );
-          await dispatch(
-            prometheusApi.util.upsertQueryData(
-              'getGrafanaGroups',
-              { folderUid: group.folderUid, groupName: group.name, limitAlerts: hookOptions.limitAlerts },
-              { data: { groups: [group] }, status: 'success' }
-            )
-          );
-        });
-
-        await Promise.allSettled(cacheAndRulerPreload);
+        populateGroupsResponseCache(response.data.groups);
       }
 
       return response;
     },
-    [getGrafanaGroups, dispatch, hookOptions.populateCache, hookOptions.limitAlerts]
+    [getGrafanaGroups, hookOptions.limitAlerts, hookOptions.populateCache, populateGroupsResponseCache]
   );
 
   return useCallback(
-    async function* (groupLimit: number) {
-      yield* genericGroupsGenerator(getGroupsAndProvideCache, groupLimit);
+    async function* (groupLimit: number, filter?: GrafanaPromApiFilter) {
+      yield* genericGroupsGenerator(
+        (fetchOptions) => getGroupsAndProvideCache({ ...fetchOptions, filter }),
+        groupLimit
+      );
     },
     [getGroupsAndProvideCache]
   );

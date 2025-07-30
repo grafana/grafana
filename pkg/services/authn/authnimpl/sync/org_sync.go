@@ -50,16 +50,6 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		return nil
 	}
 
-	// ignore org syncing if the user is provisioned
-	usr, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
-	if err != nil {
-		ctxLogger.Error("Failed to get user from provided identity", "error", err)
-		return nil
-	}
-	if usr.IsProvisioned {
-		return nil
-	}
-
 	ctxLogger.Debug("Syncing organization roles", "extOrgRoles", id.OrgRoles)
 	// don't sync org roles if none is specified
 	if len(id.OrgRoles) == 0 {

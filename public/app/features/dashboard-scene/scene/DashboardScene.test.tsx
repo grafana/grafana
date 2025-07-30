@@ -223,7 +223,7 @@ describe('DashboardScene', () => {
       it('A change to folderUid should set isDirty true', () => {
         const prevMeta = { ...scene.state.meta };
 
-        // The worker only detects changes in the model, so the folder change should be detected anyway
+        // The worker detects changes in the model, so the folder change should be detected anyway
         mockResultsOfDetectChangesWorker({ hasChanges: false });
 
         scene.setState({
@@ -452,25 +452,11 @@ describe('DashboardScene', () => {
         expect(panel.state.key).toBe('panel-7');
       });
 
-      it('Should select new panel', () => {
-        scene.state.editPane.activate();
-
-        const panel = scene.onCreateNewPanel();
-        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(panel);
-      });
-
       it('Should select new row', () => {
         scene.state.editPane.activate();
 
         const row = scene.onCreateNewRow();
         expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(row);
-      });
-
-      it('Should select new tab', () => {
-        scene.state.editPane.activate();
-
-        const tab = scene.onCreateNewTab();
-        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(tab);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
@@ -639,6 +625,7 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
+          dashboardTitle: 'hello',
           panelId: 1,
           panelName: 'Panel A',
           panelPluginId: 'table',
@@ -655,6 +642,7 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
+          dashboardTitle: 'hello',
           panelId: 1,
           panelName: 'Panel A',
           panelPluginId: 'table',

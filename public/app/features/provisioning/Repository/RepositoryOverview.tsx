@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning';
+import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
+import { MessageList } from '../Shared/MessageList';
 import { formatTimestamp } from '../utils/time';
 
 import { CheckRepository } from './CheckRepository';
@@ -20,7 +21,7 @@ function getColumnCount(hasWebhook: boolean): 3 | 4 {
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const status = repo.status;
   const webhookURL = getWebhookURL(repo);
   const columns = getColumnCount(Boolean(repo.status?.webhook));
@@ -51,7 +52,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
       <Stack direction="column" gap={2}>
         <Grid columns={columns} gap={2}>
           <div className={styles.cardContainer}>
-            <Card className={styles.card}>
+            <Card noMargin className={styles.card}>
               <Card.Heading>
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
@@ -73,7 +74,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           </div>
           {repo.status?.health && (
             <div className={styles.cardContainer}>
-              <Card className={styles.card}>
+              <Card noMargin className={styles.card}>
                 <Card.Heading>
                   <Trans i18nKey="provisioning.repository-overview.health">Health</Trans>
                 </Card.Heading>
@@ -129,7 +130,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             </div>
           )}
           <div className={styles.cardContainer}>
-            <Card className={styles.card}>
+            <Card className={styles.card} noMargin>
               <Card.Heading>
                 <Trans i18nKey="provisioning.repository-overview.pull-status">Pull status</Trans>
               </Card.Heading>
@@ -192,13 +193,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                         </Text>
                       </div>
                       <div className={styles.valueColumn}>
-                        <Stack gap={1}>
-                          {status.sync.message.map((msg, idx) => (
-                            <Text key={idx} variant="body">
-                              {msg}
-                            </Text>
-                          ))}
-                        </Stack>
+                        <MessageList messages={status.sync.message} variant="body" />
                       </div>
                     </>
                   )}
@@ -211,7 +206,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           </div>
           {repo.status?.webhook && (
             <div className={styles.cardContainer}>
-              <Card className={styles.card}>
+              <Card noMargin className={styles.card}>
                 <Card.Heading>
                   <Trans i18nKey="provisioning.repository-overview.webhook">Webhook</Trans>
                 </Card.Heading>

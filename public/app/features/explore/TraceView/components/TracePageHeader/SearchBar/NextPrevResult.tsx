@@ -18,12 +18,12 @@ import { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
 
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 
 export type NextPrevResultProps = {
   trace: Trace;
@@ -53,8 +53,6 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
       setFocusedSpanIdForSearch(spanMatches[focusedSpanIndexForSearch]);
     }
   }, [focusedSpanIndexForSearch, setFocusedSpanIdForSearch, spanFilterMatches]);
-
-  const { t } = useTranslate();
 
   const nextResult = (event: React.UIEvent, buttonEnabled: boolean) => {
     event.preventDefault();

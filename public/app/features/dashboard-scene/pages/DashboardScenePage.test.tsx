@@ -11,11 +11,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
@@ -150,7 +150,7 @@ setDashboardLoaderSrv({
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {
-    locationService.push('/');
+    locationService.push('/d/my-dash-uid');
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
     loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
@@ -339,6 +339,11 @@ describe('DashboardScenePage', () => {
   });
 
   describe('errors rendering', () => {
+    const origError = console.error;
+    const consoleErrorMock = jest.fn();
+    afterEach(() => (console.error = origError));
+    beforeEach(() => (console.error = consoleErrorMock));
+
     it('should render dashboard not found notice when dashboard... not found', async () => {
       setupLoadDashboardMockReject({
         status: 404,
@@ -362,6 +367,7 @@ describe('DashboardScenePage', () => {
 
       expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
     });
+
     it('should render error alert for backend errors', async () => {
       setupLoadDashboardMockReject({
         status: 500,
@@ -386,6 +392,7 @@ describe('DashboardScenePage', () => {
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
       expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Internal server error');
     });
+
     it('should render error alert for runtime errors', async () => {
       setupLoadDashboardRuntimeErrorMock();
 
@@ -398,8 +405,12 @@ describe('DashboardScenePage', () => {
 
   describe('UnifiedDashboardScenePageStateManager', () => {
     it('should reset active manager when unmounting', async () => {
+      // This test is missing setup for v2 api so it erroring
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
       const manager = getDashboardScenePageStateManager();
       manager.setActiveManager('v2');
+
       const { unmount } = setup();
 
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);

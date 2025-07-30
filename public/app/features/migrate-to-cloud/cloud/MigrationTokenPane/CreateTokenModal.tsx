@@ -1,6 +1,6 @@
 import { useId } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Modal, Button, Input, Stack, ClipboardButton, Field } from '@grafana/ui';
 
 import { TokenErrorAlert } from '../TokenErrorAlert';
@@ -12,8 +12,6 @@ interface Props {
 }
 
 export const CreateTokenModal = ({ isOpen, hideModal, migrationToken }: Props) => {
-  const { t } = useTranslate();
-
   return (
     <Modal
       isOpen={isOpen}
@@ -39,7 +37,6 @@ export const CreateTokenModal = ({ isOpen, hideModal, migrationToken }: Props) =
 
 function TokenSuccessContent({ migrationToken }: { migrationToken: string }) {
   const inputId = useId();
-  const { t } = useTranslate();
 
   return (
     <Field

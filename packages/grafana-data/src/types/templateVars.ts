@@ -54,6 +54,7 @@ export interface AdHocVariableFilter {
   operator: string;
   value: string;
   values?: string[];
+  origin?: 'dashboard' | string;
   /** @deprecated  */
   condition?: string;
 }
@@ -115,6 +116,8 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   query: any;
   regex: string;
   refresh: VariableRefresh;
+  staticOptions?: VariableOption[];
+  staticOptionsOrder?: 'before' | 'after' | 'sorted';
 }
 
 export interface TextBoxVariableModel extends VariableWithOptions {

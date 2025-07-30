@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 
 import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
+import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 
 export type { Options } from './panelcfg.gen';
@@ -9,11 +10,12 @@ type onClickFilterLabelType = (key: string, value: string, frame?: DataFrame) =>
 type onClickFilterOutLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterValueType = (value: string, refId?: string) => void;
 type onClickFilterOutStringType = (value: string, refId?: string) => void;
-type isFilterLabelActiveType = (key: string, value: string, refId?: string) => Promise<boolean>;
-type isOnClickShowFieldType = (value: string) => void;
-type isOnClickHideFieldType = (value: string) => void;
+type filterLabelActiveType = (key: string, value: string, refId?: string) => Promise<boolean>;
+type onClickShowFieldType = (value: string) => void;
+type onClickHideFieldType = (value: string) => void;
 export type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
 type onLogOptionsChangeType = (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
+type setDisplayedFieldsType = (fields: string[]) => void;
 
 export type GetFieldLinksFn = (
   field: Field,
@@ -38,15 +40,19 @@ export function isOnClickFilterOutString(callback: unknown): callback is onClick
   return typeof callback === 'function';
 }
 
-export function isIsFilterLabelActive(callback: unknown): callback is isFilterLabelActiveType {
+export function isIsFilterLabelActive(callback: unknown): callback is filterLabelActiveType {
   return typeof callback === 'function';
 }
 
-export function isOnClickShowField(callback: unknown): callback is isOnClickShowFieldType {
+export function isOnClickShowField(callback: unknown): callback is onClickShowFieldType {
   return typeof callback === 'function';
 }
 
-export function isOnClickHideField(callback: unknown): callback is isOnClickHideFieldType {
+export function isOnClickHideField(callback: unknown): callback is onClickHideFieldType {
+  return typeof callback === 'function';
+}
+
+export function isSetDisplayedFields(callback: unknown): callback is setDisplayedFieldsType {
   return typeof callback === 'function';
 }
 
@@ -65,4 +71,8 @@ export function isReactNodeArray(node: unknown): node is ReactNode[] {
 export function isCoreApp(app: unknown): app is CoreApp {
   const apps = Object.values(CoreApp).map((coreApp) => coreApp.toString());
   return typeof app === 'string' && apps.includes(app);
+}
+
+export function isLogLineMenuCustomItems(items: unknown): items is LogLineMenuCustomItem[] {
+  return Array.isArray(items) && items.every((item) => 'divider' in item || ('onClick' in item && 'label' in item));
 }

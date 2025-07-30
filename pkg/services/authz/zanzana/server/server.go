@@ -11,7 +11,8 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashboardV2alpha2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha2"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -62,7 +63,7 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger 
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
 		cfg:           cfg,
-		cache:         localcache.New(cfg.CheckQueryCacheTTL, cacheCleanInterval),
+		cache:         localcache.New(cfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
 		logger:        logger,
 		tracer:        tracer,
 	}
@@ -87,8 +88,21 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 				User:     subject,
 				Relation: common.RelationSetView,
 				Object: common.NewGroupResourceIdent(
-					dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
-					dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+					dashboardV2alpha1.DashboardResourceInfo.GroupResource().Group,
+					dashboardV2alpha1.DashboardResourceInfo.GroupResource().Resource,
+					"",
+				),
+			},
+		)
+
+		contextuals = append(
+			contextuals,
+			&openfgav1.TupleKey{
+				User:     subject,
+				Relation: common.RelationSetView,
+				Object: common.NewGroupResourceIdent(
+					dashboardV2alpha2.DashboardResourceInfo.GroupResource().Group,
+					dashboardV2alpha2.DashboardResourceInfo.GroupResource().Resource,
 					"",
 				),
 			},

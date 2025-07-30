@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "12.1.0-pre",
+  "version": "12.2.0-pre",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
@@ -18,7 +18,7 @@
   "publishConfig": {
     "main": "./dist/cjs/index.cjs",
     "module": "./dist/esm/index.mjs",
-    "types": "./dist/cjs/index.d.cts",
+    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "files": [
@@ -37,15 +37,14 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "@rollup/plugin-node-resolve": "16.0.0",
-    "esbuild": "0.25.0",
+    "@rollup/plugin-node-resolve": "16.0.1",
+    "esbuild": "0.25.8",
     "glob": "^11.0.0",
     "rimraf": "6.0.1",
     "rollup": "^4.22.4",
-    "rollup-plugin-dts": "^6.1.1",
-    "rollup-plugin-esbuild": "6.2.0",
+    "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "typescript": "5.7.3"
+    "typescript": "5.8.3"
   },
   "dependencies": {
     "tslib": "2.8.1"

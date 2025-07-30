@@ -1,26 +1,26 @@
 import { useState } from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+import { AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setBasicLogsQuery, setDashboardTime, setKustoQuery } from './setQueryValue';
 
 export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEditorFieldProps) {
   const [basicLogsAckOpen, setBasicLogsAckOpen] = useState<boolean>(false);
-  const { t } = useTranslate();
+
   return (
     <>
       <ConfirmModal
         isOpen={basicLogsAckOpen}
         title={t('components.logs-management.title-basic-logs-queries', 'Basic Logs Queries')}
-        body="Are you sure you want to switch to Basic Logs?"
+        body={t('components.logs-management.body-basic-logs-queries', 'Are you sure you want to switch to Basic Logs?')}
         description={t(
           'components.logs-management.description-basic-logs-queries',
           'Basic Logs queries incur cost based on the amount of data scanned.'
         )}
-        confirmText="Confirm"
+        confirmText={t('components.logs-management.confirmText-confirm', 'Confirm')}
         onConfirm={() => {
           setBasicLogsAckOpen(false);
           let updatedBasicLogsQuery = setBasicLogsQuery(query, true);

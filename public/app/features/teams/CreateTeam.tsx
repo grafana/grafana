@@ -2,7 +2,7 @@ import { JSX, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Field, Input, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -10,7 +10,8 @@ import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Role, TeamDTO } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { TeamDTO } from 'app/types/teams';
 
 const pageNav: NavModelItem = {
   icon: 'users-alt',
@@ -28,7 +29,7 @@ export const CreateTeam = (): JSX.Element => {
     register,
     formState: { errors },
   } = useForm<TeamDTO>();
-  const { t } = useTranslate();
+
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
@@ -81,7 +82,7 @@ export const CreateTeam = (): JSX.Element => {
                 'This is optional and is primarily used for allowing custom team avatars'
               )}
             >
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
               <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />
             </Field>
           </FieldSet>

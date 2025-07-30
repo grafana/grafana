@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import {
@@ -43,7 +43,6 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     () => standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
     []
   );
-  const { t } = useTranslate();
 
   const transformations = allTransformations.filter((t) => {
     if (
@@ -53,10 +52,13 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     ) {
       return false;
     }
-    return (
-      t.name.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase()) ||
-      t.description?.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase())
-    );
+    const searchLower = drawerState.search.toLocaleLowerCase();
+    const textMatch =
+      t.name.toLocaleLowerCase().includes(searchLower) || t.description?.toLocaleLowerCase().includes(searchLower);
+    const tagMatch = t.tags?.size
+      ? Array.from(t.tags).some((tag) => tag.toLocaleLowerCase().includes(searchLower))
+      : false;
+    return textMatch || tagMatch;
   });
 
   const searchBoxSuffix = (

@@ -101,6 +101,8 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       allValue: 'test-all',
       isMulti: true,
+      staticOptions: [{ label: 'test', value: 'test' }],
+      staticOptionsOrder: 'after',
     });
 
     const set = new SceneVariableSet({
@@ -136,6 +138,13 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "staticOptions": [
+        {
+          "text": "test",
+          "value": "test",
+        },
+      ],
+      "staticOptionsOrder": "after",
       "type": "query",
     }
     `);
@@ -155,6 +164,8 @@ describe('sceneVariablesSetToVariables', () => {
       allValue: 'test-all',
       allowCustomValue: false,
       isMulti: true,
+      staticOptions: [{ label: 'test', value: 'test' }],
+      staticOptionsOrder: 'after',
     });
     const set = new SceneVariableSet({
       variables: [variable],
@@ -189,6 +200,13 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "staticOptions": [
+        {
+          "text": "test",
+          "value": "test",
+        },
+      ],
+      "staticOptionsOrder": "after",
       "type": "query",
     }
     `);
@@ -221,7 +239,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result[0].options).toEqual([]);
   });
 
-  it('should handle Query variable when sceneVariablesSetToVariables shoudl keep options', () => {
+  it('should handle Query variable when sceneVariablesSetToVariables should keep options', () => {
     const variable = new QueryVariable({
       name: 'test',
       label: 'test-label',
@@ -553,14 +571,14 @@ describe('sceneVariablesSetToVariables', () => {
   });
 
   describe('should adapt AdHocFiltersVariable filters', () => {
-    it('should remove origin from filter if its not dashboard or scope', () => {
+    it('should remove non dashboard originated filters from schema', () => {
       const variable = new AdHocFiltersVariable({
         name: 'test',
         allowCustomValue: true,
         label: 'test-label',
         description: 'test-desc',
         datasource: { uid: 'fake-std', type: 'fake-std' },
-        filters: [
+        originFilters: [
           {
             key: 'filterTest',
             operator: '=',
@@ -568,14 +586,7 @@ describe('sceneVariablesSetToVariables', () => {
             origin: 'asserts',
           },
         ],
-        baseFilters: [
-          {
-            key: 'baseFilterTest',
-            operator: '=',
-            value: 'test',
-            origin: 'asserts',
-          },
-        ],
+        filters: [],
       });
       const set = new SceneVariableSet({
         variables: [variable],
@@ -587,26 +598,14 @@ describe('sceneVariablesSetToVariables', () => {
       expect(result[0]).toMatchInlineSnapshot(`
       {
         "allowCustomValue": true,
-        "baseFilters": [
-          {
-            "key": "baseFilterTest",
-            "operator": "=",
-            "value": "test",
-          },
-        ],
+        "baseFilters": [],
         "datasource": {
           "type": "fake-std",
           "uid": "fake-std",
         },
         "defaultKeys": undefined,
         "description": "test-desc",
-        "filters": [
-          {
-            "key": "filterTest",
-            "operator": "=",
-            "value": "test",
-          },
-        ],
+        "filters": [],
         "label": "test-label",
         "name": "test",
         "type": "adhoc",
@@ -614,14 +613,14 @@ describe('sceneVariablesSetToVariables', () => {
       `);
     });
 
-    it('should maintain dashboard or scope origin', () => {
+    it('should not save origin filters in model', () => {
       const variable = new AdHocFiltersVariable({
         name: 'test',
         allowCustomValue: true,
         label: 'test-label',
         description: 'test-desc',
         datasource: { uid: 'fake-std', type: 'fake-std' },
-        filters: [
+        originFilters: [
           {
             key: 'filterTest',
             operator: '=',
@@ -629,12 +628,11 @@ describe('sceneVariablesSetToVariables', () => {
             origin: 'dashboard',
           },
         ],
-        baseFilters: [
+        filters: [
           {
-            key: 'baseFilterTest',
+            key: 'filterTest2',
             operator: '=',
-            value: 'test',
-            origin: 'scope',
+            value: 'test2',
           },
         ],
       });
@@ -648,14 +646,7 @@ describe('sceneVariablesSetToVariables', () => {
       expect(result[0]).toMatchInlineSnapshot(`
       {
         "allowCustomValue": true,
-        "baseFilters": [
-          {
-            "key": "baseFilterTest",
-            "operator": "=",
-            "origin": "scope",
-            "value": "test",
-          },
-        ],
+        "baseFilters": [],
         "datasource": {
           "type": "fake-std",
           "uid": "fake-std",
@@ -668,6 +659,11 @@ describe('sceneVariablesSetToVariables', () => {
             "operator": "=",
             "origin": "dashboard",
             "value": "test",
+          },
+          {
+            "key": "filterTest2",
+            "operator": "=",
+            "value": "test2",
           },
         ],
         "label": "test-label",
@@ -809,6 +805,7 @@ describe('sceneVariablesSetToVariables', () => {
           "type": "fake-std",
           "uid": "fake-std",
         },
+        "defaultValue": undefined,
         "description": "test-desc",
         "label": "test-label",
         "name": "test",
@@ -867,6 +864,8 @@ describe('sceneVariablesSetToVariables', () => {
         includeAll: true,
         allValue: 'test-all',
         isMulti: true,
+        staticOptions: [{ label: 'test', value: 'test' }],
+        staticOptionsOrder: 'after',
       });
 
       const set = new SceneVariableSet({
@@ -912,6 +911,13 @@ describe('sceneVariablesSetToVariables', () => {
         "regex": "",
         "skipUrlSync": false,
         "sort": "disabled",
+        "staticOptions": [
+          {
+            "text": "test",
+            "value": "test",
+          },
+        ],
+        "staticOptionsOrder": "after",
       },
     }
     `);
@@ -1364,6 +1370,7 @@ describe('sceneVariablesSetToVariables', () => {
             "type": "fake-std",
             "uid": "fake-std",
           },
+          "defaultValue": undefined,
           "description": "test-desc",
           "hide": "dontHide",
           "label": "test-label",

@@ -5,7 +5,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -20,7 +20,7 @@ import {
 } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -82,7 +82,6 @@ function GroupEditPage() {
       getGroupAction.execute(dsFeatures.rulerConfig);
     }
   }, [namespaceId, groupName, dsFeatures?.rulerConfig, getGroupAction]);
-  const { t } = useTranslate();
 
   const isLoadingGroup = isFolderLoading || isDsFeaturesLoading || isLoading(groupRequestState);
   const { result: rulerGroup, error: ruleGroupError } = groupRequestState;
@@ -100,7 +99,7 @@ function GroupEditPage() {
 
   if (!!dsFeatures && !dsFeatures.rulerConfig) {
     return (
-      <AlertingPageWrapper pageNav={pageNav} title={groupName} navId="alert-list" isLoading={isLoadingGroup}>
+      <AlertingPageWrapper pageNav={pageNav} navId="alert-list" isLoading={isLoadingGroup}>
         <Alert title={t('alerting.group-edit.group-not-editable', 'Selected group cannot be edited')}>
           <Trans i18nKey="alerting.group-edit.group-not-editable-description">
             This group belongs to a data source that does not support editing.
@@ -125,12 +124,7 @@ function GroupEditPage() {
         };
 
   return (
-    <AlertingPageWrapper
-      pageNav={pageNav}
-      title={t('alerting.group-edit.title', 'Edit evaluation group')}
-      navId="alert-list"
-      isLoading={isLoadingGroup}
-    >
+    <AlertingPageWrapper pageNav={pageNav} navId="alert-list" isLoading={isLoadingGroup}>
       <>
         {Boolean(dsFeaturesError) && (
           <Alert
@@ -183,7 +177,7 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   const [deleteRuleGroup] = useDeleteRuleGroup();
   const [operations, setOperations] = useState<SwapOperation[]>([]);
   const [confirmDeleteOpened, setConfirmDeleteOpened] = useState(false);
-  const { t } = useTranslate();
+
   const groupIntervalOrDefault = rulerGroup?.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL;
 
   const {

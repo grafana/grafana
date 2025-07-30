@@ -3,7 +3,7 @@ import { isString } from 'lodash';
 
 import { GrafanaTheme2, TimeZone, dateTimeFormat } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 
 interface Props {
   timestamp: number;

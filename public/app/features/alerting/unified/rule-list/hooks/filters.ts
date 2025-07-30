@@ -8,22 +8,27 @@ import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid } from '../../utils/datasource';
+import { fuzzyMatches } from '../../utils/fuzzySearch';
 import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType } from '../../utils/rules';
 
 /**
  * @returns True if the group matches the filter, false otherwise. Keeps rules intact
  */
-export function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean {
+export function groupFilter(
+  group: PromRuleGroupDTO,
+  filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
+): boolean {
   const { name, file } = group;
+  const { namespace, groupName } = filterState;
 
-  // Add fuzzy search for namespace
-  if (filterState.namespace && !file.toLowerCase().includes(filterState.namespace)) {
+  // Use fuzzy search for namespace
+  if (namespace && !fuzzyMatches(file, namespace)) {
     return false;
   }
 
-  // Add fuzzy search for group name
-  if (filterState.groupName && !name.toLowerCase().includes(filterState.groupName)) {
+  // Use fuzzy search for group name
+  if (groupName && !fuzzyMatches(name, groupName)) {
     return false;
   }
 
@@ -36,15 +41,13 @@ export function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): 
 export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   const { name, labels = {}, health, type } = rule;
 
-  const nameLower = name.toLowerCase();
-
-  // Free form words filter (matches if any word is part of the rule name)
-  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => nameLower.includes(word))) {
+  // Free form words filter (uses fuzzy matching for each word)
+  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => fuzzyMatches(name, word))) {
     return false;
   }
 
-  // Rule name filter (exact match)
-  if (filterState.ruleName && !nameLower.includes(filterState.ruleName)) {
+  // Rule name filter (uses fuzzy matching)
+  if (filterState.ruleName && !fuzzyMatches(name, filterState.ruleName)) {
     return false;
   }
 

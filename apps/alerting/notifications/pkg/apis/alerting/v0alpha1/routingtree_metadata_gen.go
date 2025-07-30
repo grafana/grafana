@@ -24,5 +24,8 @@ type RoutingTreeMetadata struct {
 
 // NewRoutingTreeMetadata creates a new RoutingTreeMetadata object.
 func NewRoutingTreeMetadata() *RoutingTreeMetadata {
-	return &RoutingTreeMetadata{}
+	return &RoutingTreeMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

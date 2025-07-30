@@ -1,10 +1,8 @@
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 
 import { InfoItem } from '../../shared/InfoItem';
 
 export const InfoPane = () => {
-  const { t } = useTranslate();
-
   return (
     <InfoItem title={t('migrate-to-cloud.migrate-to-this-stack.title', 'Let us help you migrate to this stack')}>
       <Trans i18nKey="migrate-to-cloud.migrate-to-this-stack.body">

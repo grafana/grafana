@@ -24,5 +24,8 @@ type FolderMetadata struct {
 
 // NewFolderMetadata creates a new FolderMetadata object.
 func NewFolderMetadata() *FolderMetadata {
-	return &FolderMetadata{}
+	return &FolderMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

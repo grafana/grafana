@@ -43,6 +43,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getAppEvents: jest.fn(),
   getDataSourceSrv: () => getDataSourceSrvMock(),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 const hasLogsContextSupport = jest.fn().mockImplementation((ds) => {
@@ -55,6 +56,13 @@ jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
   hasLogsContextSupport: (ds: MockDataSourceApi) => hasLogsContextSupport(ds),
 }));
+
+jest.mock('@grafana/assistant', () => {
+  return {
+    ...jest.requireActual('@grafana/assistant'),
+    useAssistant: jest.fn().mockReturnValue([true, jest.fn()]),
+  };
+});
 
 const defaultProps = {
   data: {

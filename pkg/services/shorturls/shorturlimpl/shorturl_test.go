@@ -17,7 +17,10 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestShortURLService(t *testing.T) {
+func TestIntegrationShortURLService(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	user := &user.SignedInUser{UserID: 1}
 	store := db.InitTestDB(t)
 

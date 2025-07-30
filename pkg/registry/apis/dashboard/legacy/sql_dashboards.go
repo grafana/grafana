@@ -25,9 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -63,6 +66,9 @@ type dashboardSqlAccess struct {
 	dashStore             dashboards.Store
 	dashboardSearchClient legacysearcher.DashboardSearchClient
 
+	accessControl   accesscontrol.AccessControl
+	libraryPanelSvc librarypanels.Service
+
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
@@ -73,7 +79,9 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
+	libraryPanelSvc librarypanels.Service,
 	sorter sort.Service,
+	accessControl accesscontrol.AccessControl,
 ) DashboardAccess {
 	dashboardSearchClient := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	return &dashboardSqlAccess{
@@ -82,6 +90,8 @@ func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 		dashStore:             dashStore,
 		provisioning:          provisioning,
 		dashboardSearchClient: *dashboardSearchClient,
+		libraryPanelSvc:       libraryPanelSvc,
+		accessControl:         accessControl,
 		log:                   log.New("dashboard.legacysql"),
 	}
 }
@@ -165,7 +175,8 @@ func (r *rowsWrapper) Next() bool {
 
 		r.row, err = r.a.scanRow(r.rows, r.history)
 		if err != nil {
-			if len(r.rejected) > 1000 || r.row == nil {
+			r.a.log.Error("error scanning dashboard", "error", err)
+			if len(r.rejected) > 0 || r.row == nil {
 				r.err = fmt.Errorf("too many rejected rows (%d) %w", len(r.rejected), err)
 				return false
 			}
@@ -253,6 +264,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data, &apiVersion,
 	)
+
 	switch apiVersion.String {
 	case "":
 		apiVersion.String = dashboardV0.VERSION // default value
@@ -450,6 +462,17 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		return nil, false, fmt.Errorf("unable to retrieve dashboard after save")
 	}
 
+	// TODO: for modes 3+, we need to migrate /api to /apis for library connections, and begin to
+	// use search to return the connections, rather than the connections table.
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	err = a.libraryPanelSvc.ConnectLibraryPanelsForDashboard(ctx, requester, out)
+	if err != nil {
+		return nil, false, err
+	}
+
 	// stash the raw value in context (if requested)
 	finalMeta, err := utils.MetaAccessor(dash)
 	if err != nil {
@@ -462,11 +485,35 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	return dash, created, err
 }
 
+type panel struct {
+	ID        int64
+	UID       string
+	FolderUID sql.NullString
+
+	Created   time.Time
+	CreatedBy sql.NullString
+
+	Updated   time.Time
+	UpdatedBy sql.NullString
+
+	Version int64
+
+	Name        string
+	Type        string
+	Description string
+	Model       []byte
+}
+
 func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error) {
 	limit := int(query.Limit)
 	query.Limit += 1 // for continue
 	if query.OrgID == 0 {
 		return nil, fmt.Errorf("expected non zero orgID")
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	sqlx, err := a.sql(ctx)
@@ -492,93 +539,30 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, err
 	}
 
-	type panel struct {
-		ID        int64
-		UID       string
-		FolderUID sql.NullString
-
-		Created   time.Time
-		CreatedBy string
-
-		Updated   time.Time
-		UpdatedBy string
-
-		Name        string
-		Type        string
-		Description string
-		Model       []byte
-	}
-
 	var lastID int64
 	for rows.Next() {
 		p := panel{}
 		err = rows.Scan(&p.ID, &p.UID, &p.FolderUID,
 			&p.Created, &p.CreatedBy,
 			&p.Updated, &p.UpdatedBy,
-			&p.Name, &p.Type, &p.Description, &p.Model,
+			&p.Name, &p.Type, &p.Description, &p.Model, &p.Version,
 		)
 		if err != nil {
 			return res, err
 		}
 		lastID = p.ID
 
-		item := dashboardV0.LibraryPanel{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: dashboardV0.APIVERSION,
-				Kind:       "LibraryPanel",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              p.UID,
-				CreationTimestamp: metav1.NewTime(p.Created),
-				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMicro(), 10),
-			},
-			Spec: dashboardV0.LibraryPanelSpec{},
-		}
-
-		status := &dashboardV0.LibraryPanelStatus{
-			Missing: v0alpha1.Unstructured{},
-		}
-		err = json.Unmarshal(p.Model, &item.Spec)
+		item, err := parseLibraryPanelRow(p)
 		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(p.Model, &status.Missing.Object)
-		if err != nil {
-			return nil, err
+			return res, err
 		}
 
-		if item.Spec.Title != p.Name {
-			status.Warnings = append(status.Warnings, fmt.Sprintf("title mismatch (expected: %s)", p.Name))
-		}
-		if item.Spec.Description != p.Description {
-			status.Warnings = append(status.Warnings, fmt.Sprintf("description mismatch (expected: %s)", p.Description))
-		}
-		if item.Spec.Type != p.Type {
-			status.Warnings = append(status.Warnings, fmt.Sprintf("type mismatch (expected: %s)", p.Type))
-		}
-		item.Status = status
-
-		// Remove the properties we are already showing
-		for _, k := range []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "libraryPanel"} {
-			delete(status.Missing.Object, k)
-		}
-
-		meta, err := utils.MetaAccessor(&item)
-		if err != nil {
-			return nil, err
-		}
-		if p.FolderUID.Valid {
-			meta.SetFolder(p.FolderUID.String)
-		}
-		meta.SetCreatedBy(p.CreatedBy)
-		meta.SetGeneration(1)
-		meta.SetDeprecatedInternalID(p.ID) //nolint:staticcheck
-
-		// Only set updated metadata if it is different
-		if p.UpdatedBy != p.CreatedBy || p.Updated.Sub(p.Created) > time.Second {
-			meta.SetUpdatedBy(p.UpdatedBy)
-			meta.SetUpdatedTimestamp(&p.Updated)
-			meta.SetGeneration(2)
+		ok, err := a.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
+			libraryelements.ActionLibraryPanelsRead,
+			libraryelements.ScopeLibraryPanelsProvider.GetResourceScopeUID(item.Name),
+		))
+		if err != nil || !ok {
+			continue
 		}
 
 		res.Items = append(res.Items, item)
@@ -594,4 +578,72 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 	}
 	return res, err
+}
+
+func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
+	item := dashboardV0.LibraryPanel{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: dashboardV0.APIVERSION,
+			Kind:       "LibraryPanel",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              p.UID,
+			CreationTimestamp: metav1.NewTime(p.Created),
+			ResourceVersion:   strconv.FormatInt(p.Updated.UnixMicro(), 10),
+		},
+		Spec: dashboardV0.LibraryPanelSpec{},
+	}
+
+	status := &dashboardV0.LibraryPanelStatus{
+		Missing: v0alpha1.Unstructured{},
+	}
+	err := json.Unmarshal(p.Model, &item.Spec)
+	if err != nil {
+		return item, err
+	}
+	err = json.Unmarshal(p.Model, &status.Missing.Object)
+	if err != nil {
+		return item, err
+	}
+
+	// the panel title used in dashboards and title of the library panel can differ
+	// in the old model blob, the panel title is specified as "title", and the library panel title is
+	// in "libraryPanel.name", or as the column in the db.
+	item.Spec.PanelTitle = item.Spec.Title
+	item.Spec.Title = p.Name
+
+	if item.Spec.Title != p.Name {
+		status.Warnings = append(status.Warnings, fmt.Sprintf("title mismatch (expected: %s)", p.Name))
+	}
+	if item.Spec.Description != p.Description {
+		status.Warnings = append(status.Warnings, fmt.Sprintf("description mismatch (expected: %s)", p.Description))
+	}
+	if item.Spec.Type != p.Type {
+		status.Warnings = append(status.Warnings, fmt.Sprintf("type mismatch (expected: %s)", p.Type))
+	}
+	item.Status = status
+
+	// Remove the properties we are already showing
+	for _, k := range []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "libraryPanel", "id", "gridPos"} {
+		delete(status.Missing.Object, k)
+	}
+
+	meta, err := utils.MetaAccessor(&item)
+	if err != nil {
+		return item, err
+	}
+	if p.FolderUID.Valid {
+		meta.SetFolder(p.FolderUID.String)
+	}
+	meta.SetCreatedBy(getUserID(p.CreatedBy, sql.NullInt64{}))
+	meta.SetGeneration(p.Version)
+	meta.SetDeprecatedInternalID(p.ID) //nolint:staticcheck
+
+	// Only set updated metadata if it is different
+	if p.UpdatedBy.Valid && p.Updated.Sub(p.Created) > time.Second {
+		meta.SetUpdatedBy(getUserID(p.UpdatedBy, sql.NullInt64{}))
+		meta.SetUpdatedTimestamp(&p.Updated)
+	}
+
+	return item, nil
 }

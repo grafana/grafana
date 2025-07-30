@@ -1,11 +1,40 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder, store } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
-import { createLogRow } from '../__mocks__/logRow';
+import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
+import { createLogRow } from '../mocks/logRow';
 
 import { LogList, Props } from './LogList';
+
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: jest.fn(() => [true, jest.fn()]),
+}));
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+    reportInteraction: jest.fn(),
+    config: {
+      ...jest.requireActual('@grafana/runtime').config,
+      featureToggles: {
+        ...jest.requireActual('@grafana/runtime').config.featureToggles,
+        logRowsPopoverMenu: true,
+      },
+    },
+  };
+});
+
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  isPopoverMenuDisabled: jest.fn(),
+  disablePopoverMenu: jest.fn(),
+  enablePopoverMenu: jest.fn(),
+}));
 
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
@@ -19,7 +48,7 @@ describe('LogList', () => {
       containerElement: document.createElement('div'),
       dedupStrategy: LogsDedupStrategy.none,
       displayedFields: [],
-      enableLogDetails: false,
+      enableLogDetails: true,
       logs,
       showControls: false,
       showTime: false,
@@ -53,6 +82,12 @@ describe('LogList', () => {
   });
 
   test('Supports showing log details', async () => {
+    jest.spyOn(store, 'get').mockImplementation((option: string) => {
+      if (option === 'storage-key.detailsMode') {
+        return 'sidebar';
+      }
+      return undefined;
+    });
     const onClickFilterLabel = jest.fn();
     const onClickFilterOutLabel = jest.fn();
     const onClickShowField = jest.fn();
@@ -64,6 +99,50 @@ describe('LogList', () => {
         onClickFilterLabel={onClickFilterLabel}
         onClickFilterOutLabel={onClickFilterOutLabel}
         onClickShowField={onClickShowField}
+        logOptionsStorageKey="storage-key"
+      />
+    );
+
+    await userEvent.click(screen.getByText('log message 1'));
+    await screen.findByText('Fields');
+
+    expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
+    expect(screen.getByText('value of the label')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+    expect(onClickFilterLabel).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+    expect(onClickFilterOutLabel).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+    expect(onClickShowField).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Close log details'));
+
+    expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+    expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+  });
+
+  test('Supports showing inline log details', async () => {
+    jest.spyOn(store, 'get').mockImplementation((option: string) => {
+      if (option === 'storage-key.detailsMode') {
+        return 'inline';
+      }
+      return undefined;
+    });
+    const onClickFilterLabel = jest.fn();
+    const onClickFilterOutLabel = jest.fn();
+    const onClickShowField = jest.fn();
+
+    render(
+      <LogList
+        {...defaultProps}
+        enableLogDetails={true}
+        onClickFilterLabel={onClickFilterLabel}
+        onClickFilterOutLabel={onClickFilterOutLabel}
+        onClickShowField={onClickShowField}
+        logOptionsStorageKey="storage-key"
       />
     );
 
@@ -106,5 +185,180 @@ describe('LogList', () => {
     expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
 
     spy.mockRestore();
+  });
+
+  describe('Popover menu', () => {
+    function setup(overrides: Partial<Props> = {}) {
+      return render(
+        <LogList {...defaultProps} onClickFilterString={jest.fn()} onClickFilterOutString={jest.fn()} {...overrides} />
+      );
+    }
+    let orgGetSelection: () => Selection | null;
+    beforeEach(() => {
+      jest.mocked(isPopoverMenuDisabled).mockReturnValue(false);
+    });
+    beforeAll(() => {
+      orgGetSelection = document.getSelection;
+      jest.spyOn(document, 'getSelection').mockReturnValue({
+        toString: () => 'selected log line',
+        removeAllRanges: () => {},
+        addRange: (range: Range) => {},
+      } as Selection);
+    });
+    afterAll(() => {
+      document.getSelection = orgGetSelection;
+    });
+    it('Does not appear in the document', () => {
+      setup();
+      expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+    });
+    it('Appears after selecting text', async () => {
+      setup();
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.getByText('Copy selection')).toBeInTheDocument();
+      expect(screen.getByText('Add as line contains filter')).toBeInTheDocument();
+      expect(screen.getByText('Add as line does not contain filter')).toBeInTheDocument();
+    });
+    it('Can be disabled', async () => {
+      setup();
+      await userEvent.click(screen.getByText('log message 1'));
+      await userEvent.click(screen.getByText('Disable menu'));
+      await userEvent.click(screen.getByText('Confirm'));
+      expect(disablePopoverMenu).toHaveBeenCalledTimes(1);
+    });
+    it('Does not appear when disabled', async () => {
+      jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
+      setup();
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+    });
+    it('Can be re-enabled', async () => {
+      jest.mocked(isPopoverMenuDisabled).mockReturnValue(true);
+      const user = userEvent.setup();
+      setup();
+      await user.keyboard('[AltLeft>]'); // Press Alt (without releasing it)
+      await user.click(screen.getByText('log message 1'));
+      expect(enablePopoverMenu).toHaveBeenCalledTimes(1);
+    });
+    it('Does not appear when the props are not defined', async () => {
+      setup({
+        onClickFilterOutString: undefined,
+        onClickFilterString: undefined,
+      });
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+    });
+    it('Appears after selecting text', async () => {
+      const onClickFilterOutString = jest.fn();
+      const onClickFilterString = jest.fn();
+      setup({
+        onClickFilterOutString,
+        onClickFilterString,
+      });
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.getByText('Copy selection')).toBeInTheDocument();
+      await userEvent.click(screen.getByText('Add as line contains filter'));
+
+      await userEvent.click(screen.getByText('log message 1'));
+      expect(screen.getByText('Copy selection')).toBeInTheDocument();
+      await userEvent.click(screen.getByText('Add as line does not contain filter'));
+
+      expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterString).toHaveBeenCalledTimes(1);
+    });
+    describe('Interacting with log details', () => {
+      it('Allows text selection even if the popover menu is not available', async () => {
+        setup({
+          onClickFilterOutString: undefined,
+          onClickFilterString: undefined,
+        });
+        await userEvent.click(screen.getByText('log message 1'));
+        expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+        expect(screen.queryByText(/details/)).not.toBeInTheDocument();
+      });
+
+      it('Displays Log Details if there is no text selection', async () => {
+        jest.spyOn(document, 'getSelection').mockReturnValue(null);
+        setup({
+          onClickFilterOutString: undefined,
+          onClickFilterString: undefined,
+        });
+        await userEvent.click(screen.getByText('log message 1'));
+        expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+        expect(screen.getByText(/Fields/)).toBeInTheDocument();
+      });
+    });
+  });
+  describe('Text search', () => {
+    test('Supports text search', async () => {
+      render(<LogList {...defaultProps} />);
+
+      expect(screen.queryByPlaceholderText('Search in logs')).not.toBeInTheDocument();
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('log message 2')).toBeInTheDocument();
+
+      await userEvent.keyboard('{Control>}{f}{/Control}');
+
+      expect(screen.getByPlaceholderText('Search in logs')).toBeInTheDocument();
+
+      await userEvent.type(screen.getByPlaceholderText('Search in logs'), 'message 2');
+
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.queryByText('log message 2')).not.toBeInTheDocument();
+      expect(screen.getByText('message 2')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Filter matching logs'));
+
+      expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+      expect(screen.getByText('message 2')).toBeInTheDocument();
+
+      await userEvent.keyboard('{Escape}');
+
+      expect(screen.queryByPlaceholderText('Search in logs')).not.toBeInTheDocument();
+    });
+
+    test('Does not conflict with search words', async () => {
+      logs = [
+        createLogRow({ uid: '1' }),
+        createLogRow({ uid: '2', entry: '(?i)some text', searchWords: ['some text'] }),
+      ];
+
+      render(<LogList {...defaultProps} logs={logs} />);
+
+      expect(screen.queryByPlaceholderText('Search in logs')).not.toBeInTheDocument();
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('some text')).toBeInTheDocument();
+
+      await userEvent.keyboard('{Control>}{f}{/Control}');
+
+      expect(screen.getByPlaceholderText('Search in logs')).toBeInTheDocument();
+
+      await userEvent.type(screen.getByPlaceholderText('Search in logs'), '(?i)');
+
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('(?i)')).toBeInTheDocument();
+      expect(screen.getByText('some text')).toBeInTheDocument();
+
+      await userEvent.clear(screen.getByPlaceholderText('Search in logs'));
+
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('some text')).toBeInTheDocument();
+    });
+  });
+  describe('Interactions', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+      jest.mocked(reportInteraction).mockClear();
+    });
+    test('Reports interactions ', async () => {
+      render(<LogList {...defaultProps} />);
+      await screen.findByText('log message 1');
+      expect(reportInteraction).toHaveBeenCalled();
+    });
+    test('Can disable interaction report ', async () => {
+      render(<LogList {...defaultProps} noInteractions={true} />);
+      await screen.findByText('log message 1');
+      expect(reportInteraction).not.toHaveBeenCalled();
+    });
   });
 });

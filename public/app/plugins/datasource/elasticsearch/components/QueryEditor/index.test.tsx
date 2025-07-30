@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
+import { ElasticsearchDataQuery } from '../../dataquery.gen';
 import { ElasticDatasource } from '../../datasource';
-import { ElasticsearchQuery } from '../../types';
 
 import { QueryEditor } from '.';
 
@@ -14,7 +14,7 @@ describe('QueryEditor', () => {
   describe('Alias Field', () => {
     it('Should correctly render and trigger changes on blur', () => {
       const alias = '{{metric}}';
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         query: '',
         alias,
@@ -32,7 +32,7 @@ describe('QueryEditor', () => {
         ],
       };
 
-      const onChange = jest.fn<void, [ElasticsearchQuery]>();
+      const onChange = jest.fn<void, [ElasticsearchDataQuery]>();
 
       render(<QueryEditor query={query} datasource={datasourceMock} onChange={onChange} onRunQuery={noop} />);
 
@@ -56,7 +56,7 @@ describe('QueryEditor', () => {
     });
 
     it('Should not be shown if last bucket aggregation is not Date Histogram', () => {
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         query: '',
         metrics: [
@@ -74,7 +74,7 @@ describe('QueryEditor', () => {
     });
 
     it('Should be shown if last bucket aggregation is Date Histogram', () => {
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         query: '',
         metrics: [
@@ -93,7 +93,7 @@ describe('QueryEditor', () => {
   });
 
   it('Should NOT show Bucket Aggregations Editor if query contains a "singleMetric" metric', () => {
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: 'A',
       query: '',
       metrics: [
@@ -112,7 +112,7 @@ describe('QueryEditor', () => {
   });
 
   it('Should show Bucket Aggregations Editor if query does NOT contains a "singleMetric" metric', () => {
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: 'A',
       query: '',
       metrics: [

@@ -25,21 +25,28 @@ func VerifyDeb(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
-	}).From("debian:latest").
+	}).From("ubuntu:22.04").
 		WithFile("/src/package.deb", file).
 		WithExec([]string{"apt-get", "update"}).
-		WithExec([]string{"apt-get", "install", "-y", "/src/package.deb"}).
+		WithExec([]string{"apt-get", "install", "-yq", "ca-certificates"}).
+		WithExec([]string{"apt-get", "install", "-yq", "/src/package.deb"}).
+		WithEnvVariable("GF_LOG_LEVEL", "error").
 		WithWorkdir("/usr/share/grafana")
 
 	if err := e2e.ValidateLicense(ctx, service, "/usr/share/grafana/LICENSE", enterprise); err != nil {
 		return err
 	}
 
-	svc := service.
-		WithExec([]string{"grafana-server"}).
-		WithExposedPort(3000).AsService()
+	svc := service.WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
+		Args: []string{"grafana-server"},
+	})
 
-	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, svc, src, yarn, nodeVersion)); err != nil {
+	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarn, nodeVersion)
+	if err != nil {
+		return err
+	}
+
+	if _, err := containers.ExitError(ctx, result); err != nil {
 		return err
 	}
 
@@ -59,9 +66,10 @@ func VerifyRpm(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 	// This grafana service runs in the background for the e2e tests
 	service := d.Container(dagger.ContainerOpts{
 		Platform: platform,
-	}).From("redhat/ubi8:latest").
+	}).From("redhat/ubi8:8.10-source").
 		WithFile("/src/package.rpm", file).
 		WithExec([]string{"yum", "install", "-y", "/src/package.rpm"}).
+		WithEnvVariable("GF_LOG_LEVEL", "error").
 		WithWorkdir("/usr/share/grafana")
 
 	if err := e2e.ValidateLicense(ctx, service, "/usr/share/grafana/LICENSE", enterprise); err != nil {
@@ -72,7 +80,16 @@ func VerifyRpm(ctx context.Context, d *dagger.Client, file *dagger.File, src *da
 		WithExec([]string{"grafana-server"}).
 		WithExposedPort(3000)
 
-	if _, err := containers.ExitError(ctx, e2e.ValidatePackage(d, service.AsService(), src, yarn, nodeVersion)); err != nil {
+	svc := service.WithExposedPort(3000).AsService(dagger.ContainerAsServiceOpts{
+		Args: []string{"grafana-server"},
+	})
+
+	result, err := e2e.ValidatePackage(ctx, d, svc, src, yarn, nodeVersion)
+	if err != nil {
+		return err
+	}
+
+	if _, err := containers.ExitError(ctx, result); err != nil {
 		return err
 	}
 	if !sign {

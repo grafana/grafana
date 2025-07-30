@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorResource } from '../../types';
+import { AzureMonitorResource } from '../../types/query';
 
 export interface ResourcePickerProps<T> {
   resources: T[];
@@ -22,7 +22,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<AzureMonitorResource>) => {
-  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -73,7 +72,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
           id={`input-advanced-resource-picker-subscription`}
           value={resources[0]?.subscription ?? ''}
           onChange={(event) => onCommonPropChange({ subscription: event.currentTarget.value })}
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX"
         />
       </InlineField>
@@ -91,7 +90,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
           id={`input-advanced-resource-picker-metricNamespace`}
           value={resources[0]?.metricNamespace ?? ''}
           onChange={(event) => onCommonPropChange({ metricNamespace: event.currentTarget.value })}
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="Microsoft.Insights/metricNamespaces"
         />
       </InlineField>
@@ -111,7 +110,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
           id={`input-advanced-resource-picker-region`}
           value={resources[0]?.region ?? ''}
           onChange={(event) => onCommonPropChange({ region: event.currentTarget.value })}
-          // eslint-disable-next-line @grafana/no-untranslated-strings
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder="northeurope"
         />
       </InlineField>
@@ -142,7 +141,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
                   onChange={(event) =>
                     onResourceChange(index, { ...resource, resourceGroup: event.currentTarget.value })
                   }
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="resource-group"
                 />
                 <AccessoryButton

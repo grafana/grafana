@@ -1,6 +1,6 @@
 import { omitBy } from 'lodash';
 
-import { deprecationWarning } from '@grafana/data';
+import { deprecationWarning, validatePath } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
@@ -164,10 +164,19 @@ function serializeParams(data: Record<string, any>): string {
     .join('&');
 }
 
+/**
+ * Formats and validates the URL.
+ * If options.validatePath is true, this will throw an exception if the URL fails validation.
+ */
 export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
   const cleanParams = omitBy(options.params, (v) => v === undefined || (v && v.length === 0));
   const serializedParams = serializeParams(cleanParams);
-  return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
+
+  const url = options.validatePath //
+    ? validatePath(options.url)
+    : options.url;
+
+  return options.params && serializedParams.length ? `${url}?${serializedParams}` : url;
 };
 
 export const parseCredentials = (options: BackendSrvRequest): RequestCredentials => {

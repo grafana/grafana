@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { DataQuery, SelectableValue } from '@grafana/data';
+import { DataQuery, SelectableValue, TimeRange } from '@grafana/data';
 import { InlineField, InlineFieldRow, InputActionMeta, Select } from '@grafana/ui';
 
 import { TempoDatasource } from './datasource';
@@ -28,21 +28,30 @@ export type TempoVariableQueryEditorProps = {
   onChange: (value: TempoVariableQuery) => void;
   query: TempoVariableQuery;
   datasource: TempoDatasource;
+  range?: TimeRange;
 };
 
-export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoVariableQueryEditorProps) => {
+export const TempoVariableQueryEditor = ({ onChange, query, datasource, range }: TempoVariableQueryEditorProps) => {
   const [label, setLabel] = useState(query.label || '');
   const [type, setType] = useState<number | undefined>(query.type);
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
   const [labelQuery, setLabelQuery] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (type === TempoVariableQueryType.LabelValues) {
-      datasource.labelNamesQuery().then((labelNames: Array<{ text: string }>) => {
-        setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
-      });
+      setIsLoading(true);
+      datasource
+        .labelNamesQuery(range)
+        .then((labelNames: Array<{ text: string }>) => {
+          setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
+          setIsLoading(false);
+        })
+        .catch(() => {
+          setIsLoading(false);
+        });
     }
-  }, [datasource, query, type]);
+  }, [datasource, query, type, range]);
 
   const options = useMemo(() => {
     if (labelQuery.length === 0) {
@@ -122,6 +131,7 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
               width={32}
               allowCustomValue
               virtualized
+              isLoading={isLoading}
             />
           </InlineField>
         </InlineFieldRow>

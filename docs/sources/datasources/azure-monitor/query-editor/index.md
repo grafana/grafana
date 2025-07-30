@@ -66,9 +66,9 @@ In contrast, Azure Monitor Logs can store a variety of data types, each with the
 1. Select a resource from which to query metrics by using the subscription, resource group, resource type, and resource fields. Multiple resources can also be selected as long as they belong to the same subscription, region and resource type. Note that only a limited amount of resource types support this feature.
 1. To select a different namespace than the default—for instance, to select resources like storage accounts that are organized under multiple namespaces—use the **Namespace** option.
 
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    Not all metrics returned by the Azure Monitor Metrics API have values.
-   {{% /admonition %}}
+   {{< /admonition >}}
 
    > The data source retrieves lists of supported metrics for each subscription and ignores metrics that never have values.
 
@@ -139,10 +139,10 @@ The Azure Monitor data source also supports querying of [Basic Logs](https://lea
 1. Select a resource to query. Multiple resources can be selected as long as they are of the same type.
 
    Alternatively, you can dynamically query all resources under a single resource group or subscription.
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    If a timespan is specified in the query, the overlap of the timespan between the query and the dashboard will be used as the query timespan. See the [API documentation for
    details.](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters)
-   {{% /admonition %}}
+   {{< /admonition >}}
 
 1. Enter your KQL query.
 
@@ -155,10 +155,10 @@ You can also augment queries by using [template variables](../template-variables
 1. Select the **Logs** service.
 1. Select a resource to query. Multiple resources can be selected as long as they are of the same type.
 1. Switch the `Logs` toggle from `Analytics` to `Basic`. A modal will display to notify users of potential additional costs.
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    Basic Logs queries do not support time-ranges specified in the query. The time-range will be hardcoded to the dashboard time-range. There are also other query limitations. See the
    [documentation for details.](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1#limitations)
-   {{% /admonition %}}
+   {{< /admonition >}}
 1. Enter your KQL query.
 
 You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
@@ -253,9 +253,14 @@ By querying ARG, you can query resources with complex filtering, iteratively exp
 ### Create a Resource Graph query
 
 ARG queries are written in a variant of the [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/query-language), but not all Kusto language features are available in ARG.
+
 An Azure Resource Graph query is formatted as table data.
 
-If your Azure credentials grant you access to multiple subscriptions, you can choose multiple subscriptions before entering queries.
+If your Azure credentials grant you access to multiple subscriptions, you can choose multiple subscriptions before entering queries. It is also possible to run queries against the directory by changing the scope of the query.
+
+{{% admonition type="note" %}}
+Some queries that function at a directory level may not work at a subscription level and vice-versa.
+{{% /admonition %}}
 
 ### Resource Graph query examples
 
@@ -348,17 +353,17 @@ Application Insights stores trace data in an underlying Log Analytics workspace 
 1. Select the **Traces** service.
 1. Select a resource to query. Multiple resources can be selected as long as they are of the same type.
 
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    This query type only supports Application Insights resources.
-   {{% /admonition %}}
+   {{< /admonition >}}
 
 Running a query of this kind will return all trace data within the timespan specified by the panel/dashboard.
 
 Optionally, you can apply further filtering or select a specific Operation ID to query. The result format can also be switched between a tabular format or the trace format which will return the data in a format that can be used with the Trace visualization.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Selecting the trace format will filter events with the `trace` type.
-{{% /admonition %}}
+{{< /admonition >}}
 
 1. Specify an Operation ID value.
 1. Specify event types to filter by.

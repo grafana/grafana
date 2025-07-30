@@ -9,7 +9,10 @@ import {
   VariableOrigin,
   VariableSuggestion,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
+
+import { variableRegex } from '../variables/utils';
 
 export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
   // get full names
@@ -59,15 +62,21 @@ export function getDistinctLabels(input: DataFrame[]): Set<string> {
   return distinct;
 }
 
-export const categoriesLabels: { [K in TransformerCategory]: string } = {
-  combine: 'Combine',
-  calculateNewFields: 'Calculate new fields',
-  createNewVisualization: 'Create new visualization',
-  filter: 'Filter',
-  performSpatialOperations: 'Perform spatial operations',
-  reformat: 'Reformat',
-  reorderAndRename: 'Reorder and rename',
-};
+export const getCategoriesLabels: () => { [K in TransformerCategory]: string } = () => ({
+  combine: t('transformers.utils.get-categories-labels.combine', 'Combine'),
+  calculateNewFields: t('transformers.utils.get-categories-labels.calculate-new-fields', 'Calculate new fields'),
+  createNewVisualization: t(
+    'transformers.utils.get-categories-labels.create-new-visualization',
+    'Create new visualization'
+  ),
+  filter: t('transformers.utils.get-categories-labels.filter', 'Filter'),
+  performSpatialOperations: t(
+    'transformers.utils.get-categories-labels.perform-spatial-operations',
+    'Perform spatial operations'
+  ),
+  reformat: t('transformers.utils.get-categories-labels.reformat', 'Reformat'),
+  reorderAndRename: t('transformers.utils.get-categories-labels.reorder-and-rename', 'Reorder and rename'),
+});
 
 export const numberOrVariableValidator = (value: string | number) => {
   if (typeof value === 'number') {
@@ -76,7 +85,9 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
+  const variableFound = variableRegex.test(value);
+  variableRegex.lastIndex = 0;
+  if (variableFound) {
     return true;
   }
   return false;
@@ -89,8 +100,8 @@ export function getTimezoneOptions(includeInternal: boolean) {
   // Browser and UTC. We add the manually to avoid
   // funky string manipulation.
   if (includeInternal) {
-    timeZoneOptions.push({ label: 'Browser', value: 'browser' });
-    timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.browser', 'Browser'), value: 'browser' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.utc', 'UTC'), value: 'utc' });
   }
 
   // Add all other timezones

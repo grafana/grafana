@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 
-import { InstallControlsWarning } from '../components/InstallControls';
+import { InstallControlsWarning } from '../components/InstallControls/InstallControlsWarning';
 import { getLatestCompatibleVersion, hasInstallControlWarning } from '../helpers';
 import { useInstallStatus, useIsRemotePluginsAvailable } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';
@@ -46,7 +45,7 @@ export const PluginSubtitle = ({ plugin }: Props) => {
       <Stack direction="row" justifyContent="space-between">
         <div>
           {plugin?.description && <div>{plugin?.description}</div>}
-          {!config.featureToggles.pluginsDetailsRightPanel && !!plugin?.details?.links?.length && (
+          {!!plugin?.details?.links?.length && (
             <span>
               {plugin.details.links.map((link, index) => (
                 <Fragment key={index}>

@@ -103,7 +103,10 @@ type IndexableDocument struct {
 
 	// Maintain a list of resource references.
 	// Someday this will likely be part of https://github.com/grafana/gamma
-	References ResourceReferences `json:"reference,omitempty"`
+	References ResourceReferences `json:"references,omitempty"`
+
+	// internal field for mapping references to kind ( don't set this directly )
+	Reference map[string][]string `json:"reference,omitempty"` // map of kind to list of names
 
 	// When the resource is managed by an upstream repository
 	Manager *utils.ManagerProperties `json:"manager,omitempty"`
@@ -120,6 +123,12 @@ func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
 	m.TitlePhrase = strings.ToLower(m.Title) // Lowercase for case-insensitive sorting ?? in the analyzer?
 	if m.Manager != nil {
 		m.ManagedBy = fmt.Sprintf("%s:%s", m.Manager.Kind, m.Manager.Identity)
+	}
+
+	m.Reference = make(map[string][]string)
+	for _, ref := range m.References {
+		// Group and Version are ignored for now. This could be revisited.
+		m.Reference[ref.Kind] = append(m.Reference[ref.Kind], ref.Name)
 	}
 	return m
 }
@@ -399,7 +408,25 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Type of manager, which is responsible for managing the resource",
 			},
+			// TODO: below fields only need to be returned from search, but do not need to be searchable
+			{
+				Name: SEARCH_FIELD_MANAGER_ID,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_TIME,
+				Type: resourcepb.ResourceTableColumnDefinition_INT64,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_PATH,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_CHECKSUM,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
 		})
+
 		if err != nil {
 			panic("failed to initialize standard search fields")
 		}

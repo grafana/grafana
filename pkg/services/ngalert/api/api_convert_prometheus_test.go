@@ -3,12 +3,16 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	amconfig "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	prommodel "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
@@ -60,7 +64,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	}
 
 	t.Run("without datasource UID header should return 400", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 		rc.Req.Header.Set(datasourceUIDHeader, "")
 
@@ -71,7 +75,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("with invalid datasource should return error", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 		rc.Req.Header.Set(datasourceUIDHeader, "non-existing-ds")
 
@@ -81,7 +85,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("with rule group without evaluation interval should return 202", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
@@ -90,7 +94,8 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 	t.Run("should replace an existing rule group", func(t *testing.T) {
 		provenanceStore := fakes.NewFakeProvisioningStore()
-		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore))
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore), withFolderService(folderService))
 
 		// Create a folder in the root
 		fldr := randFolder()
@@ -152,7 +157,8 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 	t.Run("should fail to replace a provisioned rule group", func(t *testing.T) {
 		provenanceStore := fakes.NewFakeProvisioningStore()
-		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore))
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore), withFolderService(folderService))
 
 		// Create a folder in the root
 		fldr := randFolder()
@@ -187,7 +193,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 	t.Run("with no access to the datasource should return 403", func(t *testing.T) {
 		acFake := &acfakes.FakeRuleService{}
-		srv, _, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
+		srv, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
 
 		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *store.GroupDelta) error {
 			return datasources.ErrDataSourceAccessDenied
@@ -203,7 +209,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		quotas := &provisioning.MockQuotaChecker{}
 		quotas.EXPECT().LimitExceeded()
 
-		srv, _, _, _ := createConvertPrometheusSrv(t, withQuotaChecker(quotas))
+		srv, _, _ := createConvertPrometheusSrv(t, withQuotaChecker(quotas))
 
 		rc := createRequestCtx()
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "folder", simpleGroup)
@@ -241,7 +247,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				srv, _, _, _ := createConvertPrometheusSrv(t)
+				srv, _, _ := createConvertPrometheusSrv(t)
 				rc := createRequestCtx()
 				rc.Req.Header.Set(tc.headerName, tc.headerValue)
 
@@ -274,7 +280,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				srv, _, _, _ := createConvertPrometheusSrv(t)
+				srv, _, _ := createConvertPrometheusSrv(t)
 				rc := createRequestCtx()
 				rc.Req.Header.Set(tc.headerName, tc.headerValue)
 
@@ -285,8 +291,32 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		}
 	})
 
+	t.Run("with empty rule group name should return 400", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		emptyNameGroup := apimodels.PrometheusRuleGroup{
+			Name:     "",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", emptyNameGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "rule group name must not be empty")
+	})
+
 	t.Run("with valid request should return 202", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
@@ -295,47 +325,27 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 	t.Run("with disabled recording rules", func(t *testing.T) {
 		testCases := []struct {
-			name                   string
-			recordingRules         bool
-			recordingRulesTargetDS bool
-			expectedStatus         int
+			name           string
+			recordingRules bool
+			expectedStatus int
 		}{
 			{
-				name:                   "when recording rules are enabled",
-				recordingRules:         true,
-				recordingRulesTargetDS: true,
-				expectedStatus:         http.StatusAccepted,
+				name:           "when recording rules are enabled",
+				recordingRules: true,
+				expectedStatus: http.StatusAccepted,
 			},
 			{
-				name:                   "when recording rules are disabled",
-				recordingRules:         false,
-				recordingRulesTargetDS: true,
-				expectedStatus:         http.StatusBadRequest,
-			},
-			{
-				name:                   "when target datasources for recording rules are disabled",
-				recordingRules:         true,
-				recordingRulesTargetDS: false,
-				expectedStatus:         http.StatusBadRequest,
-			},
-			{
-				name:                   "when both recording rules and target datasources are disabled",
-				recordingRules:         false,
-				recordingRulesTargetDS: false,
-				expectedStatus:         http.StatusBadRequest,
+				name:           "when recording rules are disabled",
+				recordingRules: false,
+				expectedStatus: http.StatusBadRequest,
 			},
 		}
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				var features featuremgmt.FeatureToggles
-				if tc.recordingRulesTargetDS {
-					features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources)
-				} else {
-					features = featuremgmt.WithFeatures()
-				}
+				features := featuremgmt.WithFeatures()
 
-				srv, _, _, _ := createConvertPrometheusSrv(t, withFeatureToggles(features))
+				srv, _, _ := createConvertPrometheusSrv(t, withFeatureToggles(features))
 				srv.cfg.RecordingRules.Enabled = tc.recordingRules
 				rc := createRequestCtx()
 
@@ -347,7 +357,8 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 
 	t.Run("with disable provenance header should use ProvenanceNone", func(t *testing.T) {
 		provenanceStore := fakes.NewFakeProvisioningStore()
-		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore))
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore), withFolderService(folderService))
 
 		// Create a folder in the root
 		fldr := randFolder()
@@ -381,7 +392,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("returns error when target datasource does not exist", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 		rc.Req.Header.Set(targetDatasourceUIDHeader, "some-data-source")
 
@@ -391,7 +402,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("uses target datasource for recording rules", func(t *testing.T) {
-		srv, dsCache, ruleStore, _ := createConvertPrometheusSrv(t)
+		srv, dsCache, ruleStore := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 		targetDSUID := util.GenerateShortUID()
 		ds := &datasources.DataSource{
@@ -428,7 +439,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("sets notification settings for rules if specified", func(t *testing.T) {
-		srv, _, ruleStore, _ := createConvertPrometheusSrv(t)
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		receiver := "test-receiver"
@@ -470,7 +481,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("returns error when notification settings header contains invalid JSON", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		rc.Req.Header.Set(notificationSettingsHeader, "{invalid json")
@@ -492,7 +503,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("returns error when notification settings contain invalid values", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		settings := apimodels.AlertRuleNotificationSettings{
@@ -535,7 +546,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("with non-existent folder should return 404", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusGetRuleGroup(rc, "non-existent", "test")
@@ -543,7 +554,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 	})
 
 	t.Run("with non-existent group should return 404", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusGetRuleGroup(rc, "test", "non-existent")
@@ -551,7 +562,8 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 	})
 
 	t.Run("with valid request should return 200", func(t *testing.T) {
-		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
 		rc := createRequestCtx()
 
 		// Create two folders in the root folder
@@ -559,6 +571,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		fldr.ParentUID = ""
 		folderService.ExpectedFolder = fldr
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		folderService.AddFolder(fldr)
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// Create rules in both folders
@@ -639,7 +652,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 	}
 
 	t.Run("with non-existent folder should return 404", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusGetNamespace(rc, "non-existent")
@@ -647,7 +660,8 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 	})
 
 	t.Run("with valid request should return 200", func(t *testing.T) {
-		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
 		rc := createRequestCtx()
 
 		// Create two folders in the root folder
@@ -656,6 +670,8 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 		fldr2 := randFolder()
 		fldr2.ParentUID = ""
 		folderService.ExpectedFolders = []*folder.Folder{fldr, fldr2}
+		folderService.AddFolder(fldr)
+		folderService.AddFolder(fldr2)
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr, fldr2)
 
 		// Create a Grafana rule for each Prometheus rule
@@ -751,12 +767,13 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		}
 
 		t.Run("for non-existent folder should return empty response", func(t *testing.T) {
-			srv, _, _, _ := createConvertPrometheusSrv(t)
+			srv, _, _ := createConvertPrometheusSrv(t)
 			assertEmptyResponse(t, srv, rc)
 		})
 
 		t.Run("for existing folder with no children should return empty response", func(t *testing.T) {
-			srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+			folderService := foldertest.NewFakeService()
+			srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
 
 			fldr := randFolder()
 			fldr.UID = unknownFolderUID
@@ -777,12 +794,14 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 	})
 
 	t.Run("with rules should return 200 with rules", func(t *testing.T) {
-		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
 		rc := createRequestCtx()
 
 		// Create a folder in the root
 		fldr := randFolder()
 		fldr.ParentUID = ""
+		folderService.AddFolder(fldr)
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
@@ -817,7 +836,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 
 func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 	t.Run("for non-existent folder should return 404", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusDeleteNamespace(rc, "non-existent")
@@ -825,7 +844,8 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 	})
 
 	t.Run("for existing folder with no groups should return 404", func(t *testing.T) {
-		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
 		rc := createRequestCtx()
 
 		fldr := randFolder()
@@ -840,7 +860,8 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 
 	t.Run("valid request should delete rules", func(t *testing.T) {
 		initNamespace := func(promDefinition string, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *fakes.RuleStore, *folder.Folder, *models.AlertRule) {
-			srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, opts...)
+			folderService := foldertest.NewFakeService()
+			srv, _, ruleStore := createConvertPrometheusSrv(t, append(opts, withFolderService(folderService))...)
 
 			// Create a folder in the root
 			fldr := randFolder()
@@ -947,7 +968,7 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 
 func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 	t.Run("for non-existent folder should return 404", func(t *testing.T) {
-		srv, _, _, _ := createConvertPrometheusSrv(t)
+		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, "non-existent", "test-group")
@@ -955,7 +976,8 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 	})
 
 	t.Run("for existing folder with no group should return 404", func(t *testing.T) {
-		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
 		rc := createRequestCtx()
 
 		fldr := randFolder()
@@ -972,7 +994,8 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 
 	t.Run("valid request should delete rules", func(t *testing.T) {
 		initGroup := func(promDefinition string, groupName string, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *fakes.RuleStore, *folder.Folder, *models.AlertRule) {
-			srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, opts...)
+			folderService := foldertest.NewFakeService()
+			srv, _, ruleStore := createConvertPrometheusSrv(t, append(opts, withFolderService(folderService))...)
 
 			// Create a folder in the root
 			fldr := randFolder()
@@ -1080,7 +1103,8 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 }
 
 func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
-	srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+	folderService := foldertest.NewFakeService()
+	srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
 
 	req := createRequestCtx()
 	req.Req.Header.Set(datasourceUIDHeader, existingDSUID)
@@ -1104,12 +1128,17 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 		Name:     "TestGroup1",
 		Interval: prommodel.Duration(1 * time.Minute),
 		Rules:    []apimodels.PrometheusRule{promAlertRule},
+		Labels: map[string]string{
+			"group_label": "group_value",
+		},
 	}
 
+	queryOffset := prommodel.Duration(5 * time.Minute)
 	promGroup2 := apimodels.PrometheusRuleGroup{
-		Name:     "TestGroup2",
-		Interval: prommodel.Duration(1 * time.Minute),
-		Rules:    []apimodels.PrometheusRule{promAlertRule},
+		Name:        "TestGroup2",
+		Interval:    prommodel.Duration(1 * time.Minute),
+		Rules:       []apimodels.PrometheusRule{promAlertRule},
+		QueryOffset: &queryOffset,
 	}
 
 	promGroup3 := apimodels.PrometheusRuleGroup{
@@ -1145,10 +1174,12 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
+				require.Equal(t, "group_value", rule.Labels["group_label"])
 			case "TestGroup2":
 				require.Equal(t, "TestAlert", rule.Title)
 				require.Equal(t, "critical", rule.Labels["severity"])
 				require.Equal(t, 5*time.Minute, rule.For)
+				require.Equal(t, models.Duration(queryOffset), rule.Data[0].RelativeTimeRange.To)
 			case "TestGroup3":
 				switch rule.Title {
 				case "TestAlert":
@@ -1278,6 +1309,8 @@ type convertPrometheusSrvOptions struct {
 	fakeAccessControlRuleService *acfakes.FakeRuleService
 	quotaChecker                 *provisioning.MockQuotaChecker
 	featureToggles               featuremgmt.FeatureToggles
+	alertmanager                 Alertmanager
+	folderService                folder.Service
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -1306,7 +1339,19 @@ func withFeatureToggles(toggles featuremgmt.FeatureToggles) convertPrometheusSrv
 	}
 }
 
-func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *dsfakes.FakeCacheService, *fakes.RuleStore, *foldertest.FakeService) {
+func withAlertmanager(am Alertmanager) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.alertmanager = am
+	}
+}
+
+func withFolderService(f folder.Service) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.folderService = f
+	}
+}
+
+func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *dsfakes.FakeCacheService, *fakes.RuleStore) {
 	t.Helper()
 
 	// By default the quota checker will allow the operation
@@ -1317,7 +1362,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		provenanceStore:              fakes.NewFakeProvisioningStore(),
 		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
 		quotaChecker:                 quotas,
-		featureToggles:               featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRulesDatasources),
+		folderService:                foldertest.NewFakeService(),
 	}
 
 	for _, opt := range opts {
@@ -1335,12 +1380,10 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 	}
 	dsCache.DataSources = append(dsCache.DataSources, ds)
 
-	folderService := foldertest.NewFakeService()
-
 	alertRuleService := provisioning.NewAlertRuleService(
 		ruleStore,
 		options.provenanceStore,
-		folderService,
+		options.folderService,
 		options.quotaChecker,
 		&provisioning.NopTransactionManager{},
 		60,
@@ -1358,9 +1401,9 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager)
 
-	return srv, dsCache, ruleStore, folderService
+	return srv, dsCache, ruleStore
 }
 
 func createRequestCtx() *contextmodel.ReqContext {
@@ -1478,5 +1521,516 @@ func TestGetProvenance(t *testing.T) {
 
 		provenance := getProvenance(rc)
 		require.Equal(t, models.ProvenanceNone, provenance)
+	})
+}
+
+type mockAlertmanager struct {
+	mock.Mock
+}
+
+func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, extraConfig apimodels.ExtraConfiguration) error {
+	args := m.Called(ctx, org, extraConfig)
+	return args.Error(0)
+}
+
+func (m *mockAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error) {
+	args := m.Called(ctx, org, withAutogen)
+	return args.Get(0).(apimodels.GettableUserConfig), args.Error(1)
+}
+
+func (m *mockAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, identifier string) error {
+	args := m.Called(ctx, org, identifier)
+	return args.Error(0)
+}
+
+func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
+	const identifier = "test-config"
+	mockAM := &mockAlertmanager{}
+
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+			return extraConfig.Identifier == identifier &&
+				len(extraConfig.MergeMatchers) == 2 &&
+				len(extraConfig.TemplateFiles) == 1 &&
+				extraConfig.TemplateFiles["test.tmpl"] == "{{ define \"test\" }}Hello{{ end }}"
+		})).Return(nil).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(mergeMatchersHeader, "environment=production,team=backend")
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"route": {
+					"receiver": "default"
+				},
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+			TemplateFiles: map[string]string{
+				"test.tmpl": "{{ define \"test\" }}Hello{{ end }}",
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should use default identifier when header is missing", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(mergeMatchersHeader, "test=value")
+		mockAM := &mockAlertmanager{}
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.MatchedBy(func(extraConfig apimodels.ExtraConfiguration) bool {
+			return extraConfig.Identifier == defaultConfigIdentifier
+		})).Return(nil)
+
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"route": {
+					"receiver": "default"
+				},
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return error when merge matchers header has invalid format", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(mergeMatchersHeader, "invalid-format")
+
+		amCfg := apimodels.AlertmanagerUserConfig{}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "format should be 'key=value,key2=value2'")
+	})
+
+	t.Run("should return error when alertmanager config has empty route", func(t *testing.T) {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(mergeMatchersHeader, "env=prod")
+
+		amCfg := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{
+				"receivers": [
+					{
+						"name": "default"
+					}
+				]
+			}`,
+		}
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "failed to parse alertmanager config")
+	})
+}
+
+func TestRouteConvertPrometheusGetAlertmanagerConfig(t *testing.T) {
+	const identifier = "test-config"
+	const orgID = int64(1)
+
+	t.Run("without feature flag should return 501", func(t *testing.T) {
+		ft := featuremgmt.WithFeatures()
+		srv, _, _ := createConvertPrometheusSrv(t, withFeatureToggles(ft))
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		response := srv.RouteConvertPrometheusGetAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusNotImplemented, response.Status())
+	})
+
+	t.Run("without config identifier header should use default identifier", func(t *testing.T) {
+		mockAM := &mockAlertmanager{}
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
+			ExtraConfigs: []apimodels.ExtraConfiguration{
+				{
+					Identifier: defaultConfigIdentifier,
+					AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+				},
+			},
+		}, nil)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusGetAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusOK, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("with empty config identifier header should use default identifier", func(t *testing.T) {
+		mockAM := &mockAlertmanager{}
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{
+			ExtraConfigs: []apimodels.ExtraConfiguration{
+				{
+					Identifier: defaultConfigIdentifier,
+					AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+				},
+			},
+		}, nil)
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, "")
+		response := srv.RouteConvertPrometheusGetAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusOK, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return config when it is found", func(t *testing.T) {
+		mockAM := &mockAlertmanager{}
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		// Create a config with secrets to check that they will be hided in the response.
+		expectedConfig := apimodels.GettableUserConfig{
+			ExtraConfigs: []apimodels.ExtraConfiguration{
+				{
+					Identifier: identifier,
+					TemplateFiles: map[string]string{
+						"test.tmpl": "{{ define \"test\" }}Hello{{ end }}",
+					},
+					AlertmanagerConfig: `route:
+  receiver: webhook
+receivers:
+  - name: webhook
+    webhook_configs:
+      - url: "http://localhost/webhook"
+        http_config:
+          bearer_token: "some-token"
+`,
+				},
+			},
+		}
+
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, int64(1), false).Return(expectedConfig, nil).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		response := srv.RouteConvertPrometheusGetAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusOK, response.Status())
+
+		expectedResponse := `alertmanager_config: |
+  route:
+      receiver: webhook
+      continue: false
+  receivers:
+      - name: webhook
+        webhook_configs:
+          - send_resolved: true
+            http_config:
+              authorization:
+                  type: Bearer
+                  credentials: <secret>
+              follow_redirects: true
+              enable_http2: true
+            url: <secret>
+            url_file: ""
+            max_alerts: 0
+            timeout: 0s
+  templates: []
+template_files:
+  test.tmpl: '{{ define "test" }}Hello{{ end }}'`
+
+		require.YAMLEq(t, expectedResponse, string(response.Body()))
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("when config not found should return 404", func(t *testing.T) {
+		mockAM := &mockAlertmanager{}
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		expectedConfig := apimodels.GettableUserConfig{
+			ExtraConfigs: []apimodels.ExtraConfiguration{
+				{
+					Identifier: "other-config",
+					TemplateFiles: map[string]string{
+						"test.tmpl": "{{ define \"test\" }}Hello{{ end }}",
+					},
+					AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+				},
+			},
+		}
+
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(expectedConfig, nil).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		response := srv.RouteConvertPrometheusGetAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusNotFound, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return error when GetAlertmanagerConfiguration fails", func(t *testing.T) {
+		mockAM := &mockAlertmanager{}
+		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		mockAM.On("GetAlertmanagerConfiguration", mock.Anything, orgID, false).Return(apimodels.GettableUserConfig{}, errors.New("config error")).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		response := srv.RouteConvertPrometheusGetAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusInternalServerError, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+}
+
+func TestParseMergeMatchersHeader(t *testing.T) {
+	testCases := []struct {
+		name             string
+		headerValue      string
+		expectedError    bool
+		expectedMatchers amconfig.Matchers
+	}{
+		{
+			name:          "empty header should return error",
+			headerValue:   "",
+			expectedError: true,
+		},
+		{
+			name:          "single matcher should parse correctly",
+			headerValue:   "env=prod",
+			expectedError: false,
+			expectedMatchers: amconfig.Matchers{
+				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
+			},
+		},
+		{
+			name:          "multiple matchers should be parsed correctly",
+			headerValue:   "env=prod,team=alerting",
+			expectedError: false,
+			expectedMatchers: amconfig.Matchers{
+				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
+				{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
+			},
+		},
+		{
+			name:          "matchers with spaces should be parsed correctly",
+			headerValue:   " env = prod , team = alerting ",
+			expectedError: false,
+			expectedMatchers: amconfig.Matchers{
+				{Type: labels.MatchEqual, Name: "env", Value: "prod"},
+				{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
+			},
+		},
+		{
+			name:          "invalid format without equals should return error",
+			headerValue:   "env:prod",
+			expectedError: true,
+		},
+		{
+			name:          "empty key should return error",
+			headerValue:   "=prod",
+			expectedError: true,
+		},
+		{
+			name:          "empty value should return error",
+			headerValue:   "env=",
+			expectedError: true,
+		},
+		{
+			name:          "missing value should return error",
+			headerValue:   "env",
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rc := createRequestCtx()
+			rc.Req.Header.Set(mergeMatchersHeader, tc.headerValue)
+
+			matchers, err := parseMergeMatchersHeader(rc)
+
+			if tc.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.ElementsMatch(t, tc.expectedMatchers, matchers)
+			}
+		})
+	}
+}
+
+func TestParseConfigIdentifierHeader(t *testing.T) {
+	testCases := []struct {
+		name          string
+		headerValue   string
+		expectedValue string
+		expectedError bool
+	}{
+		{
+			name:          "valid identifier should parse correctly",
+			headerValue:   "test-config",
+			expectedValue: "test-config",
+			expectedError: false,
+		},
+		{
+			name:          "identifier with spaces should be trimmed",
+			headerValue:   "  test-config  ",
+			expectedValue: "test-config",
+			expectedError: false,
+		},
+		{
+			name:          "empty identifier should return the default value",
+			headerValue:   "",
+			expectedValue: defaultConfigIdentifier,
+		},
+		{
+			name:          "whitespace only identifier should return the default value",
+			headerValue:   "   ",
+			expectedValue: defaultConfigIdentifier,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rc := createRequestCtx()
+			rc.Req.Header.Set(configIdentifierHeader, tc.headerValue)
+
+			identifier := parseConfigIdentifierHeader(rc)
+			require.Equal(t, tc.expectedValue, identifier)
+		})
+	}
+}
+
+func TestFormatMergeMatchers(t *testing.T) {
+	t.Run("empty matchers should return empty string", func(t *testing.T) {
+		result := formatMergeMatchers(nil)
+		require.Equal(t, "", result)
+	})
+
+	t.Run("single matcher should format correctly", func(t *testing.T) {
+		matchers := amconfig.Matchers{
+			&labels.Matcher{
+				Type:  labels.MatchEqual,
+				Name:  "env",
+				Value: "prod",
+			},
+		}
+		result := formatMergeMatchers(matchers)
+		require.Equal(t, "env=prod", result)
+	})
+
+	t.Run("multiple matchers should format correctly", func(t *testing.T) {
+		matchers := amconfig.Matchers{
+			&labels.Matcher{
+				Type:  labels.MatchEqual,
+				Name:  "env",
+				Value: "prod",
+			},
+			&labels.Matcher{
+				Type:  labels.MatchEqual,
+				Name:  "team",
+				Value: "backend",
+			},
+		}
+		result := formatMergeMatchers(matchers)
+		require.Equal(t, "env=prod,team=backend", result)
+	})
+}
+
+func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
+	const identifier = "test-config"
+	const orgID = int64(1)
+
+	mockAM := &mockAlertmanager{}
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+	t.Run("should parse identifier header and call DeleteExtraConfiguration", func(t *testing.T) {
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, identifier).Return(nil).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should use default identifier when header is missing", func(t *testing.T) {
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, defaultConfigIdentifier).Return(nil).Once()
+		rc := createRequestCtx()
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return error when DeleteExtraConfiguration fails", func(t *testing.T) {
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, identifier).Return(errors.New("delete error")).Once()
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusInternalServerError, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return not implemented when feature toggle is disabled", func(t *testing.T) {
+		ft := featuremgmt.WithFeatures()
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, identifier)
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusNotImplemented, response.Status())
+	})
+
+	t.Run("should use default identifier for empty identifier header", func(t *testing.T) {
+		mockAM.On("DeleteExtraConfiguration", mock.Anything, orgID, defaultConfigIdentifier).Return(nil).Once()
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, "")
+
+		response := srv.RouteConvertPrometheusDeleteAlertmanagerConfig(rc)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		mockAM.AssertExpectations(t)
 	})
 }

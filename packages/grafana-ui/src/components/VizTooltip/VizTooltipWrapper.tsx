@@ -3,7 +3,7 @@ import React, { HTMLAttributes } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;

@@ -1,9 +1,12 @@
-import { Trans, useTranslate } from '@grafana/i18n';
-import { Alert, ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning';
+import { useEffect, useRef } from 'react';
+
+import { Trans, t } from '@grafana/i18n';
+import { ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
+import { Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';
+import { useStepStatus } from '../Wizard/StepStatusContext';
 
 import { JobSummary } from './JobSummary';
 
@@ -13,7 +16,8 @@ export interface JobContentProps {
 }
 
 export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
-  const { t } = useTranslate();
+  const { setStepStatusInfo } = useStepStatus();
+  const errorSetRef = useRef(false);
 
   if (!job?.status) {
     return null;
@@ -22,39 +26,60 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
   const { state, message, progress, summary, errors } = job.status;
   const repoName = job.metadata?.labels?.['provisioning.grafana.app/repository'];
 
-  const getStatusDisplay = () => {
+  // Update step status based on job state
+  useEffect(() => {
+    if (!state) {
+      return;
+    }
+
     switch (state) {
       case 'success':
-        return (
-          <Alert
-            severity="success"
-            title={t('provisioning.job-status.status.title-job-completed-successfully', 'Job completed successfully')}
-          />
-        );
+        setStepStatusInfo({ status: 'success' });
+        break;
+      case 'warning':
+        if (!errorSetRef.current) {
+          setStepStatusInfo({
+            status: 'warning',
+            warning: {
+              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+              message: errors?.length ? errors : message,
+            },
+          });
+          errorSetRef.current = true;
+        }
+        break;
       case 'error':
-        return (
-          <Alert
-            severity="error"
-            title={t('provisioning.job-status.status.title-error-running-job', 'Error running job')}
-          >
-            {message ?? errors?.join('\n')}
-          </Alert>
-        );
+        if (!errorSetRef.current) {
+          setStepStatusInfo({
+            status: 'error',
+            error: {
+              title: t('provisioning.job-status.status.title-error-running-job', 'Error running job'),
+              message: errors?.length ? errors : message,
+            },
+          });
+          errorSetRef.current = true;
+        }
+        break;
+      case 'working':
+      case 'pending':
+        setStepStatusInfo({ status: 'running' });
+        break;
+      default:
+        break;
     }
-    return (
-      <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-        {['working', 'pending'].includes(state ?? '') && <Spinner size={24} />}
-        <Text element="h4" color="secondary">
-          {message ?? state ?? ''}
-        </Text>
-      </Stack>
-    );
-  };
+  }, [state, message, errors, setStepStatusInfo]);
 
   return (
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
-        {getStatusDisplay()}
+        {['working', 'pending'].includes(state ?? '') && (
+          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+            <Spinner size={24} />
+            <Text element="h4" color="secondary">
+              {message ?? state ?? t('provisioning.job-status.starting', 'Starting...')}
+            </Text>
+          </Stack>
+        )}
         {state && !['success', 'error'].includes(state) && (
           <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
             <ProgressBar progress={progress ?? 0} />

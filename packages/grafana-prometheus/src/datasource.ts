@@ -1,4 +1,3 @@
-// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/datasource.ts
 import { defaults } from 'lodash';
 import { tz } from 'moment-timezone';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
@@ -42,16 +41,24 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusAnnotationSupport } from './annotations';
-import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
-  expandRecordingRules,
-  getClientCacheDurationInMinutes,
-  getPrometheusTime,
-  getRangeSnapInterval,
-} from './language_utils';
+  DEFAULT_SERIES_LIMIT,
+  GET_AND_POST_METADATA_ENDPOINTS,
+  InstantQueryRefIdIndex,
+  SUGGESTIONS_LIMIT,
+} from './constants';
+import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
+import {
+  exportToAbstractQuery,
+  importFromAbstractQuery,
+  populateMatchParamsFromQueries,
+  PrometheusLanguageProvider,
+  PrometheusLanguageProviderInterface,
+} from './language_provider';
+import { expandRecordingRules, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
 import { getQueryHints } from './query_hints';
-import { promQueryModeller } from './querybuilder/PromQueryModeller';
+import { renderLabelsWithoutBrackets } from './querybuilder/shared/rendering/labels';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { transformV2 } from './result_transformer';
@@ -69,91 +76,141 @@ import {
 import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
-const GET_AND_POST_METADATA_ENDPOINTS = [
-  'api/v1/query',
-  'api/v1/query_range',
-  'api/v1/series',
-  'api/v1/labels',
-  'suggestions',
-];
-
-export const InstantQueryRefIdIndex = '-Instant';
-
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
 {
-  type: string;
-  ruleMappings: RuleQueryMapping;
-  hasIncrementalQuery: boolean;
-  url: string;
-  id: number;
   access: 'direct' | 'proxy';
   basicAuth: any;
-  withCredentials: boolean;
-  interval: string;
-  httpMethod: string;
-  languageProvider: PrometheusLanguageProvider;
-  exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
-  lookupsDisabled: boolean;
+  cache: QueryCache<PromQuery>;
+  cacheLevel: PrometheusCacheLevel;
   customQueryParameters: URLSearchParams;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
   disableRecordingRules: boolean;
-  defaultEditor?: QueryEditorMode;
+  exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   exemplarsAvailable: boolean;
-  cacheLevel: PrometheusCacheLevel;
-  cache: QueryCache<PromQuery>;
+  hasIncrementalQuery: boolean;
+  httpMethod: string;
+  id: number;
+  interval: string;
+  languageProvider: PrometheusLanguageProviderInterface;
+  lookupsDisabled: boolean;
   metricNamesAutocompleteSuggestionLimit: number;
+  ruleMappings: RuleQueryMapping;
   seriesEndpoint: boolean;
+  seriesLimit: number;
+  type: string;
+  url: string;
+  withCredentials: boolean;
+  defaultEditor?: QueryEditorMode;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    languageProvider?: PrometheusLanguageProvider
+    languageProvider?: PrometheusLanguageProviderInterface
   ) {
     super(instanceSettings);
 
-    this.type = 'prometheus';
-    this.id = instanceSettings.id;
-    this.url = instanceSettings.url!;
+    // DATASOURCE CONFIGURATION PROPERTIES
     this.access = instanceSettings.access;
     this.basicAuth = instanceSettings.basicAuth;
-    this.withCredentials = Boolean(instanceSettings.withCredentials);
-    this.interval = instanceSettings.jsonData.timeInterval || '15s';
-    this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
-    this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
-    this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
-    this.ruleMappings = {};
-    this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
-    this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
-    this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
-    this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
-    this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
-    this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
-    this.defaultEditor = instanceSettings.jsonData.defaultEditor;
-    this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
-    this.variables = new PrometheusVariableSupport(this, this.templateSrv);
-    this.exemplarsAvailable = true;
-    this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
-    this.metricNamesAutocompleteSuggestionLimit =
-      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
-
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
       overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
       applyInterpolation: this.interpolateString.bind(this),
     });
+    this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
+    this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
+    this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
+    this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
+    this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
+    this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
+    this.exemplarsAvailable = true;
+    this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
+    this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
+    this.id = instanceSettings.id;
+    this.interval = instanceSettings.jsonData.timeInterval || '15s';
+    this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
+    this.metricNamesAutocompleteSuggestionLimit =
+      instanceSettings.jsonData.codeModeMetricNamesSuggestionLimit ?? SUGGESTIONS_LIMIT;
+    this.ruleMappings = {};
+    this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
+    this.seriesLimit = instanceSettings.jsonData.seriesLimit ?? DEFAULT_SERIES_LIMIT;
+    this.type = 'prometheus';
+    this.url = instanceSettings.url!;
+    this.withCredentials = Boolean(instanceSettings.withCredentials);
+    this.defaultEditor = instanceSettings.jsonData.defaultEditor;
 
+    // INHERITED PROPERTIES
     this.annotations = PrometheusAnnotationSupport(this);
+    this.variables = new PrometheusVariableSupport(this, this.templateSrv);
+
+    // LANGUAGE PROVIDER
+    // This needs to be the last thing we initialize.
+    this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
   }
 
-  init = async () => {
+  /**
+   * Initializes the Prometheus datasource by loading recording rules and checking exemplar availability.
+   *
+   * This method performs two key initialization tasks: Loads recording rules from the
+   * Prometheus API and checks if exemplars are available by testing the exemplars API endpoint.
+   */
+  init = async (): Promise<void> => {
     if (!this.disableRecordingRules) {
       this.loadRules();
     }
     this.exemplarsAvailable = await this.areExemplarsAvailable();
   };
+
+  /**
+   * Loads recording rules from the Prometheus API and extracts rule mappings.
+   *
+   * This method fetches rules from the `/api/v1/rules` endpoint and processes
+   * them to create a mapping of rule names to their corresponding queries and labels.
+   * The rules API is experimental, so errors are logged but not thrown.
+   */
+  private async loadRules(): Promise<void> {
+    try {
+      const params = {};
+      const options = { showErrorAlert: false };
+      const res = await this.metadataRequest('/api/v1/rules', params, options);
+      const ruleGroups = res.data?.data?.groups;
+
+      if (ruleGroups) {
+        this.ruleMappings = extractRuleMappingFromGroups(ruleGroups);
+      }
+    } catch (err) {
+      console.log('Rules API is experimental. Ignore next error.');
+      console.error(err);
+    }
+  }
+
+  /**
+   * Checks if exemplars are available by testing the exemplars API endpoint.
+   *
+   * This method makes a test request to the `/api/v1/query_exemplars` endpoint to determine
+   * if the Prometheus instance supports exemplars. The test uses a simple query with a
+   * 30-minute time range. If the request succeeds with a 'success' status, exemplars
+   * are considered available. Errors are caught and return false to avoid breaking
+   * the datasource initialization.
+   */
+  private async areExemplarsAvailable(): Promise<boolean> {
+    try {
+      const params = {
+        query: 'test',
+        start: dateTime().subtract(30, 'minutes').valueOf().toString(),
+        end: dateTime().valueOf().toString(),
+      };
+      const options = { showErrorAlert: false };
+      const res = await this.metadataRequest('/api/v1/query_exemplars', params, options);
+
+      return res.data.status === 'success';
+    } catch (err) {
+      return false;
+    }
+  }
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
@@ -282,11 +339,11 @@ export class PrometheusDatasource
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<PromQuery[]> {
-    return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
+    return abstractQueries.map((abstractQuery) => importFromAbstractQuery(abstractQuery));
   }
 
   async exportToAbstractQueries(queries: PromQuery[]): Promise<AbstractQuery[]> {
-    return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
+    return queries.map((query) => exportToAbstractQuery(query));
   }
 
   // Use this for tab completion features, wont publish response to other components
@@ -347,7 +404,7 @@ export class PrometheusDatasource
   shouldRunExemplarQuery(target: PromQuery, request: DataQueryRequest<PromQuery>): boolean {
     if (target.exemplar) {
       // We check all already processed targets and only create exemplar target for not used metric names
-      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
+      const metricName = this.languageProvider.retrieveHistogramMetrics().find((m) => target.expr.includes(m));
       // Remove targets that weren't processed yet (in targets array they are after current target)
       const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
       const targets = request.targets.slice(0, currentTargetIdx).filter((t) => !t.hide);
@@ -521,25 +578,12 @@ export class PrometheusDatasource
         .map((k) => ({ value: k, text: k }));
     }
 
-    if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels(options.timeRange, options.queries);
-      return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
-    }
+    const match = extractResourceMatcher(options.queries ?? [], options.filters);
 
-    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
-      label: f.key,
-      value: f.value,
-      op: f.operator,
-    }));
-    const expr = promQueryModeller.renderLabels(labelFilters);
-
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(
-      options.timeRange,
-      expr
-    );
+    let labelKeys: string[] = await this.languageProvider.queryLabelKeys(options.timeRange, match);
 
     // filter out already used labels
-    return Object.keys(labelsIndex)
+    return labelKeys
       .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
       .map((k) => ({ value: k, text: k }));
   }
@@ -565,26 +609,12 @@ export class PrometheusDatasource
       ).map((v) => ({ value: v, text: v }));
     }
 
-    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
-      label: f.key,
-      value: f.value,
-      op: f.operator,
+    const match = extractResourceMatcher(options.queries ?? [], options.filters);
+
+    return (await this.languageProvider.queryLabelValues(options.timeRange, options.key, match)).map((v) => ({
+      value: v,
+      text: v,
     }));
-
-    const expr = promQueryModeller.renderLabels(labelFilters);
-
-    if (this.hasLabelsMatchAPISupport()) {
-      return (
-        await this.languageProvider.fetchSeriesValuesWithMatch(options.timeRange, options.key, expr, requestId)
-      ).map((v) => ({
-        value: v,
-        text: v,
-      }));
-    }
-
-    const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
-    const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
-    return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
 
   interpolateVariablesInQueries(
@@ -624,43 +654,6 @@ export class PrometheusDatasource
 
   getQueryHints(query: PromQuery, result: unknown[]) {
     return getQueryHints(query.expr ?? '', result, this);
-  }
-
-  async loadRules() {
-    try {
-      const res = await this.metadataRequest('/api/v1/rules', {}, { showErrorAlert: false });
-      const groups = res.data?.data?.groups;
-
-      if (groups) {
-        this.ruleMappings = extractRuleMappingFromGroups(groups);
-      }
-    } catch (e) {
-      console.log('Rules API is experimental. Ignore next error.');
-      console.error(e);
-    }
-  }
-
-  async areExemplarsAvailable() {
-    try {
-      const res = await this.metadataRequest(
-        '/api/v1/query_exemplars',
-        {
-          query: 'test',
-          start: dateTime().subtract(30, 'minutes').valueOf().toString(),
-          end: dateTime().valueOf().toString(),
-        },
-        {
-          // Avoid alerting the user if this test fails
-          showErrorAlert: false,
-        }
-      );
-      if (res.data.status === 'success') {
-        return true;
-      }
-      return false;
-    } catch (err) {
-      return false;
-    }
   }
 
   modifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {
@@ -862,32 +855,6 @@ export class PrometheusDatasource
     return range.raw.from.includes('now') || range.raw.to.includes('now');
   }
 
-  getDebounceTimeInMilliseconds(): number {
-    switch (this.cacheLevel) {
-      case PrometheusCacheLevel.Medium:
-        return 600;
-      case PrometheusCacheLevel.High:
-        return 1200;
-      default:
-        return 350;
-    }
-  }
-
-  getDaysToCacheMetadata(): number {
-    switch (this.cacheLevel) {
-      case PrometheusCacheLevel.Medium:
-        return 7;
-      case PrometheusCacheLevel.High:
-        return 30;
-      default:
-        return 1;
-    }
-  }
-
-  getCacheDurationInMinutes(): number {
-    return getClientCacheDurationInMinutes(this.cacheLevel);
-  }
-
   getDefaultQuery(app: CoreApp): PromQuery {
     const defaults = {
       refId: 'A',
@@ -936,46 +903,34 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
   );
 }
 
-// NOTE: these two functions are similar to the escapeLabelValueIn* functions
-// in language_utils.ts, but they are not exactly the same algorithm, and we found
-// no way to reuse one in the another or vice versa.
-export function prometheusRegularEscape<T>(value: T) {
-  if (typeof value !== 'string') {
-    return value;
+/**
+ * It creates a matcher string for resource calls
+ * @param queries
+ * @param adhocFilters
+ *
+ * @example
+ * queries<PromQuery>=[{expr:`metricName{label="value"}`}]
+ * adhocFilters={key:"instance", operator:"=", value:"localhost"}
+ * returns {__name__=~"metricName", instance="localhost"}
+ */
+export const extractResourceMatcher = (
+  queries: PromQuery[],
+  adhocFilters: AdHocVariableFilter[]
+): string | undefined => {
+  // Extract metric names from queries we have already
+  const metricMatch = populateMatchParamsFromQueries(queries);
+  const labelFilters: QueryBuilderLabelFilter[] = adhocFilters.map((f) => ({
+    label: f.key,
+    value: f.value,
+    op: f.operator,
+  }));
+  // Extract label filters from the filters we have already
+  const labelsMatch = renderLabelsWithoutBrackets(labelFilters);
+
+  if (metricMatch.length === 0 && labelsMatch.length === 0) {
+    return undefined;
   }
 
-  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
-    // if the string looks like a complete label matcher (e.g. 'job="grafana"' or 'job=~"grafana"'),
-    // don't escape the encapsulating quotes
-    if (/^\w+(=|!=|=~|!~)".*"$/.test(value)) {
-      return value;
-    }
-
-    return value
-      .replace(/\\/g, '\\\\') // escape backslashes
-      .replace(/"/g, '\\"'); // escape double quotes
-  }
-
-  // classic behavior
-  return value
-    .replace(/\\/g, '\\\\') // escape backslashes
-    .replace(/'/g, "\\\\'"); // escape single quotes
-}
-
-export function prometheusSpecialRegexEscape<T>(value: T) {
-  if (typeof value !== 'string') {
-    return value;
-  }
-
-  if (config.featureToggles.prometheusSpecialCharsInLabelValues) {
-    return value
-      .replace(/\\/g, '\\\\\\\\') // escape backslashes
-      .replace(/"/g, '\\\\\\"') // escape double quotes
-      .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'); // escape regex metacharacters
-  }
-
-  // classic behavior
-  return value
-    .replace(/\\/g, '\\\\\\\\') // escape backslashes
-    .replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'); // escape regex metacharacters
-}
+  // Create a matcher using metric names and label filters
+  return `{${[...metricMatch, ...labelsMatch].join(',')}}`;
+};

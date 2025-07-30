@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { createRef, PureComponent, ReactElement } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   ConfirmButton,
@@ -21,7 +20,9 @@ import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Organization, OrgRole, Role, UserDTO, UserOrg } from 'app/types';
+import { AccessControlAction, Role } from 'app/types/accessControl';
+import { Organization } from 'app/types/organization';
+import { UserOrg, UserDTO } from 'app/types/user';
 
 import { OrgRolePicker } from './OrgRolePicker';
 
@@ -241,7 +242,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
         <td colSpan={1}>
           {canRemoveFromOrg && (
             <ConfirmButton
-              confirmText="Confirm removal"
+              confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
               confirmVariant="destructive"
               onCancel={this.onCancelClick}
               onConfirm={this.onOrgRemove}
@@ -465,7 +466,7 @@ export function ChangeOrgButton({
         </>
       ) : (
         <ConfirmButton
-          confirmText="Save"
+          confirmText={t('admin.change-org-button.confirmText-save', 'Save')}
           onClick={onChangeRoleClick}
           onCancel={onCancelClick}
           onConfirm={onOrgRoleSave}

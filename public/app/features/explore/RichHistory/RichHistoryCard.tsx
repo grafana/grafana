@@ -4,7 +4,7 @@ import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
@@ -142,7 +142,7 @@ export function RichHistoryCard(props: Props) {
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(queryHistoryItem.comment);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const cardRootDatasource = datasourceInstances
     ? datasourceInstances.find((di) => di.uid === queryHistoryItem.datasourceUid)
     : undefined;
@@ -388,7 +388,7 @@ interface QueryProps {
 
 const Query = ({ query, showDsInfo = false }: QueryProps) => {
   const styles = useStyles2(getQueryStyles);
-  const { t } = useTranslate();
+
   return (
     <div className={styles.queryRow}>
       {showDsInfo && (
@@ -416,7 +416,6 @@ const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
   const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <div className={styles}>

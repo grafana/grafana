@@ -28,7 +28,7 @@ lineage: schemas: [{
 			language?: string
 
 			// Selected locale (beta)
-			locale?: string
+			regionalFormat?: string
 
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference

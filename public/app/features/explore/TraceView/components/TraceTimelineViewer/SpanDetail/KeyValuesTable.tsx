@@ -15,14 +15,13 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import { PropsWithChildren } from 'react';
-import * as React from 'react';
 
-import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { GrafanaTheme2, PluginExtensionLink, TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import { TraceLink, TNil } from '../../types';
+import TNil from '../../types/TNil';
 
 import jsonMarkup from './jsonMarkup';
 
@@ -56,6 +55,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
       [`&:not(:hover) .${copyIconClassName}`]: {
         visibility: 'hidden',
+      },
+      'a span': {
+        color: `${theme.colors.text.link} !important`,
+      },
+      'a:hover span': {
+        textDecoration: 'underline',
       },
     }),
     keyColumn: css({
@@ -94,23 +99,25 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
+export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'>;
+
 interface LinkValueProps {
-  href: string;
-  title?: string;
-  children: React.ReactNode;
+  link: KeyValuesTableLink;
 }
 
-export const LinkValue = ({ href, title = '', children }: PropsWithChildren<LinkValueProps>) => {
+export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>) => {
+  const { path, title = '', onClick, icon = 'external-link-alt' } = link;
+
   return (
-    <a href={href} title={title} target="_blank" rel="noopener noreferrer">
-      {children} <Icon name="external-link-alt" />
+    <a href={path} title={title} onClick={onClick} target="_blank" rel="noopener noreferrer">
+      {children} <Icon name={icon} />
     </a>
   );
 };
 
 export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
@@ -125,15 +132,13 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               __html: jsonMarkup(parseIfComplexJson(row.value)),
             };
             const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={markup} />;
-            const links = linksGetter ? linksGetter(data, i) : null;
+            const links = linksGetter?.(data, i);
             let valueMarkup;
             if (links && links.length) {
               // TODO: handle multiple items
               valueMarkup = (
                 <div>
-                  <LinkValue href={links[0].url} title={links[0].text}>
-                    {jsonTable}
-                  </LinkValue>
+                  <LinkValue link={links[0]}>{jsonTable}</LinkValue>
                 </div>
               );
             } else {

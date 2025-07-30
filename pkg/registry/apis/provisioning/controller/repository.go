@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -60,7 +59,6 @@ type RepositoryController struct {
 	repoSynced     cache.InformerSynced
 	parsers        resources.ParserFactory
 	logger         logging.Logger
-	secrets        secrets.Service
 	dualwrite      dualwrite.Service
 
 	jobs      jobs.Queue
@@ -87,7 +85,6 @@ func NewRepositoryController(
 	clients resources.ClientFactory,
 	tester RepositoryTester,
 	jobs jobs.Queue,
-	secrets secrets.Service,
 	dualwrite dualwrite.Service,
 ) (*RepositoryController, error) {
 	rc := &RepositoryController{
@@ -110,7 +107,6 @@ func NewRepositoryController(
 		tester:    tester,
 		jobs:      jobs,
 		logger:    logging.DefaultLogger.With("logger", loggerName),
-		secrets:   secrets,
 		dualwrite: dualwrite,
 	}
 

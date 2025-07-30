@@ -1,19 +1,30 @@
 import { PropsOf } from '@emotion/react';
 
 import { AppEvents } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Button, ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
-import { Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
+import { EditableRuleIdentifier, Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
+import {
+  AlertRuleAction,
+  skipToken,
+  useGrafanaPromRuleAbilities,
+  useRulerRuleAbilities,
+} from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import {
+  getRuleUID,
+  isEditableRuleIdentifier,
+  isPausedRule,
+  prometheusRuleType,
+  rulerRuleType,
+} from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
@@ -23,7 +34,7 @@ interface Props {
   identifier: RuleIdentifier;
   groupIdentifier: RuleGroupIdentifierV2;
   handleSilence: () => void;
-  handleDelete: (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifierV2) => void;
+  handleDelete: (identifier: EditableRuleIdentifier, groupIdentifier: RuleGroupIdentifierV2) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
@@ -33,6 +44,8 @@ interface Props {
 /**
  * Get a list of menu items + divider elements for rendering in an alert rule's
  * dropdown menu
+ * If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
+ * as we have removed all requests to the ruler API in the list view.
  */
 const AlertRuleMenu = ({
   promRule,
@@ -46,32 +59,53 @@ const AlertRuleMenu = ({
   buttonSize,
   fill,
 }: Props) => {
-  // check all abilities and permissions
-  const [pauseSupported, pauseAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Pause);
-  const canPause = pauseSupported && pauseAllowed;
+  // check all abilities and permissions using rulerRule
+  const [rulerPauseAbility, rulerDeleteAbility, rulerDuplicateAbility, rulerSilenceAbility, rulerExportAbility] =
+    useRulerRuleAbilities(rulerRule, groupIdentifier, [
+      AlertRuleAction.Pause,
+      AlertRuleAction.Delete,
+      AlertRuleAction.Duplicate,
+      AlertRuleAction.Silence,
+      AlertRuleAction.ModifyExport,
+    ]);
 
-  const [deleteSupported, deleteAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Delete);
-  const canDelete = deleteSupported && deleteAllowed;
+  // check all abilities and permissions using promRule
+  const [
+    grafanaPauseAbility,
+    grafanaDeleteAbility,
+    grafanaDuplicateAbility,
+    grafanaSilenceAbility,
+    grafanaExportAbility,
+  ] = useGrafanaPromRuleAbilities(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
+    AlertRuleAction.Pause,
+    AlertRuleAction.Delete,
+    AlertRuleAction.Duplicate,
+    AlertRuleAction.Silence,
+    AlertRuleAction.ModifyExport,
+  ]);
 
-  const [duplicateSupported, duplicateAllowed] = useRulerRuleAbility(
-    rulerRule,
-    groupIdentifier,
-    AlertRuleAction.Duplicate
-  );
-  const canDuplicate = duplicateSupported && duplicateAllowed;
+  const [pauseSupported, pauseAllowed] = rulerPauseAbility;
+  const [grafanaPauseSupported, grafanaPauseAllowed] = grafanaPauseAbility;
+  const canPause = (pauseSupported && pauseAllowed) || (grafanaPauseSupported && grafanaPauseAllowed);
 
-  const [silenceSupported, silenceAllowed] = useRulerRuleAbility(rulerRule, groupIdentifier, AlertRuleAction.Silence);
-  const canSilence = silenceSupported && silenceAllowed;
+  const [deleteSupported, deleteAllowed] = rulerDeleteAbility;
+  const [grafanaDeleteSupported, grafanaDeleteAllowed] = grafanaDeleteAbility;
+  const canDelete = (deleteSupported && deleteAllowed) || (grafanaDeleteSupported && grafanaDeleteAllowed);
 
-  const [exportSupported, exportAllowed] = useRulerRuleAbility(
-    rulerRule,
-    groupIdentifier,
-    AlertRuleAction.ModifyExport
-  );
-  const canExport = exportSupported && exportAllowed;
+  const [duplicateSupported, duplicateAllowed] = rulerDuplicateAbility;
+  const [grafanaDuplicateSupported, grafanaDuplicateAllowed] = grafanaDuplicateAbility;
+  const canDuplicate =
+    (duplicateSupported && duplicateAllowed) || (grafanaDuplicateSupported && grafanaDuplicateAllowed);
+
+  const [silenceSupported, silenceAllowed] = rulerSilenceAbility;
+  const [grafanaSilenceSupported, grafanaSilenceAllowed] = grafanaSilenceAbility;
+  const canSilence = (silenceSupported && silenceAllowed) || (grafanaSilenceSupported && grafanaSilenceAllowed);
+
+  const [exportSupported, exportAllowed] = rulerExportAbility;
+  const [grafanaExportSupported, grafanaExportAllowed] = grafanaExportAbility;
+  const canExport = (exportSupported && exportAllowed) || (grafanaExportSupported && grafanaExportAllowed);
 
   const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
-  const { t } = useTranslate();
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
@@ -90,10 +124,22 @@ const AlertRuleMenu = ({
   const showDivider =
     [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) && [canExport].some(Boolean);
 
+  // grab the UID from either rulerRule or promRule
+  const ruleUid = getRuleUID(rulerRule ?? promRule);
+
+  const isPaused =
+    (rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule)) ||
+    (prometheusRuleType.grafana.rule(promRule) && promRule.isPaused);
+
   const menuItems = (
     <>
-      {canPause && rulerRuleType.grafana.rule(rulerRule) && groupIdentifier.groupOrigin === 'grafana' && (
-        <MenuItemPauseRule rule={rulerRule} groupIdentifier={groupIdentifier} onPauseChange={onPauseChange} />
+      {canPause && ruleUid && groupIdentifier.groupOrigin === 'grafana' && (
+        <MenuItemPauseRule
+          uid={ruleUid}
+          isPaused={isPaused}
+          groupIdentifier={groupIdentifier}
+          onPauseChange={onPauseChange}
+        />
       )}
       {canSilence && (
         <Menu.Item
@@ -134,14 +180,19 @@ const AlertRuleMenu = ({
           ))}
         </>
       )}
-      {canDelete && rulerRule && (
+      {canDelete && (
         <>
           <Menu.Divider />
           <Menu.Item
             label={t('alerting.common.delete', 'Delete')}
             icon="trash-alt"
             destructive
-            onClick={() => handleDelete(rulerRule, groupIdentifier)}
+            onClick={() => {
+              // if the identifier is not for a editable rule I wonder how you even got here.
+              if (isEditableRuleIdentifier(identifier)) {
+                handleDelete(identifier, groupIdentifier);
+              }
+            }}
           />
         </>
       )}
@@ -160,7 +211,6 @@ interface ExportMenuItemProps {
 }
 
 const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
-  const { t } = useTranslate();
   const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(
     `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,

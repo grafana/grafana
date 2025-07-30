@@ -37,7 +37,6 @@ In this tutorial you will learn how to:
 ## Before you begin
 
 - **Interactive learning environment**
-
   - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt5/). It’s a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
@@ -173,10 +172,13 @@ Notification policies route alert instances to contact points via label matchers
 
 Although our application doesn't explicitly include an `environment` label, we can rely on other labels like `instance` or `deployment`, which may contain keywords (like prod or staging) that indicate the environment.
 
+1. Sign in to Grafana:
+   - **Grafana Cloud** users: Log in via Grafana Cloud.
+   - **OSS users**: Go to [http://localhost:3000](http://localhost:3000).
+
 1. Navigate to **Alerts & IRM > Alerting > Notification Policies**.
 
 1. Add a child policy:
-
    - In the **Default policy**, click **+ New child policy**.
    - **Label**: `environment`.
    - **Operator**: `=`.
@@ -184,17 +186,14 @@ Although our application doesn't explicitly include an `environment` label, we c
    - This label matches alert rules where the environment label is `prod`.
 
 1. Choose a **contact point**:
-
    - If you don’t have any contact points, add a [Contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#add-a-contact-point).
 
    For a quick test, you can use a public webhook from [webhook.site](https://webhook.site/) to capture and inspect alert notifications. If you choose this method, select **Webhook** from the drop-down menu in contact points.
 
 1. Enable continue matching:
-
    - Turn on **Continue matching subsequent sibling nodes** so the evaluation continues even after one or more labels (i.e., _environment_ labels) match.
 
 1. Save and repeat
-
    - Create another child policy by following the same steps.
    - Use `environment = staging` as the label/value pair.
    - Feel free to use a different contact point.
@@ -229,7 +228,6 @@ Make it short and descriptive, as this will appear in your alert notification. F
    ```
 
 1. **Alert condition** section:
-
    - Enter `75` as the value for **WHEN QUERY IS ABOVE** to set the threshold for the alert.
    - Click **Preview alert rule condition** to run the queries.
 
@@ -325,7 +323,23 @@ The template should be flexible enough to capture the target keywords (e.g., pro
 
 By using notification policies, you can route alerts based on query values, directing them to the appropriate teams.
 
-## Learn more
+## Learn more in [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/)
+
+<!-- INTERACTIVE ignore START -->
+
+{{< admonition type="tip" >}}
+
+In [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/) you will create alerts using Prometheus data and link them to your graphs.
+
+{{< /admonition >}}
+
+<!-- INTERACTIVE ignore END -->
+
+{{< docs/ignore >}}
+
+In [Grafana Alerting - Link alerts to visualizations](http://www.grafana.com/tutorials/alerting-get-started-pt6/) you will create alerts using Prometheus data and link them to your graphs.
+
+{{< /docs/ignore >}}
 
 Explore related topics covered in this tutorial:
 

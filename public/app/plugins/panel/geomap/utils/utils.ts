@@ -1,4 +1,5 @@
-import { Map as OpenLayersMap } from 'ol';
+import Feature from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
 import Geometry from 'ol/geom/Geometry';
 import Point from 'ol/geom/Point';
 import { defaults as interactionDefaults } from 'ol/interaction';
@@ -14,8 +15,12 @@ import TileSource from 'ol/source/Tile';
 import VectorSource from 'ol/source/Vector';
 
 import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
+import { getColorDimension } from 'app/features/dimensions/color';
+import { getScalarDimension } from 'app/features/dimensions/scalar';
+import { getScaledDimension } from 'app/features/dimensions/scale';
+import { getTextDimension } from 'app/features/dimensions/text';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
 import { GeomapPanel } from '../GeomapPanel';
@@ -99,7 +104,7 @@ export const getNewOpenLayersMap = (panel: GeomapPanel, options: Options, div: H
   const view = panel.initMapView(options.view);
   return (panel.map = new OpenLayersMap({
     view: view,
-    pixelRatio: 1, // or zoom?
+    pixelRatio: window.devicePixelRatio, // or zoom?
     layers: [], // loaded explicitly below
     controls: [],
     target: div,
@@ -129,13 +134,13 @@ export const notifyPanelEditor = (geomapPanel: GeomapPanel, layers: MapLayerStat
 export const getNextLayerName = (panel: GeomapPanel) => {
   let idx = panel.layers.length; // since basemap is 0, this looks right
   while (true && idx < 100) {
-    const name = `Layer ${idx++}`;
+    const name = t('geomap.utils.get-next-layer-name', 'Layer {{name}}', { name: idx++ });
     if (!panel.byName.has(name)) {
       return name;
     }
   }
 
-  return `Layer ${Date.now()}`;
+  return t('geomap.utils.get-next-layer-name', 'Layer {{name}}', { name: Date.now() });
 };
 
 export function isSegmentVisible(
@@ -174,9 +179,9 @@ export const isUrl = (url: string) => {
 export function hasLayerData(
   layer:
     | LayerGroup
-    | VectorLayer<VectorSource<Geometry>>
-    | VectorImage<VectorSource<Geometry>>
-    | WebGLPointsLayer<VectorSource<Point>>
+    | VectorLayer<VectorSource<Feature<Geometry>>>
+    | VectorImage<VectorSource<Feature<Geometry>>>
+    | WebGLPointsLayer<VectorSource<Feature<Point>>>
     | TileLayer<TileSource>
     | ImageLayer<ImageSource>
     | BaseLayer

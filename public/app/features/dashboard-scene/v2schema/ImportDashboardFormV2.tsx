@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input } from '@grafana/ui';
@@ -54,7 +54,7 @@ export const ImportDashboardFormV2 = ({
       });
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
-  const { t } = useTranslate();
+
   return (
     <>
       <Trans i18nKey="manage-dashboards.import-dashboard-form.options">Options</Trans>

@@ -23,9 +23,9 @@ This method of authentication is useful for integrating with other systems that
 use JWKS but can't directly integrate with Grafana or if you want to use pass-through
 authentication in an app embedding Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana does not currently support refresh tokens.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Enable JWT
 

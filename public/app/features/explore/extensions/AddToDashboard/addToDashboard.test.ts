@@ -1,6 +1,6 @@
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
 import { DataQuery, LoadingState } from '@grafana/schema';
-import { ExplorePanelData } from 'app/types';
+import { ExplorePanelData } from 'app/types/explore';
 
 import { buildDashboardPanelFromExploreState } from './addToDashboard';
 

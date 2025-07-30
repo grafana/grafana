@@ -144,6 +144,22 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name:      "rule group with empty name",
+			orgID:     1,
+			namespace: "namespaceUID",
+			promGroup: PrometheusRuleGroup{
+				Name: "",
+				Rules: []PrometheusRule{
+					{
+						Alert: "alert-1",
+						Expr:  "up == 0",
+					},
+				},
+			},
+			expectError: true,
+			errorMsg:    "rule group name must not be empty",
+		},
+		{
 			name:      "recording rule",
 			orgID:     1,
 			namespace: "namespaceUID",
@@ -347,6 +363,12 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				require.Equal(t, models.OkErrState, grafanaRule.ExecErrState)
 				require.Equal(t, models.OK, grafanaRule.NoDataState)
 
+				// Update the rule with the group-level labels,
+				// to test that they are saved to the rule definition.
+				mergedLabels := make(map[string]string)
+				maps.Copy(mergedLabels, tc.promGroup.Labels)
+				maps.Copy(mergedLabels, promRule.Labels)
+				promRule.Labels = mergedLabels
 				originalRuleDefinition, err := yaml.Marshal(promRule)
 				require.NoError(t, err)
 				require.Equal(t, string(originalRuleDefinition), grafanaRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)

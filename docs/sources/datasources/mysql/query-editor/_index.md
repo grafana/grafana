@@ -66,9 +66,9 @@ Grafana’s query editors are unique for each data source. For general informati
 
 The MySQL query editor is located on the [Explore page](ref:explore). You can also access the MySQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If a default database is configured in the **Data Source Configuration page**, or via a provisioning configuration file, users will be restricted to querying only that pre-configured database. This feature is behind a feature flag and is available once you enable `sqlDatasourceDatabaseSelection`.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## MySQL query editor components
 
@@ -76,9 +76,9 @@ The MySQL query editor has two modes: **Builder** and **Code**.
 
 Builder mode helps you build a query using a visual interface. Code mode allows for advanced querying and offers support for complex SQL query writing.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If your table or database name contains a reserved word or a [prohibited character](https://dev.mysql.com/doc/en/identifiers.html) the editor will put quotes around the name. For example, the name `table-name` will be quoted with backticks - `` `table-name` ``.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## MySQL Builder mode
 
@@ -89,7 +89,6 @@ The following components will help you build a MySQL query:
 - **Format** - Select a format response from the drop-down for the MySQL query. The default is **Table**. If you use the **Time series** format option, one of the columns must be `time`.
 
 - **Dataset** - Select a database to query from the drop-down.
-
   - **Table** - Select a table from the drop-down. Tables correspond to the chosen database.
 
   - **Data operations** - _Optional_ Select an aggregation from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **X** to remove a data operation. Click the **garbage can icon** to remove the entire column.
@@ -99,15 +98,12 @@ The following components will help you build a MySQL query:
   - **Alias** - _Optional_ Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
 
 - **Filter** - Toggle to add filters.
-
   - **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added you can add an `AND` operator to display all true conditions or an `OR` operator to display any true conditions. Use the second drop-down to choose a filter. To remove a filter, click the `X` button next to that filter's drop-down. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column.
 
 - **Group** - Toggle to add **Group by column**.
-
   - **Group by column** - Select a column to filter by from the drop-down. Click the **+ sign** to filter by multiple columns. Click the **X** to remove a filter.
 
 - **Order** - Toggle to add an ORDER BY statement.
-
   - **Order by** - Select a column to order by from the drop-down. Select ascending (`ASC`) or descending (`DESC`) order.
   - **Limit** - You can add an optional limit on the number of retrieved results. Default is 50.
 
@@ -121,9 +117,9 @@ To create advanced queries, switch to **Code mode** by clicking **Code** in the 
 
 Select **Table** or **Time Series** as the format. Click the **{}** in the bottom right to format the query. Click the **downward caret** to expand the Code mode editor. **CTRL/CMD + Return** serves as a keyboard shortcut to execute the query.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Changes made to a query in Code mode will not transfer to Builder mode and will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Macros
 
@@ -174,9 +170,9 @@ Table panel results:
 
 Set the **Format** option to **Time series** to create and run time series queries.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To run a time series query you must include a column named `time` that returns either a SQL datetime value or a numeric datatype representing the UNIX epoch time in seconds. Additionally, the query results must be sorted by the `time` column for proper visualization in panels.
-{{% /admonition %}}
+{{< /admonition >}}
 
 The examples in this section refer to the data in the following table:
 
@@ -194,9 +190,9 @@ The examples in this section refer to the data in the following table:
 
 A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/key-concepts/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 For backward compatibility, an exception to the aforementioned rule applies to queries returning three columns, including a string column named `metric`. Instead of converting the metric column into field labels, it is used as the field name, and the series name is set to the value of the metric column. Refer to the following example with a metric column.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Example with `metric` column:**
 

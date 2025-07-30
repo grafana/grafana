@@ -14,7 +14,7 @@ import {
   LogLabelStatsModel,
   LogRowModel,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   ClipboardButton,
@@ -32,6 +32,10 @@ import { getLabelTypeFromRow } from '../utils';
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
 
+interface LinkModelWithIcon extends LinkModel<Field> {
+  icon?: IconName;
+}
+
 export interface Props extends Themeable2 {
   parsedValues: string[];
   parsedKeys: string[];
@@ -40,7 +44,7 @@ export interface Props extends Themeable2 {
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  links?: Array<LinkModel<Field>>;
+  links?: LinkModelWithIcon[];
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
@@ -79,6 +83,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
     }),
     copyButton: css({
       '& > button': {
+        gap: 0,
         color: theme.colors.text.secondary,
         padding: 0,
         justifyContent: 'center',
@@ -391,6 +396,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                             typeof pinLineButtonTooltipTitle === 'object' && link.onClick
                               ? pinLineButtonTooltipTitle
                               : undefined,
+                          variant: 'secondary',
+                          fill: 'outline',
+                          ...(link.icon && { icon: link.icon }),
                         }}
                         link={link}
                       />

@@ -4,13 +4,14 @@ import * as React from 'react';
 
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { ComponentSize, IconSize, IconType } from '../../types';
-import { IconName } from '../../types/icon';
+import { IconName, IconSize, IconType } from '../../types/icon';
+import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
-import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
@@ -30,6 +31,8 @@ type CommonProps = {
   tooltip?: PopoverContent;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
+  /** Position of the icon */
+  iconPlacement?: 'left' | 'right';
 };
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -48,6 +51,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       tooltip,
       disabled,
       tooltipPlacement,
+      iconPlacement = 'left',
       onClick,
       ...otherProps
     },
@@ -73,6 +77,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const hasTooltip = Boolean(tooltip);
 
+    const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
+
     // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
@@ -87,8 +93,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={!hasTooltip && disabled}
         ref={tooltip ? undefined : ref}
       >
-        <IconRenderer icon={icon} size={size} className={styles.icon} />
+        {iconPlacement === 'left' && iconComponent}
         {children && <span className={styles.content}>{children}</span>}
+        {iconPlacement === 'right' && iconComponent}
       </button>
     );
 
@@ -219,6 +226,7 @@ export const getButtonStyles = (props: StyleProps) => {
       label: 'button',
       display: 'inline-flex',
       alignItems: 'center',
+      gap: theme.spacing(1),
       fontSize: fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       fontFamily: theme.typography.fontFamily,
@@ -254,9 +262,7 @@ export const getButtonStyles = (props: StyleProps) => {
           marginRight: theme.spacing(-padding / 2),
           marginLeft: theme.spacing(-padding / 2),
         })
-      : css({
-          marginRight: theme.spacing(padding / 2),
-        }),
+      : undefined,
     content: css({
       display: 'flex',
       flexDirection: 'row',

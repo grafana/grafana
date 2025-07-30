@@ -1,16 +1,14 @@
 import { Navigate, Routes, Route, useLocation } from 'react-router-dom-v5-compat';
 
-import { StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types/store';
 
 import { ROUTES } from './constants';
-import {
-  AddNewConnectionPage,
-  DataSourceDashboardsPage,
-  DataSourceDetailsPage,
-  DataSourcesListPage,
-  EditDataSourcePage,
-  NewDataSourcePage,
-} from './pages';
+import { AddNewConnectionPage } from './pages/AddNewConnectionPage';
+import { DataSourceDashboardsPage } from './pages/DataSourceDashboardsPage';
+import { DataSourceDetailsPage } from './pages/DataSourceDetailsPage';
+import { DataSourcesListPage } from './pages/DataSourcesListPage';
+import { EditDataSourcePage } from './pages/EditDataSourcePage';
+import { NewDataSourcePage } from './pages/NewDataSourcePage';
 
 function RedirectToAddNewConnection() {
   const { search } = useLocation();

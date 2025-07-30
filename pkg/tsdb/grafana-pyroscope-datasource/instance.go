@@ -119,7 +119,7 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -167,7 +167,7 @@ func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallR
 		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: jsonResponse, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -207,7 +207,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 		return err
 	}
 
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
@@ -253,8 +253,8 @@ func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckH
 
 	// Since this is a health check mechanism and we only care about whether the
 	// request succeeded or failed, we set the window to be small.
-	start := time.Now().Add(-5 * time.Minute).UnixMilli()
-	end := time.Now().UnixMilli()
+	start := time.Unix(1, 0).UnixMilli()
+	end := time.Unix(4, 0).UnixMilli()
 	if _, err := d.client.ProfileTypes(ctx, start, end); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()

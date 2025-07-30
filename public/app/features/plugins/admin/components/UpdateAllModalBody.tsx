@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Checkbox, EmptyState, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -83,7 +83,7 @@ const StatusIcon = ({
   errorMap: Map<string, UpdateError>;
 }) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   if (errorMap && errorMap.has(id)) {
     return (
       <Tooltip
@@ -122,7 +122,7 @@ export const UpdateModalBody = ({
   errorMap,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const numberInstalled = plugins.length - pluginsNotInstalled.size;
   const installationFinished = plugins.length !== pluginsNotInstalled.size && !inProgress;
 

@@ -33,19 +33,24 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state-history/
   configure-nodata-and-error-handling:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
   stale-alert-instances:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#stale-alert-instances-missingseries
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#stale-alert-instances-missingseries
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
   no-data-and-error-alerts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#no-data-and-error-alerts
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-and-error-alerts
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#no-data-and-error-alerts
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-and-error-alerts
+  grafana-state-reason-annotation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#grafana_state_reason-for-troubleshooting
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#grafana_state_reason-for-troubleshooting
 ---
 
 # Handle missing data in Grafana Alerting
@@ -88,8 +93,7 @@ The following tables illustrate both scenarios using the previous example, with 
 | :---- | :--------- | :--------- | :--------------------------- |
 | 00:00 | 1.5s 🟢    | 1s 🟢      | ✅ No Alert                  |
 | 01:00 | No Data ⚠️ | No Data ⚠️ | ⚠️ No Alert (Silent Failure) |
-| 02:00 | No Data ⚠️ | No Data ⚠️ | ⚠️ No Alert (Silent Failure) |
-| 03:00 | 1.4s 🟢    | 1s 🟢      | ✅ No Alert                  |
+| 02:00 | 1.4s 🟢    | 1s 🟢      | ✅ No Alert                  |
 
 **MissingSeries Scenario:** Only a specific series (`region2`) disappears:
 
@@ -97,8 +101,7 @@ The following tables illustrate both scenarios using the previous example, with 
 | :---- | :------ | :---------------- | :--------------------------- |
 | 00:00 | 1.5s 🟢 | 1s 🟢             | ✅ No Alert                  |
 | 01:00 | 1.6s 🟢 | Missing Series ⚠️ | ⚠️ No Alert (Silent Failure) |
-| 02:00 | 1.6s 🟢 | Missing Series ⚠️ | ⚠️ No Alert (Silent Failure) |
-| 03:00 | 1.4s 🟢 | 1s 🟢             | ✅ No Alert                  |
+| 02:00 | 1.4s 🟢 | 1s 🟢             | ✅ No Alert                  |
 
 In both cases, something broke silently.
 
@@ -116,11 +119,17 @@ However, `absent_over_time()` can’t detect which specific series are missing s
 
 If you want to check for missing data per-region or label, you can specify the label in the alert query as follows:
 
-`absent_over_time(http_request_latency_seconds{region="region1"}[5m]) == 1`  
-`or`  
-`absent_over_time(http_request_latency_seconds{region="region2"}[5m]) == 1`
+```promQL
+# Detect missing data in region1
+absent_over_time(http_request_latency_seconds{region="region1"}[5m]) == 1
+
+# Detect missing data in region2
+absent_over_time(http_request_latency_seconds{region="region2"}[5m]) == 1
+```
 
 But this doesn't scale well. It is unreliable to have hard-coded queries for each label set, especially in dynamic cloud environments where instances can appear or disappear at any time.
+
+To detect when a specific target has disappeared, see below **Evict alert instances for missing series** for details on how Grafana handles this case and how to set up detection.
 
 ## Manage No Data issues in Grafana alerts
 
@@ -162,16 +171,13 @@ Grafana marks missing series as [**stale**](ref:stale-alert-instances) after two
 
 If an alert instance becomes stale, you’ll find it in the [alert history](ref:alert-history) as `Normal (Missing Series)` before it disappears. This table shows the eviction process from the previous example:
 
-| Time  | region1               | region2                            | Alert triggered                                                                                |
-| :---- | :-------------------- | :--------------------------------- | :--------------------------------------------------------------------------------------------- |
-| 00:00 | 1.5s 🟢               | 1s 🟢                              | 🟢🟢 No Alerts                                                                                 |
-| 01:00 | 3s 🔴 <br> `Alerting` | 3s 🔴 <br> `Alerting`              | 🔴🔴 Alert instances triggered for both regions                                                |
-| 02:00 | 1.6s 🟢               | MissingSeries ⚠️ <br> `Alerting` ️ | 🟢🔴 Region2 missing, state maintained.                                                        |
-| 03:00 | 1.6s 🟢               | MissingSeries ⚠️ `Alerting`️       | 🟢🔴Region2 missing, state maintained.                                                         |
-| 04:00 | 1.4s 🟢               | —                                  | 🟢 🟢 `region2` Normal (Missing Series), resolved, and instance evicted; 📩 Notification sent. |
-| 05:00 | 1.4s 🟢               | —                                  | 🟢 No Alerts                                                                                   |
-
-###
+| Time  | region1               | region2                               | Alert triggered                                                          |
+| :---- | :-------------------- | :------------------------------------ | :----------------------------------------------------------------------- |
+| 00:00 | 1.5s 🟢               | 1s 🟢                                 | 🟢🟢 No Alerts                                                           |
+| 01:00 | 3s 🔴 <br> `Alerting` | 3s 🔴 <br> `Alerting`                 | 🔴🔴 Alert instances triggered for both regions                          |
+| 02:00 | 1.6s 🟢               | `(MissingSeries)`⚠️ <br> `Alerting` ️ | 🟢🔴 Region2 missing, state maintained.                                  |
+| 03:00 | 1.4s 🟢               | `(MissingSeries)` <br> `Normal`       | 🟢🟢 `region2` was resolved, 📩 notification sent, and instance evicted. |
+| 04:00 | 1.4s 🟢               | —                                     | 🟢 No Alerts. `region2` was evicted.                                     |
 
 ### Why doesn’t MissingSeries match No Data behavior?
 
@@ -185,14 +191,49 @@ In environments with frequent scale events, prioritize symptom-based alerts over
 
 ### Handle MissingSeries notifications
 
-A stale alert instance triggers a **resolved notification** if it transitions from a firing state (such as `Alerting`, `No Data`, or `Error`) to `Normal`.
+A stale alert instance triggers a **resolved notification** if it transitions from a firing state (such as `Alerting`, `No Data`, or `Error`) to `Normal`, and the [`grafana_state_reason` annotation](ref:grafana-state-reason-annotation) is set to **MissingSeries** to indicate that the alert wasn’t resolved by recovery but evicted because the series data went missing.
 
-You can display the `MissingSeries` annotation in notifications to indicate the alert wasn’t resolved by recovery but evicted due to series data going missing.
+Recognizing these notifications helps you handle them appropriately. For example:
 
-Review these notifications to confirm whether something broke or if the alert was unnecessary. To reduce noise:
+- Display the `grafana_state_reason` annotation to clearly identify **MissingSeries** alerts.
+- Or use the `grafana_state_reason` annotation to process these alerts differently.
+
+Also, review these notifications to confirm whether something broke or if the alert was unnecessary. To reduce noise:
 
 - Silence or mute alerts during planned maintenance or rollouts.
 - Adjust alert rules to avoid triggering on series you expect to come and go, and use aggregated alerts instead.
+
+### Detect missing series in Prometheus
+
+Previously, an example showed how to detect missing data for a specific label, such as `region`:
+
+```promQL
+# Detect missing data in region1
+absent_over_time(http_request_latency_seconds{region="region1"}[5m]) == 1
+
+# Detect missing data in region2
+absent_over_time(http_request_latency_seconds{region="region2"}[5m]) == 1
+```
+
+However, this approach doesn’t scale well because it requires hardcoding all possible `region` values.
+
+As an alternative, you can create an alert rule that detects missing series dynamically using the `present_over_time` function:
+
+```promQL
+present_over_time(http_request_latency_seconds{}[24h])
+unless
+present_over_time(http_request_latency_seconds{}[10m])
+```
+
+Or, if you want to group by a label such as region:
+
+```promQL
+group(present_over_time(http_request_latency_seconds{}[24h])) by (region)
+unless
+group(present_over_time(http_request_latency_seconds{}[10m])) by (region)
+```
+
+This query finds regions (or other targets) that were present at any time in the past 24 hours but have not been present in the past 10 minutes. The alert rule then triggers an alert instance for each missing region. You can apply the same technique to any label or target dimension.
 
 ## Conclusion
 
@@ -200,9 +241,13 @@ Missing data isn’t always a failure. It’s a common scenario in dynamic envir
 
 Grafana Alerting handles distinct scenarios automatically. Here’s how to think about it:
 
-- Use Grafana’s _No Data_ handling options to define what happens when a query returns nothing.
 - Understand `DatasourceNoData` and `MissingSeries` notifications, since they don’t behave like regular alerts.
-- Use `absent()` or `absent_over_time()` in Prometheus for fine-grained detection when a metric or label disappears entirely.
+- Use Grafana’s _No Data_ handling options to define what happens when a query returns nothing.
+- When _NoData_ is not an issue, consider rewriting the query to always return data — for example, in Prometheus, use `your_metric_query OR on() vector(0)` to return `0` when `your_metric_query` returns nothing.
+- Use `absent_over_time()` or `present_over_time` in Prometheus to detect when a metric or target disappears.
+- If data is frequently missing due to scrape delays, use techniques to account for data delays:
+  - Adjust the **Time Range** query option in Grafana to evaluate slightly behind real time (e.g., set **To** to `now-1m`) to account for late data points.
+  - In Prometheus, you can use `last_over_time(metric_name[10m])` to pick the most recent sample within a given window.
 - Don’t alert on every instance by default. In dynamic environments, it’s better to aggregate and alert on symptoms — unless a missing individual instance directly impacts users.
 - If you’re getting too much noise from disappearing data, consider adjusting alerts, using `Keep Last State`, or routing those alerts differently.
 - For connectivity issues involving alert query failures, see the sibling guide: [Handling connectivity errors in Grafana Alerting](ref:connectivity-errors-guide).

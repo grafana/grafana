@@ -120,13 +120,13 @@ In this example:
 
 The _Math_ expression works as long as each series in `$A` can be matched with exactly one series in `$B`. They must align in a way that produces a one-to-one match between series in `$A` and `$B`.
 
-{{% admonition type="caution" %}}
+{{< admonition type="caution" >}}
 
 If a series in one query doesn’t match any series in the other, it’s excluded from the result and a warning message is displayed:
 
 _1 items **dropped from union(s)**: ["$A > $B": ($B: {service=payment-api})]_
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Labels in both series don’t need to be identical**. If labels are a subset of the other, they can join. For example:
 
@@ -146,7 +146,6 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 1. Simulate a query (`$A`) that returns latencies for each service.
 
    Select **TestData** as the data source and configure the scenario.
-
    - Scenario: Random Walk
    - Alias: latency
    - Labels: service=api-$seriesIndex
@@ -179,7 +178,6 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
    For details on CSV format requirements, see [table data examples](ref:table-data-example).
 
 1. Add a new **Reduce** expression (`$C`).
-
    - Type: Reduce
    - Input: A
    - Function: Mean
@@ -188,7 +186,6 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
    This calculates the average latency for each service: `api-0`, `api-1`, etc.
 
 1. Add a new **Math** expression.
-
    - Type: Math
    - Expression: `$C > $B`
    - Set this expression as the **alert condition**.
@@ -199,7 +196,7 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 
    {{< figure src="/media/docs/alerting/example-dynamic-thresholds-preview-v3.png" max-width="750px" caption="Alert preview evaluating multiple series with distinct threshold values" >}}
 
-   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/demqzyodxrd34e/view" >}}
+   {{< docs/play title="this alert example" url="https://play.grafana.org/alerting/grafana/aep7osljvuku8e/view" >}}
 
 ## Other use cases
 

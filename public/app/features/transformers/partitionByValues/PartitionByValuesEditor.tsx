@@ -8,7 +8,7 @@ import {
   SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   InlineField,
   InlineFieldRow,
@@ -21,8 +21,10 @@ import {
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/partitionByValues.svg';
+import lightImage from '../images/light/partitionByValues.svg';
 
-import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
+import { getPartitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
   input,
@@ -64,13 +66,19 @@ export function PartitionByValuesEditor({
   }
 
   const namingModesOptions = [
-    { label: 'As label', value: namingModes.asLabels },
-    { label: 'As frame name', value: namingModes.frameName },
+    {
+      label: t('transformers.partition-by-values-editor.naming-modes-options.label.as-label', 'As label'),
+      value: namingModes.asLabels,
+    },
+    {
+      label: t('transformers.partition-by-values-editor.naming-modes-options.label.as-frame-name', 'As frame name'),
+      value: namingModes.frameName,
+    },
   ];
 
   const KeepFieldsOptions = [
-    { label: 'Yes', value: true },
-    { label: 'No', value: false },
+    { label: t('transformers.partition-by-values-editor.keep-fields-options.label.yes', 'Yes'), value: true },
+    { label: t('transformers.partition-by-values-editor.keep-fields-options.label.no', 'No'), value: false },
   ];
 
   const removeField = useCallback(
@@ -90,7 +98,6 @@ export function PartitionByValuesEditor({
     },
     [onChange, options]
   );
-  const { t } = useTranslate();
 
   if (input.length > 1) {
     return (
@@ -173,13 +180,19 @@ export function PartitionByValuesEditor({
   );
 }
 
-export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<PartitionByValuesTransformerOptions> = {
-  id: DataTransformerID.partitionByValues,
-  editor: PartitionByValuesEditor,
-  transformation: partitionByValuesTransformer,
-  name: partitionByValuesTransformer.name,
-  description: partitionByValuesTransformer.description,
-  state: PluginState.alpha,
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
-};
+export const getPartitionByValuesTransformRegistryItem: () => TransformerRegistryItem<PartitionByValuesTransformerOptions> =
+  () => {
+    const partitionByValuesTransformer = getPartitionByValuesTransformer();
+    return {
+      id: DataTransformerID.partitionByValues,
+      editor: PartitionByValuesEditor,
+      transformation: partitionByValuesTransformer,
+      name: partitionByValuesTransformer.name,
+      description: partitionByValuesTransformer.description,
+      state: PluginState.alpha,
+      categories: new Set([TransformerCategory.Reformat]),
+      help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
+      imageDark: darkImage,
+      imageLight: lightImage,
+    };
+  };

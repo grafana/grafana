@@ -1,0 +1,512 @@
+{
+  "grafana-prometheus": {
+    "components": {
+      "annotation-query-editor": {
+        "annotation-data-load-error": "註解資料載入錯誤！",
+        "aria-label-lower-limit-parameter": "設定步驟參數的下限",
+        "label-min-step": "最少步驟數",
+        "label-series-value-as-timestamp": "作為時間戳記的序列值",
+        "label-tags": "標籤",
+        "label-text": "文字",
+        "label-title": "標題",
+        "placeholder-auto": "自動",
+        "tooltip-either-pattern-example-instance-replaced-label": "使用名稱或模式。例如，{{labelTemplate}} 會替換為標籤{{labelName}}的標籤值。",
+        "tooltip-min-step": "Prometheus 查詢的步驟參數以及 <2>{{intervalVar}}</2> 和 <4>{{rateIntervalVar}}</4> 變數的其他下限。",
+        "tooltip-timestamp-milliseconds-series-value-seconds-multiply": "時間戳記的單位為毫秒。如果序列值的單位為秒，請將其範圍向量乘以 1000。"
+      },
+      "get-query-type-options": {
+        "description": {
+          "instant-query-range": "執行即時查詢和範圍查詢"
+        },
+        "label": {
+          "both": "兩者"
+        },
+        "range-options": {
+          "description": {
+            "query-range": "針對一段時間執行查詢"
+          },
+          "label": {
+            "instant": "立即",
+            "range": "範圍"
+          }
+        }
+      },
+      "label-selector": {
+        "aria-label-filter-expression-for-label": "篩選標籤的表達式",
+        "description-select-labels": "一旦選取標籤值，只會顯示可能的標籤組合。",
+        "select-labels-to-search-in": "2. 選取您要搜尋的標籤"
+      },
+      "metric-selector": {
+        "aria-label-filter-expression-for-metric": "篩選指標的表達式",
+        "aria-label-limit-results-from-series-endpoint": "限制序列端點的結果",
+        "description-series-limit": "限制適用於所有指標、標籤和數值。將欄位留空以使用預設的限制。設定為 0 以停用限制並擷取所有內容，不過這可能會導致效能問題。",
+        "label-select-metric": "一旦選取指標，只會顯示可能的標籤。標籤受以下序列限制。",
+        "select-a-metric": "1. 選擇指標",
+        "series-limit": "序列限制"
+      },
+      "prom-cheat-sheet": {
+        "prom-ql-cheat-sheet": "PromQL 速查表"
+      },
+      "prom-exemplar-field": {
+        "exemplars": "範例",
+        "tooltip-disable-query": "停用範例查詢",
+        "tooltip-enable-query": "啟用範例查詢"
+      },
+      "prom-explore-extra-field": {
+        "aria-label-prometheus-extra-field": "Prometheus 額外欄位",
+        "aria-label-query-type-field": "查詢類型欄位",
+        "aria-label-step-field": "步驟欄位",
+        "min-step": "最小步長",
+        "query-type": "查詢類型",
+        "tooltip-units-builtin-variables-example-interval-rateinterval": "此處可使用時間單位和內建變數，例如：{{example1}}、{{example2}}、{{example3}}、{{example4}}、{{example5}}、{{example6}}、{{example7}}（如未指定單位，則為預設值：{{default}}）"
+      },
+      "prom-query-field": {
+        "placeholder-enter-a-prom-ql-query": "輸入 PromQL 查詢…"
+      },
+      "prom-variable-query-editor": {
+        "aria-label-classic-query": "經典查詢",
+        "aria-label-metric-regex": "指標正規表達式",
+        "aria-label-metric-selector": "指標選擇器",
+        "aria-label-prometheus-query": "Prometheus 查詢",
+        "aria-label-query-type": "查詢類型",
+        "aria-label-series-query": "序列查詢",
+        "label-classic-query": "經典查詢",
+        "label-label": "標籤",
+        "label-metric-regex": "指標正規表達式",
+        "label-query": "查詢",
+        "label-query-type": "查詢類型",
+        "label-series-query": "序列查詢",
+        "placeholder-classic-query": "經典查詢",
+        "placeholder-metric-regex": "指標正規表達式",
+        "placeholder-prometheus-query": "Prometheus 查詢",
+        "placeholder-select-query-type": "選取查詢類型",
+        "placeholder-series-query": "序列查詢",
+        "returns-metrics-matching-specified-metric-regex": "回傳與指定指標正規表達式相符的指標清單。",
+        "tooltip-classic-query": "Prometheus 變數查詢編輯器的原始實作。輸入一個字串，其中包含如這些文件中所述正確的查詢類型和參數。例如：{{exampleQuery}}。",
+        "tooltip-label": "除非有指定指標，否則會回傳所有指標中該標籤名稱的標籤值清單。",
+        "tooltip-metric-regex": "回傳標籤名稱清單，選擇性地依據指定指標正規表達式篩選。",
+        "tooltip-query": "回傳此查詢的 Prometheus 查詢結果清單。這可能包括 Prometheus 功能，即{{exampleQuery}}。",
+        "tooltip-query-type": "Prometheus 資料來源外掛程式為範本變數提供以下查詢類型。",
+        "tooltip-series-query": "輸入帶有標籤的指標、僅有指標或僅標籤，即 {{example1}}、{{example2}} 或 {{example3}}。回傳與輸入資料相關的時間序列清單。"
+      },
+      "selector-actions": {
+        "aria-label-selector": "選擇器",
+        "aria-label-selector-clear-button": "選擇器清除按鈕",
+        "aria-label-use-selector-as-metrics-button": "使用選擇器作為指標按鈕",
+        "aria-label-use-selector-for-query-button": "使用選擇器作為查詢按鈕",
+        "aria-label-validate-submit-button": "驗證提交按鈕",
+        "clear": "清除",
+        "resulting-selector": "4. 結果選擇器",
+        "use-as-rate-query": "作為速率查詢使用",
+        "use-query": "使用此查詢",
+        "validate-selector": "驗證選擇器"
+      },
+      "value-selector": {
+        "aria-label-filter-expression-for-label-values": "篩選標籤數值的表達式",
+        "aria-label-values-for": "以下項目的值：{{labelKey}}",
+        "description-search-field-values-across-selected-labels": "使用搜尋欄位在所選標籤中尋找數值。",
+        "select-multiple-values-for-your-labels": "3. 為您的標籤選取（多個）值"
+      }
+    },
+    "configuration": {
+      "alerting-settings-overhaul": {
+        "label-allow-as-recording-rules-target": "允許作為錄製規則目標",
+        "label-manage-alerts-via-alerting-ui": "透過警報 UI 管理警報",
+        "title-alerting": "警報",
+        "tooltip-allow-as-recording-rules-target": "允許將此資料來源選為撰寫紀錄規則的目標。",
+        "tooltip-manage-alerts-via-alerting-ui": "管理此資料來源的警報規則。若要管理其他警報資源，請新增 Alertmanager 資料來源。"
+      },
+      "config-editor": {
+        "browser-access-mode-error": "Prometheus 資料來源中的瀏覽器存取模式無法再使用。切換至伺服器存取模式。",
+        "description-advanced-settings": "附加設定為選擇性設定，可進行設定以便更妥善掌控您的資料來源。",
+        "title-advanced-settings": "進階設定",
+        "title-error": "錯誤"
+      },
+      "data-source-http-settings-overhaul": {
+        "tooltip-browser-access-mode": "您的存取方式是<1>瀏覽器</1>，這表示需要從瀏覽器存取網址。",
+        "tooltip-http-url": "指定完整的 HTTP URL（例如 {{exampleURL}}）",
+        "tooltip-server-access-mode": "您的存取方式是<1>伺服器</1>，這表示需要從 Grafana 後端／伺服器存取網址。"
+      },
+      "docs-tip": {
+        "visit-docs-for-more-details-here": "在此處瀏覽文件以了解更多詳細資訊。"
+      },
+      "exemplar-setting": {
+        "label-data-source": "資料來源",
+        "label-internal-link": "內部連結",
+        "label-label-name": "標籤名稱",
+        "label-remove-exemplar-link": "移除範例連結",
+        "label-url": "網址",
+        "label-url-label": "網址標籤",
+        "placeholder-go-to-examplecom": "前往 example.com",
+        "placeholder-httpsexamplecomvalueraw": "https://example.com/${__value.raw}",
+        "placeholder-trace-id": "traceID",
+        "title-remove-exemplar-link": "移除範例點連結",
+        "tooltip-data-source": "範例所導向的資料來源。",
+        "tooltip-internal-link": "若您有內部連結，請啟用此選項。啟用後將顯示資料來源選擇器。為您的範例資料選擇後端追蹤資料存放區。",
+        "tooltip-label-name": "標籤物件中應用來取得 traceID 的欄位名稱。",
+        "tooltip-url": "使用者將前往查看其追蹤的追蹤後端網址",
+        "tooltip-url-label": "用來覆寫範例 traceID 欄位上的按鈕標籤。"
+      },
+      "exemplars-settings": {
+        "add": "新增",
+        "no-exemplars-configurations": "沒有範例設定",
+        "title-exemplars": "範例點"
+      },
+      "prom-settings": {
+        "aria-label-default-editor": "預設編輯器（程式碼或編輯器）",
+        "aria-label-prom-type-type": "{{promType}} 類型",
+        "aria-label-prometheus-type": "Prometheus 類型",
+        "aria-label-select-http-method": "選取 HTTP 方法",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
+        "label-cache-level": "快取層級",
+        "label-custom-query-parameters": "自訂查詢參數",
+        "label-default-editor": "預設編輯器",
+        "label-disable-metrics-lookup": "停用指標檢索",
+        "label-disable-recording-rules-beta": "停用錄製規則（測試版）",
+        "label-http-method": "HTTP 方法",
+        "label-incremental-querying-beta": "增量查詢（測試版）",
+        "label-metric-names-suggestion-limit": "指標名稱建議限制",
+        "label-prom-type-version": "{{promType}} 版本",
+        "label-prometheus-type": "Prometheus 類型",
+        "label-query-overlap-window": "查詢重疊視窗",
+        "label-query-timeout": "查詢逾時",
+        "label-scrape-interval": "抓取間隔",
+        "label-series-limit": "序列限制",
+        "label-use-series-endpoint": "使用序列端點",
+        "more-info": "如需更多在資料來源中設定 Prometheus 類型與版本的相關資訊，請參閱<2>佈建文件</2>。",
+        "placeholder-example-maxsourceresolutionmtimeout": "範例：{{example}}",
+        "title-interval-behaviour": "間隔行為",
+        "title-other": "其他",
+        "title-performance": "成效",
+        "title-query-editor": "查詢編輯器",
+        "tooltip-cache-level": "設定編輯器查詢的瀏覽器快取層級。針對高基數資料來源，建議使用較高層級的快取設定。",
+        "tooltip-custom-query-parameters": "將自訂參數新增至 Prometheus 查詢網址。例如 {{example1}}、{{example2}}、{{example3}} 或 {{example4}}。多個參數應與{{concatenationChar}}串接在一起。",
+        "tooltip-default-editor": "為此資料來源的所有使用者設定預設編輯器選項。",
+        "tooltip-disable-metrics-lookup": "勾選此選項將停用查詢欄位自動完成中的指標選擇器和指標／標籤支援。如果您在較大的 Prometheus 實例上遇到效能問題，這會有所幫助。",
+        "tooltip-disable-recording-rules-beta": "此功能將停用錄製規則。開啟此功能以改善儀表板效能",
+        "tooltip-http-method": "您可以使用 POST 或 GET HTTP 方法，來查詢您的 Prometheus 資料來源。POST 是建議的方法，因為它可以處理更大規模的查詢。如果您的 Prometheus 版本早於 2.1，或您的網路中限制了 POST 請求，請將此更改為 GET。",
+        "tooltip-incremental-querying-beta": "此功能將變更相對時間查詢的預設行為，以便隨時從 Prometheus 實例要求新資料，而不會快取查詢結果，並且只會請求新紀錄。開啟此功能以減少資料庫和網路負載。",
+        "tooltip-metric-names-suggestion-limit": "在查詢編輯器的程式碼模式中，可能會顯示為自動完成建議的指標名稱之最大數量。",
+        "tooltip-prom-type-version": "如果您的{{promType}}實例未自動設定版本，請使用此功能進行設定。",
+        "tooltip-prometheus-type": "將此設定為 Prometheus 資料庫的類型，例如 Prometheus、Cortex、Mimir 或 Thanos。變更此欄位將儲存您目前的設定。特定類型的 Prometheus 支援或無法支援各種 API。例如，某些類型支援對標籤查詢使用正規表達式匹配，以提高效能。部分類型具有元資料的 API。若您設定錯誤，在查詢指標和標籤時可能會遇到異常行為。請檢查您的 Prometheus 文件，以確保您輸入正確的類型。",
+        "tooltip-query-overlap-window": "設定持續時間，例如 {{example1}} 或 {{example2}} 或 {{example3}}。預設為{{default}}。將新增此持續時間至每個增量請求的持續時間。",
+        "tooltip-query-timeout": "設定 Prometheus 查詢逾時。",
+        "tooltip-scrape-interval": "此間隔是 Prometheus 抓取目標的頻率。將此設定為 Prometheus 設定檔案中設定的典型抓取和評估間隔。若您將此設定為大於 Prometheus 設定檔案間隔的數值，Grafana 將根據此間隔評估資料，您將看到較少的資料點。預設為{{default}}。",
+        "tooltip-series-limit": "限制適用於兩個端點（系列和標籤）的所有資源（指標、標籤和值）。將欄位留空以使用預設的限制 (40000)。設定為 0 以停用限制並擷取所有內容，不過這可能會導致效能問題。預設限制為 40000。",
+        "tooltip-use-series-endpoint": "勾選此選項將優先使用具有 {{exampleParameter}} 參數的序列端點，而非具有 {{exampleParameter}} 參數的標籤值端點。雖然標籤值端點被視為擁有更佳效能，但有些使用者可能會更喜歡該序列，因為它具有 POST 方法，而標籤值端點僅具有 GET 方法。"
+      }
+    },
+    "metrics-browser": {
+      "disabled-label": "",
+      "enabled-label": ""
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
+      }
+    },
+    "promql": {
+      "getAggregationOptions": {
+        "documentation-avg": "",
+        "documentation-bottomk": "",
+        "documentation-count": "",
+        "documentation-count-values": "",
+        "documentation-group": "",
+        "documentation-max": "",
+        "documentation-min": "",
+        "documentation-quantile": "",
+        "documentation-stddev": "",
+        "documentation-stdvar": "",
+        "documentation-sum": "",
+        "documentation-topk": ""
+      },
+      "getFunctions": {
+        "documentation-abs": "",
+        "documentation-absent": "",
+        "documentation-absent-over-time": "",
+        "documentation-avg-over-time": "",
+        "documentation-ceil": "",
+        "documentation-changes": "",
+        "documentation-clamp": "",
+        "documentation-clamp-max": "",
+        "documentation-clamp-min": "",
+        "documentation-count-over-time": "",
+        "documentation-count-scalar": "",
+        "documentation-day-of-month": "",
+        "documentation-day-of-week": "",
+        "documentation-day-of-year": "",
+        "documentation-days-in-month": "",
+        "documentation-deg": "",
+        "documentation-delta": "",
+        "documentation-deriv": "",
+        "documentation-double-exponential-smoothing": "",
+        "documentation-drop-common-labels": "",
+        "documentation-exp": "",
+        "documentation-floor": "",
+        "documentation-histogram-avg": "",
+        "documentation-histogram-count": "",
+        "documentation-histogram-fraction": "",
+        "documentation-histogram-quantile": "",
+        "documentation-histogram-stddev": "",
+        "documentation-histogram-stdvar": "",
+        "documentation-histogram-sum": "",
+        "documentation-holt-winters": "",
+        "documentation-hour": "",
+        "documentation-idelta": "",
+        "documentation-increase": "",
+        "documentation-info": "",
+        "documentation-irate": "",
+        "documentation-label-join": "",
+        "documentation-label-replace": "",
+        "documentation-last-over-time": "",
+        "documentation-ln": "",
+        "documentation-log10": "",
+        "documentation-log2": "",
+        "documentation-max-over-time": "",
+        "documentation-min-over-time": "",
+        "documentation-minute": "",
+        "documentation-month": "",
+        "documentation-pi": "",
+        "documentation-predict-linear": "",
+        "documentation-present-over-time": "",
+        "documentation-quantile-over-time": "",
+        "documentation-rad": "",
+        "documentation-rate": "",
+        "documentation-resets": "",
+        "documentation-round": "",
+        "documentation-scalar": "",
+        "documentation-sgn": "",
+        "documentation-sort": "",
+        "documentation-sort-desc": "",
+        "documentation-sqrt": "",
+        "documentation-stddev-over-time": "",
+        "documentation-stdvar-over-time": "",
+        "documentation-sum-over-time": "",
+        "documentation-time": "",
+        "documentation-timestamp": "",
+        "documentation-vector": "",
+        "documentation-year": ""
+      },
+      "getTrigonometricFunctions": {
+        "documentation-acos": "",
+        "documentation-acosh": "",
+        "documentation-asin": "",
+        "documentation-asinh": "",
+        "documentation-atan": "",
+        "documentation-atanh": "",
+        "documentation-cos": "",
+        "documentation-cosh": "",
+        "documentation-sin": "",
+        "documentation-sinh": "",
+        "documentation-tan": "",
+        "documentation-tanh": ""
+      }
+    },
+    "querybuilder": {
+      "additional-settings": {
+        "content-filter-metric-names-regex-search-using": "透過正規表達式搜尋篩選指標名稱，並使用額外的 Prometheus API 呼叫。",
+        "disable-text-wrap": "停用文字換行"
+      },
+      "feedback-link": {
+        "give-feedback": "提供意見回饋",
+        "title-give-feedback": "指標瀏覽器為新功能，請告訴我們如何改善"
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
+      },
+      "get-placeholders": {
+        "browse": "",
+        "include-null-metadata": "",
+        "metadata-search-switch": "",
+        "set-use-backend": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
+      },
+      "handle-function": {
+        "text": {
+          "query-parsing-is-ambiguous": "查詢剖析不明確。"
+        }
+      },
+      "label-filter-item": {
+        "aria-label-remove": "移除{{name}}",
+        "placeholder-select-label": "選擇標籤",
+        "placeholder-select-value": "選擇值"
+      },
+      "label-filters": {
+        "label-filters": "標籤篩選條件",
+        "label-label-filters": "標籤篩選條件",
+        "tooltip-label-filters": "選擇性設定：用於篩選為此查詢類型的指標選擇。"
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
+      },
+      "metric-combobox": {
+        "async-select": {
+          "aria-label-open-metrics-explorer": "開啟指標瀏覽器",
+          "placeholder-select-metric": "選擇指標",
+          "tooltip-open-metrics-explorer": "開啟計量瀏覽器"
+        },
+        "label-metric": "指標",
+        "tooltip-metric": "選擇性設定：回傳指定指標中該標籤名稱的標籤值清單。"
+      },
+      "metrics-modal": {
+        "additional-settings": "附加設定",
+        "aria-label-additional-settings": "附加設定",
+        "aria-label-browse-metrics": "瀏覽指標",
+        "currently-selected": "目前已選取：{{selected}}",
+        "metrics-pre-filtered": "這些指標已透過標籤篩選條件中選擇的標籤進行預先篩選。",
+        "placeholder-results-per-page": "每頁顯示結果",
+        "results-per-page": "每頁顯示的結果",
+        "title-metrics-explorer": "指標瀏覽器",
+        "results-amount_other": "結果共 {{count}} 項，顯示 {{num}} 項"
+      },
+      "nested-query": {
+        "label": {
+          "ignoring": "忽略",
+          "on": "開啟"
+        },
+        "operator": "運算子",
+        "tooltip-remove-match": "移除比對",
+        "vector-matches": "向量比對"
+      },
+      "operation-editor": {
+        "not-found": "找不到{{id}}操作",
+        "title-remove": "移除{{name}}"
+      },
+      "operation-header": {
+        "placeholder-replace-with": "取代為",
+        "title-click-to-view-alternative-operations": "按一下以檢視替代操作",
+        "title-remove-operation": "移除操作"
+      },
+      "operation-info-button": {
+        "title-click-to-show-description": "按一下以顯示說明",
+        "title-remove-operation": "移除操作"
+      },
+      "operation-list": {
+        "operations": "操作",
+        "placeholder-search": "搜尋",
+        "title-add-operation": "新增操作"
+      },
+      "operation-param-editor": {
+        "title-add": "新增{{name}}",
+        "title-remove": "移除{{name}}"
+      },
+      "operation-utils": {
+        "getAggregationExplainer": {
+          "label-by": "",
+          "label-default": "",
+          "label-without": ""
+        }
+      },
+      "prom-query-builder-options": {
+        "aria-label-lower-limit-parameter": "設定步驟參數的下限",
+        "aria-label-select-resolution": "選擇解決方案",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
+        "label-exemplars": "範例點",
+        "label-format": "格式",
+        "label-min-step": "最小步長",
+        "label-resolution": "解析度",
+        "label-type": "類型",
+        "placeholder-auto": "自動",
+        "title-options": "選項",
+        "tooltip-min-step": "Prometheus 查詢的步驟參數以及 <2>{{interval}}</2> 和 <4>{{rateInterval}}</4> 變數的其他下限。"
+      },
+      "prom-query-code-editor-autocomplete-info": {
+        "autocomplete-suggestions-limited": "自動完成建議有所限制",
+        "tooltip-autocomplete-suggestions-limited": "指標名稱的數量超過自動完成限制。僅顯示與{{autocompleteLimit}}最相關的指標。您可以在資料來源設定中調整臨界值。"
+      },
+      "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
+        "kick-start-your-query": "啟動您的查詢",
+        "label-explain": "說明",
+        "run-queries": "執行查詢",
+        "title-parsing-error-switch-builder": "剖析錯誤：要切換至編輯器模式嗎？"
+      },
+      "prom-query-legend-editor": {
+        "label-legend": "圖例",
+        "placeholder-select-legend-mode": "選擇圖例模式",
+        "tooltip-legend": "序列名稱覆寫或範本。例如：{{templateExample}} 將替換為{{labelName}}的標籤值。"
+      },
+      "query-builder-hints": {
+        "hint-details": "提示：{{hintDetails}}"
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
+      },
+      "query-pattern": {
+        "apply-query": "套用查詢",
+        "aria-label-apply-query-starter-button": "套用查詢啟動按鈕",
+        "aria-label-back-button": "返回鍵",
+        "aria-label-create-new-query-button": "建立新查詢按鈕",
+        "aria-label-raw-query": "{{patternName}} 原始查詢",
+        "aria-label-use-this-query-button": "使用此查詢按鈕",
+        "back": "返回",
+        "create-new-query": "建立新查詢",
+        "use-this-query": "使用此查詢"
+      },
+      "query-patterns-modal": {
+        "aria-label-close-kick-start-your-query-modal": "關閉啟動您的查詢模式",
+        "aria-label-kick-start-your-query-modal": "啟動您的查詢模式",
+        "aria-label-toggle-query-starter": "開啟和關閉{{patternType}}查詢啟動卡",
+        "close": "關閉",
+        "description-kick-start-your-query": "選擇其中一項查詢來啟動您的查詢。您可以接著繼續完成查詢。",
+        "label-toggle-query-starter": "{{patternType}} 查詢啟動器",
+        "title-kick-start-your-query": "啟動您的查詢"
+      },
+      "raw-query": {
+        "aria-label-selector": "選擇器"
+      },
+      "results-table": {
+        "content-descriptive-type": "建立{{descriptiveType}}時，Prometheus 會透過類型計數器顯示多個序列。",
+        "description": "說明",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
+        "name": "名稱（名字）",
+        "select": "選取",
+        "type": "類型"
+      },
+      "update-function-args": {
+        "text": {
+          "query-parsing-is-ambiguous": "查詢剖析不明確。"
+        }
+      }
+    }
+  }
+}

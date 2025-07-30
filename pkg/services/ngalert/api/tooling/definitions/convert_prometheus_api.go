@@ -200,6 +200,50 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
+// Route for `mimirtool alertmanager load`
+// swagger:route POST /convert/api/v1/alerts convert_prometheus RouteConvertPrometheusPostAlertmanagerConfig
+//
+// Load extra Alertmanager configuration to Grafana and merge it with the existing configuration.
+// This endpoint allows importing Alertmanager configurations to Grafana. Each configuration is identified by
+// a unique identifier and can include merge matchers to select which alerts should be handled by
+// this specific configuration.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+//
+//     Extensions:
+//       x-raw-request: true
+
+// Route for `mimirtool alertmanager get`
+// swagger:route GET /convert/api/v1/alerts convert_prometheus RouteConvertPrometheusGetAlertmanagerConfig
+//
+// Get extra Alertmanager configuration from Grafana.
+// Returns a specific imported Alertmanager configuration by its identifier.
+//
+//     Produces:
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertmanagerUserConfig
+//       403: ForbiddenError
+
+// Route for `mimirtool alertmanager delete`
+// swagger:route DELETE /convert/api/v1/alerts convert_prometheus RouteConvertPrometheusDeleteAlertmanagerConfig
+//
+// Delete extra Alertmanager configuration from Grafana by its identifier.
+// The main Grafana Alertmanager configuration remains unaffected.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertPrometheusResponse
+//       403: ForbiddenError
+
 // swagger:parameters RouteConvertPrometheusPostRuleGroup RouteConvertPrometheusCortexPostRuleGroup
 type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: path
@@ -228,23 +272,23 @@ type PrometheusNamespace struct {
 
 // swagger:model
 type PrometheusRuleGroup struct {
-	Name        string            `yaml:"name"`
-	Interval    model.Duration    `yaml:"interval"`
-	QueryOffset *model.Duration   `yaml:"query_offset,omitempty"`
-	Limit       int               `yaml:"limit,omitempty"`
-	Rules       []PrometheusRule  `yaml:"rules"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
+	Name        string            `yaml:"name" json:"name"`
+	Interval    model.Duration    `yaml:"interval" json:"interval"`
+	QueryOffset *model.Duration   `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	Limit       int               `yaml:"limit,omitempty" json:"limit,omitempty"`
+	Rules       []PrometheusRule  `yaml:"rules" json:"rules"`
+	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 
 // swagger:model
 type PrometheusRule struct {
-	Alert         string            `yaml:"alert,omitempty"`
-	Expr          string            `yaml:"expr"`
-	For           *model.Duration   `yaml:"for,omitempty"`
-	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty"`
-	Labels        map[string]string `yaml:"labels,omitempty"`
-	Annotations   map[string]string `yaml:"annotations,omitempty"`
-	Record        string            `yaml:"record,omitempty"`
+	Alert         string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr          string            `yaml:"expr" json:"expr"`
+	For           *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
+	KeepFiringFor *model.Duration   `yaml:"keep_firing_for,omitempty" json:"keep_firing_for,omitempty"`
+	Labels        map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Annotations   map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
+	Record        string            `yaml:"record,omitempty" json:"record,omitempty"`
 }
 
 // swagger:parameters RouteConvertPrometheusDeleteRuleGroup RouteConvertPrometheusCortexDeleteRuleGroup RouteConvertPrometheusGetRuleGroup RouteConvertPrometheusCortexGetRuleGroup
@@ -266,4 +310,43 @@ type ConvertPrometheusResponse struct {
 	Status    string `json:"status"`
 	ErrorType string `json:"errorType"`
 	Error     string `json:"error"`
+}
+
+// swagger:parameters RouteConvertPrometheusPostAlertmanagerConfig
+type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
+	// Unique identifier for this Alertmanager configuration.
+	// This identifier is used to distinguish between different imported configurations.
+	// in: header
+	Identifier string `json:"x-grafana-alerting-config-identifier"`
+	// Comma-separated list of label matchers in 'key=value' format.
+	// These matchers determine which alerts this configuration should handle.
+	// For example: 'environment=production,team=backend' will only apply this
+	// configuration to alerts matching both environment=production AND team=backend.
+	// in: header
+	MergeMatchers string `json:"x-grafana-alerting-merge-matchers"`
+	// Alertmanager configuration including routing rules, receivers, and template files
+	// in:body
+	Body AlertmanagerUserConfig
+}
+
+// swagger:parameters RouteConvertPrometheusGetAlertmanagerConfig
+type RouteConvertPrometheusGetAlertmanagerConfigParams struct {
+	// Unique identifier for the Alertmanager configuration to retrieve.
+	// in: header
+	Identifier string `json:"x-grafana-alerting-config-identifier"`
+}
+
+// swagger:parameters RouteConvertPrometheusDeleteAlertmanagerConfig
+type RouteConvertPrometheusDeleteAlertmanagerConfigParams struct {
+	// Unique identifier for the Alertmanager configuration to delete.
+	// in: header
+	Identifier string `json:"x-grafana-alerting-config-identifier"`
+}
+
+// swagger:model
+type AlertmanagerUserConfig struct {
+	// Configuration for Alertmanager in YAML format.
+	// in: body
+	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 }

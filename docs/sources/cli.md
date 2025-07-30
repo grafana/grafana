@@ -229,7 +229,7 @@ To correct this, use the `--homepath` global option to specify the Grafana defau
 grafana cli --homepath "/usr/share/grafana" admin reset-admin-password <new password>
 ```
 
-If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the Server Admin > User tab.
+If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the **Server Admin > User** tab.
 
 If you need to set the password in a script, then you can use the [Grafana User API](../developers/http_api/user/#change-password).
 
@@ -240,6 +240,19 @@ If you installed Grafana using Homebrew, you can reset the admin password using 
 ```bash
 /opt/homebrew/opt/grafana/bin/grafana cli --config /opt/homebrew/etc/grafana/grafana.ini --homepath /opt/homebrew/opt/grafana/share/grafana --configOverrides cfg:default.paths.data=/opt/homebrew/var/lib/grafana admin reset-admin-password <new password>
 ```
+
+#### Reset admin password for Grafana deployed with Grafana Operator and using an external database
+
+If you deploy Grafana with Grafana Operator and configure Grafana to use an external PostgreSQL or MySQL database, specify both the homepath and configuration file in your command:
+
+```bash
+grafana cli  --homepath /usr/share/grafana --config /etc/grafana/grafana.ini admin reset-admin-password <new password>
+```
+
+If you don't do this, the CLI:
+
+- Won't see the database connection information since it's in a directory outside of the Grafana homepath
+- Will configure the default SQLite database in `/var/lib/grafana` and reset that password instead of for your external database
 
 ### Migrate data and encrypt passwords
 

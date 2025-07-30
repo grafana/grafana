@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { MouseEvent, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { NodesMarker } from './types';
@@ -47,14 +48,20 @@ export const Marker = memo(function Marker(props: {
       onClick={(event) => {
         onClick?.(event, marker);
       }}
-      aria-label={`Hidden nodes marker: ${node.id}`}
+      aria-label={t('nodeGraph.marker.aria-label-hidden-marker', 'Hidden nodes marker: {{marker}}', {
+        marker: node.id,
+      })}
     >
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       <g>
         <foreignObject x={node.x - 25} y={node.y - 25} width="50" height="50">
           <div className={styles.text}>
             {/* we limit the count to 101 so if we have more than 100 nodes we don't have exact count */}
-            <span>{marker.count > 100 ? '>100' : marker.count} nodes</span>
+            <span>
+              {marker.count > 100
+                ? t('nodeGraph.marker.100-node-count', '>100 nodes')
+                : t('nodeGraph.marker.node-count', '{{count}} nodes', { count: marker.count })}
+            </span>
           </div>
         </foreignObject>
       </g>

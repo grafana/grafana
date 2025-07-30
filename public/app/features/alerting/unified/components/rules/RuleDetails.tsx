@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -35,7 +35,7 @@ export const RuleDetails = ({ rule }: Props) => {
   } = rule;
 
   const annotations = useCleanAnnotations(rule.annotations);
-  const { t } = useTranslate();
+
   const isAlertingRule =
     rulerRuleType.any.alertingRule(rule.rulerRule) || prometheusRuleType.alertingRule(rule.promRule);
 
@@ -79,7 +79,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
     : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
-  const { t } = useTranslate();
+
   const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
 
   return (
@@ -118,7 +118,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
         >
           <Tooltip
             placement="top"
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
@@ -138,11 +138,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
         >
           <Tooltip
             placement="top"
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             content={`${lastEvaluationDuration}s`}
             theme="info"
           >
-            <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
+            <span>{Time({ timeInMs: lastEvaluationDuration, humanize: true })}</span>
           </Tooltip>
         </DetailsField>
       )}

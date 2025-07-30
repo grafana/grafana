@@ -49,7 +49,10 @@ func setupTestEnv(t testing.TB) *Service {
 	return ac
 }
 
-func TestUsageMetrics(t *testing.T) {
+func TestIntegrationUsageMetrics(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name          string
 		expectedValue int
@@ -80,7 +83,10 @@ func TestUsageMetrics(t *testing.T) {
 	}
 }
 
-func TestService_DeclareFixedRoles(t *testing.T) {
+func TestIntegrationService_DeclareFixedRoles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name          string
 		registrations []accesscontrol.RoleRegistration
@@ -165,7 +171,10 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 	}
 }
 
-func TestService_DeclarePluginRoles(t *testing.T) {
+func TestIntegrationService_DeclarePluginRoles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name          string
 		pluginID      string
@@ -278,7 +287,10 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 	}
 }
 
-func TestService_RegisterFixedRoles(t *testing.T) {
+func TestIntegrationService_RegisterFixedRoles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name          string
 		token         licensing.Licensing
@@ -380,7 +392,10 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 	}
 }
 
-func TestService_SearchUsersPermissions(t *testing.T) {
+func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	searchOption := accesscontrol.SearchOptions{ActionPrefix: "teams"}
 	ctx := context.Background()
 	listAllPerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:*"}}
@@ -601,7 +616,10 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 	}
 }
 
-func TestService_SearchUserPermissions(t *testing.T) {
+func TestIntegrationService_SearchUserPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	ctx := context.Background()
 	tests := []struct {
 		name           string
@@ -832,7 +850,10 @@ func TestService_SearchUserPermissions(t *testing.T) {
 	}
 }
 
-func TestService_SaveExternalServiceRole(t *testing.T) {
+func TestIntegrationService_SaveExternalServiceRole(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type run struct {
 		cmd     accesscontrol.SaveExternalServiceRoleCommand
 		wantErr bool
@@ -918,7 +939,10 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 	}
 }
 
-func TestService_DeleteExternalServiceRole(t *testing.T) {
+func TestIntegrationService_DeleteExternalServiceRole(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name              string
 		initCmd           *accesscontrol.SaveExternalServiceRoleCommand
@@ -971,7 +995,10 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 	}
 }
 
-func TestService_GetRoleByName(t *testing.T) {
+func TestIntegrationService_GetRoleByName(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Parallel()
 
 	ctx := context.Background()

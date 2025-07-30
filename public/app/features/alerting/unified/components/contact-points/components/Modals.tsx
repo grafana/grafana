@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, ModalProps } from '@grafana/ui';
 
 import { stringifyErrorLike } from '../../../utils/misc';
@@ -42,7 +42,6 @@ export const useDeleteContactPointModal = (
         });
     }
   }, [handleDelete, contactPoint]);
-  const { t } = useTranslate();
 
   const modalElement = useMemo(() => {
     if (error) {
@@ -83,7 +82,7 @@ export const useDeleteContactPointModal = (
         </Modal.ButtonRow>
       </Modal>
     );
-  }, [error, handleDismiss, handleSubmit, isLoading, showModal, t]);
+  }, [error, handleDismiss, handleSubmit, isLoading, showModal]);
 
   return [modalElement, handleShow, handleDismiss] as const;
 };
@@ -92,8 +91,6 @@ interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
   error: unknown;
 }
 const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
-  const { t } = useTranslate();
-
   return (
     <Modal
       isOpen={isOpen}

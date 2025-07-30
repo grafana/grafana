@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { ExploreUrlState, GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -66,7 +66,7 @@ const InsightsMenuButtonRenderer = ({ model }: SceneComponentProps<InsightsMenuB
   const styles = useStyles2(getStyles);
 
   const [showModal, setShowModal] = useState<boolean>(false);
-  const { t } = useTranslate();
+
   const onDismiss = () => {
     setShowModal(false);
   };

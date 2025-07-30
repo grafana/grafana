@@ -10,7 +10,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { clearLoadedDashboard } from 'app/features/manage-dashboards/state/actions';
-import { useDispatch, useSelector, StoreState } from 'app/types';
+import { useDispatch, useSelector, StoreState } from 'app/types/store';
 
 import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
 

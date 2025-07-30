@@ -26,21 +26,15 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetFolders(t *testing.T) {
-	testGetFolders(t, []string{featuremgmt.FlagNestedFolders})
-}
-
-func TestGetFoldersK8s(t *testing.T) {
-	testGetFolders(t, []string{featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testGetFolders(t *testing.T, featureToggles []string) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  featureToggles,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -65,10 +59,10 @@ func testGetFolders(t *testing.T, featureToggles []string) {
 		OrgID:          orgID,
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
-		Login:          "admin",
+		Login:          "admin2",
 	})
 
-	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
+	adminClient := tests.GetClient(grafanaListedAddr, "admin2", "admin")
 	editorClient := tests.GetClient(grafanaListedAddr, "editor", "editor")
 	viewerClient := tests.GetClient(grafanaListedAddr, "viewer", "viewer")
 

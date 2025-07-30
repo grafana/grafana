@@ -343,7 +343,6 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalAlertRules.Set(float64(statsResult.AlertRules))
 	metrics.StatsTotalRuleGroups.Set(float64(statsResult.RuleGroups))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsResult.LibraryPanels))
-	metrics.StatsTotalLibraryVariables.Set(float64(statsResult.LibraryVariables))
 
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsResult.ActiveDataKeys))
 	inactiveDataKeys := statsResult.DataKeys - statsResult.ActiveDataKeys

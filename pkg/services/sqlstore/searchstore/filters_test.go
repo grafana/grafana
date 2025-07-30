@@ -7,7 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFolderUIDFilter(t *testing.T) {
+func TestIntegrationFolderUIDFilter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	testCases := []struct {
 		description          string
 		uids                 []string
@@ -82,6 +85,47 @@ func TestFolderUIDFilter(t *testing.T) {
 				OrgID:                1,
 				UIDs:                 tc.uids,
 				NestedFoldersEnabled: tc.nestedFoldersEnabled,
+			}
+
+			sql, params := f.Where()
+
+			assert.Equal(t, tc.expectedSql, sql)
+			assert.Equal(t, tc.expectedParams, params)
+		})
+	}
+}
+
+func TestTitleFilter(t *testing.T) {
+	testCases := []struct {
+		description    string
+		title          string
+		exactMatch     bool
+		expectedSql    string
+		expectedParams []any
+	}{
+		{
+			description:    "searching foo folder - partial match",
+			title:          "foo",
+			expectedSql:    "dashboard.title LIKE ?",
+			expectedParams: []any{"%foo%"},
+		},
+		{
+			description:    "searching foo folder - exact match",
+			title:          "foo",
+			exactMatch:     true,
+			expectedSql:    "dashboard.title = ?",
+			expectedParams: []any{"foo"},
+		},
+	}
+
+	store := setupTestEnvironment(t)
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			f := searchstore.TitleFilter{
+				Dialect:         store.GetDialect(),
+				Title:           tc.title,
+				TitleExactMatch: tc.exactMatch,
 			}
 
 			sql, params := f.Where()

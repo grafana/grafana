@@ -1,19 +1,15 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/state/helpers.ts
 import { AnyAction } from '@reduxjs/toolkit';
 
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../../../datasource';
-import { getMetadataHelp, getMetadataType } from '../../../../language_provider';
-import { regexifyLabelValuesQueryString } from '../../../parsingUtils';
-import { QueryBuilderLabelFilter } from '../../../shared/types';
+import { PromMetricsMetadata } from '../../../../types';
 import { PromVisualQuery } from '../../../types';
-import { setFilteredMetricCount } from '../MetricsModal';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { MetricsModalMetadata, MetricsModalState } from './state';
-
-// const { setFilteredMetricCount } = stateSlice.actions;
+import { MetricsModalMetadata, MetricsModalState, setFilteredMetricCount } from './state';
 
 export async function setMetrics(
   datasource: PrometheusDatasource,
@@ -23,7 +19,7 @@ export async function setMetrics(
   // metadata is set in the metric select now
   // use this to disable metadata search and display
   let hasMetadata = true;
-  const metadata = datasource.languageProvider.metricsMetadata;
+  const metadata = datasource.languageProvider.retrieveMetricsMetadata();
   if (metadata && Object.keys(metadata).length === 0) {
     hasMetadata = false;
   }
@@ -64,9 +60,9 @@ export async function setMetrics(
  * @returns A MetricData object.
  */
 function buildMetricData(metric: string, datasource: PrometheusDatasource): MetricData {
-  let type = getMetadataType(metric, datasource.languageProvider.metricsMetadata!);
+  let type = getMetadataType(metric, datasource.languageProvider.retrieveMetricsMetadata());
 
-  const description = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata!);
+  const description = getMetadataHelp(metric, datasource.languageProvider.retrieveMetricsMetadata());
 
   ['histogram', 'summary'].forEach((t) => {
     if (description?.toLowerCase().includes(t) && type !== t) {
@@ -89,6 +85,14 @@ function buildMetricData(metric: string, datasource: PrometheusDatasource): Metr
   return metricData;
 }
 
+function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  return metadata[metric]?.help;
+}
+
+function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  return metadata[metric]?.type;
+}
+
 /**
  * The filtered and paginated metrics displayed in the modal
  * */
@@ -105,7 +109,7 @@ export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispa
 /**
  * Filter the metrics with all the options, fuzzy, type, null metadata
  */
-export function filterMetrics(state: MetricsModalState): MetricsData {
+function filterMetrics(state: MetricsModalState): MetricsData {
   let filteredMetrics: MetricsData = state.metrics;
 
   if (state.fuzzySearchQuery && !state.useBackend) {
@@ -157,7 +161,7 @@ export function calculatePageList(state: MetricsModalState) {
   return [...Array(pages).keys()].map((i) => i + 1);
 }
 
-export function sliceMetrics(metrics: MetricsData, pageNum: number, resultsPerPage: number) {
+function sliceMetrics(metrics: MetricsData, pageNum: number, resultsPerPage: number) {
   const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
   const start: number = pageNum === 1 ? 0 : (pageNum - 1) * calcResultsPerPage;
   const end: number = start + calcResultsPerPage;
@@ -175,34 +179,6 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
 
   return results ?? defaultResults;
 };
-
-/**
- * The backend query that replaces the uFuzzy search when the option 'useBackend' has been selected
- * this is a regex search either to the series or labels Prometheus endpoint
- * depending on which the Prometheus type or version supports
- * @param metricText
- * @param labels
- * @param datasource
- */
-export async function getBackendSearchMetrics(
-  metricText: string,
-  labels: QueryBuilderLabelFilter[],
-  datasource: PrometheusDatasource
-): Promise<Array<{ value: string }>> {
-  const queryString = regexifyLabelValuesQueryString(metricText);
-
-  const labelsParams = labels.map((label) => {
-    return `,${label.label}="${label.value}"`;
-  });
-
-  const params = `label_values({__name__=~".*${queryString}"${labels ? labelsParams.join() : ''}},__name__)`;
-
-  const results = datasource.metricFindQuery(params);
-
-  return await results.then((results) => {
-    return results.map((result) => buildMetricData(result.text, datasource));
-  });
-}
 
 export function tracking(event: string, state?: MetricsModalState | null, metric?: string, query?: PromVisualQuery) {
   switch (event) {
@@ -228,45 +204,75 @@ export function tracking(event: string, state?: MetricsModalState | null, metric
   }
 }
 
-export const promTypes: PromFilterOption[] = [
+export const getPromTypes: () => PromFilterOption[] = () => [
   {
     value: 'counter',
-    description:
-      'A cumulative metric that represents a single monotonically increasing counter whose value can only increase or be reset to zero on restart.',
+    label: t('grafana-prometheus.querybuilder.get-prom-types.label-counter', 'Counter'),
+    description: t(
+      'grafana-prometheus.querybuilder.get-prom-types.description-counter',
+      'A cumulative metric that represents a single monotonically increasing counter whose value can only increase or be reset to zero on restart.'
+    ),
   },
   {
     value: 'gauge',
-    description: 'A metric that represents a single numerical value that can arbitrarily go up and down.',
+    label: t('grafana-prometheus.querybuilder.get-prom-types.label-gauge', 'Gauge'),
+    description: t(
+      'grafana-prometheus.querybuilder.get-prom-types.description-gauge',
+      'A metric that represents a single numerical value that can arbitrarily go up and down.'
+    ),
   },
   {
     value: 'histogram',
-    description:
-      'A histogram samples observations (usually things like request durations or response sizes) and counts them in configurable buckets.',
+    label: t('grafana-prometheus.querybuilder.get-prom-types.label-histogram', 'Histogram'),
+    description: t(
+      'grafana-prometheus.querybuilder.get-prom-types.description-histogram',
+      'A histogram samples observations (usually things like request durations or response sizes) and counts them in configurable buckets.'
+    ),
   },
   {
     value: 'native histogram',
-    description:
-      'Native histograms are different from classic Prometheus histograms in a number of ways: Native histogram bucket boundaries are calculated by a formula that depends on the scale (resolution) of the native histogram, and are not user defined.',
+    label: t('grafana-prometheus.querybuilder.get-prom-types.label-native-histogram', 'Native histogram'),
+    description: t(
+      'grafana-prometheus.querybuilder.get-prom-types.description-native-histogram',
+      'Native histograms are different from classic Prometheus histograms in a number of ways: Native histogram bucket boundaries are calculated by a formula that depends on the scale (resolution) of the native histogram, and are not user defined.'
+    ),
   },
   {
     value: 'summary',
-    description:
-      'A summary samples observations (usually things like request durations and response sizes) and can calculate configurable quantiles over a sliding time window.',
+    label: t('grafana-prometheus.querybuilder.get-prom-types.label-summary', 'Summary'),
+    description: t(
+      'grafana-prometheus.querybuilder.get-prom-types.description-summary',
+      'A summary samples observations (usually things like request durations and response sizes) and can calculate configurable quantiles over a sliding time window.'
+    ),
   },
   {
     value: 'unknown',
-    description: 'These metrics have been given the type unknown in the metadata.',
+    label: t('grafana-prometheus.querybuilder.get-prom-types.label-unknown', 'Unknown'),
+    description: t(
+      'grafana-prometheus.querybuilder.get-prom-types.description-unknown',
+      'These metrics have been given the type unknown in the metadata.'
+    ),
   },
   {
     value: 'no type',
-    description: 'These metrics have no defined type in the metadata.',
+    label: t('grafana-prometheus.querybuilder.get-prom-types.label-no-type', 'No type'),
+    description: t(
+      'grafana-prometheus.querybuilder.get-prom-types.description-no-type',
+      'These metrics have no defined type in the metadata.'
+    ),
   },
 ];
 
-export const placeholders = {
-  browse: 'Search metrics by name',
-  metadataSearchSwitch: 'Include description in search',
-  type: 'Filter by type',
-  includeNullMetadata: 'Include results with no metadata',
-  setUseBackend: 'Enable regex search',
-};
+export const getPlaceholders = () => ({
+  browse: t('grafana-prometheus.querybuilder.get-placeholders.browse', 'Search metrics by name'),
+  metadataSearchSwitch: t(
+    'grafana-prometheus.querybuilder.get-placeholders.metadata-search-switch',
+    'Include description in search'
+  ),
+  type: t('grafana-prometheus.querybuilder.get-placeholders.type', 'Filter by type'),
+  includeNullMetadata: t(
+    'grafana-prometheus.querybuilder.get-placeholders.include-null-metadata',
+    'Include results with no metadata'
+  ),
+  setUseBackend: t('grafana-prometheus.querybuilder.get-placeholders.set-use-backend', 'Enable regex search'),
+});

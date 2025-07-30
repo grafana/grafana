@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useRef, MouseEvent } from 'react';
+import { MouseEvent, useCallback, useMemo, useRef } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
@@ -17,6 +17,17 @@ export type GetRowContextQueryFn = (
   cacheFilters?: boolean
 ) => Promise<DataQuery | null>;
 
+type MenuItem = {
+  label: string;
+  onClick(log: LogListModel): void;
+};
+
+type MenuItemDivider = {
+  divider: true;
+};
+
+export type LogLineMenuCustomItem = MenuItem | MenuItemDivider;
+
 interface Props {
   log: LogListModel;
   styles: LogLineStyles;
@@ -31,8 +42,11 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     onPermalinkClick,
     onPinLine,
     onUnpinLine,
+    logLineMenuCustomItems = [],
     logSupportsContext,
     toggleDetails,
+    isAssistantAvailable,
+    openAssistantByLog,
   } = useLogListContext();
   const pinned = useLogIsPinned(log);
   const menuRef = useRef(null);
@@ -69,8 +83,6 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     }
   }, [log, onPinLine, onUnpinLine, pinned]);
 
-  const { t } = useTranslate();
-
   const menu = useCallback(
     () => (
       <Menu ref={menuRef}>
@@ -98,6 +110,22 @@ export const LogLineMenu = ({ log, styles }: Props) => {
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
         )}
+        {isAssistantAvailable && (
+          <Menu.Item
+            onClick={() => openAssistantByLog?.(log)}
+            icon="ai-sparkle"
+            label={t('logs.log-line-menu.open-assistant', 'Explain this log line in Assistant')}
+          />
+        )}
+        {logLineMenuCustomItems.map((item, i) => {
+          if (isDivider(item)) {
+            return <Menu.Divider key={i} />;
+          }
+          if (isItem(item)) {
+            return <Menu.Item onClick={() => item.onClick(log)} label={item.label} key={i} />;
+          }
+          return null;
+        })}
       </Menu>
     ),
     [
@@ -106,15 +134,17 @@ export const LogLineMenu = ({ log, styles }: Props) => {
       detailsDisplayed,
       enableLogDetails,
       log,
+      logLineMenuCustomItems,
       onPermalinkClick,
       onPinLine,
       onUnpinLine,
       pinned,
       shouldlogSupportsContext,
       showContext,
-      t,
       toggleLogDetails,
       togglePinning,
+      isAssistantAvailable,
+      openAssistantByLog,
     ]
   );
 
@@ -128,3 +158,11 @@ export const LogLineMenu = ({ log, styles }: Props) => {
     </Dropdown>
   );
 };
+
+function isDivider(item: LogLineMenuCustomItem) {
+  return 'divider' in item && item.divider;
+}
+
+function isItem(item: LogLineMenuCustomItem) {
+  return 'onClick' in item && 'label' in item;
+}

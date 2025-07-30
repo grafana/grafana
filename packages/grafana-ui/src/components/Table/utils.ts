@@ -31,7 +31,7 @@ import {
   TableCellDisplayMode,
 } from '@grafana/schema';
 
-import { getTextColorForAlphaBackground } from '../../utils';
+import { getTextColorForAlphaBackground } from '../../utils/colors';
 
 import { ActionsCell } from './ActionsCell';
 import { BarGaugeCell } from './Cells/BarGaugeCell';
@@ -196,6 +196,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DataLinksCell;
     case TableCellDisplayMode.Actions:
       return ActionsCell;
+    case TableCellDisplayMode.Pill:
+      return DefaultCell; // Legacy table doesn't support pill cells, fallback to default
   }
 
   if (field.type === FieldType.geo) {
@@ -729,12 +731,11 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
       const numValues = stringFields[0].values.length;
       let longestLength = 0;
 
-      // If we have less than 30 values we assume
-      // that the first record is representative
-      // of the overall data
+      // If we have less than 30 values we assume that the first
+      // non-null record is representative of the overall data
       if (numValues <= 30) {
         for (const field of stringFields) {
-          const fieldLength = field.values[0].length;
+          const fieldLength = field.values.find((v) => v != null)?.length ?? 0;
           if (fieldLength > longestLength) {
             longestLength = fieldLength;
             longestField = field;
@@ -765,14 +766,38 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
   return longestField;
 }
 
-export type DataLinksActionsTooltipCoords = {
+export interface DataLinksActionsTooltipState {
+  coords: DataLinksActionsTooltipCoords;
+  links?: LinkModel[];
+  actions?: ActionModel[];
+}
+
+export interface DataLinksActionsTooltipCoords {
   clientX: number;
   clientY: number;
-};
+}
 
 export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: ActionModel[]) => {
   const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
   const shouldShowLink = links.length === 1 && !Boolean(actions?.length);
 
   return { shouldShowLink, hasMultipleLinksOrActions };
+};
+
+const shouldTriggerTooltip = (event: React.MouseEvent<HTMLElement>): boolean => {
+  return event.target === event.currentTarget;
+};
+
+/**
+ * Creates an onClick handler for table cells that only triggers tooltip when clicking directly on the cell
+ * @param setTooltipCoords - function to set tooltip coordinates
+ * @returns onClick handler
+ */
+export const tooltipOnClickHandler = (setTooltipCoords: (coords: DataLinksActionsTooltipCoords) => void) => {
+  return (event: React.MouseEvent<HTMLElement>) => {
+    if (shouldTriggerTooltip(event)) {
+      const { clientX, clientY } = event;
+      setTooltipCoords({ clientX, clientY });
+    }
+  };
 };

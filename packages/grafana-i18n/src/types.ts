@@ -46,6 +46,10 @@ interface TransProps {
    * Values to interpolate into the translation
    */
   values?: Record<string, unknown>;
+  /**
+   * Class name for the Trans component
+   */
+  className?: string;
 }
 
 /**
@@ -65,4 +69,16 @@ type TransType = typeof Trans;
  */
 type TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => string;
 
-export type { UseTranslateHook, TransProps, TransType, TFunction };
+/**
+ * Type for the resources object
+ */
+interface Resources extends Record<string, string | Resources | unknown> {}
+
+/**
+ * Type for the resource loader function
+ * @param resolvedLanguage - The resolved language to load resources for
+ * @returns A promise that resolves to the resources
+ */
+type ResourceLoader = (resolvedLanguage: string) => Promise<Resources>;
+
+export type { ResourceLoader, Resources, TransProps, TransType, TFunction, UseTranslateHook };

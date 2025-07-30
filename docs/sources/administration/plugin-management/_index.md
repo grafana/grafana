@@ -222,7 +222,7 @@ All plugins are signed under a _signature level_. The signature level determines
 
 {{< admonition type="note" >}}
 Unsigned plugins are not supported in Grafana Cloud.
-{{% /admonition %}}
+{{< /admonition >}}
 
 We strongly recommend that you don't run unsigned plugins in your Grafana instance. However, if you're aware of the risks and you still want to load an unsigned plugin, refer to [Configuration](../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins).
 
@@ -249,7 +249,6 @@ To enable backend communication between plugins:
    ```
 
    This is a comma-separated list that uses glob matching.
-
    - To allow access to all plugins that have a backend:
 
      ```

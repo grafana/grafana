@@ -11,12 +11,10 @@ import { selectors } from '../e2e/selectors';
 import { CloudMonitoringQuery, PromQLQuery, QueryType, SLOQuery } from '../types/query';
 import { CloudMonitoringOptions } from '../types/types';
 
-import { defaultTimeSeriesList, defaultTimeSeriesQuery } from './MetricQueryEditor';
+import { defaultTimeSeriesList, defaultTimeSeriesQuery, MetricQueryEditor } from './MetricQueryEditor';
 import { PromQLQueryEditor } from './PromQLEditor';
 import { QueryHeader } from './QueryHeader';
-import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
-
-import { MetricQueryEditor, SLOQueryEditor } from './';
+import { defaultQuery as defaultSLOQuery, SLOQueryEditor } from './SLOQueryEditor';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 

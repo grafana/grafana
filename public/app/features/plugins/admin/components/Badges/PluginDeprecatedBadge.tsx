@@ -1,11 +1,9 @@
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 
 export function PluginDeprecatedBadge(): React.ReactElement {
-  const { t } = useTranslate();
-
   return (
     <Badge
       icon="exclamation-triangle"

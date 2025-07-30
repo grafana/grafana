@@ -21,9 +21,11 @@ killercoda:
 
 <!-- INTERACTIVE page intro.md START -->
 
-This tutorial is a continuation of the [Get started with Grafana Alerting - Alert rules](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
+This tutorial is a continuation of the [Grafana Alerting - Create and receive your first alert](http://www.grafana.com/tutorials/alerting-get-started/) tutorial.
 
 In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
+
+{{< youtube id="nI-_MEnFBQs" >}}
 
 After introducing each component, you will learn how to:
 
@@ -49,17 +51,14 @@ Learning about alert instances and notification policies is useful if you have m
 There are different ways you can follow along with this tutorial.
 
 - **Grafana Cloud**
-
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
 
   Continue to [Alert instances](#alert-instances).
 
 - **Interactive learning environment**
-
   - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Alert routing](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt2/). It's a fully configured environment with all the dependencies already installed.
 
 - **Grafana OSS**
-
   - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
@@ -182,6 +181,10 @@ Create a notification policy if you want to handle metrics returned by alert rul
    {{< admonition type="note" >}}
    If you don’t have any contact points, add a [Contact point](https://grafana.com/tutorials/alerting-get-started/#create-a-contact-point).
    {{</ admonition >}}
+1. Enable Continue matching:
+
+   Turn on **Continue matching subsequent sibling nodes** so the evaluation continues even after one or more labels (i.e. `device` label) match.
+
 1. Click **Save Policy**.
 
    This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.
@@ -246,7 +249,6 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
    The above CSV data simulates a data source returning multiple time series, each leading to the creation of an alert instance for that specific time series. Note that the data returned matches the example in the [Alert instance](#alert-instances) section.
 
 1. In the **Alert condition** section:
-
    - Keep `Last` as the value for the reducer function (`WHEN`), and `IS ABOVE 1000` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview alert rule condition** to run the queries.
@@ -321,13 +323,13 @@ In this tutorial, you have learned how Grafana Alerting can route individual ale
 
 If you run into any problems, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
 
-## Learn more in [Grafana Alerting - Grouping](http://www.grafana.com/tutorials/alerting-get-started-pt3/)
+## Learn more in [Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Grouping](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
+In [Get started with Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
 
 {{< /admonition >}}
 
@@ -335,7 +337,7 @@ In [Get started with Grafana Alerting - Grouping](http://www.grafana.com/tutoria
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Grouping](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
+In [Get started with Grafana Alerting: Group alert notifications](http://www.grafana.com/tutorials/alerting-get-started-pt3/) you learn how to group alert notifications effectively.
 
 {{< /docs/ignore >}}
 

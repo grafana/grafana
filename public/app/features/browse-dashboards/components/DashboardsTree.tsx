@@ -7,24 +7,30 @@ import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardsTreeCellProps, DashboardsTreeColumn, DashboardsTreeItem, SelectionState } from '../types';
+import {
+  DashboardsTreeCellProps,
+  DashboardsTreeColumn,
+  DashboardsTreeItem,
+  SelectionState,
+  BrowseDashboardsPermissions,
+} from '../types';
 
 import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
-import { makeRowID } from './utils';
+import { makeRowID, canSelectItems } from './utils';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
-  canSelect: boolean;
+  permissions: BrowseDashboardsPermissions;
   isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
@@ -48,14 +54,13 @@ export function DashboardsTree({
   onItemSelectionChange,
   isItemLoaded,
   requestLoadMore,
-  canSelect = false,
+  permissions,
 }: DashboardsTreeProps) {
   const treeID = useId();
 
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const listRef = useRef<List | null>(null);
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   useEffect(() => {
     // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
@@ -95,10 +100,11 @@ export function DashboardsTree({
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: TagsCell,
     };
+    const canSelect = canSelectItems(permissions);
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
-  }, [onFolderClick, canSelect, t]);
+  }, [onFolderClick, permissions]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
@@ -110,10 +116,11 @@ export function DashboardsTree({
       onAllSelectionChange,
       onItemSelectionChange,
       treeID,
+      permissions,
     }),
     // we need this to rerender if items changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID]
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items, treeID, permissions]
   );
 
   const handleIsItemLoaded = useCallback(
@@ -157,7 +164,7 @@ export function DashboardsTree({
 
               return (
                 <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
-                  {column.render('Header', { isSelected, onAllSelectionChange })}
+                  {column.render('Header', { isSelected, onAllSelectionChange, permissions })}
                 </div>
               );
             })}
@@ -204,12 +211,13 @@ interface VirtualListRowProps {
     onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
     onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
     treeID: string;
+    permissions: BrowseDashboardsPermissions;
   };
 }
 
 function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
-  const { table, isSelected, onItemSelectionChange, treeID } = data;
+  const { table, isSelected, onItemSelectionChange, treeID, permissions } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
@@ -241,7 +249,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
         return (
           <div key={key} {...cellProps} className={styles.cell}>
-            {cell.render('Cell', { isSelected, onItemSelectionChange, treeID })}
+            {cell.render('Cell', { isSelected, onItemSelectionChange, treeID, permissions })}
           </div>
         );
       })}

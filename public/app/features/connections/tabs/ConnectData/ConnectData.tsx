@@ -3,7 +3,7 @@ import { useMemo, useState, MouseEvent } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { PluginType, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -14,7 +14,7 @@ import { SearchField } from 'app/features/plugins/admin/components/SearchField';
 import { Sorters } from 'app/features/plugins/admin/helpers';
 import { useHistory } from 'app/features/plugins/admin/hooks/useHistory';
 import { useGetAll, useIsRemotePluginsAvailable } from 'app/features/plugins/admin/state/hooks';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ROUTES } from '../../constants';
 
@@ -67,11 +67,14 @@ export function AddNewConnection() {
     },
     sortBy
   );
-  const { t } = useTranslate();
+
   const filterByOptions = [
-    { value: 'all', label: 'All' },
-    { value: 'installed', label: 'Installed' },
-    { value: 'has-update', label: 'New Updates' },
+    { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All') },
+    { value: 'installed', label: t('connections.add-new-connection.filter-by-options.label.installed', 'Installed') },
+    {
+      value: 'has-update',
+      label: t('connections.add-new-connection.filter-by-options.label.new-updates', 'New Updates'),
+    },
   ];
 
   const onClickCardGridItem = (e: MouseEvent<HTMLElement>, item: CardGridItem) => {
@@ -160,11 +163,17 @@ export function AddNewConnection() {
               value={sortBy?.toString()}
               onChange={onSortByChange}
               options={[
-                { value: 'nameAsc', label: 'By name (A-Z)' },
-                { value: 'nameDesc', label: 'By name (Z-A)' },
-                { value: 'updated', label: 'By updated date' },
-                { value: 'published', label: 'By published date' },
-                { value: 'downloads', label: 'By downloads' },
+                { value: 'nameAsc', label: t('connections.add-new-connection.label.by-name-az', 'By name (A-Z)') },
+                { value: 'nameDesc', label: t('connections.add-new-connection.label.by-name-za', 'By name (Z-A)') },
+                {
+                  value: 'updated',
+                  label: t('connections.add-new-connection.label.by-updated-date', 'By updated date'),
+                },
+                {
+                  value: 'published',
+                  label: t('connections.add-new-connection.label.by-published-date', 'By published date'),
+                },
+                { value: 'downloads', label: t('connections.add-new-connection.label.by-downloads', 'By downloads') },
               ]}
             />
           </Field>

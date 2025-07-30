@@ -16,6 +16,7 @@ type BuildOpts struct {
 	ExperimentalFlags []string
 	Tags              []string
 	WireTag           string
+	GoCacheProg       string
 	Static            bool
 	Enterprise        bool
 }
@@ -68,7 +69,11 @@ func ViceroyContainer(
 	container := d.Container(containerOpts).From(fmt.Sprintf("rfratto/viceroy:%s", viceroyVersion))
 
 	// Install Go manually, and install make, git, and curl from the package manager.
-	container = container.WithExec([]string{"apt-get", "update"}).
+	container = container.
+		WithExec([]string{"dpkg", "--remove-architecture", "ppc64el"}).
+		WithExec([]string{"dpkg", "--remove-architecture", "s390x"}).
+		WithExec([]string{"dpkg", "--remove-architecture", "armel"}).
+		WithExec([]string{"apt-get", "update", "-yq"}).
 		WithExec([]string{"apt-get", "install", "-yq", "curl", "make", "git"}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)}).
 		WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
@@ -93,15 +98,15 @@ func GolangContainer(
 
 	container := golang.Container(d, platform, goVersion).
 		WithExec([]string{"apk", "add", "--update", "wget", "build-base", "alpine-sdk", "musl", "musl-dev", "xz"}).
-		WithExec([]string{"wget", "https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz"}).
+		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/zig-linux-x86_64-0.11.0.tar.xz"}).
 		WithExec([]string{"tar", "--strip-components=1", "-C", "/", "-xf", "zig-linux-x86_64-0.11.0.tar.xz"}).
 		WithExec([]string{"mv", "/zig", "/bin/zig"}).
 		// Install the toolchain specifically for armv7 until we figure out why it's crashing w/ zig container = container.
 		WithExec([]string{"mkdir", "/toolchain"}).
-		WithExec([]string{"wget", "http://musl.cc/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xvf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
-		WithExec([]string{"wget", "https://musl.cc/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
-		WithExec([]string{"tar", "-xvf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"})
+		WithExec([]string{"wget", "-q", "http://dl.grafana.com/ci/arm-linux-musleabihf-cross.tgz", "-P", "/toolchain"}).
+		WithExec([]string{"tar", "-xf", "/toolchain/arm-linux-musleabihf-cross.tgz", "-C", "/toolchain"}).
+		WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/s390x-linux-musl-cross.tgz", "-P", "/toolchain"}).
+		WithExec([]string{"tar", "-xf", "/toolchain/s390x-linux-musl-cross.tgz", "-C", "/toolchain"})
 
 	return WithGoEnv(log, container, distro, opts)
 }
@@ -154,13 +159,17 @@ func Builder(
 		WithMountedCache("/root/.cache/go", goBuildCache).
 		WithEnvVariable("GOCACHE", "/root/.cache/go")
 
+	if prog := opts.GoCacheProg; prog != "" {
+		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
+	}
+
 	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
 
 	builder = withCue(builder, src).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
 		}).
-		WithDirectory("/src/pkg", src.Directory("pkg")).
+		WithDirectory("/src/pkg", src.WithoutDirectory("pkg/build").Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/emails", src.Directory("emails")).
 		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).

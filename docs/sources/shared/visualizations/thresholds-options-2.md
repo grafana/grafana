@@ -15,4 +15,4 @@ For each threshold, set the following options:
 | Value           | Set the value for each threshold.            |
 | Thresholds mode | Choose from **Absolute** and **Percentage**. |
 
-To learn more, refer to [Configure thresholds](../../configure-thresholds/).
+To learn more, refer to [Configure thresholds](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/).

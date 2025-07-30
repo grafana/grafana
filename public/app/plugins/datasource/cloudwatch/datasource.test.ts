@@ -9,10 +9,10 @@ import {
   logGroupNamesVariable,
   regionVariable,
   setupMockedDataSource,
-} from './__mocks__/CloudWatchDataSource';
-import { setupForLogs } from './__mocks__/logsTestContext';
-import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
-import { TimeRangeMock } from './__mocks__/timeRange';
+} from './mocks/CloudWatchDataSource';
+import { setupForLogs } from './mocks/logsTestContext';
+import { validLogsQuery, validMetricSearchBuilderQuery } from './mocks/queries';
+import { TimeRangeMock } from './mocks/timeRange';
 import {
   CloudWatchDefaultQuery,
   CloudWatchLogsQuery,
