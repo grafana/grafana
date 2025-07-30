@@ -9,12 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/build/daggerbuild/containers"
 )
 
-// NPMPackages versions and packs the npm packages into tarballs into `npm-artifacts` directory.
-// It then returns the npm-artifacts directory as a dagger.Directory.
+// NPMPackages versions and packs the npm packages into tarballs into `npm-packages` directory.
+// It then returns the npm-packages directory as a dagger.Directory.
 func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, src *dagger.Directory, ersion string) (*dagger.Directory, error) {
 	// Check if the version of Grafana uses lerna or nx to manage package versioning.
 	var (
-		out = fmt.Sprintf("../../npm-artifacts/%%s-%v.tgz", "v"+ersion)
+		out = fmt.Sprintf("/src/npm-packages/%%s-%v.tgz", "v"+ersion)
 
 		lernaBuild = fmt.Sprintf("yarn run packages:build && yarn lerna version %s --exact --no-git-tag-version --no-push --force-publish -y", ersion)
 		lernaPack  = fmt.Sprintf("yarn lerna exec --no-private -- yarn pack --out %s", out)
@@ -23,12 +23,12 @@ func NPMPackages(builder *dagger.Container, d *dagger.Client, log *slog.Logger, 
 		nxPack  = fmt.Sprintf("yarn nx exec --projects=$(cat nx.json | jq -r '.release.groups.grafanaPackages.projects | join(\",\")') -- yarn pack --out %s", out)
 	)
 
-	return builder.WithExec([]string{"mkdir", "npm-artifacts"}).
+	return builder.WithExec([]string{"mkdir", "npm-packages"}).
 		WithEnvVariable("SHELL", "/bin/bash").
 		WithExec([]string{"yarn", "install", "--immutable"}).
 		WithExec([]string{"/bin/bash", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaBuild, nxBuild)}).
 		WithExec([]string{"/bin/bash", "-c", fmt.Sprintf("if [ -f lerna.json ]; then %s; else %s; fi", lernaPack, nxPack)}).
-		Directory("./npm-artifacts"), nil
+		Directory("./npm-packages"), nil
 }
 
 // PublishNPM publishes a npm package to the given destination.

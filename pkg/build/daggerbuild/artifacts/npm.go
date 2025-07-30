@@ -80,7 +80,7 @@ func (f *NPMPackages) Filename(ctx context.Context) (string, error) {
 	// Important note: this path is only used in two ways:
 	// 1. When requesting an artifact be built and exported, this is the path where it will be exported to
 	// 2. In a map to distinguish when the same artifact is being built more than once
-	return filepath.Join(f.Version, "npm-artifacts"), nil
+	return filepath.Join(f.Version, "npm-packages"), nil
 }
 
 func NewNPMPackagesFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
