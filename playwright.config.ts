@@ -32,7 +32,7 @@ export default defineConfig<PluginOptions>({
   },
   ...(!process.env.GRAFANA_URL && {
     webServer: {
-      command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+      command: 'make GO_BUILD_DEV=1 build-go-fast && yarn e2e:plugin:build && ./e2e-playwright/start-server',
       url: DEFAULT_URL,
       stdout: 'pipe',
       stderr: 'pipe',
