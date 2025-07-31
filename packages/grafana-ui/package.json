@@ -204,7 +204,7 @@
     "storybook": "^8.6.2",
     "style-loader": "4.0.0",
     "typescript": "5.8.3",
-    "webpack": "5.97.1"
+    "webpack": "5.101.0"
   },
   "peerDependencies": {
     "react": "^18.0.0",
