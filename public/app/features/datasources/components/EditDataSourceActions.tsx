@@ -34,7 +34,7 @@ export function EditDataSourceActions({ uid }: Props) {
   const links = allLinks.filter((link) => ALLOWED_DATASOURCE_EXTENSION_PLUGINS.includes(link.pluginId));
 
   // Only render dropdown if there are multiple actions to show
-  const hasActions = (!isLoading && links.length > 0);
+  const hasActions = !isLoading && links.length > 0;
 
   const actionsMenu = (
     <Menu>
@@ -81,16 +81,14 @@ export function EditDataSourceActions({ uid }: Props) {
       >
         <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
       </LinkButton>
-      {
-        hasActions && (
-          <Dropdown overlay={actionsMenu}>
-            <Button variant="secondary" size="sm" icon="plug">
-              <Trans i18nKey="datasources.edit-data-source-actions.extensions">Extensions</Trans>
-              <Icon name="angle-down" />
-            </Button>
-          </Dropdown>
-        )
-      }
+      {hasActions && (
+        <Dropdown overlay={actionsMenu}>
+          <Button variant="secondary" size="sm" icon="plug">
+            <Trans i18nKey="datasources.edit-data-source-actions.extensions">Extensions</Trans>
+            <Icon name="angle-down" />
+          </Button>
+        </Dropdown>
+      )}
     </>
   );
 }
