@@ -106,12 +106,10 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined }));
 
     // Open drawer with the original query highlighted
-    // Note: This assumes highlightedQuery support is available in PR #9166
     if (originalQueryRef) {
       openDrawer([], () => {}, {
         context: 'explore',
-        //@ts-ignore  TODO: remove when PR is merged
-        highlightedQuery: originalQueryRef,
+        highlightQuery: originalQueryRef,
       });
     }
   };
