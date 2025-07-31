@@ -142,6 +142,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 								span.SetAttributes(attribute.String("error.source", "downstream"))
 								break
 							} else if response.Error != nil {
+								connectLogger.Debug("500 error without downstream error source", "error", response.Error, "errorSource", response.ErrorSource, "refId", refId)
 								span.SetStatus(codes.Error, "500 error without downstream error source")
 							} else {
 								span.SetStatus(codes.Error, "500 error without downstream error source and no Error message")
