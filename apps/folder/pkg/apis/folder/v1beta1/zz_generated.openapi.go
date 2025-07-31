@@ -167,21 +167,6 @@ func schema_pkg_apis_folder_v1beta1_FolderAccessInfo(ref common.ReferenceCallbac
 							Format:  "",
 						},
 					},
-					"accessControl": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: false,
-										Type:    []string{"boolean"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
 				},
 				Required: []string{"canSave", "canEdit", "canAdmin", "canDelete"},
 			},

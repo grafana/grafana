@@ -45,13 +45,6 @@ func (in *DescendantCounts) DeepCopyObject() runtime.Object {
 func (in *FolderAccessInfo) DeepCopyInto(out *FolderAccessInfo) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	if in.AccessControl != nil {
-		in, out := &in.AccessControl, &out.AccessControl
-		*out = make(map[string]bool, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	}
 	return
 }
 

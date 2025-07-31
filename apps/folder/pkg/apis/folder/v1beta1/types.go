@@ -44,11 +44,10 @@ type FolderInfo struct {
 type FolderAccessInfo struct {
 	metav1.TypeMeta `json:",inline"`
 
-	CanSave       bool            `json:"canSave"`
-	CanEdit       bool            `json:"canEdit"`
-	CanAdmin      bool            `json:"canAdmin"`
-	CanDelete     bool            `json:"canDelete"`
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	CanSave   bool `json:"canSave"`
+	CanEdit   bool `json:"canEdit"`
+	CanAdmin  bool `json:"canAdmin"`
+	CanDelete bool `json:"canDelete"`
 }
 
 // +k8s:deepcopy-gen=true

@@ -1,4 +1,5 @@
 import { QueryStatus, skipToken } from '@reduxjs/toolkit/query';
+import { isEqual } from 'lodash';
 
 import { config } from '@grafana/runtime';
 import { FolderDTO } from 'app/types/folders';
@@ -19,7 +20,7 @@ import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
 import { rootFolder, sharedWithMeFolder } from './virtualFolders';
 
-import { useGetFolderQuery, useGetFolderParentsQuery, useGetFolderAccessQuery } from './index';
+import { useGetFolderQuery, useGetFolderParentsQuery } from './index';
 
 function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
@@ -36,130 +37,133 @@ function getFolderUrl(uid: string, title: string): string {
  * @param uid
  */
 export function useGetFolderQueryFacade(uid?: string) {
-  if (config.featureToggles.foldersAppPlatformAPI) {
-    const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
-    const params = !uid ? skipToken : { name: uid };
+  // This may look weird that we call the legacy folder anyway all the time, but the issue is we don't have good API
+  // for the access control metadata yet, and so we still take it from the old api.
+  // see https://github.com/grafana/identity-access-team/issues/1103
+  const legacyFolderResult = useGetFolderQueryLegacy(uid || skipToken);
 
-    let resultFolder = useGetFolderQuery(isVirtualFolder ? skipToken : params);
-
-    // For virtual folders we simulate the response with hardcoded data.
-    if (isVirtualFolder) {
-      resultFolder = {
-        ...resultFolder,
-        status: QueryStatus.fulfilled,
-        fulfilledTimeStamp: Date.now(),
-        isUninitialized: false,
-        error: undefined,
-        isError: false,
-        isSuccess: true,
-        isLoading: false,
-        isFetching: false,
-        data: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
-        currentData: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
-      };
-    }
-
-    // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
-    // stitch the responses this way and access can actually return different response based on the grafana setup.
-    const resultParents = useGetFolderParentsQuery(params);
-    const resultAccess = useGetFolderAccessQuery(params);
-
-    // Load users info if needed.
-    const userKeys = getUserKeys(resultFolder);
-    const needsUserData = !isVirtualFolder && Boolean(userKeys.length);
-    const resultUserDisplay = useGetDisplayMappingQuery(needsUserData ? { key: userKeys } : skipToken);
-
-    // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
-    // api client.
-    let newData: FolderDTO | undefined = undefined;
-    if (
-      resultFolder.data &&
-      resultParents.data &&
-      resultAccess.data &&
-      (needsUserData ? resultUserDisplay.data : true)
-    ) {
-      const updatedBy = resultFolder.data.metadata.annotations?.[AnnoKeyUpdatedBy];
-      const createdBy = resultFolder.data.metadata.annotations?.[AnnoKeyCreatedBy];
-
-      newData = {
-        canAdmin: resultAccess.data.canAdmin,
-        canDelete: resultAccess.data.canDelete,
-        canEdit: resultAccess.data.canEdit,
-        canSave: resultAccess.data.canSave,
-        accessControl: resultAccess.data.accessControl,
-        created: resultFolder.data.metadata.creationTimestamp || '0001-01-01T00:00:00Z',
-        createdBy:
-          (createdBy &&
-            resultUserDisplay.data?.display[resultUserDisplay.data?.keys.indexOf(createdBy)]?.displayName) ||
-          'Anonymous',
-        // Does not seem like this is set to true in the legacy API
-        hasAcl: false,
-        id: parseInt(resultFolder.data.metadata.labels?.[DeprecatedInternalId] || '0', 10) || 0,
-        parentUid: resultFolder.data.metadata.annotations?.[AnnoKeyFolder],
-        managedBy: resultFolder.data.metadata.annotations?.[AnnoKeyManagerKind] as ManagerKind,
-
-        title: resultFolder.data.spec.title,
-        uid: resultFolder.data.metadata.name!,
-        updated: resultFolder.data.metadata.annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
-        updatedBy:
-          (updatedBy &&
-            resultUserDisplay.data?.display[resultUserDisplay.data?.keys.indexOf(updatedBy)]?.displayName) ||
-          'Anonymous',
-        // Seems like this annotation is not populated
-        // url: result.data.metadata.annotations?.[AnnoKeyFolderUrl] || '',
-        // general folder does not come with url
-        // see https://github.com/grafana/grafana/blob/8a05378ef3ae5545c6f7429eae5c174d3c0edbfe/pkg/services/folder/folderimpl/folder_unifiedstorage.go#L88
-        url:
-          uid === GENERAL_FOLDER_UID
-            ? ''
-            : getFolderUrl(resultFolder.data.metadata.name!, resultFolder.data.spec.title!),
-        version: resultFolder.data.metadata.generation || 1,
-      };
-
-      if (resultParents.data.items?.length) {
-        newData.parents = resultParents.data.items
-          .filter((i) => i.name !== resultFolder.data!.metadata.name)
-          .map((i) => ({
-            title: i.title,
-            uid: i.name,
-            // No idea how to make slug, on the server it uses a go lib: https://github.com/grafana/grafana/blob/aac66e91198004bc044754105e18bfff8fbfd383/pkg/infra/slugify/slugify.go#L56
-            // Don't think slug is needed for the URL to work though
-            url: getFolderUrl(i.name, i.title),
-          }));
-      }
-    }
-
-    // Wrap the stitched data into single RTK query response type object so this looks like a single API call
-    return {
-      ...resultFolder,
-      ...combinedState(resultFolder, resultParents, resultAccess, resultUserDisplay, needsUserData),
-      refetch: async () => {
-        return Promise.all([
-          resultFolder.refetch(),
-          resultParents.refetch(),
-          resultAccess.refetch(),
-          // TODO: Not sure about this, if we refetch this but the response from result change and this is dependant on
-          //  that result what are we refetching here? Maybe this is redundant.
-          resultUserDisplay.refetch(),
-        ]);
-      },
-      data: newData,
-    };
-  } else {
-    return useGetFolderQueryLegacy(uid || skipToken);
+  if (!config.featureToggles.foldersAppPlatformAPI) {
+    return legacyFolderResult;
   }
+
+  const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
+  const params = !uid ? skipToken : { name: uid };
+
+  let resultFolder = useGetFolderQuery(isVirtualFolder ? skipToken : params);
+
+  // For virtual folders we simulate the response with hardcoded data.
+  if (isVirtualFolder) {
+    resultFolder = {
+      ...resultFolder,
+      status: QueryStatus.fulfilled,
+      fulfilledTimeStamp: Date.now(),
+      isUninitialized: false,
+      error: undefined,
+      isError: false,
+      isSuccess: true,
+      isLoading: false,
+      isFetching: false,
+      data: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
+      currentData: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
+    };
+  }
+
+  // We get parents and folders for virtual folders too. Parents should just return empty array but it's easier to
+  // stitch the responses this way and access can actually return different response based on the grafana setup.
+  const resultParents = useGetFolderParentsQuery(params);
+
+  // Load users info if needed.
+  const userKeys = getUserKeys(resultFolder);
+  const needsUserData = !isVirtualFolder && Boolean(userKeys.length);
+  const resultUserDisplay = useGetDisplayMappingQuery(needsUserData ? { key: userKeys } : skipToken);
+
+  // Stitch together the responses to create a single FolderDTO object so on the outside this behaves as the legacy
+  // api client.
+  let newData: FolderDTO | undefined = undefined;
+  if (
+    resultFolder.data &&
+    resultParents.data &&
+    legacyFolderResult.data &&
+    (needsUserData ? resultUserDisplay.data : true)
+  ) {
+    const updatedBy = resultFolder.data.metadata.annotations?.[AnnoKeyUpdatedBy];
+    const createdBy = resultFolder.data.metadata.annotations?.[AnnoKeyCreatedBy];
+
+    newData = {
+      canAdmin: legacyFolderResult.data.canAdmin,
+      canDelete: legacyFolderResult.data.canDelete,
+      canEdit: legacyFolderResult.data.canEdit,
+      canSave: legacyFolderResult.data.canSave,
+      accessControl: legacyFolderResult.data.accessControl,
+      created: resultFolder.data.metadata.creationTimestamp || '0001-01-01T00:00:00Z',
+      createdBy:
+        (createdBy && resultUserDisplay.data?.display[resultUserDisplay.data?.keys.indexOf(createdBy)]?.displayName) ||
+        'Anonymous',
+      // Does not seem like this is set to true in the legacy API
+      hasAcl: false,
+      id: parseInt(resultFolder.data.metadata.labels?.[DeprecatedInternalId] || '0', 10) || 0,
+      parentUid: resultFolder.data.metadata.annotations?.[AnnoKeyFolder],
+      managedBy: resultFolder.data.metadata.annotations?.[AnnoKeyManagerKind] as ManagerKind,
+
+      title: resultFolder.data.spec.title,
+      uid: resultFolder.data.metadata.name!,
+      updated: resultFolder.data.metadata.annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
+      updatedBy:
+        (updatedBy && resultUserDisplay.data?.display[resultUserDisplay.data?.keys.indexOf(updatedBy)]?.displayName) ||
+        'Anonymous',
+      // Seems like this annotation is not populated
+      // url: result.data.metadata.annotations?.[AnnoKeyFolderUrl] || '',
+      // general folder does not come with url
+      // see https://github.com/grafana/grafana/blob/8a05378ef3ae5545c6f7429eae5c174d3c0edbfe/pkg/services/folder/folderimpl/folder_unifiedstorage.go#L88
+      url:
+        uid === GENERAL_FOLDER_UID ? '' : getFolderUrl(resultFolder.data.metadata.name!, resultFolder.data.spec.title!),
+      version: resultFolder.data.metadata.generation || 1,
+    };
+
+    if (resultParents.data.items?.length) {
+      newData.parents = resultParents.data.items
+        .filter((i) => i.name !== resultFolder.data!.metadata.name)
+        .map((i) => ({
+          title: i.title,
+          uid: i.name,
+          // No idea how to make slug, on the server it uses a go lib: https://github.com/grafana/grafana/blob/aac66e91198004bc044754105e18bfff8fbfd383/pkg/infra/slugify/slugify.go#L56
+          // Don't think slug is needed for the URL to work though
+          url: getFolderUrl(i.name, i.title),
+        }));
+    }
+  }
+
+  // TODO: we should be able to log if there is a difference
+  console.log(newData, legacyFolderResult.data, isEqual(newData, legacyFolderResult.data));
+
+  // Wrap the stitched data into single RTK query response type object so this looks like a single API call
+  return {
+    ...resultFolder,
+    ...combinedState(resultFolder, resultParents, legacyFolderResult, resultUserDisplay, needsUserData),
+    refetch: async () => {
+      return Promise.all([
+        resultFolder.refetch(),
+        resultParents.refetch(),
+        legacyFolderResult.refetch(),
+        // TODO: Not sure about this, if we refetch this but the response from result change and this is dependant on
+        //  that result what are we refetching here? Maybe this is redundant.
+        resultUserDisplay.refetch(),
+      ]);
+    },
+    data: newData,
+  };
 }
 
 function combinedState(
   result: ReturnType<typeof useGetFolderQuery>,
   resultParents: ReturnType<typeof useGetFolderParentsQuery>,
-  resultAccess: ReturnType<typeof useGetFolderAccessQuery>,
+  resultLegacyFolder: ReturnType<typeof useGetFolderQueryLegacy>,
   resultUserDisplay: ReturnType<typeof useGetDisplayMappingQuery>,
   needsUserData: boolean
 ) {
   const results = needsUserData
-    ? [result, resultParents, resultAccess, resultUserDisplay]
-    : [result, resultParents, resultAccess];
+    ? [result, resultParents, resultLegacyFolder, resultUserDisplay]
+    : [result, resultParents, resultLegacyFolder];
   return {
     isLoading: results.some((r) => r.isLoading),
     isFetching: results.some((r) => r.isFetching),

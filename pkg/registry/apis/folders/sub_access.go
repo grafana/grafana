@@ -2,9 +2,8 @@ package folders
 
 import (
 	"context"
-	"fmt"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,8 +16,8 @@ import (
 )
 
 type subAccessREST struct {
-	getter rest.Getter
-	ac     accesscontrol.AccessControl
+	service folder.Service
+	ac      accesscontrol.AccessControl
 }
 
 var _ = rest.Connecter(&subAccessREST{})
@@ -48,62 +47,37 @@ func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	folderUID := name
+	// Can view is managed here (and in the Authorizer)
+	f, err := r.service.Get(ctx, &folder.GetFolderQuery{
+		UID:          &name,
+		OrgID:        ns.OrgID,
+		SignedInUser: user,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		access := &folders.FolderAccessInfo{}
-		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		canEditEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 		access.CanEdit, _ = r.ac.Evaluate(ctx, user, canEditEvaluator)
 		access.CanSave = access.CanEdit
 		canAdminEvaluator := accesscontrol.EvalAll(
-			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
-			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
+			accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID)),
 		)
 		access.CanAdmin, _ = r.ac.Evaluate(ctx, user, canAdminEvaluator)
-		canDeleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		canDeleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID))
 		access.CanDelete, _ = r.ac.Evaluate(ctx, user, canDeleteEvaluator)
-
-		// Cargo culted from pkg/api/folder.go#getFolderACMetadata
-		allMetadata, err := getFolderAccessControl(ctx, r.getter, user, name)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		metadata := map[string]bool{}
-		// Flatten metadata - if any parent has a permission, the child folder inherits it
-		for _, md := range allMetadata {
-			for action := range md {
-				metadata[action] = true
-			}
-		}
-
-		access.AccessControl = metadata
 		responder.Object(http.StatusOK, access)
 	}), nil
-}
-
-func getFolderAccessControl(ctx context.Context, folderGetter rest.Getter, user identity.Requester, name string) (map[string]accesscontrol.Metadata, error) {
-	folderIDs := map[string]bool{name: true}
-
-	if name != folder.GeneralFolderUID && name != folder.SharedWithMeFolderUID {
-		obj, err := folderGetter.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		folderObj, ok := obj.(*folders.Folder)
-		if !ok {
-			return nil, fmt.Errorf("expecting folder, found: %T", folderObj)
-		}
-		parents := getFolderParents(ctx, folderGetter, folderObj)
-		for _, p := range parents.Items {
-			folderIDs[p.Name] = true
-		}
-	}
-
-	return accesscontrol.GetResourcesMetadata(ctx, user.GetPermissions(), dashboards.ScopeFoldersPrefix, folderIDs), nil
 }

@@ -67,9 +67,54 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			responder.Error(fmt.Errorf("expecting folder, found: %T", folderObj))
 		}
 
-		info := getFolderParents(ctx, r.getter, folderObj)
+		info := r.parents(ctx, folderObj)
 		// Start from the root
 		slices.Reverse(info.Items)
 		responder.Object(http.StatusOK, info)
 	}), nil
+}
+
+func (r *subParentsREST) parents(ctx context.Context, folder *folders.Folder) *folders.FolderInfoList {
+	info := &folders.FolderInfoList{
+		Items: []folders.FolderInfo{},
+	}
+	for folder != nil {
+		parent := getParent(folder)
+		descr := ""
+		if folder.Spec.Description != nil {
+			descr = *folder.Spec.Description
+		}
+		info.Items = append(info.Items, folders.FolderInfo{
+			Name:        folder.Name,
+			Title:       folder.Spec.Title,
+			Description: descr,
+			Parent:      parent,
+		})
+		if parent == "" {
+			break
+		}
+
+		obj, err := r.getter.Get(ctx, parent, &metav1.GetOptions{})
+		if err != nil {
+			info.Items = append(info.Items, folders.FolderInfo{
+				Name:        parent,
+				Detached:    true,
+				Description: err.Error(),
+			})
+			break
+		}
+
+		parentFolder, ok := obj.(*folders.Folder)
+		if !ok {
+			info.Items = append(info.Items, folders.FolderInfo{
+				Name:        parent,
+				Detached:    true,
+				Description: fmt.Sprintf("expected folder, found: %T", obj),
+			})
+			break
+		}
+		folder = parentFolder
+	}
+	return info
+
 }
