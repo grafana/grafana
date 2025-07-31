@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -653,13 +652,12 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		// Order by group first, then by rule index within group
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
-		var cursor groupCursor
+		var cursor ngmodels.GroupCursor
 		if query.GroupContinueToken != "" {
-			cur, err := decodeGroupCursor(query.GroupContinueToken)
-			if err != nil {
-				return fmt.Errorf("invalid group continue token: %w", err)
+			// only set the cursor if it's valid, otherwise we'll start from the beginning
+			if cur, err := ngmodels.DecodeGroupCursor(query.GroupContinueToken); err == nil {
+				cursor = cur
 			}
-			cursor = cur
 		}
 
 		// Build group cursor condition
@@ -679,16 +677,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 		}()
 
 		// Process rules and implement per-group pagination
-		currentCursor := groupCursor{}
 		groupsFetched := 0
-
-		if cursor.NamespaceUID != "" {
-			currentCursor = groupCursor{
-				NamespaceUID: cursor.NamespaceUID,
-				RuleGroup:    cursor.RuleGroup,
-			}
-		}
-
 		for rows.Next() {
 			rule := new(alertRule)
 			err = rows.Scan(rule)
@@ -704,20 +693,20 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 			}
 
 			// Check if we've moved to a new group
-			key := groupCursor{
+			key := ngmodels.GroupCursor{
 				NamespaceUID: converted.NamespaceUID,
 				RuleGroup:    converted.RuleGroup,
 			}
-			if key != currentCursor {
+			if key != cursor {
 				// Check if we've reached the group limit
 				if query.GroupLimit > 0 && groupsFetched == int(query.GroupLimit) {
 					// Generate next token for the next group
-					nextToken = encodeGroupCursor(currentCursor)
+					nextToken = ngmodels.EncodeGroupCursor(cursor)
 					break
 				}
 
 				// Reset for new group
-				currentCursor = key
+				cursor = key
 				groupsFetched++
 			}
 
@@ -735,7 +724,7 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 	return result, nextToken, err
 }
 
-func buildGroupCursorCondition(sess *xorm.Session, c groupCursor) *xorm.Session {
+func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
 	return sess.Where("(namespace_uid > ?)", c.NamespaceUID).
 		Or("(namespace_uid = ? AND rule_group > ?)", c.NamespaceUID, c.RuleGroup)
 }
@@ -771,30 +760,6 @@ func shouldIncludeRule(rule *ngmodels.AlertRule, query *ngmodels.ListAlertRulesB
 	}
 
 	return true
-}
-
-type groupCursor struct {
-	NamespaceUID string `json:"n"`
-	RuleGroup    string `json:"g"`
-}
-
-func encodeGroupCursor(c groupCursor) string {
-	data, _ := json.Marshal(c)
-	return base64.URLEncoding.EncodeToString(data)
-}
-
-func decodeGroupCursor(token string) (groupCursor, error) {
-	var c groupCursor
-	data, err := base64.URLEncoding.DecodeString(token)
-	if err != nil {
-		return c, fmt.Errorf("failed to decode group token: %w", err)
-	}
-
-	if err := json.Unmarshal(data, &c); err != nil {
-		return c, fmt.Errorf("failed to unmarshal group cursor: %w", err)
-	}
-
-	return c, nil
 }
 
 // ListAlertRules is a handler for retrieving alert rules of specific organisation.

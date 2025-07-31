@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -878,6 +879,30 @@ type ListAlertRulesByGroupQuery struct {
 
 	GroupLimit         int64  // Number of groups to fetch
 	GroupContinueToken string // Token for per-group pagination
+}
+
+type GroupCursor struct {
+	NamespaceUID string `json:"n"`
+	RuleGroup    string `json:"g"`
+}
+
+func EncodeGroupCursor(c GroupCursor) string {
+	data, _ := json.Marshal(c)
+	return base64.URLEncoding.EncodeToString(data)
+}
+
+func DecodeGroupCursor(token string) (GroupCursor, error) {
+	var c GroupCursor
+	data, err := base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return c, fmt.Errorf("failed to decode group token: %w", err)
+	}
+
+	if err := json.Unmarshal(data, &c); err != nil {
+		return c, fmt.Errorf("failed to unmarshal group cursor: %w", err)
+	}
+
+	return c, nil
 }
 
 // ListAlertRulesQuery is the query for listing alert rules
