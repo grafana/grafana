@@ -1542,8 +1542,7 @@
       "group-not-editable": "선택한 그룹은 편집할 수 없습니다.",
       "group-not-editable-description": "이 그룹은 편집을 지원하지 않는 데이터 소스에 속해 있습니다.",
       "page-title": "규칙 그룹 편집",
-      "rule-group-error": "규칙 그룹 로딩 중 오류 발생",
-      "title": "평가 그룹 편집"
+      "rule-group-error": "규칙 그룹 로딩 중 오류 발생"
     },
     "group-loader": {
       "group-load-failed": "{{ namespaceName }}의 {{ groupName }} 그룹에서 규칙 로딩 실패",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "경고"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "가져오기",
@@ -3721,6 +3719,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3963,6 +3962,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "자동"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -6984,6 +6990,9 @@
         "pro-tip-define-sources-through-configuration-files": " 전문가 팁: 구성 파일을 통해 데이터 소스를 정의할 수도 있습니다. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "이전",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "쿼리 없이 진행"
@@ -7250,18 +7259,24 @@
       "split-tooltip": "창 분할",
       "split-widen": "창 확대"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "피드백 제출하기",
-      "label-copied": "복사됨!",
-      "label-export": "내보내기",
-      "label-trace-id": "트레이스 ID",
-      "title-share-thoughts-about-tracing-grafana": "Grafana에서 트레이싱에 대한 의견을 공유하세요."
-    },
     "trace-page-header": {
-      "text-partial-trace": "부분 트레이스",
-      "tooltip-url": "{{url}} 또는 {{target}} 또는 {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "필터 지우기 버튼",

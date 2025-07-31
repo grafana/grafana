@@ -1548,8 +1548,7 @@
       "group-not-editable": "Vald grupp kan inte redigeras",
       "group-not-editable-description": "Den här gruppen tillhör en datakälla som inte stöder redigering.",
       "page-title": "Redigera regelgrupp",
-      "rule-group-error": "Fel vid laddning av regelgrupp",
-      "title": "Redigera utvärderingsgrupp"
+      "rule-group-error": "Fel vid laddning av regelgrupp"
     },
     "group-loader": {
       "group-load-failed": "Det gick inte att ladda reglerna från gruppen {{ groupName }} i {{ namespaceName }}",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Varnar"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Importera",
@@ -3740,6 +3738,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -3982,6 +3981,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -7006,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": " Tips: Du kan även definiera datakällor via konfigurationsfiler. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Tidigare",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Kör utan frågor"
@@ -7272,18 +7281,24 @@
       "split-tooltip": "Dela rutan",
       "split-widen": "Bredda rutan"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Ge feedback",
-      "label-copied": "Kopierad! ",
-      "label-export": "Exportera",
-      "label-trace-id": "Spårnings-ID",
-      "title-share-thoughts-about-tracing-grafana": "Dela dina tankar om att spåra i Grafana."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Partiell spårning",
-      "tooltip-url": "{{url}} eller {{target}} eller {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Knappen Rensa filter",

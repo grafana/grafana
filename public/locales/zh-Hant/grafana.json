@@ -1542,8 +1542,7 @@
       "group-not-editable": "無法編輯所選群組",
       "group-not-editable-description": "此群組屬於不支援編輯的資料來源。",
       "page-title": "編輯規則群組",
-      "rule-group-error": "載入規則群組時發生錯誤",
-      "title": "編輯評估群組"
+      "rule-group-error": "載入規則群組時發生錯誤"
     },
     "group-loader": {
       "group-load-failed": "無法從「{{ namespaceName }}」中的群組「{{ groupName }}」載入規則",
@@ -1577,8 +1576,7 @@
       "synthetic-monitoring-card-item-2": "在每個網路層執行 ping、DNS、HTTP/S 和 TCP 檢查。",
       "synthetic-monitoring-card-item-3": "在防火牆後使用 20 多個全球探測器或私人探測器。",
       "synthetic-monitoring-card-item-4": "使用內建的 Prometheus 風格警報追蹤 SLO - 直接從使用者介面操作。",
-      "synthetic-monitoring-card-title": "綜合監控",
-      "title-alerting": "警報"
+      "synthetic-monitoring-card-title": "綜合監控"
     },
     "import-to-gma": {
       "action-button": "匯入",
@@ -3721,6 +3719,7 @@
     "category-selected-connection": "所選連線",
     "category-selected-element": "所選元素 ({{element}})",
     "category-size": "大小",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "雲端",
       "label": {
@@ -3963,6 +3962,13 @@
       "name-vertical-align": "垂直對齊",
       "placeholder": {
         "auto": "自動"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -6984,6 +6990,9 @@
         "pro-tip-define-sources-through-configuration-files": "專家提示：您也可以透過設定檔案來定義資料來源。"
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "上一頁",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "停用查詢"
@@ -7250,18 +7259,24 @@
       "split-tooltip": "分割窗格",
       "split-widen": "擴大窗格"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "提供意見回饋",
-      "label-copied": "已複製！",
-      "label-export": "匯出",
-      "label-trace-id": "追蹤 ID",
-      "title-share-thoughts-about-tracing-grafana": "分享對於在 Grafana 中進行追蹤的想法。"
-    },
     "trace-page-header": {
-      "text-partial-trace": "部分追蹤",
-      "tooltip-url": "{{url}} 或 {{target}} 或 {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "清除篩選條件按鈕",

@@ -1560,8 +1560,7 @@
       "group-not-editable": "Vybranou skupinu nelze upravit",
       "group-not-editable-description": "Tato skupina patří ke zdroji dat, který nepodporuje úpravy.",
       "page-title": "Upravit skupinu pravidel",
-      "rule-group-error": "Chyba při načítání skupiny pravidel",
-      "title": "Upravit hodnotící skupinu"
+      "rule-group-error": "Chyba při načítání skupiny pravidel"
     },
     "group-loader": {
       "group-load-failed": "Nepodařilo se načíst pravidla ze skupiny {{ groupName }} v jmenném prostoru {{ namespaceName }}",
@@ -1595,8 +1594,7 @@
       "synthetic-monitoring-card-item-2": "Spusťte kontroly pingu, DNS, HTTP/S a TCP na každé síťové vrstvě.",
       "synthetic-monitoring-card-item-3": "Použijte více než 20 globálních nebo soukromých sond za firewallem.",
       "synthetic-monitoring-card-item-4": "Sledujte SLO pomocí vestavěných Prometheus výstrah přímo z uživatelského rozhraní.",
-      "synthetic-monitoring-card-title": "Syntetické monitorování",
-      "title-alerting": "Výstrahy"
+      "synthetic-monitoring-card-title": "Syntetické monitorování"
     },
     "import-to-gma": {
       "action-button": "Importovat",
@@ -3778,6 +3776,7 @@
     "category-selected-connection": "Vybrané připojení",
     "category-selected-element": "Vybraný prvek ({{element}})",
     "category-size": "Velikost",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -4020,6 +4019,13 @@
       "name-vertical-align": "Vertikální zarovnání",
       "placeholder": {
         "auto": "Automaticky"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -7050,6 +7056,9 @@
         "pro-tip-define-sources-through-configuration-files": " Pro tip: Zdroje dat můžete definovat také prostřednictvím konfiguračních souborů. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Předch.",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Vyhnout se dotazům"
@@ -7316,18 +7325,24 @@
       "split-tooltip": "Rozdělit podokno",
       "split-widen": "Rozšířit podokno"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Poskytnout zpětnou vazbu",
-      "label-copied": "Zkopírováno!",
-      "label-export": "Exportovat",
-      "label-trace-id": "ID trasování",
-      "title-share-thoughts-about-tracing-grafana": "Podělte se o svůj názor na trasování v Grafaně."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Částečné trasování",
-      "tooltip-url": "{{url}} nebo {{target}} nebo {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Tlačítko Vymazat filtry",

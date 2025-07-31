@@ -1560,8 +1560,7 @@
       "group-not-editable": "Выбранную группу нельзя редактировать",
       "group-not-editable-description": "Эта группа принадлежит к источнику данных, который не поддерживает редактирование.",
       "page-title": "Редактирование группы правил",
-      "rule-group-error": "Ошибка при загрузке группы правил",
-      "title": "Редактирование группы оценки"
+      "rule-group-error": "Ошибка при загрузке группы правил"
     },
     "group-loader": {
       "group-load-failed": "Не удалось загрузить правила из группы {{ groupName }} в {{ namespaceName }}",
@@ -1595,8 +1594,7 @@
       "synthetic-monitoring-card-item-2": "",
       "synthetic-monitoring-card-item-3": "",
       "synthetic-monitoring-card-item-4": "",
-      "synthetic-monitoring-card-title": "",
-      "title-alerting": "Оповещение"
+      "synthetic-monitoring-card-title": ""
     },
     "import-to-gma": {
       "action-button": "Импорт",
@@ -3778,6 +3776,7 @@
     "category-selected-connection": "",
     "category-selected-element": "",
     "category-size": "",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "",
       "label": {
@@ -4020,6 +4019,13 @@
       "name-vertical-align": "",
       "placeholder": {
         "auto": "Авто"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -7050,6 +7056,9 @@
         "pro-tip-define-sources-through-configuration-files": "Совет. Источники данных можно также задавать в файлах конфигурации. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Назад",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Не выполнять запрос"
@@ -7316,18 +7325,24 @@
       "split-tooltip": "Разделить область",
       "split-widen": "Расширить область"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Отправить отзыв",
-      "label-copied": "Скопировано",
-      "label-export": "Экспорт",
-      "label-trace-id": "Идентификатор трассировки",
-      "title-share-thoughts-about-tracing-grafana": "Ваше мнение о трассировке в Grafana"
-    },
     "trace-page-header": {
-      "text-partial-trace": "Частичная трассировка",
-      "tooltip-url": "{{url}} или {{target}}, или {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Кнопка очистки фильтров",

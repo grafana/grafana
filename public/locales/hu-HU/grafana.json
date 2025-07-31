@@ -1548,8 +1548,7 @@
       "group-not-editable": "A kijelölt csoport nem szerkeszthető",
       "group-not-editable-description": "Ez a csoport olyan adatforráshoz tartozik, amely nem támogatja a szerkesztést.",
       "page-title": "Szabálycsoport szerkesztése",
-      "rule-group-error": "Hiba történt a szabálycsoport betöltésekor",
-      "title": "Értékelési csoport szerkesztése"
+      "rule-group-error": "Hiba történt a szabálycsoport betöltésekor"
     },
     "group-loader": {
       "group-load-failed": "A szabályok betöltése a(z) {{ groupName }} csoportból nem sikerült a(z) {{ namespaceName }} névtérben",
@@ -1583,8 +1582,7 @@
       "synthetic-monitoring-card-item-2": "Futtasson pingelést, DNS-, HTTP/S- és TCP-ellenőrzéseket minden hálózati rétegben.",
       "synthetic-monitoring-card-item-3": "Használhat több mint 20 globális szondát vagy privát szondát a tűzfal mögött.",
       "synthetic-monitoring-card-item-4": "Kövesse nyomon az SLO-kat beépített Prometheus-stílusú riasztásokkal – közvetlenül a felhasználói felületről.",
-      "synthetic-monitoring-card-title": "Szintetikus megfigyelés",
-      "title-alerting": "Riasztás"
+      "synthetic-monitoring-card-title": "Szintetikus megfigyelés"
     },
     "import-to-gma": {
       "action-button": "Importálás",
@@ -3740,6 +3738,7 @@
     "category-selected-connection": "Kiválasztott kapcsolat",
     "category-selected-element": "Kiválasztott elem ({{element}})",
     "category-size": "Méret",
+    "category-tooltip": "",
     "cloud-item": {
       "category-cloud": "Felhő",
       "label": {
@@ -3982,6 +3981,13 @@
       "name-vertical-align": "Függőleges igazítás",
       "placeholder": {
         "auto": "Automatikus"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "",
+      "tooltip-mode-options": {
+        "label-disabled": "",
+        "label-enabled": ""
       }
     },
     "tree-navigation-editor": {
@@ -7006,6 +7012,9 @@
         "pro-tip-define-sources-through-configuration-files": " Tipp: Adatforrásokat konfigurációs fájlokon keresztül is definiálhat. "
       }
     },
+    "pane": {
+      "loading-placeholder": ""
+    },
     "prev": "Előző",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": "Lekérdezés nélkül"
@@ -7272,18 +7281,24 @@
       "split-tooltip": "Ablaktábla felosztása",
       "split-widen": "Ablaktábla szélesítése"
     },
-    "trace-page-actions": {
-      "ariaLabel-copy-trace-id": "",
-      "ariaLabel-export-trace": "",
-      "give-feedback": "Visszajelzés küldése",
-      "label-copied": "Kimásolva!",
-      "label-export": "Exportálás",
-      "label-trace-id": "Nyomkövetési azonosító",
-      "title-share-thoughts-about-tracing-grafana": "Ossza meg gondolatait a Grafanában elérhető nyomon követésről."
-    },
     "trace-page-header": {
-      "text-partial-trace": "Részleges nyomvonal",
-      "tooltip-url": "{{url}}, vagy {{target}}, vagy {{path}}"
+      "duration": "",
+      "export-started": "",
+      "give-feedback": "",
+      "link-copied": "",
+      "path": "",
+      "route": "",
+      "services": "",
+      "share": "",
+      "share-copy-link": "",
+      "share-export-json": "",
+      "share-tooltip": "",
+      "start-time": "",
+      "target": "",
+      "title-share-thoughts-about-tracing-grafana": "",
+      "tooltip-url": "",
+      "trace-id": "",
+      "url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Szűrők törlése gomb",
