@@ -52,8 +52,8 @@ Enabling the Frontend Sandbox might impact the performance of certain plugins. O
 
 The following applies:
 
-- The Frontend Sandbox is available in public preview in Grafana >=11.5. It's compatible with all types of plugins including app plugins, panel plugins, and data source plugins. 
-- Angular-based plugins are not supported. 
+- The Frontend Sandbox is available in public preview in Grafana >=11.5. It's compatible with all types of plugins including app plugins, panel plugins, and data source plugins.
+- Angular-based plugins are not supported.
 - Plugins developed and signed by Grafana Labs are excluded and cannot be sandboxed.
 
 ## When to use the Plugin Frontend Sandbox

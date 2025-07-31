@@ -16,19 +16,19 @@ weight: 600
 
 # Plugin management
 
-You can enhance your Grafana experience with _plugins_, extensions beyond the wide range of visualizations and data sources that are built-in in Grafana. 
+You can enhance your Grafana experience with _plugins_, extensions beyond the wide range of visualizations and data sources that are built-in in Grafana.
 
 This guide gives you an overview so you can get started with plugins:
 
-- There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins. 
+- There are three [types of plugins](#types-of-plugins): panel, data source, and app plugins.
 - Plugins are available in the [plugin catalog](#plugin-catalog). They can be built by Grafana Labs, commercial partners, our community, or you can [build a plugin yourself](/developers/plugin-tools).
 - Learn how to [install](#install-a-plugin) and [manage](#manage-your-plugins) your plugins.
-- You can also [allow the frontends of installed plugins to communicate locally with the backends](#integrate-plugins) of other installed plugins. 
+- You can also [allow the frontends of installed plugins to communicate locally with the backends](#integrate-plugins) of other installed plugins.
 
 See also the following docs:
 
 - [Customize navigation placement of plugin pages](customize-navigation-placement-of-plugin-pages)
-- [Sign in your plugins](plugin-signatures) 
+- [Sign in your plugins](plugin-signatures)
 - [Plugin Frontend Sandbox](isolate-plugin-code-with-the-plugin-frontend-sandbox)
 
 ## Types of plugins
