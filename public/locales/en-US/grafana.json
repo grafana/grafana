@@ -3563,12 +3563,12 @@
       "tags-column": "Tags"
     },
     "delete-provisioned-folder-form": {
-      "alert-folder-deleted-successfully": "Folder deleted successfully",
       "api-error": "Failed to delete folder",
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:"
+      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "success-message": "Folder deleted successfully"
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
@@ -3611,7 +3611,6 @@
     },
     "new-provisioned-folder-form": {
       "alert-error-creating-folder": "Error creating folder",
-      "alert-folder-created-successfully": "Folder created successfully",
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
@@ -3738,6 +3737,7 @@
     "category-selected-connection": "Selected connection",
     "category-selected-element": "Selected element ({{element}})",
     "category-size": "Size",
+    "category-tooltip": "Tooltip",
     "cloud-item": {
       "category-cloud": "Cloud",
       "label": {
@@ -3758,7 +3758,6 @@
       }
     },
     "description-experimental-types": "Enable selection of experimental element types",
-    "description-infinite-panning": "Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained",
     "description-inline-editing": "Enable editing the panel directly",
     "description-pan-zoom": "Enable pan and zoom",
     "direction-options": {
@@ -3859,7 +3858,6 @@
     "name-align-text": "Align text",
     "name-color": "Text color",
     "name-experimental-types": "Experimental element types",
-    "name-infinite-panning": "Infinite panning",
     "name-inline-editing": "Inline editing",
     "name-pan-zoom": "Pan and zoom",
     "name-text": "Text",
@@ -3980,6 +3978,13 @@
       "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "tooltip-options": {
+      "name-tooltip-mode": "Tooltip mode",
+      "tooltip-mode-options": {
+        "label-disabled": "Disabled",
+        "label-enabled": "Enabled"
       }
     },
     "tree-navigation-editor": {
@@ -5637,6 +5642,7 @@
       "delete-read-only-file-message": "This dashboard cannot be deleted directly from Grafana because the repository is read-only. To delete this dashboard, please remove the file from your Git repository.",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
+      "success-message": "Dashboard deleted successfully",
       "title-this-repository-is-read-only": "This repository is read only"
     },
     "description-label": {
@@ -5648,9 +5654,6 @@
           "edit-link": "Edit link"
         }
       }
-    },
-    "edit-provisioned-dashboard-form": {
-      "success": "Dashboard changes saved successfully"
     },
     "email-list": {
       "aria-label-emailmenu": "Toggle email menu"
@@ -5810,6 +5813,7 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "move-provisioned-dashboard-form": {
+      "alert-error-moving-dashboard": "Error moving dashboard",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
       "current-file-not-found": "Current dashboard file could not be found",
@@ -5819,6 +5823,7 @@
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
+      "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -11007,6 +11012,9 @@
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
+  "provisioned-resource-request-handler": "Resource saved successfully",
+  "provisioned-resource-request-handler-dashboard": "Dashboard saved successfully",
+  "provisioned-resource-request-handler-folder": "Folder created successfully",
   "provisioning": {
     "banner": {
       "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
@@ -11866,7 +11874,7 @@
         "recommended": "Recommended",
         "results": "Results"
       },
-      "search": "Search"
+      "search": "Search {{parentTitle}}"
     }
   },
   "search": {
@@ -12502,6 +12510,18 @@
       "label-large": "Large",
       "label-medium": "Medium",
       "label-small": "Small"
+    },
+    "cell-types": {
+      "actions": "Actions",
+      "auto": "Auto",
+      "color-background": "Colored background",
+      "color-text": "Colored text",
+      "data-links": "Data links",
+      "gauge": "Gauge",
+      "image": "Image",
+      "json": "JSON View",
+      "pill": "Pill",
+      "sparkline": "Sparkline"
     },
     "color-background-cell-options-editor": {
       "description-apply-to-entire-row": "If selected the entire row will be colored as this cell would be.",
