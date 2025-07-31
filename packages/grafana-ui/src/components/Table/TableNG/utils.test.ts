@@ -974,7 +974,7 @@ describe('TableNG utils', () => {
       avgCharWidth: 7,
     };
 
-    it('returns an array of line counters for each column', () => {
+    it('sets up text line counters for each text column if wrapping is on', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: { cellOptions: { wrapText: true } } } },
         {
@@ -1025,7 +1025,22 @@ describe('TableNG utils', () => {
       expect(counters).toBeUndefined();
     });
 
-    it.todo('sets up line counting for pills if present and wrapping is on');
+    it('sets up line counting for pills if present and wrapping is on', () => {
+      const fields: Field[] = [
+        {
+          name: 'Tags',
+          type: FieldType.string,
+          values: ['tag1,tag2', 'tag3', '["tag4","tag5","tag6"]'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill, wrapText: true } } },
+        },
+      ];
+      const counters = buildRowLineCounters(fields, ctx);
+      expect(counters![0].estimate).toEqual(expect.any(Function));
+      expect(counters![0].estimate!('tag1,tag2', 100, fields[0], 0)).toEqual(1);
+      expect(counters![0].counter).toEqual(expect.any(Function));
+      expect(counters![0].counter('tag1,tag2', 100, fields[0], 0)).toEqual(1);
+      expect(counters![0].fieldIdxs).toEqual([0]);
+    });
 
     it.todo('sets up line counting for datalinks if present and wrapping is on');
   });
