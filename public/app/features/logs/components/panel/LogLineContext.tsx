@@ -259,6 +259,7 @@ export const LogLineContext = memo(
           collapsible={true}
           isOpen={showLog}
           onToggle={() => setShowLog(!showLog)}
+          className={styles.referenceLogLine}
           label={
             <div className={styles.collapseLabel}>
               <div>{t('logs.log-line-context.title-log-line', 'Referenced log line')}</div>
@@ -387,20 +388,24 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: theme.spacing(3),
       textAlign: 'center',
     }),
+    referenceLogLine: css({
+      flex: 0,
+    }),
     wrapper: css({
       border: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0, 1, 1, 0),
+      flex: 1,
       height: '100%',
     }),
     logsContainer: css({
       height: '100%',
-      minHeight: '52vh',
       overflow: 'hidden',
     }),
     flexColumn: css({
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(0, 3, 3, 3),
+      height: '100%',
     }),
     link: css({
       color: theme.colors.text.secondary,
