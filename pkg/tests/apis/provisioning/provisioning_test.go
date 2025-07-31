@@ -2147,8 +2147,7 @@ func TestIntegrationProvisioning_SecondRepositoryOnlyExportsNewDashboards(t *tes
 	// Debug: print file tree to see what was synced
 	printFileTree(t, helper.ProvisioningPath)
 
-	// Initial export:
-	// Export from second repository - this should only export the unmanaged dashboard3
+	// Initial export
 	result := helper.AdminREST.Post().
 		Namespace("default").
 		Resource("repositories").
