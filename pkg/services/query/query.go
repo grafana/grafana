@@ -86,6 +86,7 @@ type ServiceImpl struct {
 	concurrentQueryLimit       int
 	mtDatasourceClientBuilder  mtdsclient.MTDatasourceClientBuilder
 	headers                    map[string]string
+	supportLocalTimeRange      bool
 }
 
 // Run ServiceImpl.
@@ -103,7 +104,7 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 		}
 	}
 	// Parse the request into parsed queries grouped by datasource uid
-	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
+	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO, s.supportLocalTimeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -222,6 +223,7 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
 		headers:                    headers,
 		concurrentQueryLimit:       16, // TODO: make it configurable
+		supportLocalTimeRange:      true,
 	}
 	return s.QueryData(ctx, nil, false, reqDTO)
 }
@@ -322,7 +324,7 @@ func getTimeRange(query *simplejson.Json, globalFrom string, globalTo string) gt
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid
-func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
+func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest, supportLocalTimeRange bool) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound
 	}
@@ -355,7 +357,12 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			req.parsedQueries[ds.UID] = []parsedQuery{}
 		}
 
-		timeRange := getTimeRange(query, reqDTO.From, reqDTO.To)
+		var timeRange gtime.TimeRange
+		if supportLocalTimeRange {
+			timeRange = getTimeRange(query, reqDTO.From, reqDTO.To)
+		} else {
+			timeRange = gtime.NewTimeRange(reqDTO.From, reqDTO.To)
+		}
 
 		modelJSON, err := query.MarshalJSON()
 		if err != nil {
