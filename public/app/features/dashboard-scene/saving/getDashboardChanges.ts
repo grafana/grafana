@@ -7,7 +7,7 @@ import {
   AdhocVariableSpec,
   Spec as DashboardV2Spec,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
