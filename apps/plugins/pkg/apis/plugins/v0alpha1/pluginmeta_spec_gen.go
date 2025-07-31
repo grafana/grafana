@@ -2,6 +2,10 @@
 
 package v0alpha1
 
+import (
+	time "time"
+)
+
 // JSON configuration schema for Grafana plugins
 // Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
 // +k8s:openapi-gen=true
@@ -61,11 +65,10 @@ type PluginMetaInfo struct {
 	// +listType=set
 	Keywords []string                    `json:"keywords"`
 	Logos    PluginMetaV0alpha1InfoLogos `json:"logos"`
-	Updated  string                      `json:"updated"`
+	Updated  time.Time                   `json:"updated"`
 	Version  string                      `json:"version"`
 	// Optional fields
 	Author      *PluginMetaV0alpha1InfoAuthor `json:"author,omitempty"`
-	Build       *PluginMetaV0alpha1InfoBuild  `json:"build,omitempty"`
 	Description *string                       `json:"description,omitempty"`
 	// +listType=atomic
 	Links []PluginMetaV0alpha1InfoLinks `json:"links,omitempty"`
@@ -239,22 +242,6 @@ type PluginMetaV0alpha1InfoAuthor struct {
 // NewPluginMetaV0alpha1InfoAuthor creates a new PluginMetaV0alpha1InfoAuthor object.
 func NewPluginMetaV0alpha1InfoAuthor() *PluginMetaV0alpha1InfoAuthor {
 	return &PluginMetaV0alpha1InfoAuthor{}
-}
-
-// +k8s:openapi-gen=true
-type PluginMetaV0alpha1InfoBuild struct {
-	Time   *float64 `json:"time,omitempty"`
-	Repo   *string  `json:"repo,omitempty"`
-	Branch *string  `json:"branch,omitempty"`
-	Hash   *string  `json:"hash,omitempty"`
-	// 		number?: number // cannot have field with this name
-	Pr    *float64 `json:"pr,omitempty"`
-	Build *float64 `json:"build,omitempty"`
-}
-
-// NewPluginMetaV0alpha1InfoBuild creates a new PluginMetaV0alpha1InfoBuild object.
-func NewPluginMetaV0alpha1InfoBuild() *PluginMetaV0alpha1InfoBuild {
-	return &PluginMetaV0alpha1InfoBuild{}
 }
 
 // +k8s:openapi-gen=true

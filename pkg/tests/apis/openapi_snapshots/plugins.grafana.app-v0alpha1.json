@@ -2231,30 +2231,6 @@
                       }
                     }
                   },
-                  "build": {
-                    "type": "object",
-                    "properties": {
-                      "branch": {
-                        "type": "string"
-                      },
-                      "build": {
-                        "type": "number"
-                      },
-                      "hash": {
-                        "type": "string"
-                      },
-                      "pr": {
-                        "description": "number?: number // cannot have field with this name",
-                        "type": "number"
-                      },
-                      "repo": {
-                        "type": "string"
-                      },
-                      "time": {
-                        "type": "number"
-                      }
-                    }
-                  },
                   "description": {
                     "type": "string"
                   },
@@ -2311,7 +2287,8 @@
                     }
                   },
                   "updated": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                   },
                   "version": {
                     "type": "string"

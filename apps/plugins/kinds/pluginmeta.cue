@@ -1,9 +1,13 @@
 package plugins
 
+import (
+	"time"
+)
+
 pluginMetaV0Alpha1: {
-	kind:       "PluginMeta"
-	plural: "pluginmeta"
-	scope:      "Namespaced"
+	kind: "PluginMeta"
+	plural: "pluginsmeta"
+	scope: "Namespaced"
 	schema: {
 		spec: {
 			pluginJSON: #JSONData,
@@ -68,23 +72,13 @@ pluginMetaV0Alpha1: {
 		small: string
 		large: string
 	}
-	updated: string
+	updated: string & time.Time
 	version: string
-
 	// Optional fields
 	author?: {
 		name?: string
 		email?: string
 		url?: string
-	}
-	build?: {
-		time?: number
-		repo?: string
-		branch?: string
-		hash?: string
-//		number?: number // cannot have field with this name
-		pr?: number
-		build?: number
 	}
 	description?: string
 	// +listType=atomic

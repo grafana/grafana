@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	claims "github.com/grafana/authlib/types"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 var (
@@ -26,12 +26,12 @@ var (
 
 type PluginMetaStorage struct {
 	gr             schema.GroupResource
-	namespacer     request.NamespaceMapper
+	namespacer     claims.NamespaceFormatter
 	tableConverter rest.TableConvertor
 }
 
 func NewPluginMetaStorage(
-	namespacer request.NamespaceMapper,
+	namespacer claims.NamespaceFormatter,
 ) *PluginMetaStorage {
 	gr := schema.GroupResource{
 		Group:    pluginsv0alpha1.PluginMetaKind().Group(),

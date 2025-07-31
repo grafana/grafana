@@ -1,9 +1,9 @@
 package plugins
 
 pluginInstallV0Alpha1: {
-	kind:       "PluginInstall"
+	kind: "PluginInstall"
 	plural: "plugininstalls"
-	scope:      "Namespaced"
+	scope: "Namespaced"
 	schema: {
 		spec: {
 			id:       string
