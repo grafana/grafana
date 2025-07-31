@@ -93,8 +93,11 @@ export function createTypographyContext(fontSize: number, fontFamily: string, le
 
   ctx.letterSpacing = `${letterSpacing}px`;
   ctx.font = font;
+  // 1/6 of the characters in this string are capitalized. Since the avgCharWidth is used for estimation, it's
+  // better that the estimation over-estimates the width than if it underestimates it, so we're a little on the
+  // aggressive side here and could even go more aggressive if we get complaints in the future.
   const txt =
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s.";
+    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s. 1234567890 ALL CAPS TO HELP WITH MEASUREMENT.";
   const txtWidth = ctx.measureText(txt).width;
   const avgCharWidth = txtWidth / txt.length + letterSpacing;
   const { count } = varPreLine(ctx);
