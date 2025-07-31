@@ -408,6 +408,15 @@ const LogListComponent = ({
 
   return (
     <div className={styles.logListContainer}>
+      {showControls && <LogListControls eventBus={eventBus} />}
+      {detailsMode === 'sidebar' && showDetails.length > 0 && (
+        <LogLineDetails
+          containerElement={containerElement}
+          focusLogLine={focusLogLine}
+          logs={filteredLogs}
+          onResize={handleLogDetailsResize}
+        />
+      )}
       <div className={styles.logListWrapper} ref={wrapperRef}>
         {popoverState.selection && popoverState.selectedRow && (
           <PopoverMenu
@@ -487,15 +496,6 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
-      {detailsMode === 'sidebar' && showDetails.length > 0 && (
-        <LogLineDetails
-          containerElement={containerElement}
-          focusLogLine={focusLogLine}
-          logs={filteredLogs}
-          onResize={handleLogDetailsResize}
-        />
-      )}
-      {showControls && <LogListControls eventBus={eventBus} />}
     </div>
   );
 };
@@ -519,6 +519,7 @@ function getStyles(
     }),
     logListContainer: css({
       display: 'flex',
+      flexDirection: 'row-reverse',
       // Minimum width to prevent rendering issues and a sausage-like logs panel.
       minWidth: theme.spacing(35),
     }),
