@@ -27,9 +27,9 @@ This guide gives you an overview so you can get started with plugins:
 
 See also the following docs:
 
-- [Customize navigation placement of plugin pages](customize-navigation-placement-of-plugin-pages)
-- [Sign in your plugins](plugin-signatures)
-- [Plugin Frontend Sandbox](isolate-plugin-code-with-the-plugin-frontend-sandbox)
+- [Customize navigation placement of plugin pages](/customize-navigation-placement-of-plugin-pages)
+- [Sign in your plugins](/plugin-signatures)
+- [Plugin Frontend Sandbox](/isolate-plugin-code-with-the-plugin-frontend-sandbox)
 
 ## Types of plugins
 
